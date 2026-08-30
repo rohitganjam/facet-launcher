@@ -2,6 +2,7 @@ package com.lumenlauncher.app.ui.theme
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.lumenlauncher.app.data.model.IconRenderMode
 
 /**
  * Whether the app is currently rendering dark — resolved once by [LumenLauncherTheme] from
@@ -30,3 +31,10 @@ val LocalCustomAccentSwatch = compositionLocalOf<AccentSwatch?> { null }
  * chat history).
  */
 val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }
+
+/**
+ * F11's global icon-rendering mode, provided once at the root by [LumenLauncherTheme] so
+ * [com.lumenlauncher.app.ui.components.AppIcon] — called from a dozen+ surfaces (Home, Drawer,
+ * Dock, context menu, pickers) — can read it without every call site threading it through.
+ */
+val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAULT }

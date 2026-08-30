@@ -66,6 +66,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.SearchBarPosition
@@ -136,6 +137,7 @@ fun SettingsScreen(
         onThemeModeChanged = viewModel::setThemeMode,
         onAccentFromSystemChanged = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChanged = viewModel::setCustomAccentSwatch,
+        onIconRenderModeChanged = viewModel::setIconRenderMode,
         modifier = modifier,
     )
 }
@@ -167,6 +169,7 @@ private fun SettingsContent(
     onThemeModeChanged: (ThemeMode) -> Unit,
     onAccentFromSystemChanged: (Boolean) -> Unit,
     onCustomAccentSwatchChanged: (AccentSwatch) -> Unit,
+    onIconRenderModeChanged: (IconRenderMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -398,7 +401,14 @@ private fun SettingsContent(
                     onCustomAccentSwatchChanged = onCustomAccentSwatchChanged,
                 )
                 CardDivider()
-                DisabledRow(title = "Icons", subtitle = "System default / Monochrome", modifier = Modifier.testTag("appearance_icons_row"))
+                LabeledDropdownRow(
+                    title = "Icons",
+                    options = IconRenderMode.entries,
+                    selected = uiState.settings.iconRenderMode,
+                    label = { it.displayName },
+                    onSelect = onIconRenderModeChanged,
+                    testTag = "appearance_icons_row",
+                )
             }
         }
 
@@ -421,6 +431,7 @@ private fun SettingsContent(
                 DisabledRow(
                     title = "Backup & restore",
                     subtitle = "Export settings as a file · widgets need re-adding on import",
+                    modifier = Modifier.testTag("backup_restore_row"),
                 )
                 CardDivider()
                 ClickableRow(
@@ -905,6 +916,7 @@ private fun SettingsScreenPreview() {
             onThemeModeChanged = {},
             onAccentFromSystemChanged = {},
             onCustomAccentSwatchChanged = {},
+            onIconRenderModeChanged = {},
         )
     }
 }

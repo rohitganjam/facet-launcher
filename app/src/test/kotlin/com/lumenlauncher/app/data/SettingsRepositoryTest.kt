@@ -10,6 +10,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
@@ -47,6 +48,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerPresentation.LIST, settings.drawerPresentation)
         assertEquals(DrawerGridSize.FIVE_BY_SIX, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.COMPACT, settings.drawerListItemSize)
+        assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
         assertEquals(0.88f, settings.drawerOpacity, 0.0001f)
         assertEquals(true, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
@@ -102,6 +104,7 @@ class SettingsRepositoryTest {
         repository.setDrawerPresentation(DrawerPresentation.GRID)
         repository.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
+        repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
         repository.setDrawerOpacity(0.5f)
         repository.setNotificationDotsEnabled(false)
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
@@ -123,6 +126,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerPresentation.GRID, settings.drawerPresentation)
         assertEquals(DrawerGridSize.FOUR_BY_FOUR, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
+        assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
         assertEquals(0.5f, settings.drawerOpacity, 0.0001f)
         assertEquals(false, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)

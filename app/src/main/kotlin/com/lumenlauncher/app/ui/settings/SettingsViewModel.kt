@@ -11,6 +11,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.SearchBarPosition
 import com.lumenlauncher.app.data.model.ThemeMode
@@ -98,6 +99,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setCustomAccentSwatch(swatch: AccentSwatch) {
         viewModelScope.launch { settingsRepository.setCustomAccentSwatch(swatch.name) }
+    }
+
+    fun setIconRenderMode(mode: IconRenderMode) {
+        viewModelScope.launch { settingsRepository.setIconRenderMode(mode) }
     }
 
     fun setThemeMode(mode: ThemeMode) {

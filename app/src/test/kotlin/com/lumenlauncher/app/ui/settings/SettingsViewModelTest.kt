@@ -90,6 +90,17 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `changing icon render mode calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setIconRenderMode(com.lumenlauncher.app.data.model.IconRenderMode.MONOCHROME_BLACK_WHITE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setIconRenderMode(com.lumenlauncher.app.data.model.IconRenderMode.MONOCHROME_BLACK_WHITE)
+    }
+
+    @Test
     fun `toggling show drawer labels calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)

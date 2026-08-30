@@ -3,12 +3,17 @@ package com.lumenlauncher.app.data
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.ColorDrawable
 import android.os.Process
+import androidx.compose.ui.graphics.asAndroidBitmap
 import com.lumenlauncher.app.data.model.AppInfo
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
@@ -27,6 +32,28 @@ class AppRepositoryTest {
         `when`(activity.componentName).thenReturn(android.content.ComponentName(packageName, className))
         `when`(activity.label).thenReturn(label as CharSequence)
         return activity
+    }
+
+    @Test
+    fun `flattens an adaptive icon without the OS's own corner masking`() = runTest {
+        // Given an app whose icon is an AdaptiveIconDrawable with fully opaque background and
+        // foreground layers — if the OS's own default masking were still in play (calling
+        // AdaptiveIconDrawable.toBitmap() directly, instead of drawing its layers ourselves),
+        // the resulting bitmap's corners would be masked out (transparent); our own flattening
+        // draws the layers past their safe-zone bounds instead, so nothing masks the corners
+        // except AppIcon's own clip() downstream — see AppRepository.flattenIcon's own doc.
+        val launcherApps = mock(LauncherApps::class.java)
+        val activity = fakeActivity("com.example.adaptive", ".Main", "Adaptive")
+        val adaptiveIcon = AdaptiveIconDrawable(ColorDrawable(Color.RED), ColorDrawable(Color.BLUE))
+        `when`(activity.getIcon(0)).thenReturn(adaptiveIcon)
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(activity))
+
+        // When fetching installed apps
+        val result = AppRepository(launcherApps).getInstalledApps()
+
+        // Then the flattened icon's corner pixel is opaque, not masked away
+        val bitmap = result[0].icon!!.asAndroidBitmap()
+        assertNotEquals(0, Color.alpha(bitmap.getPixel(0, 0)))
     }
 
     @Test

@@ -134,19 +134,39 @@ class SettingsScreenTest {
 
     @Test
     fun disabledRowsHaveNoClickAction() {
-        // Given the settings screen, scrolled to Appearance's still-unbuilt "Icons" row
-        // ("Default clock style" is no longer this — it's a real, clickable row now, see the
-        // clock template gallery). Targeted by testTag, not hasText("Icons") — that text match
-        // turned out to hit an unexpected node with a real click action once actually verified
-        // in isolation (root cause not chased further; a testTag sidesteps the ambiguity
-        // entirely and matches this codebase's own established convention for exactly this
-        // class of flake, see IMPLEMENTATION_PLAN.md).
+        // Given the settings screen, scrolled to Sync's still-unbuilt "Backup & restore" row
+        // (Appearance's "Icons" row — this test's previous target — is a real, functioning
+        // dropdown now, see iconRenderModeRowChangesTheSetting below). Targeted by testTag, not
+        // hasText(...) — a text match turned out to hit an unexpected node with a real click
+        // action once actually verified in isolation for a different row (root cause not chased
+        // further; a testTag sidesteps the ambiguity entirely and matches this codebase's own
+        // established convention for exactly this class of flake, see IMPLEMENTATION_PLAN.md).
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("backup_restore_row"))
+
+        // Then a not-yet-built row (backup & restore, Known Gap) has no click action registered
+        // at all — not just a no-op handler, genuinely non-interactive
+        composeRule.onNodeWithTag("backup_restore_row").assertHasNoClickAction()
+    }
+
+    @Test
+    fun iconRenderModeRowChangesTheSetting() {
+        // Given the settings screen, scrolled to Appearance's "Icons" row (F11 — now a real
+        // dropdown, no longer disabled)
         setContent()
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_icons_row"))
+        composeRule.onNodeWithText("System default").assertExists()
 
-        // Then a not-yet-built row (icon rendering mode, Known Gap) has no click action
-        // registered at all — not just a no-op handler, genuinely non-interactive
-        composeRule.onNodeWithTag("appearance_icons_row").assertHasNoClickAction()
+        // When picking "Monochrome (Accent)"
+        composeRule.onNodeWithTag("appearance_icons_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_icons_row_option_MONOCHROME_ACCENT").performClick()
+
+        // Then the row reflects the new selection
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Monochrome (Accent)").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Monochrome (Accent)").assertExists()
     }
 
     @Test

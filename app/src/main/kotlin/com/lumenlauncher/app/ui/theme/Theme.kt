@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.ThemeMode
 
 @Composable
@@ -50,6 +51,7 @@ fun LumenLauncherTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     accentFromSystem: Boolean = true,
     customAccentSwatch: AccentSwatch? = null,
+    iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     content: @Composable () -> Unit,
 ) {
     val isDark = when (themeMode) {
@@ -69,6 +71,7 @@ fun LumenLauncherTheme(
         LocalAccentFromSystem provides accentFromSystem,
         LocalCustomAccentSwatch provides customAccentSwatch,
         LocalDynamicColorRefreshSignal provides dynamicColorRefreshSignal,
+        LocalIconRenderMode provides iconRenderMode,
     ) {
         MaterialTheme(
             colorScheme = lumenColorScheme(isDark),

@@ -20,12 +20,15 @@ enum class DrawerGridSize(val columns: Int, val rows: Int) {
 /**
  * List presentation only. [extraRowPaddingDp] adds on top of [DrawerAppRow][com.lumenlauncher.app.ui.drawer.DrawerAppRow]'s
  * existing base vertical padding — `COMPACT` (0) reproduces that unchanged existing height; each
- * step up adds 8dp more, per direct request (see chat history).
+ * step up adds 8dp more, per direct request (see chat history). [iconSizeDp] grows the row's
+ * [AppIcon][com.lumenlauncher.app.ui.components.AppIcon] alongside it for `REGULAR`/`SPACIOUS`
+ * (also per direct request) — `COMPACT` keeps the row's existing 32dp icon unchanged, so this
+ * option's own default look doesn't shift.
  */
-enum class DrawerListItemSize(val extraRowPaddingDp: Int) {
-    COMPACT(0),
-    REGULAR(8),
-    SPACIOUS(16),
+enum class DrawerListItemSize(val extraRowPaddingDp: Int, val iconSizeDp: Int) {
+    COMPACT(0, 32),
+    REGULAR(8, 36),
+    SPACIOUS(16, 40),
 }
 
 enum class SearchBarPosition {
@@ -82,6 +85,8 @@ data class LauncherSettings(
     val accentFromSystem: Boolean = true,
     /** The user's "Basic colors" pick when [accentFromSystem] is `false`, as an `AccentSwatch` enum name (kept as a plain string here — the enum itself is a `ui/theme` type, out of reach for this data-layer class). `null` until they've picked one. */
     val customAccentSwatch: String? = null,
+    /** F11 — Settings → Theme → "Icons"; global (not per-app) app-icon rendering mode. */
+    val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     /**
      * Settings → Permissions has requested `READ_CALENDAR`/`READ_CONTACTS` at least once before.
      * `checkSelfPermission` alone can't tell "never asked" apart from "permanently denied" —

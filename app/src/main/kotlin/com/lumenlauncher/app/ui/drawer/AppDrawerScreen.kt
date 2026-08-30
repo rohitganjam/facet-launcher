@@ -266,7 +266,7 @@ fun AppDrawerScreen(
             Text(
                 text = letter,
                 style = LumenType.clock.copy(fontSize = 40.sp, lineHeight = 40.sp),
-                color = DrawerAppTextColor,
+                color = Accent,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .testTag("alphabet_rail_indicator")
@@ -703,7 +703,16 @@ private fun DrawerAppRow(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (showIcon) {
-                AppIcon(icon = app.icon, size = 32.dp, cornerRadius = 9.dp, contentDescription = null)
+                // Icon grows alongside the row height for Regular/Spacious (see
+                // DrawerListItemSize's own doc) — corner radius scaled at the same ~28% ratio
+                // the base 32dp/9dp pair already uses, not just carried over unchanged.
+                val iconSize = itemSize.iconSizeDp.dp
+                AppIcon(
+                    icon = app.icon,
+                    size = iconSize,
+                    cornerRadius = (itemSize.iconSizeDp * 9 / 32).dp,
+                    contentDescription = null,
+                )
             }
             Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
             if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)

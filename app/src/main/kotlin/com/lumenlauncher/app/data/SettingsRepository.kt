@@ -16,6 +16,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
@@ -45,6 +46,7 @@ private object Keys {
     val SEARCH_CONTACTS_ENABLED = booleanPreferencesKey("search_contacts_enabled")
     val ACCENT_FROM_SYSTEM = booleanPreferencesKey("accent_from_system")
     val CUSTOM_ACCENT_SWATCH = stringPreferencesKey("custom_accent_swatch")
+    val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val CALENDAR_PERMISSION_REQUESTED = booleanPreferencesKey("calendar_permission_requested")
     val CONTACTS_PERMISSION_REQUESTED = booleanPreferencesKey("contacts_permission_requested")
@@ -95,6 +97,8 @@ class SettingsRepository @Inject constructor(
             searchContactsEnabled = preferences[Keys.SEARCH_CONTACTS_ENABLED] ?: defaults.searchContactsEnabled,
             accentFromSystem = preferences[Keys.ACCENT_FROM_SYSTEM] ?: defaults.accentFromSystem,
             customAccentSwatch = preferences[Keys.CUSTOM_ACCENT_SWATCH],
+            iconRenderMode = preferences[Keys.ICON_RENDER_MODE]?.let { runCatching { IconRenderMode.valueOf(it) }.getOrNull() }
+                ?: defaults.iconRenderMode,
             themeMode = preferences[Keys.THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: defaults.themeMode,
             calendarPermissionRequested = preferences[Keys.CALENDAR_PERMISSION_REQUESTED] ?: defaults.calendarPermissionRequested,
@@ -188,6 +192,10 @@ class SettingsRepository @Inject constructor(
     /** [swatchName] is an `AccentSwatch` enum name — kept as a plain string here, see [LauncherSettings.customAccentSwatch]. */
     suspend fun setCustomAccentSwatch(swatchName: String) {
         dataStore.edit { it[Keys.CUSTOM_ACCENT_SWATCH] = swatchName }
+    }
+
+    suspend fun setIconRenderMode(mode: IconRenderMode) {
+        dataStore.edit { it[Keys.ICON_RENDER_MODE] = mode.name }
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {

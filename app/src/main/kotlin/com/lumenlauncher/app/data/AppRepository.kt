@@ -1,6 +1,11 @@
 package com.lumenlauncher.app.data
 
 import android.content.pm.LauncherApps
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserHandle
 import androidx.compose.ui.graphics.asImageBitmap
@@ -16,6 +21,39 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Adaptive icons (API 26+) reserve their guaranteed-visible content to a centered "safe zone" —
+ * about 66% of the full 108dp canvas — and the OS's own default drawing masks the rest to a
+ * fixed system-wide shape (e.g. a squircle) when the drawable is drawn/flattened directly. That
+ * built-in mask then visually fights [AppIcon][com.lumenlauncher.app.ui.components.AppIcon]'s own
+ * `clip(RoundedCornerShape(...))`, since the two curves don't line up — visible mismatched
+ * corners, worse for icons whose safe-zone content doesn't fill a circle cleanly. [flattenIcon]
+ * sidesteps this for adaptive icons by drawing their background/foreground layers itself, scaled
+ * past their own safe-zone inset to fill the whole canvas, so the app's own OS-level mask is never
+ * applied — [AppIcon]'s clip becomes the *only* shape in play, uniform across every icon
+ * regardless of what shape the app itself (or the OS) would otherwise have masked it to. Non-adaptive
+ * (legacy) icons already come back as whatever raw shape the app itself baked into its PNG — there's
+ * no equivalent "unmask" possible for those, so they're flattened as-is.
+ */
+private const val ADAPTIVE_ICON_CANVAS_SIZE = 108
+
+/** Undoes ~66%'s worth of built-in safe-zone inset (1 / 0.66 ≈ 1.5) — see [ADAPTIVE_ICON_CANVAS_SIZE]'s doc. */
+private const val ADAPTIVE_ICON_SCALE = 1.5f
+
+private fun flattenIcon(drawable: Drawable): Bitmap {
+    if (drawable !is AdaptiveIconDrawable) return drawable.toBitmap()
+    val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: ADAPTIVE_ICON_CANVAS_SIZE
+    val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: ADAPTIVE_ICON_CANVAS_SIZE
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val insetX = (width * (ADAPTIVE_ICON_SCALE - 1f) / 2f).toInt()
+    val insetY = (height * (ADAPTIVE_ICON_SCALE - 1f) / 2f).toInt()
+    val layerBounds = Rect(-insetX, -insetY, width + insetX, height + insetY)
+    drawable.background?.apply { bounds = layerBounds; draw(canvas) }
+    drawable.foreground?.apply { bounds = layerBounds; draw(canvas) }
+    return bitmap
+}
+
 /** Wraps [LauncherApps] to expose the launchable apps visible to this launcher. */
 @Singleton
 class AppRepository @Inject constructor(private val launcherApps: LauncherApps) {
@@ -29,7 +67,7 @@ class AppRepository @Inject constructor(private val launcherApps: LauncherApps) 
                     packageName = info.applicationInfo.packageName,
                     activityName = info.componentName.className,
                     label = info.label.toString(),
-                    icon = runCatching { info.getIcon(0).toBitmap().asImageBitmap() }.getOrNull(),
+                    icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
                 )
             }
             .sortedWith(Comparator { a, b -> collator.compare(a.label, b.label) })
