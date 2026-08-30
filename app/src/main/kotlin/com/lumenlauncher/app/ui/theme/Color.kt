@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 
 // Light/dark pairs — transcribed from design_handoff_minimal_launcher/README.md's Design
@@ -72,28 +73,65 @@ val IconTile: Color @Composable get() = if (LocalIsDarkTheme.current) IconTileDa
  * - **Basic colors**: [LocalCustomAccentSwatch]'s fixed pick from the curated [AccentSwatch]
  *   palette — each swatch carries its own light/dark pair, so switching the app's theme mode
  *   restores the right value for the *same* swatch rather than needing to re-pick.
+ *
+ * Returns both tonal extremes (light-scheme, dark-scheme) rather than just the one matching the
+ * *current* theme mode, so [Accent] can pick the current-theme one. Not `private` — [Accent] is
+ * the only other reader, same file, so this could stay private; kept internal-visible only for
+ * symmetry with [wallpaperPrimaryAndSecondary] below.
  */
+@Composable
+private fun accentTonalExtremes(): Pair<Color, Color> {
+    val swatch = LocalCustomAccentSwatch.current
+    if (!LocalAccentFromSystem.current && swatch != null) {
+        return swatch.light to swatch.dark
+    }
+    val context = LocalContext.current
+    // Keyed on the resume signal too (see its own doc) — otherwise this stays cached at
+    // whatever the OS's dynamic palette was on first composition, and a wallpaper/theme change
+    // made while Lumen sits resumed in the background (the common case for a launcher) wouldn't
+    // show up until a full force-stop.
+    val refreshSignal = LocalDynamicColorRefreshSignal.current
+    return remember(context, refreshSignal) {
+        val light = runCatching { dynamicLightColorScheme(context).primary }.getOrDefault(AccentLight)
+        val dark = runCatching { dynamicDarkColorScheme(context).primary }.getOrDefault(AccentDark)
+        light to dark
+    }
+}
+
 val Accent: Color
     @Composable get() {
-        val dark = LocalIsDarkTheme.current
-        val swatch = LocalCustomAccentSwatch.current
-        if (!LocalAccentFromSystem.current && swatch != null) {
-            return if (dark) swatch.dark else swatch.light
-        }
-        val context = LocalContext.current
-        return remember(context, dark) {
-            runCatching {
-                if (dark) dynamicDarkColorScheme(context).primary else dynamicLightColorScheme(context).primary
-            }.getOrDefault(if (dark) AccentDark else AccentLight)
-        }
+        val (light, dark) = accentTonalExtremes()
+        return if (LocalIsDarkTheme.current) dark else light
     }
+
+/**
+ * The wallpaper's own two Material You tones — light-scheme primary ("wallpaper primary") and
+ * dark-scheme primary ("wallpaper secondary") — always computed from the OS's actual dynamic
+ * color scheme, deliberately ignoring [LocalAccentFromSystem]/[LocalCustomAccentSwatch] (the
+ * "Basic colors" override [Accent] itself respects). [homeTextShadow] and
+ * [com.lumenlauncher.app.data.model.ClockColorOption]'s `WALLPAPER_PRIMARY`/`WALLPAPER_SECONDARY`
+ * options are specifically about the wallpaper's own two accent tones — picking a fixed
+ * Basic-colors swatch here would defeat the point of offering "the wallpaper's" colors as an
+ * explicit choice (see chat history).
+ */
+@Composable
+fun wallpaperPrimaryAndSecondary(): Pair<Color, Color> {
+    val context = LocalContext.current
+    // Keyed on the resume signal too — see accentTonalExtremes' identical note above.
+    val refreshSignal = LocalDynamicColorRefreshSignal.current
+    return remember(context, refreshSignal) {
+        val primary = runCatching { dynamicLightColorScheme(context).primary }.getOrDefault(AccentLight)
+        val secondary = runCatching { dynamicDarkColorScheme(context).primary }.getOrDefault(AccentDark)
+        primary to secondary
+    }
+}
 val ErrorColor: Color @Composable get() = if (LocalIsDarkTheme.current) ErrorDark else ErrorLight
 val SuccessColor: Color @Composable get() = if (LocalIsDarkTheme.current) SuccessDark else SuccessLight
 
 /**
  * Home-surface text (clock, calendar events, favorites, dock labels) sits directly on the
  * user's wallpaper with no scrim behind it, unlike the Drawer (protected by [DrawerOverlay] and
- * so in no need of a shadow — see [DrawerAppTextColor] etc. below). [HomeTextShadow] is the one
+ * so in no need of a shadow — see [DrawerAppTextColor] etc. below). [homeTextShadow] is the one
  * shared legibility treatment every Home composable already reaches for — tuning it here
  * upgrades every widget at once, not just one.
  *
@@ -107,11 +145,33 @@ val SuccessColor: Color @Composable get() = if (LocalIsDarkTheme.current) Succes
  */
 val HomeAppTextColor: Color @Composable get() = Ink
 val HomeAppTextColorFaint: Color @Composable get() = HomeAppTextColor.copy(alpha = 0.3f)
-val HomeTextShadow = Shadow(
-    color = Color(0xFF020817),
-    offset = Offset.Zero,
-    blurRadius = 8f,
-)
+
+/**
+ * A fixed dark shadow only reads as a crisp edge when the text itself is light — around dark
+ * text (light theme's [Ink], [com.lumenlauncher.app.data.model.ClockColorOption.BLACK], or a
+ * wallpaper tone that happens to resolve dark) the same dark shadow just blurs into the glyphs
+ * instead (see chat history). Rather than falling back to a neutral [Ink] tone, the glow is drawn
+ * from [wallpaperPrimaryAndSecondary] — picking whichever of the two contrasts against
+ * [textColor] (always the actual wallpaper's tones, never a Basic-colors swatch — see that
+ * function's own doc). Resolving via [textColor]'s own [Color.luminance] (WCAG relative
+ * luminance, ignores alpha — so a muted/alpha variant of a color always agrees with its opaque
+ * base here), rather than just following the current theme mode, keeps it correct even for an
+ * explicit White/Black override that doesn't track the theme mode.
+ */
+@Composable
+fun homeTextShadow(textColor: Color): Shadow {
+    val (wallpaperPrimary, wallpaperSecondary) = wallpaperPrimaryAndSecondary()
+    val (darkerTone, lighterTone) = if (wallpaperPrimary.luminance() <= wallpaperSecondary.luminance()) {
+        wallpaperPrimary to wallpaperSecondary
+    } else {
+        wallpaperSecondary to wallpaperPrimary
+    }
+    val shadowColor = if (textColor.luminance() > 0.5f) darkerTone else lighterTone
+    // 8f blurRadius (this file's earlier "Crisp" pass) still reads as a soft diffuse glow, not a
+    // border — dropping it further makes the blur mask tight enough to sit right at the glyph
+    // edge, like an outline (see chat history).
+    return Shadow(color = shadowColor, offset = Offset.Zero, blurRadius = 2f)
+}
 
 /**
  * App Drawer text colors — independent knobs from Home's, even though both currently

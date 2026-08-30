@@ -20,3 +20,13 @@ val LocalIsDarkTheme = staticCompositionLocalOf { false }
  */
 val LocalAccentFromSystem = staticCompositionLocalOf { true }
 val LocalCustomAccentSwatch = compositionLocalOf<AccentSwatch?> { null }
+
+/**
+ * Bumped by [LumenLauncherTheme] on every `ON_RESUME` so [Accent]'s dynamic-color lookup re-reads
+ * the OS's current wallpaper-derived palette instead of trusting a value cached from whenever the
+ * Activity was first composed. Needed because Lumen, as the Home app, is almost always *resumed*
+ * rather than freshly launched — without this, a wallpaper/theme-palette change made in system
+ * Settings would only show up in Lumen after a full force-stop, not just returning to Home (see
+ * chat history).
+ */
+val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }

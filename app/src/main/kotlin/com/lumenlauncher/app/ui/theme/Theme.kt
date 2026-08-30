@@ -6,6 +6,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.lumenlauncher.app.data.model.ThemeMode
 
 @Composable
@@ -52,10 +57,18 @@ fun LumenLauncherTheme(
         ThemeMode.DARK -> true
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
+    // Re-reads the OS's dynamic color palette on every resume, not just first composition — see
+    // LocalDynamicColorRefreshSignal's own doc for why this matters for a launcher specifically.
+    var dynamicColorRefreshSignal by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) {
+        dynamicColorRefreshSignal++
+        onPauseOrDispose { }
+    }
     CompositionLocalProvider(
         LocalIsDarkTheme provides isDark,
         LocalAccentFromSystem provides accentFromSystem,
         LocalCustomAccentSwatch provides customAccentSwatch,
+        LocalDynamicColorRefreshSignal provides dynamicColorRefreshSignal,
     ) {
         MaterialTheme(
             colorScheme = lumenColorScheme(isDark),

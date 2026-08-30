@@ -79,7 +79,7 @@ class SettingsRepositoryTest {
         repository.setClockColorOption(ClockColorOption.WHITE)
         repository.setClockShowMeridiem(true)
         repository.setCalendarFontOption(ClockFontOption.MANROPE)
-        repository.setCalendarColorOption(ClockColorOption.ACCENT)
+        repository.setCalendarColorOption(ClockColorOption.WALLPAPER_PRIMARY)
 
         // Then the new values come back
         val settings = repository.settings.first()
@@ -88,7 +88,7 @@ class SettingsRepositoryTest {
         assertEquals(ClockColorOption.WHITE, settings.clockColorOption)
         assertEquals(true, settings.clockShowMeridiem)
         assertEquals(ClockFontOption.MANROPE, settings.calendarFontOption)
-        assertEquals(ClockColorOption.ACCENT, settings.calendarColorOption)
+        assertEquals(ClockColorOption.WALLPAPER_PRIMARY, settings.calendarColorOption)
     }
 
     @Test

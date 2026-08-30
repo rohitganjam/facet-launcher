@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.sp
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.ui.theme.Hairline
-import com.lumenlauncher.app.ui.theme.HomeTextShadow
 import com.lumenlauncher.app.ui.theme.fontFamily
+import com.lumenlauncher.app.ui.theme.homeTextShadow
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -78,7 +78,7 @@ private fun meridiemText(now: LocalDateTime, use24HourTime: Boolean, showMeridie
 private fun MeridiemText(text: String, family: FontFamily, color: Color, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, letterSpacing = 0.84.sp, shadow = HomeTextShadow),
+        style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, letterSpacing = 0.84.sp, shadow = homeTextShadow(color)),
         color = color,
         modifier = modifier,
     )
@@ -110,7 +110,7 @@ private fun LightStackTemplate(
                     fontSize = 80.sp,
                     lineHeight = 80.sp,
                     letterSpacing = (-4).sp,
-                    shadow = HomeTextShadow,
+                    shadow = homeTextShadow(textColor),
                 ),
                 color = textColor,
             )
@@ -118,7 +118,7 @@ private fun LightStackTemplate(
         }
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 18.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 18.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
         )
     }
@@ -140,7 +140,7 @@ private fun RuleMeridiemTemplate(
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = now.format(hourMinuteFormatter),
-                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Normal, fontSize = 68.sp, shadow = HomeTextShadow),
+                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Normal, fontSize = 68.sp, shadow = homeTextShadow(textColor)),
                 color = textColor,
             )
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 9.dp))
@@ -154,7 +154,7 @@ private fun RuleMeridiemTemplate(
         ) {}
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 17.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
             modifier = Modifier.padding(top = 10.dp),
         )
@@ -176,13 +176,13 @@ private fun DateForwardTemplate(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 39.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 39.sp, shadow = homeTextShadow(textColor)),
             color = textColor,
         )
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = now.format(timeFormatter(use24HourTime, locale)),
-                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Light, fontSize = 44.sp, shadow = HomeTextShadow),
+                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Light, fontSize = 44.sp, shadow = homeTextShadow(mutedTextColor)),
                 color = mutedTextColor,
             )
             if (meridiem != null) MeridiemText(meridiem, family, mutedTextColor, Modifier.padding(bottom = 6.dp))
@@ -203,7 +203,7 @@ private fun WeightContrastTemplate(
     modifier: Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
-    val baseStyle = TextStyle(fontSize = 70.sp, letterSpacing = (-2).sp, shadow = HomeTextShadow)
+    val baseStyle = TextStyle(fontSize = 70.sp, letterSpacing = (-2).sp, shadow = homeTextShadow(textColor))
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
@@ -220,7 +220,7 @@ private fun WeightContrastTemplate(
         }
         Text(
             text = now.format(dateFormatter(locale)).uppercase(locale),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, letterSpacing = 1.1.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, letterSpacing = 1.1.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
         )
     }
@@ -242,14 +242,14 @@ private fun ItalicAccentTemplate(
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = now.format(timeFormatter(use24HourTime, locale)),
-                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic, fontSize = 74.sp, shadow = HomeTextShadow),
+                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic, fontSize = 74.sp, shadow = homeTextShadow(textColor)),
                 color = textColor,
             )
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 10.dp))
         }
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic, fontSize = 17.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
         )
     }
@@ -278,7 +278,7 @@ private fun VerticalStackTemplate(
         fontFamily = family,
         fontSize = 62.sp,
         letterSpacing = (-2).sp,
-        shadow = HomeTextShadow,
+        shadow = homeTextShadow(textColor),
     )
     Column(modifier = modifier) {
         // A tighter lineHeight/Trim.Both on each Text individually stopped closing this gap once
@@ -304,7 +304,7 @@ private fun VerticalStackTemplate(
         }
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 18.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 18.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
             modifier = Modifier.padding(top = 10.dp),
         )
@@ -324,12 +324,12 @@ private fun SpelledOutTemplate(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = timeInWords(now),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 38.sp, lineHeight = 42.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 38.sp, lineHeight = 42.sp, shadow = homeTextShadow(textColor)),
             color = textColor,
         )
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 16.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 16.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
         )
     }

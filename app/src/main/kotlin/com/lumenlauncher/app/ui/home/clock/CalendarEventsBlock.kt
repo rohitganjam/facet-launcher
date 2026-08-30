@@ -27,7 +27,7 @@ import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.ui.home.rememberTickingNow
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
-import com.lumenlauncher.app.ui.theme.HomeTextShadow
+import com.lumenlauncher.app.ui.theme.homeTextShadow
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.resolvedColor
 import java.time.Clock
@@ -136,13 +136,13 @@ private fun EventRow(
         ) {}
         Text(
             text = time,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 14.5.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 14.5.sp, shadow = homeTextShadow(textColor)),
             color = textColor,
             modifier = Modifier.widthIn(min = 48.dp),
         )
         Text(
             text = event.title,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 14.5.sp, shadow = HomeTextShadow),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 14.5.sp, shadow = homeTextShadow(textColor)),
             color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

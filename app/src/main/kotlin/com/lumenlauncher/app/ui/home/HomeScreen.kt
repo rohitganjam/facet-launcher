@@ -51,10 +51,10 @@ import com.lumenlauncher.app.ui.components.NotificationBadge
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.HomeAppTextColor
 import com.lumenlauncher.app.ui.theme.HomeAppTextColorFaint
-import com.lumenlauncher.app.ui.theme.HomeTextShadow
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
+import com.lumenlauncher.app.ui.theme.homeTextShadow
 
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
@@ -113,14 +113,15 @@ fun HomeScreen(
 
         Box(modifier = Modifier.weight(1f))
 
+        val listLabelColor = HomeAppTextColorFaint
         Text(
             text = when (listContentMode) {
                 ListContentMode.FAVORITES -> "FAVORITES"
                 ListContentMode.RECENTS -> "RECENTS"
                 ListContentMode.MOST_USED -> "MOST USED"
             },
-            style = MaterialTheme.typography.labelSmall.copy(shadow = HomeTextShadow),
-            color = HomeAppTextColorFaint,
+            style = MaterialTheme.typography.labelSmall.copy(shadow = homeTextShadow(listLabelColor)),
+            color = listLabelColor,
             modifier = Modifier.padding(bottom = 8.dp),
         )
         if (showUsageAccessPrompt) {
@@ -225,10 +226,11 @@ private fun AppRow(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             AppIcon(icon = app.icon, size = 34.dp, cornerRadius = 10.dp, contentDescription = null)
+            val textColor = HomeAppTextColor
             Text(
                 text = app.label,
-                style = MaterialTheme.typography.titleMedium.copy(shadow = HomeTextShadow),
-                color = HomeAppTextColor,
+                style = MaterialTheme.typography.titleMedium.copy(shadow = homeTextShadow(textColor)),
+                color = textColor,
             )
             if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
         }
@@ -272,7 +274,7 @@ internal fun DockIcon(
             }
             DockDisplayMode.TEXT -> Text(
                 text = app.label,
-                style = MaterialTheme.typography.bodyMedium.copy(shadow = HomeTextShadow),
+                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeTextShadow(HomeAppTextColor)),
                 color = HomeAppTextColor,
                 modifier = modifier
                     .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
