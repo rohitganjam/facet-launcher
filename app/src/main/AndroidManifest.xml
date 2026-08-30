@@ -1,0 +1,64 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <!-- F2 Recents/Most Used — special-access permission, granted via system Settings (ACTION_USAGE_ACCESS_SETTINGS),
+         never through a normal runtime dialog. Declaring it is still required for AppOpsManager's check to resolve. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- F1 Calendar integration — normal runtime permission, requested from CalendarSettingsScreen's "Turn on" action. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <!-- F6 Contacts search — normal runtime permission, requested when Settings' "Search contacts" row is turned on. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- Home swipe-down → notification shade — normal-level permission (auto-granted, no runtime prompt), required for StatusBarManager.expandNotificationsPanel(). -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
+    <application
+        android:name=".LumenApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.LumenLauncher"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:theme="@style/Theme.LumenLauncher"
+            android:windowSoftInputMode="adjustNothing">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- F13 Notification badges — special-access permission, granted per-app via system
+             Settings (ACTION_NOTIFICATION_LISTENER_SETTINGS), never a runtime dialog. The
+             android:permission attribute (not a <uses-permission>) is what restricts binding to
+             the system itself — see NotificationAccessRepository for the grant check. -->
+        <service
+            android:name=".data.LumenNotificationListenerService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>

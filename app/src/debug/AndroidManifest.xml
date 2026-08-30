@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug-build-only: CalendarSettingsScreenGrantedTest seeds/tears down a real calendar via
+         the device's own Calendar Provider to exercise the granted-state UI end-to-end. Self-
+         instrumenting androidTest code runs inside the app-under-test's own process/UID, so
+         GrantPermissionRule's grant is checked against THIS package's declared permissions, not
+         the separate androidTest APK's manifest — declaring it there alone does nothing. Scoped
+         to the debug variant (connectedAndroidTest always runs against debug) so it never ships
+         in a release build; the app itself only ever reads calendar data (see the main manifest's
+         READ_CALENDAR entry). -->
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
+</manifest>
