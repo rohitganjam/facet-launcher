@@ -146,7 +146,27 @@ val SuccessColor: Color @Composable get() = if (LocalIsDarkTheme.current) Succes
 val HomeAppTextColor: Color @Composable get() = Ink
 val HomeAppTextColorFaint: Color @Composable get() = HomeAppTextColor.copy(alpha = 0.3f)
 
+/** [homeTextShadow]'s default blur, for the clock's own large (60–80sp) digits. */
+private const val CLOCK_SHADOW_BLUR_RADIUS = 2f
+
 /**
+ * The blur every *other* Home-surface shadow uses — [homeAppLabelShadow] (app-list/dock labels)
+ * and [homeTextShadow]'s calendar callers (`CalendarEventsBlock`, passed explicitly). These all
+ * render far smaller than the clock's own digits (11–16sp vs. 60–80sp), so [CLOCK_SHADOW_BLUR_RADIUS] —
+ * tuned for those much thicker glyph strokes — covers a proportionally much larger share of these
+ * thinner strokes and reads as genuinely blurred rather than a crisp edge (see chat history). Not
+ * `private` — read from `ui/home/clock/CalendarEventsBlock.kt` too.
+ */
+const val SMALL_TEXT_SHADOW_BLUR_RADIUS = 0.6f
+
+/**
+ * Clock/calendar text only ([ClockTemplates][com.lumenlauncher.app.ui.home.clock.ClockTemplates]/
+ * [CalendarEventsBlock][com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock]) — for Home's
+ * app-list labels and dock text, use [homeAppLabelShadow] instead (see chat history: the
+ * wallpaper-accent tone this function draws from was reported as looking out of place on plain
+ * app labels — it's meant specifically for the surfaces that offer `WALLPAPER_PRIMARY`/
+ * `WALLPAPER_SECONDARY` as an explicit text-color choice).
+ *
  * A fixed dark shadow only reads as a crisp edge when the text itself is light — around dark
  * text (light theme's [Ink], [com.lumenlauncher.app.data.model.ClockColorOption.BLACK], or a
  * wallpaper tone that happens to resolve dark) the same dark shadow just blurs into the glyphs
@@ -159,7 +179,7 @@ val HomeAppTextColorFaint: Color @Composable get() = HomeAppTextColor.copy(alpha
  * explicit White/Black override that doesn't track the theme mode.
  */
 @Composable
-fun homeTextShadow(textColor: Color): Shadow {
+fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow {
     val (wallpaperPrimary, wallpaperSecondary) = wallpaperPrimaryAndSecondary()
     val (darkerTone, lighterTone) = if (wallpaperPrimary.luminance() <= wallpaperSecondary.luminance()) {
         wallpaperPrimary to wallpaperSecondary
@@ -167,10 +187,18 @@ fun homeTextShadow(textColor: Color): Shadow {
         wallpaperSecondary to wallpaperPrimary
     }
     val shadowColor = if (textColor.luminance() > 0.5f) darkerTone else lighterTone
-    // 8f blurRadius (this file's earlier "Crisp" pass) still reads as a soft diffuse glow, not a
-    // border — dropping it further makes the blur mask tight enough to sit right at the glyph
-    // edge, like an outline (see chat history).
-    return Shadow(color = shadowColor, offset = Offset.Zero, blurRadius = 2f)
+    return Shadow(color = shadowColor, offset = Offset.Zero, blurRadius = blurRadius)
+}
+
+/**
+ * Home's app-list labels and dock text (not clock/calendar — see [homeTextShadow]'s doc). Always
+ * a plain [Ink] tone — [InkLight] for light text, [InkDark] for dark text — never the wallpaper's
+ * accent tones, unlike [homeTextShadow] (see chat history).
+ */
+@Composable
+fun homeAppLabelShadow(textColor: Color): Shadow {
+    val shadowColor = if (textColor.luminance() > 0.5f) InkLight else InkDark
+    return Shadow(color = shadowColor, offset = Offset.Zero, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)
 }
 
 /**

@@ -54,7 +54,7 @@ import com.lumenlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
-import com.lumenlauncher.app.ui.theme.homeTextShadow
+import com.lumenlauncher.app.ui.theme.homeAppLabelShadow
 
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
@@ -120,7 +120,7 @@ fun HomeScreen(
                 ListContentMode.RECENTS -> "RECENTS"
                 ListContentMode.MOST_USED -> "MOST USED"
             },
-            style = MaterialTheme.typography.labelSmall.copy(shadow = homeTextShadow(listLabelColor)),
+            style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(listLabelColor)),
             color = listLabelColor,
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -229,7 +229,7 @@ private fun AppRow(
             val textColor = HomeAppTextColor
             Text(
                 text = app.label,
-                style = MaterialTheme.typography.titleMedium.copy(shadow = homeTextShadow(textColor)),
+                style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(textColor)),
                 color = textColor,
             )
             if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
@@ -274,7 +274,7 @@ internal fun DockIcon(
             }
             DockDisplayMode.TEXT -> Text(
                 text = app.label,
-                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeTextShadow(HomeAppTextColor)),
+                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),
                 color = HomeAppTextColor,
                 modifier = modifier
                     .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })

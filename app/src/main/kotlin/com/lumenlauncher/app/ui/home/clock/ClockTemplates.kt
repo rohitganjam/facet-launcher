@@ -2,19 +2,23 @@ package com.lumenlauncher.app.ui.home.clock
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,6 +66,14 @@ fun ClockDisplay(
         ClockTemplateId.SPELLED_OUT -> SpelledOutTemplate(now, locale, family, textColor, mutedTextColor, modifier)
         ClockTemplateId.VERTICAL_STACK -> VerticalStackTemplate(now, use24HourTime, meridiem, locale, family, boldHour = false, textColor, mutedTextColor, modifier)
         ClockTemplateId.VERTICAL_STACK_BOLD_HOUR -> VerticalStackTemplate(now, use24HourTime, meridiem, locale, family, boldHour = true, textColor, mutedTextColor, modifier)
+        ClockTemplateId.ROBOTO_FLEX_WIDE -> RobotoFlexWideTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.ROBOTO_FLEX_NARROW -> RobotoFlexNarrowTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.TECH_DISTORTED -> TechDistortedTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.VARIABLE_DIVIDER -> VariableDividerTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.FLUID_STACK -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.BRACKET_MINIMAL -> BracketMinimalTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.TWO_LINE_DIVIDER -> TwoLineDividerTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
+        ClockTemplateId.BOLD_COLON -> BoldColonTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)
     }
 }
 
@@ -176,7 +188,7 @@ private fun DateForwardTemplate(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = now.format(dateFormatter(locale)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 39.sp, shadow = homeTextShadow(textColor)),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 40.sp, shadow = homeTextShadow(textColor)),
             color = textColor,
         )
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -331,6 +343,513 @@ private fun SpelledOutTemplate(
             text = now.format(dateFormatter(locale)),
             style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 16.sp, shadow = homeTextShadow(mutedTextColor)),
             color = mutedTextColor,
+        )
+    }
+}
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexWide = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(150f),
+            FontVariation.weight(700)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexNarrow = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(25f),
+            FontVariation.weight(400)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val TechDistorted = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.Setting("GRAD", 150f),
+            FontVariation.Setting("XTRA", 450f),
+            FontVariation.weight(500)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexWideThin = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(150f),
+            FontVariation.weight(100)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexNarrowBlack = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(25f),
+            FontVariation.weight(900)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexLightCondensed = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(75f),
+            FontVariation.weight(300)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexUltraLight = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(100f),
+            FontVariation.weight(100)
+        )
+    )
+)
+
+@OptIn(ExperimentalTextApi::class)
+private val RobotoFlexBlack = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        com.lumenlauncher.app.R.font.roboto_flex_variable,
+        variationSettings = FontVariation.Settings(
+            FontVariation.width(100f),
+            FontVariation.weight(900)
+        )
+    )
+)
+
+@Composable
+private fun BracketMinimalTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    val timeFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH : mm" else "h : mm", locale)
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "[ ",
+                style = TextStyle(
+                    fontFamily = family,
+                    fontWeight = FontWeight.ExtraLight,
+                    fontSize = 64.sp,
+                    shadow = homeTextShadow(mutedTextColor)
+                ),
+                color = mutedTextColor
+            )
+            Text(
+                text = now.format(timeFormatter),
+                style = TextStyle(
+                    fontFamily = RobotoFlexLightCondensed,
+                    fontSize = 64.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            Text(
+                text = " ]",
+                style = TextStyle(
+                    fontFamily = family,
+                    fontWeight = FontWeight.ExtraLight,
+                    fontSize = 64.sp,
+                    shadow = homeTextShadow(mutedTextColor)
+                ),
+                color = mutedTextColor
+            )
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 8.dp))
+        }
+        Text(
+            text = now.format(dateFormatter(locale)).uppercase(locale),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                letterSpacing = 2.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun TwoLineDividerTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = now.format(hourFormatter),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Light,
+                fontSize = 60.sp,
+                shadow = homeTextShadow(textColor)
+            ),
+            color = textColor
+        )
+        Box(
+            modifier = Modifier
+                .width(40.dp)
+                .height(1.dp)
+                .background(textColor.copy(alpha = 0.4f))
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = now.format(minuteFormatter),
+                style = TextStyle(
+                    fontFamily = family,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 60.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 6.dp))
+        }
+        Text(
+            text = now.format(dateFormatter(locale)),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor,
+            modifier = Modifier.padding(top = 10.dp)
+        )
+    }
+}
+
+@Composable
+private fun BoldColonTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = now.format(hourFormatter),
+                style = TextStyle(
+                    fontFamily = RobotoFlexUltraLight,
+                    fontSize = 80.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            Text(
+                text = ":",
+                style = TextStyle(
+                    fontFamily = RobotoFlexBlack,
+                    fontSize = 80.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            Text(
+                text = now.format(minuteFormatter),
+                style = TextStyle(
+                    fontFamily = RobotoFlexUltraLight,
+                    fontSize = 80.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 8.dp))
+        }
+        Text(
+            text = now.format(dateFormatter(locale)),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Normal,
+                fontSize = 17.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun VariableDividerTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(
+                text = now.format(hourFormatter),
+                style = TextStyle(
+                    fontFamily = RobotoFlexWideThin,
+                    fontSize = 80.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(60.dp)
+                    .background(textColor.copy(alpha = 0.5f))
+            )
+            Text(
+                text = now.format(minuteFormatter),
+                style = TextStyle(
+                    fontFamily = RobotoFlexNarrowBlack,
+                    fontSize = 80.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            if (meridiem != null) {
+                MeridiemText(meridiem, family, textColor)
+            }
+        }
+        Text(
+            text = now.format(dateFormatter(locale)),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Normal,
+                fontSize = 18.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun FluidStackTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy((-12).dp)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = now.format(hourFormatter),
+                style = TextStyle(
+                    fontFamily = RobotoFlexWideThin,
+                    fontSize = 90.sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            if (meridiem != null) {
+                MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 16.dp, start = 8.dp))
+            }
+        }
+        Text(
+            text = now.format(minuteFormatter),
+            style = TextStyle(
+                fontFamily = RobotoFlexNarrowBlack,
+                fontSize = 90.sp,
+                shadow = homeTextShadow(textColor)
+            ),
+            color = textColor
+        )
+        Text(
+            text = now.format(dateFormatter(locale)),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Light,
+                fontSize = 16.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor,
+            modifier = Modifier.padding(top = 16.dp)
+        )
+    }
+}
+
+@Composable
+private fun RobotoFlexWideTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = now.format(timeFormatter(use24HourTime, locale)),
+                style = TextStyle(
+                    fontFamily = RobotoFlexWide,
+                    fontSize = 72.sp,
+                    letterSpacing = (-2).sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            if (meridiem != null) MeridiemText(meridiem, RobotoFlexWide, textColor, Modifier.padding(bottom = 8.dp))
+        }
+        Text(
+            text = now.format(dateFormatter(locale)).uppercase(locale),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                letterSpacing = 2.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor
+        )
+    }
+}
+
+@Composable
+private fun RobotoFlexNarrowTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = now.format(DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)),
+                style = TextStyle(fontFamily = RobotoFlexNarrow, fontSize = 80.sp, lineHeight = 80.sp, shadow = homeTextShadow(textColor)),
+                color = textColor
+            )
+            Text(
+                text = now.format(DateTimeFormatter.ofPattern("mm", locale)),
+                style = TextStyle(fontFamily = RobotoFlexNarrow, fontSize = 80.sp, lineHeight = 80.sp, shadow = homeTextShadow(textColor)),
+                color = textColor
+            )
+        }
+        Column {
+            if (meridiem != null) {
+                MeridiemText(meridiem, RobotoFlexNarrow, textColor)
+            }
+            Text(
+                text = now.format(DateTimeFormatter.ofPattern("EEE\nd MMM", locale)).uppercase(locale),
+                style = TextStyle(
+                    fontFamily = family,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    lineHeight = 20.sp,
+                    shadow = homeTextShadow(mutedTextColor)
+                ),
+                color = mutedTextColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun TechDistortedTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+) {
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = now.format(timeFormatter(use24HourTime, locale)),
+                style = TextStyle(
+                    fontFamily = TechDistorted,
+                    fontSize = 90.sp,
+                    letterSpacing = (-5).sp,
+                    shadow = homeTextShadow(textColor)
+                ),
+                color = textColor
+            )
+            if (meridiem != null) {
+                Text(
+                    text = meridiem,
+                    style = TextStyle(
+                        fontFamily = TechDistorted,
+                        fontSize = 24.sp,
+                        shadow = homeTextShadow(textColor)
+                    ),
+                    color = textColor,
+                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+                )
+            }
+        }
+        Text(
+            text = now.format(dateFormatter(locale)),
+            style = TextStyle(
+                fontFamily = family,
+                fontWeight = FontWeight.Light,
+                fontSize = 20.sp,
+                shadow = homeTextShadow(mutedTextColor)
+            ),
+            color = mutedTextColor,
+            modifier = Modifier.padding(start = 2.dp)
         )
     }
 }

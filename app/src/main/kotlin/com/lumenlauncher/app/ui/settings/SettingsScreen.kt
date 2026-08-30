@@ -497,7 +497,10 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelSmall,
-        color = Faint,
+        // Faint's own ~30% alpha read as too low here — bumped locally (not by changing Faint
+        // itself, which other surfaces like the Drawer's letter headers still rely on at its
+        // original value) rather than globally (see chat history).
+        color = Faint.copy(alpha = 0.6f),
         modifier = modifier.padding(top = 18.dp, bottom = 6.dp),
     )
 }
@@ -586,7 +589,9 @@ private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, te
             .padding(horizontal = 14.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (selected) Ink else Muted)
+        // Ink for both — selection is already conveyed by the pill's own background tint above;
+        // dimming the unselected label's text on top of that read as disabled (see chat history).
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Ink)
     }
 }
 

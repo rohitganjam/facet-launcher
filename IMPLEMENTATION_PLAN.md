@@ -476,6 +476,14 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 
 ---
 
+## Phase 10 — Advanced Clock Templates (F1 follow-up)
+
+- [x] Implement advanced templates with fixed fonts and variable axes (Roboto Flex Wide, Narrow, Tech Distorted).
+- [ ] Add "Pro" vs "Basic" version indicators (icons/labels) in the Clock Style Gallery for advanced templates.
+- [ ] Evaluate meridiem display for advanced templates (currently implemented with fixed fonts).
+
+---
+
 ## Post-Milestone-6 polish — type scale, live clock, calendar colors, Default favorites, reorder UX
 
 Direct follow-up work spanning several separate requests. `assembleDebug`, `test` (122 JVM unit tests) green; `connectedAndroidTest` compiles clean throughout but wasn't re-run end-to-end on-device this pass (shared AVD was repeatedly unstable — see environment notes). Manual on-device walkthrough on the physical test phone confirmed the items below, including both real bugs.

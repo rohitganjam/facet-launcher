@@ -75,7 +75,9 @@ fun <T> LabeledDropdownRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(text = label(selected), style = MaterialTheme.typography.bodyMedium, color = Muted)
+                // Ink (primary text), not Muted — this is the row's own answer, not a
+                // de-emphasized label; at Muted's alpha it read as disabled (see chat history).
+                Text(text = label(selected), style = MaterialTheme.typography.bodyMedium, color = Ink)
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Muted)
             }
             ThemedDropdownMenu(

@@ -167,4 +167,53 @@ class CalendarSettingsViewModelTest {
         // Then it persists the full set minus that one, not just "not 1"
         verify(settingsRepository).setSelectedCalendarIds(setOf("2"))
     }
+
+    @Test
+    fun `selecting all persists every currently-loaded calendar id`() = runTest {
+        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
+        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
+        val calendarRepository = mock(CalendarRepository::class.java)
+        val calendars = listOf(
+            CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"),
+            CalendarInfo(id = "2", displayName = "Personal", accountName = "personal@example.com"),
+        )
+        `when`(calendarRepository.getCalendars()).thenReturn(calendars)
+        val settingsRepository = mock(SettingsRepository::class.java)
+
+        val viewModel = createViewModel(
+            settingsRepository = settingsRepository,
+            calendarPermissionRepository = calendarPermissionRepository,
+            calendarRepository = calendarRepository,
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setAllCalendarsSelected(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setSelectedCalendarIds(setOf("1", "2"))
+    }
+
+    @Test
+    fun `deselecting all persists an empty set`() = runTest {
+        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
+        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
+        val calendarRepository = mock(CalendarRepository::class.java)
+        val calendars = listOf(CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"))
+        `when`(calendarRepository.getCalendars()).thenReturn(calendars)
+        val settingsRepository = mock(SettingsRepository::class.java)
+
+        val viewModel = createViewModel(
+            settingsRepository = settingsRepository,
+            calendarPermissionRepository = calendarPermissionRepository,
+            calendarRepository = calendarRepository,
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setAllCalendarsSelected(false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setSelectedCalendarIds(emptySet())
+    }
 }

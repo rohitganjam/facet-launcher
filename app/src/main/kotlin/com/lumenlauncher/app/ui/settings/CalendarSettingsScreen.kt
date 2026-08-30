@@ -26,6 +26,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -111,6 +113,7 @@ fun CalendarSettingsScreen(
         onOverridingChanged = viewModel::setOverriding,
         onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
         onCalendarToggled = viewModel::setCalendarSelected,
+        onSelectAllCalendarsChanged = viewModel::setAllCalendarsSelected,
         onGlobalCalendarFontOptionChanged = viewModel::setGlobalCalendarFontOption,
         onGlobalCalendarColorOptionChanged = viewModel::setGlobalCalendarColorOption,
         modifier = modifier,
@@ -125,6 +128,7 @@ private fun CalendarSettingsContent(
     onOverridingChanged: (Boolean) -> Unit,
     onTurnOnClick: () -> Unit,
     onCalendarToggled: (String, Boolean) -> Unit,
+    onSelectAllCalendarsChanged: (Boolean) -> Unit,
     onGlobalCalendarFontOptionChanged: (ClockFontOption) -> Unit,
     onGlobalCalendarColorOptionChanged: (ClockColorOption) -> Unit,
     modifier: Modifier = Modifier,
@@ -195,7 +199,29 @@ private fun CalendarSettingsContent(
 
         SettingsCard {
             Column(modifier = Modifier.padding(vertical = 13.dp)) {
-                Text(text = "Calendars to display", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(bottom = 10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text = "Calendars to display", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                    // Selects/deselects every calendar in one tap instead of one-by-one — real
+                    // pain with a lot of calendars (see chat history). Indeterminate when only
+                    // some are selected, matching the standard "select all" checkbox convention.
+                    if (uiState.isCalendarAccessGranted && uiState.calendars.isNotEmpty()) {
+                        val selectedCount = uiState.calendars.count { uiState.isCalendarSelected(it.id) }
+                        val allState = when (selectedCount) {
+                            uiState.calendars.size -> ToggleableState.On
+                            0 -> ToggleableState.Off
+                            else -> ToggleableState.Indeterminate
+                        }
+                        TriStateCheckbox(
+                            state = allState,
+                            onClick = { onSelectAllCalendarsChanged(allState != ToggleableState.On) },
+                            modifier = Modifier.testTag("calendar_select_all_checkbox"),
+                        )
+                    }
+                }
                 if (uiState.isCalendarAccessGranted) {
                     if (uiState.calendars.isEmpty()) {
                         Text(text = "No calendars found on this device.", style = MaterialTheme.typography.bodyMedium, color = Muted)
@@ -329,6 +355,7 @@ private fun CalendarSettingsScreenPreview() {
             onOverridingChanged = {},
             onTurnOnClick = {},
             onCalendarToggled = { _, _ -> },
+            onSelectAllCalendarsChanged = {},
             onGlobalCalendarFontOptionChanged = {},
             onGlobalCalendarColorOptionChanged = {},
         )

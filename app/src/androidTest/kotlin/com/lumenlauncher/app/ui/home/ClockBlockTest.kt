@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.time.Clock
 import java.time.Instant
@@ -152,5 +153,20 @@ class ClockBlockTest {
         composeRule.onNodeWithText("Early standup").assertDoesNotExist()
         composeRule.onNodeWithText("Design review").assertExists()
         composeRule.onNodeWithText("Company holiday").assertExists()
+    }
+
+    @Test
+    fun rendersAdvancedTemplatesWithoutCrashing() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    templateId = ClockTemplateId.ROBOTO_FLEX_WIDE
+                )
+            }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
     }
 }

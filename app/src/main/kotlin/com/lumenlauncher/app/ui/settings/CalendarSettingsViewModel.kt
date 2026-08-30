@@ -131,6 +131,16 @@ class CalendarSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setSelectedCalendarIds(updated) }
     }
 
+    /**
+     * The "Calendars to display" header checkbox — selects or deselects every currently-loaded
+     * calendar in one tap, rather than requiring one tap per calendar (real pain with a lot of
+     * calendars, see chat history).
+     */
+    fun setAllCalendarsSelected(selected: Boolean) {
+        val ids = if (selected) uiState.value.calendars.map { it.id }.toSet() else emptySet()
+        viewModelScope.launch { settingsRepository.setSelectedCalendarIds(ids) }
+    }
+
     /** Always writes the global setting — there's no per-profile calendar font/color override entity. */
     fun setGlobalCalendarFontOption(option: ClockFontOption) {
         viewModelScope.launch { settingsRepository.setCalendarFontOption(option) }

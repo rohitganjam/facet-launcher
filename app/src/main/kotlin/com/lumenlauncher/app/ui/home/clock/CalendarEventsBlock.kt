@@ -29,6 +29,7 @@ import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.homeTextShadow
 import com.lumenlauncher.app.ui.theme.Ink
+import com.lumenlauncher.app.ui.theme.SMALL_TEXT_SHADOW_BLUR_RADIUS
 import com.lumenlauncher.app.ui.theme.resolvedColor
 import java.time.Clock
 import java.time.Instant
@@ -136,13 +137,13 @@ private fun EventRow(
         ) {}
         Text(
             text = time,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 14.5.sp, shadow = homeTextShadow(textColor)),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 16.sp, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             modifier = Modifier.widthIn(min = 48.dp),
         )
         Text(
             text = event.title,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 14.5.sp, shadow = homeTextShadow(textColor)),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 16.sp, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

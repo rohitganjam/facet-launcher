@@ -15,4 +15,12 @@ enum class ClockTemplateId(val displayName: String) {
     SPELLED_OUT("Spelled out"),
     VERTICAL_STACK("Vertical stack"),
     VERTICAL_STACK_BOLD_HOUR("Vertical stack (bold hour)"),
+    ROBOTO_FLEX_WIDE("Flex Wide"),
+    ROBOTO_FLEX_NARROW("Flex Narrow"),
+    TECH_DISTORTED("Tech Distorted"),
+    VARIABLE_DIVIDER("Variable Divider"),
+    FLUID_STACK("Fluid Stack"),
+    BRACKET_MINIMAL("Bracket Minimal"),
+    TWO_LINE_DIVIDER("Two-Line Divider"),
+    BOLD_COLON("Bold Colon"),
 }

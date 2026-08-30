@@ -30,7 +30,7 @@ fun ThemedDropdownMenu(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset.Zero,
-    shape: Shape = MaterialTheme.shapes.extraSmall,
+    shape: Shape = MaterialTheme.shapes.small,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DropdownMenu(
