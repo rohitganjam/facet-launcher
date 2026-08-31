@@ -11,8 +11,11 @@ import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
@@ -40,6 +43,13 @@ class LauncherViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(LauncherUiState())
     val uiState: StateFlow<LauncherUiState> = _uiState.asStateFlow()
+
+    private val _homePressedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val homePressedEvent: SharedFlow<Unit> = _homePressedEvent.asSharedFlow()
+
+    fun onHomePressed() {
+        _homePressedEvent.tryEmit(Unit)
+    }
 
     init {
         // Live, not one-shot — an install/uninstall/update while Lumen is in the foreground

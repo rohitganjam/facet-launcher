@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.local.DockAppDao
 import com.lumenlauncher.app.data.local.FavoriteAppDao
 import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.local.ProfileDao
+import com.lumenlauncher.app.data.local.WidgetPlacementDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,4 +39,7 @@ object DatabaseModule {
 
     @Provides
     fun provideDefaultFavoriteAppDao(database: LumenDatabase): DefaultFavoriteAppDao = database.defaultFavoriteAppDao()
+
+    @Provides
+    fun provideWidgetPlacementDao(database: LumenDatabase): WidgetPlacementDao = database.widgetPlacementDao()
 }

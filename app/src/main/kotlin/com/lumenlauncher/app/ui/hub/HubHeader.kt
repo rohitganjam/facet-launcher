@@ -1,0 +1,82 @@
+package com.lumenlauncher.app.ui.hub
+
+import android.content.res.Configuration
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.lumenlauncher.app.domain.HUB_MAX_WIDGETS
+import com.lumenlauncher.app.ui.theme.Accent
+import com.lumenlauncher.app.ui.theme.HomeAppTextColor
+import com.lumenlauncher.app.ui.theme.HomeAppTextColorFaint
+import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
+import com.lumenlauncher.app.ui.theme.homeAppLabelShadow
+
+/**
+ * "Lumen Hub" — bold, [HomeAppTextColor], legible via [homeAppLabelShadow] rather than a
+ * background panel, since the Hub (like Home) sits directly on the transparent wallpaper/Home
+ * layer, not an opaque `Surface` the way every Settings-style screen does (see chat history).
+ * Only rendered here (as part of the pinned header) once at least one widget exists — the empty
+ * state's own Add button is centered in the middle of the screen instead.
+ */
+@Composable
+fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Column {
+            Text(
+                text = "Lumen Hub",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    shadow = homeAppLabelShadow(HomeAppTextColor),
+                ),
+                color = HomeAppTextColor,
+            )
+            Text(
+                text = "$widgetCount of $HUB_MAX_WIDGETS widgets · $columns columns",
+                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+                color = HomeAppTextColorFaint,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        Text(
+            text = "Add",
+            style = MaterialTheme.typography.bodyLarge.copy(shadow = homeAppLabelShadow(if (isAtCapacity) HomeAppTextColorFaint else Accent)),
+            color = if (isAtCapacity) HomeAppTextColorFaint else Accent,
+            modifier = Modifier
+                .testTag("hub_add_button")
+                .clickable(enabled = !isAtCapacity, onClick = onAddClick),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 120)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 120, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun HubHeaderPreview() {
+    LumenLauncherTheme {
+        HubHeader(widgetCount = 6, columns = 5, isAtCapacity = false, onAddClick = {})
+    }
+}
+
+@Preview(name = "At capacity", showBackground = true, widthDp = 390, heightDp = 120)
+@Composable
+private fun HubHeaderAtCapacityPreview() {
+    LumenLauncherTheme {
+        HubHeader(widgetCount = 20, columns = 5, isAtCapacity = true, onAddClick = {})
+    }
+}

@@ -53,15 +53,15 @@ Naming: screen composables/wrappers end in `Screen` (`HomeScreen`), their `ViewM
 
 Every component's corner radius must come from Material 3's real shape scale and defaults ([m3.material.io/styles/shape](https://m3.material.io/styles/shape/shape-scale-tokens)), applied through `MaterialTheme.shapes` — never a bespoke dp value picked by eye. This app's `LumenLauncherTheme` doesn't override `shapes`, so `MaterialTheme.shapes` is already Compose Material3's own default `Shapes()` instance, matching M3's scale exactly:
 
-| Token | Value | `MaterialTheme.shapes.*` | Used by (M3 default) |
-|---|---|---|---|
-| None | 0dp | — (`RectangleShape`) | — |
-| Extra small | 4dp | `.extraSmall` | Menus/dropdowns, text fields, snackbars |
-| Small | 8dp | `.small` | Chips |
-| Medium | 12dp | `.medium` | Cards, small FABs |
-| Large | 16dp | `.large` | FABs, extended FABs, navigation drawers |
+| Token | Value | `MaterialTheme.shapes.*` | Used by (M3 default)                                   |
+|---|---|---|--------------------------------------------------------|
+| None | 0dp | — (`RectangleShape`) | —                                                      |
+| Extra small | 4dp | `.extraSmall` | Text fields, snackbars                                 |
+| Small | 8dp | `.small` | Chips, Menus/Dropdowns                                 |
+| Medium | 12dp | `.medium` | Cards, small FABs                                      |
+| Large | 16dp | `.large` | FABs, extended FABs, navigation drawers                |
 | Extra large | 28dp | `.extraLarge` | Dialogs, large FABs, modal bottom sheets (top corners) |
-| Full | fully rounded | `CircleShape` | Buttons, search bars, segmented buttons, switches |
+| Full | fully rounded | `CircleShape` | Buttons, search bars, segmented buttons, switches      |
 
 When adding or touching a component, look up its category on the [Compose Material3 component list](https://developer.android.com/develop/ui/compose/components) or the [`androidx.compose.material3` API reference](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary) and use that component's real default shape (verified against the library's own token source when in doubt — `ShapeTokens.kt`/`MenuTokens.kt`/`DialogTokens.kt`/etc. under `androidx.compose.material3.tokens`) rather than guessing a dp value. A "top corners only" variant (e.g. a bottom sheet) is built as a literal `RoundedCornerShape(topStart = ..., topEnd = ..., bottomEnd = 0.dp, bottomStart = 0.dp)` using the matching token's dp value, since `MaterialTheme.shapes` doesn't expose per-corner variants.
 

@@ -7,8 +7,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,6 +23,7 @@ import com.lumenlauncher.app.ui.dock.DockAppPickerScreen
 import com.lumenlauncher.app.ui.home.clock.ClockStyleGalleryRoute
 import com.lumenlauncher.app.ui.home.clock.ProfileClockStyleGalleryScreen
 import com.lumenlauncher.app.ui.launcher.HomeDrawerRoute
+import com.lumenlauncher.app.ui.launcher.LauncherViewModel
 import com.lumenlauncher.app.ui.profiles.FavoritesPickerScreen
 import com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen
 import com.lumenlauncher.app.ui.profiles.ProfileSettingsScreen
@@ -83,9 +86,16 @@ fun LumenNavHost(
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    launcherViewModel: LauncherViewModel = hiltViewModel(),
 ) {
     val animationSpec = tween<IntOffset>(durationMillis = 340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
     val fadeSpec = tween<Float>(durationMillis = 240)
+
+    LaunchedEffect(launcherViewModel) {
+        launcherViewModel.homePressedEvent.collect {
+            navController.popBackStack(LumenDestinations.HOME, inclusive = false)
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -108,6 +118,7 @@ fun LumenNavHost(
                 onNavigateToUsageAccessExplanation = {
                     navController.navigate(LumenDestinations.USAGE_ACCESS_EXPLANATION)
                 },
+                launcherViewModel = launcherViewModel,
             )
         }
         composable(LumenDestinations.USAGE_ACCESS_EXPLANATION) {

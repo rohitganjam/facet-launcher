@@ -450,8 +450,10 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
   - Test: changing the Drawer's grid column setting updates the Hub's column count; adding a 21st widget is blocked with the at-capacity messaging.
 - [ ] Orphaned-widget handling (provider uninstalled/updated).
   - Test: uninstalling a provider marks its widget orphaned (`Remove` / `Keep space`), not a dead frame; provider update reloads the widget in place.
-- [ ] *(moved from Phase 5, see chat history — relocated, not part of this phase's original F5 scope)* **Icon rendering mode** (F11): System default vs. Monochrome overlay, applied globally (not per-app) — un-disables Settings' existing **Icons** row. Reads `Icon.getMonochrome()` (always available, API 33+) where an app provides one; for apps that don't, a real bitmap transform tints the icon with the current accent as a themed overlay. New `IconRenderMode` enum + `LauncherSettings.iconRenderMode` field, plumbed into `AppRepository`'s icon loading (or a new decorator layer over it) since `AppInfo.icon` is currently the raw `ActivityInfo` icon with no transform step.
-  - Test: unit test that monochrome mode tints a fake bitmap deterministically with a given accent color; instrumented test that switching icon mode in Settings changes rendered icons across Home/Favorites/Dock/Drawer.
+- [x] *(moved from Phase 5, see chat history — relocated, not part of this phase's original F5 scope)* **Icon rendering mode** (F11): System default vs. Monochrome overlay, applied globally (not per-app) — un-disables Settings' existing **Icons** row. Reads `Icon.getMonochrome()` (always available, API 33+) where an app provides one; for apps that don't, a real bitmap transform tints the icon with the current accent as a themed overlay. New `IconRenderMode` enum + `LauncherSettings.iconRenderMode` field, plumbed into `AppRepository`'s icon loading (or a new decorator layer over it) since `AppInfo.icon` is currently the raw `ActivityInfo` icon with no transform step.
+  - Test (check if done): unit test that monochrome mode tints a fake bitmap deterministically with a given accent color; instrumented test that switching icon mode in Settings changes rendered icons across Home/Favorites/Dock/Drawer.
+- [ ] ** **Return to Home Navigation** : Implementation done to return to home screen from any screen in launcher on receiving home button/gesture input. not yet tested.
+  - Test: To be determined.
 
 ## Phase 8 — Backup & Restore, onboarding, accessibility
 
