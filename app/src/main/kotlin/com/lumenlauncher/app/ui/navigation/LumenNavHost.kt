@@ -20,6 +20,7 @@ import androidx.navigation.navArgument
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
 import com.lumenlauncher.app.ui.dock.DockAppPickerScreen
+import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.lumenlauncher.app.ui.home.clock.ClockStyleGalleryRoute
 import com.lumenlauncher.app.ui.home.clock.ProfileClockStyleGalleryScreen
 import com.lumenlauncher.app.ui.launcher.HomeDrawerRoute
@@ -48,6 +49,7 @@ object LumenDestinations {
     const val NOTIFICATION_ACCESS_EXPLANATION = "notificationAccessExplanation"
     const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val PROFILE_CLOCK_STYLE_GALLERY = "profileClockStyleGallery/{profileId}"
+    const val HUB_WIDGET_PICKER = "hubWidgetPicker"
 
     fun profileClockStyleGallery(profileId: Long) = "profileClockStyleGallery/$profileId"
 
@@ -118,8 +120,12 @@ fun LumenNavHost(
                 onNavigateToUsageAccessExplanation = {
                     navController.navigate(LumenDestinations.USAGE_ACCESS_EXPLANATION)
                 },
+                onNavigateToHubWidgetPicker = { navController.navigate(LumenDestinations.HUB_WIDGET_PICKER) },
                 launcherViewModel = launcherViewModel,
             )
+        }
+        composable(LumenDestinations.HUB_WIDGET_PICKER) {
+            HubWidgetPickerScreen(onDone = { navController.popBackStackSafely() })
         }
         composable(LumenDestinations.USAGE_ACCESS_EXPLANATION) {
             UsageAccessExplanationScreen(onBack = { navController.popBackStackSafely() })

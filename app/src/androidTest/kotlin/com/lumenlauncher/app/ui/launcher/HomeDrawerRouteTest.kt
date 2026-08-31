@@ -177,6 +177,7 @@ class HomeDrawerRouteTest {
                     onNavigateToProfileCarousel = {},
                     onNavigateToEditProfile = {},
                     onNavigateToUsageAccessExplanation = {},
+                    onNavigateToHubWidgetPicker = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,

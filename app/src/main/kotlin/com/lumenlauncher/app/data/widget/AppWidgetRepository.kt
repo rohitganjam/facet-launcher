@@ -6,10 +6,17 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import com.lumenlauncher.app.data.model.WidgetProviderOption
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+
+/** Android's own widget-sizing convention (developer.android.com/develop/ui/views/appwidgets/layouts#anatomy) — a cell is ~70dp with ~30dp of combined margin/padding per cell. */
+private const val WIDGET_CELL_UNIT_DP = 70
+private const val WIDGET_CELL_PADDING_DP = 30
+
+private fun dpToCells(dp: Int): Int = ((dp + WIDGET_CELL_PADDING_DP) / WIDGET_CELL_UNIT_DP).coerceAtLeast(1)
 
 /**
  * Every `AppWidgetManager`/`AppWidgetHost` call for the Hub (F5) lives here — nothing else in
@@ -26,6 +33,23 @@ class AppWidgetRepository @Inject constructor(
 ) {
 
     fun getInstalledProviders(): List<AppWidgetProviderInfo> = appWidgetManager.installedProviders
+
+    /** Stable UI options for the add-widget picker (README `4c`) — grouped by the picker's own owning-app logic, not here. */
+    fun getWidgetProviderOptions(): List<WidgetProviderOption> {
+        val packageManager = context.packageManager
+        return getInstalledProviders().mapNotNull { info ->
+            val appLabel = runCatching {
+                packageManager.getApplicationLabel(packageManager.getApplicationInfo(info.provider.packageName, 0)).toString()
+            }.getOrNull() ?: return@mapNotNull null
+            WidgetProviderOption(
+                provider = info.provider,
+                appLabel = appLabel,
+                widgetLabel = info.loadLabel(packageManager),
+                columns = dpToCells(info.minWidth),
+                rows = dpToCells(info.minHeight),
+            )
+        }
+    }
 
     fun allocateAppWidgetId(): Int = host.allocateAppWidgetId()
 

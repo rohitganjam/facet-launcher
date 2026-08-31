@@ -150,6 +150,7 @@ fun HomeDrawerRoute(
     onNavigateToProfileCarousel: () -> Unit,
     onNavigateToEditProfile: (profileId: Long) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
+    onNavigateToHubWidgetPicker: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
@@ -266,7 +267,7 @@ fun HomeDrawerRoute(
                 },
         ) {
             HubScreen(
-                onAddClick = {}, // wired to the widget picker once it exists (Milestone 5)
+                onAddClick = onNavigateToHubWidgetPicker,
                 onManageClick = {}, // wired once there's a dedicated manage flow
                 modifier = Modifier.fillMaxSize().testTag("hub_screen"),
                 viewModel = hubViewModel,
