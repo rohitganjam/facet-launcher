@@ -4,11 +4,13 @@ import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -32,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.BackButton
+import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.Faint
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -68,33 +71,20 @@ private fun DockAppPickerContent(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    StickyHeaderLayout(
         modifier = modifier
             .fillMaxSize()
             .background(Surface)
-            .testTag("dock_app_picker_screen")
-            .windowInsetsPadding(WindowInsets.systemBars),
-    ) {
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        BackButton(onClick = onDone)
-                        Text(text = "Dock", style = MaterialTheme.typography.headlineSmall, color = Ink)
-                    }
-                    Text(
-                        text = "Done",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Ink,
-                        modifier = Modifier.testTag("dock_picker_done").clickable(onClick = onDone),
-                    )
-                }
-            }
-
+            .testTag("dock_app_picker_screen"),
+        header = { DockAppPickerHeader(onDone = onDone) },
+        content = { headerHeight ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(horizontal = 24.dp),
+            contentPadding = PaddingValues(top = headerHeight),
+        ) {
             item {
                 OutlinedTextField(
                     value = uiState.query,
@@ -130,6 +120,32 @@ private fun DockAppPickerContent(
                 }
             }
         }
+        },
+    )
+}
+
+@Composable
+private fun DockAppPickerHeader(onDone: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Surface)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BackButton(onClick = onDone)
+            Text(text = "Dock", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        }
+        Text(
+            text = "Done",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink,
+            modifier = Modifier.testTag("dock_picker_done").clickable(onClick = onDone),
+        )
     }
 }
 

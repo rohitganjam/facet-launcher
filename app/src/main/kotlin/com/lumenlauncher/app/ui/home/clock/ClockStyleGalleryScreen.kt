@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -42,6 +44,7 @@ import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
+import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.Ink
@@ -128,27 +131,19 @@ private fun ClockStyleGalleryScreen(
     val fixedClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
     val now = remember { LocalDateTime.now(fixedClock) }
 
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { ClockStyleGalleryHeader(onBack = onBack) },
+        content = { headerHeight ->
     LazyColumn(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(Surface)
             .windowInsetsPadding(WindowInsets.systemBars)
             .testTag("clock_style_gallery_list"),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                BackButton(onClick = onBack)
-                Text(
-                    text = "Clock style",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Ink,
-                    modifier = Modifier.padding(start = 12.dp),
-                )
-            }
-        }
-
         item {
             SettingsCard {
                 LabeledDropdownRow(
@@ -238,6 +233,28 @@ private fun ClockStyleGalleryScreen(
                 )
             }
         }
+    }
+        },
+    )
+}
+
+@Composable
+private fun ClockStyleGalleryHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Surface)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BackButton(onClick = onBack)
+        Text(
+            text = "Clock style",
+            style = MaterialTheme.typography.titleLarge,
+            color = Ink,
+            modifier = Modifier.padding(start = 12.dp),
+        )
     }
 }
 

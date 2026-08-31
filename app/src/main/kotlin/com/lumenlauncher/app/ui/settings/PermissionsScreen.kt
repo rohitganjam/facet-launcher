@@ -12,12 +12,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -42,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.SettingsCard
+import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -127,33 +131,47 @@ private fun PermissionsContent(
     onTurnOnClick: (PermissionRowState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Surface)
-            .testTag("permissions_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(horizontal = 24.dp),
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { PermissionsHeader(onBack = onBack) },
+        content = { headerHeight ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Surface)
+                    .testTag("permissions_screen")
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(horizontal = 24.dp),
+                contentPadding = PaddingValues(top = headerHeight),
             ) {
-                BackButton(onClick = onBack)
-                Text(text = "Permissions", style = MaterialTheme.typography.headlineSmall, color = Ink)
-            }
-        }
-        item {
-            SettingsCard {
-                permissions.forEachIndexed { index, permission ->
-                    if (index > 0) CardDivider()
-                    PermissionRow(permission = permission, onTurnOnClick = { onTurnOnClick(permission) })
+                item {
+                    SettingsCard {
+                        permissions.forEachIndexed { index, permission ->
+                            if (index > 0) CardDivider()
+                            PermissionRow(permission = permission, onTurnOnClick = { onTurnOnClick(permission) })
+                        }
+                    }
                 }
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
-        }
-        item { Spacer(modifier = Modifier.height(24.dp)) }
+        },
+    )
+}
+
+@Composable
+private fun PermissionsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Surface)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BackButton(onClick = onBack)
+        Text(text = "Permissions", style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 

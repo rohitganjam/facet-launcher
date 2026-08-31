@@ -3,12 +3,14 @@ package com.lumenlauncher.app.ui.profiles
 import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
@@ -85,6 +87,25 @@ class FavoritesPickerScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertIsOn() }.isSuccess
         }
+    }
+
+    @Test
+    fun headerStaysVisibleAfterScrollingToAllApps() {
+        // Given two real apps already favorited, so both "FAVORITES" and "ALL APPS" render
+        setContent { appRepository, favoriteAppRepository ->
+            val installed = runBlocking { appRepository.getInstalledApps() }
+            installed.take(2).forEachIndexed { index, app -> favoriteAppRepository.addFavorite(profileId, app, index) }
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithText("ALL APPS").assertExists() }.isSuccess
+        }
+
+        // When scrolling down to the "ALL APPS" section
+        composeRule.onNodeWithText("ALL APPS").performScrollTo()
+
+        // Then the pinned header (title + Done) is still on screen, not scrolled away
+        composeRule.onNodeWithText("Favorites").assertIsDisplayed()
+        composeRule.onNodeWithTag("favorites_picker_done").assertIsDisplayed()
     }
 
     @Test

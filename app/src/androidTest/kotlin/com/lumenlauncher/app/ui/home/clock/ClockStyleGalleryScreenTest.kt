@@ -2,12 +2,14 @@ package com.lumenlauncher.app.ui.home.clock
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -44,6 +46,18 @@ class ClockStyleGalleryScreenTest {
         }
         composeRule.waitForIdle()
         return settingsRepository
+    }
+
+    @Test
+    fun headerStaysVisibleAfterScrollingThroughTheTemplateList() {
+        // Given the gallery, scrolled all the way to the last template card
+        setContent()
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.entries.last().name}"))
+
+        // Then the pinned header (title + back button) is still on screen, not scrolled away
+        composeRule.onNodeWithText("Clock style").assertIsDisplayed()
+        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 
     @Test

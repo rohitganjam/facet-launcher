@@ -51,6 +51,18 @@ class PermissionsScreenTest {
     }
 
     @Test
+    fun headerRendersOutsideTheScrollingCard() {
+        // Given the permissions screen — only 3 rows, too short to actually overflow the screen,
+        // so this just confirms the pinned header (StickyHeaderLayout) renders correctly rather
+        // than exercising a real scroll-regression case the way the longer Settings screen does
+        setContent()
+
+        // Then the header's title and back button are both present
+        composeRule.onNodeWithText("Permissions").assertExists()
+        composeRule.onNodeWithTag("back_button").assertExists()
+    }
+
+    @Test
     fun rendersAllThreePermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
         // Given none of the three permissions are granted (fake Calendar repository, real
         // ungranted defaults for the other two)

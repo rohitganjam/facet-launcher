@@ -6,12 +6,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -53,6 +56,7 @@ import com.lumenlauncher.app.ui.components.InheritOverrideCard
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.RenameDialog
 import com.lumenlauncher.app.ui.components.SettingsCard
+import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.Faint
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -116,25 +120,32 @@ private fun ProfileSettingsContent(
     var showRenameDialog by remember { mutableStateOf(false) }
     val profile = uiState.profile
 
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { ProfileSettingsHeader(title = profile?.name ?: "Profile", onBack = onBack) },
+        content = { headerHeight ->
     LazyColumn(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(Surface)
             .testTag("profile_settings_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 24.dp),
+        contentPadding = PaddingValues(top = headerHeight),
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                BackButton(onClick = onBack)
-                Text(text = profile?.name ?: "Profile", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            SettingsCard {
+                ClickableRow(
+                    title = "Rename profile",
+                    subtitle = profile?.name,
+                    onClick = { showRenameDialog = true },
+                    testTag = "profile_settings_rename_row",
+                    trailing = { NavigationChevron() },
+                )
             }
         }
 
+        item { Spacer(modifier = Modifier.height(18.dp)) }
         item { SectionHeader("APPS") }
         item {
             AppsSection(
@@ -195,25 +206,36 @@ private fun ProfileSettingsContent(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(18.dp)) }
-        item {
-            ClickableRow(
-                title = "Rename profile",
-                subtitle = null,
-                onClick = { showRenameDialog = true },
-                testTag = "profile_settings_rename_row",
-            )
-        }
+        item { Spacer(modifier = Modifier.height(24.dp)) }
     }
+        },
+    )
 
     if (showRenameDialog && profile != null) {
         RenameDialog(
             title = "Rename profile",
-            explanation = "This name is only shown to you.",
+            explanation = "Rename this profile.",
             initialValue = profile.name,
             onSave = { newName -> onRename(newName); showRenameDialog = false },
             onDismiss = { showRenameDialog = false },
         )
+    }
+}
+
+@Composable
+private fun ProfileSettingsHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Surface)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BackButton(onClick = onBack)
+        Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 

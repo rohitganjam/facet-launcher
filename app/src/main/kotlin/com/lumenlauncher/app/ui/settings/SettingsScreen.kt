@@ -12,13 +12,16 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -76,6 +79,7 @@ import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
+import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.Faint
@@ -175,25 +179,19 @@ private fun SettingsContent(
     val context = LocalContext.current
     val presentation = uiState.settings.drawerPresentation
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Surface)
-            .testTag("settings_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(horizontal = 24.dp),
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { SettingsHeader(onBack = onBack) },
+        content = { headerHeight ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Surface)
+                    .testTag("settings_screen")
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(horizontal = 24.dp),
+                contentPadding = PaddingValues(top = headerHeight),
             ) {
-                BackButton(onClick = onBack)
-                Text(text = "Settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
-            }
-        }
-
         item { SectionHeader("PROFILES") }
         item {
             SettingsCard {
@@ -449,6 +447,28 @@ private fun SettingsContent(
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
+            }
+        },
+    )
+}
+
+@Composable
+private fun SettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Surface)
+            // Only the top inset — this header sits above scrolling content that already claims
+            // the bottom nav-bar inset itself; absorbing systemBars' bottom side too would just
+            // pad the header taller for no reason (see StickyHeaderLayout's own doc comment).
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BackButton(onClick = onBack)
+        Text(text = "Settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 

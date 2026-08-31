@@ -244,5 +244,9 @@ class CalendarSettingsScreenGrantedTest {
         // Then it's actually visible on screen — not just present off-screen in a Column
         // that never scrolled at all
         composeRule.onNodeWithText("Calendar Number 12", substring = true).assertIsDisplayed()
+
+        // And the pinned header stayed on screen the whole time, not scrolled away with the list
+        composeRule.onNodeWithText("Calendar settings").assertIsDisplayed()
+        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 }

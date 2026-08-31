@@ -9,19 +9,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -37,18 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -61,8 +57,10 @@ import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.InheritOverrideCard
+import com.lumenlauncher.app.ui.components.dashedBorder
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
+import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
@@ -145,138 +143,162 @@ private fun CalendarSettingsContent(
     val onCalendarColorOptionChanged: (ClockColorOption) -> Unit =
         if (uiState.isProfileScoped) { { localCalendarColorOption = it } } else onGlobalCalendarColorOptionChanged
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Surface)
-            .testTag("calendar_settings_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            BackButton(onClick = onBack)
-            Text(text = "Calendar settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
-        }
+    // The toggle below is read-only under Inherit and live under Override.
+    val controlsEnabled = !uiState.isProfileScoped || uiState.isOverriding
 
-        // The toggle below is read-only under Inherit and live under Override.
-        val controlsEnabled = !uiState.isProfileScoped || uiState.isOverriding
-
-        if (uiState.isProfileScoped) {
-            InheritOverrideCard(
-                overriding = uiState.isOverriding,
-                onOverridingChanged = onOverridingChanged,
-                testTagPrefix = "calendar",
-                inheritSubtitle = "Follows the launcher-wide Calendar setting",
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        SettingsCard {
-            Row(
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { CalendarSettingsHeader(onBack = onBack) },
+        content = { headerHeight ->
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 13.dp)
-                    .alpha(if (controlsEnabled) 1f else 0.4f),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                    .fillMaxSize()
+                    .background(Surface)
+                    .testTag("calendar_settings_screen")
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(horizontal = 24.dp),
+                contentPadding = PaddingValues(top = headerHeight),
             ) {
-                Text(text = "Show all-day events", style = MaterialTheme.typography.bodyLarge, color = Ink)
-                Switch(
-                    checked = uiState.effectiveShowAllDayEvents,
-                    onCheckedChange = onShowAllDayEventsChanged,
-                    enabled = controlsEnabled,
-                    modifier = Modifier.testTag("show_all_day_events_toggle"),
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        SettingsCard {
-            Column(modifier = Modifier.padding(vertical = 13.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = "Calendars to display", style = MaterialTheme.typography.bodyLarge, color = Ink)
-                    // Selects/deselects every calendar in one tap instead of one-by-one — real
-                    // pain with a lot of calendars (see chat history). Indeterminate when only
-                    // some are selected, matching the standard "select all" checkbox convention.
-                    if (uiState.isCalendarAccessGranted && uiState.calendars.isNotEmpty()) {
-                        val selectedCount = uiState.calendars.count { uiState.isCalendarSelected(it.id) }
-                        val allState = when (selectedCount) {
-                            uiState.calendars.size -> ToggleableState.On
-                            0 -> ToggleableState.Off
-                            else -> ToggleableState.Indeterminate
-                        }
-                        TriStateCheckbox(
-                            state = allState,
-                            onClick = { onSelectAllCalendarsChanged(allState != ToggleableState.On) },
-                            modifier = Modifier.testTag("calendar_select_all_checkbox"),
+                if (uiState.isProfileScoped) {
+                    item {
+                        InheritOverrideCard(
+                            overriding = uiState.isOverriding,
+                            onOverridingChanged = onOverridingChanged,
+                            testTagPrefix = "calendar",
+                            inheritSubtitle = "Follows the launcher-wide Calendar setting",
                         )
                     }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
-                if (uiState.isCalendarAccessGranted) {
-                    if (uiState.calendars.isEmpty()) {
-                        Text(text = "No calendars found on this device.", style = MaterialTheme.typography.bodyMedium, color = Muted)
-                    } else {
-                        uiState.calendars.forEach { calendar ->
-                            CalendarPickerRow(
-                                calendar = calendar,
-                                swatch = uiState.calendarColors[calendar.id]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
-                                checked = uiState.isCalendarSelected(calendar.id),
-                                onToggle = { onCalendarToggled(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
+
+                item {
+                    SettingsCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 13.dp)
+                                .alpha(if (controlsEnabled) 1f else 0.4f),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(text = "Show all-day events", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                            Switch(
+                                checked = uiState.effectiveShowAllDayEvents,
+                                onCheckedChange = onShowAllDayEventsChanged,
+                                enabled = controlsEnabled,
+                                modifier = Modifier.testTag("show_all_day_events_toggle"),
                             )
                         }
                     }
-                } else {
-                    PermissionDeniedStrip(
-                        message = "Calendar access off — events hidden.",
-                        actionLabel = "Turn on",
-                        testTag = "calendar_permission_strip",
-                        onClick = onTurnOnClick,
+                }
+
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+
+                item {
+                    SettingsCard {
+                        Column(modifier = Modifier.padding(vertical = 13.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(text = "Calendars to display", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                                // Selects/deselects every calendar in one tap instead of one-by-one — real
+                                // pain with a lot of calendars (see chat history). Indeterminate when only
+                                // some are selected, matching the standard "select all" checkbox convention.
+                                if (uiState.isCalendarAccessGranted && uiState.calendars.isNotEmpty()) {
+                                    val selectedCount = uiState.calendars.count { uiState.isCalendarSelected(it.id) }
+                                    val allState = when (selectedCount) {
+                                        uiState.calendars.size -> ToggleableState.On
+                                        0 -> ToggleableState.Off
+                                        else -> ToggleableState.Indeterminate
+                                    }
+                                    TriStateCheckbox(
+                                        state = allState,
+                                        onClick = { onSelectAllCalendarsChanged(allState != ToggleableState.On) },
+                                        modifier = Modifier.testTag("calendar_select_all_checkbox"),
+                                    )
+                                }
+                            }
+                            if (uiState.isCalendarAccessGranted) {
+                                if (uiState.calendars.isEmpty()) {
+                                    Text(text = "No calendars found on this device.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                                } else {
+                                    uiState.calendars.forEach { calendar ->
+                                        CalendarPickerRow(
+                                            calendar = calendar,
+                                            swatch = uiState.calendarColors[calendar.id]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
+                                            checked = uiState.isCalendarSelected(calendar.id),
+                                            onToggle = { onCalendarToggled(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
+                                        )
+                                    }
+                                }
+                            } else {
+                                PermissionDeniedStrip(
+                                    message = "Calendar access off — events hidden.",
+                                    actionLabel = "Turn on",
+                                    testTag = "calendar_permission_strip",
+                                    onClick = onTurnOnClick,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+
+                item {
+                    SettingsCard {
+                        LabeledDropdownRow(
+                            title = "Font",
+                            options = ClockFontOption.entries,
+                            selected = calendarFontOption,
+                            label = { it.displayName },
+                            onSelect = onCalendarFontOptionChanged,
+                            testTag = "calendar_style_font_row",
+                        )
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = "Color",
+                            options = ClockColorOption.entries,
+                            selected = calendarColorOption,
+                            label = { it.displayName },
+                            onSelect = onCalendarColorOptionChanged,
+                            testTag = "calendar_style_color_row",
+                        )
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(12.dp)) }
+
+                item {
+                    CalendarEventsBlock(
+                        events = calendarPreviewEvents,
+                        clock = calendarPreviewClock,
+                        fontFamily = calendarFontOption.fontFamily,
+                        textColor = calendarColorOption.resolve(),
+                        modifier = Modifier.padding(bottom = 16.dp),
                     )
                 }
             }
-        }
+        },
+    )
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        SettingsCard {
-            LabeledDropdownRow(
-                title = "Font",
-                options = ClockFontOption.entries,
-                selected = calendarFontOption,
-                label = { it.displayName },
-                onSelect = onCalendarFontOptionChanged,
-                testTag = "calendar_style_font_row",
-            )
-            CardDivider()
-            LabeledDropdownRow(
-                title = "Color",
-                options = ClockColorOption.entries,
-                selected = calendarColorOption,
-                label = { it.displayName },
-                onSelect = onCalendarColorOptionChanged,
-                testTag = "calendar_style_color_row",
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        CalendarEventsBlock(
-            events = calendarPreviewEvents,
-            clock = calendarPreviewClock,
-            fontFamily = calendarFontOption.fontFamily,
-            textColor = calendarColorOption.resolve(),
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
+@Composable
+private fun CalendarSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Surface)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BackButton(onClick = onBack)
+        Text(text = "Calendar settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 
@@ -333,14 +355,6 @@ private fun PermissionDeniedStrip(message: String, actionLabel: String, testTag:
         Text(text = message, style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.weight(1f))
         Text(text = actionLabel, style = MaterialTheme.typography.bodyMedium, color = Accent)
     }
-}
-
-private fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: Dp = 1.dp): Modifier = drawBehind {
-    drawRoundRect(
-        color = color,
-        style = Stroke(width = strokeWidth.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)),
-        cornerRadius = CornerRadius(cornerRadius.toPx()),
-    )
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)

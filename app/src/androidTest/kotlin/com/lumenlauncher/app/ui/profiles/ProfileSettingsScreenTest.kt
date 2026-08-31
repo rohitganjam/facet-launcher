@@ -80,6 +80,34 @@ class ProfileSettingsScreenTest {
     }
 
     @Test
+    fun renameCardRendersInItsOwnCardDirectlyUnderTheHeaderBeforeApps() {
+        // Given the screen
+        setContent()
+
+        // Then the Rename card sits above the APPS section header — not at the bottom of the
+        // page — verified by comparing on-screen vertical position rather than just existence
+        val renameTop = composeRule.onNodeWithTag("profile_settings_rename_row").fetchSemanticsNode().boundsInRoot.top
+        val appsSectionTop = composeRule.onNodeWithText("APPS").fetchSemanticsNode().boundsInRoot.top
+        assert(renameTop < appsSectionTop)
+    }
+
+    @Test
+    fun headerStaysVisibleWhileProfileNameIsShown() {
+        // Given the screen for "Profile 1" — waited until the real Room-backed profile has loaded
+        setContent()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the pinned header (title + back button) is present
+        assert(composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty())
+        composeRule.onNodeWithTag("back_button").assertExists()
+    }
+
+    @Test
     fun appsCardDefaultsToInheritWithEditFavoritesDisabled() {
         // Given the screen for a fresh profile, which hasn't overridden anything yet
         setContent()
@@ -97,7 +125,10 @@ class ProfileSettingsScreenTest {
         var navigatedProfileId: Long? = null
         setContent(onNavigateToFavorites = { navigatedProfileId = it })
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Profile 1").assertExists() }.isSuccess
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
 
         // When switching this profile's single Apps card to Override (the row is only tappable then)
@@ -124,7 +155,10 @@ class ProfileSettingsScreenTest {
         // waitForIdle() (same async-I/O-vs-idling gap as DataStore, see IMPLEMENTATION_PLAN.md)
         val profileRepository = setContent()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Profile 1").assertExists() }.isSuccess
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
 
         // When renaming it
@@ -134,10 +168,37 @@ class ProfileSettingsScreenTest {
 
         // Then the new name is reflected, both on screen and in the repository — the merged
         // semantics tree can fold the title's EditableText-bearing node in a way onNodeWithText
-        // won't match by default, so check the unmerged tree directly.
-        composeRule.onNodeWithText("Work", useUnmergedTree = true).assertExists()
+        // won't match by default, so check the unmerged tree directly. Also now ambiguous on its
+        // own: the Rename card's subtitle shows the same new name, so two nodes legitimately
+        // match "Work" — onAllNodesWithText rather than the singular onNodeWithText.
+        assert(composeRule.onAllNodesWithText("Work", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { profileRepository.observeProfiles().first().first().name == "Work" }
+        }
+    }
+
+    @Test
+    fun renameCardSubtitleMatchesTheProfilesNameBeforeAndAfterRenaming() {
+        // Given the screen for "Profile 1" — waited until the real Room-backed profile has loaded
+        setContent()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the Rename card's own subtitle shows the current name
+        composeRule.onNodeWithTag("profile_settings_rename_row").assertTextContains("Profile 1")
+
+        // When renaming it
+        composeRule.onNodeWithTag("profile_settings_rename_row").performClick()
+        composeRule.onNodeWithTag("rename_dialog_field").performTextReplacement("Work")
+        composeRule.onNodeWithTag("rename_dialog_save").performClick()
+
+        // Then the Rename card's subtitle reflects the new name, not the stale one
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("profile_settings_rename_row").assertTextContains("Work") }.isSuccess
         }
     }
 
@@ -161,7 +222,10 @@ class ProfileSettingsScreenTest {
         // async-I/O-vs-idling gap as elsewhere, see IMPLEMENTATION_PLAN.md)
         val profileRepository = setContent()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Profile 1").assertExists() }.isSuccess
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("app_list_content_row").assertTextContains("Favorites")
 
@@ -196,7 +260,10 @@ class ProfileSettingsScreenTest {
         // previous test for why — otherwise selecting an option silently no-ops)
         val profileRepository = setContent()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Profile 1").assertExists() }.isSuccess
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Apps to show").assertDoesNotExist()
 
@@ -243,7 +310,10 @@ class ProfileSettingsScreenTest {
         // (same async-I/O-vs-idling gap as elsewhere, see IMPLEMENTATION_PLAN.md)
         val profileRepository = setContent()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Profile 1").assertExists() }.isSuccess
+            // onAllNodesWithText, not onNodeWithText — the Rename card's own subtitle also shows
+            // the profile's name now, so "Profile 1" legitimately matches two nodes at once
+            // (header + rename row) and a singular onNodeWithText would throw as ambiguous.
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
 
         // When switching to Override and toggling 24-hour time on

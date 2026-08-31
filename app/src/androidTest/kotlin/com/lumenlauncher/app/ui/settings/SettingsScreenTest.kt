@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasTestTag
@@ -83,6 +84,17 @@ class SettingsScreenTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun headerStaysVisibleAfterScrollingToTheBottom() {
+        // Given the settings screen, scrolled all the way to the last row
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("set_default_launcher_row"))
+
+        // Then the pinned header (title + back button) is still on screen, not scrolled away
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 
     @Test
