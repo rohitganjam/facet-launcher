@@ -42,7 +42,7 @@ class HubWidgetPickerScreenTest {
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                 )
-                HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
+                HubWidgetPickerViewModel(context, appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
             LumenLauncherTheme {
                 HubWidgetPickerScreen(onDone = onDone, viewModel = viewModel)
@@ -87,5 +87,25 @@ class HubWidgetPickerScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithText("No widgets found").assertIsDisplayed() }.isSuccess
         }
+    }
+
+    @Test
+    fun aFailedAddShowsAnErrorMessageInsteadOfSilentlyDoingNothing() {
+        // Given the picker content rendered with a failure message set (as it would be right
+        // after AddFailed — e.g. the provider's own configure activity was canceled/incomplete)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HubWidgetPickerContent(
+                    uiState = HubWidgetPickerUiState(),
+                    failureMessage = "Setup wasn't finished, so that widget wasn't added",
+                    onQueryChanged = {},
+                    onProviderSelected = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        // Then the error is visible, not a silent no-op
+        composeRule.onNodeWithTag("hub_widget_picker_error").assertIsDisplayed()
     }
 }

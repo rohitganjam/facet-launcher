@@ -6,6 +6,12 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Phase 7 Launcher Hub (F5) — without this, AppWidgetManager.getInstalledProviders()
+             comes back incomplete/empty on API 30+'s package-visibility filtering, since a widget
+             provider's own package is otherwise invisible to us without a matching <queries> entry. -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
     </queries>
 
     <!-- F2 Recents/Most Used — special-access permission, granted via system Settings (ACTION_USAGE_ACCESS_SETTINGS),

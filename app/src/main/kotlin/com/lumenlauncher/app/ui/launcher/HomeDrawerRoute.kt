@@ -10,7 +10,9 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +46,7 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
@@ -61,6 +64,8 @@ import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.home.LongPressSheet
 import com.lumenlauncher.app.ui.hub.HubScreen
 import com.lumenlauncher.app.ui.hub.HubViewModel
+import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerScreen
+import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.lumenlauncher.app.ui.theme.Scrim
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -150,11 +155,11 @@ fun HomeDrawerRoute(
     onNavigateToProfileCarousel: () -> Unit,
     onNavigateToEditProfile: (profileId: Long) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
-    onNavigateToHubWidgetPicker: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
+    widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -175,6 +180,7 @@ fun HomeDrawerRoute(
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     var containerHeightPx by remember { mutableFloatStateOf(2000f) }
     var containerWidthPx by remember { mutableFloatStateOf(1000f) }
@@ -183,11 +189,16 @@ fun HomeDrawerRoute(
 
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
+            focusManager.clearFocus()
             drawerAxis.close()
             hubAxis.close()
         }
     }
     var showLongPressSheet by remember { mutableStateOf(false) }
+    // Rendered in-place as an overlay below (not a NavHost destination — see chat history):
+    // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
+    // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
+    var showWidgetPicker by remember { mutableStateOf(false) }
     var drawerQuery by remember { mutableStateOf("") }
     var homeDragStartedClosed by remember { mutableStateOf(false) }
     var homeRawDragDistance by remember { mutableFloatStateOf(0f) }
@@ -230,8 +241,44 @@ fun HomeDrawerRoute(
 
     val isDrawerOpen by remember { derivedStateOf { drawerAxis.progress.value > 0f } }
     val isHubOpen by remember { derivedStateOf { hubAxis.progress.value > 0f } }
-    BackHandler(enabled = isDrawerOpen || isHubOpen || showLongPressSheet) {
+
+    // AppWidgetHost.startListening() is what actually makes hosted AppWidgetHostViews render/
+    // update — without it, widget tiles stay blank. Only listen while the Hub is actually
+    // visible, matching every other AppWidgetHost caller's lifecycle discipline.
+    DisposableEffect(isHubOpen) {
+        if (isHubOpen) hubViewModel.onHubVisible()
+        onDispose { if (isHubOpen) hubViewModel.onHubHidden() }
+    }
+
+    // Clear focus whenever the drawer or hub starts closing via a drag.
+    LaunchedEffect(drawerAxis.dragActive, hubAxis.dragActive) {
+        if (drawerAxis.dragActive || hubAxis.dragActive) {
+            focusManager.clearFocus()
+        }
+    }
+
+    // Reset drawer state when it's fully closed.
+    LaunchedEffect(isDrawerOpen) {
+        if (!isDrawerOpen) {
+            drawerQuery = ""
+            drawerViewModel.onQueryChanged("")
+            listState.scrollToItem(0)
+            gridState.scrollToItem(0)
+        }
+    }
+
+    // Reset hub widget picker state when it's fully closed.
+    LaunchedEffect(isHubOpen) {
+        if (!isHubOpen) {
+            showWidgetPicker = false
+            widgetPickerViewModel.reset()
+        }
+    }
+
+    BackHandler(enabled = isDrawerOpen || isHubOpen || showLongPressSheet || showWidgetPicker) {
+        focusManager.clearFocus()
         when {
+            showWidgetPicker -> showWidgetPicker = false
             showLongPressSheet -> showLongPressSheet = false
             isDrawerOpen -> coroutineScope.launch { drawerAxis.close() }
             isHubOpen -> coroutineScope.launch { hubAxis.close() }
@@ -246,34 +293,6 @@ fun HomeDrawerRoute(
                 containerWidthPx = it.width.toFloat()
             },
     ) {
-        // Hub — sits to Home's left: off-screen at progress 0, flush with the screen at progress 1.
-        // Transparent background throughout (see HubScreen's own doc comment) — unlike the
-        // Drawer, there's no separate scrollable content to hand a NestedScrollConnection to yet
-        // (HubGrid's own vertical scroll and this horizontal close-drag don't conflict since
-        // they're on different axes), so a direct drag detector on the Hub's own surface is
-        // enough to close it, mirroring the Drawer's closed-state opening gesture on Home.
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset { IntOffset(((hubAxis.progress.value - 1f) * containerWidthPx).toInt(), 0) }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = { hubAxis.settle() },
-                        onDragCancel = { hubAxis.settle() },
-                    ) { change, dragAmount ->
-                        hubAxis.dragBy(dragAmount)
-                        change.consume()
-                    }
-                },
-        ) {
-            HubScreen(
-                onAddClick = onNavigateToHubWidgetPicker,
-                onManageClick = {}, // wired once there's a dedicated manage flow
-                modifier = Modifier.fillMaxSize().testTag("hub_screen"),
-                viewModel = hubViewModel,
-            )
-        }
-
         HomeScreen(
             appListItems = homeUiState.appListItems,
             listContentMode = homeUiState.activeListContentMode,
@@ -365,9 +384,45 @@ fun HomeDrawerRoute(
                 },
         )
 
+        // Hub — sits to Home's left: off-screen at progress 0, flush with the screen at progress
+        // 1. Drawn after HomeScreen so it slides in ON TOP of Home (matching AppDrawerScreen
+        // below), not behind it. Backed by the same DrawerOverlay scrim/opacity Drawer itself
+        // uses (drawerSettings.drawerOpacity) rather than a fully transparent background, so
+        // opening the Hub reads the same as opening the Drawer. There's no separate scrollable
+        // content to hand a NestedScrollConnection to yet (HubGrid's own vertical scroll and this
+        // horizontal close-drag don't conflict since they're on different axes), so a direct drag
+        // detector on the Hub's own surface is enough to close it, mirroring the Drawer's
+        // closed-state opening gesture on Home.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset { IntOffset(((hubAxis.progress.value - 1f) * containerWidthPx).toInt(), 0) }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = { hubAxis.settle() },
+                        onDragCancel = { hubAxis.settle() },
+                    ) { change, dragAmount ->
+                        hubAxis.dragBy(dragAmount)
+                        change.consume()
+                    }
+                },
+        ) {
+            HubScreen(
+                onAddClick = { showWidgetPicker = true },
+                onManageClick = {}, // wired once there's a dedicated manage flow
+                opacity = drawerSettings.drawerOpacity,
+                modifier = Modifier.fillMaxSize().testTag("hub_screen"),
+                viewModel = hubViewModel,
+            )
+        }
+
         AppDrawerScreen(
             apps = apps,
-            onAppClick = onAppClick,
+            onAppClick = { app ->
+                focusManager.clearFocus()
+                onAppClick(app)
+                coroutineScope.launch { drawerAxis.close() }
+            },
             listState = listState,
             gridState = gridState,
             presentation = drawerSettings.drawerPresentation,
@@ -442,6 +497,21 @@ fun HomeDrawerRoute(
                     runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) }
                 },
                 modifier = Modifier.testTag("long_press_sheet")
+            )
+        }
+
+        // Add-widget picker — an in-place overlay (see the showWidgetPicker declaration above for
+        // why), sliding in over the Hub the same direction a NavHost push would have, so it still
+        // reads as "opening a sub-screen" even though Hub itself never leaves composition.
+        AnimatedVisibility(
+            visible = showWidgetPicker,
+            enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
+            exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
+            modifier = Modifier.testTag("hub_widget_picker_overlay"),
+        ) {
+            HubWidgetPickerScreen(
+                onDone = { showWidgetPicker = false },
+                viewModel = widgetPickerViewModel,
             )
         }
     }

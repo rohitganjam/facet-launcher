@@ -1,6 +1,7 @@
 package com.lumenlauncher.app.ui.hub.picker
 
 import android.content.Intent
+import android.content.IntentSender
 import com.lumenlauncher.app.data.model.WidgetProviderOption
 
 data class WidgetProviderGroup(
@@ -14,10 +15,12 @@ data class HubWidgetPickerUiState(
     val remaining: Int = 0,
 )
 
+enum class AddFailureReason { HUB_FULL, SETUP_CANCELLED }
+
 /** One-off effects the composable must act on (system Activity-result detours) — not folded into [HubWidgetPickerUiState]. */
 sealed interface HubAddWidgetEvent {
     data class LaunchBindPermission(val intent: Intent) : HubAddWidgetEvent
-    data class LaunchConfigure(val intent: Intent) : HubAddWidgetEvent
+    data class LaunchConfigure(val intentSender: IntentSender) : HubAddWidgetEvent
     data object WidgetAdded : HubAddWidgetEvent
-    data object AddFailed : HubAddWidgetEvent
+    data class AddFailed(val reason: AddFailureReason) : HubAddWidgetEvent
 }

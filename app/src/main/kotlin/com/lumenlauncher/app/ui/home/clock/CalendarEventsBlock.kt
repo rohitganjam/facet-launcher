@@ -37,6 +37,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** The clock block shows only the next few events, not the whole day's agenda. */
+private const val MAX_VISIBLE_EVENTS = 3
+
 /**
  * Today's calendar events (F1), deliberately independent of [com.lumenlauncher.app.ui.home.ClockBlock]/
  * `ClockDisplay` — a font/color/layout change to one never has to touch the other, and either
@@ -55,7 +58,8 @@ import java.util.Locale
  * already filtered to selected
  * calendars/all-day setting by [com.lumenlauncher.app.data.CalendarRepository]), only the ones
  * still relevant are actually rendered: an all-day event always, a timed one only until its own
- * end time passes.
+ * end time passes — capped at [MAX_VISIBLE_EVENTS], since this is a glanceable clock-block strip,
+ * not a full day agenda.
  *
  * Owns its own live "now" (via [rememberTickingNow]) so it's fully self-contained — it doesn't
  * need a clock composable anywhere on screen to know which events have ended.
@@ -79,7 +83,7 @@ fun CalendarEventsBlock(
     }
     val nowMillis = now.atZone(clock.zone).toInstant().toEpochMilli()
     val visibleEvents = remember(events, nowMillis) {
-        events.filter { it.isAllDay || it.endTimeMillis > nowMillis }
+        events.filter { it.isAllDay || it.endTimeMillis > nowMillis }.take(MAX_VISIBLE_EVENTS)
     }
     if (visibleEvents.isEmpty()) return
 

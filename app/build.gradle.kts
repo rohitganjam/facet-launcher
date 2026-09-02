@@ -94,6 +94,7 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.navigation:navigation-testing:2.9.6")
+    androidTestImplementation("org.mockito:mockito-android:5.23.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestUtil("androidx.test:orchestrator:1.5.1")
 }

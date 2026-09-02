@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -64,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -155,6 +157,7 @@ fun AppDrawerScreen(
     val groupUseCase = remember { GroupAppsByLetterUseCase() }
     val groupedApps = remember(filteredApps) { groupUseCase(filteredApps) }
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
     var draggingLetter by remember { mutableStateOf<String?>(null) }
     var railHeightPx by remember { mutableFloatStateOf(0f) }
     val isSearching = query.isNotBlank()
@@ -162,7 +165,10 @@ fun AppDrawerScreen(
     // First back-press while searching clears the query and stays in the drawer (browse mode,
     // unfiltered); only a second, empty-query back-press falls through to the caller's own
     // drawer-close BackHandler.
-    BackHandler(enabled = isSearching) { onQueryChanged("") }
+    BackHandler(enabled = isSearching) {
+        focusManager.clearFocus()
+        onQueryChanged("")
+    }
 
     val scrollToIndex: suspend (Int) -> Unit = if (presentation == DrawerPresentation.GRID) {
         { index -> gridState.scrollToItem(index) }
@@ -260,6 +266,7 @@ fun AppDrawerScreen(
             railHeightPx = railHeightPx,
             onRailHeightMeasured = {},
             modifier = Modifier.align(Alignment.CenterStart).testTag("left_edge_letter_jump_zone"),
+            requireDrag = true,
         )
 
         draggingLetter?.let { letter ->
@@ -575,6 +582,7 @@ private fun LetterJumpZone(
     railHeightPx: Float,
     onRailHeightMeasured: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    requireDrag: Boolean = false,
 ) {
     var zoneHeightPx by remember { mutableFloatStateOf(0f) }
 
@@ -588,25 +596,37 @@ private fun LetterJumpZone(
             .fillMaxHeight(TOUCH_ZONE_HEIGHT_FRACTION)
             .width(EDGE_ZONE_WIDTH_DP.dp)
             .onSizeChanged { zoneHeightPx = it.height.toFloat() }
-            // A plain detectDragGestures only fires onDragStart once the touch has moved past
-            // the platform's touch-slop threshold — a stationary press-and-hold does nothing
-            // until the finger actually moves (see chat history). This zone has no competing
-            // tap/click interaction to disambiguate a drag from, so activating immediately on
-            // the initial down (awaitFirstDown, no slop wait) is safe and is what makes a single
-            // touch — not just a drag — jump straight to a letter.
-            .pointerInput(letters) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    down.consume()
-                    onLetterChanged(letterFor(down.position.y))
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) break
-                        change.consume()
-                        onLetterChanged(letterFor(change.position.y))
+            // The right rail (requireDrag=false) jumps straight to a letter on the initial down
+            // (awaitFirstDown, no slop wait) — this makes it feel responsive. The left edge
+            // (requireDrag=true) requires a drag past the system's touch-slop threshold before
+            // activating, preventing accidental jumps from simple touches.
+            .pointerInput(letters, requireDrag) {
+                if (requireDrag) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            onLetterChanged(letterFor(offset.y))
+                        },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            onLetterChanged(letterFor(change.position.y))
+                        },
+                        onDragEnd = { onLetterChanged(null) },
+                        onDragCancel = { onLetterChanged(null) }
+                    )
+                } else {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        down.consume()
+                        onLetterChanged(letterFor(down.position.y))
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) break
+                            change.consume()
+                            onLetterChanged(letterFor(change.position.y))
+                        }
+                        onLetterChanged(null)
                     }
-                    onLetterChanged(null)
                 }
             },
     ) {

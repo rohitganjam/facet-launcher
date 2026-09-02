@@ -6,10 +6,14 @@ import com.lumenlauncher.app.data.WidgetPlacementRepository
 import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.model.WidgetProviderOption
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
+import com.lumenlauncher.app.domain.HUB_COLUMNS
 import com.lumenlauncher.app.domain.HUB_MAX_WIDGETS
 import com.lumenlauncher.app.domain.PlaceWidgetResult
 import com.lumenlauncher.app.domain.PlaceWidgetUseCase
+import com.lumenlauncher.app.domain.calculateHubCellWidth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import android.content.Context
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,12 +35,14 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class HubWidgetPickerViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val appWidgetRepository: AppWidgetRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val placeWidget: PlaceWidgetUseCase,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
+    private val allOptions = MutableStateFlow<List<WidgetProviderOption>?>(null)
     private val _events = MutableSharedFlow<HubAddWidgetEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<HubAddWidgetEvent> = _events.asSharedFlow()
 
@@ -46,12 +52,14 @@ class HubWidgetPickerViewModel @Inject constructor(
     val uiState: StateFlow<HubWidgetPickerUiState> = combine(
         query,
         widgetPlacementRepository.observeAll(),
-    ) { currentQuery, placements ->
-        val allOptions = appWidgetRepository.getWidgetProviderOptions()
+        allOptions,
+    ) { currentQuery, placements, options ->
+        val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
         val filtered = if (currentQuery.isBlank()) {
-            allOptions
+            currentOptions
         } else {
-            allOptions.filter { it.appLabel.contains(currentQuery, ignoreCase = true) || it.widgetLabel.contains(currentQuery, ignoreCase = true) }
+            // Search only by app name, not widget name, per user request.
+            currentOptions.filter { it.appLabel.contains(currentQuery, ignoreCase = true) }
         }
         HubWidgetPickerUiState(
             query = currentQuery,
@@ -64,10 +72,19 @@ class HubWidgetPickerViewModel @Inject constructor(
         query.value = newQuery
     }
 
+    /**
+     * Resets search query and cached widget options. Called when the user exits the hub screen
+     * to ensure a fresh state on return.
+     */
+    fun reset() {
+        query.value = ""
+        allOptions.value = null
+    }
+
     fun onProviderSelected(option: WidgetProviderOption) {
         viewModelScope.launch {
             if (uiState.value.remaining <= 0) {
-                _events.emit(HubAddWidgetEvent.AddFailed)
+                _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))
                 return@launch
             }
             val appWidgetId = appWidgetRepository.allocateAppWidgetId()
@@ -86,7 +103,7 @@ class HubWidgetPickerViewModel @Inject constructor(
         pendingAppWidgetId = null
         viewModelScope.launch {
             if (!granted) {
-                failAndRelease(appWidgetId)
+                failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
                 return@launch
             }
             proceedAfterBind(appWidgetId)
@@ -99,12 +116,12 @@ class HubWidgetPickerViewModel @Inject constructor(
         pendingAppWidgetId = null
         viewModelScope.launch {
             if (!resultOk) {
-                failAndRelease(appWidgetId)
+                failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
                 return@launch
             }
             val info = appWidgetRepository.getAppWidgetInfo(appWidgetId)
             if (info == null) {
-                failAndRelease(appWidgetId)
+                failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
                 return@launch
             }
             finishPlacing(appWidgetId, info.provider.packageName, info.provider.className, info.minWidth, info.minHeight)
@@ -114,13 +131,13 @@ class HubWidgetPickerViewModel @Inject constructor(
     private suspend fun proceedAfterBind(appWidgetId: Int) {
         val info = appWidgetRepository.getAppWidgetInfo(appWidgetId)
         if (info == null) {
-            failAndRelease(appWidgetId)
+            failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
             return
         }
-        val configureIntent = appWidgetRepository.createConfigureIntent(appWidgetId, info)
-        if (configureIntent != null) {
+        val configureIntentSender = appWidgetRepository.createConfigureIntentSender(appWidgetId, info)
+        if (configureIntentSender != null) {
             pendingAppWidgetId = appWidgetId
-            _events.emit(HubAddWidgetEvent.LaunchConfigure(configureIntent))
+            _events.emit(HubAddWidgetEvent.LaunchConfigure(configureIntentSender))
             return
         }
         finishPlacing(appWidgetId, info.provider.packageName, info.provider.className, info.minWidth, info.minHeight)
@@ -128,8 +145,9 @@ class HubWidgetPickerViewModel @Inject constructor(
 
     private suspend fun finishPlacing(appWidgetId: Int, providerPackageName: String, providerClassName: String, minWidthDp: Int, minHeightDp: Int) {
         val existing = widgetPlacementRepository.observeAll().first()
-        val colSpan = ((minWidthDp + 30) / 70).coerceAtLeast(1)
-        val rowSpan = ((minHeightDp + 30) / 70).coerceAtLeast(1)
+        val cellUnitDp = calculateHubCellWidth(context)
+        val colSpan = ((minWidthDp + 30) / cellUnitDp).coerceIn(1, HUB_COLUMNS)
+        val rowSpan = ((minHeightDp + 30) / cellUnitDp).coerceAtLeast(1)
         when (val result = placeWidget(existing, colSpan, rowSpan)) {
             is PlaceWidgetResult.Placed -> {
                 widgetPlacementRepository.upsert(
@@ -145,12 +163,12 @@ class HubWidgetPickerViewModel @Inject constructor(
                 )
                 _events.emit(HubAddWidgetEvent.WidgetAdded)
             }
-            PlaceWidgetResult.HubFull -> failAndRelease(appWidgetId)
+            PlaceWidgetResult.HubFull -> failAndRelease(appWidgetId, AddFailureReason.HUB_FULL)
         }
     }
 
-    private suspend fun failAndRelease(appWidgetId: Int) {
+    private suspend fun failAndRelease(appWidgetId: Int, reason: AddFailureReason) {
         appWidgetRepository.deleteAppWidgetId(appWidgetId)
-        _events.emit(HubAddWidgetEvent.AddFailed)
+        _events.emit(HubAddWidgetEvent.AddFailed(reason))
     }
 }

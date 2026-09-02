@@ -1,10 +1,14 @@
 package com.lumenlauncher.app.ui.hub
 
+import com.lumenlauncher.app.data.WidgetPlacementRepository
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.HubDomainState
 import com.lumenlauncher.app.domain.HubWidgetState
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
+import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.CompactWidgetsUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -46,7 +50,15 @@ class HubViewModelTest {
     fun `maps domain widgets into stable UI widgets`() = runTest {
         val observeHubState = mock(ObserveHubStateUseCase::class.java)
         `when`(observeHubState()).thenReturn(flowOf(HubDomainState(widgets = listOf(widget(id = 1)))))
-        val viewModel = HubViewModel(observeHubState, mock(AppWidgetRepository::class.java), mock(DeleteWidgetUseCase::class.java))
+        val viewModel = HubViewModel(
+            observeHubState,
+            mock(AppWidgetRepository::class.java),
+            mock(WidgetPlacementRepository::class.java),
+            mock(DeleteWidgetUseCase::class.java),
+            ResolveWidgetDropUseCase(),
+            ResizeWidgetUseCase(),
+            CompactWidgetsUseCase(),
+        )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -61,7 +73,15 @@ class HubViewModelTest {
     fun `an orphaned domain widget maps through with no label`() = runTest {
         val observeHubState = mock(ObserveHubStateUseCase::class.java)
         `when`(observeHubState()).thenReturn(flowOf(HubDomainState(widgets = listOf(widget(id = 1, orphaned = true)))))
-        val viewModel = HubViewModel(observeHubState, mock(AppWidgetRepository::class.java), mock(DeleteWidgetUseCase::class.java))
+        val viewModel = HubViewModel(
+            observeHubState,
+            mock(AppWidgetRepository::class.java),
+            mock(WidgetPlacementRepository::class.java),
+            mock(DeleteWidgetUseCase::class.java),
+            ResolveWidgetDropUseCase(),
+            ResizeWidgetUseCase(),
+            CompactWidgetsUseCase(),
+        )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -74,7 +94,15 @@ class HubViewModelTest {
     fun `isEmpty and isAtCapacity reflect the widget count`() = runTest {
         val observeHubState = mock(ObserveHubStateUseCase::class.java)
         `when`(observeHubState()).thenReturn(flowOf(HubDomainState(widgets = emptyList())))
-        val viewModel = HubViewModel(observeHubState, mock(AppWidgetRepository::class.java), mock(DeleteWidgetUseCase::class.java))
+        val viewModel = HubViewModel(
+            observeHubState,
+            mock(AppWidgetRepository::class.java),
+            mock(WidgetPlacementRepository::class.java),
+            mock(DeleteWidgetUseCase::class.java),
+            ResolveWidgetDropUseCase(),
+            ResizeWidgetUseCase(),
+            CompactWidgetsUseCase(),
+        )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -87,7 +115,15 @@ class HubViewModelTest {
         val observeHubState = mock(ObserveHubStateUseCase::class.java)
         `when`(observeHubState()).thenReturn(flowOf(HubDomainState(widgets = emptyList())))
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
-        val viewModel = HubViewModel(observeHubState, appWidgetRepository, mock(DeleteWidgetUseCase::class.java))
+        val viewModel = HubViewModel(
+            observeHubState,
+            appWidgetRepository,
+            mock(WidgetPlacementRepository::class.java),
+            mock(DeleteWidgetUseCase::class.java),
+            ResolveWidgetDropUseCase(),
+            ResizeWidgetUseCase(),
+            CompactWidgetsUseCase(),
+        )
 
         viewModel.onHubVisible()
         verify(appWidgetRepository).startListening()

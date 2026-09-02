@@ -20,27 +20,21 @@ class ResizeWidgetUseCaseTest {
     )
 
     @Test
-    fun `growing within the provider minimum and without overlap is accepted`() {
+    fun `growing without overlap is accepted`() {
         val existing = listOf(placement(id = 1, row = 0, col = 0, colSpan = 1, rowSpan = 1))
 
-        val result = useCase(
-            existing, resizingAppWidgetId = 1, row = 0, col = 0,
-            newColSpan = 2, newRowSpan = 2, minColSpan = 1, minRowSpan = 1,
-        )
+        val result = useCase(existing, resizingAppWidgetId = 1, row = 0, col = 0, newColSpan = 2, newRowSpan = 2)
 
         assertTrue(result)
     }
 
     @Test
-    fun `shrinking below the provider's declared minimum is rejected`() {
+    fun `shrinking below the provider's own declared minimum is still accepted — widgets adapt to whatever size the user picks`() {
         val existing = listOf(placement(id = 1, row = 0, col = 0, colSpan = 2, rowSpan = 2))
 
-        val result = useCase(
-            existing, resizingAppWidgetId = 1, row = 0, col = 0,
-            newColSpan = 1, newRowSpan = 1, minColSpan = 2, minRowSpan = 2,
-        )
+        val result = useCase(existing, resizingAppWidgetId = 1, row = 0, col = 0, newColSpan = 1, newRowSpan = 1)
 
-        assertFalse(result)
+        assertTrue(result)
     }
 
     @Test
@@ -52,10 +46,7 @@ class ResizeWidgetUseCaseTest {
         )
 
         // When widget 1 tries to grow into widget 2's cell
-        val result = useCase(
-            existing, resizingAppWidgetId = 1, row = 0, col = 0,
-            newColSpan = 2, newRowSpan = 1, minColSpan = 1, minRowSpan = 1,
-        )
+        val result = useCase(existing, resizingAppWidgetId = 1, row = 0, col = 0, newColSpan = 2, newRowSpan = 1)
 
         assertFalse(result)
     }
@@ -66,7 +57,7 @@ class ResizeWidgetUseCaseTest {
 
         val result = useCase(
             existing, resizingAppWidgetId = 1, row = 0, col = HUB_COLUMNS - 1,
-            newColSpan = 2, newRowSpan = 1, minColSpan = 1, minRowSpan = 1,
+            newColSpan = 2, newRowSpan = 1,
         )
 
         assertFalse(result)

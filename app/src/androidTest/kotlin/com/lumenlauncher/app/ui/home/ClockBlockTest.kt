@@ -169,4 +169,32 @@ class ClockBlockTest {
         }
         composeRule.onNodeWithText("9:05").assertExists()
     }
+
+    @Test
+    fun onlyTheFirstThreeUpcomingEventsRender() {
+        // Given five still-relevant events, chronologically ordered (as CalendarRepository hands them)
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val events = (1..5).map { i ->
+            CalendarEvent(
+                id = i.toLong(),
+                calendarId = "1",
+                title = "Event $i",
+                startTimeMillis = Instant.parse("2026-08-27T1${i}:00:00Z").toEpochMilli(),
+                endTimeMillis = Instant.parse("2026-08-27T1${i}:30:00Z").toEpochMilli(),
+                isAllDay = false,
+            )
+        }
+
+        // When the ClockBlock is composed with all five
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, events = events) }
+        }
+
+        // Then only the first three (soonest) render, not the whole day's agenda
+        composeRule.onNodeWithText("Event 1").assertExists()
+        composeRule.onNodeWithText("Event 2").assertExists()
+        composeRule.onNodeWithText("Event 3").assertExists()
+        composeRule.onNodeWithText("Event 4").assertDoesNotExist()
+        composeRule.onNodeWithText("Event 5").assertDoesNotExist()
+    }
 }

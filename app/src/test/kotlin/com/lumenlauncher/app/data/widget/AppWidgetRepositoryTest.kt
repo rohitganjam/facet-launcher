@@ -3,6 +3,7 @@ package com.lumenlauncher.app.data.widget
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
+import android.content.IntentSender
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -44,29 +45,29 @@ class AppWidgetRepositoryTest {
     }
 
     @Test
-    fun `createConfigureIntent returns null when the provider declares no configure activity`() {
+    fun `createConfigureIntentSender returns null when the provider declares no configure activity`() {
         // Given a provider with no configure component
         val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java))
         val provider = AppWidgetProviderInfo().apply { configure = null }
 
         // Then no configure step is needed
-        assertNull(repository.createConfigureIntent(appWidgetId = 7, provider = provider))
+        assertNull(repository.createConfigureIntentSender(appWidgetId = 7, provider = provider))
     }
 
     @Test
-    fun `createConfigureIntent targets the provider's own configure activity when declared`() {
-        // Given a provider that declares a configure activity
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java))
+    fun `createConfigureIntentSender delegates to the host's own permission-scoped sender when a configure activity is declared`() {
+        // Given a provider that declares a configure activity, and the host's own IntentSender for it
+        // (must come from AppWidgetHost, not a bare Intent — a configure Activity is very often not
+        // exported, e.g. Slack's, and a bare Intent hits the OS's exported-Activity check and crashes)
+        val host = mock(LauncherAppWidgetHost::class.java)
+        val sender = mock(IntentSender::class.java)
+        `when`(host.configureIntentSender(7)).thenReturn(sender)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host)
         val configureComponent = ComponentName("com.example.widgets", ".ConfigureActivity")
         val provider = AppWidgetProviderInfo().apply { configure = configureComponent }
 
-        // When building the configure intent
-        val intent = repository.createConfigureIntent(appWidgetId = 7, provider = provider)
-
-        // Then it targets that exact activity, carrying the widget id
-        assertEquals(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE, intent?.action)
-        assertEquals(configureComponent, intent?.component)
-        assertEquals(7, intent?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1))
+        // Then it returns exactly the host's sender for this widget id
+        assertEquals(sender, repository.createConfigureIntentSender(appWidgetId = 7, provider = provider))
     }
 
     @Test

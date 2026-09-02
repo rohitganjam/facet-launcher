@@ -3,6 +3,8 @@ package com.lumenlauncher.app.ui.drawer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -148,12 +150,55 @@ class AppDrawerScreenTest {
             }
         }
 
-        // When the left-edge zone is dragged from top to bottom
+        // When the left-edge zone is dragged from top to bottom — now requires a drag past
+        // slop, which swipeDown() correctly provides
         composeRule.onNodeWithTag("left_edge_letter_jump_zone").performTouchInput { swipeDown() }
 
         // Then the last letter's header is scrolled into view, same as the right rail
         composeRule.onNodeWithTag("header_Z").assertExists()
         composeRule.onNodeWithText("Z App").assertExists()
+    }
+
+    @Test
+    fun leftEdgeTouchWithoutDragDoesNotScroll() {
+        // Given a drawer, scrolled away from the top
+        composeRule.setContent {
+            LumenLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {})
+            }
+        }
+        composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeUp() }
+        composeRule.onNodeWithTag("header_A").assertIsNotDisplayed()
+
+        // When tapping (touch down + up without movement) the left-edge zone
+        composeRule.onNodeWithTag("left_edge_letter_jump_zone").performTouchInput {
+            down(center)
+            up()
+        }
+
+        // Then it does not scroll back to the top (letter A) — requires a drag
+        composeRule.onNodeWithTag("header_A").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun rightRailTouchWithoutDragStillScrolls() {
+        // Given a drawer, scrolled away from the top
+        composeRule.setContent {
+            LumenLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {})
+            }
+        }
+        composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeUp() }
+        composeRule.onNodeWithTag("header_A").assertIsNotDisplayed()
+
+        // When tapping the right rail
+        composeRule.onNodeWithTag("alphabet_rail").performTouchInput {
+            down(topCenter)
+            up()
+        }
+
+        // Then it still activates immediately on touch, jumping back to the top
+        composeRule.onNodeWithTag("header_A").assertIsDisplayed()
     }
 
     @Test

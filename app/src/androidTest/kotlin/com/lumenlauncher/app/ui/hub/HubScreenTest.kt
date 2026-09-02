@@ -18,6 +18,9 @@ import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.HUB_MAX_WIDGETS
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
+import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.CompactWidgetsUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -44,7 +47,11 @@ class HubScreenTest {
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),
                     appWidgetRepository,
+                    widgetPlacementRepository,
                     DeleteWidgetUseCase(widgetPlacementRepository, appWidgetRepository),
+                    ResolveWidgetDropUseCase(),
+                    ResizeWidgetUseCase(),
+                    CompactWidgetsUseCase(),
                 )
             }
             LumenLauncherTheme {

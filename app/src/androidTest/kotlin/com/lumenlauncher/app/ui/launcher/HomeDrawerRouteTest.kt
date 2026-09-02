@@ -7,15 +7,20 @@ import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.center
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
@@ -45,6 +50,7 @@ import com.lumenlauncher.app.data.UsageAccessRepository
 import com.lumenlauncher.app.data.UsageStatsRepository
 import com.lumenlauncher.app.data.WidgetPlacementRepository
 import com.lumenlauncher.app.data.local.LumenDatabase
+import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
@@ -54,11 +60,15 @@ import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
+import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.CompactWidgetsUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 
@@ -79,7 +89,7 @@ class HomeDrawerRouteTest {
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
     }
 
-    private fun setContent() {
+    private fun setContent(seedHubWithOneWidget: Boolean = false) {
         composeRule.setContent {
             val context = LocalContext.current
             val homeViewModel = remember {
@@ -157,6 +167,21 @@ class HomeDrawerRouteTest {
             val hubViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
+                if (seedHubWithOneWidget) {
+                    runBlocking {
+                        widgetPlacementRepository.upsert(
+                            WidgetPlacementEntity(
+                                appWidgetId = 1,
+                                providerPackageName = "com.example.widgets",
+                                providerClassName = ".Provider",
+                                row = 0,
+                                col = 0,
+                                colSpan = 1,
+                                rowSpan = 1,
+                            ),
+                        )
+                    }
+                }
                 val appWidgetRepository = AppWidgetRepository(
                     context,
                     AppWidgetManager.getInstance(context),
@@ -165,7 +190,11 @@ class HomeDrawerRouteTest {
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),
                     appWidgetRepository,
+                    widgetPlacementRepository,
                     DeleteWidgetUseCase(widgetPlacementRepository, appWidgetRepository),
+                    ResolveWidgetDropUseCase(),
+                    ResizeWidgetUseCase(),
+                    CompactWidgetsUseCase(),
                 )
             }
 
@@ -177,7 +206,6 @@ class HomeDrawerRouteTest {
                     onNavigateToProfileCarousel = {},
                     onNavigateToEditProfile = {},
                     onNavigateToUsageAccessExplanation = {},
-                    onNavigateToHubWidgetPicker = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
@@ -451,5 +479,111 @@ class HomeDrawerRouteTest {
 
         // Then the sheet never opens
         composeRule.onNodeWithTag("long_press_sheet").assertDoesNotExist()
+    }
+
+    @Test
+    fun draggingAGrabbedHubWidgetDoesNotAlsoCloseTheHub() {
+        // Given the Hub is open with one widget placed
+        setContent(seedHubWithOneWidget = true)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        settleAnimation()
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
+
+        // When that widget is long-pressed and dragged left — the same direction a swipe-to-close
+        // would use — regression guard: the tile's own gesture must consume the pointer stream so
+        // the ancestor Home<->Hub swipe-axis never also reacts to it
+        composeRule.onNodeWithTag("hub_widget_tile_1").performTouchInput { down(center) }
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("hub_widget_tile_1").performTouchInput {
+            moveTo(center - Offset(80f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the Hub is still open — the drag moved/bounced the widget, not the surface
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun addingAWidgetOverlaysTheHubAndReturnsToItStillOpen() {
+        // Given the Hub is open
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        settleAnimation()
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
+
+        // When Add is tapped — the picker must load as an overlay ON TOP of Hub (a real NavHost
+        // destination here would tear down this whole composable instead, resetting hubAxis and
+        // losing Hub's own open state — see chat history)
+        composeRule.onNodeWithTag("hub_add_button").performClick()
+        settleAnimation()
+
+        // Then the picker is showing, and Hub is still composed underneath it (not replaced)
+        composeRule.onNodeWithTag("hub_widget_picker_overlay").assertIsDisplayed()
+        composeRule.onNodeWithTag("hub_screen").assertExists()
+
+        // When the picker is dismissed via its own back button
+        composeRule.onNodeWithTag("back_button").performClick()
+        settleAnimation()
+
+        // Then it's back to the Hub, which is still open (not reset to closed)
+        composeRule.onNodeWithTag("hub_widget_picker_overlay").assertDoesNotExist()
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun closingDrawerResetsSearchQueryAndScrollPosition() {
+        // Given the drawer is open with a search query and scrolled down
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        
+        val query = "TestQuery"
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput(query)
+        composeRule.onNodeWithTag("drawer_search_results").performTouchInput { swipeUp() }
+        
+        // When the drawer is closed (using swipe down since pressBack is flaky in this env)
+        composeRule.onNodeWithTag("drawer_search_results").performTouchInput { swipeDown() }
+        settleAnimation()
+        
+        // Then it resets state when opened again
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        
+        composeRule.onNodeWithText(query).assertDoesNotExist()
+        // Verify it's back at the top - "A App" header should be visible
+        composeRule.onNodeWithTag("header_A").assertIsDisplayed()
+    }
+
+    @Test
+    fun launchingAppFromDrawerClosesDrawerAndResetsState() {
+        // Given the drawer is open with a search query
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        
+        // Search for "A" so "A App" is visible and clickable
+        val query = "A"
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput(query)
+        
+        // When an app is clicked
+        composeRule.onNodeWithTag("drawer_app_row_com.example.A").performClick()
+        settleAnimation()
+        
+        // Then the drawer is closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+        
+        // And it resets state when opened again
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        
+        // The search field should not contain the query "A"
+        // We check that the search field does not have the text "A" 
+        // (but it might have the placeholder "Search apps", so we check for exact text match of the query)
+        // Using assertDoesNotExist on the query string itself is risky if it's "A", 
+        // so we check the field's semantics.
+        composeRule.onNodeWithTag("drawer_search_field").assert(hasText(""))
+        composeRule.onNodeWithTag("header_A").assertIsDisplayed()
     }
 }
