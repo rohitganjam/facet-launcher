@@ -63,6 +63,14 @@ class ProfileCarouselScreenTest {
                 val appRepository = AppRepository(launcherApps)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
+                val usageStatsRepository = com.lumenlauncher.app.data.UsageStatsRepository(
+                    context.getSystemService(android.app.usage.UsageStatsManager::class.java),
+                    appRepository
+                )
+                val usageAccessRepository = com.lumenlauncher.app.data.UsageAccessRepository(
+                    context.getSystemService(android.app.AppOpsManager::class.java),
+                    context
+                )
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
                 runBlocking { seed(profileRepository, settingsRepository) }
                 runBlocking { seedApps(appRepository, favoriteAppRepository, dockAppRepository) }
@@ -70,7 +78,14 @@ class ProfileCarouselScreenTest {
                     profileRepository,
                     settingsRepository,
                     dockAppRepository,
-                    ObserveProfilePreviewsUseCase(profileRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    ObserveProfilePreviewsUseCase(
+                        profileRepository, 
+                        settingsRepository, 
+                        favoriteAppRepository, 
+                        defaultFavoriteAppRepository,
+                        usageStatsRepository,
+                        usageAccessRepository
+                    ),
                 )
             }
             LumenLauncherTheme {

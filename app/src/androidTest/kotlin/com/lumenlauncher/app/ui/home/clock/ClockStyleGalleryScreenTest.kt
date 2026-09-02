@@ -13,7 +13,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.room.Room
+import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
@@ -33,12 +37,14 @@ class ClockStyleGalleryScreenTest {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
+                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
+                val profileRepository = ProfileRepository(database.profileDao())
                 settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "clock-style-gallery-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                ClockStyleGalleryViewModel(settingsRepository)
+                ClockStyleGalleryViewModel(SavedStateHandle(), settingsRepository, profileRepository)
             }
             LumenLauncherTheme {
                 ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)

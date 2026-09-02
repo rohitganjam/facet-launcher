@@ -6,7 +6,7 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [ProfileEntity::class, FavoriteAppEntity::class, DockAppEntity::class, DefaultFavoriteAppEntity::class, WidgetPlacementEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

@@ -2,6 +2,9 @@ package com.lumenlauncher.app.data
 
 import com.lumenlauncher.app.data.local.ProfileDao
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ListContentMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -43,24 +46,68 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(name = newName))
     }
 
-    /** `null` reverts this profile to inheriting the global default. */
-    suspend fun setUse24HourTimeOverride(profile: ProfileEntity, override: Boolean?) {
-        profileDao.upsert(profile.copy(use24HourTimeOverride = override))
+    /** Reverts this profile to inheriting the global default or switches to overriding. */
+    suspend fun setOverrideClock(profile: ProfileEntity, overriding: Boolean) {
+        profileDao.upsert(profile.copy(overrideClock = overriding))
     }
 
-    /** `null` reverts this profile to inheriting the global default. */
-    suspend fun setShowAllDayEventsOverride(profile: ProfileEntity, override: Boolean?) {
-        profileDao.upsert(profile.copy(showAllDayEventsOverride = override))
+    suspend fun setClockTemplateId(profile: ProfileEntity, id: ClockTemplateId) {
+        profileDao.upsert(profile.copy(clockTemplateId = id))
     }
 
-    /** `null` reverts this profile to inheriting the global default. */
-    suspend fun setListContentModeOverride(profile: ProfileEntity, override: ListContentMode?) {
-        profileDao.upsert(profile.copy(listContentModeOverride = override))
+    suspend fun setClockFontOption(profile: ProfileEntity, option: ClockFontOption) {
+        profileDao.upsert(profile.copy(clockFontOption = option))
     }
 
-    /** `null` reverts this profile to inheriting the global default; otherwise coerced into README's `3d` 4…8 range. */
-    suspend fun setAppsToShowCountOverride(profile: ProfileEntity, override: Int?) {
-        profileDao.upsert(profile.copy(appsToShowCountOverride = override?.coerceIn(4, 8)))
+    suspend fun setClockColorOption(profile: ProfileEntity, option: ClockColorOption) {
+        profileDao.upsert(profile.copy(clockColorOption = option))
+    }
+
+    suspend fun setUse24HourTime(profile: ProfileEntity, enabled: Boolean) {
+        profileDao.upsert(profile.copy(use24HourTime = enabled))
+    }
+
+    suspend fun setClockShowMeridiem(profile: ProfileEntity, enabled: Boolean) {
+        profileDao.upsert(profile.copy(clockShowMeridiem = enabled))
+    }
+
+    /**
+     * Seeds the profile's clock settings from effective values and toggles the override flag.
+     * Atomic upsert to avoid clobbering.
+     */
+    suspend fun updateOverridingClock(
+        profile: ProfileEntity,
+        overriding: Boolean,
+        templateId: ClockTemplateId,
+        fontOption: ClockFontOption,
+        colorOption: ClockColorOption,
+        use24HourTime: Boolean,
+        showMeridiem: Boolean,
+    ) {
+        profileDao.upsert(
+            profile.copy(
+                overrideClock = overriding,
+                clockTemplateId = templateId,
+                clockFontOption = fontOption,
+                clockColorOption = colorOption,
+                use24HourTime = use24HourTime,
+                clockShowMeridiem = showMeridiem,
+            ),
+        )
+    }
+
+    /** Reverts this profile to inheriting the global default or switches to overriding. */
+    suspend fun setOverrideApps(profile: ProfileEntity, overriding: Boolean) {
+        profileDao.upsert(profile.copy(overrideApps = overriding))
+    }
+
+    suspend fun setListContentMode(profile: ProfileEntity, mode: ListContentMode) {
+        profileDao.upsert(profile.copy(listContentMode = mode))
+    }
+
+    /** Coerced into README's `3d` 4…8 range. */
+    suspend fun setAppsToShowCount(profile: ProfileEntity, count: Int) {
+        profileDao.upsert(profile.copy(appsToShowCount = count.coerceIn(4, 8)))
     }
 
     suspend fun setOverridingFavorites(profile: ProfileEntity, overriding: Boolean) {
@@ -68,22 +115,45 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
     }
 
     /**
-     * The Apps card's single Inherit/Override switch — sets list content mode, apps-to-show,
-     * and the favorites-override flag together in **one** [ProfileDao.upsert] call. Deliberately
-     * not three separate calls to the setters above: each of those does a full-row `INSERT OR
-     * REPLACE` from whatever [ProfileEntity] snapshot it's handed, so three sequential calls
-     * built from the *same* (now-stale-after-the-first-write) snapshot silently clobber each
-     * other — every call after the first undoes the previous one's field change, leaving only
-     * the last call's own field actually persisted. That was a real, shipped bug: switching to
-     * Override looked like it did nothing because the mode-override write was immediately wiped
-     * out by the very next (apps-to-show) write built from the same stale profile.
+     * Seeds the profile's app settings from effective values and toggles the override flags.
+     * Atomic upsert to avoid clobbering.
      */
-    suspend fun setOverridingApps(profile: ProfileEntity, overriding: Boolean, effectiveMode: ListContentMode, effectiveAppsToShowCount: Int) {
+    suspend fun updateOverridingApps(
+        profile: ProfileEntity,
+        overriding: Boolean,
+        mode: ListContentMode,
+        count: Int,
+        overridingFavorites: Boolean,
+    ) {
         profileDao.upsert(
             profile.copy(
-                listContentModeOverride = if (overriding) effectiveMode else null,
-                appsToShowCountOverride = if (overriding) effectiveAppsToShowCount.coerceIn(4, 8) else null,
-                overridingFavorites = overriding,
+                overrideApps = overriding,
+                listContentMode = mode,
+                appsToShowCount = count.coerceIn(4, 8),
+                overridingFavorites = overridingFavorites,
+            ),
+        )
+    }
+
+    /** Reverts this profile to inheriting the global default or switches to overriding. */
+    suspend fun setOverrideCalendar(profile: ProfileEntity, overriding: Boolean) {
+        profileDao.upsert(profile.copy(overrideCalendar = overriding))
+    }
+
+    suspend fun setShowAllDayEvents(profile: ProfileEntity, enabled: Boolean) {
+        profileDao.upsert(profile.copy(showAllDayEvents = enabled))
+    }
+
+    /** Seeds and toggles calendar override. */
+    suspend fun updateOverridingCalendar(
+        profile: ProfileEntity,
+        overriding: Boolean,
+        showAllDayEvents: Boolean,
+    ) {
+        profileDao.upsert(
+            profile.copy(
+                overrideCalendar = overriding,
+                showAllDayEvents = showAllDayEvents,
             ),
         )
     }

@@ -113,17 +113,19 @@ fun HomeScreen(
 
         Box(modifier = Modifier.weight(1f))
 
-        val listLabelColor = HomeAppTextColorFaint
-        Text(
-            text = when (listContentMode) {
-                ListContentMode.FAVORITES -> "FAVORITES"
-                ListContentMode.RECENTS -> "RECENTS"
-                ListContentMode.MOST_USED -> "MOST USED"
-            },
-            style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(listLabelColor)),
-            color = listLabelColor,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
+        if (appListItems.isNotEmpty()) {
+            val listLabelColor = HomeAppTextColorFaint
+            Text(
+                text = when (listContentMode) {
+                    ListContentMode.FAVORITES -> "FAVORITES"
+                    ListContentMode.RECENTS -> "RECENTS"
+                    ListContentMode.MOST_USED -> "MOST USED"
+                },
+                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(listLabelColor)),
+                color = listLabelColor,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
         if (showUsageAccessPrompt) {
             UsageAccessStrip(onClick = onUsageAccessPromptClick)
         } else {

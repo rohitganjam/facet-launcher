@@ -115,7 +115,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given a profile set to Recents, usage access granted
         val fixture = Fixture()
         fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, listContentModeOverride = ListContentMode.RECENTS, appsToShowCountOverride =6),
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
         `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(listOf(appInfo('r')))
 
@@ -132,7 +132,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given a profile set to Most Used, usage access granted
         val fixture = Fixture()
         fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, listContentModeOverride = ListContentMode.MOST_USED, appsToShowCountOverride =4),
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED, appsToShowCount = 4),
         )
         `when`(fixture.usageStatsRepository.getMostUsedApps(4)).thenReturn(listOf(appInfo('m')))
 
@@ -149,7 +149,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
         fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, listContentModeOverride = ListContentMode.RECENTS),
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
         )
 
         // When observing home screen state
@@ -181,7 +181,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val event = CalendarEvent(id = 1L, calendarId = "1", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
         `when`(fixture.calendarRepository.getTodayEvents(null, false)).thenReturn(listOf(event))
         fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, showAllDayEventsOverride = false),
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
         )
 
         // When observing home screen state

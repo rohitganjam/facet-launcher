@@ -59,6 +59,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.BackButton
@@ -221,7 +224,11 @@ private fun ProfileCarouselContent(
                     ProfilePreviewPage(
                         profile = profile,
                         favorites = uiState.favoritesByProfileId[profile.id].orEmpty(),
+                        clockTemplateId = uiState.clockTemplateId(profile.id),
+                        clockFontOption = uiState.clockFontOption(profile.id),
+                        clockColorOption = uiState.clockColorOption(profile.id),
                         use24HourTime = uiState.effectiveUse24HourTime(profile.id),
+                        clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
                         dockApps = uiState.dockApps,
                         dockDisplayMode = uiState.dockDisplayMode,
                         modifier = visualModifier
@@ -488,7 +495,11 @@ private fun AddProfileRow(enabled: Boolean, onClick: () -> Unit, modifier: Modif
 private fun ProfilePreviewPage(
     profile: ProfileEntity,
     favorites: List<AppInfo>,
+    clockTemplateId: ClockTemplateId,
+    clockFontOption: ClockFontOption,
+    clockColorOption: ClockColorOption,
     use24HourTime: Boolean,
+    clockShowMeridiem: Boolean,
     dockApps: List<AppInfo>,
     dockDisplayMode: DockDisplayMode,
     modifier: Modifier = Modifier,
@@ -512,7 +523,14 @@ private fun ProfilePreviewPage(
         )
 
         Spacer(modifier = Modifier.height(28.dp))
-        ClockBlock(use24HourTime = use24HourTime, modifier = Modifier.align(Alignment.Start))
+        ClockBlock(
+            use24HourTime = use24HourTime,
+            templateId = clockTemplateId,
+            fontOption = clockFontOption,
+            colorOption = clockColorOption,
+            showMeridiem = clockShowMeridiem,
+            modifier = Modifier.align(Alignment.Start)
+        )
 
         Spacer(modifier = Modifier.weight(1f))
 

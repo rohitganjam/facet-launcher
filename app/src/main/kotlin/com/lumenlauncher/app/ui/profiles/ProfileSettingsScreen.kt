@@ -165,7 +165,7 @@ private fun ProfileSettingsContent(
                 overriding = uiState.isOverridingClock,
                 onOverridingChanged = onOverridingClockChanged,
                 testTagPrefix = "profile_clock",
-                inheritSubtitle = "Light stack · " + if (uiState.globalUse24HourTime) "24-hour time" else "12-hour time",
+                inheritSubtitle = "${uiState.globalClockTemplateId.name.replace("_", " ")} · ${if (uiState.globalUse24HourTime) "24-hour" else "12-hour"} time",
             )
         }
         item { Spacer(modifier = Modifier.height(12.dp)) }
@@ -173,7 +173,7 @@ private fun ProfileSettingsContent(
             SettingsCard {
                 ClickableRow(
                     title = "Clock style",
-                    subtitle = "Inherits default · Light stack — tap to preview (not saved)",
+                    subtitle = if (uiState.isOverridingClock) "Overriding defaults · tap to edit" else "Inherits default · Light stack · tap to preview",
                     onClick = onClockStyleClick,
                     testTag = "profile_clock_style_gallery_row",
                     trailing = { NavigationChevron() },

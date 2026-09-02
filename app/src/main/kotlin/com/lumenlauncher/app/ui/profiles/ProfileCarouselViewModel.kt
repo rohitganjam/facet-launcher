@@ -7,7 +7,11 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -21,7 +25,7 @@ data class ProfileCarouselUiState(
     val profiles: List<ProfileEntity> = emptyList(),
     val activeProfileId: Long = 0L,
     val favoritesByProfileId: Map<Long, List<AppInfo>> = emptyMap(),
-    val globalUse24HourTime: Boolean = false,
+    val globalSettings: LauncherSettings = LauncherSettings(),
     // Dock is shared across all profiles (not per-profile — see DockAppRepository), so every
     // preview card renders the same dockApps/dockDisplayMode rather than one entry per profile.
     val dockApps: List<AppInfo> = emptyList(),
@@ -30,9 +34,22 @@ data class ProfileCarouselUiState(
     val canAddProfile: Boolean get() = profiles.size < ProfileRepository.MAX_PROFILES
     val canDeleteProfile: Boolean get() = profiles.size > ProfileRepository.MIN_PROFILES
 
-    /** Each profile can override 24-hour time independently — falls back to the global default when unset. */
+    private fun profile(id: Long) = profiles.find { it.id == id }
+
+    fun clockTemplateId(profileId: Long): ClockTemplateId =
+        profile(profileId)?.let { if (it.overrideClock) it.clockTemplateId else globalSettings.clockTemplateId } ?: globalSettings.clockTemplateId
+
+    fun clockFontOption(profileId: Long): ClockFontOption =
+        profile(profileId)?.let { if (it.overrideClock) it.clockFontOption else globalSettings.clockFontOption } ?: globalSettings.clockFontOption
+
+    fun clockColorOption(profileId: Long): ClockColorOption =
+        profile(profileId)?.let { if (it.overrideClock) it.clockColorOption else globalSettings.clockColorOption } ?: globalSettings.clockColorOption
+
     fun effectiveUse24HourTime(profileId: Long): Boolean =
-        profiles.find { it.id == profileId }?.use24HourTimeOverride ?: globalUse24HourTime
+        profile(profileId)?.let { if (it.overrideClock) it.use24HourTime else globalSettings.use24HourTime } ?: globalSettings.use24HourTime
+
+    fun clockShowMeridiem(profileId: Long): Boolean =
+        profile(profileId)?.let { if (it.overrideClock) it.clockShowMeridiem else globalSettings.clockShowMeridiem } ?: globalSettings.clockShowMeridiem
 }
 
 @HiltViewModel
@@ -53,7 +70,7 @@ class ProfileCarouselViewModel @Inject constructor(
             profiles = profiles,
             activeProfileId = settings.activeProfileId,
             favoritesByProfileId = favoritesByProfileId,
-            globalUse24HourTime = settings.use24HourTime,
+            globalSettings = settings,
             dockApps = dockApps,
             dockDisplayMode = settings.dockDisplayMode,
         )

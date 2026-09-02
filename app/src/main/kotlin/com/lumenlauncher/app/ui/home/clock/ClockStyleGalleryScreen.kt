@@ -63,14 +63,14 @@ import java.time.ZoneId
  */
 @Composable
 fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
-    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ClockStyleGalleryScreen(
         onBack = onBack,
-        templateId = settings.clockTemplateId,
-        fontOption = settings.clockFontOption,
-        colorOption = settings.clockColorOption,
-        use24HourTime = settings.use24HourTime,
-        showMeridiem = settings.clockShowMeridiem,
+        templateId = uiState.templateId,
+        fontOption = uiState.fontOption,
+        colorOption = uiState.colorOption,
+        use24HourTime = uiState.use24HourTime,
+        showMeridiem = uiState.showMeridiem,
         onTemplateSelected = viewModel::setClockTemplateId,
         onFontOptionChanged = viewModel::setClockFontOption,
         onColorOptionChanged = viewModel::setClockColorOption,
@@ -80,30 +80,12 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
 }
 
 /**
- * Profile-scoped entry point (a profile's Clock card) — evaluation only, per direct instruction:
- * local in-memory state, nothing persisted, resets every time the screen is reopened. Doesn't
- * affect Home or any real profile setting.
+ * Profile-scoped entry point (a profile's Clock card) — now uses a ViewModel to persist changes
+ * if the user chooses to override.
  */
 @Composable
-fun ProfileClockStyleGalleryScreen(onBack: () -> Unit) {
-    var templateId by remember { mutableStateOf(ClockTemplateId.LIGHT_STACK) }
-    var fontOption by remember { mutableStateOf(ClockFontOption.SYSTEM) }
-    var colorOption by remember { mutableStateOf(ClockColorOption.INK) }
-    var use24HourTime by remember { mutableStateOf(false) }
-    var showMeridiem by remember { mutableStateOf(false) }
-    ClockStyleGalleryScreen(
-        onBack = onBack,
-        templateId = templateId,
-        fontOption = fontOption,
-        colorOption = colorOption,
-        use24HourTime = use24HourTime,
-        showMeridiem = showMeridiem,
-        onTemplateSelected = { templateId = it },
-        onFontOptionChanged = { fontOption = it },
-        onColorOptionChanged = { colorOption = it },
-        onUse24HourTimeChanged = { use24HourTime = it },
-        onShowMeridiemChanged = { showMeridiem = it },
-    )
+fun ProfileClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
+    ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
 }
 
 /**

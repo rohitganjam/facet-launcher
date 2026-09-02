@@ -9,6 +9,9 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ListContentMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -24,19 +27,27 @@ data class ProfileSettingsUiState(
     val favorites: List<AppInfo> = emptyList(),
     /** The launcher-wide default Favorites list — shown read-only while inheriting. */
     val defaultFavorites: List<AppInfo> = emptyList(),
+    val globalClockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
+    val globalClockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
+    val globalClockColorOption: ClockColorOption = ClockColorOption.INK,
     val globalUse24HourTime: Boolean = false,
+    val globalClockShowMeridiem: Boolean = false,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
     val globalAppsToShowCount: Int = 5,
 ) {
-    /** The Clock card's single inherit/override switch — governs both Clock style and 24-hour time. */
-    val isOverridingClock: Boolean get() = profile?.use24HourTimeOverride != null
-    val effectiveUse24HourTime: Boolean get() = profile?.use24HourTimeOverride ?: globalUse24HourTime
+    /** The Clock card's single inherit/override switch — governs template, font, color, 24h, and meridiem. */
+    val isOverridingClock: Boolean get() = profile?.overrideClock ?: false
+    val clockTemplateId: ClockTemplateId get() = if (isOverridingClock) profile?.clockTemplateId ?: globalClockTemplateId else globalClockTemplateId
+    val clockFontOption: ClockFontOption get() = if (isOverridingClock) profile?.clockFontOption ?: globalClockFontOption else globalClockFontOption
+    val clockColorOption: ClockColorOption get() = if (isOverridingClock) profile?.clockColorOption ?: globalClockColorOption else globalClockColorOption
+    val effectiveUse24HourTime: Boolean get() = if (isOverridingClock) profile?.use24HourTime ?: globalUse24HourTime else globalUse24HourTime
+    val clockShowMeridiem: Boolean get() = if (isOverridingClock) profile?.clockShowMeridiem ?: globalClockShowMeridiem else globalClockShowMeridiem
 
     /** The Apps card's single inherit/override switch — governs list content mode, apps-to-show, and favorites together. */
-    val isOverridingApps: Boolean get() = profile?.listContentModeOverride != null
-    val listContentMode: ListContentMode get() = profile?.listContentModeOverride ?: globalListContentMode
-    val appsToShowCount: Int get() = profile?.appsToShowCountOverride ?: globalAppsToShowCount
-    val effectiveFavorites: List<AppInfo> get() = if (isOverridingApps) favorites else defaultFavorites
+    val isOverridingApps: Boolean get() = profile?.overrideApps ?: false
+    val listContentMode: ListContentMode get() = if (isOverridingApps) profile?.listContentMode ?: globalListContentMode else globalListContentMode
+    val appsToShowCount: Int get() = if (isOverridingApps) profile?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
+    val effectiveFavorites: List<AppInfo> get() = if (profile?.overridingFavorites == true) favorites else defaultFavorites
     val favoritesLabel: String get() = "${effectiveFavorites.size} of ${FavoriteAppRepository.MAX_FAVORITES}"
 }
 
@@ -61,7 +72,11 @@ class ProfileSettingsViewModel @Inject constructor(
             profile = profiles.find { it.id == profileId },
             favorites = favorites,
             defaultFavorites = defaultFavorites,
+            globalClockTemplateId = settings.clockTemplateId,
+            globalClockFontOption = settings.clockFontOption,
+            globalClockColorOption = settings.clockColorOption,
             globalUse24HourTime = settings.use24HourTime,
+            globalClockShowMeridiem = settings.clockShowMeridiem,
             globalListContentMode = settings.listContentMode,
             globalAppsToShowCount = settings.appsToShowCount,
         )
@@ -75,46 +90,56 @@ class ProfileSettingsViewModel @Inject constructor(
     /** Switching to Override seeds the profile's stored value with the current effective one; switching back to Inherit clears it. */
     fun setOverridingClock(overriding: Boolean) {
         val profile = uiState.value.profile ?: return
-        val newOverride = if (overriding) uiState.value.effectiveUse24HourTime else null
-        viewModelScope.launch { profileRepository.setUse24HourTimeOverride(profile, newOverride) }
+        val state = uiState.value
+        viewModelScope.launch {
+            profileRepository.updateOverridingClock(
+                profile = profile,
+                overriding = overriding,
+                templateId = state.clockTemplateId,
+                fontOption = state.clockFontOption,
+                colorOption = state.clockColorOption,
+                use24HourTime = state.effectiveUse24HourTime,
+                showMeridiem = state.clockShowMeridiem,
+            )
+        }
     }
 
     fun setUse24HourTimeOverride(enabled: Boolean) {
         val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setUse24HourTimeOverride(profile, enabled) }
+        viewModelScope.launch { profileRepository.setUse24HourTime(profile, enabled) }
     }
 
     /**
      * The Apps card's single Inherit/Override switch — governs list content mode, apps-to-show,
-     * and favorites as one unit (matching the single card this drives; see `AppsSection` in
-     * `ProfileSettingsScreen.kt`). Switching to Override seeds all three with this profile's
-     * current effective values (mode/count as-is, favorites as a copy of the default list) so
-     * the card doesn't suddenly go empty; switching back to Inherit clears the mode/count
-     * override and stops using this profile's own favorites — its own favorites rows are left
-     * alone rather than deleted, so they're still there if this profile overrides again later.
-     * Delegates the profile-row write to [ProfileRepository.setOverridingApps] as one atomic
-     * upsert — see that method's doc for why splitting this into several sequential setter calls
-     * (each doing its own full-row replace) doesn't work.
+     * and favorites as one unit. Switching to Override seeds all three with current effective 
+     * values (including copying the default favorites list if the profile's own list is empty) 
+     * so the card doesn't suddenly go empty.
      */
     fun setOverridingApps(overriding: Boolean) {
         val profile = uiState.value.profile ?: return
         val state = uiState.value
         viewModelScope.launch {
-            if (overriding) {
+            if (overriding && state.favorites.isEmpty()) {
                 favoriteAppRepository.replaceFavorites(profileId, state.defaultFavorites)
             }
-            profileRepository.setOverridingApps(profile, overriding, state.listContentMode, state.appsToShowCount)
+            profileRepository.updateOverridingApps(
+                profile = profile,
+                overriding = overriding,
+                mode = state.listContentMode,
+                count = state.appsToShowCount,
+                overridingFavorites = overriding,
+            )
         }
     }
 
     fun setListContentMode(mode: ListContentMode) {
         val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setListContentModeOverride(profile, mode) }
+        viewModelScope.launch { profileRepository.setListContentMode(profile, mode) }
     }
 
     fun setAppsToShowCount(count: Int) {
         val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setAppsToShowCountOverride(profile, count) }
+        viewModelScope.launch { profileRepository.setAppsToShowCount(profile, count) }
     }
 
     /** Drag-reorder only — adding/removing favorites happens on the picker screen, not here. */

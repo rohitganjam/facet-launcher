@@ -2,6 +2,9 @@ package com.lumenlauncher.app.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ListContentMode
 
 @Entity(tableName = "profiles")
@@ -9,14 +12,27 @@ data class ProfileEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val position: Int,
-    /** `null` = inherit the global [com.lumenlauncher.app.data.model.LauncherSettings] default; non-null = this profile's override. */
-    val use24HourTimeOverride: Boolean? = null,
-    val showAllDayEventsOverride: Boolean? = null,
-    /** `null` = inherit the global [com.lumenlauncher.app.data.model.LauncherSettings] default (Settings → "Default apps list"); non-null = this profile's own override. */
-    val listContentModeOverride: ListContentMode? = null,
-    /** Only meaningful when the effective mode isn't [ListContentMode.FAVORITES]. Range 4…8 per README's `3d` spec. `null` = inherit. */
-    val appsToShowCountOverride: Int? = null,
-    /** `false` = this profile shows the launcher-wide default Favorites list (Settings → "Default
-     * favorites"); `true` = its own list, managed in [com.lumenlauncher.app.data.FavoriteAppRepository]. */
+
+    // Clock section
+    val overrideClock: Boolean = false,
+    val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
+    val clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
+    val clockColorOption: ClockColorOption = ClockColorOption.INK,
+    val use24HourTime: Boolean = false,
+    val clockShowMeridiem: Boolean = false,
+
+    // Apps section
+    val overrideApps: Boolean = false,
+    val listContentMode: ListContentMode = ListContentMode.FAVORITES,
+    val appsToShowCount: Int = 5,
+    /** 
+     * Independent of [overrideApps] flag for the mode/count, but typically switched 
+     * together in the UI (see [com.lumenlauncher.app.ui.profiles.ProfileSettingsViewModel.setOverridingApps]).
+     * [false] = use global default favorites; [true] = use this profile's own list.
+     */
     val overridingFavorites: Boolean = false,
+
+    // Calendar section
+    val overrideCalendar: Boolean = false,
+    val showAllDayEvents: Boolean = true,
 )

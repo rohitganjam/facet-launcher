@@ -108,8 +108,8 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
     private fun observeAppListItems(profile: ProfileEntity?, settings: LauncherSettings): Flow<List<AppInfo>> {
         if (profile == null) return flowOf(emptyList())
-        val mode = profile.listContentModeOverride ?: settings.listContentMode
-        val appsToShowCount = profile.appsToShowCountOverride ?: settings.appsToShowCount
+        val mode = if (profile.overrideApps) profile.listContentMode else settings.listContentMode
+        val appsToShowCount = if (profile.overrideApps) profile.appsToShowCount else settings.appsToShowCount
         return when {
             mode == ListContentMode.FAVORITES && profile.overridingFavorites -> favoriteAppRepository.observeFavoritesForProfile(profile.id)
             mode == ListContentMode.FAVORITES -> defaultFavoriteAppRepository.observeDefaultFavorites()
@@ -121,7 +121,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
     private fun observeCalendarEvents(profile: ProfileEntity?, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
-        val includeAllDay = profile?.showAllDayEventsOverride ?: settings.showAllDayEvents
+        val includeAllDay = if (profile?.overrideCalendar == true) profile.showAllDayEvents else settings.showAllDayEvents
         return flow { emit(calendarRepository.getTodayEvents(settings.selectedCalendarIds, includeAllDay)) }
     }
 }

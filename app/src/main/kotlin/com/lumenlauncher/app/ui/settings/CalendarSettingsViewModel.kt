@@ -37,8 +37,8 @@ data class CalendarSettingsUiState(
     val globalCalendarColorOption: ClockColorOption = ClockColorOption.INK,
 ) {
     val isProfileScoped: Boolean get() = profile != null
-    val isOverriding: Boolean get() = profile?.showAllDayEventsOverride != null
-    val effectiveShowAllDayEvents: Boolean get() = profile?.showAllDayEventsOverride ?: globalShowAllDayEvents
+    val isOverriding: Boolean get() = profile?.overrideCalendar ?: false
+    val effectiveShowAllDayEvents: Boolean get() = if (isOverriding) profile?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
     fun isCalendarSelected(calendarId: String): Boolean = selectedCalendarIds?.let { calendarId in it } ?: true
 }
 
@@ -109,7 +109,7 @@ class CalendarSettingsViewModel @Inject constructor(
         val profile = uiState.value.profile
         viewModelScope.launch {
             if (profile != null) {
-                profileRepository.setShowAllDayEventsOverride(profile, enabled)
+                profileRepository.setShowAllDayEvents(profile, enabled)
             } else {
                 settingsRepository.setShowAllDayEvents(enabled)
             }
@@ -119,8 +119,13 @@ class CalendarSettingsViewModel @Inject constructor(
     /** Switching to Override seeds the profile's stored value with the current effective one; switching back to Inherit clears it. */
     fun setOverriding(overriding: Boolean) {
         val profile = uiState.value.profile ?: return
-        val newOverride = if (overriding) uiState.value.effectiveShowAllDayEvents else null
-        viewModelScope.launch { profileRepository.setShowAllDayEventsOverride(profile, newOverride) }
+        viewModelScope.launch {
+            profileRepository.updateOverridingCalendar(
+                profile = profile,
+                overriding = overriding,
+                showAllDayEvents = uiState.value.effectiveShowAllDayEvents,
+            )
+        }
     }
 
     /** Toggling one calendar materializes an implicit "all selected" (`null`) into an explicit set first. */

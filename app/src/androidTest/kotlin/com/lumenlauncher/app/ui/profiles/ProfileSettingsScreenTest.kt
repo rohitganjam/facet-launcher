@@ -166,14 +166,12 @@ class ProfileSettingsScreenTest {
         composeRule.onNodeWithTag("rename_dialog_field").performTextReplacement("Work")
         composeRule.onNodeWithTag("rename_dialog_save").performClick()
 
-        // Then the new name is reflected, both on screen and in the repository — the merged
-        // semantics tree can fold the title's EditableText-bearing node in a way onNodeWithText
-        // won't match by default, so check the unmerged tree directly. Also now ambiguous on its
-        // own: the Rename card's subtitle shows the same new name, so two nodes legitimately
-        // match "Work" — onAllNodesWithText rather than the singular onNodeWithText.
-        assert(composeRule.onAllNodesWithText("Work", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+        // Then the new name is reflected, both on screen and in the repository.
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().first().name == "Work" }
+            composeRule.onAllNodesWithText("Work", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        runBlocking { 
+            assertEquals("Work", profileRepository.observeProfiles().first().first().name)
         }
     }
 
@@ -243,14 +241,14 @@ class ProfileSettingsScreenTest {
         composeRule.onNodeWithTag("app_list_content_row_option_MOST_USED").assertExists().assertIsEnabled()
         composeRule.onNodeWithTag("app_list_content_row_option_MOST_USED").performClick()
 
-        // Then the selection is reflected on screen and persisted to the profile's own override
+        // Then the selection is reflected on screen and persisted to the profile
         // — poll rather than trust a single waitForIdle() caught it, since the write is real
         // Room I/O (upsert -> Flow re-emission -> recomposition), not just a Compose state change
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithText("Most used").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().first().listContentModeOverride == ListContentMode.MOST_USED }
+            runBlocking { profileRepository.observeProfiles().first().first().listContentMode == ListContentMode.MOST_USED }
         }
     }
 
@@ -287,9 +285,9 @@ class ProfileSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("apps_to_show_row_option_7").performClick()
 
-        // Then it persists on the profile's own override
+        // Then it persists on the profile
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().first().appsToShowCountOverride == 7 }
+            runBlocking { profileRepository.observeProfiles().first().first().appsToShowCount == 7 }
         }
     }
 
@@ -323,9 +321,9 @@ class ProfileSettingsScreenTest {
         }
         composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").performClick()
 
-        // Then the profile's own override is persisted (not the global default)
+        // Then the profile's own value is persisted
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().first().use24HourTimeOverride == true }
+            runBlocking { profileRepository.observeProfiles().first().first().use24HourTime == true }
         }
     }
 
