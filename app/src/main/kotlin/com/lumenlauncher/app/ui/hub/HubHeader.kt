@@ -40,14 +40,16 @@ fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick:
         Column {
             Text(
                 text = "Lumen Hub",
-                style = MaterialTheme.typography.titleMedium.copy(
+                // headlineSmall to match Settings' own header size (see chat history) — was
+                // titleMedium, which read small next to every other screen's title.
+                style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     shadow = homeAppLabelShadow(HomeAppTextColor),
                 ),
                 color = HomeAppTextColor,
             )
             Text(
-                text = "$widgetCount of $HUB_MAX_WIDGETS widgets · $columns columns",
+                text = "$widgetCount of $HUB_MAX_WIDGETS widgets",
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
                 color = HomeAppTextColorFaint,
                 modifier = Modifier.padding(top = 4.dp),

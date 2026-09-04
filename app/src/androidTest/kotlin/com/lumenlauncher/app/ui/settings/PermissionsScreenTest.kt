@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.ContactPermissionRepository
+import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -24,7 +25,10 @@ class PermissionsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onNavigateToUsageAccessExplanation: () -> Unit = {}) {
+    private fun setContent(
+        onNavigateToUsageAccessExplanation: () -> Unit = {},
+        onNavigateToNotificationAccessExplanation: () -> Unit = {},
+    ) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -38,12 +42,14 @@ class PermissionsScreenTest {
                     FakeCalendarPermissionRepository(context, granted = false),
                     ContactPermissionRepository(context),
                     UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                    NotificationAccessRepository(context),
                 )
             }
             LumenLauncherTheme {
                 PermissionsScreen(
                     onBack = {},
                     onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
+                    onNavigateToNotificationAccessExplanation = onNavigateToNotificationAccessExplanation,
                     viewModel = viewModel,
                 )
             }
@@ -63,9 +69,10 @@ class PermissionsScreenTest {
     }
 
     @Test
-    fun rendersAllThreePermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
-        // Given none of the three permissions are granted (fake Calendar repository, real
-        // ungranted defaults for the other two)
+    fun rendersAllFourPermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
+        // Given none of the four permissions are granted (fake Calendar repository, real
+        // ungranted defaults for the other three — a fresh test/emulator instance never has
+        // notification listener access granted either)
         setContent()
 
         // Then each row renders with its title, its "why" subtitle, and a working "Turn on" action
@@ -82,6 +89,10 @@ class PermissionsScreenTest {
         composeRule.onNodeWithText("Usage access").assertExists()
         composeRule.onNodeWithText("Powers the Recents and Most used app lists.").assertExists()
         composeRule.onNodeWithTag("permission_turn_on_USAGE_ACCESS").assertExists().assertHasClickAction()
+
+        composeRule.onNodeWithText("Notification access").assertExists()
+        composeRule.onNodeWithText("Shows a dot or count badge on apps with active notifications.").assertExists()
+        composeRule.onNodeWithTag("permission_turn_on_NOTIFICATION_ACCESS").assertExists().assertHasClickAction()
     }
 
     @Test
@@ -93,6 +104,21 @@ class PermissionsScreenTest {
         // When tapping "Turn on" for Usage access — a special-access permission with no runtime
         // dialog of its own, so this always goes to the existing explanation screen instead
         composeRule.onNodeWithTag("permission_turn_on_USAGE_ACCESS").performClick()
+
+        // Then it navigates there
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun tappingTurnOnForNotificationAccessNavigatesToItsExplanationScreen() {
+        // Given the permissions screen — Notification access is likewise a special-access
+        // permission with no runtime dialog, reusing the same explanation screen Notification
+        // Settings already routes to (see chat history)
+        var navigated = false
+        setContent(onNavigateToNotificationAccessExplanation = { navigated = true })
+
+        // When tapping "Turn on" for Notification access
+        composeRule.onNodeWithTag("permission_turn_on_NOTIFICATION_ACCESS").performClick()
 
         // Then it navigates there
         assertEquals(true, navigated)
@@ -120,10 +146,16 @@ class PermissionsScreenGrantedTest {
                     FakeCalendarPermissionRepository(context, granted = true),
                     ContactPermissionRepository(context),
                     UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                    NotificationAccessRepository(context),
                 )
             }
             LumenLauncherTheme {
-                PermissionsScreen(onBack = {}, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
+                PermissionsScreen(
+                    onBack = {},
+                    onNavigateToUsageAccessExplanation = {},
+                    onNavigateToNotificationAccessExplanation = {},
+                    viewModel = viewModel,
+                )
             }
         }
 

@@ -10,8 +10,10 @@ import com.lumenlauncher.app.data.NotificationBadgeRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppShortcut
+import com.lumenlauncher.app.data.model.ContactConnection
 import com.lumenlauncher.app.data.model.ContactInfo
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,6 +38,7 @@ class DrawerViewModel @Inject constructor(
     private val appShortcutRepository: AppShortcutRepository,
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
+    private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
@@ -63,12 +66,46 @@ class DrawerViewModel @Inject constructor(
         if (!enabled || !contactPermissionRepository.isGranted() || query.isBlank()) {
             flowOf(emptyList())
         } else {
-            flow { emit(contactRepository.searchContacts(query, MAX_CONTACT_RESULTS)) }
+            flow {
+                // The Provider's own LIKE-based query already narrows to substring matches on
+                // DISPLAY_NAME; re-rank so a name that *starts with* the query (e.g. "Ann" for
+                // "Anna Lee") outranks one that merely contains it ("Marianna") — same relevance
+                // rule the Drawer's own app search uses (see chat history).
+                val matches = contactRepository.searchContacts(query, MAX_CONTACT_RESULTS)
+                emit(rankBySearchRelevance(matches, query) { it.displayName })
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val contactsPermissionPromptDismissed = MutableStateFlow(false)
+
+    /**
+     * True while the drawer search wants to show contacts (the setting is on, and there's a real
+     * query) but `READ_CONTACTS` isn't actually granted — most commonly because it was revoked via
+     * system Settings after being granted once (the in-app toggle itself already reverts to off on
+     * an initial denial, so this specifically covers that external-revocation case). Stays false
+     * once the user taps the prompt's own button, regardless of whether they actually complete the
+     * grant afterward — same dismiss-on-click contract as Home's usage-access prompt (see chat history).
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val showContactsPermissionPrompt: StateFlow<Boolean> = combine(
+        searchQuery,
+        settingsRepository.settings,
+        contactsPermissionPromptDismissed,
+    ) { query, settings, dismissed ->
+        query.isNotBlank() && settings.searchContactsEnabled && !dismissed && !contactPermissionRepository.isGranted()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    /** Called the moment the contacts-permission prompt's own button is tapped. */
+    fun dismissContactsPermissionPrompt() {
+        contactsPermissionPromptDismissed.value = true
+    }
 
     /** F12's long-press context menu — fetched fresh per app, only when its menu actually opens. */
     suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName)
 
     fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
+
+    /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (same fetch-on-open precedent as [getShortcuts]). */
+    suspend fun getConnections(contact: ContactInfo): List<ContactConnection> = contactRepository.getConnections(contact.id)
 }

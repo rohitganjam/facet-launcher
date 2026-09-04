@@ -2,6 +2,7 @@ package com.lumenlauncher.app.ui.settings
 
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.ContactPermissionRepository
+import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
 import com.lumenlauncher.app.data.model.LauncherSettings
@@ -44,9 +45,16 @@ class PermissionsViewModelTest {
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         contactPermissionRepository: ContactPermissionRepository = mock(ContactPermissionRepository::class.java),
         usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
+        notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
     ): PermissionsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
-        return PermissionsViewModel(settingsRepository, calendarPermissionRepository, contactPermissionRepository, usageAccessRepository)
+        return PermissionsViewModel(
+            settingsRepository,
+            calendarPermissionRepository,
+            contactPermissionRepository,
+            usageAccessRepository,
+            notificationAccessRepository,
+        )
     }
 
     @Test
@@ -57,17 +65,20 @@ class PermissionsViewModelTest {
         `when`(contactPermissionRepository.isGranted()).thenReturn(false)
         val usageAccessRepository = mock(UsageAccessRepository::class.java)
         `when`(usageAccessRepository.isGranted()).thenReturn(false)
+        val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
+        `when`(notificationAccessRepository.isGranted()).thenReturn(true)
         val viewModel = createViewModel(
             settings = LauncherSettings(calendarPermissionRequested = true, contactsPermissionRequested = false),
             calendarPermissionRepository = calendarPermissionRepository,
             contactPermissionRepository = contactPermissionRepository,
             usageAccessRepository = usageAccessRepository,
+            notificationAccessRepository = notificationAccessRepository,
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         val permissions = viewModel.uiState.value.permissions
-        assertEquals(3, permissions.size)
+        assertEquals(4, permissions.size)
 
         val calendar = permissions.single { it.kind == PermissionKind.CALENDAR }
         assertTrue(calendar.isGranted)
@@ -79,6 +90,9 @@ class PermissionsViewModelTest {
 
         val usageAccess = permissions.single { it.kind == PermissionKind.USAGE_ACCESS }
         assertFalse(usageAccess.isGranted)
+
+        val notificationAccess = permissions.single { it.kind == PermissionKind.NOTIFICATION_ACCESS }
+        assertTrue(notificationAccess.isGranted)
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.lumenlauncher.app.ui.home.clock
 
+import androidx.lifecycle.SavedStateHandle
+import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
@@ -34,15 +36,21 @@ class ClockStyleGalleryViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(settingsRepository: SettingsRepository = mock(SettingsRepository::class.java)): ClockStyleGalleryViewModel {
+    private fun createViewModel(
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
+        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
+        profileId: Long? = null,
+    ): ClockStyleGalleryViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        return ClockStyleGalleryViewModel(settingsRepository)
+        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(emptyList()))
+        val savedStateHandle = if (profileId != null) SavedStateHandle(mapOf("profileId" to profileId)) else SavedStateHandle()
+        return ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
     }
 
     @Test
     fun `selecting a template calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
 
         viewModel.setClockTemplateId(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -53,7 +61,7 @@ class ClockStyleGalleryViewModelTest {
     @Test
     fun `changing the clock font calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
 
         viewModel.setClockFontOption(ClockFontOption.POPPINS)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -64,7 +72,7 @@ class ClockStyleGalleryViewModelTest {
     @Test
     fun `changing the clock color calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
 
         viewModel.setClockColorOption(ClockColorOption.WHITE)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -75,7 +83,7 @@ class ClockStyleGalleryViewModelTest {
     @Test
     fun `toggling 24 hour time calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
 
         viewModel.setUse24HourTime(true)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -86,7 +94,7 @@ class ClockStyleGalleryViewModelTest {
     @Test
     fun `toggling show meridiem calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
 
         viewModel.setClockShowMeridiem(true)
         testDispatcher.scheduler.advanceUntilIdle()

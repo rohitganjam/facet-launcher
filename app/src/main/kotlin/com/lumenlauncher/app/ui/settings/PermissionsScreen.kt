@@ -64,6 +64,7 @@ import com.lumenlauncher.app.ui.theme.SuccessColor
 fun PermissionsScreen(
     onBack: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
+    onNavigateToNotificationAccessExplanation: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PermissionsViewModel = hiltViewModel(),
 ) {
@@ -101,6 +102,7 @@ fun PermissionsScreen(
     fun onTurnOnClick(permission: PermissionRowState) {
         when (permission.kind) {
             PermissionKind.USAGE_ACCESS -> onNavigateToUsageAccessExplanation()
+            PermissionKind.NOTIFICATION_ACCESS -> onNavigateToNotificationAccessExplanation()
             PermissionKind.CALENDAR -> {
                 val canAskAgain = !permission.hasRequestedBefore ||
                     activity == null ||
@@ -233,6 +235,12 @@ private fun PermissionsScreenPreview() {
                     kind = PermissionKind.USAGE_ACCESS,
                     title = "Usage access",
                     subtitle = "Needed to show Recent and Most Used apps.",
+                    isGranted = false,
+                ),
+                PermissionRowState(
+                    kind = PermissionKind.NOTIFICATION_ACCESS,
+                    title = "Notification access",
+                    subtitle = "Shows a dot or count badge on apps with active notifications.",
                     isGranted = false,
                 ),
             ),

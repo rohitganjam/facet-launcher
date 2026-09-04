@@ -2,6 +2,8 @@ package com.lumenlauncher.app.data
 
 import com.lumenlauncher.app.data.local.ProfileDao
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ClockFontOption
@@ -123,15 +125,38 @@ class ProfileRepositoryTest {
         repository.updateOverridingApps(
             profile = profile,
             overriding = true,
+            position = AppRowPosition.RIGHT,
+            presentation = AppRowPresentation.TEXT_ONLY,
             mode = ListContentMode.MOST_USED,
             count = 7,
             overridingFavorites = true
         )
         val stored = repository.observeProfiles().first().single()
         assertEquals(true, stored.overrideApps)
+        assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
+        assertEquals(AppRowPresentation.TEXT_ONLY, stored.appRowPresentation)
         assertEquals(ListContentMode.MOST_USED, stored.listContentMode)
         assertEquals(7, stored.appsToShowCount)
         assertEquals(true, stored.overridingFavorites)
+    }
+
+    @Test
+    fun `setAppRowPosition and setAppRowPresentation round-trip independently`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setAppRowPosition(profile, AppRowPosition.RIGHT)
+        val afterPosition = repository.observeProfiles().first().single()
+        assertEquals(AppRowPosition.RIGHT, afterPosition.appRowPosition)
+
+        // Re-fetch before the second setter — each setter copies from the entity it's given and
+        // fully replaces the stored row, so acting on the original (now-stale) `profile` here
+        // would silently discard the position update just made above.
+        repository.setAppRowPresentation(afterPosition, AppRowPresentation.ICON_ONLY)
+        val stored = repository.observeProfiles().first().single()
+        assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
+        assertEquals(AppRowPresentation.ICON_ONLY, stored.appRowPresentation)
     }
 
     @Test
@@ -152,9 +177,33 @@ class ProfileRepositoryTest {
         val dao = FakeProfileDao()
         val repository = ProfileRepository(dao)
         val profile = repository.addProfile()
-        repository.updateOverridingCalendar(profile, overriding = true, showAllDayEvents = false)
+        repository.updateOverridingCalendar(
+            profile,
+            overriding = true,
+            showAllDayEvents = false,
+            fontOption = ClockFontOption.POPPINS,
+            colorOption = ClockColorOption.WHITE,
+        )
         val stored = repository.observeProfiles().first().single()
         assertEquals(true, stored.overrideCalendar)
         assertEquals(false, stored.showAllDayEvents)
+        assertEquals(ClockFontOption.POPPINS, stored.calendarFontOption)
+        assertEquals(ClockColorOption.WHITE, stored.calendarColorOption)
+    }
+
+    @Test
+    fun `setCalendarFontOption and setCalendarColorOption round-trip independently`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setCalendarFontOption(profile, ClockFontOption.MANROPE)
+        val afterFont = repository.observeProfiles().first().single()
+        assertEquals(ClockFontOption.MANROPE, afterFont.calendarFontOption)
+
+        repository.setCalendarColorOption(afterFont, ClockColorOption.WHITE)
+        val stored = repository.observeProfiles().first().single()
+        assertEquals(ClockFontOption.MANROPE, stored.calendarFontOption)
+        assertEquals(ClockColorOption.WHITE, stored.calendarColorOption)
     }
 }

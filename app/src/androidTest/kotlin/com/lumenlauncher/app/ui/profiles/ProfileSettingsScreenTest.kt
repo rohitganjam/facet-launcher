@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
@@ -22,6 +23,8 @@ import com.lumenlauncher.app.data.FavoriteAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.LumenDatabase
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
@@ -213,6 +216,65 @@ class ProfileSettingsScreenTest {
     }
 
     @Test
+    fun positionAndPresentationRowsDefaultToInheritAndAreReadOnlyUntilOverriding() {
+        // Given the screen for a fresh profile, which hasn't overridden anything yet
+        setContent()
+
+        // Then Position/Presentation reflect the global defaults (Left / Icon & Text) and sit
+        // above the App list content row — same relative order as the global Settings screen
+        composeRule.onNodeWithTag("profile_app_row_position_row").assertExists().assertTextContains("Left").assertIsNotEnabled()
+        composeRule.onNodeWithTag("profile_app_row_presentation_row").assertExists().assertTextContains("Icon & Text").assertIsNotEnabled()
+        val positionTop = composeRule.onNodeWithTag("profile_app_row_position_row").fetchSemanticsNode().boundsInRoot.top
+        val presentationTop = composeRule.onNodeWithTag("profile_app_row_presentation_row").fetchSemanticsNode().boundsInRoot.top
+        val contentModeTop = composeRule.onNodeWithTag("app_list_content_row").fetchSemanticsNode().boundsInRoot.top
+        assert(positionTop < presentationTop)
+        assert(presentationTop < contentModeTop)
+    }
+
+    @Test
+    fun overridingAppsAllowsChangingPositionAndPresentationAndPersistsThem() {
+        // Given the screen, waited until the real Room-backed profile has loaded — otherwise
+        // uiState.profile is still null and selecting an option would silently no-op against a
+        // null profile (same async-I/O-vs-idling gap as elsewhere, see IMPLEMENTATION_PLAN.md)
+        val profileRepository = setContent()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // When switching to Override (the dropdowns are read-only while inheriting)
+        composeRule.onNodeWithTag("profile_apps_override_row").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("profile_app_row_position_row").assertIsEnabled() }.isSuccess
+        }
+
+        // And picking "Right" for Position
+        composeRule.onNodeWithTag("profile_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("profile_app_row_position_row_option_RIGHT").performClick()
+
+        // Then it's reflected on screen and persisted to the profile
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("profile_app_row_position_row").assertTextContains("Right") }.isSuccess
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { profileRepository.observeProfiles().first().first().appRowPosition == AppRowPosition.RIGHT }
+        }
+
+        // And picking "Text Only" for Presentation
+        composeRule.onNodeWithTag("profile_app_row_presentation_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("profile_app_row_presentation_row_option_TEXT_ONLY").performClick()
+
+        // Then it's reflected on screen and persisted to the profile
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("profile_app_row_presentation_row").assertTextContains("Text Only") }.isSuccess
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { profileRepository.observeProfiles().first().first().appRowPresentation == AppRowPresentation.TEXT_ONLY }
+        }
+    }
+
+    @Test
     fun appListContentDropdownAllowsSelectingRecentsOrMostUsedAndPersists() {
         // Given the screen, waited until the real Room-backed profile has loaded — otherwise
         // uiState.profile is still null and the row's default-Favorites label is a false
@@ -314,12 +376,16 @@ class ProfileSettingsScreenTest {
             composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // When switching to Override and toggling 24-hour time on
-        composeRule.onNodeWithTag("profile_clock_override_row").performClick()
+        // When switching to Override and toggling 24-hour time on — the Apps section (position,
+        // presentation, and content-mode rows) pushes the Clock card below the fold on this
+        // device's viewport, so each row needs a real scroll before it can actually be tapped
+        // (performClick() dispatches a real touch at the node's bounds — an off-screen node just
+        // silently swallows the click rather than throwing, see chat history)
+        composeRule.onNodeWithTag("profile_clock_override_row").performScrollTo().performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").assertIsEnabled() }.isSuccess
         }
-        composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").performClick()
+        composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").performScrollTo().performClick()
 
         // Then the profile's own value is persisted
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -333,8 +399,9 @@ class ProfileSettingsScreenTest {
         var navigatedProfileId: Long? = null
         setContent(onNavigateToCalendarSettings = { navigatedProfileId = it })
 
-        // When tapping the Clock card's Calendar row
-        composeRule.onNodeWithTag("profile_calendar_settings_row").performClick()
+        // When tapping the Clock card's Calendar row — scrolled to first, same off-screen-click
+        // gap as overridingTheClockCardMakesTwentyFourHourTimeLiveAndPersists above
+        composeRule.onNodeWithTag("profile_calendar_settings_row").performScrollTo().performClick()
 
         // Then it navigates with this profile's id
         assertEquals(true, navigatedProfileId != null)
@@ -347,7 +414,7 @@ class ProfileSettingsScreenTest {
         setContent(onNavigateToClockStyleGallery = { navigatedProfileId = it })
 
         // When tapping the Clock card's "Clock style" row
-        composeRule.onNodeWithTag("profile_clock_style_gallery_row").performClick()
+        composeRule.onNodeWithTag("profile_clock_style_gallery_row").performScrollTo().performClick()
 
         // Then it navigates with this profile's id
         assertEquals(true, navigatedProfileId != null)

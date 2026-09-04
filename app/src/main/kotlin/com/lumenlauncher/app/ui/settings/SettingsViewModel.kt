@@ -7,11 +7,15 @@ import com.lumenlauncher.app.data.DefaultLauncherRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.SearchBarPosition
 import com.lumenlauncher.app.data.model.ThemeMode
@@ -105,12 +109,30 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setIconRenderMode(mode) }
     }
 
+    fun setLauncherFontOption(option: LauncherFontOption) {
+        viewModelScope.launch { settingsRepository.setLauncherFontOption(option) }
+    }
+
+    fun setAppLabelColorOption(option: ClockColorOption) {
+        viewModelScope.launch { settingsRepository.setAppLabelColorOption(option) }
+    }
+
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { settingsRepository.setThemeMode(mode) }
     }
 
     fun reorderDockApps(orderedApps: List<AppInfo>) {
         viewModelScope.launch { dockAppRepository.reorderDockApps(orderedApps) }
+    }
+
+    /** The default every profile inherits unless it sets its own override. */
+    fun setAppRowPosition(position: AppRowPosition) {
+        viewModelScope.launch { settingsRepository.setAppRowPosition(position) }
+    }
+
+    /** The default every profile inherits unless it sets its own override. */
+    fun setAppRowPresentation(presentation: AppRowPresentation) {
+        viewModelScope.launch { settingsRepository.setAppRowPresentation(presentation) }
     }
 
     /** The default every profile inherits unless it sets its own override. */

@@ -2,7 +2,9 @@ package com.lumenlauncher.app.ui.launcher
 
 import android.content.ContentUris
 import android.content.Intent
+import android.net.Uri
 import android.provider.CalendarContract
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -166,6 +168,7 @@ fun HomeDrawerRoute(
     val drawerSettings by drawerViewModel.settings.collectAsStateWithLifecycle()
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
+    val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
 
     // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
     // Home (e.g. from the usage-access Settings redirect) rather than only on profile changes.
@@ -296,8 +299,13 @@ fun HomeDrawerRoute(
         HomeScreen(
             appListItems = homeUiState.appListItems,
             listContentMode = homeUiState.activeListContentMode,
+            appRowPosition = homeUiState.activeAppRowPosition,
+            appRowPresentation = homeUiState.activeAppRowPresentation,
             showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
-            onUsageAccessPromptClick = onNavigateToUsageAccessExplanation,
+            onUsageAccessPromptClick = {
+                homeViewModel.dismissUsageAccessPrompt()
+                onNavigateToUsageAccessExplanation()
+            },
             dockApps = homeUiState.dockApps,
             dockDisplayMode = homeUiState.settings.dockDisplayMode,
             notificationBadgeStyle = homeUiState.settings.notificationBadgeStyle,
@@ -309,13 +317,15 @@ fun HomeDrawerRoute(
             clockShowMeridiem = homeUiState.clockShowMeridiem,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
-            calendarFontOption = homeUiState.settings.calendarFontOption,
-            calendarColorOption = homeUiState.settings.calendarColorOption,
+            calendarFontOption = homeUiState.activeCalendarFontOption,
+            calendarColorOption = homeUiState.activeCalendarColorOption,
             onEventClick = { event ->
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
             },
             onAppClick = onAppClick,
+            launcherFontOption = homeUiState.settings.launcherFontOption,
+            appLabelColorOption = homeUiState.settings.appLabelColorOption,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
             modifier = Modifier
@@ -386,13 +396,13 @@ fun HomeDrawerRoute(
 
         // Hub — sits to Home's left: off-screen at progress 0, flush with the screen at progress
         // 1. Drawn after HomeScreen so it slides in ON TOP of Home (matching AppDrawerScreen
-        // below), not behind it. Backed by the same DrawerOverlay scrim/opacity Drawer itself
-        // uses (drawerSettings.drawerOpacity) rather than a fully transparent background, so
-        // opening the Hub reads the same as opening the Drawer. There's no separate scrollable
-        // content to hand a NestedScrollConnection to yet (HubGrid's own vertical scroll and this
-        // horizontal close-drag don't conflict since they're on different axes), so a direct drag
-        // detector on the Hub's own surface is enough to close it, mirroring the Drawer's
-        // closed-state opening gesture on Home.
+        // below), not behind it. Uses its own, much fainter default opacity than the Drawer
+        // (see HubScreen's own doc comment) rather than drawerSettings.drawerOpacity — the two
+        // are deliberately independent. There's no separate scrollable content to hand a
+        // NestedScrollConnection to yet (HubGrid's own vertical scroll and this horizontal
+        // close-drag don't conflict since they're on different axes), so a direct drag detector
+        // on the Hub's own surface is enough to close it, mirroring the Drawer's closed-state
+        // opening gesture on Home.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -410,7 +420,6 @@ fun HomeDrawerRoute(
             HubScreen(
                 onAddClick = { showWidgetPicker = true },
                 onManageClick = {}, // wired once there's a dedicated manage flow
-                opacity = drawerSettings.drawerOpacity,
                 modifier = Modifier.fillMaxSize().testTag("hub_screen"),
                 viewModel = hubViewModel,
             )
@@ -440,6 +449,14 @@ fun HomeDrawerRoute(
             contacts = contactResults,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
+            onRequestConnections = drawerViewModel::getConnections,
+            showContactsPermissionPrompt = showContactsPermissionPrompt,
+            onContactsPermissionPromptClick = {
+                drawerViewModel.dismissContactsPermissionPrompt()
+                context.startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .offset { IntOffset(0, ((1f - drawerAxis.progress.value) * containerHeightPx).toInt()) }

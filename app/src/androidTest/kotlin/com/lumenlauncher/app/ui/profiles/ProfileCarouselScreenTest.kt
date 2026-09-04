@@ -238,8 +238,12 @@ class ProfileCarouselScreenTest {
         composeRule.onNode(hasText("Delete")).performClick()
         composeRule.waitForIdle()
 
-        // Then it's gone
-        composeRule.onNodeWithText("Profile 2").assertDoesNotExist()
+        // Then it's gone — the deletion is a real async round trip (ViewModel -> Repository ->
+        // Room -> StateFlow -> recomposition), which a single waitForIdle() doesn't reliably
+        // catch, so poll instead of asserting immediately (see chat history / CLAUDE.md)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithText("Profile 2").assertDoesNotExist() }.isSuccess
+        }
     }
 
     @Test
@@ -316,8 +320,11 @@ class ProfileCarouselScreenTest {
         composeRule.onNode(hasText("Delete")).performClick()
         composeRule.waitForIdle()
 
-        // Then it's gone from the list
-        composeRule.onNodeWithText("Profile 2").assertDoesNotExist()
+        // Then it's gone from the list — same real async-deletion gap as
+        // deletingAProfileRemovesItFromTheCarousel above, poll instead of asserting immediately
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithText("Profile 2").assertDoesNotExist() }.isSuccess
+        }
     }
 
     @Test

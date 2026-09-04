@@ -149,6 +149,9 @@ fun LumenNavHost(
             PermissionsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToUsageAccessExplanation = { navController.navigate(LumenDestinations.USAGE_ACCESS_EXPLANATION) },
+                onNavigateToNotificationAccessExplanation = {
+                    navController.navigate(LumenDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                },
             )
         }
         composable(LumenDestinations.NOTIFICATION_SETTINGS) {

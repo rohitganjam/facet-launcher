@@ -7,6 +7,8 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.CalendarInfo
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -64,7 +66,7 @@ class CalendarSettingsViewModelTest {
 
     @Test
     fun `profile-scoped mode toggling writes the profile's own override`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0)
+        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true)
         val profileRepository = mock(ProfileRepository::class.java)
         val viewModel = createViewModel(profileId = 5L, profile = profile, profileRepository = profileRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -73,12 +75,12 @@ class CalendarSettingsViewModelTest {
         viewModel.setShowAllDayEvents(false)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setShowAllDayEventsOverride(profile, false)
+        verify(profileRepository).setShowAllDayEvents(profile, false)
     }
 
     @Test
     fun `switching to override seeds the profile's stored value with the current effective one`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, showAllDayEventsOverride = null)
+        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
         val profileRepository = mock(ProfileRepository::class.java)
         val viewModel = createViewModel(
             profileId = 5L,
@@ -92,12 +94,18 @@ class CalendarSettingsViewModelTest {
         viewModel.setOverriding(true)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setShowAllDayEventsOverride(profile, true)
+        verify(profileRepository).updateOverridingCalendar(
+            profile,
+            overriding = true,
+            showAllDayEvents = true,
+            fontOption = ClockFontOption.LAUNCHER_DEFAULT,
+            colorOption = ClockColorOption.INK,
+        )
     }
 
     @Test
-    fun `switching back to inherit clears the profile's override`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, showAllDayEventsOverride = false)
+    fun `switching back to inherit toggles the override flag`() = runTest {
+        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false)
         val profileRepository = mock(ProfileRepository::class.java)
         val viewModel = createViewModel(profileId = 5L, profile = profile, profileRepository = profileRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -106,7 +114,39 @@ class CalendarSettingsViewModelTest {
         viewModel.setOverriding(false)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setShowAllDayEventsOverride(profile, null)
+        verify(profileRepository).updateOverridingCalendar(
+            profile,
+            overriding = false,
+            showAllDayEvents = false,
+            fontOption = ClockFontOption.LAUNCHER_DEFAULT,
+            colorOption = ClockColorOption.INK,
+        )
+    }
+
+    @Test
+    fun `profile-scoped font change writes the profile's own override`() = runTest {
+        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true)
+        val profileRepository = mock(ProfileRepository::class.java)
+        val viewModel = createViewModel(profileId = 5L, profile = profile, profileRepository = profileRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setCalendarFontOption(ClockFontOption.POPPINS)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(profileRepository).setCalendarFontOption(profile, ClockFontOption.POPPINS)
+    }
+
+    @Test
+    fun `global font change writes SettingsRepository directly`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setCalendarColorOption(ClockColorOption.WHITE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setCalendarColorOption(ClockColorOption.WHITE)
     }
 
     @Test

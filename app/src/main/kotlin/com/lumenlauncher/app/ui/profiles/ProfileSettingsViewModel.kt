@@ -9,6 +9,8 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -32,6 +34,8 @@ data class ProfileSettingsUiState(
     val globalClockColorOption: ClockColorOption = ClockColorOption.INK,
     val globalUse24HourTime: Boolean = false,
     val globalClockShowMeridiem: Boolean = false,
+    val globalAppRowPosition: AppRowPosition = AppRowPosition.LEFT,
+    val globalAppRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
     val globalAppsToShowCount: Int = 5,
 ) {
@@ -43,8 +47,10 @@ data class ProfileSettingsUiState(
     val effectiveUse24HourTime: Boolean get() = if (isOverridingClock) profile?.use24HourTime ?: globalUse24HourTime else globalUse24HourTime
     val clockShowMeridiem: Boolean get() = if (isOverridingClock) profile?.clockShowMeridiem ?: globalClockShowMeridiem else globalClockShowMeridiem
 
-    /** The Apps card's single inherit/override switch — governs list content mode, apps-to-show, and favorites together. */
+    /** The Apps card's single inherit/override switch — governs position, presentation, list content mode, apps-to-show, and favorites together. */
     val isOverridingApps: Boolean get() = profile?.overrideApps ?: false
+    val appRowPosition: AppRowPosition get() = if (isOverridingApps) profile?.appRowPosition ?: globalAppRowPosition else globalAppRowPosition
+    val appRowPresentation: AppRowPresentation get() = if (isOverridingApps) profile?.appRowPresentation ?: globalAppRowPresentation else globalAppRowPresentation
     val listContentMode: ListContentMode get() = if (isOverridingApps) profile?.listContentMode ?: globalListContentMode else globalListContentMode
     val appsToShowCount: Int get() = if (isOverridingApps) profile?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
     val effectiveFavorites: List<AppInfo> get() = if (profile?.overridingFavorites == true) favorites else defaultFavorites
@@ -77,6 +83,8 @@ class ProfileSettingsViewModel @Inject constructor(
             globalClockColorOption = settings.clockColorOption,
             globalUse24HourTime = settings.use24HourTime,
             globalClockShowMeridiem = settings.clockShowMeridiem,
+            globalAppRowPosition = settings.appRowPosition,
+            globalAppRowPresentation = settings.appRowPresentation,
             globalListContentMode = settings.listContentMode,
             globalAppsToShowCount = settings.appsToShowCount,
         )
@@ -110,10 +118,10 @@ class ProfileSettingsViewModel @Inject constructor(
     }
 
     /**
-     * The Apps card's single Inherit/Override switch — governs list content mode, apps-to-show,
-     * and favorites as one unit. Switching to Override seeds all three with current effective 
-     * values (including copying the default favorites list if the profile's own list is empty) 
-     * so the card doesn't suddenly go empty.
+     * The Apps card's single Inherit/Override switch — governs position, presentation, list
+     * content mode, apps-to-show, and favorites as one unit. Switching to Override seeds all of
+     * them with current effective values (including copying the default favorites list if the
+     * profile's own list is empty) so the card doesn't suddenly go empty.
      */
     fun setOverridingApps(overriding: Boolean) {
         val profile = uiState.value.profile ?: return
@@ -125,11 +133,23 @@ class ProfileSettingsViewModel @Inject constructor(
             profileRepository.updateOverridingApps(
                 profile = profile,
                 overriding = overriding,
+                position = state.appRowPosition,
+                presentation = state.appRowPresentation,
                 mode = state.listContentMode,
                 count = state.appsToShowCount,
                 overridingFavorites = overriding,
             )
         }
+    }
+
+    fun setAppRowPosition(position: AppRowPosition) {
+        val profile = uiState.value.profile ?: return
+        viewModelScope.launch { profileRepository.setAppRowPosition(profile, position) }
+    }
+
+    fun setAppRowPresentation(presentation: AppRowPresentation) {
+        val profile = uiState.value.profile ?: return
+        viewModelScope.launch { profileRepository.setAppRowPresentation(profile, presentation) }
     }
 
     fun setListContentMode(mode: ListContentMode) {

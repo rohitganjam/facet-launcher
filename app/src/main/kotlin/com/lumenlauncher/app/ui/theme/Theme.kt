@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ThemeMode
 
 @Composable
@@ -45,6 +46,9 @@ private fun lumenColorScheme(isDark: Boolean) = if (isDark) {
  * regardless of the device's own setting.
  * @param accentFromSystem Settings → Theme → Accent color's source — Material You when `true`
  * (default), [customAccentSwatch]'s fixed pick when `false`.
+ * @param launcherFontOption Settings → Appearance → "Font" — the base font for every text role
+ * app-wide (via [lumenTypography]) except the clock/calendar, which resolve their own font
+ * independently (see `ClockFontOption.resolveFontFamily`).
  */
 @Composable
 fun LumenLauncherTheme(
@@ -52,6 +56,7 @@ fun LumenLauncherTheme(
     accentFromSystem: Boolean = true,
     customAccentSwatch: AccentSwatch? = null,
     iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     content: @Composable () -> Unit,
 ) {
     val isDark = when (themeMode) {
@@ -75,7 +80,7 @@ fun LumenLauncherTheme(
     ) {
         MaterialTheme(
             colorScheme = lumenColorScheme(isDark),
-            typography = LumenTypography,
+            typography = lumenTypography(launcherFontOption.fontFamily),
             content = content,
         )
     }

@@ -11,6 +11,7 @@ import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.CalendarInfo
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
 import com.lumenlauncher.app.domain.AssignCalendarColorsUseCase
 import com.lumenlauncher.app.ui.theme.AccentSwatch
@@ -32,13 +33,17 @@ data class CalendarSettingsUiState(
     val selectedCalendarIds: Set<String>? = null,
     /** Calendar id -> `AccentSwatch` enum name — see [com.lumenlauncher.app.data.model.LauncherSettings.calendarColors]. */
     val calendarColors: Map<String, String> = emptyMap(),
-    /** The calendar events block's own font/color — global only (no per-profile override entity exists; a profile-scoped screen keeps these local/unpersisted for evaluation, see `CalendarSettingsScreen.kt`). */
-    val globalCalendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
+    /** The calendar events block's own font/color — the global default every non-overriding profile inherits, gated the same way [globalShowAllDayEvents] already is. */
+    val globalCalendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val globalCalendarColorOption: ClockColorOption = ClockColorOption.INK,
+    /** Resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview, whether this instance is global or profile-scoped. */
+    val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
     val isProfileScoped: Boolean get() = profile != null
     val isOverriding: Boolean get() = profile?.overrideCalendar ?: false
     val effectiveShowAllDayEvents: Boolean get() = if (isOverriding) profile?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
+    val effectiveCalendarFontOption: ClockFontOption get() = if (isOverriding) profile?.calendarFontOption ?: globalCalendarFontOption else globalCalendarFontOption
+    val effectiveCalendarColorOption: ClockColorOption get() = if (isOverriding) profile?.calendarColorOption ?: globalCalendarColorOption else globalCalendarColorOption
     fun isCalendarSelected(calendarId: String): Boolean = selectedCalendarIds?.let { calendarId in it } ?: true
 }
 
@@ -79,6 +84,7 @@ class CalendarSettingsViewModel @Inject constructor(
             calendarColors = settings.calendarColors,
             globalCalendarFontOption = settings.calendarFontOption,
             globalCalendarColorOption = settings.calendarColorOption,
+            launcherFontOption = settings.launcherFontOption,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarSettingsUiState())
 
@@ -116,14 +122,17 @@ class CalendarSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Switching to Override seeds the profile's stored value with the current effective one; switching back to Inherit clears it. */
+    /** Switching to Override seeds the profile's stored values with the current effective ones; switching back to Inherit clears it. */
     fun setOverriding(overriding: Boolean) {
         val profile = uiState.value.profile ?: return
+        val state = uiState.value
         viewModelScope.launch {
             profileRepository.updateOverridingCalendar(
                 profile = profile,
                 overriding = overriding,
-                showAllDayEvents = uiState.value.effectiveShowAllDayEvents,
+                showAllDayEvents = state.effectiveShowAllDayEvents,
+                fontOption = state.effectiveCalendarFontOption,
+                colorOption = state.effectiveCalendarColorOption,
             )
         }
     }
@@ -146,12 +155,26 @@ class CalendarSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setSelectedCalendarIds(ids) }
     }
 
-    /** Always writes the global setting — there's no per-profile calendar font/color override entity. */
-    fun setGlobalCalendarFontOption(option: ClockFontOption) {
-        viewModelScope.launch { settingsRepository.setCalendarFontOption(option) }
+    /** Writes this profile's own override when overriding, otherwise the global default — same routing [setShowAllDayEvents] already uses. */
+    fun setCalendarFontOption(option: ClockFontOption) {
+        val profile = uiState.value.profile
+        viewModelScope.launch {
+            if (profile != null) {
+                profileRepository.setCalendarFontOption(profile, option)
+            } else {
+                settingsRepository.setCalendarFontOption(option)
+            }
+        }
     }
 
-    fun setGlobalCalendarColorOption(option: ClockColorOption) {
-        viewModelScope.launch { settingsRepository.setCalendarColorOption(option) }
+    fun setCalendarColorOption(option: ClockColorOption) {
+        val profile = uiState.value.profile
+        viewModelScope.launch {
+            if (profile != null) {
+                profileRepository.setCalendarColorOption(profile, option)
+            } else {
+                settingsRepository.setCalendarColorOption(option)
+            }
+        }
     }
 }

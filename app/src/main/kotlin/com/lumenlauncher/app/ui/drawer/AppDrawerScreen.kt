@@ -3,7 +3,15 @@ package com.lumenlauncher.app.ui.drawer
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.provider.ContactsContract
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +71,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppShortcut
+import com.lumenlauncher.app.data.model.ContactConnection
 import com.lumenlauncher.app.data.model.ContactInfo
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
@@ -82,6 +96,7 @@ import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.SearchBarPosition
 import com.lumenlauncher.app.domain.GroupAppsByLetterUseCase
 import com.lumenlauncher.app.domain.GroupedApps
+import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.lumenlauncher.app.ui.components.AppContextMenu
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.NotificationBadge
@@ -96,6 +111,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.LumenType
 import com.lumenlauncher.app.ui.theme.Muted
+import com.lumenlauncher.app.ui.theme.Scrim
 import com.lumenlauncher.app.ui.theme.Surface
 import kotlinx.coroutines.launch
 
@@ -137,10 +153,10 @@ fun AppDrawerScreen(
     gridState: LazyGridState = rememberLazyGridState(),
     presentation: DrawerPresentation = DrawerPresentation.LIST,
     gridSize: DrawerGridSize = DrawerGridSize.FIVE_BY_SIX,
-    listItemSize: DrawerListItemSize = DrawerListItemSize.COMPACT,
+    listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     showIcons: Boolean = true,
     showLabels: Boolean = true,
-    opacity: Float = 0.88f,
+    opacity: Float = 0.6f,
     notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     badgeCounts: Map<String, Int> = emptyMap(),
     query: String = "",
@@ -150,10 +166,13 @@ fun AppDrawerScreen(
     contacts: List<ContactInfo> = emptyList(),
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    onRequestConnections: suspend (ContactInfo) -> List<ContactConnection> = { emptyList() },
+    /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
+    showContactsPermissionPrompt: Boolean = false,
+    onContactsPermissionPromptClick: () -> Unit = {},
 ) {
-    val filteredApps = remember(apps, query) {
-        if (query.isBlank()) apps else apps.filter { it.label.contains(query, ignoreCase = true) }
-    }
+    val rankBySearchRelevance = remember { RankBySearchRelevanceUseCase() }
+    val filteredApps = remember(apps, query) { rankBySearchRelevance(apps, query) { it.label } }
     val groupUseCase = remember { GroupAppsByLetterUseCase() }
     val groupedApps = remember(filteredApps) { groupUseCase(filteredApps) }
     val coroutineScope = rememberCoroutineScope()
@@ -161,6 +180,14 @@ fun AppDrawerScreen(
     var draggingLetter by remember { mutableStateOf<String?>(null) }
     var railHeightPx by remember { mutableFloatStateOf(0f) }
     val isSearching = query.isNotBlank()
+    // Phase 9's connections sheet — hoisted here (not down in DrawerSearchResults/ContactRow) so
+    // it can overlay the *whole* screen, matching HomeDrawerRoute's LongPressSheet conventions.
+    var connectionsSheetContact by remember { mutableStateOf<ContactInfo?>(null) }
+    var connections by remember { mutableStateOf<List<ContactConnection>>(emptyList()) }
+    LaunchedEffect(connectionsSheetContact) {
+        val contact = connectionsSheetContact
+        connections = if (contact != null) onRequestConnections(contact) else emptyList()
+    }
 
     // First back-press while searching clears the query and stays in the drawer (browse mode,
     // unfiltered); only a second, empty-query back-press falls through to the caller's own
@@ -185,10 +212,13 @@ fun AppDrawerScreen(
         coroutineScope.launch { scrollToIndex(index) }
     }
 
+    // Outer Box so the connections sheet (below) can overlay the entire screen — the Column
+    // itself keeps its previous fillMaxSize/background/inset treatment unchanged.
+    Box(modifier = modifier.fillMaxSize()) {
     // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this, the
     // drawer's content (notably a TOP search bar) draws straight under the status bar/notch.
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(DrawerOverlay.copy(alpha = opacity))
             .windowInsetsPadding(WindowInsets.systemBars),
@@ -206,12 +236,21 @@ fun AppDrawerScreen(
                 presentation = presentation,
                 gridColumns = gridSize.columns,
                 showIcons = showIcons,
+                showLabels = showLabels,
+                itemSize = listItemSize,
                 badgeStyle = notificationBadgeStyle,
                 badgeCounts = badgeCounts,
                 onAppClick = onAppClick,
                 onClearSearch = { onQueryChanged("") },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
+                // Closing the keyboard here (not just clearing text-field focus) matters
+                // specifically because the user was very likely still typing their search query
+                // when they tapped a contact result — leaving it open behind the sheet looked
+                // like a stuck/forgotten keyboard (see chat history).
+                onContactClick = { focusManager.clearFocus(); connectionsSheetContact = it },
+                showContactsPermissionPrompt = showContactsPermissionPrompt,
+                onContactsPermissionPromptClick = onContactsPermissionPromptClick,
                 modifier = Modifier.fillMaxSize().testTag("drawer_search_results"),
             )
         } else {
@@ -293,6 +332,45 @@ fun AppDrawerScreen(
             )
         }
     }
+
+    // Phase 9's connections sheet — same scrim/slide conventions as HomeDrawerRoute's LongPressSheet.
+    AnimatedVisibility(
+        visible = connectionsSheetContact != null,
+        enter = fadeIn(animationSpec = tween(240)),
+        exit = fadeOut(animationSpec = tween(240)),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Scrim)
+                .testTag("contact_connections_scrim")
+                .clickable(onClick = { connectionsSheetContact = null }),
+        )
+    }
+    AnimatedVisibility(
+        visible = connectionsSheetContact != null,
+        enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
+        exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
+        modifier = Modifier.align(Alignment.BottomCenter),
+    ) {
+        connectionsSheetContact?.let { contact ->
+            val context = LocalContext.current
+            ContactConnectionsSheet(
+                contactName = contact.displayName,
+                connections = connections,
+                onConnectionClick = { intent ->
+                    runCatching { context.startActivity(intent) }
+                    connectionsSheetContact = null
+                },
+                onViewContactClick = {
+                    val uri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_URI, contact.id)
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+                    connectionsSheetContact = null
+                },
+            )
+        }
+    }
+    }
 }
 
 /**
@@ -364,7 +442,10 @@ private fun DrawerSearchBar(
  * caller passes an empty list in that case, which reads identically to "no matches" from here,
  * exactly matching the `4p` mockup's own "denied → app results only" annotation). Both sections
  * are capped independently, no "N more" affordance. The `4q` empty state shows only when *both*
- * are empty.
+ * are empty. Apps render with the exact same [showLabels]/[itemSize] the Drawer's own browse-mode
+ * grid/list uses — search used to always render at a fixed base size/label visibility regardless
+ * of those settings, which read as a different, unrelated screen (see chat history). Contacts stay
+ * list-form regardless of [presentation] (grid doesn't apply to them), but also honor [itemSize].
  */
 @Composable
 private fun DrawerSearchResults(
@@ -374,15 +455,20 @@ private fun DrawerSearchResults(
     presentation: DrawerPresentation,
     gridColumns: Int,
     showIcons: Boolean,
+    showLabels: Boolean,
+    itemSize: DrawerListItemSize,
     badgeStyle: NotificationBadgeStyle,
     badgeCounts: Map<String, Int>,
     onAppClick: (AppInfo) -> Unit,
     onClearSearch: () -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onContactClick: (ContactInfo) -> Unit,
+    showContactsPermissionPrompt: Boolean,
+    onContactsPermissionPromptClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (apps.isEmpty() && contacts.isEmpty()) {
+    if (apps.isEmpty() && contacts.isEmpty() && !showContactsPermissionPrompt) {
         DrawerSearchEmptyState(query = query, onClearSearch = onClearSearch, modifier = modifier)
         return
     }
@@ -400,14 +486,17 @@ private fun DrawerSearchResults(
                 item {
                     // A LazyVerticalGrid can't nest inside this LazyColumn — the tile count here
                     // is tiny (capped at 5), so a plain flow-row-style Column of chunked rows is
-                    // simpler than wiring a second scroll container.
+                    // simpler than wiring a second scroll container. Same 8dp horizontal / 20dp
+                    // vertical spacing and DrawerGridTile itself as the real grid, just without
+                    // its fixed per-row height (that's a "fill N screen rows" browse-mode
+                    // computation that doesn't apply to a handful of search results).
                     apps.chunked(gridColumns).forEach { rowApps ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 20.dp)) {
                             rowApps.forEach { app ->
                                 DrawerGridTile(
                                     app = app,
                                     onClick = { onAppClick(app) },
-                                    showLabel = true,
+                                    showLabel = showLabels,
                                     badgeCount = badgeCounts[app.packageName],
                                     badgeStyle = badgeStyle,
                                     onRequestShortcuts = onRequestShortcuts,
@@ -423,6 +512,7 @@ private fun DrawerSearchResults(
                         app = app,
                         onClick = { onAppClick(app) },
                         showIcon = showIcons,
+                        itemSize = itemSize,
                         badgeCount = badgeCounts[app.packageName],
                         badgeStyle = badgeStyle,
                         onRequestShortcuts = onRequestShortcuts,
@@ -431,7 +521,7 @@ private fun DrawerSearchResults(
                 }
             }
         }
-        if (contacts.isNotEmpty()) {
+        if (contacts.isNotEmpty() || showContactsPermissionPrompt) {
             item {
                 Text(
                     text = "CONTACTS",
@@ -440,8 +530,16 @@ private fun DrawerSearchResults(
                     modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
                 )
             }
+            if (showContactsPermissionPrompt) {
+                item {
+                    ContactsAccessStrip(
+                        onClick = onContactsPermissionPromptClick,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
+            }
             items(contacts, key = { "contact_" + it.id }) { contact ->
-                ContactRow(contact = contact)
+                ContactRow(contact = contact, itemSize = itemSize, onClick = { onContactClick(contact) })
             }
         }
         item { Spacer(modifier = Modifier.height(40.dp)) }
@@ -449,95 +547,73 @@ private fun DrawerSearchResults(
 }
 
 /**
- * One contact match — collapsed to just a 32dp avatar/initials + name by default; tapping
- * toggles this row's own [expanded] state, revealing action chips beneath the name. Call/Message
- * chips always show (a phone-number match implies a number); WhatsApp only when the app is
- * actually installed. Each chip launches its target app pre-filled with the contact, per the
- * approved F6 design — never dials/sends automatically.
+ * Same dashed-strip styling as Home's usage-access prompt (`HomeScreen.kt`'s `UsageAccessStrip`) —
+ * duplicated locally rather than shared, since the two screens' surrounding chrome/color tokens
+ * differ (`Ink`/`Muted`/`Accent` here are the Drawer's own theme values, not Home's). Shown in
+ * place of contacts search results while `READ_CONTACTS` isn't granted (see
+ * `DrawerViewModel.showContactsPermissionPrompt`'s doc for the exact condition).
  */
 @Composable
-private fun ContactRow(contact: ContactInfo, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val hasWhatsApp = remember {
-        runCatching { context.packageManager.getPackageInfo("com.whatsapp", 0) }.isSuccess
-    }
-
-    Column(
+private fun ContactsAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded }
-            .testTag("contact_row_${contact.id}")
-            .padding(vertical = 6.dp),
+            .clickable(onClick = onClick)
+            .testTag("drawer_contacts_access_strip")
+            .drawerDashedBorder(color = Ink.copy(alpha = 0.16f), cornerRadius = 10.dp)
+            .padding(horizontal = 13.dp, vertical = 11.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(
-                modifier = Modifier.size(32.dp).clip(CircleShape).background(IconTile),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = contact.displayName.firstOrNull()?.uppercaseChar()?.toString().orEmpty(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Surface,
-                )
-            }
-            Text(text = contact.displayName, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
-        }
-        if (expanded) {
-            Row(
-                modifier = Modifier.padding(start = 44.dp, top = 4.dp, bottom = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ContactActionChip(
-                    label = "Call",
-                    primary = true,
-                    onClick = {
-                        runCatching { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${contact.phoneNumber}"))) }
-                    },
-                )
-                ContactActionChip(
-                    label = "Message",
-                    primary = false,
-                    onClick = {
-                        runCatching { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${contact.phoneNumber}"))) }
-                    },
-                )
-                if (hasWhatsApp) {
-                    ContactActionChip(
-                        label = "WhatsApp",
-                        primary = false,
-                        onClick = {
-                            val uri = Uri.parse("https://api.whatsapp.com/send?phone=${contact.phoneNumber}")
-                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
-                        },
-                    )
-                }
-            }
-        }
+        Text(
+            text = "Contact search needs access from system settings.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted,
+            modifier = Modifier.weight(1f),
+        )
+        Text(text = "Open settings", style = MaterialTheme.typography.bodyMedium, color = Accent)
     }
 }
 
-/** README's `padding: 7px 15px`, `border-radius: 8px` (M3 Chip default — `MaterialTheme.shapes.small`) — primary filled, others outlined. */
-@Composable
-private fun ContactActionChip(label: String, primary: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = MaterialTheme.shapes.small
-    Text(
-        text = label,
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (primary) Surface else Ink,
-        modifier = modifier
-            .clip(shape)
-            .then(
-                if (primary) {
-                    Modifier.background(Accent, shape)
-                } else {
-                    Modifier.background(Surface, shape).border(1.dp, Ink.copy(alpha = 0.22f), shape)
-                },
-            )
-            .clickable(onClick = onClick)
-            .testTag("contact_action_${label.lowercase()}")
-            .padding(horizontal = 15.dp, vertical = 7.dp),
+private fun Modifier.drawerDashedBorder(color: Color, cornerRadius: androidx.compose.ui.unit.Dp, strokeWidth: androidx.compose.ui.unit.Dp = 1.dp): Modifier = drawBehind {
+    drawRoundRect(
+        color = color,
+        style = Stroke(width = strokeWidth.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx()),
     )
+}
+
+/**
+ * One contact match — an avatar/initials + name, tapping opens [ContactConnectionsSheet] (Phase 9)
+ * rather than expanding an inline chip row in place. [itemSize] scales the avatar/row padding the
+ * same way [DrawerAppRow]'s icon does, so contacts and apps read as one consistent list rather
+ * than contacts staying pinned at Compact regardless of the chosen size (see chat history).
+ */
+@Composable
+private fun ContactRow(contact: ContactInfo, onClick: () -> Unit, modifier: Modifier = Modifier, itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT) {
+    val avatarSize = itemSize.iconSizeDp.dp
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("contact_row_${contact.id}")
+            .padding(vertical = 6.dp + itemSize.extraRowPaddingDp.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(avatarSize).clip(CircleShape).background(IconTile),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = contact.displayName.firstOrNull()?.uppercaseChar()?.toString().orEmpty(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Surface,
+            )
+        }
+        Text(text = contact.displayName, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
+    }
 }
 
 /** `4q` — shown when a search matches nothing at all (apps and contacts both empty). No web fallback. */
@@ -696,8 +772,6 @@ private fun DrawerAppRow(
     app: AppInfo,
     onClick: () -> Unit,
     showIcon: Boolean,
-    // Search results render this row at its unchanged base size regardless of the List item
-    // size setting — that setting is about browse-mode density, not search (see chat history).
     itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT,
     badgeCount: Int?,
     badgeStyle: NotificationBadgeStyle,

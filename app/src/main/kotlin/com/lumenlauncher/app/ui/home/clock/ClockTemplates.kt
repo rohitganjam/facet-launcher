@@ -24,9 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.theme.Hairline
-import com.lumenlauncher.app.ui.theme.fontFamily
 import com.lumenlauncher.app.ui.theme.homeTextShadow
+import com.lumenlauncher.app.ui.theme.resolveFontFamily
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -54,8 +55,9 @@ fun ClockDisplay(
     mutedTextColor: Color,
     modifier: Modifier = Modifier,
     locale: Locale = Locale.getDefault(),
+    launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
-    val family = fontOption.fontFamily
+    val family = fontOption.resolveFontFamily(launcherFontOption)
     val meridiem = meridiemText(now, use24HourTime, showMeridiem, locale)
     when (templateId) {
         ClockTemplateId.LIGHT_STACK -> LightStackTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier)

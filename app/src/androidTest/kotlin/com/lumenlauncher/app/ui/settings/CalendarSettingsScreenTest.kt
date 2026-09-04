@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -32,8 +31,9 @@ class CalendarSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(profileId: Long? = null): SettingsRepository {
+    private fun setContent(profileId: Long? = null): Pair<SettingsRepository, ProfileRepository> {
         lateinit var settingsRepository: SettingsRepository
+        lateinit var profileRepository: ProfileRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -43,7 +43,7 @@ class CalendarSettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
-                val profileRepository = ProfileRepository(database.profileDao())
+                profileRepository = ProfileRepository(database.profileDao())
                 if (profileId != null) {
                     runBlocking { profileRepository.addProfile() } // seeds id 1L, matching profileId below
                 }
@@ -61,13 +61,13 @@ class CalendarSettingsScreenTest {
             }
         }
         composeRule.waitForIdle()
-        return settingsRepository
+        return settingsRepository to profileRepository
     }
 
     @Test
     fun globalModeTogglePersistsThroughSettingsRepository() {
         // Given the global (non-profile-scoped) entry point, all-day events shown by default
-        val settingsRepository = setContent()
+        val (settingsRepository, _) = setContent()
         composeRule.onNodeWithTag("show_all_day_events_toggle").assertIsOn()
 
         // When toggling it off
@@ -82,7 +82,7 @@ class CalendarSettingsScreenTest {
     @Test
     fun globalCalendarStyleFontSelectionPersistsThroughSettingsRepository() {
         // Given the global entry point
-        val settingsRepository = setContent()
+        val (settingsRepository, _) = setContent()
 
         // When picking a calendar-style font other than the default
         composeRule.onNodeWithTag("calendar_style_font_row").performClick()
@@ -96,20 +96,43 @@ class CalendarSettingsScreenTest {
     }
 
     @Test
-    fun profileScopedCalendarStyleFontSelectionStaysLocalNotPersisted() {
-        // Given a profile-scoped entry point
-        val settingsRepository = setContent(profileId = 1L)
+    fun profileScopedCalendarStyleFontIsReadOnlyWhileInheriting() {
+        // Given a profile-scoped entry point, still Inheriting (the default)
+        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
 
-        // When picking a calendar-style font — evaluation only, per direct instruction
+        // When attempting to open the Font row's dropdown
+        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
+        composeRule.waitForIdle()
+
+        // Then it never opens (the row is disabled) — no option appears to pick
+        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").assertDoesNotExist()
+        // ...and neither the profile nor the global setting were touched
+        val profile = runBlocking { profileRepository.observeProfiles().first().single() }
+        val settings = runBlocking { settingsRepository.settings.first() }
+        assert(profile.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
+        assert(settings.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
+    }
+
+    @Test
+    fun profileScopedCalendarStyleFontPersistsToTheProfileWhileOverriding() {
+        // Given a profile-scoped entry point, switched to Override
+        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+        composeRule.onNodeWithTag("calendar_override_row").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("calendar_style_font_row").assertHasClickAction() }.isSuccess
+        }
+
+        // When picking a calendar-style font other than the default
         composeRule.onNodeWithTag("calendar_style_font_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
 
-        // Then the row itself reflects the pick (local UI state)...
+        // Then it's persisted to this profile's own row, not the launcher-wide global setting
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Poppins").fetchSemanticsNodes().isNotEmpty()
+            runBlocking {
+                profileRepository.observeProfiles().first().single().calendarFontOption == com.lumenlauncher.app.data.model.ClockFontOption.POPPINS
+            }
         }
-        // ...but nothing was written to the real, global repository
         val settings = runBlocking { settingsRepository.settings.first() }
         assert(settings.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
     }

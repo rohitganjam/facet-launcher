@@ -5,6 +5,7 @@ enum class PermissionKind {
     CALENDAR,
     CONTACTS,
     USAGE_ACCESS,
+    NOTIFICATION_ACCESS,
 }
 
 data class PermissionRowState(

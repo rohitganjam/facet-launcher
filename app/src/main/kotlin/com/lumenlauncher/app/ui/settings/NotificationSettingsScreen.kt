@@ -90,7 +90,12 @@ private fun NotificationSettingsContent(
     onBadgeStyleChanged: (NotificationBadgeStyle) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val enabled = uiState.settings.notificationDotsEnabled
+    // The stored preference alone isn't enough to actually show badges — it defaults to true and
+    // is never flipped back off by an external revocation, so a switch that only read that value
+    // would show "on" even when notification listener access itself has been denied or revoked,
+    // exactly the silently-broken state that led to adding this gating (see chat history). The
+    // switch must never show on without the real permission backing it.
+    val enabled = uiState.settings.notificationDotsEnabled && uiState.isAccessGranted
 
     Column(
         modifier = modifier

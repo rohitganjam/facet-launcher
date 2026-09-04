@@ -53,7 +53,6 @@ import com.lumenlauncher.app.data.model.WidgetProviderOption
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.ErrorColor
-import com.lumenlauncher.app.ui.theme.Faint
 import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -209,7 +208,7 @@ private fun WidgetProviderGroupRow(group: WidgetProviderGroup, onProviderSelecte
             Text(
                 text = if (group.options.size == 1) "1 widget" else "${group.options.size} widgets",
                 style = MaterialTheme.typography.labelSmall,
-                color = Faint,
+                color = Muted,
             )
         }
         // FlowRow, not Row — a group with more options than fit on one line (Clock's 9, say)

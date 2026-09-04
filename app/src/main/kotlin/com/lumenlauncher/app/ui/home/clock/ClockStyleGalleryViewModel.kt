@@ -9,6 +9,7 @@ import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +26,8 @@ data class ClockStyleGalleryUiState(
     val colorOption: ClockColorOption = ClockColorOption.INK,
     val use24HourTime: Boolean = false,
     val showMeridiem: Boolean = false,
+    /** Global only — resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview here regardless of whether this instance is profile-scoped. */
+    val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 )
 
 /** Backs the global or profile-scoped clock style gallery. */
@@ -49,6 +52,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 colorOption = profile.clockColorOption,
                 use24HourTime = profile.use24HourTime,
                 showMeridiem = profile.clockShowMeridiem,
+                launcherFontOption = settings.launcherFontOption,
             )
         } else {
             ClockStyleGalleryUiState(
@@ -57,6 +61,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 colorOption = settings.clockColorOption,
                 use24HourTime = settings.use24HourTime,
                 showMeridiem = settings.clockShowMeridiem,
+                launcherFontOption = settings.launcherFontOption,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ClockStyleGalleryUiState())

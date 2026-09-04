@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
@@ -71,6 +72,7 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         colorOption = uiState.colorOption,
         use24HourTime = uiState.use24HourTime,
         showMeridiem = uiState.showMeridiem,
+        launcherFontOption = uiState.launcherFontOption,
         onTemplateSelected = viewModel::setClockTemplateId,
         onFontOptionChanged = viewModel::setClockFontOption,
         onColorOptionChanged = viewModel::setClockColorOption,
@@ -108,6 +110,7 @@ private fun ClockStyleGalleryScreen(
     onUse24HourTimeChanged: (Boolean) -> Unit,
     onShowMeridiemChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
     val textColor = colorOption.resolve()
     val fixedClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
@@ -212,6 +215,7 @@ private fun ClockStyleGalleryScreen(
                     showMeridiem = showMeridiem,
                     textColor = textColor,
                     mutedTextColor = textColor.copy(alpha = 0.8f),
+                    launcherFontOption = launcherFontOption,
                 )
             }
         }

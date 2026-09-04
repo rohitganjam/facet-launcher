@@ -31,6 +31,7 @@ class LauncherActivity : ComponentActivity() {
                 accentFromSystem = uiState.accentFromSystem,
                 customAccentSwatch = uiState.customAccentSwatch?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
                 iconRenderMode = uiState.iconRenderMode,
+                launcherFontOption = uiState.launcherFontOption,
             ) {
                 LumenNavHost(
                     apps = uiState.apps,

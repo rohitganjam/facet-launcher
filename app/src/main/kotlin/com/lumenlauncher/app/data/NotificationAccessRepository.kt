@@ -14,9 +14,9 @@ import javax.inject.Singleton
  * callers re-check this (typically on `onResume`, since the only way to grant it is that redirect).
  */
 @Singleton
-class NotificationAccessRepository @Inject constructor(
+open class NotificationAccessRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    fun isGranted(): Boolean =
+    open fun isGranted(): Boolean =
         NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
 }

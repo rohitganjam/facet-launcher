@@ -8,7 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,17 +43,14 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -65,11 +62,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.SearchBarPosition
@@ -80,6 +81,7 @@ import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
+import com.lumenlauncher.app.ui.components.rememberDragReorderState
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.Faint
@@ -136,12 +138,16 @@ fun SettingsScreen(
         },
         onReorderDockApps = viewModel::reorderDockApps,
         onReorderDefaultFavorites = viewModel::reorderDefaultFavorites,
+        onAppRowPositionChanged = viewModel::setAppRowPosition,
+        onAppRowPresentationChanged = viewModel::setAppRowPresentation,
         onListContentModeChanged = viewModel::setListContentMode,
         onAppsToShowCountChanged = viewModel::setAppsToShowCount,
         onThemeModeChanged = viewModel::setThemeMode,
         onAccentFromSystemChanged = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChanged = viewModel::setCustomAccentSwatch,
         onIconRenderModeChanged = viewModel::setIconRenderMode,
+        onLauncherFontOptionChanged = viewModel::setLauncherFontOption,
+        onAppLabelColorOptionChanged = viewModel::setAppLabelColorOption,
         modifier = modifier,
     )
 }
@@ -168,12 +174,16 @@ private fun SettingsContent(
     onSearchContactsToggled: (Boolean) -> Unit,
     onReorderDockApps: (List<AppInfo>) -> Unit,
     onReorderDefaultFavorites: (List<AppInfo>) -> Unit,
+    onAppRowPositionChanged: (AppRowPosition) -> Unit,
+    onAppRowPresentationChanged: (AppRowPresentation) -> Unit,
     onListContentModeChanged: (ListContentMode) -> Unit,
     onAppsToShowCountChanged: (Int) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onAccentFromSystemChanged: (Boolean) -> Unit,
     onCustomAccentSwatchChanged: (AccentSwatch) -> Unit,
     onIconRenderModeChanged: (IconRenderMode) -> Unit,
+    onLauncherFontOptionChanged: (LauncherFontOption) -> Unit,
+    onAppLabelColorOptionChanged: (ClockColorOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -273,6 +283,24 @@ private fun SettingsContent(
         item { SectionHeader("APPS LIST") }
         item {
             SettingsCard {
+                LabeledDropdownRow(
+                    title = "Position",
+                    options = AppRowPosition.entries,
+                    selected = uiState.settings.appRowPosition,
+                    label = { it.displayLabel() },
+                    onSelect = onAppRowPositionChanged,
+                    testTag = "default_app_row_position_row",
+                )
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "Presentation",
+                    options = AppRowPresentation.entries,
+                    selected = uiState.settings.appRowPresentation,
+                    label = { it.displayLabel() },
+                    onSelect = onAppRowPresentationChanged,
+                    testTag = "default_app_row_presentation_row",
+                )
+                CardDivider()
                 LabeledDropdownRow(
                     title = "Default App list content",
                     options = ListContentMode.entries,
@@ -407,6 +435,24 @@ private fun SettingsContent(
                     onSelect = onIconRenderModeChanged,
                     testTag = "appearance_icons_row",
                 )
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "Launcher Font",
+                    options = LauncherFontOption.entries,
+                    selected = uiState.settings.launcherFontOption,
+                    label = { it.displayName },
+                    onSelect = onLauncherFontOptionChanged,
+                    testTag = "appearance_font_row",
+                )
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "App label color",
+                    options = ClockColorOption.entries,
+                    selected = uiState.settings.appLabelColorOption,
+                    label = { it.displayName },
+                    onSelect = onAppLabelColorOptionChanged,
+                    testTag = "appearance_app_label_color_row",
+                )
             }
         }
 
@@ -501,6 +547,17 @@ private fun SearchBarPosition.displayLabel(): String = when (this) {
     SearchBarPosition.BOTTOM -> "Bottom"
 }
 
+private fun AppRowPosition.displayLabel(): String = when (this) {
+    AppRowPosition.LEFT -> "Left"
+    AppRowPosition.RIGHT -> "Right"
+}
+
+private fun AppRowPresentation.displayLabel(): String = when (this) {
+    AppRowPresentation.ICON_ONLY -> "Icon Only"
+    AppRowPresentation.ICON_AND_TEXT -> "Icon & Text"
+    AppRowPresentation.TEXT_ONLY -> "Text Only"
+}
+
 private fun ListContentMode.displayLabel(): String = when (this) {
     ListContentMode.FAVORITES -> "Favorites"
     ListContentMode.RECENTS -> "Recents"
@@ -517,10 +574,9 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelSmall,
-        // Faint's own ~30% alpha read as too low here — bumped locally (not by changing Faint
-        // itself, which other surfaces like the Drawer's letter headers still rely on at its
-        // original value) rather than globally (see chat history).
-        color = Faint.copy(alpha = 0.6f),
+        // Muted, not Faint — this label is read as navigation, not decoration, and Faint's ~30%
+        // alpha was too dim for that (see chat history).
+        color = Muted,
         modifier = modifier.padding(top = 18.dp, bottom = 6.dp),
     )
 }
@@ -728,14 +784,18 @@ private fun DockSection(
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         // Keyed on component identity only, not the raw `dockApps` list — see FavoritesReorderList's
         // doc comment (ProfileSettingsScreen.kt) for why keying on the raw list resets drag state
-        // (and restarts the gesture detector) mid-drag on incidental re-emissions.
+        // mid-drag on incidental re-emissions.
         val componentsKey = dockApps.map { it.packageName to it.activityName }
         var order by remember(componentsKey) { mutableStateOf(dockApps) }
-        var draggingComponent by remember { mutableStateOf<Pair<String, String>?>(null) }
-        var dragOffsetX by remember { mutableFloatStateOf(0f) }
         val slotWidthPx = with(LocalDensity.current) { (DOCK_ICON_SIZE_DP + DOCK_ICON_SPACING_DP).dp.toPx() }
-        val currentOrder = rememberUpdatedState(order)
-        val currentOnReorder = rememberUpdatedState(onReorder)
+        val reorderState = rememberDragReorderState(
+            items = order,
+            key = { it.packageName to it.activityName },
+            axis = Orientation.Horizontal,
+            slotSizePx = slotWidthPx,
+            onOrderChanged = { order = it },
+            onDragCommit = { onReorder(it) },
+        )
 
         LazyRow(
             modifier = Modifier.height(DOCK_ICON_SIZE_DP.dp),
@@ -744,14 +804,13 @@ private fun DockSection(
             userScrollEnabled = false,
         ) {
             items(order, key = { it.packageName + it.activityName }) { app ->
-                val component = app.packageName to app.activityName
-                val isDragging = component == draggingComponent
+                val isDragging = reorderState.isDragging(app)
                 Box(
                     modifier = Modifier
                         .testTag("dock_app_${app.packageName}")
                         .zIndex(if (isDragging) 1f else 0f)
                         .graphicsLayer {
-                            translationX = if (isDragging) dragOffsetX else 0f
+                            translationX = if (isDragging) reorderState.dragOffset else 0f
                             scaleX = if (isDragging) REORDER_DRAG_SCALE else 1f
                             scaleY = if (isDragging) REORDER_DRAG_SCALE else 1f
                             shadowElevation = if (isDragging) REORDER_DRAG_ELEVATION.toPx() else 0f
@@ -759,29 +818,7 @@ private fun DockSection(
                             clip = false
                         }
                         .then(if (isDragging) Modifier else Modifier.animateItem())
-                        .pointerInput(component) {
-                            detectDragGestures(
-                                onDragStart = { draggingComponent = component; dragOffsetX = 0f },
-                                onDragEnd = {
-                                    val list = currentOrder.value
-                                    val currentIndex = list.indexOfFirst { it.packageName == component.first && it.activityName == component.second }
-                                    if (currentIndex != -1) {
-                                        val targetIndex = (currentIndex + (dragOffsetX / slotWidthPx).roundToInt())
-                                            .coerceIn(0, list.lastIndex)
-                                        if (targetIndex != currentIndex) {
-                                            order = list.toMutableList().apply { add(targetIndex, removeAt(currentIndex)) }
-                                            currentOnReorder.value(order)
-                                        }
-                                    }
-                                    draggingComponent = null
-                                    dragOffsetX = 0f
-                                },
-                                onDragCancel = { draggingComponent = null; dragOffsetX = 0f },
-                            ) { change, dragAmount ->
-                                change.consume()
-                                dragOffsetX += dragAmount.x
-                            }
-                        },
+                        .then(reorderState.dragModifier(app)),
                 ) {
                     DockAppTile(app)
                 }
@@ -790,7 +827,7 @@ private fun DockSection(
         Text(
             text = "Drag to reorder",
             style = MaterialTheme.typography.bodyMedium,
-            color = Faint,
+            color = Muted,
             modifier = Modifier.padding(top = 8.dp),
         )
     }
@@ -807,27 +844,30 @@ private val DEFAULT_FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
 /**
  * Drag-to-reorder for Settings' own "Default favorites" list — the same shape as
  * [com.lumenlauncher.app.ui.profiles.ProfileSettingsScreen]'s `FavoritesReorderList` (see that
- * file's own doc comment for why `remember`/`pointerInput` are keyed on stable component identity
- * rather than the raw [favorites] list). Adding/removing a favorite happens on the picker screen
- * reached via the "Default favorites" row above this list, never here.
+ * file's own doc comment for why `remember` is keyed on stable component identity rather than the
+ * raw [favorites] list). Adding/removing a favorite happens on the picker screen reached via the
+ * "Default favorites" row above this list, never here.
  */
 @Composable
 private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = favorites.map { it.packageName to it.activityName }
     var order by remember(componentsKey) { mutableStateOf(favorites) }
-    var draggingComponent by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
     val rowHeightPx = with(LocalDensity.current) { DEFAULT_FAVORITE_ROW_HEIGHT_DP.dp.toPx() }
-    val currentOrder = rememberUpdatedState(order)
-    val currentOnReorder = rememberUpdatedState(onReorder)
+    val reorderState = rememberDragReorderState(
+        items = order,
+        key = { it.packageName to it.activityName },
+        axis = Orientation.Vertical,
+        slotSizePx = rowHeightPx,
+        onOrderChanged = { order = it },
+        onDragCommit = { onReorder(it) },
+    )
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().height((DEFAULT_FAVORITE_ROW_HEIGHT_DP * order.size).dp),
         userScrollEnabled = false,
     ) {
         items(order, key = { it.packageName + it.activityName }) { app ->
-            val component = app.packageName to app.activityName
-            val isDragging = component == draggingComponent
+            val isDragging = reorderState.isDragging(app)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -835,7 +875,7 @@ private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (Li
                     .testTag("default_favorite_reorder_row_${app.packageName}")
                     .zIndex(if (isDragging) 1f else 0f)
                     .graphicsLayer {
-                        translationY = if (isDragging) dragOffsetY else 0f
+                        translationY = if (isDragging) reorderState.dragOffset else 0f
                         scaleX = if (isDragging) REORDER_DRAG_SCALE else 1f
                         scaleY = if (isDragging) REORDER_DRAG_SCALE else 1f
                         shadowElevation = if (isDragging) REORDER_DRAG_ELEVATION.toPx() else 0f
@@ -854,29 +894,7 @@ private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (Li
                     tint = Faint,
                     modifier = Modifier
                         .testTag("default_favorite_reorder_handle_${app.packageName}")
-                        .pointerInput(component) {
-                            detectDragGestures(
-                                onDragStart = { draggingComponent = component; dragOffsetY = 0f },
-                                onDragEnd = {
-                                    val list = currentOrder.value
-                                    val currentIndex = list.indexOfFirst { it.packageName == component.first && it.activityName == component.second }
-                                    if (currentIndex != -1) {
-                                        val targetIndex = (currentIndex + (dragOffsetY / rowHeightPx).roundToInt())
-                                            .coerceIn(0, list.lastIndex)
-                                        if (targetIndex != currentIndex) {
-                                            order = list.toMutableList().apply { add(targetIndex, removeAt(currentIndex)) }
-                                            currentOnReorder.value(order)
-                                        }
-                                    }
-                                    draggingComponent = null
-                                    dragOffsetY = 0f
-                                },
-                                onDragCancel = { draggingComponent = null; dragOffsetY = 0f },
-                            ) { change, dragAmount ->
-                                change.consume()
-                                dragOffsetY += dragAmount.y
-                            }
-                        },
+                        .then(reorderState.dragModifier(app)),
                 )
                 AppIcon(icon = app.icon, size = 32.dp, cornerRadius = 9.dp, contentDescription = null)
                 Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
@@ -936,12 +954,16 @@ private fun SettingsScreenPreview() {
             onSearchContactsToggled = {},
             onReorderDockApps = {},
             onReorderDefaultFavorites = {},
+            onAppRowPositionChanged = {},
+            onAppRowPresentationChanged = {},
             onListContentModeChanged = {},
             onAppsToShowCountChanged = {},
             onThemeModeChanged = {},
             onAccentFromSystemChanged = {},
             onCustomAccentSwatchChanged = {},
             onIconRenderModeChanged = {},
+            onLauncherFontOptionChanged = {},
+            onAppLabelColorOptionChanged = {},
         )
     }
 }

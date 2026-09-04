@@ -35,6 +35,11 @@ private val MutedLight = Color(0x73020817) // rgba(2,8,23,.45)
 private val MutedDark = Color(0x80E2E8F0) // rgba(226,232,240,.5)
 // Dark "Faint" isn't in README's dark token table — derived at the same alpha *ratio* to Muted
 // as the light table's Faint (.3) is to its Muted (.45), applied to Muted-dark's base color.
+// Deliberately dimmer than Muted — reserved for decorative/disabled elements (drag-handle icons,
+// inactive carousel dots, disabled menu items) where that's the point. Any *readable* secondary
+// text that turned out too dim at this alpha uses Muted instead, not a locally-bumped Faint (see
+// chat history — `SettingsScreen.kt`'s `SectionHeader` used to work around this with a local
+// `Faint.copy(alpha = 0.6f)`, which was the tell that Faint itself was the wrong token there).
 private val FaintLight = Color(0x4D020817) // rgba(2,8,23,.3)
 private val FaintDark = Color(0x4DE2E8F0) // rgba(226,232,240,.3)
 private val HairlineLight = Color(0x12020817) // rgba(2,8,23,.07)

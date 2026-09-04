@@ -2,6 +2,8 @@ package com.lumenlauncher.app.data
 
 import com.lumenlauncher.app.data.local.ProfileDao
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -101,6 +103,14 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(overrideApps = overriding))
     }
 
+    suspend fun setAppRowPosition(profile: ProfileEntity, position: AppRowPosition) {
+        profileDao.upsert(profile.copy(appRowPosition = position))
+    }
+
+    suspend fun setAppRowPresentation(profile: ProfileEntity, presentation: AppRowPresentation) {
+        profileDao.upsert(profile.copy(appRowPresentation = presentation))
+    }
+
     suspend fun setListContentMode(profile: ProfileEntity, mode: ListContentMode) {
         profileDao.upsert(profile.copy(listContentMode = mode))
     }
@@ -121,6 +131,8 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
     suspend fun updateOverridingApps(
         profile: ProfileEntity,
         overriding: Boolean,
+        position: AppRowPosition,
+        presentation: AppRowPresentation,
         mode: ListContentMode,
         count: Int,
         overridingFavorites: Boolean,
@@ -128,6 +140,8 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(
             profile.copy(
                 overrideApps = overriding,
+                appRowPosition = position,
+                appRowPresentation = presentation,
                 listContentMode = mode,
                 appsToShowCount = count.coerceIn(4, 8),
                 overridingFavorites = overridingFavorites,
@@ -144,16 +158,28 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(showAllDayEvents = enabled))
     }
 
-    /** Seeds and toggles calendar override. */
+    suspend fun setCalendarFontOption(profile: ProfileEntity, option: ClockFontOption) {
+        profileDao.upsert(profile.copy(calendarFontOption = option))
+    }
+
+    suspend fun setCalendarColorOption(profile: ProfileEntity, option: ClockColorOption) {
+        profileDao.upsert(profile.copy(calendarColorOption = option))
+    }
+
+    /** Seeds the profile's calendar settings from effective values and toggles the override flag. Atomic upsert to avoid clobbering. */
     suspend fun updateOverridingCalendar(
         profile: ProfileEntity,
         overriding: Boolean,
         showAllDayEvents: Boolean,
+        fontOption: ClockFontOption,
+        colorOption: ClockColorOption,
     ) {
         profileDao.upsert(
             profile.copy(
                 overrideCalendar = overriding,
                 showAllDayEvents = showAllDayEvents,
+                calendarFontOption = fontOption,
+                calendarColorOption = colorOption,
             ),
         )
     }

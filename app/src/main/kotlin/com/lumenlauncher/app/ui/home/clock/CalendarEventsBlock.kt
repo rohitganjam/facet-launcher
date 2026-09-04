@@ -45,7 +45,7 @@ private const val MAX_VISIBLE_EVENTS = 3
  * `ClockDisplay` — a font/color/layout change to one never has to touch the other, and either
  * can be dropped onto a screen alone. Own font/color configuration, kept separate from the rest
  * of the app's theme (per the clock/calendar template design brief) — [fontFamily]/[textColor]
- * default to values matching today's shipped look, not read from [com.lumenlauncher.app.ui.theme.LumenTypography]/
+ * default to values matching today's shipped look, not read from [com.lumenlauncher.app.ui.theme.lumenTypography]/
  * `Ink` directly, so a caller can override either without touching the app's global type scale.
  *
  * `[2×13px rule] [time] [title]` rows per row, the rule colored by which calendar the event

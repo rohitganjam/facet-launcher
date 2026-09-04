@@ -93,8 +93,10 @@ private enum class ResizeEdge { START, END }
  * Dragging the right/bottom handles only changes span (top-left cell fixed); dragging left/top
  * changes span **and** shifts that edge's row/col, so the opposite edge stays fixed instead —
  * both resolved by the same [com.lumenlauncher.app.domain.ResizeWidgetUseCase], which validates
- * whatever (row, col, colSpan, rowSpan) rectangle it's given regardless of which edge moved. A
- * tap anywhere in the grid while resizing cancels it without committing. While anything is
+ * whatever (row, col, colSpan, rowSpan) rectangle it's given regardless of which edge moved.
+ * Committing one handle's drag (its `onDragEnd`) does **not** itself end resize mode — the border
+ * and all four handles stay up afterward so the user can immediately grab a different handle and
+ * keep resizing. A tap anywhere in the grid while resizing cancels it without committing. While anything is
  * grabbed or resizing, `change.consume()` inside that tile's own gesture keeps the ancestor
  * Home<->Hub horizontal swipe-close gesture (`HomeDrawerRoute.kt`) from also reacting to the same
  * pointer stream — ordinary Compose consumption arbitration, no explicit wiring needed.
@@ -222,6 +224,7 @@ fun HubGrid(
                     key(widget.appWidgetId) {
                         val isGrabbed = widget.appWidgetId == grabbedAppWidgetId
                         val isResizing = widget.appWidgetId == resizingAppWidgetId
+                        val isMenuOpen = widget.appWidgetId == showContextMenuForAppWidgetId
                         val baseColSpan = widget.colSpan
                         val baseRowSpan = widget.rowSpan
 
@@ -305,8 +308,10 @@ fun HubGrid(
                                 .testTag("hub_widget_tile_${widget.appWidgetId}")
                                 // Resize mode's own footprint indicator — otherwise the exact cell
                                 // bounds a resize is currently claiming aren't visible against the
-                                // transparent Hub background, only the handles themselves are.
-                                .then(if (isResizing) Modifier.border(1.dp, Accent) else Modifier)
+                                // transparent Hub background, only the handles themselves are. Also
+                                // shown (without handles) while the context menu is open on this
+                                // widget, so it's clear which tile the menu belongs to.
+                                .then(if (isResizing || isMenuOpen) Modifier.border(1.dp, Accent) else Modifier)
                                 .then(
                                     if (isGrabbed) {
                                         Modifier
@@ -333,6 +338,15 @@ fun HubGrid(
                                 .pointerInput(widget.appWidgetId, columns, cellWidthPx, rowHeightPx, baseColSpan, baseRowSpan) {
                                     detectGrabOrResizeGesture(
                                         onLongPressHold = {
+                                            // A long-press on any tile — including the one
+                                            // currently in resize mode — always exits resize mode
+                                            // first, then proceeds as an ordinary grab-or-menu
+                                            // gesture from a clean slate; resize and grab are never
+                                            // simultaneously active (see chat history).
+                                            resizingAppWidgetId = null
+                                            resizeDeltaPx = Offset.Zero
+                                            horizontalResizeEdge = null
+                                            verticalResizeEdge = null
                                             grabbedAppWidgetId = widget.appWidgetId
                                             dragOffsetPx = Offset.Zero
                                         },
@@ -433,11 +447,18 @@ fun HubGrid(
                                         if (currentCanResizeTo.value(widget.appWidgetId, widget.row, widget.col, finalColSpan, baseRowSpan)) {
                                             currentOnWidgetResized.value(widget.appWidgetId, widget.row, widget.col, finalColSpan, baseRowSpan)
                                         }
-                                        resizingAppWidgetId = null
+                                        // Resize mode itself stays active (resizingAppWidgetId is
+                                        // left untouched) so the user can immediately grab another
+                                        // handle — only the "tap away" detector above ends it. Only
+                                        // this drag's own transient state resets, so the next resize
+                                        // starts fresh off the just-committed span instead of
+                                        // layering a new delta on a stale one.
                                         resizeDeltaPx = Offset.Zero
+                                        horizontalResizeEdge = null
+                                        verticalResizeEdge = null
                                     },
                                     testTag = "hub_resize_handle_right",
-                                    modifier = Modifier.align(Alignment.CenterEnd).offset(x = WIDGET_RESIZE_HANDLE_SIZE / 2),
+                                    modifier = Modifier.align(Alignment.CenterEnd).offset(x = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                                 )
                                 WidgetResizeHandle(
                                     onDrag = { delta -> horizontalResizeEdge = ResizeEdge.START; resizeDeltaPx += Offset(delta.x, 0f) },
@@ -447,11 +468,14 @@ fun HubGrid(
                                         if (currentCanResizeTo.value(widget.appWidgetId, widget.row, finalCol, finalColSpan, baseRowSpan)) {
                                             currentOnWidgetResized.value(widget.appWidgetId, widget.row, finalCol, finalColSpan, baseRowSpan)
                                         }
-                                        resizingAppWidgetId = null
+                                        // See the right handle's onDragEnd above — resize mode stays
+                                        // active; only this drag's own transient state resets.
                                         resizeDeltaPx = Offset.Zero
+                                        horizontalResizeEdge = null
+                                        verticalResizeEdge = null
                                     },
                                     testTag = "hub_resize_handle_left",
-                                    modifier = Modifier.align(Alignment.CenterStart).offset(x = -WIDGET_RESIZE_HANDLE_SIZE / 2),
+                                    modifier = Modifier.align(Alignment.CenterStart).offset(x = -WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                                 )
                                 WidgetResizeHandle(
                                     onDrag = { delta ->
@@ -473,12 +497,15 @@ fun HubGrid(
                                         if (currentCanResizeTo.value(widget.appWidgetId, widget.row, widget.col, baseColSpan, finalRowSpan)) {
                                             currentOnWidgetResized.value(widget.appWidgetId, widget.row, widget.col, baseColSpan, finalRowSpan)
                                         }
-                                        resizingAppWidgetId = null
+                                        // See the right handle's onDragEnd above — resize mode stays
+                                        // active; only this drag's own transient state resets.
                                         resizeDeltaPx = Offset.Zero
+                                        horizontalResizeEdge = null
+                                        verticalResizeEdge = null
                                         autoScrollDirection = 0
                                     },
                                     testTag = "hub_resize_handle_bottom",
-                                    modifier = Modifier.align(Alignment.BottomCenter).offset(y = WIDGET_RESIZE_HANDLE_SIZE / 2),
+                                    modifier = Modifier.align(Alignment.BottomCenter).offset(y = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                                 )
                                 WidgetResizeHandle(
                                     onDrag = { delta ->
@@ -496,40 +523,50 @@ fun HubGrid(
                                         if (currentCanResizeTo.value(widget.appWidgetId, finalRow, widget.col, baseColSpan, finalRowSpan)) {
                                             currentOnWidgetResized.value(widget.appWidgetId, finalRow, widget.col, baseColSpan, finalRowSpan)
                                         }
-                                        resizingAppWidgetId = null
+                                        // See the right handle's onDragEnd above — resize mode stays
+                                        // active; only this drag's own transient state resets.
                                         resizeDeltaPx = Offset.Zero
+                                        horizontalResizeEdge = null
+                                        verticalResizeEdge = null
                                         autoScrollDirection = 0
                                     },
                                     testTag = "hub_resize_handle_top",
-                                    modifier = Modifier.align(Alignment.TopCenter).offset(y = -WIDGET_RESIZE_HANDLE_SIZE / 2),
+                                    modifier = Modifier.align(Alignment.TopCenter).offset(y = -WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                                 )
                             }
-                        }
 
-                        ThemedDropdownMenu(
-                            expanded = showContextMenuForAppWidgetId == widget.appWidgetId,
-                            onDismissRequest = { showContextMenuForAppWidgetId = null },
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
-                            ThemedDropdownMenuItem(
-                                label = "Resize widget",
-                                onClick = {
-                                    showContextMenuForAppWidgetId = null
-                                    resizingAppWidgetId = widget.appWidgetId
-                                    resizeDeltaPx = Offset.Zero
-                                    horizontalResizeEdge = null
-                                    verticalResizeEdge = null
-                                },
-                                enabled = !widget.isOrphaned,
-                            )
-                            ThemedDropdownMenuItem(
-                                label = "Remove widget",
-                                onClick = {
-                                    showContextMenuForAppWidgetId = null
-                                    onWidgetDroppedOnTrash(widget.appWidgetId)
-                                },
-                                destructive = true,
-                            )
+                            // Anchored *inside* this widget's own positioned Box — DropdownMenu's
+                            // underlying Popup anchors to wherever its own composable sits in the
+                            // layout, so placing this as a sibling *after* the Box (as a previous
+                            // version of this code did) anchored it near the grid's own origin
+                            // instead of near the widget that was actually long-pressed (confirmed
+                            // on-device: menu rendered bottom-left regardless of which widget was
+                            // pressed — see chat history).
+                            ThemedDropdownMenu(
+                                expanded = showContextMenuForAppWidgetId == widget.appWidgetId,
+                                onDismissRequest = { showContextMenuForAppWidgetId = null },
+                                shape = MaterialTheme.shapes.medium,
+                            ) {
+                                ThemedDropdownMenuItem(
+                                    label = "Resize widget",
+                                    onClick = {
+                                        showContextMenuForAppWidgetId = null
+                                        resizingAppWidgetId = widget.appWidgetId
+                                        resizeDeltaPx = Offset.Zero
+                                        horizontalResizeEdge = null
+                                        verticalResizeEdge = null
+                                    },
+                                    enabled = !widget.isOrphaned,
+                                )
+                                ThemedDropdownMenuItem(
+                                    label = "Remove widget",
+                                    onClick = {
+                                        showContextMenuForAppWidgetId = null
+                                        onWidgetDroppedOnTrash(widget.appWidgetId)
+                                    },
+                                    destructive = true,
+                                )
+                            }
                         }
                     }
                 }

@@ -1,5 +1,7 @@
 package com.lumenlauncher.app.ui.drawer
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,6 +24,9 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.ConnectionDetail
+import com.lumenlauncher.app.data.model.ContactConnection
+import com.lumenlauncher.app.data.model.ContactConnectionType
 import com.lumenlauncher.app.data.model.ContactInfo
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
@@ -379,21 +384,21 @@ class AppDrawerScreenTest {
     @Test
     fun gridSizeRowsSettingControlsTileHeight() {
         // Given the drawer in Grid presentation with a small row count (tiles get more of the
-        // viewport's height each)
+        // viewport's height each) — a single setContent with reactive state driving [gridSize],
+        // not two separate setContent calls on the same Activity (no longer permitted by the
+        // current compose-ui-test/activity libraries — see chat history).
+        var gridSize by mutableStateOf(DrawerGridSize.FOUR_BY_FOUR)
         composeRule.setContent {
             LumenLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridSize = DrawerGridSize.FOUR_BY_FOUR)
+                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridSize = gridSize)
             }
         }
         val fourRowsHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
         // When the same drawer instead uses a larger row count (tiles get less height each,
         // since more rows must fit in the same viewport)
-        composeRule.setContent {
-            LumenLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridSize = DrawerGridSize.FIVE_BY_SIX)
-            }
-        }
+        gridSize = DrawerGridSize.FIVE_BY_SIX
+        composeRule.waitForIdle()
         val sixRowsHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
         // Then tile height tracks the selected row count, not just column count — this is the
@@ -407,20 +412,19 @@ class AppDrawerScreenTest {
     @Test
     fun listItemSizeSettingControlsRowHeight() {
         // Given the drawer in List presentation at the Compact item size (today's unchanged
-        // default height)
+        // default height) — a single setContent with reactive state driving [itemSize], not two
+        // separate setContent calls on the same Activity (see the identical note above).
+        var itemSize by mutableStateOf(DrawerListItemSize.COMPACT)
         composeRule.setContent {
             LumenLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, listItemSize = DrawerListItemSize.COMPACT)
+                AppDrawerScreen(apps = apps, onAppClick = {}, listItemSize = itemSize)
             }
         }
         val compactHeight = composeRule.onNodeWithTag("drawer_app_row_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
         // When the same drawer instead uses the Spacious item size
-        composeRule.setContent {
-            LumenLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, listItemSize = DrawerListItemSize.SPACIOUS)
-            }
-        }
+        itemSize = DrawerListItemSize.SPACIOUS
+        composeRule.waitForIdle()
         val spaciousHeight = composeRule.onNodeWithTag("drawer_app_row_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
         // Then Spacious rows are taller than Compact rows
@@ -450,36 +454,93 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun contactsSectionRendersCollapsedAndExpandsChipsOnTap() {
-        // Given a search that also has a contact match
+    fun contactsPermissionBannerShowsWhileSearchingAndDismissesOnItsOwnClick() {
+        // Given the caller reports READ_CONTACTS isn't granted (mirrors DrawerViewModel.showContactsPermissionPrompt)
         var query by mutableStateOf("")
-        val contact = ContactInfo(id = "1", displayName = "Jane Doe", phoneNumber = "555-1234")
+        var showPrompt by mutableStateOf(false)
+        var clicked = false
         composeRule.setContent {
             LumenLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it }, contacts = listOf(contact))
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    query = query,
+                    onQueryChanged = { query = it },
+                    contacts = emptyList(),
+                    showContactsPermissionPrompt = showPrompt,
+                    onContactsPermissionPromptClick = { clicked = true; showPrompt = false },
+                )
+            }
+        }
+
+        // Then it stays hidden while there's no query yet
+        composeRule.onNodeWithTag("drawer_contacts_access_strip").assertDoesNotExist()
+
+        // When searching while the prompt condition holds
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
+        showPrompt = true
+        composeRule.waitForIdle()
+
+        // Then the banner renders under a CONTACTS header alongside the app results
+        composeRule.onNodeWithText("CONTACTS").assertExists()
+        composeRule.onNodeWithTag("drawer_contacts_access_strip").assertExists()
+        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+
+        // When tapping the banner
+        composeRule.onNodeWithTag("drawer_contacts_access_strip").performClick()
+
+        // Then its own click callback fires and (per the caller's own state, mirroring the dismiss-on-click contract) it disappears immediately
+        assertEquals(true, clicked)
+        composeRule.onNodeWithTag("drawer_contacts_access_strip").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingAContactRowOpensTheConnectionsSheetForThem() {
+        // Given a search that also has a contact match, with a fake connections provider
+        // standing in for ContactRepository.getConnections (Phase 9 — see chat history)
+        var query by mutableStateOf("")
+        val contact = ContactInfo(id = "1", displayName = "Jane Doe", phoneNumber = "555-1234")
+        val callConnection = ContactConnection(
+            ContactConnectionType.CALL,
+            "Call",
+            null,
+            ConnectionDetail.Single("555-1234", "Mobile", Intent(Intent.ACTION_DIAL, Uri.parse("tel:555-1234"))),
+        )
+        composeRule.setContent {
+            LumenLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    query = query,
+                    onQueryChanged = { query = it },
+                    contacts = listOf(contact),
+                    onRequestConnections = { listOf(callConnection) },
+                )
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("Jane")
 
-        // Then the contact renders collapsed — name visible, no chips yet
+        // Then the contact renders in the results, sheet not open yet
         composeRule.onNodeWithText("CONTACTS").assertExists()
         composeRule.onNodeWithText("Jane Doe").assertExists()
-        composeRule.onNodeWithTag("contact_action_call").assertDoesNotExist()
+        composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist()
 
         // When tapping the contact row
         composeRule.onNodeWithTag("contact_row_1").performClick()
 
-        // Then Call/Message chips appear (WhatsApp isn't installed on the test device, so it's
-        // correctly absent — this exercises the "package not installed" branch, not the positive one)
-        composeRule.onNodeWithTag("contact_action_call").assertExists()
-        composeRule.onNodeWithTag("contact_action_message").assertExists()
-        composeRule.onNodeWithTag("contact_action_whatsapp").assertDoesNotExist()
+        // Then the connections sheet opens, showing their name and fetched Call connection
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertIsDisplayed() }.isSuccess
+        }
+        composeRule.onNodeWithTag("contact_connection_call_call").assertExists()
 
-        // When tapping the row again
-        composeRule.onNodeWithTag("contact_row_1").performClick()
+        // When tapping the scrim to dismiss
+        composeRule.onNodeWithTag("contact_connections_scrim").performClick()
 
-        // Then it collapses back
-        composeRule.onNodeWithTag("contact_action_call").assertDoesNotExist()
+        // Then the sheet closes
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist() }.isSuccess
+        }
     }
 
     @Test

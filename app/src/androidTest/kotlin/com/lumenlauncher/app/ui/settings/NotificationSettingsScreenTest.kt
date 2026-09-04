@@ -11,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -27,7 +26,11 @@ class NotificationSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}, onNavigateToNotificationAccessExplanation: () -> Unit = {}): SettingsRepository {
+    private fun setContent(
+        onBack: () -> Unit = {},
+        onNavigateToNotificationAccessExplanation: () -> Unit = {},
+        accessGranted: Boolean = true,
+    ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
             val context = LocalContext.current
@@ -37,7 +40,7 @@ class NotificationSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "notification-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                NotificationSettingsViewModel(settingsRepository, NotificationAccessRepository(context))
+                NotificationSettingsViewModel(settingsRepository, FakeNotificationAccessRepository(context, granted = accessGranted))
             }
             LumenLauncherTheme {
                 NotificationSettingsScreen(
@@ -53,8 +56,8 @@ class NotificationSettingsScreenTest {
 
     @Test
     fun badgesOnByDefaultWithBadgeStyleEnabled() {
-        // Given the screen, badges on by default
-        setContent()
+        // Given the screen, badges on by default and access already granted
+        setContent(accessGranted = true)
 
         // Then the toggle is on and the style row is enabled
         composeRule.onNodeWithTag("notification_badges_toggle").assertIsOn()
@@ -63,9 +66,23 @@ class NotificationSettingsScreenTest {
     }
 
     @Test
+    fun toggleStaysOffWithoutRealAccessEvenThoughTheStoredPreferenceDefaultsOn() {
+        // Given the screen — the stored "Notification badges" preference defaults to true, but
+        // notification listener access itself was never actually granted (e.g. revoked
+        // externally, or simply never granted — see chat history for the real bug this covers:
+        // the switch used to read the stored preference alone and showed "on" while nothing
+        // worked, with no visible reason why)
+        setContent(accessGranted = false)
+
+        // Then the switch honors the real permission, not just the stored preference
+        composeRule.onNodeWithTag("notification_badges_toggle").assertIsOff()
+        composeRule.onNodeWithTag("badge_style_row").assertIsNotEnabled()
+    }
+
+    @Test
     fun turningBadgesOffDisablesTheStyleRowAndPersists() {
-        // Given the screen
-        val settingsRepository = setContent()
+        // Given the screen, access granted so badges start genuinely on
+        val settingsRepository = setContent(accessGranted = true)
 
         // When turning badges off
         composeRule.onNodeWithTag("notification_badges_toggle").performClick()
@@ -102,23 +119,26 @@ class NotificationSettingsScreenTest {
     }
 
     @Test
-    fun turningBadgesOnWithoutAccessGrantedRoutesToTheExplanationScreenInsteadOfPersisting() {
-        // Given the screen, badges already off (so the toggle can be turned back on) and
-        // notification listener access not granted in this test environment
+    fun tappingTheOffSwitchWithoutAccessGrantedRoutesToTheExplanationScreenInsteadOfPersisting() {
+        // Given the screen with the stored preference at its true default but access not
+        // granted — the switch already reads off per the gating above, exactly the state a real
+        // user lands on before ever visiting the explanation screen
         var navigatedToExplanation = false
-        val settingsRepository = setContent(onNavigateToNotificationAccessExplanation = { navigatedToExplanation = true })
-        composeRule.onNodeWithTag("notification_badges_toggle").performClick()
+        val settingsRepository = setContent(
+            onNavigateToNotificationAccessExplanation = { navigatedToExplanation = true },
+            accessGranted = false,
+        )
         composeRule.onNodeWithTag("notification_badges_toggle").assertIsOff()
 
-        // When turning it back on
+        // When tapping it (attempting to turn it on)
         composeRule.onNodeWithTag("notification_badges_toggle").performClick()
 
-        // Then it routes to the explanation screen instead of persisting the setting directly —
-        // the toggle itself stays off until the explanation screen's own grant-check flips it
+        // Then it routes to the explanation screen instead of persisting the setting directly,
+        // and the stored preference is left untouched at its original default
         assertEquals(true, navigatedToExplanation)
         composeRule.onNodeWithTag("notification_badges_toggle").assertIsOff()
         composeRule.waitUntil(timeoutMillis = 1_000) {
-            runBlocking { !settingsRepository.settings.first().notificationDotsEnabled }
+            runBlocking { settingsRepository.settings.first().notificationDotsEnabled }
         }
     }
 

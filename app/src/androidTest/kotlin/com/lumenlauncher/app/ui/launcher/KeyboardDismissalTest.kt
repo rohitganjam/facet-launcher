@@ -40,6 +40,7 @@ import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
+import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
@@ -48,10 +49,12 @@ import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
 import com.lumenlauncher.app.domain.ResizeWidgetUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
+import com.lumenlauncher.app.domain.PlaceWidgetUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.hub.HubViewModel
+import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import org.junit.Rule
 import org.junit.Test
@@ -137,10 +140,11 @@ class KeyboardDismissalTest {
                 DrawerViewModel(
                     settingsRepository,
                     ContactPermissionRepository(context),
-                    ContactRepository(context.contentResolver),
+                    ContactRepository(context.contentResolver, context),
                     AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
+                    RankBySearchRelevanceUseCase(),
                 )
             }
             val hubViewModel = remember {
@@ -161,6 +165,16 @@ class KeyboardDismissalTest {
                     CompactWidgetsUseCase(),
                 )
             }
+            val widgetPickerViewModel = remember {
+                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
+                val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                )
+                HubWidgetPickerViewModel(context, appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
+            }
 
             LumenLauncherTheme {
                 HomeDrawerRoute(
@@ -173,6 +187,7 @@ class KeyboardDismissalTest {
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
+                    widgetPickerViewModel = widgetPickerViewModel,
                     launcherViewModel = launcherViewModel,
                 )
             }

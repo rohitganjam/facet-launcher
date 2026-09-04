@@ -54,6 +54,7 @@ import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
+import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
@@ -158,10 +159,11 @@ class HomeDrawerRouteTest {
                 DrawerViewModel(
                     settingsRepository,
                     ContactPermissionRepository(context),
-                    ContactRepository(context.contentResolver),
+                    ContactRepository(context.contentResolver, context),
                     AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
+                    RankBySearchRelevanceUseCase(),
                 )
             }
             val hubViewModel = remember {

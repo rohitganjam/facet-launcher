@@ -3,7 +3,7 @@ package com.lumenlauncher.app.ui.profiles
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,16 +30,13 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +45,8 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.BackButton
@@ -57,17 +56,28 @@ import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.RenameDialog
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
+import com.lumenlauncher.app.ui.components.rememberDragReorderState
 import com.lumenlauncher.app.ui.theme.Faint
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
-import kotlin.math.roundToInt
 
 private fun ListContentMode.displayLabel(): String = when (this) {
     ListContentMode.FAVORITES -> "Favorites"
     ListContentMode.RECENTS -> "Recents"
     ListContentMode.MOST_USED -> "Most used"
+}
+
+private fun AppRowPosition.displayLabel(): String = when (this) {
+    AppRowPosition.LEFT -> "Left"
+    AppRowPosition.RIGHT -> "Right"
+}
+
+private fun AppRowPresentation.displayLabel(): String = when (this) {
+    AppRowPresentation.ICON_ONLY -> "Icon Only"
+    AppRowPresentation.ICON_AND_TEXT -> "Icon & Text"
+    AppRowPresentation.TEXT_ONLY -> "Text Only"
 }
 
 /** README `3d`'s 4…8 range. */
@@ -94,6 +104,8 @@ fun ProfileSettingsScreen(
         onOverridingClockChanged = viewModel::setOverridingClock,
         onUse24HourTimeOverrideChanged = viewModel::setUse24HourTimeOverride,
         onOverridingAppsChanged = viewModel::setOverridingApps,
+        onAppRowPositionChanged = viewModel::setAppRowPosition,
+        onAppRowPresentationChanged = viewModel::setAppRowPresentation,
         onListContentModeChanged = viewModel::setListContentMode,
         onAppsToShowCountChanged = viewModel::setAppsToShowCount,
         onReorderFavorites = viewModel::reorderFavorites,
@@ -112,6 +124,8 @@ private fun ProfileSettingsContent(
     onOverridingClockChanged: (Boolean) -> Unit,
     onUse24HourTimeOverrideChanged: (Boolean) -> Unit,
     onOverridingAppsChanged: (Boolean) -> Unit,
+    onAppRowPositionChanged: (AppRowPosition) -> Unit,
+    onAppRowPresentationChanged: (AppRowPresentation) -> Unit,
     onListContentModeChanged: (ListContentMode) -> Unit,
     onAppsToShowCountChanged: (Int) -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
@@ -151,6 +165,8 @@ private fun ProfileSettingsContent(
             AppsSection(
                 uiState = uiState,
                 onOverridingAppsChanged = onOverridingAppsChanged,
+                onAppRowPositionChanged = onAppRowPositionChanged,
+                onAppRowPresentationChanged = onAppRowPresentationChanged,
                 onListContentModeChanged = onListContentModeChanged,
                 onAppsToShowCountChanged = onAppsToShowCountChanged,
                 onFavoritesClick = onFavoritesClick,
@@ -241,7 +257,7 @@ private fun ProfileSettingsHeader(title: String, onBack: () -> Unit, modifier: M
 
 @Composable
 private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(text = title, style = MaterialTheme.typography.labelSmall, color = Faint, modifier = modifier.padding(bottom = 6.dp))
+    Text(text = title, style = MaterialTheme.typography.labelSmall, color = Muted, modifier = modifier.padding(bottom = 6.dp))
 }
 
 /**
@@ -253,6 +269,8 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 private fun AppsSection(
     uiState: ProfileSettingsUiState,
     onOverridingAppsChanged: (Boolean) -> Unit,
+    onAppRowPositionChanged: (AppRowPosition) -> Unit,
+    onAppRowPresentationChanged: (AppRowPresentation) -> Unit,
     onListContentModeChanged: (ListContentMode) -> Unit,
     onAppsToShowCountChanged: (Int) -> Unit,
     onFavoritesClick: () -> Unit,
@@ -269,6 +287,26 @@ private fun AppsSection(
         )
         Spacer(modifier = Modifier.height(12.dp))
         SettingsCard {
+            LabeledDropdownRow(
+                title = "Position",
+                options = AppRowPosition.entries,
+                selected = uiState.appRowPosition,
+                label = { it.displayLabel() },
+                onSelect = onAppRowPositionChanged,
+                enabled = uiState.isOverridingApps,
+                testTag = "profile_app_row_position_row",
+            )
+            CardDivider()
+            LabeledDropdownRow(
+                title = "Presentation",
+                options = AppRowPresentation.entries,
+                selected = uiState.appRowPresentation,
+                label = { it.displayLabel() },
+                onSelect = onAppRowPresentationChanged,
+                enabled = uiState.isOverridingApps,
+                testTag = "profile_app_row_presentation_row",
+            )
+            CardDivider()
             LabeledDropdownRow(
                 title = "App list content",
                 options = ListContentMode.entries,
@@ -329,28 +367,27 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
     // Keyed on component identity only, not the raw `favorites` list — that list's own AppInfo.icon
     // is a freshly-decoded ImageBitmap on every LauncherApps re-emission (even ones unrelated to
     // favorites), so it's structurally "new" far more often than the actual membership/order
-    // changes. Keying remember()/pointerInput() on the raw list instead would reset drag state —
-    // and restart the gesture detector — mid-drag on every such incidental re-emission, which is
-    // exactly what feels like the dragged row "jumping"/losing the finger.
+    // changes. Keying remember() on the raw list instead would reset drag state mid-drag on every
+    // such incidental re-emission, which is exactly what feels like the dragged row "jumping"/
+    // losing the finger.
     val componentsKey = favorites.map { it.packageName to it.activityName }
     var order by remember(componentsKey) { mutableStateOf(favorites) }
-    var draggingComponent by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
     val rowHeightPx = with(LocalDensity.current) { FAVORITE_ROW_HEIGHT_DP.dp.toPx() }
-    // The gesture-detection coroutine below is long-lived (one drag start-to-end) and its
-    // pointerInput key is deliberately just the row's own stable component — it must read the
-    // *current* order/callback through these rather than closing over a snapshot from whenever
-    // the coroutine started, without needing to restart the coroutine to get a fresh one.
-    val currentOrder = rememberUpdatedState(order)
-    val currentOnReorder = rememberUpdatedState(onReorder)
+    val reorderState = rememberDragReorderState(
+        items = order,
+        key = { it.packageName to it.activityName },
+        axis = Orientation.Vertical,
+        slotSizePx = rowHeightPx,
+        onOrderChanged = { order = it },
+        onDragCommit = { onReorder(it) },
+    )
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().height((FAVORITE_ROW_HEIGHT_DP * order.size).dp),
         userScrollEnabled = false,
     ) {
         items(order, key = { it.packageName + it.activityName }) { app ->
-            val component = app.packageName to app.activityName
-            val isDragging = component == draggingComponent
+            val isDragging = reorderState.isDragging(app)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -358,7 +395,7 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
                     .testTag("profile_favorite_reorder_row_${app.packageName}")
                     .zIndex(if (isDragging) 1f else 0f)
                     .graphicsLayer {
-                        translationY = if (isDragging) dragOffsetY else 0f
+                        translationY = if (isDragging) reorderState.dragOffset else 0f
                         scaleX = if (isDragging) REORDER_DRAG_SCALE else 1f
                         scaleY = if (isDragging) REORDER_DRAG_SCALE else 1f
                         shadowElevation = if (isDragging) REORDER_DRAG_ELEVATION.toPx() else 0f
@@ -377,29 +414,7 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
                     tint = Faint,
                     modifier = Modifier
                         .testTag("profile_favorite_reorder_handle_${app.packageName}")
-                        .pointerInput(component) {
-                            detectDragGestures(
-                                onDragStart = { draggingComponent = component; dragOffsetY = 0f },
-                                onDragEnd = {
-                                    val list = currentOrder.value
-                                    val currentIndex = list.indexOfFirst { it.packageName == component.first && it.activityName == component.second }
-                                    if (currentIndex != -1) {
-                                        val targetIndex = (currentIndex + (dragOffsetY / rowHeightPx).roundToInt())
-                                            .coerceIn(0, list.lastIndex)
-                                        if (targetIndex != currentIndex) {
-                                            order = list.toMutableList().apply { add(targetIndex, removeAt(currentIndex)) }
-                                            currentOnReorder.value(order)
-                                        }
-                                    }
-                                    draggingComponent = null
-                                    dragOffsetY = 0f
-                                },
-                                onDragCancel = { draggingComponent = null; dragOffsetY = 0f },
-                            ) { change, dragAmount ->
-                                change.consume()
-                                dragOffsetY += dragAmount.y
-                            }
-                        },
+                        .then(reorderState.dragModifier(app)),
                 )
                 AppIcon(icon = app.icon, size = 32.dp, cornerRadius = 9.dp, contentDescription = null)
                 Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
@@ -481,6 +496,8 @@ private fun ProfileSettingsScreenPreview() {
             onOverridingClockChanged = {},
             onUse24HourTimeOverrideChanged = {},
             onOverridingAppsChanged = {},
+            onAppRowPositionChanged = {},
+            onAppRowPresentationChanged = {},
             onListContentModeChanged = {},
             onAppsToShowCountChanged = {},
             onReorderFavorites = {},

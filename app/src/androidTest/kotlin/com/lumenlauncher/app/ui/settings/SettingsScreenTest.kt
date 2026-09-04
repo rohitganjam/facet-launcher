@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasTestTag
@@ -182,6 +183,46 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun launcherFontRowChangesTheSetting() {
+        // Given the settings screen, scrolled to Appearance's "Font" row, System selected by
+        // default — scoped to this row's own tag, not a global text search, since the Theme
+        // card's "Launcher theme" dropdown also defaults to "System" (see chat history)
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_font_row"))
+        composeRule.onNodeWithTag("appearance_font_row").assertTextContains("System")
+
+        // When picking "Manrope"
+        composeRule.onNodeWithTag("appearance_font_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_font_row_option_MANROPE").performClick()
+
+        // Then the row reflects the new selection
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("appearance_font_row").assertTextContains("Manrope") }.isSuccess
+        }
+    }
+
+    @Test
+    fun appLabelColorRowChangesTheSetting() {
+        // Given the settings screen, scrolled to Appearance's "App label color" row, Ink selected
+        // by default — scoped to this row's own tag, since "Ink (default)" is otherwise a unique
+        // label but the row-scoping convention is kept consistent with the Font row above
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_app_label_color_row"))
+        composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("Ink (default)")
+
+        // When picking "White"
+        composeRule.onNodeWithTag("appearance_app_label_color_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_label_color_row_option_WHITE").performClick()
+
+        // Then the row reflects the new selection
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("White") }.isSuccess
+        }
+    }
+
+    @Test
     fun calendarRowNavigatesToCalendarSettings() {
         // Given the settings screen — Calendar is functional as of this pass (UI shell, see
         // IMPLEMENTATION_PLAN.md — no real permission/CalendarContract query yet)
@@ -265,6 +306,47 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun appRowPositionDropdownSwitchesBetweenLeftAndRightAndAppearsAboveListContent() {
+        // Given the settings screen, Left selected by default, scrolled to the Apps list card
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("default_app_row_position_row"))
+        composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Left")
+
+        // Then it renders above the "Default App list content" row within the same card
+        val positionTop = composeRule.onNodeWithTag("default_app_row_position_row").fetchSemanticsNode().boundsInRoot.top
+        val listContentTop = composeRule.onNodeWithTag("default_list_content_row").fetchSemanticsNode().boundsInRoot.top
+        assert(positionTop < listContentTop)
+
+        // When opening the dropdown and choosing "Right" (Popup root-registration note — see above)
+        composeRule.onNodeWithTag("default_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("default_app_row_position_row_option_RIGHT").performClick()
+
+        // Then the row's own current-value label reflects it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Right") }.isSuccess
+        }
+    }
+
+    @Test
+    fun appRowPresentationDropdownSwitchesBetweenTheThreeOptions() {
+        // Given the settings screen, "Icon & Text" selected by default, scrolled to the Apps list card
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("default_app_row_presentation_row"))
+        composeRule.onNodeWithTag("default_app_row_presentation_row").assertTextContains("Icon & Text")
+
+        // When opening the dropdown and choosing "Text Only" (Popup root-registration note — see above)
+        composeRule.onNodeWithTag("default_app_row_presentation_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("default_app_row_presentation_row_option_TEXT_ONLY").performClick()
+
+        // Then the row's own current-value label reflects it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("default_app_row_presentation_row").assertTextContains("Text Only") }.isSuccess
+        }
+    }
+
+    @Test
     fun defaultFavoritesRowIsClickable() {
         // Given the settings screen, scrolled to the Apps list card
         var navigated = false
@@ -303,20 +385,22 @@ class SettingsScreenTest {
 
     @Test
     fun drawerOpacitySliderShowsTheCurrentPercentage() {
-        // Given the settings screen with the documented 88% default, scrolled to the slider
+        // Given the settings screen with the documented 60% default, scrolled to the slider
         setContent()
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("drawer_opacity_slider"))
 
         // Then the slider's label reflects it
-        composeRule.onNodeWithText("88%").assertExists()
+        composeRule.onNodeWithText("60%").assertExists()
     }
 
     @Test
     fun themeModeDropdownSwitchesBetweenLightDarkAndSystem() {
-        // Given the settings screen, System selected by default, scrolled to the Theme card
+        // Given the settings screen, System selected by default, scrolled to the Theme card —
+        // scoped to this row's own tag, not a global text search, since Appearance's "Font" row
+        // also defaults to "System" and both are composed once either is scrolled near (see chat history)
         setContent()
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
-        composeRule.onNodeWithText("System").assertExists()
+        composeRule.onNodeWithTag("theme_mode_dropdown").assertTextContains("System")
 
         // When opening the dropdown and choosing "Dark" (Popup root-registration note — see above)
         composeRule.onNodeWithTag("theme_mode_dropdown").performClick()

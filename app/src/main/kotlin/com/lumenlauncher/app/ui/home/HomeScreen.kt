@@ -33,16 +33,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.AppShortcut
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.components.AppContextMenu
@@ -55,6 +59,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.homeAppLabelShadow
+import com.lumenlauncher.app.ui.theme.resolve
 
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
@@ -71,6 +76,8 @@ fun HomeScreen(
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     listContentMode: ListContentMode = ListContentMode.FAVORITES,
+    appRowPosition: AppRowPosition = AppRowPosition.LEFT,
+    appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     showUsageAccessPrompt: Boolean = false,
     onUsageAccessPromptClick: () -> Unit = {},
     dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
@@ -88,57 +95,72 @@ fun HomeScreen(
     onEventClick: (CalendarEvent) -> Unit = {},
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    appLabelColorOption: ClockColorOption = ClockColorOption.INK,
 ) {
+    val appLabelColor = appLabelColorOption.resolve()
     Column(
         modifier = modifier
             .fillMaxSize()
             // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without
             // this, the dock at the bottom draws under the gesture/nav bar.
             .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(start = 24.dp, end = 24.dp, bottom = 22.dp),
+            .padding(bottom = 22.dp),
     ) {
-        ClockBlock(
-            modifier = Modifier.padding(top = 52.dp),
-            use24HourTime = use24HourTime,
-            templateId = clockTemplateId,
-            fontOption = clockFontOption,
-            colorOption = clockColorOption,
-            showMeridiem = clockShowMeridiem,
-            events = calendarEvents,
-            calendarColors = calendarColors,
-            calendarFontOption = calendarFontOption,
-            calendarColorOption = calendarColorOption,
-            onEventClick = onEventClick,
-        )
-
-        Box(modifier = Modifier.weight(1f))
-
-        if (appListItems.isNotEmpty()) {
-            val listLabelColor = HomeAppTextColorFaint
-            Text(
-                text = when (listContentMode) {
-                    ListContentMode.FAVORITES -> "FAVORITES"
-                    ListContentMode.RECENTS -> "RECENTS"
-                    ListContentMode.MOST_USED -> "MOST USED"
-                },
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(listLabelColor)),
-                color = listLabelColor,
-                modifier = Modifier.padding(bottom = 8.dp),
+        // Everything but the dock keeps the screen's own 24dp side margin. The dock row is
+        // deliberately outside this padding (see below) so Arrangement.SpaceEvenly can space its
+        // icons against the true screen edge, not this inset.
+        Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
+            ClockBlock(
+                modifier = Modifier.padding(top = 52.dp),
+                use24HourTime = use24HourTime,
+                templateId = clockTemplateId,
+                fontOption = clockFontOption,
+                colorOption = clockColorOption,
+                showMeridiem = clockShowMeridiem,
+                events = calendarEvents,
+                calendarColors = calendarColors,
+                calendarFontOption = calendarFontOption,
+                calendarColorOption = calendarColorOption,
+                onEventClick = onEventClick,
+                launcherFontOption = launcherFontOption,
             )
-        }
-        if (showUsageAccessPrompt) {
-            UsageAccessStrip(onClick = onUsageAccessPromptClick)
-        } else {
-            Column {
-                appListItems.forEach { app ->
-                    AppRow(
-                        app = app,
-                        onClick = { onAppClick(app) },
-                        badgeCount = badgeCounts[app.packageName],
-                        badgeStyle = notificationBadgeStyle,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
-                    )
+
+            Box(modifier = Modifier.weight(1f))
+
+            if (appListItems.isNotEmpty()) {
+                val listLabelColor = HomeAppTextColorFaint
+                Text(
+                    text = when (listContentMode) {
+                        ListContentMode.FAVORITES -> "FAVORITES"
+                        ListContentMode.RECENTS -> "RECENTS"
+                        ListContentMode.MOST_USED -> "MOST USED"
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        shadow = homeAppLabelShadow(listLabelColor),
+                        textAlign = if (appRowPosition == AppRowPosition.RIGHT) TextAlign.End else TextAlign.Start,
+                    ),
+                    color = listLabelColor,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                )
+            }
+            if (showUsageAccessPrompt) {
+                UsageAccessStrip(onClick = onUsageAccessPromptClick)
+            } else {
+                Column {
+                    appListItems.forEach { app ->
+                        AppRow(
+                            app = app,
+                            onClick = { onAppClick(app) },
+                            badgeCount = badgeCounts[app.packageName],
+                            badgeStyle = notificationBadgeStyle,
+                            onRequestShortcuts = onRequestShortcuts,
+                            onLaunchShortcut = onLaunchShortcut,
+                            position = appRowPosition,
+                            presentation = appRowPresentation,
+                            labelColor = appLabelColor,
+                        )
+                    }
                 }
             }
         }
@@ -148,12 +170,15 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (dockApps.isNotEmpty()) {
+            // Full screen width, no horizontal inset — SpaceEvenly then puts an equal gap before
+            // the first icon, between every pair of icons, and after the last, so dock icons sit
+            // at the same distance from each other as from the screen edges.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp, bottom = 4.dp)
                     .testTag("home_dock_row"),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 dockApps.forEach { app ->
                     DockIcon(
@@ -164,6 +189,7 @@ fun HomeScreen(
                         badgeStyle = notificationBadgeStyle,
                         onRequestShortcuts = onRequestShortcuts,
                         onLaunchShortcut = onLaunchShortcut,
+                        labelColor = appLabelColor,
                     )
                 }
             }
@@ -202,6 +228,13 @@ private fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: D
     )
 }
 
+/**
+ * [position] governs both internal ordering (icon-then-label vs. label-then-icon) and whether the
+ * row's content packs against the start or end of the available width — `RIGHT` needs both, not
+ * just a reversed order while staying left-anchored, for the row to actually hug the screen's
+ * right edge. [presentation] independently governs which of icon/label actually render; the
+ * unused one's slot composable simply emits nothing rather than branching the whole layout.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppRow(
@@ -212,8 +245,13 @@ private fun AppRow(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
     modifier: Modifier = Modifier,
+    position: AppRowPosition = AppRowPosition.LEFT,
+    presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+    labelColor: Color = HomeAppTextColor,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val showIcon = presentation != AppRowPresentation.TEXT_ONLY
+    val showLabel = presentation != AppRowPresentation.ICON_ONLY
     Box {
         Row(
             modifier = modifier
@@ -225,16 +263,51 @@ private fun AppRow(
                 .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
                 .padding(horizontal = 8.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            // RIGHT packs the whole row's content against the trailing edge (not just reversed
+            // order while left-anchored) so the row visually hugs the screen's right edge.
+            horizontalArrangement = if (position == AppRowPosition.RIGHT) {
+                Arrangement.spacedBy(14.dp, Alignment.End)
+            } else {
+                Arrangement.spacedBy(14.dp)
+            },
         ) {
-            AppIcon(icon = app.icon, size = 34.dp, cornerRadius = 10.dp, contentDescription = null)
-            val textColor = HomeAppTextColor
-            Text(
-                text = app.label,
-                style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(textColor)),
-                color = textColor,
-            )
-            if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
+            val icon: @Composable () -> Unit = {
+                if (showIcon) {
+                    AppIcon(
+                        icon = app.icon,
+                        size = 34.dp,
+                        cornerRadius = 10.dp,
+                        // No visible label to carry the a11y name when text is hidden — mirrors
+                        // the Dock's own icons-only mode (see DockIcon below).
+                        contentDescription = if (showLabel) null else app.label,
+                        modifier = Modifier.testTag("home_app_icon_${app.packageName}"),
+                    )
+                }
+            }
+            val label: @Composable () -> Unit = {
+                if (showLabel) {
+                    Text(
+                        text = app.label,
+                        style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(labelColor)),
+                        color = labelColor,
+                        modifier = Modifier.testTag("home_app_label_${app.packageName}"),
+                    )
+                }
+            }
+            val badge: @Composable () -> Unit = {
+                if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
+            }
+            if (position == AppRowPosition.RIGHT) {
+                // Badge first, then label (leftmost of the packed content), icon last — landing
+                // on the row's true trailing edge since the row itself is now end-packed.
+                badge()
+                label()
+                icon()
+            } else {
+                icon()
+                label()
+                badge()
+            }
         }
         AppContextMenu(
             app = app,
@@ -258,6 +331,7 @@ internal fun DockIcon(
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    labelColor: Color = HomeAppTextColor,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box {
@@ -276,8 +350,8 @@ internal fun DockIcon(
             }
             DockDisplayMode.TEXT -> Text(
                 text = app.label,
-                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),
-                color = HomeAppTextColor,
+                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor)),
+                color = labelColor,
                 modifier = modifier
                     .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
                     .padding(vertical = 14.dp, horizontal = 4.dp),
@@ -305,6 +379,47 @@ private fun HomeScreenPreview() {
             appListItems = apps.take(5),
             dockApps = apps.drop(5).take(4),
             onAppClick = {},
+        )
+    }
+}
+
+/** Position = Right: rows hug the right edge, label-then-icon. */
+@Preview(name = "Right position", showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(
+    name = "Right position - Dark",
+    showBackground = true,
+    widthDp = 390,
+    heightDp = 844,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+)
+@Composable
+private fun HomeScreenRightPositionPreview() {
+    LumenLauncherTheme {
+        val apps = (1..5).map {
+            AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
+        }
+        HomeScreen(
+            appListItems = apps,
+            dockApps = emptyList(),
+            onAppClick = {},
+            appRowPosition = AppRowPosition.RIGHT,
+        )
+    }
+}
+
+/** Presentation = Text Only: no icons in the app list. */
+@Preview(name = "Text only presentation", showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun HomeScreenTextOnlyPresentationPreview() {
+    LumenLauncherTheme {
+        val apps = (1..5).map {
+            AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
+        }
+        HomeScreen(
+            appListItems = apps,
+            dockApps = emptyList(),
+            onAppClick = {},
+            appRowPresentation = AppRowPresentation.TEXT_ONLY,
         )
     }
 }

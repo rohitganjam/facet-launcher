@@ -9,6 +9,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -17,6 +19,7 @@ import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
@@ -47,9 +50,13 @@ private object Keys {
     val ACCENT_FROM_SYSTEM = booleanPreferencesKey("accent_from_system")
     val CUSTOM_ACCENT_SWATCH = stringPreferencesKey("custom_accent_swatch")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
+    val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
+    val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val CALENDAR_PERMISSION_REQUESTED = booleanPreferencesKey("calendar_permission_requested")
     val CONTACTS_PERMISSION_REQUESTED = booleanPreferencesKey("contacts_permission_requested")
+    val APP_ROW_POSITION = stringPreferencesKey("app_row_position")
+    val APP_ROW_PRESENTATION = stringPreferencesKey("app_row_presentation")
     val LIST_CONTENT_MODE = stringPreferencesKey("list_content_mode")
     val APPS_TO_SHOW_COUNT = intPreferencesKey("apps_to_show_count")
     val CLOCK_TEMPLATE_ID = stringPreferencesKey("clock_template_id")
@@ -99,10 +106,18 @@ class SettingsRepository @Inject constructor(
             customAccentSwatch = preferences[Keys.CUSTOM_ACCENT_SWATCH],
             iconRenderMode = preferences[Keys.ICON_RENDER_MODE]?.let { runCatching { IconRenderMode.valueOf(it) }.getOrNull() }
                 ?: defaults.iconRenderMode,
+            launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
+                ?: defaults.launcherFontOption,
+            appLabelColorOption = preferences[Keys.APP_LABEL_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
+                ?: defaults.appLabelColorOption,
             themeMode = preferences[Keys.THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: defaults.themeMode,
             calendarPermissionRequested = preferences[Keys.CALENDAR_PERMISSION_REQUESTED] ?: defaults.calendarPermissionRequested,
             contactsPermissionRequested = preferences[Keys.CONTACTS_PERMISSION_REQUESTED] ?: defaults.contactsPermissionRequested,
+            appRowPosition = preferences[Keys.APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() }
+                ?: defaults.appRowPosition,
+            appRowPresentation = preferences[Keys.APP_ROW_PRESENTATION]?.let { runCatching { AppRowPresentation.valueOf(it) }.getOrNull() }
+                ?: defaults.appRowPresentation,
             listContentMode = preferences[Keys.LIST_CONTENT_MODE]?.let { runCatching { ListContentMode.valueOf(it) }.getOrNull() }
                 ?: defaults.listContentMode,
             appsToShowCount = preferences[Keys.APPS_TO_SHOW_COUNT] ?: defaults.appsToShowCount,
@@ -198,6 +213,14 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.ICON_RENDER_MODE] = mode.name }
     }
 
+    suspend fun setLauncherFontOption(option: LauncherFontOption) {
+        dataStore.edit { it[Keys.LAUNCHER_FONT_OPTION] = option.name }
+    }
+
+    suspend fun setAppLabelColorOption(option: ClockColorOption) {
+        dataStore.edit { it[Keys.APP_LABEL_COLOR_OPTION] = option.name }
+    }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { it[Keys.THEME_MODE] = mode.name }
     }
@@ -208,6 +231,16 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setContactsPermissionRequested(requested: Boolean) {
         dataStore.edit { it[Keys.CONTACTS_PERMISSION_REQUESTED] = requested }
+    }
+
+    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appRowPosition]. */
+    suspend fun setAppRowPosition(position: AppRowPosition) {
+        dataStore.edit { it[Keys.APP_ROW_POSITION] = position.name }
+    }
+
+    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appRowPresentation]. */
+    suspend fun setAppRowPresentation(presentation: AppRowPresentation) {
+        dataStore.edit { it[Keys.APP_ROW_PRESENTATION] = presentation.name }
     }
 
     /** The default every profile inherits unless it sets its own override — see [LauncherSettings.listContentMode]. */

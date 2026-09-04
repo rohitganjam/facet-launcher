@@ -3,6 +3,8 @@ package com.lumenlauncher.app.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -11,6 +13,7 @@ import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
@@ -47,9 +50,9 @@ class SettingsRepositoryTest {
         assertEquals(DockDisplayMode.ICONS, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.LIST, settings.drawerPresentation)
         assertEquals(DrawerGridSize.FIVE_BY_SIX, settings.drawerGridSize)
-        assertEquals(DrawerListItemSize.COMPACT, settings.drawerListItemSize)
+        assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
-        assertEquals(0.88f, settings.drawerOpacity, 0.0001f)
+        assertEquals(0.6f, settings.drawerOpacity, 0.0001f)
         assertEquals(true, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
         assertEquals(true, settings.showDrawerIcons)
@@ -60,14 +63,18 @@ class SettingsRepositoryTest {
         assertEquals(null, settings.selectedCalendarIds)
         assertEquals(emptyMap<String, String>(), settings.calendarColors)
         assertEquals(false, settings.searchContactsEnabled)
+        assertEquals(AppRowPosition.LEFT, settings.appRowPosition)
+        assertEquals(AppRowPresentation.ICON_AND_TEXT, settings.appRowPresentation)
         assertEquals(ListContentMode.FAVORITES, settings.listContentMode)
         assertEquals(5, settings.appsToShowCount)
         assertEquals(ClockTemplateId.LIGHT_STACK, settings.clockTemplateId)
-        assertEquals(ClockFontOption.SYSTEM, settings.clockFontOption)
+        assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.clockFontOption)
         assertEquals(ClockColorOption.INK, settings.clockColorOption)
         assertFalse(settings.clockShowMeridiem)
-        assertEquals(ClockFontOption.SYSTEM, settings.calendarFontOption)
+        assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.calendarFontOption)
         assertEquals(ClockColorOption.INK, settings.calendarColorOption)
+        assertEquals(LauncherFontOption.SYSTEM, settings.launcherFontOption)
+        assertEquals(ClockColorOption.INK, settings.appLabelColorOption)
     }
 
     @Test
@@ -105,6 +112,8 @@ class SettingsRepositoryTest {
         repository.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
+        repository.setLauncherFontOption(LauncherFontOption.MANROPE)
+        repository.setAppLabelColorOption(ClockColorOption.WHITE)
         repository.setDrawerOpacity(0.5f)
         repository.setNotificationDotsEnabled(false)
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
@@ -116,6 +125,8 @@ class SettingsRepositoryTest {
         repository.setSelectedCalendarIds(setOf("cal-1", "cal-2"))
         repository.setCalendarColors(mapOf("cal-1" to "BLUE", "cal-2" to "TEAL"))
         repository.setSearchContactsEnabled(true)
+        repository.setAppRowPosition(AppRowPosition.RIGHT)
+        repository.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
         repository.setListContentMode(ListContentMode.MOST_USED)
         repository.setAppsToShowCount(7)
 
@@ -127,6 +138,8 @@ class SettingsRepositoryTest {
         assertEquals(DrawerGridSize.FOUR_BY_FOUR, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
+        assertEquals(LauncherFontOption.MANROPE, settings.launcherFontOption)
+        assertEquals(ClockColorOption.WHITE, settings.appLabelColorOption)
         assertEquals(0.5f, settings.drawerOpacity, 0.0001f)
         assertEquals(false, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)
@@ -138,6 +151,8 @@ class SettingsRepositoryTest {
         assertEquals(setOf("cal-1", "cal-2"), settings.selectedCalendarIds)
         assertEquals(mapOf("cal-1" to "BLUE", "cal-2" to "TEAL"), settings.calendarColors)
         assertEquals(true, settings.searchContactsEnabled)
+        assertEquals(AppRowPosition.RIGHT, settings.appRowPosition)
+        assertEquals(AppRowPresentation.TEXT_ONLY, settings.appRowPresentation)
         assertEquals(ListContentMode.MOST_USED, settings.listContentMode)
         assertEquals(7, settings.appsToShowCount)
     }

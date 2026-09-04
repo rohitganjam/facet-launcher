@@ -4,7 +4,7 @@ import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,17 +36,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
@@ -61,6 +58,7 @@ import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.ui.components.AppIcon
@@ -68,6 +66,7 @@ import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.ConfirmDialog
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenu
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenuItem
+import com.lumenlauncher.app.ui.components.rememberDragReorderState
 import com.lumenlauncher.app.ui.home.ClockBlock
 import com.lumenlauncher.app.ui.home.DockIcon
 import com.lumenlauncher.app.ui.theme.Accent
@@ -78,7 +77,7 @@ import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.LumenType
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
-import kotlin.math.roundToInt
+import com.lumenlauncher.app.ui.theme.resolve
 
 /** Every page (profile or Add) renders at a fixed, position-independent scale — smaller than a
  *  full-size card so more of each neighbor peeks in on either side, recent-apps style. */
@@ -165,7 +164,8 @@ private fun ProfileCarouselContent(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 BackButton(onClick = { if (isReordering) isReordering = false else onBack() })
-                Text(text = "Profiles", style = MaterialTheme.typography.titleMedium, color = Ink)
+                // headlineSmall to match Settings' own header size (see chat history) — was titleMedium.
+                Text(text = "Profiles", style = MaterialTheme.typography.headlineSmall, color = Ink)
             }
             // No "Done" counterpart once reordering — every drag-release autosaves via onCommit,
             // so there's nothing left to confirm; the back button (above) already exits reorder
@@ -229,6 +229,8 @@ private fun ProfileCarouselContent(
                         clockColorOption = uiState.clockColorOption(profile.id),
                         use24HourTime = uiState.effectiveUse24HourTime(profile.id),
                         clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
+                        launcherFontOption = uiState.globalSettings.launcherFontOption,
+                        appLabelColorOption = uiState.globalSettings.appLabelColorOption,
                         dockApps = uiState.dockApps,
                         dockDisplayMode = uiState.dockDisplayMode,
                         modifier = visualModifier
@@ -328,18 +330,15 @@ private fun ProfileReorderList(
     onAddProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var draggedId by remember { mutableStateOf<Long?>(null) }
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
     val rowSlotHeightPx = with(LocalDensity.current) { (REORDER_ROW_HEIGHT + REORDER_ROW_SPACING).toPx() }
-    // ProfileReorderRow's own pointerInput is keyed only on profile.id (stable across the drag),
-    // so it never restarts mid-gesture — but that also means the onDrag/onOrderChanged/onCommit
-    // closures it's holding are whatever was passed in when that particular gesture started; if
-    // `profiles` itself re-emits mid-drag for an unrelated reason, a stale closure would keep
-    // reordering against outdated data instead of the current list. rememberUpdatedState keeps
-    // the values used inside those closures current without needing the gesture to restart.
-    val currentProfiles = rememberUpdatedState(profiles)
-    val currentOnOrderChanged = rememberUpdatedState(onOrderChanged)
-    val currentOnCommit = rememberUpdatedState(onCommit)
+    val reorderState = rememberDragReorderState(
+        items = profiles,
+        key = { it.id },
+        axis = Orientation.Vertical,
+        slotSizePx = rowSlotHeightPx,
+        onOrderChanged = onOrderChanged,
+        onDragCommit = { onCommit() },
+    )
 
     LazyColumn(
         modifier = modifier.testTag("profile_reorder_list"),
@@ -347,40 +346,18 @@ private fun ProfileReorderList(
         verticalArrangement = Arrangement.spacedBy(REORDER_ROW_SPACING),
     ) {
         items(profiles, key = { it.id }) { profile ->
-            val isDragged = profile.id == draggedId
+            val isDragged = reorderState.isDragging(profile)
             ProfileReorderRow(
                 profile = profile,
                 canDelete = canDeleteProfile,
                 onEditProfileClick = { onEditProfile(profile.id) },
                 onDeleteClick = { onDeleteRequest(profile) },
-                onDragStart = {
-                    draggedId = profile.id
-                    dragOffsetY = 0f
-                },
-                onDrag = { deltaY ->
-                    dragOffsetY += deltaY
-                    val list = currentProfiles.value
-                    val currentIndex = list.indexOfFirst { it.id == draggedId }
-                    if (currentIndex == -1) return@ProfileReorderRow
-                    val shift = (dragOffsetY / rowSlotHeightPx).roundToInt()
-                    if (shift != 0) {
-                        val targetIndex = (currentIndex + shift).coerceIn(0, list.lastIndex)
-                        if (targetIndex != currentIndex) {
-                            currentOnOrderChanged.value(list.toMutableList().apply { add(targetIndex, removeAt(currentIndex)) })
-                            dragOffsetY -= shift * rowSlotHeightPx
-                        }
-                    }
-                },
-                onDragEnd = {
-                    draggedId = null
-                    dragOffsetY = 0f
-                    currentOnCommit.value()
-                },
+                dragHandleModifier = reorderState.dragModifier(profile),
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(if (isDragged) Modifier else Modifier.animateItem())
                     .graphicsLayer {
-                        translationY = if (isDragged) dragOffsetY else 0f
+                        translationY = if (isDragged) reorderState.dragOffset else 0f
                         scaleX = if (isDragged) REORDER_DRAG_SCALE else 1f
                         scaleY = if (isDragged) REORDER_DRAG_SCALE else 1f
                         shadowElevation = if (isDragged) REORDER_DRAG_ELEVATION.toPx() else 0f
@@ -406,9 +383,7 @@ private fun ProfileReorderRow(
     canDelete: Boolean,
     onEditProfileClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onDragStart: () -> Unit,
-    onDrag: (Float) -> Unit,
-    onDragEnd: () -> Unit,
+    dragHandleModifier: Modifier,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -430,16 +405,7 @@ private fun ProfileReorderRow(
             modifier = Modifier
                 .padding(end = 12.dp)
                 .testTag("profile_reorder_handle_${profile.id}")
-                .pointerInput(profile.id) {
-                    detectDragGestures(
-                        onDragStart = { onDragStart() },
-                        onDragEnd = { onDragEnd() },
-                        onDragCancel = { onDragEnd() },
-                    ) { change, dragAmount ->
-                        change.consume()
-                        onDrag(dragAmount.y)
-                    }
-                },
+                .then(dragHandleModifier),
         )
         Text(text = profile.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
         Box {
@@ -500,6 +466,8 @@ private fun ProfilePreviewPage(
     clockColorOption: ClockColorOption,
     use24HourTime: Boolean,
     clockShowMeridiem: Boolean,
+    launcherFontOption: LauncherFontOption,
+    appLabelColorOption: ClockColorOption,
     dockApps: List<AppInfo>,
     dockDisplayMode: DockDisplayMode,
     modifier: Modifier = Modifier,
@@ -529,6 +497,7 @@ private fun ProfilePreviewPage(
             fontOption = clockFontOption,
             colorOption = clockColorOption,
             showMeridiem = clockShowMeridiem,
+            launcherFontOption = launcherFontOption,
             modifier = Modifier.align(Alignment.Start)
         )
 
@@ -537,11 +506,11 @@ private fun ProfilePreviewPage(
         Text(
             text = "FAVORITES",
             style = MaterialTheme.typography.labelSmall,
-            color = Faint,
+            color = Muted,
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
         )
         if (favorites.isEmpty()) {
-            Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Faint, modifier = Modifier.fillMaxWidth())
+            Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
                 favorites.forEach { app -> PreviewAppRow(app) }
@@ -549,14 +518,15 @@ private fun ProfilePreviewPage(
         }
 
         // Dock is shared across all profiles (not per-profile), same 16dp gap + omit-when-empty
-        // behavior as the real Home screen (ui/home/HomeScreen.kt) so this preview matches it.
+        // + SpaceEvenly distribution as the real Home screen (ui/home/HomeScreen.kt) so this
+        // preview matches it.
         Spacer(modifier = Modifier.height(16.dp))
         if (dockApps.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                dockApps.forEach { app -> DockIcon(app = app, displayMode = dockDisplayMode, onClick = {}) }
+                dockApps.forEach { app -> DockIcon(app = app, displayMode = dockDisplayMode, onClick = {}, labelColor = appLabelColorOption.resolve()) }
             }
         }
     }

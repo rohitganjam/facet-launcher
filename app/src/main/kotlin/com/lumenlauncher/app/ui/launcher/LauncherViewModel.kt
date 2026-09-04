@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ThemeMode
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
@@ -31,6 +32,7 @@ data class LauncherUiState(
     /** An `AccentSwatch` enum name — see [com.lumenlauncher.app.data.model.LauncherSettings.customAccentSwatch]. */
     val customAccentSwatch: String? = null,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 )
 
 @HiltViewModel
@@ -63,6 +65,7 @@ class LauncherViewModel @Inject constructor(
                 accentFromSystem = settings.accentFromSystem,
                 customAccentSwatch = settings.customAccentSwatch,
                 iconRenderMode = settings.iconRenderMode,
+                launcherFontOption = settings.launcherFontOption,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
         viewModelScope.launch { ensureActiveProfile() }

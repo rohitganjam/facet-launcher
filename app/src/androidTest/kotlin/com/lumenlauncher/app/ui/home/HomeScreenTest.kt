@@ -2,15 +2,21 @@ package com.lumenlauncher.app.ui.home
 
 import android.content.res.Configuration
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -149,6 +155,126 @@ class HomeScreenTest {
 
         // Then the context menu opens
         composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun leftPositionRendersTheIconBeforeTheLabel() {
+        // Given the default Left position
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(appListItems = apps(1), dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.LEFT)
+            }
+        }
+
+        // Then the icon renders before (further left than) the label — normal reading order
+        val iconLeft = composeRule.onNodeWithTag("home_app_icon_com.example.app1").fetchSemanticsNode().boundsInRoot.left
+        val labelLeft = composeRule.onNodeWithTag("home_app_label_com.example.app1").fetchSemanticsNode().boundsInRoot.left
+        assert(iconLeft < labelLeft)
+    }
+
+    @Test
+    fun rightPositionRendersTheLabelBeforeTheIconAndPacksTheRowAgainstTheRightEdge() {
+        // Given Right position
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(appListItems = apps(1), dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.RIGHT)
+            }
+        }
+
+        // Then the internal order flips — label renders before (further left than) the icon
+        val iconNode = composeRule.onNodeWithTag("home_app_icon_com.example.app1").fetchSemanticsNode()
+        val labelLeft = composeRule.onNodeWithTag("home_app_label_com.example.app1").fetchSemanticsNode().boundsInRoot.left
+        assert(labelLeft < iconNode.boundsInRoot.left)
+
+        // And the icon — now the row's trailing element — sits in the right portion of the
+        // screen rather than packed to the left, i.e. the whole row hugs the right edge, not
+        // just a reversed order while staying left-anchored
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        assert(iconNode.boundsInRoot.right > rootWidth * 0.7f)
+    }
+
+    @Test
+    fun rightPositionAlsoRightAlignsTheSectionHeading() {
+        // Given Left position (default) — the "FAVORITES" heading hugs the left edge
+        var appRowPosition by mutableStateOf(AppRowPosition.LEFT)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(appListItems = apps(1), dockApps = emptyList(), onAppClick = {}, appRowPosition = appRowPosition)
+            }
+        }
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val leftPositionHeadingLeft = composeRule.onNodeWithText("FAVORITES").fetchSemanticsNode().boundsInRoot.left
+        assert(leftPositionHeadingLeft < rootWidth * 0.3f)
+
+        // When switching to Right position
+        appRowPosition = AppRowPosition.RIGHT
+        composeRule.waitForIdle()
+
+        // Then the heading moves with the app rows, now hugging the right edge instead
+        val rightPositionHeadingRight = composeRule.onNodeWithText("FAVORITES").fetchSemanticsNode().boundsInRoot.right
+        assert(rightPositionHeadingRight > rootWidth * 0.7f)
+    }
+
+    @Test
+    fun iconOnlyPresentationHidesTheLabelButKeepsTheIconAccessible() {
+        // Given Icon Only presentation
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(1),
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appRowPresentation = AppRowPresentation.ICON_ONLY,
+                )
+            }
+        }
+
+        // Then the visible label text is gone, but the icon still renders and carries the app's
+        // name for accessibility (mirroring the Dock's own icons-only mode)
+        composeRule.onNodeWithText("App 1").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1").assertExists()
+        composeRule.onNodeWithContentDescription("App 1").assertExists()
+    }
+
+    @Test
+    fun textOnlyPresentationHidesTheIconButKeepsTheLabel() {
+        // Given Text Only presentation
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(1),
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appRowPresentation = AppRowPresentation.TEXT_ONLY,
+                )
+            }
+        }
+
+        // Then the label still renders, but the icon does not
+        composeRule.onNodeWithText("App 1").assertExists()
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingARowStillLaunchesTheAppUnderIconOnlyPresentation() {
+        // Given Icon Only presentation — the row has no visible text to tap, only the icon area
+        var clicked: AppInfo? = null
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(1),
+                    dockApps = emptyList(),
+                    onAppClick = { clicked = it },
+                    appRowPresentation = AppRowPresentation.ICON_ONLY,
+                )
+            }
+        }
+
+        // When tapping the icon (its own node, now the row's only visible content)
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1").performClick()
+
+        // Then the click still reaches the row's own click handler
+        assertEquals("com.example.app1", clicked?.packageName)
     }
 
     @Test

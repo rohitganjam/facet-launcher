@@ -35,7 +35,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
-import com.lumenlauncher.app.ui.theme.Faint
+import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Surface
@@ -154,7 +154,7 @@ private fun PickerSectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelSmall,
-        color = Faint,
+        color = Muted,
         modifier = modifier.padding(top = 12.dp, bottom = 6.dp),
     )
 }

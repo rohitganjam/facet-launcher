@@ -292,6 +292,40 @@ class HubGestureTest {
     }
 
     @Test
+    fun resizeModeStaysActiveAfterCommittingOneHandleDragAndOnlyEndsOnTapAway() {
+        setContent(listOf(placement(id = 10, row = 0, col = 0)), resolvable = setOf(10))
+        val cellWidth = cellWidthPxOf(10)
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
+        composeRule.onNodeWithText("Resize widget").performClick()
+
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput {
+            down(center)
+            stepMoveBy(Offset(cellWidth, 0f))
+            up()
+        }
+        awaitPlacement(10) { it?.colSpan == 2 }
+
+        // Committing the resize via one handle must NOT exit resize mode — the border and all
+        // four handles stay up so the user can immediately grab a different handle.
+        composeRule.onNodeWithTag("hub_resize_handle_right").assertExists()
+        composeRule.onNodeWithTag("hub_resize_handle_left").assertExists()
+        composeRule.onNodeWithTag("hub_resize_handle_bottom").assertExists()
+        composeRule.onNodeWithTag("hub_resize_handle_top").assertExists()
+
+        // Only tapping away from the widget/handles — the pre-existing cancellation path — ends it.
+        composeRule.onNodeWithTag("hub_grid").performTouchInput {
+            down(Offset(centerX, bottom - 20f))
+            up()
+        }
+
+        composeRule.onNodeWithTag("hub_resize_handle_right").assertDoesNotExist()
+        composeRule.onNodeWithTag("hub_resize_handle_left").assertDoesNotExist()
+        composeRule.onNodeWithTag("hub_resize_handle_bottom").assertDoesNotExist()
+        composeRule.onNodeWithTag("hub_resize_handle_top").assertDoesNotExist()
+    }
+
+    @Test
     fun resizeHandleAtEdgeIsStillInteractive() {
         setContent(listOf(placement(id = 10, row = 0, col = 4)), resolvable = setOf(10))
         val cellWidth = cellWidthPxOf(10)

@@ -12,11 +12,12 @@ import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock
 import com.lumenlauncher.app.ui.home.clock.ClockDisplay
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
-import com.lumenlauncher.app.ui.theme.fontFamily
 import com.lumenlauncher.app.ui.theme.resolve
+import com.lumenlauncher.app.ui.theme.resolveFontFamily
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -44,6 +45,7 @@ fun ClockBlock(
     calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
     calendarColorOption: ClockColorOption = ClockColorOption.INK,
     onEventClick: (CalendarEvent) -> Unit = {},
+    launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
     val now by rememberTickingNow(clock)
     val clockTextColor = colorOption.resolve()
@@ -57,6 +59,7 @@ fun ClockBlock(
             textColor = clockTextColor,
             mutedTextColor = clockTextColor.copy(alpha = 0.8f),
             locale = locale,
+            launcherFontOption = launcherFontOption,
         )
         CalendarEventsBlock(
             events = events,
@@ -64,7 +67,7 @@ fun ClockBlock(
             locale = locale,
             use24HourTime = use24HourTime,
             calendarColors = calendarColors,
-            fontFamily = calendarFontOption.fontFamily,
+            fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
             textColor = calendarColorOption.resolve(),
             onEventClick = onEventClick,
         )

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.ContactPermissionRepository
+import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,7 @@ class PermissionsViewModel @Inject constructor(
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val contactPermissionRepository: ContactPermissionRepository,
     private val usageAccessRepository: UsageAccessRepository,
+    private val notificationAccessRepository: NotificationAccessRepository,
 ) : ViewModel() {
 
     private val refreshTick = MutableStateFlow(0)
@@ -54,6 +56,12 @@ class PermissionsViewModel @Inject constructor(
                     title = "Usage access",
                     subtitle = "Powers the Recents and Most used app lists.",
                     isGranted = usageAccessRepository.isGranted(),
+                ),
+                PermissionRowState(
+                    kind = PermissionKind.NOTIFICATION_ACCESS,
+                    title = "Notification access",
+                    subtitle = "Shows a dot or count badge on apps with active notifications.",
+                    isGranted = notificationAccessRepository.isGranted(),
                 ),
             ),
         )

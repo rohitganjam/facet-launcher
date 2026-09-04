@@ -32,8 +32,6 @@ import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +52,7 @@ import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.CalendarInfo
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.InheritOverrideCard
@@ -68,8 +67,8 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
-import com.lumenlauncher.app.ui.theme.fontFamily
 import com.lumenlauncher.app.ui.theme.resolve
+import com.lumenlauncher.app.ui.theme.resolveFontFamily
 import com.lumenlauncher.app.ui.theme.resolvedColor
 import java.time.Clock
 import java.time.Instant
@@ -112,8 +111,8 @@ fun CalendarSettingsScreen(
         onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
         onCalendarToggled = viewModel::setCalendarSelected,
         onSelectAllCalendarsChanged = viewModel::setAllCalendarsSelected,
-        onGlobalCalendarFontOptionChanged = viewModel::setGlobalCalendarFontOption,
-        onGlobalCalendarColorOptionChanged = viewModel::setGlobalCalendarColorOption,
+        onCalendarFontOptionChanged = viewModel::setCalendarFontOption,
+        onCalendarColorOptionChanged = viewModel::setCalendarColorOption,
         modifier = modifier,
     )
 }
@@ -127,23 +126,14 @@ private fun CalendarSettingsContent(
     onTurnOnClick: () -> Unit,
     onCalendarToggled: (String, Boolean) -> Unit,
     onSelectAllCalendarsChanged: (Boolean) -> Unit,
-    onGlobalCalendarFontOptionChanged: (ClockFontOption) -> Unit,
-    onGlobalCalendarColorOptionChanged: (ClockColorOption) -> Unit,
+    onCalendarFontOptionChanged: (ClockFontOption) -> Unit,
+    onCalendarColorOptionChanged: (ClockColorOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Profile-scoped instances stay local/unpersisted — evaluation only, per direct instruction;
-    // there's no per-profile calendar-style override entity. Global instances read/write the
-    // real setting through the ViewModel.
-    var localCalendarFontOption by remember { mutableStateOf(ClockFontOption.SYSTEM) }
-    var localCalendarColorOption by remember { mutableStateOf(ClockColorOption.INK) }
-    val calendarFontOption = if (uiState.isProfileScoped) localCalendarFontOption else uiState.globalCalendarFontOption
-    val calendarColorOption = if (uiState.isProfileScoped) localCalendarColorOption else uiState.globalCalendarColorOption
-    val onCalendarFontOptionChanged: (ClockFontOption) -> Unit =
-        if (uiState.isProfileScoped) { { localCalendarFontOption = it } } else onGlobalCalendarFontOptionChanged
-    val onCalendarColorOptionChanged: (ClockColorOption) -> Unit =
-        if (uiState.isProfileScoped) { { localCalendarColorOption = it } } else onGlobalCalendarColorOptionChanged
+    val calendarFontOption = uiState.effectiveCalendarFontOption
+    val calendarColorOption = uiState.effectiveCalendarColorOption
 
-    // The toggle below is read-only under Inherit and live under Override.
+    // Every control below (all-day events, font, color) is read-only under Inherit and live under Override.
     val controlsEnabled = !uiState.isProfileScoped || uiState.isOverriding
 
     StickyHeaderLayout(
@@ -255,6 +245,7 @@ private fun CalendarSettingsContent(
                             selected = calendarFontOption,
                             label = { it.displayName },
                             onSelect = onCalendarFontOptionChanged,
+                            enabled = controlsEnabled,
                             testTag = "calendar_style_font_row",
                         )
                         CardDivider()
@@ -264,6 +255,7 @@ private fun CalendarSettingsContent(
                             selected = calendarColorOption,
                             label = { it.displayName },
                             onSelect = onCalendarColorOptionChanged,
+                            enabled = controlsEnabled,
                             testTag = "calendar_style_color_row",
                         )
                     }
@@ -275,7 +267,7 @@ private fun CalendarSettingsContent(
                     CalendarEventsBlock(
                         events = calendarPreviewEvents,
                         clock = calendarPreviewClock,
-                        fontFamily = calendarFontOption.fontFamily,
+                        fontFamily = calendarFontOption.resolveFontFamily(uiState.launcherFontOption),
                         textColor = calendarColorOption.resolve(),
                         modifier = Modifier.padding(bottom = 16.dp),
                     )
@@ -370,8 +362,8 @@ private fun CalendarSettingsScreenPreview() {
             onTurnOnClick = {},
             onCalendarToggled = { _, _ -> },
             onSelectAllCalendarsChanged = {},
-            onGlobalCalendarFontOptionChanged = {},
-            onGlobalCalendarColorOptionChanged = {},
+            onCalendarFontOptionChanged = {},
+            onCalendarColorOptionChanged = {},
         )
     }
 }

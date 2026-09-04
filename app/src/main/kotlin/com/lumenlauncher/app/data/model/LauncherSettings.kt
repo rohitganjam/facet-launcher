@@ -49,6 +49,25 @@ enum class NotificationBadgeStyle {
     COUNT,
 }
 
+/**
+ * Alignment of each app-list row (Home's Favorites/Recents/Most-used list — see [ListContentMode]).
+ * `LEFT` (the default) is today's unchanged layout — icon then label, normal reading order,
+ * packed against the row's start edge. `RIGHT` both reverses the internal order (label then icon,
+ * icon landing on the row's trailing edge) and packs the whole row's content against the
+ * available width's end, so the row visually hugs the right edge of the screen.
+ */
+enum class AppRowPosition {
+    LEFT,
+    RIGHT,
+}
+
+/** What renders per app-list row — independent of [AppRowPosition]. `ICON_AND_TEXT` is the default, unchanged look. */
+enum class AppRowPresentation {
+    ICON_ONLY,
+    ICON_AND_TEXT,
+    TEXT_ONLY,
+}
+
 /** No profile has been created/selected yet — [ProfileRepository][com.lumenlauncher.app.data.ProfileRepository]'s ids start at 1. */
 const val NO_ACTIVE_PROFILE_ID = 0L
 
@@ -57,8 +76,8 @@ data class LauncherSettings(
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     val drawerGridSize: DrawerGridSize = DrawerGridSize.FIVE_BY_SIX,
-    val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.COMPACT,
-    val drawerOpacity: Float = 0.88f,
+    val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
+    val drawerOpacity: Float = 0.6f,
     val notificationDotsEnabled: Boolean = true,
     /** F13 — Dot (README's spec default) vs a capped numeric count, chosen from the dedicated Notification settings screen. */
     val notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
@@ -88,6 +107,20 @@ data class LauncherSettings(
     /** F11 — Settings → Theme → "Icons"; global (not per-app) app-icon rendering mode. */
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     /**
+     * Settings → Appearance → "Font" — the base font for every text role app-wide except the
+     * clock/calendar, which pick their own font independently (see [ClockFontOption]'s
+     * `LAUNCHER_DEFAULT`, which follows this value when selected there). Global only — not
+     * profile-overridable, same as [themeMode]/[accentFromSystem]/[iconRenderMode].
+     */
+    val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    /**
+     * Settings → Appearance → "App label color" — the app-list row and dock text color, reusing
+     * [ClockFontOption]'s sibling color enum ([ClockColorOption]) since it's the same "text over
+     * the home/wallpaper surface" choice the clock/calendar already offer. Global only, same as
+     * [launcherFontOption] — the dock itself isn't per-profile, so this can't be either.
+     */
+    val appLabelColorOption: ClockColorOption = ClockColorOption.INK,
+    /**
      * Settings → Permissions has requested `READ_CALENDAR`/`READ_CONTACTS` at least once before.
      * `checkSelfPermission` alone can't tell "never asked" apart from "permanently denied" —
      * both read as ungranted with no system rationale to show — so this is the disambiguating
@@ -97,18 +130,20 @@ data class LauncherSettings(
      */
     val calendarPermissionRequested: Boolean = false,
     val contactsPermissionRequested: Boolean = false,
-    /** Settings → "Default apps list" — every profile's own [ProfileEntity][com.lumenlauncher.app.data.local.ProfileEntity]
-     * inherits this unless it sets its own override. */
+    /** Settings → "Apps list" section — every profile's own [ProfileEntity][com.lumenlauncher.app.data.local.ProfileEntity]
+     * inherits [appRowPosition], [appRowPresentation], and [listContentMode] unless it sets its own override. */
+    val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
+    val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES]. Range 4…8 per README's `3d` spec. */
     val appsToShowCount: Int = 5,
     /** Global default clock look — see the clock template gallery, reached from Settings' Clock card. */
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    val clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
+    val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val clockColorOption: ClockColorOption = ClockColorOption.INK,
     /** Ignored (no AM/PM to show) whenever [use24HourTime] is on, regardless of this value. */
     val clockShowMeridiem: Boolean = false,
     /** Calendar events block (`ui/home/clock/CalendarEventsBlock`) — configured independently of the clock's own font/color. */
-    val calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
+    val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val calendarColorOption: ClockColorOption = ClockColorOption.INK,
 )

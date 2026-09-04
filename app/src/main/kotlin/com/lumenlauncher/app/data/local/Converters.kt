@@ -1,6 +1,8 @@
 package com.lumenlauncher.app.data.local
 
 import androidx.room.TypeConverter
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -42,4 +44,18 @@ class Converters {
     @TypeConverter
     fun toClockColorOption(value: String?): ClockColorOption? =
         value?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
+
+    @TypeConverter
+    fun fromAppRowPosition(position: AppRowPosition?): String? = position?.name
+
+    @TypeConverter
+    fun toAppRowPosition(value: String?): AppRowPosition? =
+        value?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() }
+
+    @TypeConverter
+    fun fromAppRowPresentation(presentation: AppRowPresentation?): String? = presentation?.name
+
+    @TypeConverter
+    fun toAppRowPresentation(value: String?): AppRowPresentation? =
+        value?.let { runCatching { AppRowPresentation.valueOf(it) }.getOrNull() }
 }

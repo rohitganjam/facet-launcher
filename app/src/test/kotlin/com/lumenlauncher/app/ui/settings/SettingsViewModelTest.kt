@@ -101,6 +101,28 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `changing launcher font option calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setLauncherFontOption(com.lumenlauncher.app.data.model.LauncherFontOption.NOTO_SANS)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setLauncherFontOption(com.lumenlauncher.app.data.model.LauncherFontOption.NOTO_SANS)
+    }
+
+    @Test
+    fun `changing app label color option calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setAppLabelColorOption(com.lumenlauncher.app.data.model.ClockColorOption.WHITE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setAppLabelColorOption(com.lumenlauncher.app.data.model.ClockColorOption.WHITE)
+    }
+
+    @Test
     fun `toggling show drawer labels calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)

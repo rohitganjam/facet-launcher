@@ -6,10 +6,11 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.lumenlauncher.app.R
 import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.LauncherFontOption
 
 /**
  * Fonts bundled specifically for the clock/calendar template system (`ui/home/clock/`) — kept
- * separate from [LumenTypography]'s app-wide [FontFamily.SansSerif] since clock/calendar
+ * separate from [lumenTypography]'s app-wide font since clock/calendar
  * font choice is deliberately independent of the rest of the app's UI (see the clock template
  * gallery). All four are Google Fonts, OFL-licensed, bundled locally under `res/font/` so they
  * render identically with no network dependency — see `THIRD_PARTY_FONT_LICENSES/` at the repo
@@ -41,13 +42,30 @@ private val PoppinsFamily = FontFamily(
 )
 
 /**
+ * Resolves a [LauncherFontOption] to its real [FontFamily] — reuses the same four bundled
+ * families [ClockFontOption] draws from, so picking a launcher-wide font never needs new assets.
+ */
+val LauncherFontOption.fontFamily: FontFamily
+    get() = when (this) {
+        LauncherFontOption.SYSTEM -> FontFamily.SansSerif
+        LauncherFontOption.ROBOTO_FLEX -> RobotoFlexFamily
+        LauncherFontOption.NOTO_SANS -> NotoSansFamily
+        LauncherFontOption.MANROPE -> ManropeFamily
+        LauncherFontOption.POPPINS -> PoppinsFamily
+    }
+
+/**
  * Resolves a [ClockFontOption] to its real [FontFamily] — every option must render every clock
  * template and [com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock] correctly (a
  * weight/style request a template doesn't have an exact bundled instance for just falls back to
  * the platform's nearest match), which is what makes templates and fonts freely combinable.
+ * [ClockFontOption.LAUNCHER_DEFAULT] has no font of its own — it defers to [launcherFontOption],
+ * the live Settings → Appearance → Font value, which is why this takes it as a parameter rather
+ * than being a plain stateless property the way [LauncherFontOption.fontFamily] above is.
  */
-val ClockFontOption.fontFamily: FontFamily
-    get() = when (this) {
+fun ClockFontOption.resolveFontFamily(launcherFontOption: LauncherFontOption): FontFamily =
+    when (this) {
+        ClockFontOption.LAUNCHER_DEFAULT -> launcherFontOption.fontFamily
         ClockFontOption.SYSTEM -> FontFamily.SansSerif
         ClockFontOption.ROBOTO_FLEX -> RobotoFlexFamily
         ClockFontOption.NOTO_SANS -> NotoSansFamily

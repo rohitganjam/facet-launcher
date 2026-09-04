@@ -2,6 +2,8 @@ package com.lumenlauncher.app.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -16,13 +18,15 @@ data class ProfileEntity(
     // Clock section
     val overrideClock: Boolean = false,
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    val clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
+    val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val clockColorOption: ClockColorOption = ClockColorOption.INK,
     val use24HourTime: Boolean = false,
     val clockShowMeridiem: Boolean = false,
 
     // Apps section
     val overrideApps: Boolean = false,
+    val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
+    val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = 5,
     /** 
@@ -35,4 +39,6 @@ data class ProfileEntity(
     // Calendar section
     val overrideCalendar: Boolean = false,
     val showAllDayEvents: Boolean = true,
+    val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
+    val calendarColorOption: ClockColorOption = ClockColorOption.INK,
 )

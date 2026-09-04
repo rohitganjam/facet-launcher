@@ -6,9 +6,10 @@ import com.lumenlauncher.app.data.NotificationShadeRepository
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -19,8 +20,9 @@ class HomeViewModel @Inject constructor(
     private val notificationShadeRepository: NotificationShadeRepository,
 ) : ViewModel() {
 
-    val uiState: StateFlow<HomeUiState> = observeHomeScreenState()
-        .map { screenState ->
+    private val usageAccessPromptDismissed = MutableStateFlow(false)
+
+    val uiState: StateFlow<HomeUiState> = combine(observeHomeScreenState(), usageAccessPromptDismissed) { screenState, dismissed ->
             HomeUiState(
                 settings = screenState.settings,
                 dockApps = screenState.dockApps,
@@ -29,6 +31,7 @@ class HomeViewModel @Inject constructor(
                 usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,
                 badgeCounts = screenState.badgeCounts,
+                usageAccessPromptDismissed = dismissed,
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
@@ -36,6 +39,11 @@ class HomeViewModel @Inject constructor(
     /** `PACKAGE_USAGE_STATS` has no grant-change callback — call this from `onResume` so a grant made via Settings takes effect without waiting for an unrelated profile change. */
     fun refresh() {
         observeHomeScreenState.refresh()
+    }
+
+    /** Called the moment the usage-access prompt's own button is tapped — hides it for the rest of this ViewModel's lifetime regardless of whether the permission actually ends up granted (see chat history). */
+    fun dismissUsageAccessPrompt() {
+        usageAccessPromptDismissed.value = true
     }
 
     /** Swipe-down-to-open-shade gesture, from [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute]. */

@@ -31,32 +31,31 @@ class ProfileDaoTest {
     }
 
     @Test
-    fun `a non-null listContentModeOverride round-trips through Room, not just an in-memory copy`() = runTest {
+    fun `a non-null listContentMode round-trips through Room, not just an in-memory copy`() = runTest {
         // Given a stored profile with no override
         val dao = createDao()
         val id = dao.upsert(ProfileEntity(name = "Profile 1", position = 0))
 
-        // When it's upserted again with a real (non-null) override — this is the exact write
-        // that silently failed: it went through Room's TypeConverters, not a plain object copy
-        dao.upsert(ProfileEntity(id = id, name = "Profile 1", position = 0, listContentModeOverride = ListContentMode.MOST_USED))
+        // When it's upserted again with a real (non-default) mode
+        dao.upsert(ProfileEntity(id = id, name = "Profile 1", position = 0, listContentMode = ListContentMode.MOST_USED))
 
         // Then a fresh read (forcing the value through Converters.toListContentMode) reflects it
         val result = dao.observeAll().first().single()
-        assertEquals(ListContentMode.MOST_USED, result.listContentModeOverride)
+        assertEquals(ListContentMode.MOST_USED, result.listContentMode)
     }
 
     @Test
-    fun `clearing listContentModeOverride back to null round-trips too`() = runTest {
-        // Given a profile with a real override set
+    fun `toggling overrideApps flag round-trips`() = runTest {
+        // Given a profile inheriting global apps
         val dao = createDao()
-        val id = dao.upsert(ProfileEntity(name = "Profile 1", position = 0, listContentModeOverride = ListContentMode.RECENTS))
+        val id = dao.upsert(ProfileEntity(name = "Profile 1", position = 0, overrideApps = false))
 
-        // When it's cleared back to null (Inherit)
-        dao.upsert(ProfileEntity(id = id, name = "Profile 1", position = 0, listContentModeOverride = null))
+        // When it's switched to override
+        dao.upsert(ProfileEntity(id = id, name = "Profile 1", position = 0, overrideApps = true))
 
-        // Then the read-back value is genuinely null, not left over from before
+        // Then it reflects the new flag
         val result = dao.observeAll().first().single()
-        assertNull(result.listContentModeOverride)
+        assertEquals(true, result.overrideApps)
     }
 
     @Test
@@ -65,8 +64,8 @@ class ProfileDaoTest {
         val id = dao.upsert(ProfileEntity(name = "Profile 1", position = 0))
 
         for (mode in ListContentMode.entries) {
-            dao.upsert(ProfileEntity(id = id, name = "Profile 1", position = 0, listContentModeOverride = mode))
-            assertEquals(mode, dao.observeAll().first().single().listContentModeOverride)
+            dao.upsert(ProfileEntity(id = id, name = "Profile 1", position = 0, listContentMode = mode))
+            assertEquals(mode, dao.observeAll().first().single().listContentMode)
         }
     }
 }

@@ -22,16 +22,17 @@ import com.lumenlauncher.app.ui.theme.DrawerOverlay
 
 /**
  * The Launcher Hub (F5) — reached by swiping right from Home. Backed by the same [DrawerOverlay]
- * scrim the Drawer itself uses (see `AppDrawerScreen`'s own root `.background(...)`), driven by
- * the same `drawerSettings.drawerOpacity` value, so opening the Hub reads the same as opening the
- * Drawer rather than as a fully transparent overlay on the wallpaper.
+ * scrim the Drawer itself uses (see `AppDrawerScreen`'s own root `.background(...)`), but at its
+ * own fixed opacity — deliberately *not* tied to `drawerSettings.drawerOpacity` (it happens to
+ * currently match the Drawer's own default, but the two are independent values, not the same
+ * source — see chat history).
  */
 @Composable
 fun HubScreen(
     onAddClick: () -> Unit,
     onManageClick: () -> Unit,
     modifier: Modifier = Modifier,
-    opacity: Float = 0.88f,
+    opacity: Float = 0.6f,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
