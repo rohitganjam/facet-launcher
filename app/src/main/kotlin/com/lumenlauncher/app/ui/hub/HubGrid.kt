@@ -217,15 +217,26 @@ fun HubGrid(
                     // itself — cancels resize mode without committing. A quick tap (no
                     // long-press) never gets consumed by the per-tile gesture below (it only
                     // consumes once a long-press is recognized), so it reaches this detector.
-                    .then(
-                        if (resizingAppWidgetId != null) {
-                            Modifier.pointerInput(resizingAppWidgetId) {
-                                detectTapGestures(onTap = { resizingAppWidgetId = null })
+                    //
+                    // Keyed on Unit (always attached), NOT on resizingAppWidgetId: a per-tile
+                    // long-press that ends resize mode (see onLongPressHold below, which always
+                    // nulls resizingAppWidgetId as its first step) nulls this same state from
+                    // WITHIN that tile's own gesture coroutine, mid-gesture. If this pointerInput
+                    // were keyed on resizingAppWidgetId, that write would detach this ancestor's
+                    // PointerInputModifierNode right then — and detaching a node that's still part
+                    // of the same pointer's currently-tracked hit path cancels the whole path,
+                    // including the tile's own still-in-progress gesture below it (its next
+                    // Initial-pass event reads as a synthetic "up" instead of the drag that
+                    // follows) — see chat history, this broke moving a widget right after
+                    // resizing it. Reading resizingAppWidgetId fresh (a State) inside the gesture
+                    // instead keeps the node itself stable across that transition.
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = {
+                            if (resizingAppWidgetId != null) {
+                                resizingAppWidgetId = null
                             }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                        })
+                    },
             ) {
                 widgets.forEach { widget ->
                     key(widget.appWidgetId) {

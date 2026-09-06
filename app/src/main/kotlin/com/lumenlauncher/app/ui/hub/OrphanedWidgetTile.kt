@@ -33,7 +33,20 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
             .padding(10.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
+        // weight(1f, fill = false) — NOT the default fill = true — so this info block only ever
+        // claims space it actually needs, and NEVER at the expense of the Remove/Keep space row
+        // below. On a 1-row-tall orphaned tile (rowSpan=1 is a completely normal size for a
+        // provider that later got uninstalled) these two lines of text can, at this typeography,
+        // consume the tile's entire content height on their own — without this weight, the Row
+        // below was measured with whatever was left over, which was zero, silently laying out a
+        // "Remove"/"Keep space" row with zero height. That's not just a cosmetic clip: real touch
+        // input (Compose's own performClick() included) hit-tests actual screen coordinates, and a
+        // zero-height target can never be tapped — the widget became permanently un-removable
+        // (see chat history: this is what HubScreenTest's removingAnOrphanedWidgetDeletesItsPlacement
+        // was catching). Letting this Column size itself and cede space to the Row below fixes that
+        // — worst case on a very short tile, this text visually clips, which is far better than an
+        // orphaned widget the user can never get rid of.
+        Column(modifier = Modifier.weight(1f, fill = false)) {
             Text(
                 text = "${providerLabel ?: "This"} widget unavailable",
                 style = MaterialTheme.typography.labelMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),

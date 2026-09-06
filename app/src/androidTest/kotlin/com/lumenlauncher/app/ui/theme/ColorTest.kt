@@ -111,25 +111,30 @@ class ColorTest {
     }
 
     @Test
-    fun `derived Home and Drawer text colors follow Ink and Faint into dark mode`() {
+    fun `derived Home and Drawer text colors follow Ink and Muted into dark mode`() {
         var ink: Color? = null
-        var faint: Color? = null
+        var muted: Color? = null
         var homeAppTextColor: Color? = null
         var drawerAppTextColor: Color? = null
         var drawerHeaderTextColor: Color? = null
+        var drawerRailTextColor: Color? = null
         composeRule.setContent {
             themed(dark = true) {
                 ink = Ink
-                faint = Faint
+                muted = Muted
                 homeAppTextColor = HomeAppTextColor
                 drawerAppTextColor = DrawerAppTextColor
                 drawerHeaderTextColor = DrawerHeaderTextColor
+                drawerRailTextColor = DrawerRailTextColor
             }
         }
         composeRule.waitForIdle()
 
         assertEquals(requireNotNull(ink).toArgb(), requireNotNull(homeAppTextColor).toArgb())
         assertEquals(requireNotNull(ink).toArgb(), requireNotNull(drawerAppTextColor).toArgb())
-        assertEquals(requireNotNull(faint).toArgb(), requireNotNull(drawerHeaderTextColor).toArgb())
+        // Muted, not Faint — both are real readable navigational text, not decorative (see
+        // Color.kt's own doc comment on DrawerHeaderTextColor/DrawerRailTextColor).
+        assertEquals(requireNotNull(muted).toArgb(), requireNotNull(drawerHeaderTextColor).toArgb())
+        assertEquals(requireNotNull(muted).toArgb(), requireNotNull(drawerRailTextColor).toArgb())
     }
 }

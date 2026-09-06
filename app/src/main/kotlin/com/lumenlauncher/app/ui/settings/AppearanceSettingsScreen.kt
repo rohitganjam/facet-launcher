@@ -250,14 +250,16 @@ private fun AppearancePreviewCard(
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            DockIcon(
-                app = PreviewDockApp,
-                displayMode = dockDisplayMode,
-                onClick = {},
-                labelColor = labelColor,
-                labelFontWeight = labelFontWeight,
-                enableLongPressMenu = false,
-            )
+            PreviewDockApps.forEach { app ->
+                DockIcon(
+                    app = app,
+                    displayMode = dockDisplayMode,
+                    onClick = {},
+                    labelColor = labelColor,
+                    labelFontWeight = labelFontWeight,
+                    enableLongPressMenu = false,
+                )
+            }
         }
     }
 }
@@ -266,7 +268,11 @@ private val PreviewApps = listOf(
     AppInfo(packageName = "preview.appearance.one", activityName = ".Main", label = "Camera", icon = null),
     AppInfo(packageName = "preview.appearance.two", activityName = ".Main", label = "Messages", icon = null),
 )
-private val PreviewDockApp = AppInfo(packageName = "preview.appearance.dock", activityName = ".Main", label = "Phone", icon = null)
+private val PreviewDockApps = listOf(
+    AppInfo(packageName = "preview.appearance.dock.one", activityName = ".Main", label = "Phone", icon = null),
+    AppInfo(packageName = "preview.appearance.dock.two", activityName = ".Main", label = "Browser", icon = null),
+    AppInfo(packageName = "preview.appearance.dock.three", activityName = ".Main", label = "Mail", icon = null),
+)
 
 @Composable
 private fun AppearanceSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {

@@ -39,10 +39,15 @@ private val ScrimLight = Color(0x47020817) // rgba(2,8,23,.28)
 private val ScrimDark = Color(0x94000000) // rgba(0,0,0,.58)
 private val InkLight = Color(0xFF020817)
 private val InkDark = Color(0xFFE7EAF0)
-private val MutedLight = Color(0x73020817) // rgba(2,8,23,.45)
-private val MutedDark = Color(0x80E2E8F0) // rgba(226,232,240,.5)
+// .55, not README's original .45/.5 — that literal spec value read under WCAG AA's 4.5:1 text
+// contrast minimum (~3.2:1 light, ~4.4:1 dark against Surface) despite Muted being relied on for
+// actual readable secondary text (see chat history) — a deliberate departure from the spec value,
+// same category of call as the M3-shape departure already recorded above.
+private val MutedLight = Color(0x8C020817) // rgba(2,8,23,.55)
+private val MutedDark = Color(0x8CE2E8F0) // rgba(226,232,240,.55)
 // Dark "Faint" isn't in README's dark token table — derived at the same alpha *ratio* to Muted
-// as the light table's Faint (.3) is to its Muted (.45), applied to Muted-dark's base color.
+// as the light table's Faint (.3) is to its *original* Muted (.45, since recalibrated above to
+// .55 for contrast — Faint's own derivation wasn't revisited alongside it).
 // Deliberately dimmer than Muted — reserved for decorative/disabled elements (drag-handle icons,
 // inactive carousel dots, disabled menu items) where that's the point. Any *readable* secondary
 // text that turned out too dim at this alpha uses Muted instead, not a locally-bumped Faint (see
@@ -224,10 +229,15 @@ fun homeAppLabelShadow(textColor: Color): Shadow {
 }
 
 /**
- * App Drawer text colors — independent knobs from Home's, even though both currently
- * resolve to the same [Ink]/[Faint] values. The Drawer's [DrawerOverlay] already keeps
+ * App Drawer text colors — independent knobs from Home's, even though [DrawerAppTextColor]
+ * currently resolves to the same [Ink] value. The Drawer's [DrawerOverlay] already keeps
  * these legible against any wallpaper, so no shadow is needed here.
+ *
+ * [DrawerHeaderTextColor]/[DrawerRailTextColor] use [Muted], not [Faint] — both are real,
+ * readable navigational text (section headers like "APPS"/"CONTACTS", the A-Z fast-scroll rail),
+ * not the decorative/disabled use [Faint]'s own doc reserves it for. Mirrors the identical fix
+ * `SettingsScreen.kt`'s own `SectionHeader` already made for the same reason (see chat history).
  */
 val DrawerAppTextColor: Color @Composable get() = Ink
-val DrawerHeaderTextColor: Color @Composable get() = Faint
-val DrawerRailTextColor: Color @Composable get() = Faint
+val DrawerHeaderTextColor: Color @Composable get() = Muted
+val DrawerRailTextColor: Color @Composable get() = Muted

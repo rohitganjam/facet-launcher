@@ -257,8 +257,7 @@ private fun ProfileCarouselContent(
                         onCardClick = { onSelect(profile.id) },
                         modifier = visualModifier
                             .fillMaxSize()
-                            .testTag("profile_page_${profile.id}")
-                            .clickable { onSelect(profile.id) },
+                            .testTag("profile_page_${profile.id}"),
                     )
                 } else {
                     AddProfilePage(
@@ -555,7 +554,10 @@ private fun ProfilePreviewPage(
                 // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
                 // CLAUDE.md's Material 3 shape section.
                 .clip(MaterialTheme.shapes.extraLarge)
-                .background(Surface),
+                .background(Surface)
+                // Card-only tap/ripple target — kept off the name+menu header above so a
+                // long-press ripple doesn't bleed across the whole page (see chat history).
+                .clickable(onClick = onCardClick),
         ) {
             // This card renders at a fraction of Home's real on-screen size — first from sharing
             // vertical space with the header/dots/settings row above, then from CARD_SCALE's own
@@ -664,34 +666,51 @@ private fun ListContentMode.previewLabel(): String = when (this) {
 
 @Composable
 private fun AddProfilePage(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
-            // CLAUDE.md's Material 3 shape section.
-            .clip(MaterialTheme.shapes.extraLarge)
-            .background(Surface)
-            .clickable(onClick = onClick)
-            .padding(18.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 96.dp, height = 70.dp)
-                .clip(RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center,
+    Column(modifier = modifier.fillMaxSize()) {
+        // Invisible stand-in for ProfilePreviewPage's own name+menu row — same Row/Text/IconButton
+        // structure so it measures to the exact same height, without hardcoding a dp guess. Without
+        // this, the Add-profile card (which has no header of its own) would start higher up than
+        // its neighboring profile cards and read as a different, taller size (see chat history).
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = "+", style = LumenType.clock.copy(fontSize = 34.sp), color = Faint)
+            Text(text = "", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            IconButton(onClick = {}) {
+                Icon(Icons.Default.MoreVert, contentDescription = null)
+            }
         }
-        Text(text = "Add profile", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
-        Text(
-            text = "Starts with your launcher's default clock, calendar, favorite apps, and settings. Customize them per profile.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Muted,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
+                // CLAUDE.md's Material 3 shape section.
+                .clip(MaterialTheme.shapes.extraLarge)
+                .background(Surface)
+                .clickable(onClick = onClick)
+                .padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 96.dp, height = 70.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = "+", style = LumenType.clock.copy(fontSize = 34.sp), color = Faint)
+            }
+            Text(text = "Add profile", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
+            Text(
+                text = "Starts with your launcher's default clock, calendar, favorite apps, and settings. Customize them per profile.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }
 

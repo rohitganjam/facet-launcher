@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -315,6 +316,10 @@ private fun ClickableRow(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
+            // Rounds the row's own ripple/press-highlight — matches this app's other standalone
+            // clickable rows (see ProfileCarouselScreen.kt's LauncherSettingsRow/AddProfileRow),
+            // M3's Card default shape (CLAUDE.md's Material 3 shape section).
+            .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
             .padding(vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

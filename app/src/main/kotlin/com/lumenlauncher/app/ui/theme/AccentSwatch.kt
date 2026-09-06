@@ -18,7 +18,11 @@ enum class AccentSwatch(val label: String, val light: Color, val dark: Color) {
     PINK("Pink", Color(0xFFDB2777), Color(0xFFF8A5C2)),
     RED("Red", Color(0xFFDC2626), Color(0xFFF2857F)),
     ORANGE("Orange", Color(0xFFEA580C), Color(0xFFFFB68A)),
-    AMBER("Amber", Color(0xFFD97706), Color(0xFFFFCC80)),
+    // Light value darkened from the original #D97706 (see chat history) — that value cleared the
+    // 3:1 non-text UI-component minimum only barely (~3.2:1) and fell short of 4.5:1 wherever it
+    // backs real text (e.g. HubEmptyState's "Add widget" button label). #AE5E04 keeps the same hue
+    // at ~4.8:1 against white/Surface, matching every other swatch's comfortable margin.
+    AMBER("Amber", Color(0xFFAE5E04), Color(0xFFFFCC80)),
     GREEN("Green", Color(0xFF16A34A), Color(0xFF7FD493)),
     TEAL("Teal", Color(0xFF0D9488), Color(0xFF80CBC4)),
     CYAN("Cyan", Color(0xFF0891B2), Color(0xFF80DEEA)),

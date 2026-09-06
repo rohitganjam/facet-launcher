@@ -186,10 +186,10 @@
     "semantic_hash": "2c1bad04da58406d346e10b30c02e802"
   },
   "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsScreenTest.kt": {
-    "mtime": 1788610574.7912207,
-    "seen": 1788674056.895045,
-    "ast_hash": "d8ea1d526f63c89a59527efeebcfd10e",
-    "semantic_hash": "d8ea1d526f63c89a59527efeebcfd10e"
+    "mtime": 1788677493.0367866,
+    "seen": 1788684276.4110348,
+    "ast_hash": "888666cfc3a78651e85d558ae8d6234b",
+    "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/CalendarSettingsScreenTest.kt": {
     "mtime": 1788585063.4181607,
@@ -834,10 +834,10 @@
     "semantic_hash": "0fc6d9dd5dbc599f17e9dc9f99f6fc8d"
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1788669109.0109305,
-    "seen": 1788674056.895086,
-    "ast_hash": "1c86d5c8d25057ba378765185ddcbbb8",
-    "semantic_hash": "1c86d5c8d25057ba378765185ddcbbb8"
+    "mtime": 1788680730.4087389,
+    "seen": 1788684276.411094,
+    "ast_hash": "aa0ca6f23aa03d1d800977c740e98166",
+    "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeUiState.kt": {
     "mtime": 1788612206.820841,
@@ -1002,10 +1002,10 @@
     "semantic_hash": "a284fac76254243df5f25234fc23a6f3"
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt": {
-    "mtime": 1788669122.6042664,
-    "seen": 1788674056.895097,
-    "ast_hash": "7feb7bd02742c6f2aeb2312871ddda0e",
-    "semantic_hash": "7feb7bd02742c6f2aeb2312871ddda0e"
+    "mtime": 1788684200.9569702,
+    "seen": 1788684276.4111118,
+    "ast_hash": "37b4dc34bd1422a48fa082b1f98846ab",
+    "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselViewModel.kt": {
     "mtime": 1788660697.0535207,
@@ -1038,10 +1038,10 @@
     "semantic_hash": "6334b778c563053a22f6cfe23d69cc61"
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsScreen.kt": {
-    "mtime": 1788610535.794478,
-    "seen": 1788674056.8950999,
-    "ast_hash": "364b2dda0d8f8b1bf3c466d24af4cd93",
-    "semantic_hash": "364b2dda0d8f8b1bf3c466d24af4cd93"
+    "mtime": 1788677263.5907547,
+    "seen": 1788684276.4111161,
+    "ast_hash": "406b7d61007ca281b0970ce5f24e851e",
+    "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsViewModel.kt": {
     "mtime": 1788610152.64725,
@@ -1578,10 +1578,10 @@
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1788609919.2329164,
-    "seen": 1788674056.895134,
-    "ast_hash": "d35332de8adf9cf728301d387050acef",
-    "semantic_hash": "d35332de8adf9cf728301d387050acef"
+    "mtime": 1788677563.14598,
+    "seen": 1788684276.411167,
+    "ast_hash": "e79a70540589806e2fb7aa79b8ab9220",
+    "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
     "mtime": 1788080116.9683175,
