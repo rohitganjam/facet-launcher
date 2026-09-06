@@ -25,4 +25,8 @@ interface DockAppDao {
     /** Uninstall cleanup — removes the dock entry for [packageName] regardless of activity. */
     @Query("DELETE FROM dock_apps WHERE packageName = :packageName")
     suspend fun deleteByPackage(packageName: String)
+
+    /** F14 Backup & Restore — wipes the whole dock before restoring from a backup. */
+    @Query("DELETE FROM dock_apps")
+    suspend fun deleteAll()
 }

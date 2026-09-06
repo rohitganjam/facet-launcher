@@ -26,7 +26,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,6 +61,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 private fun ListContentMode.displayLabel(): String = when (this) {
     ListContentMode.FAVORITES -> "Favorites"
@@ -102,7 +102,6 @@ fun ProfileSettingsScreen(
         onClockStyleClick = { onNavigateToClockStyleGallery(viewModel.profileId) },
         onRename = viewModel::renameProfile,
         onOverridingClockChanged = viewModel::setOverridingClock,
-        onUse24HourTimeOverrideChanged = viewModel::setUse24HourTimeOverride,
         onOverridingAppsChanged = viewModel::setOverridingApps,
         onAppRowPositionChanged = viewModel::setAppRowPosition,
         onAppRowPresentationChanged = viewModel::setAppRowPresentation,
@@ -122,7 +121,6 @@ private fun ProfileSettingsContent(
     onClockStyleClick: () -> Unit,
     onRename: (String) -> Unit,
     onOverridingClockChanged: (Boolean) -> Unit,
-    onUse24HourTimeOverrideChanged: (Boolean) -> Unit,
     onOverridingAppsChanged: (Boolean) -> Unit,
     onAppRowPositionChanged: (AppRowPosition) -> Unit,
     onAppRowPresentationChanged: (AppRowPresentation) -> Unit,
@@ -141,7 +139,7 @@ private fun ProfileSettingsContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Surface)
+            .background(SurfaceContainer)
             .testTag("profile_settings_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 24.dp),
@@ -160,7 +158,7 @@ private fun ProfileSettingsContent(
         }
 
         item { Spacer(modifier = Modifier.height(18.dp)) }
-        item { SectionHeader("APPS") }
+        item { SectionHeader("APPS LIST") }
         item {
             AppsSection(
                 uiState = uiState,
@@ -175,7 +173,7 @@ private fun ProfileSettingsContent(
         }
 
         item { Spacer(modifier = Modifier.height(18.dp)) }
-        item { SectionHeader("CLOCK") }
+        item { SectionHeader("CLOCK & CALENDAR") }
         item {
             InheritOverrideCard(
                 overriding = uiState.isOverridingClock,
@@ -188,32 +186,15 @@ private fun ProfileSettingsContent(
         item {
             SettingsCard {
                 ClickableRow(
-                    title = "Clock style",
+                    title = "Clock & Calendar Style",
                     subtitle = if (uiState.isOverridingClock) "Overriding defaults · tap to edit" else "Inherits default · Light stack · tap to preview",
                     onClick = onClockStyleClick,
                     testTag = "profile_clock_style_gallery_row",
                     trailing = { NavigationChevron() },
                 )
                 CardDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 13.dp)
-                        .alpha(if (uiState.isOverridingClock) 1f else 0.4f),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = "24-hour time", style = MaterialTheme.typography.bodyLarge, color = Ink)
-                    Switch(
-                        checked = uiState.effectiveUse24HourTime,
-                        onCheckedChange = onUse24HourTimeOverrideChanged,
-                        enabled = uiState.isOverridingClock,
-                        modifier = Modifier.testTag("profile_use_24_hour_time_toggle"),
-                    )
-                }
-                CardDivider()
                 ClickableRow(
-                    title = "Calendar",
+                    title = "Calendars to display",
                     subtitle = null,
                     onClick = onCalendarClick,
                     testTag = "profile_calendar_settings_row",
@@ -243,7 +224,7 @@ private fun ProfileSettingsHeader(title: String, onBack: () -> Unit, modifier: M
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Surface)
+            .background(SurfaceContainer)
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .padding(horizontal = 24.dp)
             .padding(top = 24.dp, bottom = 16.dp),
@@ -494,7 +475,6 @@ private fun ProfileSettingsScreenPreview() {
             onClockStyleClick = {},
             onRename = {},
             onOverridingClockChanged = {},
-            onUse24HourTimeOverrideChanged = {},
             onOverridingAppsChanged = {},
             onAppRowPositionChanged = {},
             onAppRowPresentationChanged = {},

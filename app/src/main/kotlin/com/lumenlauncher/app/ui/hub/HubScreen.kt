@@ -45,7 +45,6 @@ fun HubScreen(
         onKeepOrphanSpace = { viewModel.onKeepOrphanSpace() },
         onWidgetDropped = viewModel::onWidgetDropped,
         onWidgetDroppedOnTrash = viewModel::onWidgetDroppedOnTrash,
-        canResizeTo = viewModel::canResizeTo,
         onWidgetResized = viewModel::onWidgetResized,
         opacity = opacity,
         modifier = modifier,
@@ -62,7 +61,6 @@ private fun HubContent(
     onKeepOrphanSpace: (Int) -> Unit,
     onWidgetDropped: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
     onWidgetDroppedOnTrash: (Int) -> Unit,
-    canResizeTo: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Boolean,
     onWidgetResized: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
     opacity: Float,
     modifier: Modifier = Modifier,
@@ -100,7 +98,6 @@ private fun HubContent(
                             onKeepOrphanSpace = onKeepOrphanSpace,
                             onWidgetDropped = onWidgetDropped,
                             onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
-                            canResizeTo = canResizeTo,
                             onWidgetResized = onWidgetResized,
                             modifier = Modifier.weight(1f),
                         )

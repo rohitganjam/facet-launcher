@@ -6,7 +6,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.ui.launcher.LauncherViewModel
@@ -33,11 +36,20 @@ class LauncherActivity : ComponentActivity() {
                 iconRenderMode = uiState.iconRenderMode,
                 launcherFontOption = uiState.launcherFontOption,
             ) {
-                LumenNavHost(
-                    apps = uiState.apps,
-                    onAppClick = { app -> launchApp(app) },
-                    launcherViewModel = viewModel,
-                )
+                if (uiState.isLoading) {
+                    // Real settings/apps haven't loaded yet — render nothing rather than a frame
+                    // styled with defaults that don't match the user's actual choices (see chat
+                    // history). The window already shows the wallpaper through it
+                    // (windowShowWallpaper + a transparent windowBackground in themes.xml), so an
+                    // empty Box is a blank Home, not a black/white flash.
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LumenNavHost(
+                        apps = uiState.apps,
+                        onAppClick = { app -> launchApp(app) },
+                        launcherViewModel = viewModel,
+                    )
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ package com.lumenlauncher.app.data
 
 import android.app.usage.UsageStatsManager
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.LUMEN_LAUNCHER_PACKAGE_NAME
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,7 +41,14 @@ class UsageStatsRepository @Inject constructor(
                 maxOf(lastUsed, entry.lastTimeUsed) to (totalForeground + entry.totalTimeInForeground)
         }
 
-        val installedByPackage = appRepository.getInstalledApps().associateBy { it.packageName }
+        // Lumen itself is foregrounded every time the user returns to Home, so it would
+        // otherwise rank near the top of both Recents and Most Used — showing your own launcher
+        // in its own app list is meaningless. Excluded here, before ranking/truncation, rather
+        // than filtered out of an already-`take(limit)`'d list — that would risk silently
+        // showing one fewer than `limit` real apps whenever Lumen placed within the top `limit`.
+        val installedByPackage = appRepository.getInstalledApps()
+            .filterNot { it.packageName == LUMEN_LAUNCHER_PACKAGE_NAME }
+            .associateBy { it.packageName }
 
         aggregatedByPackage.entries
             .filter { (packageName, usage) -> rankBy(usage.first, usage.second) > 0 && installedByPackage.containsKey(packageName) }

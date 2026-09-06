@@ -43,6 +43,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * F13's required onboarding explanation screen shown before the
@@ -92,7 +93,7 @@ private fun NotificationAccessExplanationContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Surface)
+            .background(SurfaceContainer)
             .testTag("notification_access_explanation_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 24.dp),

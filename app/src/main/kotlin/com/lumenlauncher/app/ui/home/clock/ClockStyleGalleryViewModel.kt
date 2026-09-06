@@ -9,6 +9,7 @@ import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
@@ -23,9 +24,13 @@ import kotlinx.coroutines.launch
 data class ClockStyleGalleryUiState(
     val templateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val fontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    val colorOption: ClockColorOption = ClockColorOption.INK,
+    val colorOption: ClockColorOption = ClockColorOption.THEME,
     val use24HourTime: Boolean = false,
     val showMeridiem: Boolean = false,
+    /** The calendar events strip's own font/color — part of this same Clock+Calendar design block/override, not a separate one (see chat history). */
+    val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
+    val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
+    val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /** Global only — resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview here regardless of whether this instance is profile-scoped. */
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 )
@@ -52,6 +57,9 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 colorOption = profile.clockColorOption,
                 use24HourTime = profile.use24HourTime,
                 showMeridiem = profile.clockShowMeridiem,
+                calendarFontOption = profile.calendarFontOption,
+                calendarColorOption = profile.calendarColorOption,
+                calendarFontWeight = profile.calendarFontWeight,
                 launcherFontOption = settings.launcherFontOption,
             )
         } else {
@@ -61,6 +69,9 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 colorOption = settings.clockColorOption,
                 use24HourTime = settings.use24HourTime,
                 showMeridiem = settings.clockShowMeridiem,
+                calendarFontOption = settings.calendarFontOption,
+                calendarColorOption = settings.calendarColorOption,
+                calendarFontWeight = settings.calendarFontWeight,
                 launcherFontOption = settings.launcherFontOption,
             )
         }
@@ -103,6 +114,30 @@ class ClockStyleGalleryViewModel @Inject constructor(
             profileId?.let { pid ->
                 profileRepository.getById(pid)?.let { profileRepository.setClockShowMeridiem(it, enabled) }
             } ?: settingsRepository.setClockShowMeridiem(enabled)
+        }
+    }
+
+    fun setCalendarFontOption(option: ClockFontOption) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setCalendarFontOption(it, option) }
+            } ?: settingsRepository.setCalendarFontOption(option)
+        }
+    }
+
+    fun setCalendarColorOption(option: ClockColorOption) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setCalendarColorOption(it, option) }
+            } ?: settingsRepository.setCalendarColorOption(option)
+        }
+    }
+
+    fun setCalendarFontWeight(weight: FontWeightOption) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setCalendarFontWeight(it, weight) }
+            } ?: settingsRepository.setCalendarFontWeight(weight)
         }
     }
 }

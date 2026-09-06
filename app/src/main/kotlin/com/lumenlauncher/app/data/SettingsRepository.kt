@@ -18,6 +18,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
@@ -65,6 +66,8 @@ private object Keys {
     val CLOCK_SHOW_MERIDIEM = booleanPreferencesKey("clock_show_meridiem")
     val CALENDAR_FONT_OPTION = stringPreferencesKey("calendar_font_option")
     val CALENDAR_COLOR_OPTION = stringPreferencesKey("calendar_color_option")
+    val CALENDAR_FONT_WEIGHT = stringPreferencesKey("calendar_font_weight")
+    val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
 }
 
 @Singleton
@@ -132,6 +135,10 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.calendarFontOption,
             calendarColorOption = preferences[Keys.CALENDAR_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
                 ?: defaults.calendarColorOption,
+            calendarFontWeight = preferences[Keys.CALENDAR_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
+                ?: defaults.calendarFontWeight,
+            homeAppsFontWeight = preferences[Keys.HOME_APPS_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
+                ?: defaults.homeAppsFontWeight,
         )
     }
 
@@ -275,5 +282,13 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setCalendarColorOption(colorOption: ClockColorOption) {
         dataStore.edit { it[Keys.CALENDAR_COLOR_OPTION] = colorOption.name }
+    }
+
+    suspend fun setCalendarFontWeight(weight: FontWeightOption) {
+        dataStore.edit { it[Keys.CALENDAR_FONT_WEIGHT] = weight.name }
+    }
+
+    suspend fun setHomeAppsFontWeight(weight: FontWeightOption) {
+        dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
     }
 }

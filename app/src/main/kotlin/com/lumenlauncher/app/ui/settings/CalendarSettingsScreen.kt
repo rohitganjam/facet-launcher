@@ -48,36 +48,27 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.CalendarInfo
-import com.lumenlauncher.app.data.model.ClockColorOption
-import com.lumenlauncher.app.data.model.ClockFontOption
-import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.components.BackButton
-import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.InheritOverrideCard
 import com.lumenlauncher.app.ui.components.dashedBorder
-import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
-import com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
-import com.lumenlauncher.app.ui.theme.resolve
-import com.lumenlauncher.app.ui.theme.resolveFontFamily
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import com.lumenlauncher.app.ui.theme.resolvedColor
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
 
 /**
- * Calendar settings (`4l`). Reached from the global Settings Clock card (no profile scope) or a
- * profile's Clock card (scoped, with an inherit/override header per `3f`'s pattern). Real
- * `READ_CALENDAR` runtime request + a live `CalendarContract` query back the "Calendars to
+ * "Calendars to display" (`4l`) — calendar *selection* only (which calendars, all-day events);
+ * font/color/weight moved to `ClockStyleGalleryScreen` (see `CalendarSettingsViewModel`'s own doc
+ * comment). Reached from Settings' "Calendars to display" row (no profile scope) or a profile's
+ * "Calendars to display" row (scoped, with its own inherit/override header per `3f`'s pattern).
+ * Real `READ_CALENDAR` runtime request + a live `CalendarContract` query back the "Calendars to
  * display" card once granted.
  */
 @Composable
@@ -111,8 +102,6 @@ fun CalendarSettingsScreen(
         onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
         onCalendarToggled = viewModel::setCalendarSelected,
         onSelectAllCalendarsChanged = viewModel::setAllCalendarsSelected,
-        onCalendarFontOptionChanged = viewModel::setCalendarFontOption,
-        onCalendarColorOptionChanged = viewModel::setCalendarColorOption,
         modifier = modifier,
     )
 }
@@ -126,14 +115,9 @@ private fun CalendarSettingsContent(
     onTurnOnClick: () -> Unit,
     onCalendarToggled: (String, Boolean) -> Unit,
     onSelectAllCalendarsChanged: (Boolean) -> Unit,
-    onCalendarFontOptionChanged: (ClockFontOption) -> Unit,
-    onCalendarColorOptionChanged: (ClockColorOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val calendarFontOption = uiState.effectiveCalendarFontOption
-    val calendarColorOption = uiState.effectiveCalendarColorOption
-
-    // Every control below (all-day events, font, color) is read-only under Inherit and live under Override.
+    // Every control below (all-day events, calendar selection) is read-only under Inherit and live under Override.
     val controlsEnabled = !uiState.isProfileScoped || uiState.isOverriding
 
     StickyHeaderLayout(
@@ -143,7 +127,7 @@ private fun CalendarSettingsContent(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Surface)
+                    .background(SurfaceContainer)
                     .testTag("calendar_settings_screen")
                     .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(horizontal = 24.dp),
@@ -235,43 +219,6 @@ private fun CalendarSettingsContent(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-
-                item {
-                    SettingsCard {
-                        LabeledDropdownRow(
-                            title = "Font",
-                            options = ClockFontOption.entries,
-                            selected = calendarFontOption,
-                            label = { it.displayName },
-                            onSelect = onCalendarFontOptionChanged,
-                            enabled = controlsEnabled,
-                            testTag = "calendar_style_font_row",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = "Color",
-                            options = ClockColorOption.entries,
-                            selected = calendarColorOption,
-                            label = { it.displayName },
-                            onSelect = onCalendarColorOptionChanged,
-                            enabled = controlsEnabled,
-                            testTag = "calendar_style_color_row",
-                        )
-                    }
-                }
-
-                item { Spacer(modifier = Modifier.height(12.dp)) }
-
-                item {
-                    CalendarEventsBlock(
-                        events = calendarPreviewEvents,
-                        clock = calendarPreviewClock,
-                        fontFamily = calendarFontOption.resolveFontFamily(uiState.launcherFontOption),
-                        textColor = calendarColorOption.resolve(),
-                        modifier = Modifier.padding(bottom = 16.dp),
-                    )
-                }
             }
         },
     )
@@ -282,7 +229,7 @@ private fun CalendarSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modi
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Surface)
+            .background(SurfaceContainer)
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .padding(horizontal = 24.dp)
             .padding(top = 24.dp, bottom = 16.dp),
@@ -293,12 +240,6 @@ private fun CalendarSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modi
         Text(text = "Calendar settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
-
-private val calendarPreviewClock: Clock = Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC"))
-private val calendarPreviewEvents: List<CalendarEvent> = listOf(
-    CalendarEvent(id = 1, calendarId = "1", title = "Team standup", startTimeMillis = calendarPreviewClock.millis() + 3_600_000, endTimeMillis = calendarPreviewClock.millis() + 5_400_000, isAllDay = false),
-    CalendarEvent(id = 2, calendarId = "1", title = "Design review", startTimeMillis = calendarPreviewClock.millis() + 7_200_000, endTimeMillis = calendarPreviewClock.millis() + 9_000_000, isAllDay = false),
-)
 
 @Composable
 private fun CalendarPickerRow(calendar: CalendarInfo, swatch: AccentSwatch?, checked: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
@@ -362,8 +303,6 @@ private fun CalendarSettingsScreenPreview() {
             onTurnOnClick = {},
             onCalendarToggled = { _, _ -> },
             onSelectAllCalendarsChanged = {},
-            onCalendarFontOptionChanged = {},
-            onCalendarColorOptionChanged = {},
         )
     }
 }

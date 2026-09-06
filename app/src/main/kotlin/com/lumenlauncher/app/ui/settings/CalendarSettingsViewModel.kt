@@ -9,10 +9,8 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.CalendarInfo
-import com.lumenlauncher.app.data.model.ClockColorOption
-import com.lumenlauncher.app.data.model.ClockFontOption
-import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
+import com.lumenlauncher.app.data.selectedCalendarIds
 import com.lumenlauncher.app.domain.AssignCalendarColorsUseCase
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,30 +25,29 @@ import kotlinx.coroutines.launch
 data class CalendarSettingsUiState(
     val profile: ProfileEntity? = null,
     val globalShowAllDayEvents: Boolean = true,
+    /** `null` means every calendar is implicitly selected — see [com.lumenlauncher.app.data.model.LauncherSettings.selectedCalendarIds]. */
+    val globalSelectedCalendarIds: Set<String>? = null,
     val isCalendarAccessGranted: Boolean = false,
     val calendars: List<CalendarInfo> = emptyList(),
-    /** `null` means every calendar is implicitly selected — see [com.lumenlauncher.app.data.model.LauncherSettings.selectedCalendarIds]. */
-    val selectedCalendarIds: Set<String>? = null,
-    /** Calendar id -> `AccentSwatch` enum name — see [com.lumenlauncher.app.data.model.LauncherSettings.calendarColors]. */
+    /** Calendar id -> `AccentSwatch` enum name — see [com.lumenlauncher.app.data.model.LauncherSettings.calendarColors]. Always global, never profile-scoped (a bar color isn't a "which calendars"/"show all-day" kind of decision). */
     val calendarColors: Map<String, String> = emptyMap(),
-    /** The calendar events block's own font/color — the global default every non-overriding profile inherits, gated the same way [globalShowAllDayEvents] already is. */
-    val globalCalendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val globalCalendarColorOption: ClockColorOption = ClockColorOption.INK,
-    /** Resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview, whether this instance is global or profile-scoped. */
-    val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
     val isProfileScoped: Boolean get() = profile != null
     val isOverriding: Boolean get() = profile?.overrideCalendar ?: false
     val effectiveShowAllDayEvents: Boolean get() = if (isOverriding) profile?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
-    val effectiveCalendarFontOption: ClockFontOption get() = if (isOverriding) profile?.calendarFontOption ?: globalCalendarFontOption else globalCalendarFontOption
-    val effectiveCalendarColorOption: ClockColorOption get() = if (isOverriding) profile?.calendarColorOption ?: globalCalendarColorOption else globalCalendarColorOption
-    fun isCalendarSelected(calendarId: String): Boolean = selectedCalendarIds?.let { calendarId in it } ?: true
+    val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverriding) profile?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
+    fun isCalendarSelected(calendarId: String): Boolean = effectiveSelectedCalendarIds?.let { calendarId in it } ?: true
 }
 
 /**
- * Calendar settings (`4l`, plus the new inherit/override header when reached from a profile's
- * Clock card). No `profileId` (or [NO_ACTIVE_PROFILE_ID]) means the global Settings entry point —
- * the toggle then writes [SettingsRepository] directly instead of a per-profile override.
+ * Calendar *selection* settings (`4l`'s "Calendars to display"/all-day-events — content decisions,
+ * not design ones). Reached from the global Settings Clock card (no profile scope) or a profile's
+ * Clock card (scoped, with its own inherit/override header per `3f`'s pattern) — deliberately
+ * separate from the Clock+Calendar *design* settings (font/color/weight/template), which now live
+ * on `ClockStyleGalleryScreen` under `overrideClock` instead, since the whole Home clock/calendar
+ * block reads as one visual unit (see chat history). No `profileId` (or [NO_ACTIVE_PROFILE_ID])
+ * means the global Settings entry point — the toggle then writes [SettingsRepository] directly
+ * instead of a per-profile override.
  */
 @HiltViewModel
 class CalendarSettingsViewModel @Inject constructor(
@@ -78,13 +75,10 @@ class CalendarSettingsViewModel @Inject constructor(
         CalendarSettingsUiState(
             profile = if (profileId == NO_ACTIVE_PROFILE_ID) null else profiles.find { it.id == profileId },
             globalShowAllDayEvents = settings.showAllDayEvents,
+            globalSelectedCalendarIds = settings.selectedCalendarIds,
             isCalendarAccessGranted = granted,
             calendars = calendarList,
-            selectedCalendarIds = settings.selectedCalendarIds,
             calendarColors = settings.calendarColors,
-            globalCalendarFontOption = settings.calendarFontOption,
-            globalCalendarColorOption = settings.calendarColorOption,
-            launcherFontOption = settings.launcherFontOption,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarSettingsUiState())
 
@@ -131,18 +125,17 @@ class CalendarSettingsViewModel @Inject constructor(
                 profile = profile,
                 overriding = overriding,
                 showAllDayEvents = state.effectiveShowAllDayEvents,
-                fontOption = state.effectiveCalendarFontOption,
-                colorOption = state.effectiveCalendarColorOption,
+                selectedCalendarIds = state.effectiveSelectedCalendarIds,
             )
         }
     }
 
-    /** Toggling one calendar materializes an implicit "all selected" (`null`) into an explicit set first. */
+    /** Toggling one calendar materializes an implicit "all selected" (`null`) into an explicit set first — writes the profile's own override when overriding, otherwise the global default (same routing [setShowAllDayEvents] already uses). */
     fun setCalendarSelected(calendarId: String, selected: Boolean) {
         val state = uiState.value
-        val current = state.selectedCalendarIds ?: state.calendars.map { it.id }.toSet()
+        val current = state.effectiveSelectedCalendarIds ?: state.calendars.map { it.id }.toSet()
         val updated = if (selected) current + calendarId else current - calendarId
-        viewModelScope.launch { settingsRepository.setSelectedCalendarIds(updated) }
+        writeSelectedCalendarIds(state.profile, updated)
     }
 
     /**
@@ -151,29 +144,17 @@ class CalendarSettingsViewModel @Inject constructor(
      * calendars, see chat history).
      */
     fun setAllCalendarsSelected(selected: Boolean) {
-        val ids = if (selected) uiState.value.calendars.map { it.id }.toSet() else emptySet()
-        viewModelScope.launch { settingsRepository.setSelectedCalendarIds(ids) }
+        val state = uiState.value
+        val ids = if (selected) state.calendars.map { it.id }.toSet() else emptySet()
+        writeSelectedCalendarIds(state.profile, ids)
     }
 
-    /** Writes this profile's own override when overriding, otherwise the global default — same routing [setShowAllDayEvents] already uses. */
-    fun setCalendarFontOption(option: ClockFontOption) {
-        val profile = uiState.value.profile
+    private fun writeSelectedCalendarIds(profile: ProfileEntity?, ids: Set<String>) {
         viewModelScope.launch {
-            if (profile != null) {
-                profileRepository.setCalendarFontOption(profile, option)
+            if (profile != null && profile.overrideCalendar) {
+                profileRepository.setSelectedCalendarIds(profile, ids)
             } else {
-                settingsRepository.setCalendarFontOption(option)
-            }
-        }
-    }
-
-    fun setCalendarColorOption(option: ClockColorOption) {
-        val profile = uiState.value.profile
-        viewModelScope.launch {
-            if (profile != null) {
-                profileRepository.setCalendarColorOption(profile, option)
-            } else {
-                settingsRepository.setCalendarColorOption(option)
+                settingsRepository.setSelectedCalendarIds(ids)
             }
         }
     }

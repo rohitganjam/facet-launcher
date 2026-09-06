@@ -80,64 +80,6 @@ class CalendarSettingsScreenTest {
     }
 
     @Test
-    fun globalCalendarStyleFontSelectionPersistsThroughSettingsRepository() {
-        // Given the global entry point
-        val (settingsRepository, _) = setContent()
-
-        // When picking a calendar-style font other than the default
-        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
-
-        // Then it's persisted to the real repository
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().calendarFontOption == com.lumenlauncher.app.data.model.ClockFontOption.POPPINS }
-        }
-    }
-
-    @Test
-    fun profileScopedCalendarStyleFontIsReadOnlyWhileInheriting() {
-        // Given a profile-scoped entry point, still Inheriting (the default)
-        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
-
-        // When attempting to open the Font row's dropdown
-        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
-        composeRule.waitForIdle()
-
-        // Then it never opens (the row is disabled) — no option appears to pick
-        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").assertDoesNotExist()
-        // ...and neither the profile nor the global setting were touched
-        val profile = runBlocking { profileRepository.observeProfiles().first().single() }
-        val settings = runBlocking { settingsRepository.settings.first() }
-        assert(profile.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
-        assert(settings.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
-    }
-
-    @Test
-    fun profileScopedCalendarStyleFontPersistsToTheProfileWhileOverriding() {
-        // Given a profile-scoped entry point, switched to Override
-        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
-        composeRule.onNodeWithTag("calendar_override_row").performClick()
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("calendar_style_font_row").assertHasClickAction() }.isSuccess
-        }
-
-        // When picking a calendar-style font other than the default
-        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
-
-        // Then it's persisted to this profile's own row, not the launcher-wide global setting
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking {
-                profileRepository.observeProfiles().first().single().calendarFontOption == com.lumenlauncher.app.data.model.ClockFontOption.POPPINS
-            }
-        }
-        val settings = runBlocking { settingsRepository.settings.first() }
-        assert(settings.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
-    }
-
-    @Test
     fun profileScopedModeShowsInheritOverrideSwitch() {
         // Given a profile-scoped entry point
         setContent(profileId = 1L)

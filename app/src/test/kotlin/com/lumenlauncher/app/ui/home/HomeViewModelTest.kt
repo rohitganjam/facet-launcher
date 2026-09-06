@@ -6,12 +6,15 @@ import com.lumenlauncher.app.domain.HomeScreenState
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -69,5 +72,39 @@ class HomeViewModelTest {
 
         // Then it delegates to the repository rather than reaching the platform directly
         verify(notificationShadeRepository).expand()
+    }
+
+    @Test
+    fun `is loading until the use case emits, then reflects the real state`() = runTest {
+        // Given a HomeViewModel wired to the fake state from homeViewModel(), which emits immediately
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java))
+
+        // Then immediately after construction it's still loading (the combine coroutine hasn't run yet)
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // When the pending coroutine work is allowed to complete
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it's no longer loading
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `stops loading on its own after the timeout even if the underlying flow never emits`() = runTest {
+        // Given a use case whose flow never emits (simulating a stuck/broken data source) — this
+        // is the actual home screen, so it must never stay blank forever (see chat history).
+        val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
+        `when`(observeHomeScreenState.invoke()).thenReturn(MutableSharedFlow())
+        val viewModel = HomeViewModel(observeHomeScreenState, mock(NotificationShadeRepository::class.java))
+
+        // Then it's still loading well before the timeout
+        testDispatcher.scheduler.advanceTimeBy(2_000)
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // When the timeout elapses with no real data having arrived
+        testDispatcher.scheduler.advanceTimeBy(1_500)
+
+        // Then it stops loading anyway
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 }

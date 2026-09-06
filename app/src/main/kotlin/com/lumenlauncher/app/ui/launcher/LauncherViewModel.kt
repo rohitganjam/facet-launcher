@@ -12,6 +12,7 @@ import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,8 +22,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * [LauncherUiState.isLoading] starts `true` and flips `false` on this ViewModel's first real
+ * emission — [com.lumenlauncher.app.LauncherActivity] renders nothing at all while it's `true`
+ * rather than a frame styled with these defaults (see chat history: previously visible as a flash
+ * of default theme/font/icon on cold start, since these defaults feed [com.lumenlauncher.app.ui.theme.LumenLauncherTheme]
+ * directly). The `init` block's timeout coroutine is a safety net, not the expected path — the
+ * underlying flows normally emit within milliseconds — so a bug in one of them can never leave the
+ * launcher permanently blank, since unlike an ordinary app there is no "force quit and reopen" for
+ * the actual home screen.
+ */
 data class LauncherUiState(
     val apps: List<AppInfo> = emptyList(),
     val isLoading: Boolean = true,
@@ -72,5 +84,14 @@ class LauncherViewModel @Inject constructor(
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }
+
+        viewModelScope.launch {
+            delay(LOADING_TIMEOUT_MS)
+            _uiState.update { if (it.isLoading) it.copy(isLoading = false) else it }
+        }
+    }
+
+    private companion object {
+        const val LOADING_TIMEOUT_MS = 3_000L
     }
 }

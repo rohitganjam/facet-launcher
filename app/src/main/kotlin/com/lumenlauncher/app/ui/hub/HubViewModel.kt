@@ -10,8 +10,8 @@ import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
-import com.lumenlauncher.app.domain.ResizeWidgetUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +28,7 @@ class HubViewModel @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val deleteWidget: DeleteWidgetUseCase,
     private val resolveWidgetDrop: ResolveWidgetDropUseCase,
-    private val resizeWidget: ResizeWidgetUseCase,
+    private val resolveWidgetResize: ResolveWidgetResizeUseCase,
     private val compactWidgets: CompactWidgetsUseCase,
 ) : ViewModel() {
 
@@ -101,19 +101,18 @@ class HubViewModel @Inject constructor(
     }
 
     /**
-     * [row]/[col] are parameters, not read off the current widget, because a left/top-edge resize
-     * moves the anchor cell itself (grows/shrinks from that edge while the opposite edge stays
-     * put) — only a right/bottom-edge resize keeps the widget's existing row/col unchanged.
+     * Resolves and commits a resize in one step — [row]/[col] are parameters, not read off the
+     * current widget, because a left/top-edge resize moves the anchor cell itself (grows/shrinks
+     * from that edge while the opposite edge stays put); only a right/bottom-edge resize keeps
+     * the widget's existing row/col unchanged. A target rectangle that overlaps other widgets
+     * displaces them straight down (cascading further if needed) rather than bouncing back — see
+     * [ResolveWidgetResizeUseCase] — unless even that can't make room, in which case nothing
+     * changes and the resize snaps back to its pre-drag span.
      */
-    fun canResizeTo(appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int): Boolean =
-        resizeWidget(currentPlacements(), appWidgetId, row, col, colSpan, rowSpan)
-
     fun onWidgetResized(appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) {
         val current = currentPlacements()
-        val resized = current.map {
-            if (it.appWidgetId == appWidgetId) it.copy(row = row, col = col, colSpan = colSpan, rowSpan = rowSpan) else it
-        }
-        commitPlacements(compactWidgets(resized))
+        val resolved = resolveWidgetResize(current, appWidgetId, row, col, colSpan, rowSpan) ?: return
+        commitPlacements(compactWidgets(mergeResolved(current, resolved)))
     }
 
     /** Re-reads placements straight from Room (not [currentPlacements]'s [uiState] snapshot, which may not have caught up with the delete yet) before compacting what's left. */
@@ -148,7 +147,7 @@ class HubViewModel @Inject constructor(
 
     /**
      * A minimal, throwaway [WidgetPlacementEntity] projection of the latest known widgets —
-     * [ResolveWidgetDropUseCase]/[ResizeWidgetUseCase]/[CompactWidgetsUseCase] only read
+     * [ResolveWidgetDropUseCase]/[ResolveWidgetResizeUseCase]/[CompactWidgetsUseCase] only read
      * `appWidgetId`/`row`/`col`/`colSpan`/`rowSpan`, so the provider fields are irrelevant
      * placeholders here.
      */

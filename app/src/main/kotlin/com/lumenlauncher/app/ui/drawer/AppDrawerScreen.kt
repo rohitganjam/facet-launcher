@@ -80,6 +80,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -156,6 +157,7 @@ fun AppDrawerScreen(
     listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     showIcons: Boolean = true,
     showLabels: Boolean = true,
+    labelFontWeight: FontWeight = FontWeight.Normal,
     opacity: Float = 0.6f,
     notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     badgeCounts: Map<String, Int> = emptyMap(),
@@ -237,6 +239,7 @@ fun AppDrawerScreen(
                 gridColumns = gridSize.columns,
                 showIcons = showIcons,
                 showLabels = showLabels,
+                labelFontWeight = labelFontWeight,
                 itemSize = listItemSize,
                 badgeStyle = notificationBadgeStyle,
                 badgeCounts = badgeCounts,
@@ -266,6 +269,7 @@ fun AppDrawerScreen(
                     rows = gridSize.rows,
                     onAppClick = onAppClick,
                     showLabels = showLabels,
+                    labelFontWeight = labelFontWeight,
                     badgeStyle = notificationBadgeStyle,
                     badgeCounts = badgeCounts,
                     onRequestShortcuts = onRequestShortcuts,
@@ -279,6 +283,7 @@ fun AppDrawerScreen(
                     itemSize = listItemSize,
                     onAppClick = onAppClick,
                     showIcons = showIcons,
+                    labelFontWeight = labelFontWeight,
                     badgeStyle = notificationBadgeStyle,
                     badgeCounts = badgeCounts,
                     onRequestShortcuts = onRequestShortcuts,
@@ -456,6 +461,7 @@ private fun DrawerSearchResults(
     gridColumns: Int,
     showIcons: Boolean,
     showLabels: Boolean,
+    labelFontWeight: FontWeight,
     itemSize: DrawerListItemSize,
     badgeStyle: NotificationBadgeStyle,
     badgeCounts: Map<String, Int>,
@@ -497,6 +503,7 @@ private fun DrawerSearchResults(
                                     app = app,
                                     onClick = { onAppClick(app) },
                                     showLabel = showLabels,
+                                    labelFontWeight = labelFontWeight,
                                     badgeCount = badgeCounts[app.packageName],
                                     badgeStyle = badgeStyle,
                                     onRequestShortcuts = onRequestShortcuts,
@@ -513,6 +520,7 @@ private fun DrawerSearchResults(
                         onClick = { onAppClick(app) },
                         showIcon = showIcons,
                         itemSize = itemSize,
+                        labelFontWeight = labelFontWeight,
                         badgeCount = badgeCounts[app.packageName],
                         badgeStyle = badgeStyle,
                         onRequestShortcuts = onRequestShortcuts,
@@ -598,7 +606,7 @@ private fun ContactRow(contact: ContactInfo, onClick: () -> Unit, modifier: Modi
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .testTag("contact_row_${contact.id}")
-            .padding(vertical = 6.dp + itemSize.extraRowPaddingDp.dp),
+            .padding(vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -725,6 +733,7 @@ private fun DrawerListContent(
     itemSize: DrawerListItemSize,
     onAppClick: (AppInfo) -> Unit,
     showIcons: Boolean,
+    labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCounts: Map<String, Int>,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
@@ -756,6 +765,7 @@ private fun DrawerListContent(
                     onClick = { onAppClick(app) },
                     showIcon = showIcons,
                     itemSize = itemSize,
+                    labelFontWeight = labelFontWeight,
                     badgeCount = badgeCounts[app.packageName],
                     badgeStyle = badgeStyle,
                     onRequestShortcuts = onRequestShortcuts,
@@ -773,6 +783,7 @@ private fun DrawerAppRow(
     onClick: () -> Unit,
     showIcon: Boolean,
     itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT,
+    labelFontWeight: FontWeight = FontWeight.Normal,
     badgeCount: Int?,
     badgeStyle: NotificationBadgeStyle,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
@@ -792,7 +803,7 @@ private fun DrawerAppRow(
                 .testTag("drawer_app_row_${app.packageName}")
                 // Base 6dp vertical padding plus the selected size tier's extra (0/8/16dp) — see
                 // DrawerListItemSize's own doc (see chat history).
-                .padding(horizontal = 8.dp, vertical = 6.dp + itemSize.extraRowPaddingDp.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -808,7 +819,7 @@ private fun DrawerAppRow(
                     contentDescription = null,
                 )
             }
-            Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
+            Text(text = app.label, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight), color = DrawerAppTextColor)
             if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
         }
         AppContextMenu(
@@ -847,6 +858,7 @@ private fun DrawerGridContent(
     rows: Int,
     onAppClick: (AppInfo) -> Unit,
     showLabels: Boolean,
+    labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCounts: Map<String, Int>,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
@@ -873,6 +885,7 @@ private fun DrawerGridContent(
                     app = app,
                     onClick = { onAppClick(app) },
                     showLabel = showLabels,
+                    labelFontWeight = labelFontWeight,
                     badgeCount = badgeCounts[app.packageName],
                     badgeStyle = badgeStyle,
                     onRequestShortcuts = onRequestShortcuts,
@@ -890,6 +903,7 @@ private fun DrawerGridTile(
     app: AppInfo,
     onClick: () -> Unit,
     showLabel: Boolean,
+    labelFontWeight: FontWeight = FontWeight.Normal,
     badgeCount: Int?,
     badgeStyle: NotificationBadgeStyle,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
@@ -920,7 +934,7 @@ private fun DrawerGridTile(
                 Spacer(modifier = Modifier.height(7.dp))
                 Text(
                     text = app.label,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
                     color = DrawerAppTextColor,
                     textAlign = TextAlign.Center,
                     maxLines = 1,

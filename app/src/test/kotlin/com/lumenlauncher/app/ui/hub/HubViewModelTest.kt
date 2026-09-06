@@ -6,7 +6,7 @@ import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.HubDomainState
 import com.lumenlauncher.app.domain.HubWidgetState
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
-import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,7 @@ class HubViewModelTest {
             mock(WidgetPlacementRepository::class.java),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
-            ResizeWidgetUseCase(),
+            ResolveWidgetResizeUseCase(),
             CompactWidgetsUseCase(),
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -79,7 +79,7 @@ class HubViewModelTest {
             mock(WidgetPlacementRepository::class.java),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
-            ResizeWidgetUseCase(),
+            ResolveWidgetResizeUseCase(),
             CompactWidgetsUseCase(),
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -100,7 +100,7 @@ class HubViewModelTest {
             mock(WidgetPlacementRepository::class.java),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
-            ResizeWidgetUseCase(),
+            ResolveWidgetResizeUseCase(),
             CompactWidgetsUseCase(),
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -121,7 +121,7 @@ class HubViewModelTest {
             mock(WidgetPlacementRepository::class.java),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
-            ResizeWidgetUseCase(),
+            ResolveWidgetResizeUseCase(),
             CompactWidgetsUseCase(),
         )
 

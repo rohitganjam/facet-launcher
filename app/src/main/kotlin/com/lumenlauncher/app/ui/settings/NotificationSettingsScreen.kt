@@ -36,6 +36,7 @@ import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 private fun NotificationBadgeStyle.displayLabel(): String = when (this) {
     NotificationBadgeStyle.DOT -> "Dot"
@@ -100,7 +101,7 @@ private fun NotificationSettingsContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Surface)
+            .background(SurfaceContainer)
             .testTag("notification_settings_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 24.dp),

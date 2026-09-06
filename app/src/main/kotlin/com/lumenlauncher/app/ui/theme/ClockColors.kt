@@ -5,17 +5,18 @@ import androidx.compose.ui.graphics.Color
 import com.lumenlauncher.app.data.model.ClockColorOption
 
 /**
- * Resolves a [ClockColorOption] to a real [Color] — [ClockColorOption.INK] is theme-aware
- * ([Ink]); [ClockColorOption.WHITE]/[ClockColorOption.BLACK] are fixed; `WALLPAPER_PRIMARY`/
- * `WALLPAPER_SECONDARY` are [wallpaperPrimaryAndSecondary]'s two wallpaper-derived tones, picked
- * explicitly rather than following the app's current theme mode (see that function's own doc,
- * and chat history).
+ * Resolves a [ClockColorOption] to a real [Color] — [ClockColorOption.THEME]/`THEME_INVERTED` are
+ * theme-aware ([Ink]/[InkInverted]); `ACCENT_PRIMARY`/`ACCENT_SECONDARY` are
+ * [accentTonalExtremes]' two tonal extremes, picked explicitly rather than following the app's
+ * current theme mode (see that function's own doc, and chat history). This means they follow
+ * Settings → Theme → Accent color's own source: the "Basic colors" swatch when one is picked, or
+ * the wallpaper's own Material You tones when "Wallpaper colors" is selected — never a fixed
+ * color of their own.
  */
 @Composable
 fun ClockColorOption.resolve(): Color = when (this) {
-    ClockColorOption.INK -> Ink
-    ClockColorOption.WHITE -> Color.White
-    ClockColorOption.BLACK -> Color.Black
-    ClockColorOption.WALLPAPER_PRIMARY -> wallpaperPrimaryAndSecondary().first
-    ClockColorOption.WALLPAPER_SECONDARY -> wallpaperPrimaryAndSecondary().second
+    ClockColorOption.THEME -> Ink
+    ClockColorOption.THEME_INVERTED -> InkInverted
+    ClockColorOption.ACCENT_PRIMARY -> accentTonalExtremes().first
+    ClockColorOption.ACCENT_SECONDARY -> accentTonalExtremes().second
 }

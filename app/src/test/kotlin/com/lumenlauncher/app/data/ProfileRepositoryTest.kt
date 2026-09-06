@@ -8,6 +8,7 @@ import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.FontWeightOption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -36,6 +37,10 @@ private class FakeProfileDao : ProfileDao {
     }
 
     override suspend fun getById(id: Long): ProfileEntity? = state.value.find { it.id == id }
+
+    override suspend fun deleteAll() {
+        state.value = emptyList()
+    }
 }
 
 class ProfileRepositoryTest {
@@ -104,17 +109,23 @@ class ProfileRepositoryTest {
             overriding = true,
             templateId = ClockTemplateId.VERTICAL_STACK_BOLD_HOUR,
             fontOption = ClockFontOption.MANROPE,
-            colorOption = ClockColorOption.INK,
+            colorOption = ClockColorOption.THEME,
             use24HourTime = true,
-            showMeridiem = true
+            showMeridiem = true,
+            calendarFontOption = ClockFontOption.POPPINS,
+            calendarColorOption = ClockColorOption.ACCENT_SECONDARY,
+            calendarFontWeight = FontWeightOption.SEMI_BOLD,
         )
         val stored = repository.observeProfiles().first().single()
         assertEquals(true, stored.overrideClock)
         assertEquals(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR, stored.clockTemplateId)
         assertEquals(ClockFontOption.MANROPE, stored.clockFontOption)
-        assertEquals(ClockColorOption.INK, stored.clockColorOption)
+        assertEquals(ClockColorOption.THEME, stored.clockColorOption)
         assertEquals(true, stored.use24HourTime)
         assertEquals(true, stored.clockShowMeridiem)
+        assertEquals(ClockFontOption.POPPINS, stored.calendarFontOption)
+        assertEquals(ClockColorOption.ACCENT_SECONDARY, stored.calendarColorOption)
+        assertEquals(FontWeightOption.SEMI_BOLD, stored.calendarFontWeight)
     }
 
     @Test
@@ -173,7 +184,7 @@ class ProfileRepositoryTest {
     }
 
     @Test
-    fun `updateOverridingCalendar sets fields and flag together`() = runTest {
+    fun `updateOverridingCalendar sets selection fields and flag together, design fields untouched`() = runTest {
         val dao = FakeProfileDao()
         val repository = ProfileRepository(dao)
         val profile = repository.addProfile()
@@ -181,14 +192,28 @@ class ProfileRepositoryTest {
             profile,
             overriding = true,
             showAllDayEvents = false,
-            fontOption = ClockFontOption.POPPINS,
-            colorOption = ClockColorOption.WHITE,
+            selectedCalendarIds = setOf("1", "2"),
         )
         val stored = repository.observeProfiles().first().single()
         assertEquals(true, stored.overrideCalendar)
         assertEquals(false, stored.showAllDayEvents)
-        assertEquals(ClockFontOption.POPPINS, stored.calendarFontOption)
-        assertEquals(ClockColorOption.WHITE, stored.calendarColorOption)
+        assertEquals(setOf("1", "2"), stored.selectedCalendarIds)
+        // Design fields (font/color) belong to overrideClock's group now, not overrideCalendar's — untouched here.
+        assertEquals(ClockFontOption.LAUNCHER_DEFAULT, stored.calendarFontOption)
+        assertEquals(ClockColorOption.THEME, stored.calendarColorOption)
+    }
+
+    @Test
+    fun `setSelectedCalendarIds round-trips, null means every calendar selected`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setSelectedCalendarIds(profile, setOf("10", "20", "30"))
+        assertEquals(setOf("10", "20", "30"), repository.observeProfiles().first().single().selectedCalendarIds)
+
+        repository.setSelectedCalendarIds(repository.observeProfiles().first().single(), null)
+        assertEquals(null, repository.observeProfiles().first().single().selectedCalendarIds)
     }
 
     @Test
@@ -201,9 +226,19 @@ class ProfileRepositoryTest {
         val afterFont = repository.observeProfiles().first().single()
         assertEquals(ClockFontOption.MANROPE, afterFont.calendarFontOption)
 
-        repository.setCalendarColorOption(afterFont, ClockColorOption.WHITE)
+        repository.setCalendarColorOption(afterFont, ClockColorOption.THEME_INVERTED)
         val stored = repository.observeProfiles().first().single()
         assertEquals(ClockFontOption.MANROPE, stored.calendarFontOption)
-        assertEquals(ClockColorOption.WHITE, stored.calendarColorOption)
+        assertEquals(ClockColorOption.THEME_INVERTED, stored.calendarColorOption)
+    }
+
+    @Test
+    fun `setCalendarFontWeight round-trips`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setCalendarFontWeight(profile, FontWeightOption.LIGHT)
+        assertEquals(FontWeightOption.LIGHT, repository.observeProfiles().first().single().calendarFontWeight)
     }
 }

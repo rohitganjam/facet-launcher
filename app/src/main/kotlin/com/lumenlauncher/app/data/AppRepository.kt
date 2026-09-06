@@ -15,6 +15,8 @@ import java.text.Collator
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -58,18 +60,30 @@ private fun flattenIcon(drawable: Drawable): Bitmap {
 @Singleton
 class AppRepository @Inject constructor(private val launcherApps: LauncherApps) {
 
-    /** All launchable activities for the current user, sorted alphabetically (locale-aware). */
+    /**
+     * All launchable activities for the current user, sorted alphabetically (locale-aware).
+     * Each app's icon decode/flatten runs as its own [async] on [Dispatchers.Default]'s thread
+     * pool rather than one after another — on a real device with 100+ installed apps, decoding
+     * every icon sequentially before this ever emits once took multiple real seconds; spreading
+     * that work across all available cores cuts it down to roughly the slowest single icon
+     * instead of the sum of all of them (see chat history: this was invisible before Home started
+     * gating its own first paint on this list, since default content rendered over it in the
+     * meantime).
+     */
     suspend fun getInstalledApps(): List<AppInfo> = withContext(Dispatchers.Default) {
         val collator = Collator.getInstance()
         launcherApps.getActivityList(null, Process.myUserHandle())
             .map { info ->
-                AppInfo(
-                    packageName = info.applicationInfo.packageName,
-                    activityName = info.componentName.className,
-                    label = info.label.toString(),
-                    icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
-                )
+                async {
+                    AppInfo(
+                        packageName = info.applicationInfo.packageName,
+                        activityName = info.componentName.className,
+                        label = info.label.toString(),
+                        icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
+                    )
+                }
             }
+            .awaitAll()
             .sortedWith(Comparator { a, b -> collator.compare(a.label, b.label) })
     }
 

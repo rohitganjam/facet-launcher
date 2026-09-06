@@ -37,6 +37,10 @@ private class FakeDockAppDao : DockAppDao {
     override suspend fun deleteByPackage(packageName: String) {
         state.value = state.value.filterNot { it.packageName == packageName }
     }
+
+    override suspend fun deleteAll() {
+        state.value = emptyList()
+    }
 }
 
 class DockAppRepositoryTest {

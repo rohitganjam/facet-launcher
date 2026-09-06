@@ -69,6 +69,7 @@ import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.lumenlauncher.app.ui.theme.Scrim
+import com.lumenlauncher.app.ui.theme.resolve
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -96,7 +97,11 @@ private class SwipeAxisState(private val containerSizePx: () -> Float, private v
         private set
     var dragTargetProgress = 0f
         private set
-    var dragActive = false
+
+    // Must be observable Compose state, not a plain var — the "clear focus while drag-closing"
+    // LaunchedEffect below is keyed on this, and a plain var's mutation doesn't itself trigger
+    // recomposition, so that effect could silently never re-fire mid-drag (see chat history).
+    var dragActive by mutableStateOf(false)
         private set
 
     fun dragBy(deltaPx: Float) {
@@ -169,6 +174,14 @@ fun HomeDrawerRoute(
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
     val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
+
+    if (homeUiState.isLoading) {
+        // Real Home state (dock/app list, theme-driven colors and fonts) hasn't loaded yet —
+        // render nothing rather than a frame styled with defaults, mirroring LauncherActivity's
+        // own gate (see chat history and HomeViewModel's own doc).
+        Box(modifier = modifier.fillMaxSize())
+        return
+    }
 
     // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
     // Home (e.g. from the usage-access Settings redirect) rather than only on profile changes.
@@ -319,6 +332,7 @@ fun HomeDrawerRoute(
             calendarColors = homeUiState.settings.calendarColors,
             calendarFontOption = homeUiState.activeCalendarFontOption,
             calendarColorOption = homeUiState.activeCalendarColorOption,
+            calendarFontWeight = homeUiState.activeCalendarFontWeight,
             onEventClick = { event ->
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
@@ -326,6 +340,7 @@ fun HomeDrawerRoute(
             onAppClick = onAppClick,
             launcherFontOption = homeUiState.settings.launcherFontOption,
             appLabelColorOption = homeUiState.settings.appLabelColorOption,
+            homeAppsFontWeight = homeUiState.settings.homeAppsFontWeight,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
             modifier = Modifier
@@ -439,6 +454,7 @@ fun HomeDrawerRoute(
             listItemSize = drawerSettings.drawerListItemSize,
             showIcons = drawerSettings.showDrawerIcons,
             showLabels = drawerSettings.showDrawerLabels,
+            labelFontWeight = drawerSettings.homeAppsFontWeight.resolve(),
             opacity = drawerSettings.drawerOpacity,
             notificationBadgeStyle = drawerSettings.notificationBadgeStyle,
             badgeCounts = drawerBadgeCounts,

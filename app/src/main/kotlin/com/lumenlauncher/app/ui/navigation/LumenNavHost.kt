@@ -27,7 +27,12 @@ import com.lumenlauncher.app.ui.launcher.LauncherViewModel
 import com.lumenlauncher.app.ui.profiles.FavoritesPickerScreen
 import com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen
 import com.lumenlauncher.app.ui.profiles.ProfileSettingsScreen
+import com.lumenlauncher.app.ui.settings.AppDrawerSettingsScreen
+import com.lumenlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.lumenlauncher.app.ui.settings.CalendarSettingsScreen
+import com.lumenlauncher.app.ui.settings.DockSettingsScreen
+import com.lumenlauncher.app.ui.settings.HomeAppsListSettingsScreen
+import com.lumenlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.lumenlauncher.app.ui.settings.NotificationAccessExplanationScreen
 import com.lumenlauncher.app.ui.settings.NotificationSettingsScreen
 import com.lumenlauncher.app.ui.settings.PermissionsScreen
@@ -48,6 +53,11 @@ object LumenDestinations {
     const val NOTIFICATION_ACCESS_EXPLANATION = "notificationAccessExplanation"
     const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val PROFILE_CLOCK_STYLE_GALLERY = "profileClockStyleGallery/{profileId}"
+    const val BACKUP_RESTORE = "backupRestore"
+    const val APPEARANCE_SETTINGS = "appearanceSettings"
+    const val DOCK_SETTINGS = "dockSettings"
+    const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings"
+    const val APP_DRAWER_SETTINGS = "appDrawerSettings"
 
     fun profileClockStyleGallery(profileId: Long) = "profileClockStyleGallery/$profileId"
 
@@ -127,14 +137,38 @@ fun LumenNavHost(
         composable(LumenDestinations.SETTINGS) {
             SettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onAddDockApp = { navController.navigate(LumenDestinations.DOCK_PICKER) },
                 onViewProfiles = { navController.navigate(LumenDestinations.PROFILE_CAROUSEL) },
-                onNavigateToCalendarSettings = { navController.navigate(LumenDestinations.calendarSettings()) },
-                onNavigateToPermissions = { navController.navigate(LumenDestinations.PERMISSIONS) },
-                onNavigateToNotificationSettings = { navController.navigate(LumenDestinations.NOTIFICATION_SETTINGS) },
-                onEditDefaultFavorites = { navController.navigate(LumenDestinations.favoritesPicker()) },
+                onNavigateToAppearance = { navController.navigate(LumenDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToClockStyleGallery = { navController.navigate(LumenDestinations.CLOCK_STYLE_GALLERY) },
+                onNavigateToCalendarSettings = { navController.navigate(LumenDestinations.calendarSettings()) },
+                onNavigateToDockSettings = { navController.navigate(LumenDestinations.DOCK_SETTINGS) },
+                onNavigateToHomeAppsListSettings = { navController.navigate(LumenDestinations.HOME_APPS_LIST_SETTINGS) },
+                onNavigateToAppDrawerSettings = { navController.navigate(LumenDestinations.APP_DRAWER_SETTINGS) },
+                onNavigateToNotificationSettings = { navController.navigate(LumenDestinations.NOTIFICATION_SETTINGS) },
+                onNavigateToPermissions = { navController.navigate(LumenDestinations.PERMISSIONS) },
+                onNavigateToBackupRestore = { navController.navigate(LumenDestinations.BACKUP_RESTORE) },
             )
+        }
+        composable(LumenDestinations.BACKUP_RESTORE) {
+            BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
+        }
+        composable(LumenDestinations.APPEARANCE_SETTINGS) {
+            AppearanceSettingsScreen(onBack = { navController.popBackStackSafely() })
+        }
+        composable(LumenDestinations.DOCK_SETTINGS) {
+            DockSettingsScreen(
+                onBack = { navController.popBackStackSafely() },
+                onAddDockApp = { navController.navigate(LumenDestinations.DOCK_PICKER) },
+            )
+        }
+        composable(LumenDestinations.HOME_APPS_LIST_SETTINGS) {
+            HomeAppsListSettingsScreen(
+                onBack = { navController.popBackStackSafely() },
+                onEditDefaultFavorites = { navController.navigate(LumenDestinations.favoritesPicker()) },
+            )
+        }
+        composable(LumenDestinations.APP_DRAWER_SETTINGS) {
+            AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(LumenDestinations.CLOCK_STYLE_GALLERY) {
             ClockStyleGalleryRoute(onBack = { navController.popBackStackSafely() })

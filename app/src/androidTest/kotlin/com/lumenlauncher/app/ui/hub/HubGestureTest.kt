@@ -20,7 +20,7 @@ import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
-import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -81,7 +81,7 @@ class HubGestureTest {
                     widgetPlacementRepository,
                     DeleteWidgetUseCase(widgetPlacementRepository, appWidgetRepository),
                     ResolveWidgetDropUseCase(),
-                    ResizeWidgetUseCase(),
+                    ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
                 )
             }
@@ -255,7 +255,7 @@ class HubGestureTest {
     }
 
     @Test
-    fun growingIntoANeighboringWidgetDoesNotCommit() {
+    fun growingIntoANeighborPushesItDownRatherThanRejectingTheResize() {
         setContent(
             listOf(placement(id = 10, row = 0, col = 0), placement(id = 11, row = 0, col = 1)),
             resolvable = setOf(10),
@@ -271,8 +271,9 @@ class HubGestureTest {
             up()
         }
 
-        awaitPlacement(10) { it?.colSpan == 1 }
-        awaitPlacement(11) { it?.col == 1 }
+        awaitPlacement(10) { it?.colSpan == 2 }
+        // Pushed straight down out of the grown widget's way, not sideways.
+        awaitPlacement(11) { it?.row == 1 && it.col == 1 }
     }
 
     @Test
@@ -289,6 +290,43 @@ class HubGestureTest {
 
         composeRule.onNodeWithTag("hub_resize_handle_right").assertDoesNotExist()
         composeRule.onNodeWithTag("hub_resize_handle_bottom").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingAnotherWidgetWhileResizingOnlyCancelsResizeAndDoesNotActOnThatWidget() {
+        // An orphaned widget's Remove button is a real clickable Compose target, so it doubles
+        // here as the only way this test harness can observe whether a tap actually reached the
+        // OTHER widget's own content (the embedded AppWidgetHostView in the non-orphaned case has
+        // no observable click side effect under test).
+        setContent(
+            listOf(placement(id = 10, row = 0, col = 0), placement(id = 11, row = 0, col = 2, colSpan = 2, rowSpan = 2)),
+            resolvable = setOf(10),
+        )
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
+        composeRule.onNodeWithText("Resize widget").performClick()
+        composeRule.onNodeWithTag("hub_resize_handle_right").assertExists()
+
+        // A real touch tap — not performClick(), which fires the target's semantics action
+        // directly and would bypass the very hit-testing/overlay this is meant to exercise —
+        // landing on the OTHER widget's own Remove button while resize mode is active.
+        composeRule.onNodeWithTag("hub_orphaned_remove").performTouchInput {
+            down(center)
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Resize mode is cancelled, but the tap must NOT also have removed the widget.
+        composeRule.onNodeWithTag("hub_resize_handle_right").assertDoesNotExist()
+        awaitPlacement(11) { it != null }
+
+        // A second, separate tap on the same button — now that resize mode is already off —
+        // reaches it normally.
+        composeRule.onNodeWithTag("hub_orphaned_remove").performTouchInput {
+            down(center)
+            up()
+        }
+        awaitPlacement(11) { it == null }
     }
 
     @Test

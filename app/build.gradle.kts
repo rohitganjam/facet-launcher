@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
@@ -50,6 +51,12 @@ android {
         }
         getByName("androidTest") {
             java.srcDirs("src/androidTest/kotlin")
+            // Exported Room schema JSONs (room.schemaLocation below) — MigrationTestHelper reads
+            // them via Context.getAssets() at <databaseClass.canonicalName>/<version>.json, which
+            // already matches this folder's own layout. AGP only merges assets for real
+            // (non-unit-test) variants, so this must live on androidTest, not test — see
+            // LumenDatabaseMigrationTest.
+            assets.srcDirs("$projectDir/schemas")
         }
     }
 }
@@ -82,13 +89,23 @@ dependencies {
 
     implementation("androidx.datastore:datastore-preferences:1.2.0")
 
+    // F14 Backup & Restore — the exported/imported JSON snapshot's own model (data/model/BackupBundle.kt).
+    // Pinned at exactly 1.8.1, not left to float: androidx.room:room-testing:2.8.4 (used by
+    // LumenDatabaseMigrationTest) needs 1.8.1's kotlinx-serialization, while
+    // androidx.navigation:navigation-common:2.9.6 only ever requests 1.7.3 — without this real
+    // main-classpath dependency, AGP's automatic main/androidTest consistent-resolution settles
+    // on 1.7.3 and room-testing's precompiled schema-bundle classes crash with AbstractMethodError
+    // (a GeneratedSerializer method 1.7.3 doesn't implement). Declaring this here, at the version
+    // Room actually needs, is what makes that resolution land on 1.8.1 without a manual
+    // resolutionStrategy.force() override.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testImplementation("androidx.room:room-testing:2.8.4")
     testImplementation("androidx.test:core:1.7.0")
 
     androidTestImplementation(platform("androidx.compose:compose-bom:2026.01.01"))
@@ -99,6 +116,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.navigation:navigation-testing:2.9.6")
     androidTestImplementation("org.mockito:mockito-android:5.23.0")
+    androidTestImplementation("androidx.room:room-testing:2.8.4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestUtil("androidx.test:orchestrator:1.5.1")
 }

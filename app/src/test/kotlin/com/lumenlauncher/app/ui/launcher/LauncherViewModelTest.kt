@@ -69,4 +69,33 @@ class LauncherViewModelTest {
         assertFalse(viewModel.uiState.value.isLoading)
         assertEquals(apps, viewModel.uiState.value.apps)
     }
+
+    @Test
+    fun `stops loading on its own after the timeout even if the underlying flows never emit`() = runTest {
+        // Given a repository whose flow never emits (simulating a stuck/broken data source) —
+        // this is the actual home screen, so it must never stay blank forever (see chat history).
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
+        val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveProfile,
+            cleanUpUninstalledApps,
+            settingsRepository,
+        )
+
+        // Then it's still loading well before the timeout
+        testDispatcher.scheduler.advanceTimeBy(2_000)
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // When the timeout elapses with no real data having arrived
+        testDispatcher.scheduler.advanceTimeBy(1_500)
+
+        // Then it stops loading anyway, still with the (empty/default) state it had
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals(emptyList<AppInfo>(), viewModel.uiState.value.apps)
+    }
 }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -37,12 +38,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
+import com.lumenlauncher.app.ui.components.FontWeightSlider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
@@ -52,7 +56,9 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import com.lumenlauncher.app.ui.theme.resolve
+import com.lumenlauncher.app.ui.theme.resolveFontFamily
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -72,12 +78,18 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         colorOption = uiState.colorOption,
         use24HourTime = uiState.use24HourTime,
         showMeridiem = uiState.showMeridiem,
+        calendarFontOption = uiState.calendarFontOption,
+        calendarColorOption = uiState.calendarColorOption,
+        calendarFontWeight = uiState.calendarFontWeight,
         launcherFontOption = uiState.launcherFontOption,
         onTemplateSelected = viewModel::setClockTemplateId,
         onFontOptionChanged = viewModel::setClockFontOption,
         onColorOptionChanged = viewModel::setClockColorOption,
         onUse24HourTimeChanged = viewModel::setUse24HourTime,
         onShowMeridiemChanged = viewModel::setClockShowMeridiem,
+        onCalendarFontOptionChanged = viewModel::setCalendarFontOption,
+        onCalendarColorOptionChanged = viewModel::setCalendarColorOption,
+        onCalendarFontWeightChanged = viewModel::setCalendarFontWeight,
     )
 }
 
@@ -91,10 +103,11 @@ fun ProfileClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGall
 }
 
 /**
- * Stateless clock-style picker: font/color/24h/meridiem controls up top (immediately affecting
- * every preview below), then every [ClockTemplateId] as its own selectable card — tapping one
- * calls [onTemplateSelected] and gets an [Accent] border to show it's the applied option. On
- * [Surface] (the same theme-aware, light/dark-following background every other screen uses).
+ * Stateless clock-style picker. Order: Calendar font/color controls + a live [CalendarEventsBlock]
+ * preview first, then Clock font/color/24h/meridiem controls, then every [ClockTemplateId] as its
+ * own selectable card — tapping one calls [onTemplateSelected] and gets an [Accent] border to show
+ * it's the applied option. On [Surface] (the same theme-aware, light/dark-following background
+ * every other screen uses).
  */
 @Composable
 private fun ClockStyleGalleryScreen(
@@ -110,11 +123,24 @@ private fun ClockStyleGalleryScreen(
     onUse24HourTimeChanged: (Boolean) -> Unit,
     onShowMeridiemChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
+    calendarColorOption: ClockColorOption = ClockColorOption.THEME,
+    calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    onCalendarFontOptionChanged: (ClockFontOption) -> Unit = {},
+    onCalendarColorOptionChanged: (ClockColorOption) -> Unit = {},
+    onCalendarFontWeightChanged: (FontWeightOption) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
     val textColor = colorOption.resolve()
     val fixedClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
     val now = remember { LocalDateTime.now(fixedClock) }
+    val calendarPreviewClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
+    val calendarPreviewEvents = remember {
+        listOf(
+            CalendarEvent(id = 1, calendarId = "1", title = "Team standup", startTimeMillis = calendarPreviewClock.millis() + 3_600_000, endTimeMillis = calendarPreviewClock.millis() + 5_400_000, isAllDay = false),
+            CalendarEvent(id = 2, calendarId = "1", title = "Design review", startTimeMillis = calendarPreviewClock.millis() + 7_200_000, endTimeMillis = calendarPreviewClock.millis() + 9_000_000, isAllDay = false),
+        )
+    }
 
     StickyHeaderLayout(
         modifier = modifier,
@@ -123,12 +149,72 @@ private fun ClockStyleGalleryScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Surface)
+            .background(SurfaceContainer)
             .windowInsetsPadding(WindowInsets.systemBars)
             .testTag("clock_style_gallery_list"),
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
+        item {
+            Text(
+                text = "CALENDAR",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+            )
+        }
+        item {
+            SettingsCard {
+                LabeledDropdownRow(
+                    title = "Font",
+                    options = ClockFontOption.entries,
+                    selected = calendarFontOption,
+                    label = { it.displayName },
+                    onSelect = onCalendarFontOptionChanged,
+                    testTag = "calendar_style_font_row",
+                )
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "Color",
+                    options = ClockColorOption.entries,
+                    selected = calendarColorOption,
+                    label = { it.displayName },
+                    onSelect = onCalendarColorOptionChanged,
+                    testTag = "calendar_style_color_row",
+                )
+                CardDivider()
+                FontWeightSlider(
+                    selected = calendarFontWeight,
+                    onSelectedChange = onCalendarFontWeightChanged,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 13.dp)
+                        .testTag("calendar_style_weight_slider"),
+                    sliderTestTag = "calendar_style_weight_slider_control",
+                )
+            }
+        }
+        item {
+            CalendarEventsBlock(
+                events = calendarPreviewEvents,
+                clock = calendarPreviewClock,
+                fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
+                textColor = calendarColorOption.resolve(),
+                fontWeight = calendarFontWeight.resolve(),
+                modifier = Modifier.testTag("calendar_style_preview"),
+            )
+        }
+
+        item {
+            HorizontalDivider(color = Hairline, modifier = Modifier.testTag("calendar_clock_section_divider"))
+        }
+
+        item {
+            Text(
+                text = "CLOCK",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+            )
+        }
         item {
             SettingsCard {
                 LabeledDropdownRow(
@@ -179,7 +265,7 @@ private fun ClockStyleGalleryScreen(
 
         item {
             Text(
-                text = "TEMPLATES — TAP TO SELECT",
+                text = "CLOCK STYLES — TAP TO SELECT",
                 style = MaterialTheme.typography.labelSmall,
                 color = Muted,
             )
@@ -229,14 +315,14 @@ private fun ClockStyleGalleryHeader(onBack: () -> Unit, modifier: Modifier = Mod
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Surface)
+            .background(SurfaceContainer)
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BackButton(onClick = onBack)
         Text(
-            text = "Clock style",
+            text = "Clock & Calendar Style",
             style = MaterialTheme.typography.titleLarge,
             color = Ink,
             modifier = Modifier.padding(start = 12.dp),
@@ -252,7 +338,7 @@ private fun ClockStyleGalleryScreenPreview() {
             onBack = {},
             templateId = ClockTemplateId.LIGHT_STACK,
             fontOption = ClockFontOption.SYSTEM,
-            colorOption = ClockColorOption.INK,
+            colorOption = ClockColorOption.THEME,
             use24HourTime = false,
             showMeridiem = false,
             onTemplateSelected = {},

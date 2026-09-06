@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
 import org.junit.Assert.assertEquals
@@ -152,22 +153,44 @@ class HomeUiStateTest {
     @Test
     fun `active calendar color falls back to the global default when the active profile has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarColorOption = ClockColorOption.WHITE, activeProfileId = 1L),
+            settings = LauncherSettings(calendarColorOption = ClockColorOption.THEME_INVERTED, activeProfileId = 1L),
             profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = false)),
         )
 
-        assertEquals(ClockColorOption.WHITE, state.activeCalendarColorOption)
+        assertEquals(ClockColorOption.THEME_INVERTED, state.activeCalendarColorOption)
     }
 
     @Test
     fun `active calendar color uses the active profile's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarColorOption = ClockColorOption.WHITE, activeProfileId = 1L),
+            settings = LauncherSettings(calendarColorOption = ClockColorOption.THEME_INVERTED, activeProfileId = 1L),
             profiles = listOf(
-                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = true, calendarColorOption = ClockColorOption.BLACK),
+                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = true, calendarColorOption = ClockColorOption.ACCENT_PRIMARY),
             ),
         )
 
-        assertEquals(ClockColorOption.BLACK, state.activeCalendarColorOption)
+        assertEquals(ClockColorOption.ACCENT_PRIMARY, state.activeCalendarColorOption)
+    }
+
+    @Test
+    fun `active calendar font weight falls back to the global default when the active profile has no override`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(calendarFontWeight = FontWeightOption.LIGHT, activeProfileId = 1L),
+            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = false)),
+        )
+
+        assertEquals(FontWeightOption.LIGHT, state.activeCalendarFontWeight)
+    }
+
+    @Test
+    fun `active calendar font weight uses the active profile's override when set`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(calendarFontWeight = FontWeightOption.LIGHT, activeProfileId = 1L),
+            profiles = listOf(
+                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = true, calendarFontWeight = FontWeightOption.SEMI_BOLD),
+            ),
+        )
+
+        assertEquals(FontWeightOption.SEMI_BOLD, state.activeCalendarFontWeight)
     }
 }

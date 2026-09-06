@@ -61,6 +61,7 @@ import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.ConfirmDialog
@@ -231,6 +232,7 @@ private fun ProfileCarouselContent(
                         clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
                         launcherFontOption = uiState.globalSettings.launcherFontOption,
                         appLabelColorOption = uiState.globalSettings.appLabelColorOption,
+                        homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
                         dockApps = uiState.dockApps,
                         dockDisplayMode = uiState.dockDisplayMode,
                         modifier = visualModifier
@@ -468,6 +470,7 @@ private fun ProfilePreviewPage(
     clockShowMeridiem: Boolean,
     launcherFontOption: LauncherFontOption,
     appLabelColorOption: ClockColorOption,
+    homeAppsFontWeight: FontWeightOption,
     dockApps: List<AppInfo>,
     dockDisplayMode: DockDisplayMode,
     modifier: Modifier = Modifier,
@@ -526,7 +529,15 @@ private fun ProfilePreviewPage(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                dockApps.forEach { app -> DockIcon(app = app, displayMode = dockDisplayMode, onClick = {}, labelColor = appLabelColorOption.resolve()) }
+                dockApps.forEach { app ->
+                    DockIcon(
+                        app = app,
+                        displayMode = dockDisplayMode,
+                        onClick = {},
+                        labelColor = appLabelColorOption.resolve(),
+                        labelFontWeight = homeAppsFontWeight.resolve(),
+                    )
+                }
             }
         }
     }

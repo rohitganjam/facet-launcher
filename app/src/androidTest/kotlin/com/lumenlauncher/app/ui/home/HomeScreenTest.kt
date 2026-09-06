@@ -104,9 +104,12 @@ class HomeScreenTest {
 
     @Test
     fun sectionLabelReflectsTheActiveListContentMode() {
+        // The heading only renders alongside a real list (see HomeScreen.kt's own
+        // `if (appListItems.isNotEmpty())` gate) — an empty list here would never show any
+        // heading text regardless of listContentMode, which isn't what this test means to cover.
         composeRule.setContent {
             LumenLauncherTheme {
-                HomeScreen(appListItems = emptyList(), dockApps = emptyList(), onAppClick = {}, listContentMode = ListContentMode.RECENTS)
+                HomeScreen(appListItems = apps(1), dockApps = emptyList(), onAppClick = {}, listContentMode = ListContentMode.RECENTS)
             }
         }
 
@@ -166,9 +169,13 @@ class HomeScreenTest {
             }
         }
 
-        // Then the icon renders before (further left than) the label — normal reading order
-        val iconLeft = composeRule.onNodeWithTag("home_app_icon_com.example.app1").fetchSemanticsNode().boundsInRoot.left
-        val labelLeft = composeRule.onNodeWithTag("home_app_label_com.example.app1").fetchSemanticsNode().boundsInRoot.left
+        // Then the icon renders before (further left than) the label — normal reading order.
+        // `useUnmergedTree = true` because both live inside AppRow's clickable Row, which merges
+        // descendant semantics into itself for accessibility (a single "App 1, button" unit) —
+        // testTag deliberately isn't included in that merge, so the default merged-tree query
+        // can't find either tag standalone (see chat history).
+        val iconLeft = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        val labelLeft = composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
         assert(iconLeft < labelLeft)
     }
 
@@ -182,8 +189,9 @@ class HomeScreenTest {
         }
 
         // Then the internal order flips — label renders before (further left than) the icon
-        val iconNode = composeRule.onNodeWithTag("home_app_icon_com.example.app1").fetchSemanticsNode()
-        val labelLeft = composeRule.onNodeWithTag("home_app_label_com.example.app1").fetchSemanticsNode().boundsInRoot.left
+        // (useUnmergedTree = true — see leftPositionRendersTheIconBeforeTheLabel's note above)
+        val iconNode = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode()
+        val labelLeft = composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
         assert(labelLeft < iconNode.boundsInRoot.left)
 
         // And the icon — now the row's trailing element — sits in the right portion of the
@@ -232,7 +240,7 @@ class HomeScreenTest {
         // Then the visible label text is gone, but the icon still renders and carries the app's
         // name for accessibility (mirroring the Dock's own icons-only mode)
         composeRule.onNodeWithText("App 1").assertDoesNotExist()
-        composeRule.onNodeWithTag("home_app_icon_com.example.app1").assertExists()
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithContentDescription("App 1").assertExists()
     }
 
@@ -270,8 +278,10 @@ class HomeScreenTest {
             }
         }
 
-        // When tapping the icon (its own node, now the row's only visible content)
-        composeRule.onNodeWithTag("home_app_icon_com.example.app1").performClick()
+        // When tapping the icon (its own node, now the row's only visible content) —
+        // useUnmergedTree = true since its own bounds are still real regardless of the tree used;
+        // the click still bubbles up to AppRow's registered handler
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).performClick()
 
         // Then the click still reaches the row's own click handler
         assertEquals("com.example.app1", clicked?.packageName)

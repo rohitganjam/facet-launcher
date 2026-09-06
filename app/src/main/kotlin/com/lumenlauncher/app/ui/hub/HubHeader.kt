@@ -21,12 +21,21 @@ import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.HomeAppTextColor
 import com.lumenlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
+import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.homeAppLabelShadow
 
 /**
  * "Lumen Hub" — bold, [HomeAppTextColor], legible via [homeAppLabelShadow] rather than a
  * background panel, since the Hub (like Home) sits directly on the transparent wallpaper/Home
  * layer, not an opaque `Surface` the way every Settings-style screen does (see chat history).
+ *
+ * Deliberately bolder than Settings/Permissions/Backup & restore's own plain (unbolded)
+ * `headlineSmall` titles — those are menu/utility screens the user passes through, whereas the
+ * Hub, like Home, *is* a page of the launcher itself (part of the canvas, reached by swiping, not
+ * navigating into a submenu), and reads as one accordingly (see chat history — this was briefly
+ * flattened to match the menu screens' own weight, then reverted once that distinction was made
+ * explicit; don't re-flatten it for "consistency" without that context).
+ *
  * Only rendered here (as part of the pinned header) once at least one widget exists — the empty
  * state's own Add button is centered in the middle of the screen instead.
  */
@@ -51,7 +60,7 @@ fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick:
             Text(
                 text = "$widgetCount of $HUB_MAX_WIDGETS widgets",
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
-                color = HomeAppTextColorFaint,
+                color = Muted,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }

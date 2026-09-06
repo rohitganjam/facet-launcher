@@ -25,6 +25,14 @@ private val CarouselBackdropDraggingLight = Color(0xFFD3D8E1)
 private val CarouselBackdropDraggingDark = Color(0xFF0D1015)
 private val SurfaceLight = Color(0xFFFFFFFF)
 private val SurfaceDark = Color(0xFF171A21)
+// A page's own background, one step dimmer than the [Surface] cards floating on it — previously
+// both were the same [Surface] tone, distinguished only by a card's drop shadow/hairline border
+// (see `SettingsCard.kt`'s own doc comment). The card is always the *lighter* of the two in both
+// themes, matching Material's dark-theme convention of elevated surfaces reading lighter, not
+// darker (see chat history). Dark's value coincides with [WallpaperDark] — a coincidence, not a
+// reuse, since that token's own job (Home carousel backdrop) is unrelated to this one.
+private val SurfaceContainerLight = Color(0xFFF8F9FA)
+private val SurfaceContainerDark = Color(0xFF14171D)
 private val DrawerOverlayLight = Color(0xE0FFFFFF) // rgba(255,255,255,.88)
 private val DrawerOverlayDark = Color(0xEB14171D) // rgba(20,23,29,.92)
 private val ScrimLight = Color(0x47020817) // rgba(2,8,23,.28)
@@ -61,9 +69,18 @@ val CarouselBackdrop: Color @Composable get() = if (LocalIsDarkTheme.current) Ca
 val CarouselBackdropDragging: Color
     @Composable get() = if (LocalIsDarkTheme.current) CarouselBackdropDraggingDark else CarouselBackdropDraggingLight
 val Surface: Color @Composable get() = if (LocalIsDarkTheme.current) SurfaceDark else SurfaceLight
+
+/** A settings-style screen's own page background — see this file's own doc comment above [SurfaceContainerLight]. [com.lumenlauncher.app.ui.components.SettingsCard]s on top of it stay [Surface]. */
+val SurfaceContainer: Color @Composable get() = if (LocalIsDarkTheme.current) SurfaceContainerDark else SurfaceContainerLight
 val DrawerOverlay: Color @Composable get() = if (LocalIsDarkTheme.current) DrawerOverlayDark else DrawerOverlayLight
 val Scrim: Color @Composable get() = if (LocalIsDarkTheme.current) ScrimDark else ScrimLight
 val Ink: Color @Composable get() = if (LocalIsDarkTheme.current) InkDark else InkLight
+
+/**
+ * [Ink]'s deliberate opposite — [InkLight] in dark theme, [InkDark] in light theme — backing
+ * [com.lumenlauncher.app.data.model.ClockColorOption.THEME_INVERTED] (see that enum's own doc).
+ */
+val InkInverted: Color @Composable get() = if (LocalIsDarkTheme.current) InkLight else InkDark
 val Muted: Color @Composable get() = if (LocalIsDarkTheme.current) MutedDark else MutedLight
 val Faint: Color @Composable get() = if (LocalIsDarkTheme.current) FaintDark else FaintLight
 val Hairline: Color @Composable get() = if (LocalIsDarkTheme.current) HairlineDark else HairlineLight
@@ -80,12 +97,12 @@ val IconTile: Color @Composable get() = if (LocalIsDarkTheme.current) IconTileDa
  *   restores the right value for the *same* swatch rather than needing to re-pick.
  *
  * Returns both tonal extremes (light-scheme, dark-scheme) rather than just the one matching the
- * *current* theme mode, so [Accent] can pick the current-theme one. Not `private` — [Accent] is
- * the only other reader, same file, so this could stay private; kept internal-visible only for
- * symmetry with [wallpaperPrimaryAndSecondary] below.
+ * *current* theme mode, so [Accent] can pick the current-theme one. `internal`, not `private` —
+ * also read from `ui/theme/ClockColors.kt`'s `ClockColorOption.resolve()` for
+ * [com.lumenlauncher.app.data.model.ClockColorOption.ACCENT_PRIMARY]/`ACCENT_SECONDARY`.
  */
 @Composable
-private fun accentTonalExtremes(): Pair<Color, Color> {
+internal fun accentTonalExtremes(): Pair<Color, Color> {
     val swatch = LocalCustomAccentSwatch.current
     if (!LocalAccentFromSystem.current && swatch != null) {
         return swatch.light to swatch.dark
@@ -110,14 +127,13 @@ val Accent: Color
     }
 
 /**
- * The wallpaper's own two Material You tones — light-scheme primary ("wallpaper primary") and
- * dark-scheme primary ("wallpaper secondary") — always computed from the OS's actual dynamic
- * color scheme, deliberately ignoring [LocalAccentFromSystem]/[LocalCustomAccentSwatch] (the
- * "Basic colors" override [Accent] itself respects). [homeTextShadow] and
- * [com.lumenlauncher.app.data.model.ClockColorOption]'s `WALLPAPER_PRIMARY`/`WALLPAPER_SECONDARY`
- * options are specifically about the wallpaper's own two accent tones — picking a fixed
- * Basic-colors swatch here would defeat the point of offering "the wallpaper's" colors as an
- * explicit choice (see chat history).
+ * The wallpaper's own two Material You tones — light-scheme primary and dark-scheme primary —
+ * always computed from the OS's actual dynamic color scheme, deliberately ignoring
+ * [LocalAccentFromSystem]/[LocalCustomAccentSwatch] (the "Basic colors" override [Accent] itself
+ * respects). Read only by [homeTextShadow], which draws its glow from the *actual* wallpaper
+ * regardless of the user's Accent color source setting — the clock/calendar/app-label text color
+ * itself ([com.lumenlauncher.app.data.model.ClockColorOption]'s `ACCENT_PRIMARY`/`ACCENT_SECONDARY`)
+ * instead follows [accentTonalExtremes], which *does* respect that setting (see chat history).
  */
 @Composable
 fun wallpaperPrimaryAndSecondary(): Pair<Color, Color> {
@@ -169,19 +185,20 @@ const val SMALL_TEXT_SHADOW_BLUR_RADIUS = 0.6f
  * [CalendarEventsBlock][com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock]) — for Home's
  * app-list labels and dock text, use [homeAppLabelShadow] instead (see chat history: the
  * wallpaper-accent tone this function draws from was reported as looking out of place on plain
- * app labels — it's meant specifically for the surfaces that offer `WALLPAPER_PRIMARY`/
- * `WALLPAPER_SECONDARY` as an explicit text-color choice).
+ * app labels — it's meant specifically for the surfaces that offer `ACCENT_PRIMARY`/
+ * `ACCENT_SECONDARY` as an explicit text-color choice).
  *
  * A fixed dark shadow only reads as a crisp edge when the text itself is light — around dark
- * text (light theme's [Ink], [com.lumenlauncher.app.data.model.ClockColorOption.BLACK], or a
- * wallpaper tone that happens to resolve dark) the same dark shadow just blurs into the glyphs
- * instead (see chat history). Rather than falling back to a neutral [Ink] tone, the glow is drawn
- * from [wallpaperPrimaryAndSecondary] — picking whichever of the two contrasts against
- * [textColor] (always the actual wallpaper's tones, never a Basic-colors swatch — see that
- * function's own doc). Resolving via [textColor]'s own [Color.luminance] (WCAG relative
- * luminance, ignores alpha — so a muted/alpha variant of a color always agrees with its opaque
- * base here), rather than just following the current theme mode, keeps it correct even for an
- * explicit White/Black override that doesn't track the theme mode.
+ * text (light theme's [Ink], [InkInverted] in dark theme, or a wallpaper/accent tone that happens
+ * to resolve dark) the same dark shadow just blurs into the glyphs instead (see chat history).
+ * Rather than falling back to a neutral [Ink] tone, the glow is drawn from
+ * [wallpaperPrimaryAndSecondary] — picking whichever of the two contrasts against [textColor]
+ * (always the actual wallpaper's tones, never a Basic-colors swatch — see that function's own
+ * doc). Resolving via [textColor]'s own [Color.luminance] (WCAG relative luminance, ignores alpha
+ * — so a muted/alpha variant of a color always agrees with its opaque base here), rather than
+ * just following the current theme mode, keeps it correct even for an explicit
+ * [com.lumenlauncher.app.data.model.ClockColorOption.THEME_INVERTED]/accent override that doesn't
+ * track the theme mode the same way [Ink] itself does.
  */
 @Composable
 fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow {

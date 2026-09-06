@@ -18,7 +18,7 @@ import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.HUB_MAX_WIDGETS
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
-import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -50,7 +50,7 @@ class HubScreenTest {
                     widgetPlacementRepository,
                     DeleteWidgetUseCase(widgetPlacementRepository, appWidgetRepository),
                     ResolveWidgetDropUseCase(),
-                    ResizeWidgetUseCase(),
+                    ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
                 )
             }
@@ -94,7 +94,7 @@ class HubScreenTest {
         }
 
         // Then the header reflects the real count regardless of orphan status
-        composeRule.onNodeWithText("2 of $HUB_MAX_WIDGETS widgets · 5 columns").assertExists()
+        composeRule.onNodeWithText("2 of $HUB_MAX_WIDGETS widgets").assertExists()
     }
 
     @Test

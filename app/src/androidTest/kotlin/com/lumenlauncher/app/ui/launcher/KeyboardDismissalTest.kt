@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -47,7 +48,7 @@ import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
-import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.PlaceWidgetUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
@@ -161,7 +162,7 @@ class KeyboardDismissalTest {
                     widgetPlacementRepository,
                     DeleteWidgetUseCase(widgetPlacementRepository, appWidgetRepository),
                     ResolveWidgetDropUseCase(),
-                    ResizeWidgetUseCase(),
+                    ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
                 )
             }
@@ -191,6 +192,13 @@ class KeyboardDismissalTest {
                     launcherViewModel = launcherViewModel,
                 )
             }
+        }
+        // HomeDrawerRoute renders nothing at all until HomeViewModel's first real state emission
+        // arrives (see HomeViewModel's own doc) — the real repositories behind it here (Room/
+        // DataStore, not fakes) make that a genuine, if normally tiny, async gap, so every test
+        // needs to wait it out before interacting rather than assuming instant content.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("drawer_search_field").fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -227,7 +235,14 @@ class KeyboardDismissalTest {
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("test")
         composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
 
-        // When back is pressed (first time clears query and focus)
+        // When back is pressed — with the IME visible, the first system back press is consumed by
+        // the keyboard dismissal itself (standard OS behavior, handled below the Activity's
+        // back-callback stack, before our BackHandler ever sees it), not by our own BackHandler.
+        // Close the keyboard first so this exercises our handler specifically, matching what a
+        // real user's *second* back press sees — see the identical, already-documented workaround
+        // in AppDrawerScreenTest.searchResultsAreHiddenAndBrowseModeReturnsOnBackPress.
+        Espresso.closeSoftKeyboard()
+        composeRule.waitForIdle()
         Espresso.pressBack()
         settleAnimation()
 

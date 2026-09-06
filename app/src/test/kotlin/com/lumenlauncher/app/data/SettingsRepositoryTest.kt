@@ -12,6 +12,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.DrawerGridSize
 import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ListContentMode
@@ -69,12 +70,29 @@ class SettingsRepositoryTest {
         assertEquals(5, settings.appsToShowCount)
         assertEquals(ClockTemplateId.LIGHT_STACK, settings.clockTemplateId)
         assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.clockFontOption)
-        assertEquals(ClockColorOption.INK, settings.clockColorOption)
+        assertEquals(ClockColorOption.THEME, settings.clockColorOption)
         assertFalse(settings.clockShowMeridiem)
         assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.calendarFontOption)
-        assertEquals(ClockColorOption.INK, settings.calendarColorOption)
+        assertEquals(ClockColorOption.THEME, settings.calendarColorOption)
         assertEquals(LauncherFontOption.SYSTEM, settings.launcherFontOption)
-        assertEquals(ClockColorOption.INK, settings.appLabelColorOption)
+        assertEquals(ClockColorOption.THEME, settings.appLabelColorOption)
+        assertEquals(FontWeightOption.REGULAR, settings.calendarFontWeight)
+        assertEquals(FontWeightOption.REGULAR, settings.homeAppsFontWeight)
+    }
+
+    @Test
+    fun `setCalendarFontWeight and setHomeAppsFontWeight round-trip independently`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When each font-weight setting is changed
+        repository.setCalendarFontWeight(FontWeightOption.LIGHT)
+        repository.setHomeAppsFontWeight(FontWeightOption.SEMI_BOLD)
+
+        // Then the new values come back, independently
+        val settings = repository.settings.first()
+        assertEquals(FontWeightOption.LIGHT, settings.calendarFontWeight)
+        assertEquals(FontWeightOption.SEMI_BOLD, settings.homeAppsFontWeight)
     }
 
     @Test
@@ -85,19 +103,19 @@ class SettingsRepositoryTest {
         // When each clock/calendar style setting is changed
         repository.setClockTemplateId(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR)
         repository.setClockFontOption(ClockFontOption.POPPINS)
-        repository.setClockColorOption(ClockColorOption.WHITE)
+        repository.setClockColorOption(ClockColorOption.THEME_INVERTED)
         repository.setClockShowMeridiem(true)
         repository.setCalendarFontOption(ClockFontOption.MANROPE)
-        repository.setCalendarColorOption(ClockColorOption.WALLPAPER_PRIMARY)
+        repository.setCalendarColorOption(ClockColorOption.ACCENT_PRIMARY)
 
         // Then the new values come back
         val settings = repository.settings.first()
         assertEquals(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR, settings.clockTemplateId)
         assertEquals(ClockFontOption.POPPINS, settings.clockFontOption)
-        assertEquals(ClockColorOption.WHITE, settings.clockColorOption)
+        assertEquals(ClockColorOption.THEME_INVERTED, settings.clockColorOption)
         assertEquals(true, settings.clockShowMeridiem)
         assertEquals(ClockFontOption.MANROPE, settings.calendarFontOption)
-        assertEquals(ClockColorOption.WALLPAPER_PRIMARY, settings.calendarColorOption)
+        assertEquals(ClockColorOption.ACCENT_PRIMARY, settings.calendarColorOption)
     }
 
     @Test
@@ -113,7 +131,7 @@ class SettingsRepositoryTest {
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
         repository.setLauncherFontOption(LauncherFontOption.MANROPE)
-        repository.setAppLabelColorOption(ClockColorOption.WHITE)
+        repository.setAppLabelColorOption(ClockColorOption.THEME_INVERTED)
         repository.setDrawerOpacity(0.5f)
         repository.setNotificationDotsEnabled(false)
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
@@ -139,7 +157,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
         assertEquals(LauncherFontOption.MANROPE, settings.launcherFontOption)
-        assertEquals(ClockColorOption.WHITE, settings.appLabelColorOption)
+        assertEquals(ClockColorOption.THEME_INVERTED, settings.appLabelColorOption)
         assertEquals(0.5f, settings.drawerOpacity, 0.0001f)
         assertEquals(false, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)

@@ -44,6 +44,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * PRD F2's required "onboarding explanation screen" shown before the `ACTION_USAGE_ACCESS_SETTINGS`
@@ -93,7 +94,7 @@ private fun UsageAccessExplanationContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Surface)
+            .background(SurfaceContainer)
             .testTag("usage_access_explanation_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 24.dp),

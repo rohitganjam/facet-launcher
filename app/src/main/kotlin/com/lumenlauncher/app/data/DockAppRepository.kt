@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.local.DockAppEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -54,6 +55,19 @@ class DockAppRepository @Inject constructor(
      */
     suspend fun removeByPackage(packageName: String) {
         dockAppDao.deleteByPackage(packageName)
+    }
+
+    /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
+    suspend fun getRawDockApps(): List<DockAppEntity> = dockAppDao.observeAll().first()
+
+    /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
+    suspend fun restoreDockApp(entity: DockAppEntity) {
+        dockAppDao.upsert(entity.copy(id = 0))
+    }
+
+    /** F14 Backup & Restore — wipes the whole dock before restoring from a backup. */
+    suspend fun deleteAllDockApps() {
+        dockAppDao.deleteAll()
     }
 
     suspend fun reorderDockApps(orderedApps: List<AppInfo>) {

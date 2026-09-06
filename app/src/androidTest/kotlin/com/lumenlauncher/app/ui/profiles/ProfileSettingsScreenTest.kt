@@ -87,10 +87,10 @@ class ProfileSettingsScreenTest {
         // Given the screen
         setContent()
 
-        // Then the Rename card sits above the APPS section header — not at the bottom of the
+        // Then the Rename card sits above the APPS LIST section header — not at the bottom of the
         // page — verified by comparing on-screen vertical position rather than just existence
         val renameTop = composeRule.onNodeWithTag("profile_settings_rename_row").fetchSemanticsNode().boundsInRoot.top
-        val appsSectionTop = composeRule.onNodeWithText("APPS").fetchSemanticsNode().boundsInRoot.top
+        val appsSectionTop = composeRule.onNodeWithText("APPS LIST").fetchSemanticsNode().boundsInRoot.top
         assert(renameTop < appsSectionTop)
     }
 
@@ -354,17 +354,18 @@ class ProfileSettingsScreenTest {
     }
 
     @Test
-    fun clockCardDefaultsToInheritWithTwentyFourHourToggleReadOnly() {
+    fun clockCardDefaultsToInheritWithRowSubtitleReflectingTheGlobalDefault() {
         // Given the screen
         setContent()
 
-        // Then the Clock card's 24-hour time toggle reflects the global default and is read-only
-        composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").assertIsOff()
-        composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").assertIsNotEnabled()
+        // Then the Clock card defaults to Inherit, and the "Clock & Calendar Style" row's subtitle
+        // reflects the global default rather than any profile-specific override
+        composeRule.onNodeWithTag("profile_clock_inherit_row").assertExists()
+        composeRule.onNodeWithText("Inherits default · Light stack · tap to preview").assertExists()
     }
 
     @Test
-    fun overridingTheClockCardMakesTwentyFourHourTimeLiveAndPersists() {
+    fun overridingTheClockCardPersistsTheFlagAndUpdatesTheRowSubtitle() {
         // Given the screen, waited until the real Room-backed profile has loaded — otherwise the
         // Clock card's rows render against the still-null initial uiState and clicks no-op
         // (same async-I/O-vs-idling gap as elsewhere, see IMPLEMENTATION_PLAN.md)
@@ -376,21 +377,19 @@ class ProfileSettingsScreenTest {
             composeRule.onAllNodesWithText("Profile 1").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // When switching to Override and toggling 24-hour time on — the Apps section (position,
-        // presentation, and content-mode rows) pushes the Clock card below the fold on this
-        // device's viewport, so each row needs a real scroll before it can actually be tapped
-        // (performClick() dispatches a real touch at the node's bounds — an off-screen node just
-        // silently swallows the click rather than throwing, see chat history)
+        // When switching to Override — the Apps section (position, presentation, and content-mode
+        // rows) pushes the Clock card below the fold on this device's viewport, so the row needs a
+        // real scroll before it can actually be tapped (performClick() dispatches a real touch at
+        // the node's bounds — an off-screen node just silently swallows the click rather than
+        // throwing, see chat history)
         composeRule.onNodeWithTag("profile_clock_override_row").performScrollTo().performClick()
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").assertIsEnabled() }.isSuccess
-        }
-        composeRule.onNodeWithTag("profile_use_24_hour_time_toggle").performScrollTo().performClick()
 
-        // Then the profile's own value is persisted
+        // Then the profile's own flag is persisted...
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().first().use24HourTime == true }
+            runBlocking { profileRepository.observeProfiles().first().first().overrideClock == true }
         }
+        // ...and the row's subtitle switches to reflect it
+        composeRule.onNodeWithText("Overriding defaults · tap to edit").assertExists()
     }
 
     @Test

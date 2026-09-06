@@ -84,4 +84,44 @@ class PlaceWidgetUseCaseTest {
         // Then the grid-full edge case is treated the same as the widget cap (see plan decisions)
         assertEquals(PlaceWidgetResult.HubFull, result)
     }
+
+    // F14 Backup & Restore's guided widget re-add — see PlaceWidgetUseCase's own doc comment.
+
+    @Test
+    fun `a free preferred cell is used instead of the first-fit scan`() {
+        // Given an empty grid, but a widget already sitting at the very first first-fit cell
+        val existing = listOf(placement(id = 1, row = 0, col = 0))
+
+        // When placing with a preferred position elsewhere that's free
+        val result = useCase(existing, colSpan = 1, rowSpan = 1, preferredRow = 3, preferredCol = 2)
+
+        // Then it lands exactly at the preferred cell, not wherever first-fit would have chosen
+        assertEquals(PlaceWidgetResult.Placed(row = 3, col = 2), result)
+    }
+
+    @Test
+    fun `an occupied preferred cell falls back to first-fit`() {
+        // Given something already occupying the preferred cell
+        val existing = listOf(placement(id = 1, row = 0, col = 0))
+
+        // When placing with that same cell as preferred
+        val result = useCase(existing, colSpan = 1, rowSpan = 1, preferredRow = 0, preferredCol = 0)
+
+        // Then it falls back to the ordinary first-fit scan instead of overlapping
+        assertEquals(PlaceWidgetResult.Placed(row = 0, col = 1), result)
+    }
+
+    @Test
+    fun `a preferred cell outside the grid bounds falls back to first-fit`() {
+        val result = useCase(existing = emptyList(), colSpan = 1, rowSpan = 1, preferredRow = HUB_MAX_ROWS, preferredCol = 0)
+
+        assertEquals(PlaceWidgetResult.Placed(row = 0, col = 0), result)
+    }
+
+    @Test
+    fun `no preferred position keeps the unchanged first-fit behavior`() {
+        val result = useCase(existing = emptyList(), colSpan = 1, rowSpan = 1)
+
+        assertEquals(PlaceWidgetResult.Placed(row = 0, col = 0), result)
+    }
 }

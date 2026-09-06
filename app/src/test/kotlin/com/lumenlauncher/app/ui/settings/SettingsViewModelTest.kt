@@ -18,12 +18,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
+/** [SettingsViewModel] is purely observational now — every mutable section lives in its own screen/ViewModel — so this only exercises the summary state it composes for the main list's rows. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
 
@@ -43,103 +44,40 @@ class SettingsViewModelTest {
 
     private fun createViewModel(
         dockApps: List<AppInfo> = emptyList(),
-        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
-        dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java),
+        defaultFavorites: List<AppInfo> = emptyList(),
+        isDefaultLauncher: Boolean = false,
     ): SettingsViewModel {
+        val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val dockAppRepository = mock(DockAppRepository::class.java)
         `when`(dockAppRepository.observeDockApps()).thenReturn(flowOf(dockApps))
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
-        `when`(defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(emptyList()))
+        `when`(defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(defaultFavorites))
         val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
-        runBlocking { `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(false) }
+        runBlocking { `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
         val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository)
-        return SettingsViewModel(useCase, settingsRepository, dockAppRepository, defaultFavoriteAppRepository, defaultLauncherRepository)
+        return SettingsViewModel(useCase, defaultLauncherRepository)
     }
 
     @Test
-    fun `changing drawer presentation calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setDrawerPresentation(com.lumenlauncher.app.data.model.DrawerPresentation.GRID)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setDrawerPresentation(com.lumenlauncher.app.data.model.DrawerPresentation.GRID)
-    }
-
-    @Test
-    fun `changing drawer grid size calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setDrawerGridSize(com.lumenlauncher.app.data.model.DrawerGridSize.FOUR_BY_FOUR)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setDrawerGridSize(com.lumenlauncher.app.data.model.DrawerGridSize.FOUR_BY_FOUR)
-    }
-
-    @Test
-    fun `changing drawer list item size calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setDrawerListItemSize(com.lumenlauncher.app.data.model.DrawerListItemSize.SPACIOUS)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setDrawerListItemSize(com.lumenlauncher.app.data.model.DrawerListItemSize.SPACIOUS)
-    }
-
-    @Test
-    fun `changing icon render mode calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setIconRenderMode(com.lumenlauncher.app.data.model.IconRenderMode.MONOCHROME_BLACK_WHITE)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setIconRenderMode(com.lumenlauncher.app.data.model.IconRenderMode.MONOCHROME_BLACK_WHITE)
-    }
-
-    @Test
-    fun `changing launcher font option calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setLauncherFontOption(com.lumenlauncher.app.data.model.LauncherFontOption.NOTO_SANS)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setLauncherFontOption(com.lumenlauncher.app.data.model.LauncherFontOption.NOTO_SANS)
-    }
-
-    @Test
-    fun `changing app label color option calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setAppLabelColorOption(com.lumenlauncher.app.data.model.ClockColorOption.WHITE)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setAppLabelColorOption(com.lumenlauncher.app.data.model.ClockColorOption.WHITE)
-    }
-
-    @Test
-    fun `toggling show drawer labels calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setShowDrawerLabels(false)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setShowDrawerLabels(false)
-    }
-
-    @Test
-    fun `dock cannot accept more apps once at the maximum`() = runTest {
-        val fiveApps = (1..5).map(::appInfo)
-        val viewModel = createViewModel(dockApps = fiveApps)
+    fun `uiState composes dock apps, default favorites, settings, and default-launcher status`() = runTest {
+        val dockApps = (1..3).map(::appInfo)
+        val defaultFavorites = (1..2).map(::appInfo)
+        val viewModel = createViewModel(dockApps = dockApps, defaultFavorites = defaultFavorites, isDefaultLauncher = true)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assert(!viewModel.canAddMoreDockApps())
+        assertEquals(3, viewModel.uiState.value.dockApps.size)
+        assertEquals(2, viewModel.uiState.value.defaultFavorites.size)
+        assertEquals(true, viewModel.uiState.value.isDefaultLauncher)
+    }
+
+    @Test
+    fun `uiState reflects Lumen not being the default launcher`() = runTest {
+        val viewModel = createViewModel(isDefaultLauncher = false)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.uiState.value.isDefaultLauncher)
     }
 }

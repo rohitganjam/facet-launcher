@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -46,6 +47,7 @@ import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
@@ -54,7 +56,6 @@ import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.NotificationBadge
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.HomeAppTextColor
-import com.lumenlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
@@ -86,19 +87,22 @@ fun HomeScreen(
     use24HourTime: Boolean = false,
     clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    clockColorOption: ClockColorOption = ClockColorOption.INK,
+    clockColorOption: ClockColorOption = ClockColorOption.THEME,
     clockShowMeridiem: Boolean = false,
     calendarEvents: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
     calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    calendarColorOption: ClockColorOption = ClockColorOption.INK,
+    calendarColorOption: ClockColorOption = ClockColorOption.THEME,
+    calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     onEventClick: (CalendarEvent) -> Unit = {},
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
-    appLabelColorOption: ClockColorOption = ClockColorOption.INK,
+    appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
+    homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
 ) {
     val appLabelColor = appLabelColorOption.resolve()
+    val appLabelFontWeight = homeAppsFontWeight.resolve()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -122,6 +126,7 @@ fun HomeScreen(
                 calendarColors = calendarColors,
                 calendarFontOption = calendarFontOption,
                 calendarColorOption = calendarColorOption,
+                calendarFontWeight = calendarFontWeight,
                 onEventClick = onEventClick,
                 launcherFontOption = launcherFontOption,
             )
@@ -129,7 +134,7 @@ fun HomeScreen(
             Box(modifier = Modifier.weight(1f))
 
             if (appListItems.isNotEmpty()) {
-                val listLabelColor = HomeAppTextColorFaint
+                val listLabelColor = Muted
                 Text(
                     text = when (listContentMode) {
                         ListContentMode.FAVORITES -> "FAVORITES"
@@ -159,6 +164,7 @@ fun HomeScreen(
                             position = appRowPosition,
                             presentation = appRowPresentation,
                             labelColor = appLabelColor,
+                            labelFontWeight = appLabelFontWeight,
                         )
                     }
                 }
@@ -190,6 +196,7 @@ fun HomeScreen(
                         onRequestShortcuts = onRequestShortcuts,
                         onLaunchShortcut = onLaunchShortcut,
                         labelColor = appLabelColor,
+                        labelFontWeight = appLabelFontWeight,
                     )
                 }
             }
@@ -248,6 +255,7 @@ private fun AppRow(
     position: AppRowPosition = AppRowPosition.LEFT,
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     labelColor: Color = HomeAppTextColor,
+    labelFontWeight: FontWeight = FontWeight.Normal,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
@@ -261,7 +269,10 @@ private fun AppRow(
                 // rounded rect instead of a full-bleed rectangle (see chat history).
                 .clip(MaterialTheme.shapes.large)
                 .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                // 16dp — matches App Drawer's own Regular list-item spacing exactly (base 8dp +
+                // DrawerListItemSize.REGULAR's 8dp extraRowPaddingDp), per direct request that
+                // Home's app list read as the same density as Drawer's default (see chat history).
+                .padding(horizontal = 8.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             // RIGHT packs the whole row's content against the trailing edge (not just reversed
             // order while left-anchored) so the row visually hugs the screen's right edge.
@@ -288,7 +299,7 @@ private fun AppRow(
                 if (showLabel) {
                     Text(
                         text = app.label,
-                        style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(labelColor)),
+                        style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
                         color = labelColor,
                         modifier = Modifier.testTag("home_app_label_${app.packageName}"),
                     )
@@ -332,6 +343,7 @@ internal fun DockIcon(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
     labelColor: Color = HomeAppTextColor,
+    labelFontWeight: FontWeight = FontWeight.Normal,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box {
@@ -350,7 +362,7 @@ internal fun DockIcon(
             }
             DockDisplayMode.TEXT -> Text(
                 text = app.label,
-                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor)),
+                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
                 color = labelColor,
                 modifier = modifier
                     .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })

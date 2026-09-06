@@ -14,6 +14,7 @@ import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -31,9 +32,13 @@ data class ProfileSettingsUiState(
     val defaultFavorites: List<AppInfo> = emptyList(),
     val globalClockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val globalClockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    val globalClockColorOption: ClockColorOption = ClockColorOption.INK,
+    val globalClockColorOption: ClockColorOption = ClockColorOption.THEME,
     val globalUse24HourTime: Boolean = false,
     val globalClockShowMeridiem: Boolean = false,
+    /** The calendar events strip's own font/color — part of the same Clock+Calendar design block/override, not a separate one (see chat history). */
+    val globalCalendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
+    val globalCalendarColorOption: ClockColorOption = ClockColorOption.THEME,
+    val globalCalendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val globalAppRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val globalAppRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
@@ -46,6 +51,9 @@ data class ProfileSettingsUiState(
     val clockColorOption: ClockColorOption get() = if (isOverridingClock) profile?.clockColorOption ?: globalClockColorOption else globalClockColorOption
     val effectiveUse24HourTime: Boolean get() = if (isOverridingClock) profile?.use24HourTime ?: globalUse24HourTime else globalUse24HourTime
     val clockShowMeridiem: Boolean get() = if (isOverridingClock) profile?.clockShowMeridiem ?: globalClockShowMeridiem else globalClockShowMeridiem
+    val calendarFontOption: ClockFontOption get() = if (isOverridingClock) profile?.calendarFontOption ?: globalCalendarFontOption else globalCalendarFontOption
+    val calendarColorOption: ClockColorOption get() = if (isOverridingClock) profile?.calendarColorOption ?: globalCalendarColorOption else globalCalendarColorOption
+    val calendarFontWeight: FontWeightOption get() = if (isOverridingClock) profile?.calendarFontWeight ?: globalCalendarFontWeight else globalCalendarFontWeight
 
     /** The Apps card's single inherit/override switch — governs position, presentation, list content mode, apps-to-show, and favorites together. */
     val isOverridingApps: Boolean get() = profile?.overrideApps ?: false
@@ -83,6 +91,9 @@ class ProfileSettingsViewModel @Inject constructor(
             globalClockColorOption = settings.clockColorOption,
             globalUse24HourTime = settings.use24HourTime,
             globalClockShowMeridiem = settings.clockShowMeridiem,
+            globalCalendarFontOption = settings.calendarFontOption,
+            globalCalendarColorOption = settings.calendarColorOption,
+            globalCalendarFontWeight = settings.calendarFontWeight,
             globalAppRowPosition = settings.appRowPosition,
             globalAppRowPresentation = settings.appRowPresentation,
             globalListContentMode = settings.listContentMode,
@@ -108,13 +119,11 @@ class ProfileSettingsViewModel @Inject constructor(
                 colorOption = state.clockColorOption,
                 use24HourTime = state.effectiveUse24HourTime,
                 showMeridiem = state.clockShowMeridiem,
+                calendarFontOption = state.calendarFontOption,
+                calendarColorOption = state.calendarColorOption,
+                calendarFontWeight = state.calendarFontWeight,
             )
         }
-    }
-
-    fun setUse24HourTimeOverride(enabled: Boolean) {
-        val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setUse24HourTime(profile, enabled) }
     }
 
     /**

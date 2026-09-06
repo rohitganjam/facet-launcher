@@ -14,15 +14,18 @@ import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.ui.theme.ErrorColor
 import com.lumenlauncher.app.ui.theme.Faint
 import com.lumenlauncher.app.ui.theme.Ink
-import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 /**
- * A [DropdownMenu] colored to match the rest of the app's popup surfaces ([ConfirmDialog],
- * [RenameDialog]) — [Surface] background. Defaults to M3's own Menu shape
- * ([MaterialTheme.shapes.extraSmall], 4dp — see `CLAUDE.md`'s Material 3 shape section), right for
- * a compact anchored picker like a Settings dropdown; a caller presenting something closer to a
- * small floating card (e.g. [AppContextMenu]) passes a rounder [shape] from the same M3 scale
- * instead, rather than this component picking one shape for every kind of popup.
+ * A [DropdownMenu] using [SurfaceContainer] rather than [com.lumenlauncher.app.ui.theme.Surface] —
+ * this popup floats as its own layer above whatever anchored it (often a [com.lumenlauncher.app.ui.components.SettingsCard],
+ * itself [com.lumenlauncher.app.ui.theme.Surface]-colored), so it reads as a separate plane rather
+ * than blending into the card underneath it (see chat history — same page/card split as
+ * `SettingsCard`'s own). Defaults to M3's own Menu shape ([MaterialTheme.shapes.extraSmall], 4dp —
+ * see `CLAUDE.md`'s Material 3 shape section), right for a compact anchored picker like a Settings
+ * dropdown; a caller presenting something closer to a small floating card (e.g. [AppContextMenu])
+ * passes a rounder [shape] from the same M3 scale instead, rather than this component picking one
+ * shape for every kind of popup.
  */
 @Composable
 fun ThemedDropdownMenu(
@@ -39,7 +42,7 @@ fun ThemedDropdownMenu(
         modifier = modifier,
         offset = offset,
         shape = shape,
-        containerColor = Surface,
+        containerColor = SurfaceContainer,
         content = content,
     )
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.moveTo
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -61,12 +62,14 @@ import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
-import com.lumenlauncher.app.domain.ResizeWidgetUseCase
+import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
+import com.lumenlauncher.app.domain.PlaceWidgetUseCase
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.hub.HubViewModel
+import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -195,9 +198,19 @@ class HomeDrawerRouteTest {
                     widgetPlacementRepository,
                     DeleteWidgetUseCase(widgetPlacementRepository, appWidgetRepository),
                     ResolveWidgetDropUseCase(),
-                    ResizeWidgetUseCase(),
+                    ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
                 )
+            }
+            val widgetPickerViewModel = remember {
+                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
+                val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                )
+                HubWidgetPickerViewModel(context, appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
 
             LumenLauncherTheme {
@@ -211,9 +224,17 @@ class HomeDrawerRouteTest {
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
+                    widgetPickerViewModel = widgetPickerViewModel,
                     launcherViewModel = launcherViewModel,
                 )
             }
+        }
+        // HomeDrawerRoute renders nothing at all until HomeViewModel's first real state emission
+        // arrives (see HomeViewModel's own doc) — the real repositories behind it here (Room/
+        // DataStore, not fakes) make that a genuine, if normally tiny, async gap, so every test
+        // needs to wait it out before interacting rather than assuming instant content.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("drawer_search_field").fetchSemanticsNodes().isNotEmpty()
         }
     }
 

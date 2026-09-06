@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,6 +48,19 @@ class DefaultFavoriteAppRepository @Inject constructor(
     /** Uninstall cleanup — driven by [com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase]. */
     suspend fun removeByPackage(packageName: String) {
         defaultFavoriteAppDao.deleteByPackage(packageName)
+    }
+
+    /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
+    suspend fun getRawDefaultFavorites(): List<DefaultFavoriteAppEntity> = defaultFavoriteAppDao.observeAll().first()
+
+    /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
+    suspend fun restoreDefaultFavorite(entity: DefaultFavoriteAppEntity) {
+        defaultFavoriteAppDao.upsert(entity.copy(id = 0))
+    }
+
+    /** F14 Backup & Restore — wipes the whole list before restoring from a backup. */
+    suspend fun deleteAllDefaultFavorites() {
+        defaultFavoriteAppDao.deleteAll()
     }
 
     suspend fun reorderFavorites(orderedApps: List<AppInfo>) {

@@ -12,6 +12,7 @@ import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.ui.home.clock.CalendarEventsBlock
 import com.lumenlauncher.app.ui.home.clock.ClockDisplay
@@ -38,12 +39,13 @@ fun ClockBlock(
     use24HourTime: Boolean = false,
     templateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     fontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    colorOption: ClockColorOption = ClockColorOption.INK,
+    colorOption: ClockColorOption = ClockColorOption.THEME,
     showMeridiem: Boolean = false,
     events: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
     calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    calendarColorOption: ClockColorOption = ClockColorOption.INK,
+    calendarColorOption: ClockColorOption = ClockColorOption.THEME,
+    calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     onEventClick: (CalendarEvent) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 ) {
@@ -69,6 +71,7 @@ fun ClockBlock(
             calendarColors = calendarColors,
             fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
             textColor = calendarColorOption.resolve(),
+            fontWeight = calendarFontWeight.resolve(),
             onEventClick = onEventClick,
         )
     }

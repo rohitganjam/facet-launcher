@@ -8,11 +8,14 @@ import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
 
 data class HomeUiState(
     val settings: LauncherSettings = LauncherSettings(),
+    /** True until the first real state emission arrives — see [HomeViewModel]'s own doc for why this exists and how it resolves. */
+    val isLoading: Boolean = true,
     val dockApps: List<AppInfo> = emptyList(),
     /** Favorites, Recents, or Most Used, depending on the active profile's [ListContentMode]. */
     val appListItems: List<AppInfo> = emptyList(),
@@ -45,6 +48,10 @@ data class HomeUiState(
 
     val activeCalendarColorOption: ClockColorOption
         get() = activeProfile?.let { if (it.overrideCalendar) it.calendarColorOption else settings.calendarColorOption } ?: settings.calendarColorOption
+
+    /** Mirrors [activeCalendarFontOption]'s own gating exactly — same `overrideCalendar` flag, same fallback shape. */
+    val activeCalendarFontWeight: FontWeightOption
+        get() = activeProfile?.let { if (it.overrideCalendar) it.calendarFontWeight else settings.calendarFontWeight } ?: settings.calendarFontWeight
 
     val effectiveUse24HourTime: Boolean
         get() = activeProfile?.let { if (it.overrideClock) it.use24HourTime else settings.use24HourTime } ?: settings.use24HourTime

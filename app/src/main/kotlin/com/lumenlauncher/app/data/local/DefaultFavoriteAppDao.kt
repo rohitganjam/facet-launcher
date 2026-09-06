@@ -25,4 +25,8 @@ interface DefaultFavoriteAppDao {
     /** Uninstall cleanup — removes the default-favorite entry for [packageName] regardless of activity. */
     @Query("DELETE FROM default_favorite_apps WHERE packageName = :packageName")
     suspend fun deleteByPackage(packageName: String)
+
+    /** F14 Backup & Restore — wipes the whole list before restoring from a backup. */
+    @Query("DELETE FROM default_favorite_apps")
+    suspend fun deleteAll()
 }

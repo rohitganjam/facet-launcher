@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.lumenlauncher.app.data.model.FontWeightOption
 
 /**
  * Every text role except [LumenType.clock] reads Material 3's own type scale directly
@@ -48,4 +49,14 @@ object LumenType {
         lineHeight = 72.sp,
         letterSpacing = (-4).sp,
     )
+}
+
+/** Resolves a [FontWeightOption] to its real [FontWeight] — see that enum's own doc for why it stops at [FontWeightOption.SEMI_BOLD]. */
+fun FontWeightOption.resolve(): FontWeight = when (this) {
+    FontWeightOption.THIN -> FontWeight.Thin
+    FontWeightOption.EXTRA_LIGHT -> FontWeight.ExtraLight
+    FontWeightOption.LIGHT -> FontWeight.Light
+    FontWeightOption.REGULAR -> FontWeight.Normal
+    FontWeightOption.MEDIUM -> FontWeight.Medium
+    FontWeightOption.SEMI_BOLD -> FontWeight.SemiBold
 }

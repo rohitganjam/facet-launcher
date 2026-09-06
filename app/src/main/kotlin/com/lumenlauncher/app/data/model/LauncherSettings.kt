@@ -19,11 +19,12 @@ enum class DrawerGridSize(val columns: Int, val rows: Int) {
 
 /**
  * List presentation only. [extraRowPaddingDp] adds on top of [DrawerAppRow][com.lumenlauncher.app.ui.drawer.DrawerAppRow]'s
- * existing base vertical padding — `COMPACT` (0) reproduces that unchanged existing height; each
- * step up adds 8dp more, per direct request (see chat history). [iconSizeDp] grows the row's
- * [AppIcon][com.lumenlauncher.app.ui.components.AppIcon] alongside it for `REGULAR`/`SPACIOUS`
- * (also per direct request) — `COMPACT` keeps the row's existing 32dp icon unchanged, so this
- * option's own default look doesn't shift.
+ * own 8dp base vertical padding (originally the design spec's `6px 0` for App Drawer's list rows —
+ * see `design_handoff_minimal_launcher/README.md`'s `1h` — rounded up to 8dp per direct request so
+ * every tier's total sits on a clean 4dp-grid value: `COMPACT` 8dp, `REGULAR` 16dp, `SPACIOUS`
+ * 24dp; see chat history). [iconSizeDp] grows the row's [AppIcon][com.lumenlauncher.app.ui.components.AppIcon]
+ * alongside it for `REGULAR`/`SPACIOUS` (also per direct request) — `COMPACT` keeps the row's
+ * existing 32dp icon unchanged, so this option's own default look doesn't shift.
  */
 enum class DrawerListItemSize(val extraRowPaddingDp: Int, val iconSizeDp: Int) {
     COMPACT(0, 32),
@@ -119,7 +120,7 @@ data class LauncherSettings(
      * the home/wallpaper surface" choice the clock/calendar already offer. Global only, same as
      * [launcherFontOption] — the dock itself isn't per-profile, so this can't be either.
      */
-    val appLabelColorOption: ClockColorOption = ClockColorOption.INK,
+    val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     /**
      * Settings → Permissions has requested `READ_CALENDAR`/`READ_CONTACTS` at least once before.
      * `checkSelfPermission` alone can't tell "never asked" apart from "permanently denied" —
@@ -140,10 +141,19 @@ data class LauncherSettings(
     /** Global default clock look — see the clock template gallery, reached from Settings' Clock card. */
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val clockColorOption: ClockColorOption = ClockColorOption.INK,
+    val clockColorOption: ClockColorOption = ClockColorOption.THEME,
     /** Ignored (no AM/PM to show) whenever [use24HourTime] is on, regardless of this value. */
     val clockShowMeridiem: Boolean = false,
     /** Calendar events block (`ui/home/clock/CalendarEventsBlock`) — configured independently of the clock's own font/color. */
     val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val calendarColorOption: ClockColorOption = ClockColorOption.INK,
+    val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
+    /** Calendar events block's own font weight — part of the same Clock+Calendar design bundle as [calendarFontOption]/[calendarColorOption] above, profile-overridable alongside them. */
+    val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    /**
+     * Settings → Appearance → "Font weight" — pairs with [launcherFontOption] but scopes narrower:
+     * only Home's app list, Dock, and App Drawer labels (see `ui/home/HomeScreen.kt`'s `AppRow`/
+     * `DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s app-label `Text`s), not every text role
+     * [launcherFontOption] itself reaches. Global only, same as [launcherFontOption].
+     */
+    val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
 )

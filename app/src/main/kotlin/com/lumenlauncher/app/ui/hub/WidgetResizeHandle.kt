@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -37,13 +38,27 @@ val WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE = 44.dp
  * right edge (dragging it grows/shrinks width only) and one on the bottom edge (height only),
  * rather than a single corner handle, so which dimension a drag changes is obvious from which
  * edge is grabbed. Either way the top-left cell it's anchored at never moves, matching
- * [com.lumenlauncher.app.domain.ResizeWidgetUseCase]'s own contract.
+ * [com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase]'s own contract.
  */
 @Composable
-fun WidgetResizeHandle(onDrag: (Offset) -> Unit, onDragEnd: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
+fun WidgetResizeHandle(
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    // Only [HubGrid]'s top handle ever overrides these — its own touch target is clamped
+    // narrower than the full square when there isn't enough room above the widget to straddle
+    // (see the top handle's own call site for why), and this keeps the *reach into the widget's
+    // own interior* fixed at half the standard target rather than growing to fill whatever's left
+    // over when the exterior overhang shrinks (see chat history — an earlier version just slid the
+    // full-size square down instead of shrinking it, so a fully-clamped handle ballooned inward to
+    // cover nearly half the tile, stealing ordinary long-press-to-regrab touches).
+    touchTargetWidth: Dp = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE,
+    touchTargetHeight: Dp = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE,
+) {
     Box(
         modifier = modifier
-            .size(WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE)
+            .size(width = touchTargetWidth, height = touchTargetHeight)
             .testTag(testTag)
             // Excludes this handle's area from system gestures (like the back swipe)
             // so grabbing it near the screen edge doesn't trigger navigation.

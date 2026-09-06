@@ -4,6 +4,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.LUMEN_LAUNCHER_PACKAGE_NAME
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -119,6 +120,30 @@ class UsageStatsRepositoryTest {
 
         // Then only the still-installed app is returned
         assertEquals(listOf("Used"), result.map { it.label })
+    }
+
+    @Test
+    fun `Lumen's own package is excluded even when it ranks highest, without shorting the requested limit`() = runTest {
+        // Given Lumen itself is (as it always is, being foregrounded on every Home visit) the
+        // single most-used app, ranking ahead of two real apps
+        addUsageStats(LUMEN_LAUNCHER_PACKAGE_NAME, lastTimeUsed = 3_000L, totalTimeInForeground = 999_000L)
+        addUsageStats("com.example.a", lastTimeUsed = 1_000L, totalTimeInForeground = 100_000L)
+        addUsageStats("com.example.b", lastTimeUsed = 2_000L, totalTimeInForeground = 200_000L)
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.getInstalledApps()).thenReturn(
+            listOf(
+                appInfo(LUMEN_LAUNCHER_PACKAGE_NAME, "Lumen Launcher"),
+                appInfo("com.example.a", "A"),
+                appInfo("com.example.b", "B"),
+            ),
+        )
+        val repository = UsageStatsRepository(usageStatsManager, appRepository)
+
+        // When asking for the top 2 most-used apps
+        val result = repository.getMostUsedApps(limit = 2)
+
+        // Then both real apps come through — Lumen never displaces one of them out of the limit
+        assertEquals(listOf("B", "A"), result.map { it.label })
     }
 
     @Test

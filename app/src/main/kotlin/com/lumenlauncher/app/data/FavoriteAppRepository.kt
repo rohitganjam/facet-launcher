@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.local.FavoriteAppEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -91,6 +92,15 @@ class FavoriteAppRepository @Inject constructor(
                 FavoriteAppEntity(profileId = profileId, packageName = app.packageName, activityName = app.activityName, position = index),
             )
         }
+    }
+
+    /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up, unlike every other read here). */
+    suspend fun getRawFavoritesForProfile(profileId: Long): List<FavoriteAppEntity> =
+        favoriteAppDao.observeForProfile(profileId).first()
+
+    /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
+    suspend fun restoreFavorite(entity: FavoriteAppEntity) {
+        favoriteAppDao.upsert(entity.copy(id = 0))
     }
 
     suspend fun reorderFavorites(profileId: Long, orderedApps: List<AppInfo>) {

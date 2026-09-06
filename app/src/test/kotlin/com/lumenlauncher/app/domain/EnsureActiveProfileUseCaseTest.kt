@@ -34,6 +34,10 @@ private class FakeProfileDao : ProfileDao {
     }
 
     override suspend fun getById(id: Long): ProfileEntity? = state.value.find { it.id == id }
+
+    override suspend fun deleteAll() {
+        state.value = emptyList()
+    }
 }
 
 class EnsureActiveProfileUseCaseTest {

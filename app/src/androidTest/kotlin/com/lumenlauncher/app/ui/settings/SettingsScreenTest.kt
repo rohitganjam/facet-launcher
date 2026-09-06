@@ -4,18 +4,10 @@ import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertHasClickAction
-import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,13 +34,16 @@ class SettingsScreenTest {
 
     private fun setContent(
         onBack: () -> Unit = {},
-        onAddDockApp: () -> Unit = {},
         onViewProfiles: () -> Unit = {},
-        onNavigateToCalendarSettings: () -> Unit = {},
-        onNavigateToPermissions: () -> Unit = {},
-        onNavigateToNotificationSettings: () -> Unit = {},
-        onEditDefaultFavorites: () -> Unit = {},
+        onNavigateToAppearance: () -> Unit = {},
         onNavigateToClockStyleGallery: () -> Unit = {},
+        onNavigateToCalendarSettings: () -> Unit = {},
+        onNavigateToDockSettings: () -> Unit = {},
+        onNavigateToHomeAppsListSettings: () -> Unit = {},
+        onNavigateToAppDrawerSettings: () -> Unit = {},
+        onNavigateToNotificationSettings: () -> Unit = {},
+        onNavigateToPermissions: () -> Unit = {},
+        onNavigateToBackupRestore: () -> Unit = {},
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -59,28 +54,27 @@ class SettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
-                val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 SettingsViewModel(
                     ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository),
-                    settingsRepository,
-                    dockAppRepository,
-                    defaultFavoriteAppRepository,
                     DefaultLauncherRepository(context),
                 )
             }
             LumenLauncherTheme {
                 SettingsScreen(
                     onBack = onBack,
-                    onAddDockApp = onAddDockApp,
                     onViewProfiles = onViewProfiles,
-                    onNavigateToCalendarSettings = onNavigateToCalendarSettings,
-                    onNavigateToPermissions = onNavigateToPermissions,
-                    onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-                    onEditDefaultFavorites = onEditDefaultFavorites,
+                    onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
+                    onNavigateToCalendarSettings = onNavigateToCalendarSettings,
+                    onNavigateToDockSettings = onNavigateToDockSettings,
+                    onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
+                    onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
+                    onNavigateToNotificationSettings = onNavigateToNotificationSettings,
+                    onNavigateToPermissions = onNavigateToPermissions,
+                    onNavigateToBackupRestore = onNavigateToBackupRestore,
                     viewModel = viewModel,
                 )
             }
@@ -112,114 +106,100 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun dockDisplayStyleDropdownSwitchesBetweenIconsAndText() {
-        // Given the settings screen, Icons selected by default
-        setContent()
-        composeRule.onNodeWithText("Icons").assertExists()
-
-        // When opening the dropdown and choosing "Text" — the dropdown is a Popup, a separate
-        // window that doesn't always register with the test framework's root registry by the
-        // time performClick() returns; waitForIdle() settles that before querying its content.
-        composeRule.onNodeWithTag("dock_display_style_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
-
-        // Then the row's own current-value label reflects it — poll rather than trust a single
-        // waitForIdle() caught this second recomposition (selecting the item closes the Popup
-        // and updates the row's label, two state transitions after the click returns)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Text").fetchSemanticsNodes().isNotEmpty()
-        }
-    }
-
-    @Test
-    fun selectDockAppsRowIsClickable() {
-        // Given the settings screen
+    fun backupRestoreRowIsClickable() {
+        // Given the settings screen, scrolled to the "Backup & restore" row (now grouped under
+        // SYSTEM alongside Permissions and Set as default launcher)
         var navigated = false
-        setContent(onAddDockApp = { navigated = true })
+        setContent(onNavigateToBackupRestore = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("backup_restore_row"))
 
-        // When tapping "Select Dock Apps"
-        composeRule.onNodeWithTag("add_dock_app_row").performClick()
+        // When tapping it
+        composeRule.onNodeWithTag("backup_restore_row").performClick()
 
-        // Then it opens the picker
+        // Then its callback fires
         assertEquals(true, navigated)
     }
 
     @Test
-    fun disabledRowsHaveNoClickAction() {
-        // Given the settings screen, scrolled to Sync's still-unbuilt "Backup & restore" row
-        // (Appearance's "Icons" row — this test's previous target — is a real, functioning
-        // dropdown now, see iconRenderModeRowChangesTheSetting below). Targeted by testTag, not
-        // hasText(...) — a text match turned out to hit an unexpected node with a real click
-        // action once actually verified in isolation for a different row (root cause not chased
-        // further; a testTag sidesteps the ambiguity entirely and matches this codebase's own
-        // established convention for exactly this class of flake, see IMPLEMENTATION_PLAN.md).
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("backup_restore_row"))
+    fun appearanceRowIsClickableAndReflectsCurrentThemeAndFont() {
+        // Given the settings screen, scrolled to the "Appearance" row — the theme/accent/icons/
+        // font block lives on its own screen, reached through this single summary row instead of
+        // inline controls.
+        var navigated = false
+        setContent(onNavigateToAppearance = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_row"))
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("System · System", substring = true)
 
-        // Then a not-yet-built row (backup & restore, Known Gap) has no click action registered
-        // at all — not just a no-op handler, genuinely non-interactive
-        composeRule.onNodeWithTag("backup_restore_row").assertHasNoClickAction()
+        // When tapping it
+        composeRule.onNodeWithTag("appearance_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
     }
 
     @Test
-    fun iconRenderModeRowChangesTheSetting() {
-        // Given the settings screen, scrolled to Appearance's "Icons" row (F11 — now a real
-        // dropdown, no longer disabled)
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_icons_row"))
-        composeRule.onNodeWithText("System default").assertExists()
+    fun dockRowIsClickableAndReflectsDockAppCount() {
+        // Given the settings screen, scrolled to the "Dock" row under HOME & APPS — Dock and Home
+        // Apps List used to be one combined row/screen; they're now separate (see chat history).
+        var navigated = false
+        setContent(onNavigateToDockSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_settings_row"))
+        composeRule.onNodeWithTag("dock_settings_row").assertTextContains("0 Dock Apps", substring = true)
 
-        // When picking "Monochrome (Accent)"
-        composeRule.onNodeWithTag("appearance_icons_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_icons_row_option_MONOCHROME_ACCENT").performClick()
+        // When tapping it
+        composeRule.onNodeWithTag("dock_settings_row").performClick()
 
-        // Then the row reflects the new selection
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Monochrome (Accent)").fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText("Monochrome (Accent)").assertExists()
+        // Then its callback fires
+        assertEquals(true, navigated)
     }
 
     @Test
-    fun launcherFontRowChangesTheSetting() {
-        // Given the settings screen, scrolled to Appearance's "Font" row, System selected by
-        // default — scoped to this row's own tag, not a global text search, since the Theme
-        // card's "Launcher theme" dropdown also defaults to "System" (see chat history)
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_font_row"))
-        composeRule.onNodeWithTag("appearance_font_row").assertTextContains("System")
+    fun homeAppsListRowIsClickableAndReflectsListContentCount() {
+        // Given the settings screen, scrolled to the "Home Apps List" row under HOME & APPS.
+        // Defaults: Favorites content mode with 0 default favorites.
+        var navigated = false
+        setContent(onNavigateToHomeAppsListSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("home_apps_list_settings_row"))
+        composeRule.onNodeWithTag("home_apps_list_settings_row").assertTextContains("0 Favorites", substring = true)
 
-        // When picking "Manrope"
-        composeRule.onNodeWithTag("appearance_font_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_font_row_option_MANROPE").performClick()
+        // When tapping it
+        composeRule.onNodeWithTag("home_apps_list_settings_row").performClick()
 
-        // Then the row reflects the new selection
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("appearance_font_row").assertTextContains("Manrope") }.isSuccess
-        }
+        // Then its callback fires
+        assertEquals(true, navigated)
     }
 
     @Test
-    fun appLabelColorRowChangesTheSetting() {
-        // Given the settings screen, scrolled to Appearance's "App label color" row, Ink selected
-        // by default — scoped to this row's own tag, since "Ink (default)" is otherwise a unique
-        // label but the row-scoping convention is kept consistent with the Font row above
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_app_label_color_row"))
-        composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("Ink (default)")
+    fun appDrawerRowIsClickable() {
+        // Given the settings screen, scrolled to the "App Drawer" row under HOME & APPS — its
+        // seven controls used to be inline on this list; they now live on their own screen.
+        var navigated = false
+        setContent(onNavigateToAppDrawerSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
 
-        // When picking "White"
-        composeRule.onNodeWithTag("appearance_app_label_color_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_app_label_color_row_option_WHITE").performClick()
+        // When tapping it
+        composeRule.onNodeWithTag("app_drawer_settings_row").performClick()
 
-        // Then the row reflects the new selection
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("White") }.isSuccess
-        }
+        // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun notificationSettingsRowIsClickableAndReflectsEnabledStateWithCrossCuttingScope() {
+        // Given the settings screen — notification dots are enabled by default (Dot badge style),
+        // and the row's subtitle states the cross-cutting scope explicitly (see chat history: dots
+        // render on Dock, Home Apps List, and App Drawer icons alike, not just one surface), using
+        // the actual configured badge style rather than a generic "dots/badges" placeholder.
+        var navigated = false
+        setContent(onNavigateToNotificationSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
+        composeRule.onNodeWithTag("notification_settings_row").assertTextContains("Enabled · Dots on Dock, Home & Drawer")
+
+        // When tapping "Notifications"
+        composeRule.onNodeWithTag("notification_settings_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
     }
 
     @Test
@@ -237,34 +217,6 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun gridSizeRowOnlyAppearsWhenGridPresentationIsSelected() {
-        // Given the settings screen, List presentation selected by default
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("drawer_presentation_row"))
-        composeRule.onNodeWithTag("drawer_grid_size_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("drawer_list_item_size_row").assertExists()
-        composeRule.onNodeWithTag("show_drawer_icons_toggle").assertExists()
-        composeRule.onNodeWithTag("show_drawer_labels_toggle").assertDoesNotExist()
-
-        // When switching Presentation to Grid (see the Popup/root-registration note above)
-        composeRule.onNodeWithTag("drawer_presentation_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("drawer_presentation_row_option_GRID").performClick()
-
-        // Then Grid size and Show labels appear, and Show icons/List item size are hidden — poll
-        // rather than trust a single waitForIdle() caught the recomposition (same class of gap as
-        // the StateFlow-vs-waitForIdle lesson elsewhere in this codebase, just triggered by a
-        // Popup-driven state change instead of async I/O)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("drawer_grid_size_row").fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithTag("drawer_grid_size_row").assertExists()
-        composeRule.onNodeWithTag("show_drawer_labels_toggle").assertExists()
-        composeRule.onNodeWithTag("show_drawer_icons_toggle").assertDoesNotExist()
-        composeRule.onNodeWithTag("drawer_list_item_size_row").assertDoesNotExist()
-    }
-
-    @Test
     fun viewProfilesRowIsClickable() {
         // Given the settings screen — Profiles is functional as of Phase 3
         var viewProfilesClicked = false
@@ -279,7 +231,7 @@ class SettingsScreenTest {
 
     @Test
     fun clockStyleGalleryRowIsClickable() {
-        // Given the settings screen, scrolled to the Clock card's "Default clock style" row
+        // Given the settings screen, scrolled to the Clock & Calendar card's style row
         var navigated = false
         setContent(onNavigateToClockStyleGallery = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
@@ -293,81 +245,13 @@ class SettingsScreenTest {
 
     @Test
     fun permissionsRowIsClickable() {
-        // Given the settings screen, scrolled to the Permissions card (now after Appearance)
+        // Given the settings screen, scrolled to the Permissions row (now under SYSTEM)
         var navigated = false
         setContent(onNavigateToPermissions = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("view_permissions_row"))
 
         // When tapping "Permissions"
         composeRule.onNodeWithTag("view_permissions_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun appRowPositionDropdownSwitchesBetweenLeftAndRightAndAppearsAboveListContent() {
-        // Given the settings screen, Left selected by default, scrolled to the Apps list card
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("default_app_row_position_row"))
-        composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Left")
-
-        // Then it renders above the "Default App list content" row within the same card
-        val positionTop = composeRule.onNodeWithTag("default_app_row_position_row").fetchSemanticsNode().boundsInRoot.top
-        val listContentTop = composeRule.onNodeWithTag("default_list_content_row").fetchSemanticsNode().boundsInRoot.top
-        assert(positionTop < listContentTop)
-
-        // When opening the dropdown and choosing "Right" (Popup root-registration note — see above)
-        composeRule.onNodeWithTag("default_app_row_position_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("default_app_row_position_row_option_RIGHT").performClick()
-
-        // Then the row's own current-value label reflects it
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Right") }.isSuccess
-        }
-    }
-
-    @Test
-    fun appRowPresentationDropdownSwitchesBetweenTheThreeOptions() {
-        // Given the settings screen, "Icon & Text" selected by default, scrolled to the Apps list card
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("default_app_row_presentation_row"))
-        composeRule.onNodeWithTag("default_app_row_presentation_row").assertTextContains("Icon & Text")
-
-        // When opening the dropdown and choosing "Text Only" (Popup root-registration note — see above)
-        composeRule.onNodeWithTag("default_app_row_presentation_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("default_app_row_presentation_row_option_TEXT_ONLY").performClick()
-
-        // Then the row's own current-value label reflects it
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("default_app_row_presentation_row").assertTextContains("Text Only") }.isSuccess
-        }
-    }
-
-    @Test
-    fun defaultFavoritesRowIsClickable() {
-        // Given the settings screen, scrolled to the Apps list card
-        var navigated = false
-        setContent(onEditDefaultFavorites = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
-
-        // When tapping "Default favorites"
-        composeRule.onNodeWithTag("default_favorites_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun notificationSettingsRowIsClickable() {
-        // Given the settings screen
-        var navigated = false
-        setContent(onNavigateToNotificationSettings = { navigated = true })
-
-        // When tapping "Notifications"
-        composeRule.onNodeWithTag("notification_settings_row").performClick()
 
         // Then its callback fires
         assertEquals(true, navigated)
@@ -381,79 +265,5 @@ class SettingsScreenTest {
 
         // Then the default-launcher row is genuinely interactive
         composeRule.onNodeWithTag("set_default_launcher_row").assertHasClickAction()
-    }
-
-    @Test
-    fun drawerOpacitySliderShowsTheCurrentPercentage() {
-        // Given the settings screen with the documented 60% default, scrolled to the slider
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("drawer_opacity_slider"))
-
-        // Then the slider's label reflects it
-        composeRule.onNodeWithText("60%").assertExists()
-    }
-
-    @Test
-    fun themeModeDropdownSwitchesBetweenLightDarkAndSystem() {
-        // Given the settings screen, System selected by default, scrolled to the Theme card —
-        // scoped to this row's own tag, not a global text search, since Appearance's "Font" row
-        // also defaults to "System" and both are composed once either is scrolled near (see chat history)
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
-        composeRule.onNodeWithTag("theme_mode_dropdown").assertTextContains("System")
-
-        // When opening the dropdown and choosing "Dark" (Popup root-registration note — see above)
-        composeRule.onNodeWithTag("theme_mode_dropdown").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("theme_mode_dropdown_option_DARK").performClick()
-
-        // Then the row's own current-value label reflects it
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Dark").fetchSemanticsNodes().isNotEmpty()
-        }
-    }
-
-    @Test
-    fun searchBarPositionDropdownSwitchesBetweenTopAndBottom() {
-        // Given the settings screen, Top selected by default, scrolled to the App Drawer card
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("search_bar_position_row"))
-        composeRule.onNodeWithText("Top").assertExists()
-
-        // When opening the dropdown and choosing "Bottom" (Popup root-registration note — see above)
-        composeRule.onNodeWithTag("search_bar_position_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("search_bar_position_row_option_BOTTOM").performClick()
-
-        // Then the row's own current-value label reflects it
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Bottom").fetchSemanticsNodes().isNotEmpty()
-        }
-    }
-
-    @Test
-    fun accentSwatchGridOnlyAppearsWhenBasicColorsIsSelectedAndPickingOneShowsItChecked() {
-        // Given the settings screen, "Wallpaper colors" selected by default, scrolled to Accent color
-        setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("accent_source_wallpaper"))
-        composeRule.onNodeWithTag("accent_swatch_grid").assertDoesNotExist()
-
-        // When switching to "Basic colors"
-        composeRule.onNodeWithTag("accent_source_basic").performClick()
-
-        // Then the swatch grid appears, defaulting to the first swatch (Blue) selected
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("accent_swatch_grid").fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithContentDescription("Blue").assertExists()
-
-        // When picking a different swatch (Teal)
-        composeRule.onNodeWithTag("accent_swatch_TEAL").performClick()
-
-        // Then that swatch shows as checked instead — poll, since the pick round-trips through
-        // DataStore before the grid re-renders (same async-write lesson as the toggles above)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithContentDescription("Teal").fetchSemanticsNodes().isNotEmpty()
-        }
     }
 }

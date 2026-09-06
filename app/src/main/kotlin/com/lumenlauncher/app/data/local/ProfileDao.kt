@@ -21,4 +21,8 @@ interface ProfileDao {
 
     @Query("SELECT * FROM profiles WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): ProfileEntity?
+
+    /** F14 Backup & Restore — wipes every profile (cascades to `favorite_apps` via its FK) before restoring from a backup. */
+    @Query("DELETE FROM profiles")
+    suspend fun deleteAll()
 }

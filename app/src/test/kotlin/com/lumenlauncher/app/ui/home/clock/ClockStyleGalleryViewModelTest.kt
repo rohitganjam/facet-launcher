@@ -3,18 +3,22 @@ package com.lumenlauncher.app.ui.home.clock
 import androidx.lifecycle.SavedStateHandle
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -74,10 +78,10 @@ class ClockStyleGalleryViewModelTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
-        viewModel.setClockColorOption(ClockColorOption.WHITE)
+        viewModel.setClockColorOption(ClockColorOption.THEME_INVERTED)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setClockColorOption(ClockColorOption.WHITE)
+        verify(settingsRepository).setClockColorOption(ClockColorOption.THEME_INVERTED)
     }
 
     @Test
@@ -100,5 +104,106 @@ class ClockStyleGalleryViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setClockShowMeridiem(true)
+    }
+
+    @Test
+    fun `changing the calendar font calls the repository setter globally`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setCalendarFontOption(ClockFontOption.POPPINS)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setCalendarFontOption(ClockFontOption.POPPINS)
+    }
+
+    @Test
+    fun `changing the calendar color calls the repository setter globally`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setCalendarColorOption(ClockColorOption.THEME_INVERTED)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setCalendarColorOption(ClockColorOption.THEME_INVERTED)
+    }
+
+    @Test
+    fun `changing the calendar font weight calls the repository setter globally`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setCalendarFontWeight(FontWeightOption.SEMI_BOLD)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setCalendarFontWeight(FontWeightOption.SEMI_BOLD)
+    }
+
+    @Test
+    fun `profile-scoped calendar font, color, and weight changes write the profile's own override`() = runTest {
+        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
+        val profileRepository = mock(ProfileRepository::class.java)
+        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
+        `when`(profileRepository.getById(5L)).thenReturn(profile)
+        val viewModel = createViewModel(profileRepository = profileRepository, profileId = 5L)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setCalendarFontOption(ClockFontOption.MANROPE)
+        viewModel.setCalendarColorOption(ClockColorOption.ACCENT_SECONDARY)
+        viewModel.setCalendarFontWeight(FontWeightOption.LIGHT)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(profileRepository).setCalendarFontOption(profile, ClockFontOption.MANROPE)
+        verify(profileRepository).setCalendarColorOption(profile, ClockColorOption.ACCENT_SECONDARY)
+        verify(profileRepository).setCalendarFontWeight(profile, FontWeightOption.LIGHT)
+    }
+
+    @Test
+    fun `uiState resolves calendar font, color, and weight from the profile when scoped`() = runTest {
+        val profile = ProfileEntity(
+            id = 5L,
+            name = "Work",
+            position = 0,
+            overrideClock = true,
+            calendarFontOption = ClockFontOption.MANROPE,
+            calendarColorOption = ClockColorOption.ACCENT_SECONDARY,
+            calendarFontWeight = FontWeightOption.SEMI_BOLD,
+        )
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val profileRepository = mock(ProfileRepository::class.java)
+        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
+        val savedStateHandle = SavedStateHandle(mapOf("profileId" to 5L))
+        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(ClockFontOption.MANROPE, viewModel.uiState.value.calendarFontOption)
+        assertEquals(ClockColorOption.ACCENT_SECONDARY, viewModel.uiState.value.calendarColorOption)
+        assertEquals(FontWeightOption.SEMI_BOLD, viewModel.uiState.value.calendarFontWeight)
+    }
+
+    @Test
+    fun `uiState resolves calendar font, color, and weight from global settings when not scoped`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(
+                LauncherSettings(
+                    calendarFontOption = ClockFontOption.POPPINS,
+                    calendarColorOption = ClockColorOption.THEME_INVERTED,
+                    calendarFontWeight = FontWeightOption.LIGHT,
+                ),
+            ),
+        )
+        val profileRepository = mock(ProfileRepository::class.java)
+        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(emptyList()))
+        val viewModel = ClockStyleGalleryViewModel(SavedStateHandle(), settingsRepository, profileRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(ClockFontOption.POPPINS, viewModel.uiState.value.calendarFontOption)
+        assertEquals(ClockColorOption.THEME_INVERTED, viewModel.uiState.value.calendarColorOption)
+        assertEquals(FontWeightOption.LIGHT, viewModel.uiState.value.calendarFontWeight)
     }
 }

@@ -10,8 +10,10 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
@@ -19,6 +21,7 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -32,26 +35,31 @@ class ClockStyleGalleryScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}): SettingsRepository {
+    private fun setContent(onBack: () -> Unit = {}, profileId: Long? = null): Pair<SettingsRepository, ProfileRepository> {
         lateinit var settingsRepository: SettingsRepository
+        lateinit var profileRepository: ProfileRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
-                val profileRepository = ProfileRepository(database.profileDao())
+                profileRepository = ProfileRepository(database.profileDao())
                 settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "clock-style-gallery-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                ClockStyleGalleryViewModel(SavedStateHandle(), settingsRepository, profileRepository)
+                if (profileId != null) {
+                    runBlocking { profileRepository.addProfile() } // seeds id 1L, matching profileId below
+                }
+                val savedStateHandle = if (profileId != null) SavedStateHandle(mapOf("profileId" to profileId)) else SavedStateHandle()
+                ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
             }
             LumenLauncherTheme {
                 ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
-        return settingsRepository
+        return settingsRepository to profileRepository
     }
 
     @Test
@@ -62,14 +70,14 @@ class ClockStyleGalleryScreenTest {
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.entries.last().name}"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
-        composeRule.onNodeWithText("Clock style").assertIsDisplayed()
+        composeRule.onNodeWithText("Clock & Calendar Style").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 
     @Test
     fun tappingATemplateCardPersistsItAsTheChosenTemplate() {
         // Given the gallery, Light stack applied by default
-        val settingsRepository = setContent()
+        val (settingsRepository, _) = setContent()
         composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.LIGHT_STACK.name}").assertExists()
 
         // When tapping a different template's card
@@ -86,7 +94,7 @@ class ClockStyleGalleryScreenTest {
     @Test
     fun toggling24HourTimePersistsAndDisablesTheMeridiemToggle() {
         // Given the gallery, 24-hour time off by default
-        val settingsRepository = setContent()
+        val (settingsRepository, _) = setContent()
         composeRule.onNodeWithTag("clock_use_24_hour_time_toggle").assertIsOff()
         composeRule.onNodeWithTag("clock_show_meridiem_toggle").assertIsOff()
 
@@ -103,7 +111,7 @@ class ClockStyleGalleryScreenTest {
     @Test
     fun togglingShowMeridiemPersists() {
         // Given the gallery, meridiem off by default
-        val settingsRepository = setContent()
+        val (settingsRepository, _) = setContent()
 
         // When turning it on
         composeRule.onNodeWithTag("clock_show_meridiem_toggle").performClick()
@@ -113,5 +121,84 @@ class ClockStyleGalleryScreenTest {
             runBlocking { settingsRepository.settings.first().clockShowMeridiem }
         }
         composeRule.onNodeWithTag("clock_show_meridiem_toggle").assertIsOn()
+    }
+
+    @Test
+    fun calendarAndClockSectionsAreSeparatedByADivider() {
+        // Given the gallery
+        setContent()
+
+        // Then a divider sits between the Calendar section (font/color + preview) and the Clock section
+        composeRule.onNodeWithTag("calendar_clock_section_divider").assertIsDisplayed()
+    }
+
+    @Test
+    fun globalCalendarStyleFontSelectionPersistsThroughSettingsRepository() {
+        // Given the global (non-profile-scoped) entry point
+        val (settingsRepository, _) = setContent()
+
+        // When picking a calendar-style font other than the default
+        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
+
+        // Then it's persisted to the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().calendarFontOption == com.lumenlauncher.app.data.model.ClockFontOption.POPPINS }
+        }
+    }
+
+    @Test
+    fun profileScopedCalendarStyleFontPersistsToTheProfileDirectly() {
+        // Given a profile-scoped entry point — this gallery has no per-row Inherit/Override
+        // gating of its own; reaching it scoped to a profile always edits that profile directly
+        // (the Inherit/Override choice lives on ProfileSettingsScreen's own card instead).
+        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+
+        // When picking a calendar-style font other than the default
+        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
+
+        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                profileRepository.observeProfiles().first().single().calendarFontOption == com.lumenlauncher.app.data.model.ClockFontOption.POPPINS
+            }
+        }
+        val settings = runBlocking { settingsRepository.settings.first() }
+        assert(settings.calendarFontOption != com.lumenlauncher.app.data.model.ClockFontOption.POPPINS)
+    }
+
+    @Test
+    fun globalCalendarWeightSelectionPersistsThroughSettingsRepository() {
+        // Given the global (non-profile-scoped) entry point, Regular weight by default
+        val (settingsRepository, _) = setContent()
+
+        // When dragging the calendar weight slider to its last stop (Semi Bold)
+        composeRule.onNodeWithTag("calendar_style_weight_slider_control")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontWeightOption.entries.size - 1).toFloat()) }
+
+        // Then it's persisted to the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().calendarFontWeight == FontWeightOption.SEMI_BOLD }
+        }
+    }
+
+    @Test
+    fun profileScopedCalendarWeightPersistsToTheProfileDirectly() {
+        // Given a profile-scoped entry point (same reasoning as the font/color tests above)
+        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+
+        // When dragging the calendar weight slider to its last stop (Semi Bold)
+        composeRule.onNodeWithTag("calendar_style_weight_slider_control")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontWeightOption.entries.size - 1).toFloat()) }
+
+        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { profileRepository.observeProfiles().first().single().calendarFontWeight == FontWeightOption.SEMI_BOLD }
+        }
+        val settings = runBlocking { settingsRepository.settings.first() }
+        assert(settings.calendarFontWeight != FontWeightOption.SEMI_BOLD)
     }
 }

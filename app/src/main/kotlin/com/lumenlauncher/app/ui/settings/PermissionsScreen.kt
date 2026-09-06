@@ -51,6 +51,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import com.lumenlauncher.app.ui.theme.SuccessColor
 
 /**
@@ -140,7 +141,7 @@ private fun PermissionsContent(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Surface)
+                    .background(SurfaceContainer)
                     .testTag("permissions_screen")
                     .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(horizontal = 24.dp),
@@ -165,7 +166,7 @@ private fun PermissionsHeader(onBack: () -> Unit, modifier: Modifier = Modifier)
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Surface)
+            .background(SurfaceContainer)
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .padding(horizontal = 24.dp)
             .padding(top = 24.dp, bottom = 16.dp),
