@@ -56,18 +56,23 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
-import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.data.model.ListContentMode
+import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.ConfirmDialog
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenu
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.lumenlauncher.app.ui.components.rememberDragReorderState
+import com.lumenlauncher.app.ui.home.AppRow
 import com.lumenlauncher.app.ui.home.ClockBlock
 import com.lumenlauncher.app.ui.home.DockIcon
 import com.lumenlauncher.app.ui.theme.Accent
@@ -223,13 +228,21 @@ private fun ProfileCarouselContent(
                     // applies it immediately. Browsing (without applying) is swipe-only.
                     ProfilePreviewPage(
                         profile = profile,
-                        favorites = uiState.favoritesByProfileId[profile.id].orEmpty(),
+                        favorites = uiState.previewsByProfileId[profile.id]?.favorites.orEmpty(),
+                        listContentMode = uiState.listContentMode(profile.id),
                         clockTemplateId = uiState.clockTemplateId(profile.id),
                         clockFontOption = uiState.clockFontOption(profile.id),
                         clockColorOption = uiState.clockColorOption(profile.id),
                         use24HourTime = uiState.effectiveUse24HourTime(profile.id),
                         clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
+                        calendarEvents = uiState.previewsByProfileId[profile.id]?.calendarEvents.orEmpty(),
+                        calendarColors = uiState.globalSettings.calendarColors,
+                        calendarFontOption = uiState.calendarFontOption(profile.id),
+                        calendarColorOption = uiState.calendarColorOption(profile.id),
+                        calendarFontWeight = uiState.calendarFontWeight(profile.id),
                         launcherFontOption = uiState.globalSettings.launcherFontOption,
+                        appRowPosition = uiState.appRowPosition(profile.id),
+                        appRowPresentation = uiState.appRowPresentation(profile.id),
                         appLabelColorOption = uiState.globalSettings.appLabelColorOption,
                         homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
                         dockApps = uiState.dockApps,
@@ -453,21 +466,30 @@ private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifi
 
 /**
  * A live snapshot of what [profile]'s Home screen actually looks like — reuses the real
- * [ClockBlock] composable (not a redrawn lookalike) and renders its real favorites
- * ([favorites], from [com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase], one Flow per
- * profile so browsing shows each profile's own list, not just the active profile's), so the
- * carousel card is a genuine preview rather than a placeholder.
+ * [ClockBlock]/[AppRow]/[DockIcon] composables (not a redrawn lookalike) and renders each
+ * profile's own effective content ([favorites]/[calendarEvents], from
+ * [com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase], one Flow per profile so browsing
+ * shows each profile's own list, not just the active profile's), so the carousel card is a
+ * genuine preview rather than a placeholder.
  */
 @Composable
 private fun ProfilePreviewPage(
     profile: ProfileEntity,
     favorites: List<AppInfo>,
+    listContentMode: ListContentMode,
     clockTemplateId: ClockTemplateId,
     clockFontOption: ClockFontOption,
     clockColorOption: ClockColorOption,
     use24HourTime: Boolean,
     clockShowMeridiem: Boolean,
+    calendarEvents: List<CalendarEvent>,
+    calendarColors: Map<String, String>,
+    calendarFontOption: ClockFontOption,
+    calendarColorOption: ClockColorOption,
+    calendarFontWeight: FontWeightOption,
     launcherFontOption: LauncherFontOption,
+    appRowPosition: AppRowPosition,
+    appRowPresentation: AppRowPresentation,
     appLabelColorOption: ClockColorOption,
     homeAppsFontWeight: FontWeightOption,
     dockApps: List<AppInfo>,
@@ -534,6 +556,11 @@ private fun ProfilePreviewPage(
                 fontOption = clockFontOption,
                 colorOption = clockColorOption,
                 showMeridiem = clockShowMeridiem,
+                events = calendarEvents,
+                calendarColors = calendarColors,
+                calendarFontOption = calendarFontOption,
+                calendarColorOption = calendarColorOption,
+                calendarFontWeight = calendarFontWeight,
                 launcherFontOption = launcherFontOption,
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -541,7 +568,7 @@ private fun ProfilePreviewPage(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "FAVORITES",
+                text = listContentMode.previewLabel(),
                 style = MaterialTheme.typography.labelSmall,
                 color = Muted,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
@@ -550,7 +577,20 @@ private fun ProfilePreviewPage(
                 Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
             } else {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    favorites.forEach { app -> PreviewAppRow(app) }
+                    favorites.forEach { app ->
+                        AppRow(
+                            app = app,
+                            onClick = {},
+                            badgeCount = null,
+                            badgeStyle = NotificationBadgeStyle.DOT,
+                            onRequestShortcuts = { emptyList() },
+                            onLaunchShortcut = {},
+                            position = appRowPosition,
+                            presentation = appRowPresentation,
+                            labelColor = appLabelColorOption.resolve(),
+                            labelFontWeight = homeAppsFontWeight.resolve(),
+                        )
+                    }
                 }
             }
 
@@ -578,22 +618,11 @@ private fun ProfilePreviewPage(
     }
 }
 
-@Composable
-private fun PreviewAppRow(app: AppInfo, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        AppIcon(icon = app.icon, size = 28.dp, cornerRadius = 8.dp, contentDescription = null)
-        Text(
-            text = app.label,
-            style = MaterialTheme.typography.titleMedium,
-            color = Ink,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+/** Matches HomeScreen.kt's own list-header label exactly, so the preview's section header agrees with the real screen. */
+private fun ListContentMode.previewLabel(): String = when (this) {
+    ListContentMode.FAVORITES -> "FAVORITES"
+    ListContentMode.RECENTS -> "RECENTS"
+    ListContentMode.MOST_USED -> "MOST USED"
 }
 
 @Composable

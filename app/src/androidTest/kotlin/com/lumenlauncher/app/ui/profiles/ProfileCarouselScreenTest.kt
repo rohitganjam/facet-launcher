@@ -73,6 +73,8 @@ class ProfileCarouselScreenTest {
                     context.getSystemService(android.app.AppOpsManager::class.java),
                     context
                 )
+                val calendarPermissionRepository = com.lumenlauncher.app.data.CalendarPermissionRepository(context)
+                val calendarRepository = com.lumenlauncher.app.data.CalendarRepository(context.contentResolver)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
                 runBlocking { seed(profileRepository, settingsRepository) }
                 runBlocking { seedApps(appRepository, favoriteAppRepository, dockAppRepository) }
@@ -81,12 +83,14 @@ class ProfileCarouselScreenTest {
                     settingsRepository,
                     dockAppRepository,
                     ObserveProfilePreviewsUseCase(
-                        profileRepository, 
-                        settingsRepository, 
-                        favoriteAppRepository, 
+                        profileRepository,
+                        settingsRepository,
+                        favoriteAppRepository,
                         defaultFavoriteAppRepository,
                         usageStatsRepository,
-                        usageAccessRepository
+                        usageAccessRepository,
+                        calendarPermissionRepository,
+                        calendarRepository,
                     ),
                 )
             }

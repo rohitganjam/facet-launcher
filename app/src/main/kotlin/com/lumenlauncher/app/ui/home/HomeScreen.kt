@@ -241,10 +241,15 @@ private fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: D
  * just a reversed order while staying left-anchored, for the row to actually hug the screen's
  * right edge. [presentation] independently governs which of icon/label actually render; the
  * unused one's slot composable simply emits nothing rather than branching the whole layout.
+ *
+ * Not private: reused by the profile carousel's preview cards
+ * ([com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen]) so the favorites list renders with
+ * the same position/presentation/color/weight styling there as it does on the real Home screen —
+ * same reasoning as [DockIcon]'s own visibility.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AppRow(
+internal fun AppRow(
     app: AppInfo,
     onClick: () -> Unit,
     badgeCount: Int?,

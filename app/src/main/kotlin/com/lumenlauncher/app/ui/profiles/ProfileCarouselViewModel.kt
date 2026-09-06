@@ -7,12 +7,17 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase
+import com.lumenlauncher.app.domain.ProfilePreviewData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +29,7 @@ import kotlinx.coroutines.launch
 data class ProfileCarouselUiState(
     val profiles: List<ProfileEntity> = emptyList(),
     val activeProfileId: Long = 0L,
-    val favoritesByProfileId: Map<Long, List<AppInfo>> = emptyMap(),
+    val previewsByProfileId: Map<Long, ProfilePreviewData> = emptyMap(),
     val globalSettings: LauncherSettings = LauncherSettings(),
     // Dock is shared across all profiles (not per-profile — see DockAppRepository), so every
     // preview card renders the same dockApps/dockDisplayMode rather than one entry per profile.
@@ -50,6 +55,26 @@ data class ProfileCarouselUiState(
 
     fun clockShowMeridiem(profileId: Long): Boolean =
         profile(profileId)?.let { if (it.overrideClock) it.clockShowMeridiem else globalSettings.clockShowMeridiem } ?: globalSettings.clockShowMeridiem
+
+    /** Mirrors [com.lumenlauncher.app.ui.home.HomeUiState.activeCalendarFontOption]'s own gating exactly — same `overrideCalendar` flag. */
+    fun calendarFontOption(profileId: Long): ClockFontOption =
+        profile(profileId)?.let { if (it.overrideCalendar) it.calendarFontOption else globalSettings.calendarFontOption } ?: globalSettings.calendarFontOption
+
+    fun calendarColorOption(profileId: Long): ClockColorOption =
+        profile(profileId)?.let { if (it.overrideCalendar) it.calendarColorOption else globalSettings.calendarColorOption } ?: globalSettings.calendarColorOption
+
+    fun calendarFontWeight(profileId: Long): FontWeightOption =
+        profile(profileId)?.let { if (it.overrideCalendar) it.calendarFontWeight else globalSettings.calendarFontWeight } ?: globalSettings.calendarFontWeight
+
+    /** Mirrors [com.lumenlauncher.app.ui.home.HomeUiState.activeAppRowPosition]'s own gating exactly — same `overrideApps` flag. */
+    fun appRowPosition(profileId: Long): AppRowPosition =
+        profile(profileId)?.let { if (it.overrideApps) it.appRowPosition else globalSettings.appRowPosition } ?: globalSettings.appRowPosition
+
+    fun appRowPresentation(profileId: Long): AppRowPresentation =
+        profile(profileId)?.let { if (it.overrideApps) it.appRowPresentation else globalSettings.appRowPresentation } ?: globalSettings.appRowPresentation
+
+    fun listContentMode(profileId: Long): ListContentMode =
+        profile(profileId)?.let { if (it.overrideApps) it.listContentMode else globalSettings.listContentMode } ?: globalSettings.listContentMode
 }
 
 @HiltViewModel
@@ -65,11 +90,11 @@ class ProfileCarouselViewModel @Inject constructor(
         settingsRepository.settings,
         observeProfilePreviews(),
         dockAppRepository.observeDockApps(),
-    ) { profiles, settings, favoritesByProfileId, dockApps ->
+    ) { profiles, settings, previewsByProfileId, dockApps ->
         ProfileCarouselUiState(
             profiles = profiles,
             activeProfileId = settings.activeProfileId,
-            favoritesByProfileId = favoritesByProfileId,
+            previewsByProfileId = previewsByProfileId,
             globalSettings = settings,
             dockApps = dockApps,
             dockDisplayMode = settings.dockDisplayMode,
