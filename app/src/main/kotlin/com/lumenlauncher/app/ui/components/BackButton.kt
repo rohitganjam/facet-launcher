@@ -1,14 +1,13 @@
 package com.lumenlauncher.app.ui.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.ui.theme.Ink
 
 /**
@@ -16,16 +15,17 @@ import com.lumenlauncher.app.ui.theme.Ink
  * same nav-back action as the system back button/gesture — added per a design update
  * requesting an explicit on-screen back affordance everywhere, not just gesture/system-back.
  * Home/Drawer are excluded (swipe down already closes the drawer).
+ *
+ * Wrapped in [IconButton] (not a bare `Icon.clickable`) so the tap target meets Android's 48dp
+ * minimum instead of shrinking to the 24dp glyph plus a few dp of padding.
  */
 @Composable
 fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Icon(
-        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-        contentDescription = "Back",
-        tint = Ink,
-        modifier = modifier
-            .testTag("back_button")
-            .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
-    )
+    IconButton(
+        onClick = onClick,
+        modifier = modifier.testTag("back_button"),
+        colors = IconButtonDefaults.iconButtonColors(contentColor = Ink),
+    ) {
+        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    }
 }

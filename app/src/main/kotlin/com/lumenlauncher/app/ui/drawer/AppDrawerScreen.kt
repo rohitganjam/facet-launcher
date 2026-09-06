@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -635,17 +636,20 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
         Spacer(modifier = Modifier.height(12.dp))
         Text(text = "No matches found for “$query”", style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(18.dp))
-        Text(
-            text = "Clear search",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Ink,
+        Box(
             modifier = Modifier
                 .clip(CircleShape)
                 .border(1.dp, Ink.copy(alpha = 0.14f), CircleShape)
                 .clickable(onClick = onClearSearch)
                 .testTag("drawer_search_clear")
+                // defaultMinSize before padding so the 48dp Android touch-target minimum wins
+                // even though bodyMedium + this row's own padding alone falls short (~38dp).
+                .defaultMinSize(minHeight = 48.dp)
                 .padding(horizontal = 16.dp, vertical = 9.dp),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "Clear search", style = MaterialTheme.typography.bodyMedium, color = Ink)
+        }
     }
 }
 
