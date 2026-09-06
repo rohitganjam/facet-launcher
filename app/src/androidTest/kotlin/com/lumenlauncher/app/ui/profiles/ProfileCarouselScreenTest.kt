@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -396,6 +397,116 @@ class ProfileCarouselScreenTest {
         // Then the preview card renders the favorite as a visible row and the dock app as an icon
         composeRule.onNodeWithText(favoriteLabel).assertExists()
         composeRule.onNodeWithContentDescription(dockLabel).assertExists()
+    }
+
+    @Test
+    fun tappingAFavoriteRowInsideTheCardStillAppliesTheProfile() {
+        // Given one profile with a favorite app
+        var profileId = 0L
+        var favoriteLabel = ""
+        var applied = false
+        setContent(
+            onProfileApplied = { applied = true },
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                profileId = only.id
+                settings.setActiveProfileId(only.id)
+                profileRepository.setOverridingFavorites(only, true)
+            },
+            seedApps = { appRepository, favoriteAppRepository, _ ->
+                val favoriteApp = appRepository.getInstalledApps()[0]
+                favoriteLabel = favoriteApp.label
+                favoriteAppRepository.addFavorite(profileId = profileId, app = favoriteApp, position = 0)
+            },
+        )
+
+        // When tapping directly on the favorite row's own label — the reused real AppRow's own
+        // click used to consume this touch instead of letting it reach the card's own clickable
+        // underneath, so the tap silently did nothing (see chat history).
+        composeRule.onNodeWithText(favoriteLabel).performClick()
+
+        // Then the profile is still applied
+        assertEquals(true, applied)
+    }
+
+    @Test
+    fun tappingADockIconInsideTheCardStillAppliesTheProfile() {
+        // Given one profile and a (profile-independent, shared) dock app
+        var profileId = 0L
+        var dockLabel = ""
+        var applied = false
+        setContent(
+            onProfileApplied = { applied = true },
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                profileId = only.id
+                settings.setActiveProfileId(only.id)
+            },
+            seedApps = { appRepository, _, dockAppRepository ->
+                val dockApp = appRepository.getInstalledApps()[0]
+                dockLabel = dockApp.label
+                dockAppRepository.addDockApp(dockApp, position = 0)
+            },
+        )
+
+        // When tapping directly on the dock icon — same reused-composable touch-consumption gap
+        // as the favorite row above.
+        composeRule.onNodeWithContentDescription(dockLabel).performClick()
+
+        // Then the profile is still applied
+        assertEquals(true, applied)
+    }
+
+    @Test
+    fun longPressingAFavoriteRowInsideTheCardDoesNotOpenTheAppContextMenu() {
+        // Given one profile with a favorite app — this card is a read-only preview of a
+        // profile's Home layout, not a place to manage apps, so the reused real AppRow's own
+        // long-press-to-open-Uninstall/App-Info menu must not fire here (see chat history).
+        var profileId = 0L
+        var favoriteLabel = ""
+        setContent(
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                profileId = only.id
+                settings.setActiveProfileId(only.id)
+                profileRepository.setOverridingFavorites(only, true)
+            },
+            seedApps = { appRepository, favoriteAppRepository, _ ->
+                val favoriteApp = appRepository.getInstalledApps()[0]
+                favoriteLabel = favoriteApp.label
+                favoriteAppRepository.addFavorite(profileId = profileId, app = favoriteApp, position = 0)
+            },
+        )
+
+        // When long-pressing the favorite row
+        composeRule.onNodeWithText(favoriteLabel).performTouchInput { longClick() }
+
+        // Then no context menu appears
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+    }
+
+    @Test
+    fun longPressingADockIconInsideTheCardDoesNotOpenTheAppContextMenu() {
+        // Given one profile and a (profile-independent, shared) dock app — same
+        // read-only-preview reasoning as the favorite row above.
+        var dockLabel = ""
+        setContent(
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                settings.setActiveProfileId(only.id)
+            },
+            seedApps = { appRepository, _, dockAppRepository ->
+                val dockApp = appRepository.getInstalledApps()[0]
+                dockLabel = dockApp.label
+                dockAppRepository.addDockApp(dockApp, position = 0)
+            },
+        )
+
+        // When long-pressing the dock icon
+        composeRule.onNodeWithContentDescription(dockLabel).performTouchInput { longClick() }
+
+        // Then no context menu appears
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
     }
 
     @Test

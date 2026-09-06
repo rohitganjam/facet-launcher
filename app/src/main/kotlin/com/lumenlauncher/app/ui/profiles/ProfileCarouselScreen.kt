@@ -250,6 +250,7 @@ private fun ProfileCarouselContent(
                         canDelete = uiState.canDeleteProfile,
                         onEditProfileClick = { onEditProfile(profile.id) },
                         onDeleteClick = { deletingProfile = profile },
+                        onCardClick = { onSelect(profile.id) },
                         modifier = visualModifier
                             .fillMaxSize()
                             .testTag("profile_page_${profile.id}")
@@ -497,6 +498,10 @@ private fun ProfilePreviewPage(
     canDelete: Boolean,
     onEditProfileClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    /** Tapping the card anywhere applies its profile (see chat history) — including on top of a
+     *  favorite row or dock icon, whose own [AppRow]/[DockIcon] click would otherwise consume the
+     *  touch instead of letting it reach the card's own clickable underneath. */
+    onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -580,7 +585,7 @@ private fun ProfilePreviewPage(
                     favorites.forEach { app ->
                         AppRow(
                             app = app,
-                            onClick = {},
+                            onClick = onCardClick,
                             badgeCount = null,
                             badgeStyle = NotificationBadgeStyle.DOT,
                             onRequestShortcuts = { emptyList() },
@@ -589,6 +594,10 @@ private fun ProfilePreviewPage(
                             presentation = appRowPresentation,
                             labelColor = appLabelColorOption.resolve(),
                             labelFontWeight = homeAppsFontWeight.resolve(),
+                            // This card is a read-only preview of a profile's Home layout, not a
+                            // place to manage apps — long-press must not open the real
+                            // Uninstall/App Info/shortcuts menu (see chat history).
+                            enableLongPressMenu = false,
                         )
                     }
                 }
@@ -607,9 +616,11 @@ private fun ProfilePreviewPage(
                         DockIcon(
                             app = app,
                             displayMode = dockDisplayMode,
-                            onClick = {},
+                            onClick = onCardClick,
                             labelColor = appLabelColorOption.resolve(),
                             labelFontWeight = homeAppsFontWeight.resolve(),
+                            // Same read-only-preview reasoning as the AppRow above.
+                            enableLongPressMenu = false,
                         )
                     }
                 }

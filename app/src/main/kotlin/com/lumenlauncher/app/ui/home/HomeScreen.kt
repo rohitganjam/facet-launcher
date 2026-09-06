@@ -261,6 +261,10 @@ internal fun AppRow(
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
+    // False for the profile carousel's read-only preview cards (see
+    // com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen) — long-press there must not open
+    // Home's real Uninstall/App Info/shortcuts menu, since the preview isn't a place you manage apps.
+    enableLongPressMenu: Boolean = true,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
@@ -273,7 +277,13 @@ internal fun AppRow(
                 // names this the "navigation drawers" token) clips the ripple/press state to a
                 // rounded rect instead of a full-bleed rectangle (see chat history).
                 .clip(MaterialTheme.shapes.large)
-                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                .then(
+                    if (enableLongPressMenu) {
+                        Modifier.combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                    } else {
+                        Modifier.clickable(onClick = onClick)
+                    }
+                )
                 // 16dp — matches App Drawer's own Regular list-item spacing exactly (base 8dp +
                 // DrawerListItemSize.REGULAR's 8dp extraRowPaddingDp), per direct request that
                 // Home's app list read as the same density as Drawer's default (see chat history).
@@ -325,13 +335,15 @@ internal fun AppRow(
                 badge()
             }
         }
-        AppContextMenu(
-            app = app,
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
-        )
+        if (enableLongPressMenu) {
+            AppContextMenu(
+                app = app,
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+            )
+        }
     }
 }
 
@@ -349,12 +361,21 @@ internal fun DockIcon(
     onLaunchShortcut: (AppShortcut) -> Unit = {},
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
+    // False for the profile carousel's read-only preview cards (see
+    // com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen) — long-press there must not open
+    // Home's real Uninstall/App Info/shortcuts menu, since the preview isn't a place you manage apps.
+    enableLongPressMenu: Boolean = true,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val clickModifier = if (enableLongPressMenu) {
+        Modifier.combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+    } else {
+        Modifier.clickable(onClick = onClick)
+    }
     Box {
         when (displayMode) {
             DockDisplayMode.ICONS -> Box(
-                modifier = modifier.combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }),
+                modifier = modifier.then(clickModifier),
             ) {
                 AppIcon(
                     icon = app.icon,
@@ -370,17 +391,19 @@ internal fun DockIcon(
                 style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
                 color = labelColor,
                 modifier = modifier
-                    .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                    .then(clickModifier)
                     .padding(vertical = 14.dp, horizontal = 4.dp),
             )
         }
-        AppContextMenu(
-            app = app,
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
-        )
+        if (enableLongPressMenu) {
+            AppContextMenu(
+                app = app,
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+            )
+        }
     }
 }
 
