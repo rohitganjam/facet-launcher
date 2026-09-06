@@ -1,0 +1,1688 @@
+{
+  "app/build.gradle.kts": {
+    "mtime": 1788560892.713798,
+    "seen": 1788674056.89503,
+    "ast_hash": "a56b1799e8e821c867350b61722509a1",
+    "semantic_hash": "a56b1799e8e821c867350b61722509a1"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/1.json": {
+    "mtime": 1787836876.758627,
+    "seen": 1788674056.8950322,
+    "ast_hash": "9b47e2160b0b7943f011eec8d5560608",
+    "semantic_hash": "9b47e2160b0b7943f011eec8d5560608"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/10.json": {
+    "mtime": 1788494127.590966,
+    "seen": 1788674056.8950331,
+    "ast_hash": "8dd6c8c1fde6afd6d877d00b56db4a61",
+    "semantic_hash": "8dd6c8c1fde6afd6d877d00b56db4a61"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/11.json": {
+    "mtime": 1788584163.9580534,
+    "seen": 1788674056.895034,
+    "ast_hash": "753e38c4427ca40d3829796704c71853",
+    "semantic_hash": "753e38c4427ca40d3829796704c71853"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/12.json": {
+    "mtime": 1788609519.4788437,
+    "seen": 1788674056.895034,
+    "ast_hash": "1ccb601668d747474348ce8e615bdbe8",
+    "semantic_hash": "1ccb601668d747474348ce8e615bdbe8"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/2.json": {
+    "mtime": 1787968195.6857903,
+    "seen": 1788674056.8950348,
+    "ast_hash": "67b88d51db397407d00200324c8acbfb",
+    "semantic_hash": "67b88d51db397407d00200324c8acbfb"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/3.json": {
+    "mtime": 1787983720.8491871,
+    "seen": 1788674056.8950348,
+    "ast_hash": "d1d2421638713038d4b7e2dbf22919f5",
+    "semantic_hash": "d1d2421638713038d4b7e2dbf22919f5"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/4.json": {
+    "mtime": 1788026199.5549037,
+    "seen": 1788674056.895036,
+    "ast_hash": "2217054f54be6855c7ad819b4490a31c",
+    "semantic_hash": "2217054f54be6855c7ad819b4490a31c"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/5.json": {
+    "mtime": 1788056489.458508,
+    "seen": 1788674056.895036,
+    "ast_hash": "009b610b72dc5094f12a621c79c8637b",
+    "semantic_hash": "009b610b72dc5094f12a621c79c8637b"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/6.json": {
+    "mtime": 1788065272.4622214,
+    "seen": 1788674056.895036,
+    "ast_hash": "ae01b6d07f9f039e13ab8c3121a1af1c",
+    "semantic_hash": "ae01b6d07f9f039e13ab8c3121a1af1c"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/7.json": {
+    "mtime": 1788138802.1949677,
+    "seen": 1788674056.895037,
+    "ast_hash": "e084e8de3341858f68eae9b1fe3c6332",
+    "semantic_hash": "e084e8de3341858f68eae9b1fe3c6332"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/8.json": {
+    "mtime": 1788358172.5000634,
+    "seen": 1788674056.895037,
+    "ast_hash": "bd6011b64f63b3bcfa948143153ee463",
+    "semantic_hash": "bd6011b64f63b3bcfa948143153ee463"
+  },
+  "app/schemas/com.lumenlauncher.app.data.local.LumenDatabase/9.json": {
+    "mtime": 1788488117.2864945,
+    "seen": 1788674056.895038,
+    "ast_hash": "067e231e9ef1e260aba4ca286f616816",
+    "semantic_hash": "067e231e9ef1e260aba4ca286f616816"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/data/local/LumenDatabaseMigrationTest.kt": {
+    "mtime": 1788609870.392011,
+    "seen": 1788674056.895038,
+    "ast_hash": "9dfca4fd03faa5758924729a02157118",
+    "semantic_hash": "9dfca4fd03faa5758924729a02157118"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/components/AppContextMenuTest.kt": {
+    "mtime": 1788005899.0707448,
+    "seen": 1788674056.895038,
+    "ast_hash": "08eb2666fd8576a31383ae90cca9093c",
+    "semantic_hash": "08eb2666fd8576a31383ae90cca9093c"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/dock/DockAppPickerScreenTest.kt": {
+    "mtime": 1788110329.9864964,
+    "seen": 1788674056.895039,
+    "ast_hash": "3545e41c1f6a5fdcd20c6079d1b471f0",
+    "semantic_hash": "3545e41c1f6a5fdcd20c6079d1b471f0"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/drawer/AlphabetRailTest.kt": {
+    "mtime": 1787838549.8832138,
+    "seen": 1788674056.895039,
+    "ast_hash": "45f39bad72e5a633d02ca1fc69867284",
+    "semantic_hash": "45f39bad72e5a633d02ca1fc69867284"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/drawer/AppDrawerScreenTest.kt": {
+    "mtime": 1788488093.4217064,
+    "seen": 1788674056.89504,
+    "ast_hash": "d9b4fc74f163885281dd4e68ae927549",
+    "semantic_hash": "d9b4fc74f163885281dd4e68ae927549"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/drawer/ContactConnectionsSheetTest.kt": {
+    "mtime": 1788453821.0605676,
+    "seen": 1788674056.89504,
+    "ast_hash": "c03e536c8eaa68bd54f8ce7910d333e9",
+    "semantic_hash": "c03e536c8eaa68bd54f8ce7910d333e9"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/home/ClockBlockTest.kt": {
+    "mtime": 1788150863.9202783,
+    "seen": 1788674056.89504,
+    "ast_hash": "cb1ed86e6cc1c94b87f02377ff078ffa",
+    "semantic_hash": "cb1ed86e6cc1c94b87f02377ff078ffa"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/home/HomeScreenTest.kt": {
+    "mtime": 1788544678.4801347,
+    "seen": 1788674056.895041,
+    "ast_hash": "eb3377cd6bcf7d33c5f62df7cd0b8f4e",
+    "semantic_hash": "eb3377cd6bcf7d33c5f62df7cd0b8f4e"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/home/clock/ClockStyleGalleryScreenTest.kt": {
+    "mtime": 1788610552.4513304,
+    "seen": 1788674056.895041,
+    "ast_hash": "b926e872b20e41c6ab14cb4ad9827e94",
+    "semantic_hash": "b926e872b20e41c6ab14cb4ad9827e94"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/HubGestureTest.kt": {
+    "mtime": 1788543901.2608376,
+    "seen": 1788674056.895042,
+    "ast_hash": "a77e693f3a45d6f8d3b09204296d59ee",
+    "semantic_hash": "a77e693f3a45d6f8d3b09204296d59ee"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/HubScreenTest.kt": {
+    "mtime": 1788572029.4341838,
+    "seen": 1788674056.895042,
+    "ast_hash": "5b6abc56e1b3f0c21f62fc83c2fcf936",
+    "semantic_hash": "5b6abc56e1b3f0c21f62fc83c2fcf936"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt": {
+    "mtime": 1788352367.2750895,
+    "seen": 1788674056.895042,
+    "ast_hash": "86f241e34eb3eeab391f8a6c084b55dd",
+    "semantic_hash": "86f241e34eb3eeab391f8a6c084b55dd"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRouteTest.kt": {
+    "mtime": 1788660094.8525305,
+    "seen": 1788674056.8950431,
+    "ast_hash": "7ee9874d8a4ff83c170c45921445188e",
+    "semantic_hash": "7ee9874d8a4ff83c170c45921445188e"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/launcher/KeyboardDismissalTest.kt": {
+    "mtime": 1788660119.0581636,
+    "seen": 1788674056.8950431,
+    "ast_hash": "4ab2cfe4ddf08f38f1f2103a66f0c9fb",
+    "semantic_hash": "4ab2cfe4ddf08f38f1f2103a66f0c9fb"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt": {
+    "mtime": 1788110316.7840617,
+    "seen": 1788674056.895044,
+    "ast_hash": "8c10b27ff87b42f9514eff4f52b9ea24",
+    "semantic_hash": "8c10b27ff87b42f9514eff4f52b9ea24"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreenTest.kt": {
+    "mtime": 1788669160.871061,
+    "seen": 1788674056.895044,
+    "ast_hash": "0bda58f5a53e8d25b24ef9e10aa679dd",
+    "semantic_hash": "0bda58f5a53e8d25b24ef9e10aa679dd"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ProfileSettingsScreenTest.kt": {
+    "mtime": 1788600390.4908226,
+    "seen": 1788674056.895044,
+    "ast_hash": "fe5cbb63cc9fdca01fd90f9d1bd403a8",
+    "semantic_hash": "fe5cbb63cc9fdca01fd90f9d1bd403a8"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/AppDrawerSettingsScreenTest.kt": {
+    "mtime": 1788600378.2179887,
+    "seen": 1788674056.895045,
+    "ast_hash": "2c1bad04da58406d346e10b30c02e802",
+    "semantic_hash": "2c1bad04da58406d346e10b30c02e802"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsScreenTest.kt": {
+    "mtime": 1788610574.7912207,
+    "seen": 1788674056.895045,
+    "ast_hash": "d8ea1d526f63c89a59527efeebcfd10e",
+    "semantic_hash": "d8ea1d526f63c89a59527efeebcfd10e"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/CalendarSettingsScreenTest.kt": {
+    "mtime": 1788585063.4181607,
+    "seen": 1788674056.895046,
+    "ast_hash": "74320557adab4acf425f1fea28df205e",
+    "semantic_hash": "74320557adab4acf425f1fea28df205e"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/DockSettingsScreenTest.kt": {
+    "mtime": 1788600307.7450738,
+    "seen": 1788674056.895046,
+    "ast_hash": "72f085f0ee81a45f01820abfcddd986e",
+    "semantic_hash": "72f085f0ee81a45f01820abfcddd986e"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/FakeCalendarPermissionRepository.kt": {
+    "mtime": 1788078626.7655497,
+    "seen": 1788674056.895046,
+    "ast_hash": "bdf830714542264da56c2f66c39ae8dd",
+    "semantic_hash": "bdf830714542264da56c2f66c39ae8dd"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/FakeNotificationAccessRepository.kt": {
+    "mtime": 1788491952.0697627,
+    "seen": 1788674056.895047,
+    "ast_hash": "67458c3c1440bcb13b34fe46dd0c576b",
+    "semantic_hash": "67458c3c1440bcb13b34fe46dd0c576b"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/HomeAppsListSettingsScreenTest.kt": {
+    "mtime": 1788600324.1871693,
+    "seen": 1788674056.895047,
+    "ast_hash": "003a31854c8c99ed4fd25f57c22a1290",
+    "semantic_hash": "003a31854c8c99ed4fd25f57c22a1290"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/NotificationSettingsScreenTest.kt": {
+    "mtime": 1788491991.193458,
+    "seen": 1788674056.895047,
+    "ast_hash": "da61f943d0c1b0e1e9dc503ab772df65",
+    "semantic_hash": "da61f943d0c1b0e1e9dc503ab772df65"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/PermissionsScreenTest.kt": {
+    "mtime": 1788491837.6385586,
+    "seen": 1788674056.895048,
+    "ast_hash": "a34e8fe01ca326dccd7382e45a7af3b7",
+    "semantic_hash": "a34e8fe01ca326dccd7382e45a7af3b7"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/SettingsScreenTest.kt": {
+    "mtime": 1788659826.928805,
+    "seen": 1788674056.895048,
+    "ast_hash": "77068c79488905eb1a6afbf0a96f8d29",
+    "semantic_hash": "77068c79488905eb1a6afbf0a96f8d29"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreScreenTest.kt": {
+    "mtime": 1788553491.254499,
+    "seen": 1788674056.8950489,
+    "ast_hash": "26ab08e2737c1ba0cdc2bf4e4db4eec1",
+    "semantic_hash": "26ab08e2737c1ba0cdc2bf4e4db4eec1"
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/theme/ColorTest.kt": {
+    "mtime": 1788017774.328571,
+    "seen": 1788674056.8950489,
+    "ast_hash": "cddaf46da383c500f43baeabeb0e463a",
+    "semantic_hash": "cddaf46da383c500f43baeabeb0e463a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/LauncherActivity.kt": {
+    "mtime": 1788612255.3043478,
+    "seen": 1788674056.8950489,
+    "ast_hash": "2b7af18125158edf8ecdbe120b614202",
+    "semantic_hash": "2b7af18125158edf8ecdbe120b614202"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/LumenApplication.kt": {
+    "mtime": 1787805486.734938,
+    "seen": 1788674056.89505,
+    "ast_hash": "1ce105de771b29d4429d3da1d8ce9849",
+    "semantic_hash": "1ce105de771b29d4429d3da1d8ce9849"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/AppRepository.kt": {
+    "mtime": 1788612957.0982175,
+    "seen": 1788674056.89505,
+    "ast_hash": "ab888d66e4b0d0b0786778b48e6c7011",
+    "semantic_hash": "ab888d66e4b0d0b0786778b48e6c7011"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/AppShortcutRepository.kt": {
+    "mtime": 1788007587.0610766,
+    "seen": 1788674056.895051,
+    "ast_hash": "42e47038ca802e8828156330dc3340e0",
+    "semantic_hash": "42e47038ca802e8828156330dc3340e0"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/BackupRepository.kt": {
+    "mtime": 1788548205.8415976,
+    "seen": 1788674056.895051,
+    "ast_hash": "727b114b9e22ebe25842b13aa14b7bb6",
+    "semantic_hash": "727b114b9e22ebe25842b13aa14b7bb6"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/CalendarPermissionRepository.kt": {
+    "mtime": 1788078472.0211267,
+    "seen": 1788674056.895051,
+    "ast_hash": "eda1592431d2d4476019c1b93e6d34d9",
+    "semantic_hash": "eda1592431d2d4476019c1b93e6d34d9"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/CalendarRepository.kt": {
+    "mtime": 1788026224.5770738,
+    "seen": 1788674056.895052,
+    "ast_hash": "8b00fafbf76a7ad95a469668cda8f7b7",
+    "semantic_hash": "8b00fafbf76a7ad95a469668cda8f7b7"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/ContactPermissionRepository.kt": {
+    "mtime": 1788001569.616032,
+    "seen": 1788674056.895052,
+    "ast_hash": "ba2cae01b627ec504636234cde47a94d",
+    "semantic_hash": "ba2cae01b627ec504636234cde47a94d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/ContactRepository.kt": {
+    "mtime": 1788453373.486742,
+    "seen": 1788674056.895052,
+    "ast_hash": "6000a055e6a254802043e54d2693b935",
+    "semantic_hash": "6000a055e6a254802043e54d2693b935"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/DefaultFavoriteAppRepository.kt": {
+    "mtime": 1788548194.4352605,
+    "seen": 1788674056.8950531,
+    "ast_hash": "e2033a8cb212e010bd02be15a314c62f",
+    "semantic_hash": "e2033a8cb212e010bd02be15a314c62f"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/DefaultLauncherRepository.kt": {
+    "mtime": 1787837398.9360387,
+    "seen": 1788674056.8950531,
+    "ast_hash": "485dde0274d395031b82f8845154a5e4",
+    "semantic_hash": "485dde0274d395031b82f8845154a5e4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/DockAppRepository.kt": {
+    "mtime": 1788548184.2270436,
+    "seen": 1788674056.895054,
+    "ast_hash": "ccbab3e066e192b39d5ba10d183e1802",
+    "semantic_hash": "ccbab3e066e192b39d5ba10d183e1802"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt": {
+    "mtime": 1788548173.384466,
+    "seen": 1788674056.895054,
+    "ast_hash": "3bd1cf83b4480630cedc23a612a99d94",
+    "semantic_hash": "3bd1cf83b4480630cedc23a612a99d94"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/LumenNotificationListenerService.kt": {
+    "mtime": 1788068469.5752726,
+    "seen": 1788674056.895054,
+    "ast_hash": "6687ed88191dc27f7db89eeb6961c70a",
+    "semantic_hash": "6687ed88191dc27f7db89eeb6961c70a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/NotificationAccessRepository.kt": {
+    "mtime": 1788491947.0250452,
+    "seen": 1788674056.895055,
+    "ast_hash": "eb73db0a8569f7c03f2b0d7db841731e",
+    "semantic_hash": "eb73db0a8569f7c03f2b0d7db841731e"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/NotificationBadgeRepository.kt": {
+    "mtime": 1788068323.3443575,
+    "seen": 1788674056.895055,
+    "ast_hash": "df57359bda337481d17cf97f9f0a7b50",
+    "semantic_hash": "df57359bda337481d17cf97f9f0a7b50"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/NotificationShadeRepository.kt": {
+    "mtime": 1788026886.8189788,
+    "seen": 1788674056.895055,
+    "ast_hash": "4e4a297bd5bc2918eeef5f7f932010cb",
+    "semantic_hash": "4e4a297bd5bc2918eeef5f7f932010cb"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/ProfileRepository.kt": {
+    "mtime": 1788609476.1392417,
+    "seen": 1788674056.8950558,
+    "ast_hash": "f0898507a73534344ab3680b454717b0",
+    "semantic_hash": "f0898507a73534344ab3680b454717b0"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/SettingsRepository.kt": {
+    "mtime": 1788609386.9051557,
+    "seen": 1788674056.8950558,
+    "ast_hash": "f64684a459e903ae752ed6241fe94d6c",
+    "semantic_hash": "f64684a459e903ae752ed6241fe94d6c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/UsageAccessRepository.kt": {
+    "mtime": 1787983700.9166374,
+    "seen": 1788674056.8950558,
+    "ast_hash": "676a8e0b93fe9bd95dbddac010931a08",
+    "semantic_hash": "676a8e0b93fe9bd95dbddac010931a08"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/UsageStatsRepository.kt": {
+    "mtime": 1788572513.5853486,
+    "seen": 1788674056.895057,
+    "ast_hash": "d3908a766acaa0d98070ac1debeaab96",
+    "semantic_hash": "d3908a766acaa0d98070ac1debeaab96"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/WidgetPlacementRepository.kt": {
+    "mtime": 1788138762.8254175,
+    "seen": 1788674056.895057,
+    "ast_hash": "d1680a9627acebfaa290cce6f9373dd6",
+    "semantic_hash": "d1680a9627acebfaa290cce6f9373dd6"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/di/AppModule.kt": {
+    "mtime": 1787983681.3480108,
+    "seen": 1788674056.895057,
+    "ast_hash": "7e55e201a0274761456c13c0c8b7768b",
+    "semantic_hash": "7e55e201a0274761456c13c0c8b7768b"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/di/DataStoreModule.kt": {
+    "mtime": 1787836804.7220013,
+    "seen": 1788674056.895058,
+    "ast_hash": "be4fd794e0cbf2c0380c85ccf284cff4",
+    "semantic_hash": "be4fd794e0cbf2c0380c85ccf284cff4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/di/DatabaseModule.kt": {
+    "mtime": 1788546839.7345214,
+    "seen": 1788674056.895058,
+    "ast_hash": "e781743e4677eca58daa3c70028af4cd",
+    "semantic_hash": "e781743e4677eca58daa3c70028af4cd"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/di/WidgetModule.kt": {
+    "mtime": 1788138980.5077202,
+    "seen": 1788674056.8950589,
+    "ast_hash": "205e81d38c339a52860076121c938d39",
+    "semantic_hash": "205e81d38c339a52860076121c938d39"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/Converters.kt": {
+    "mtime": 1788609430.12478,
+    "seen": 1788674056.8950589,
+    "ast_hash": "16959876d609e9a7f479f63b75977e49",
+    "semantic_hash": "16959876d609e9a7f479f63b75977e49"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/DefaultFavoriteAppDao.kt": {
+    "mtime": 1788548151.4044478,
+    "seen": 1788674056.8950589,
+    "ast_hash": "1b9bd5c5190db50ef7f15adfc782c744",
+    "semantic_hash": "1b9bd5c5190db50ef7f15adfc782c744"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/DefaultFavoriteAppEntity.kt": {
+    "mtime": 1788056086.0316122,
+    "seen": 1788674056.89506,
+    "ast_hash": "88c999403f9311f913f8dee95567bf48",
+    "semantic_hash": "88c999403f9311f913f8dee95567bf48"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/DockAppDao.kt": {
+    "mtime": 1788548143.8825564,
+    "seen": 1788674056.89506,
+    "ast_hash": "81589a41b594d70862afb8f5af8dc881",
+    "semantic_hash": "81589a41b594d70862afb8f5af8dc881"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/DockAppEntity.kt": {
+    "mtime": 1787836844.0291145,
+    "seen": 1788674056.895061,
+    "ast_hash": "e79739cecbb866d3db0d2f1c4b73b9a8",
+    "semantic_hash": "e79739cecbb866d3db0d2f1c4b73b9a8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDao.kt": {
+    "mtime": 1788056097.3928914,
+    "seen": 1788674056.895061,
+    "ast_hash": "322259069e20aaa210c9caa63a4dc994",
+    "semantic_hash": "322259069e20aaa210c9caa63a4dc994"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/FavoriteAppEntity.kt": {
+    "mtime": 1787836852.5212743,
+    "seen": 1788674056.895061,
+    "ast_hash": "db716ecd0aafe03826cd844321435475",
+    "semantic_hash": "db716ecd0aafe03826cd844321435475"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/LumenDatabase.kt": {
+    "mtime": 1788609437.845767,
+    "seen": 1788674056.895062,
+    "ast_hash": "21b86449c81286878e3986714bd7ec7c",
+    "semantic_hash": "21b86449c81286878e3986714bd7ec7c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/Migrations.kt": {
+    "mtime": 1788609448.797564,
+    "seen": 1788674056.895062,
+    "ast_hash": "82539da081c01cecb4a80c3a7dbb0c59",
+    "semantic_hash": "82539da081c01cecb4a80c3a7dbb0c59"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/ProfileDao.kt": {
+    "mtime": 1788548137.0807927,
+    "seen": 1788674056.895062,
+    "ast_hash": "a34e5d526e00089c263784ce7a0dc7c1",
+    "semantic_hash": "a34e5d526e00089c263784ce7a0dc7c1"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/ProfileEntity.kt": {
+    "mtime": 1788609411.6154237,
+    "seen": 1788674056.895063,
+    "ast_hash": "339504faa6efbed9856c1ab500d88fec",
+    "semantic_hash": "339504faa6efbed9856c1ab500d88fec"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/WidgetPlacementDao.kt": {
+    "mtime": 1788138756.970994,
+    "seen": 1788674056.895063,
+    "ast_hash": "76184c99bf762a7a9c94fa83ca059926",
+    "semantic_hash": "76184c99bf762a7a9c94fa83ca059926"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/local/WidgetPlacementEntity.kt": {
+    "mtime": 1788138752.0683966,
+    "seen": 1788674056.895064,
+    "ast_hash": "44b52128a1cd2ba12772add7fc19ef21",
+    "semantic_hash": "44b52128a1cd2ba12772add7fc19ef21"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/AppInfo.kt": {
+    "mtime": 1788572496.6123433,
+    "seen": 1788674056.895064,
+    "ast_hash": "f51b59587b87f63fb74442aca77c4f3d",
+    "semantic_hash": "f51b59587b87f63fb74442aca77c4f3d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/AppShortcut.kt": {
+    "mtime": 1788007572.5832484,
+    "seen": 1788674056.895064,
+    "ast_hash": "24365db469461cddb50f043f80b011e4",
+    "semantic_hash": "24365db469461cddb50f043f80b011e4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/BackupBundle.kt": {
+    "mtime": 1788609539.2258048,
+    "seen": 1788674056.895065,
+    "ast_hash": "6b26248ec6da2da462f5e9126868adc8",
+    "semantic_hash": "6b26248ec6da2da462f5e9126868adc8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/CalendarInfo.kt": {
+    "mtime": 1788024500.4890177,
+    "seen": 1788674056.895065,
+    "ast_hash": "28e7882cfad25558344e394445b70684",
+    "semantic_hash": "28e7882cfad25558344e394445b70684"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockColorOption.kt": {
+    "mtime": 1788543427.7733474,
+    "seen": 1788674056.895065,
+    "ast_hash": "f5c7903930d4816c7bf963ab140ae08a",
+    "semantic_hash": "f5c7903930d4816c7bf963ab140ae08a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt": {
+    "mtime": 1788493434.7585115,
+    "seen": 1788674056.895066,
+    "ast_hash": "3c6b76f372fb196396438ecb7f883223",
+    "semantic_hash": "3c6b76f372fb196396438ecb7f883223"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockTemplateId.kt": {
+    "mtime": 1788105976.0210614,
+    "seen": 1788674056.895067,
+    "ast_hash": "5e4cf634ebf2511d42d86bbd3dd3c22b",
+    "semantic_hash": "5e4cf634ebf2511d42d86bbd3dd3c22b"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/ContactConnection.kt": {
+    "mtime": 1788452989.4469345,
+    "seen": 1788674056.895067,
+    "ast_hash": "9734545a38b70a42a9ee02859267041d",
+    "semantic_hash": "9734545a38b70a42a9ee02859267041d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/ContactInfo.kt": {
+    "mtime": 1788001564.3112066,
+    "seen": 1788674056.895067,
+    "ast_hash": "7f1331a84a5825d490d756cd55b0608c",
+    "semantic_hash": "7f1331a84a5825d490d756cd55b0608c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/FontWeightOption.kt": {
+    "mtime": 1788609323.105653,
+    "seen": 1788674056.895068,
+    "ast_hash": "46c061edfe3050f21a300fae462203e6",
+    "semantic_hash": "46c061edfe3050f21a300fae462203e6"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/IconRenderMode.kt": {
+    "mtime": 1788096200.2711601,
+    "seen": 1788674056.895068,
+    "ast_hash": "5c82ba91b4607c22e3b5d18114c84715",
+    "semantic_hash": "5c82ba91b4607c22e3b5d18114c84715"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/LauncherFontOption.kt": {
+    "mtime": 1788493426.268826,
+    "seen": 1788674056.895069,
+    "ast_hash": "aef92c4e500492ed6ee92f22b4a472f1",
+    "semantic_hash": "aef92c4e500492ed6ee92f22b4a472f1"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/LauncherSettings.kt": {
+    "mtime": 1788656937.7762053,
+    "seen": 1788674056.895069,
+    "ast_hash": "e884a18f6d8326fd684d7fa0c728b065",
+    "semantic_hash": "e884a18f6d8326fd684d7fa0c728b065"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/ListContentMode.kt": {
+    "mtime": 1787983606.8738158,
+    "seen": 1788674056.895069,
+    "ast_hash": "5d3a2ba509193356a1d49a3126ebbcd1",
+    "semantic_hash": "5d3a2ba509193356a1d49a3126ebbcd1"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/NotificationInfo.kt": {
+    "mtime": 1788068313.7571244,
+    "seen": 1788674056.8950698,
+    "ast_hash": "01d0f1b479113ab2089a46a76f0d507d",
+    "semantic_hash": "01d0f1b479113ab2089a46a76f0d507d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/model/WidgetProviderOption.kt": {
+    "mtime": 1788150567.6312158,
+    "seen": 1788674056.8950698,
+    "ast_hash": "1cce99e4353dc9c1b520d540dc6a6956",
+    "semantic_hash": "1cce99e4353dc9c1b520d540dc6a6956"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/widget/AppWidgetRepository.kt": {
+    "mtime": 1788320701.9499414,
+    "seen": 1788674056.8950698,
+    "ast_hash": "ac67aa30027ac5b2a029971a9e3c7d98",
+    "semantic_hash": "ac67aa30027ac5b2a029971a9e3c7d98"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/data/widget/LauncherAppWidgetHost.kt": {
+    "mtime": 1788319715.3275115,
+    "seen": 1788674056.895071,
+    "ast_hash": "f232709a457e0075d0b85d847ed83622",
+    "semantic_hash": "f232709a457e0075d0b85d847ed83622"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/AssignCalendarColorsUseCase.kt": {
+    "mtime": 1788023190.3301995,
+    "seen": 1788674056.895071,
+    "ast_hash": "fce60834a63dfd384453a11dab8f3420",
+    "semantic_hash": "fce60834a63dfd384453a11dab8f3420"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/BackupMapping.kt": {
+    "mtime": 1788609558.1581573,
+    "seen": 1788674056.895072,
+    "ast_hash": "927e1dc571db36f26d64fedf28eb589e",
+    "semantic_hash": "927e1dc571db36f26d64fedf28eb589e"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/CleanUpUninstalledAppsUseCase.kt": {
+    "mtime": 1788056464.2421486,
+    "seen": 1788674056.895072,
+    "ast_hash": "457c8402e1ba48569d609e3700d46be5",
+    "semantic_hash": "457c8402e1ba48569d609e3700d46be5"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/CompactWidgetsUseCase.kt": {
+    "mtime": 1788196128.0622563,
+    "seen": 1788674056.895072,
+    "ast_hash": "3add95d76038379e7bb74931fe32f7ce",
+    "semantic_hash": "3add95d76038379e7bb74931fe32f7ce"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/DeleteWidgetUseCase.kt": {
+    "mtime": 1788139111.7917333,
+    "seen": 1788674056.895073,
+    "ast_hash": "5768e9bdfe3e030b738458d3bf3e07bc",
+    "semantic_hash": "5768e9bdfe3e030b738458d3bf3e07bc"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/EnsureActiveProfileUseCase.kt": {
+    "mtime": 1787881239.7566776,
+    "seen": 1788674056.895073,
+    "ast_hash": "a5e7b17b59ac5db149184506fb977bd7",
+    "semantic_hash": "a5e7b17b59ac5db149184506fb977bd7"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ExportBackupUseCase.kt": {
+    "mtime": 1788609570.646319,
+    "seen": 1788674056.895073,
+    "ast_hash": "3e718c5baddeeebe22449dc237d5a4e4",
+    "semantic_hash": "3e718c5baddeeebe22449dc237d5a4e4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/FlowCombine.kt": {
+    "mtime": 1788000800.0082154,
+    "seen": 1788674056.8950741,
+    "ast_hash": "34b6b0b801ea19d1a4461f3111cb7ed4",
+    "semantic_hash": "34b6b0b801ea19d1a4461f3111cb7ed4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/GetInstalledAppsUseCase.kt": {
+    "mtime": 1788572524.9743612,
+    "seen": 1788674056.8950741,
+    "ast_hash": "800be78165fd959806ab53c3df55ba6e",
+    "semantic_hash": "800be78165fd959806ab53c3df55ba6e"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/GroupAppsByLetterUseCase.kt": {
+    "mtime": 1787982657.2769017,
+    "seen": 1788674056.895075,
+    "ast_hash": "43a48fb9c98862e248fa18e0efbb23e7",
+    "semantic_hash": "43a48fb9c98862e248fa18e0efbb23e7"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/HubGridConstants.kt": {
+    "mtime": 1788320675.5070386,
+    "seen": 1788674056.895075,
+    "ast_hash": "5f3aba2268c723ae6336df17eca40d54",
+    "semantic_hash": "5f3aba2268c723ae6336df17eca40d54"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCase.kt": {
+    "mtime": 1788609589.0355682,
+    "seen": 1788674056.895075,
+    "ast_hash": "16eea61d34eb3e64caf3e5ae60074c48",
+    "semantic_hash": "16eea61d34eb3e64caf3e5ae60074c48"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ObserveHomeScreenStateUseCase.kt": {
+    "mtime": 1788667450.8810573,
+    "seen": 1788674056.895076,
+    "ast_hash": "785bc16544a6807bd43a199ab7fb9a04",
+    "semantic_hash": "785bc16544a6807bd43a199ab7fb9a04"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ObserveHubStateUseCase.kt": {
+    "mtime": 1788139526.7665343,
+    "seen": 1788674056.895076,
+    "ast_hash": "c52995465c42b5bd892828e2d01ac17f",
+    "semantic_hash": "c52995465c42b5bd892828e2d01ac17f"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ObserveProfilePreviewsUseCase.kt": {
+    "mtime": 1788667470.579255,
+    "seen": 1788674056.895076,
+    "ast_hash": "b747ae47c84e2c37f7a4f6a879d846ba",
+    "semantic_hash": "b747ae47c84e2c37f7a4f6a879d846ba"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ObserveSettingsScreenStateUseCase.kt": {
+    "mtime": 1788056234.620188,
+    "seen": 1788674056.8950772,
+    "ast_hash": "fdf1005341fb0544dca6a6a1fd5eb708",
+    "semantic_hash": "fdf1005341fb0544dca6a6a1fd5eb708"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/PlaceWidgetUseCase.kt": {
+    "mtime": 1788548413.2339604,
+    "seen": 1788674056.8950772,
+    "ast_hash": "bf2107def86d86bdd84bc34004ecb257",
+    "semantic_hash": "bf2107def86d86bdd84bc34004ecb257"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/RankBySearchRelevanceUseCase.kt": {
+    "mtime": 1788405437.3287745,
+    "seen": 1788674056.895078,
+    "ast_hash": "0d0655131b3f2c6b8a291921beb43d71",
+    "semantic_hash": "0d0655131b3f2c6b8a291921beb43d71"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ResolveWidgetDropUseCase.kt": {
+    "mtime": 1788151843.6428323,
+    "seen": 1788674056.895078,
+    "ast_hash": "c0ea131a4d78d0051a8a15dc4145953d",
+    "semantic_hash": "c0ea131a4d78d0051a8a15dc4145953d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/domain/ResolveWidgetResizeUseCase.kt": {
+    "mtime": 1788540536.8703454,
+    "seen": 1788674056.895078,
+    "ast_hash": "6d717730ed590406e0f26c25e76e03c2",
+    "semantic_hash": "6d717730ed590406e0f26c25e76e03c2"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/AppContextMenu.kt": {
+    "mtime": 1788096148.363238,
+    "seen": 1788674056.895079,
+    "ast_hash": "41d87e61ef627e80353aeb5f476d4b61",
+    "semantic_hash": "41d87e61ef627e80353aeb5f476d4b61"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/AppIcon.kt": {
+    "mtime": 1788096122.6530797,
+    "seen": 1788674056.895079,
+    "ast_hash": "b73f320bb337e76ae9d2fbe776e8b87c",
+    "semantic_hash": "b73f320bb337e76ae9d2fbe776e8b87c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/BackButton.kt": {
+    "mtime": 1788675481.504528,
+    "seen": 1788675976.7712471,
+    "ast_hash": "d1f8ef298c31f12f5306afd93b78eb3c",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/ConfirmDialog.kt": {
+    "mtime": 1788022533.8179133,
+    "seen": 1788674056.8950799,
+    "ast_hash": "1d8ef43000278765db08254508340bb0",
+    "semantic_hash": "1d8ef43000278765db08254508340bb0"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/DashedBorder.kt": {
+    "mtime": 1788141751.2061386,
+    "seen": 1788674056.8950799,
+    "ast_hash": "07642ec5f77a54336b9656be6a922583",
+    "semantic_hash": "07642ec5f77a54336b9656be6a922583"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/DragReorderState.kt": {
+    "mtime": 1788449778.1992822,
+    "seen": 1788674056.895081,
+    "ast_hash": "b0fd0caa6dd1b3613f12dc5139e7d18d",
+    "semantic_hash": "b0fd0caa6dd1b3613f12dc5139e7d18d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/FontWeightSlider.kt": {
+    "mtime": 1788610527.2111177,
+    "seen": 1788674056.895081,
+    "ast_hash": "2e52033abdd45a359290cd1dc127fe78",
+    "semantic_hash": "2e52033abdd45a359290cd1dc127fe78"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/InheritOverrideCard.kt": {
+    "mtime": 1788065868.6013556,
+    "seen": 1788674056.895081,
+    "ast_hash": "c3fdb7d71005001c22013395c91c2b0b",
+    "semantic_hash": "c3fdb7d71005001c22013395c91c2b0b"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/LabeledDropdownRow.kt": {
+    "mtime": 1788097616.5870733,
+    "seen": 1788674056.895082,
+    "ast_hash": "c543421fbda6e6047904e2d1bc630f47",
+    "semantic_hash": "c543421fbda6e6047904e2d1bc630f47"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/RenameDialog.kt": {
+    "mtime": 1788022509.1239877,
+    "seen": 1788674056.895082,
+    "ast_hash": "46474ad57a4873bfb1ece9cc8063b2ba",
+    "semantic_hash": "46474ad57a4873bfb1ece9cc8063b2ba"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/SettingsCard.kt": {
+    "mtime": 1788097297.389132,
+    "seen": 1788674056.895083,
+    "ast_hash": "dc55788ba00b4f256944a381ae1f4baf",
+    "semantic_hash": "dc55788ba00b4f256944a381ae1f4baf"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/StickyHeaderLayout.kt": {
+    "mtime": 1788109610.4246836,
+    "seen": 1788674056.895083,
+    "ast_hash": "f065a8f921b190e311fa0e70b8fa62b8",
+    "semantic_hash": "f065a8f921b190e311fa0e70b8fa62b8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/ThemedDropdownMenu.kt": {
+    "mtime": 1788587842.2449405,
+    "seen": 1788674056.895083,
+    "ast_hash": "d07083cfc7b3bee000295f3b9c8a425e",
+    "semantic_hash": "d07083cfc7b3bee000295f3b9c8a425e"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/dock/DockAppPickerScreen.kt": {
+    "mtime": 1788401689.23606,
+    "seen": 1788674056.8950841,
+    "ast_hash": "938d29435c7acdb51f89472ab80083c4",
+    "semantic_hash": "938d29435c7acdb51f89472ab80083c4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/dock/DockAppPickerViewModel.kt": {
+    "mtime": 1788025652.0492687,
+    "seen": 1788674056.8950841,
+    "ast_hash": "c940335dc7336cd5f906e8e14328d324",
+    "semantic_hash": "c940335dc7336cd5f906e8e14328d324"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/AlphabetRail.kt": {
+    "mtime": 1788086330.8816073,
+    "seen": 1788674056.8950841,
+    "ast_hash": "c6a4ca1be38cdf40744bd38fee193d54",
+    "semantic_hash": "c6a4ca1be38cdf40744bd38fee193d54"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/AppDrawerScreen.kt": {
+    "mtime": 1788675560.1346264,
+    "seen": 1788675976.771254,
+    "ast_hash": "e18544aacfc18ba181e8bc68d8f0bef0",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/ContactConnectionsSheet.kt": {
+    "mtime": 1788660027.912794,
+    "seen": 1788674056.895085,
+    "ast_hash": "8bf790fa75821d6154a9eae1203d3549",
+    "semantic_hash": "8bf790fa75821d6154a9eae1203d3549"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/DrawerViewModel.kt": {
+    "mtime": 1788487657.5166197,
+    "seen": 1788674056.895086,
+    "ast_hash": "dde62765c62ed708a464cd3c6e47d5f4",
+    "semantic_hash": "dde62765c62ed708a464cd3c6e47d5f4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/ClockBlock.kt": {
+    "mtime": 1788610002.1581578,
+    "seen": 1788674056.895086,
+    "ast_hash": "0fc6d9dd5dbc599f17e9dc9f99f6fc8d",
+    "semantic_hash": "0fc6d9dd5dbc599f17e9dc9f99f6fc8d"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt": {
+    "mtime": 1788669109.0109305,
+    "seen": 1788674056.895086,
+    "ast_hash": "1c86d5c8d25057ba378765185ddcbbb8",
+    "semantic_hash": "1c86d5c8d25057ba378765185ddcbbb8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeUiState.kt": {
+    "mtime": 1788612206.820841,
+    "seen": 1788674056.895087,
+    "ast_hash": "b74997a1ce23e9a408fdaa40ccd15cbd",
+    "semantic_hash": "b74997a1ce23e9a408fdaa40ccd15cbd"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeViewModel.kt": {
+    "mtime": 1788612230.8126478,
+    "seen": 1788674056.895087,
+    "ast_hash": "a42b05089b78628074f9b6c650469f13",
+    "semantic_hash": "a42b05089b78628074f9b6c650469f13"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/TimeTick.kt": {
+    "mtime": 1788080153.6273901,
+    "seen": 1788674056.8950882,
+    "ast_hash": "25f3513e9942ce28104460915e2453f7",
+    "semantic_hash": "25f3513e9942ce28104460915e2453f7"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/clock/CalendarEventsBlock.kt": {
+    "mtime": 1788493534.2850091,
+    "seen": 1788674056.8950882,
+    "ast_hash": "d39fd095e0be39e1148043ee33fa4b19",
+    "semantic_hash": "d39fd095e0be39e1148043ee33fa4b19"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/clock/ClockStyleGalleryScreen.kt": {
+    "mtime": 1788610531.6847816,
+    "seen": 1788674056.8950882,
+    "ast_hash": "ccb96a2d692390123ab13d242e7a277c",
+    "semantic_hash": "ccb96a2d692390123ab13d242e7a277c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/clock/ClockStyleGalleryViewModel.kt": {
+    "mtime": 1788609944.0829742,
+    "seen": 1788674056.895089,
+    "ast_hash": "2b2b91c4603d2d44028990a8fbc08962",
+    "semantic_hash": "2b2b91c4603d2d44028990a8fbc08962"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/clock/ClockTemplates.kt": {
+    "mtime": 1788493565.286867,
+    "seen": 1788674056.895089,
+    "ast_hash": "e93d8b199b40b6b8f143f1976d670c07",
+    "semantic_hash": "e93d8b199b40b6b8f143f1976d670c07"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/home/clock/TimeInWords.kt": {
+    "mtime": 1788080476.184514,
+    "seen": 1788674056.895089,
+    "ast_hash": "cd3faea205ebad0ae4bd5901a0583fec",
+    "semantic_hash": "cd3faea205ebad0ae4bd5901a0583fec"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubAtCapacityStrip.kt": {
+    "mtime": 1788141861.3226147,
+    "seen": 1788674056.8950899,
+    "ast_hash": "3d06c642fbd6aa8708cb3cf29636d521",
+    "semantic_hash": "3d06c642fbd6aa8708cb3cf29636d521"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubEmptyState.kt": {
+    "mtime": 1788141849.58351,
+    "seen": 1788674056.8950899,
+    "ast_hash": "7f08ad7f38a99a91d2caa29d721044a8",
+    "semantic_hash": "7f08ad7f38a99a91d2caa29d721044a8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubGrid.kt": {
+    "mtime": 1788543892.518011,
+    "seen": 1788674056.895091,
+    "ast_hash": "1c78af69550327dd94372047472e80f2",
+    "semantic_hash": "1c78af69550327dd94372047472e80f2"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubHeader.kt": {
+    "mtime": 1788656428.1462903,
+    "seen": 1788674056.895091,
+    "ast_hash": "9c060308e2e446bf4989ce1d89530705",
+    "semantic_hash": "9c060308e2e446bf4989ce1d89530705"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubScreen.kt": {
+    "mtime": 1788540583.0681064,
+    "seen": 1788674056.895091,
+    "ast_hash": "631c00b11b51c8e53d07b3e009bbd33c",
+    "semantic_hash": "631c00b11b51c8e53d07b3e009bbd33c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubUiState.kt": {
+    "mtime": 1788141626.2548213,
+    "seen": 1788674056.895092,
+    "ast_hash": "e430b6d80e445ab45eb0abcc7ff09424",
+    "semantic_hash": "e430b6d80e445ab45eb0abcc7ff09424"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubViewModel.kt": {
+    "mtime": 1788540572.7022247,
+    "seen": 1788674056.895092,
+    "ast_hash": "8d52baa11edb4634d5a6516e2c8b44f2",
+    "semantic_hash": "8d52baa11edb4634d5a6516e2c8b44f2"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubWidgetTile.kt": {
+    "mtime": 1788322460.3682642,
+    "seen": 1788674056.895092,
+    "ast_hash": "f6bf7be6bd7384214d5b10c730f57346",
+    "semantic_hash": "f6bf7be6bd7384214d5b10c730f57346"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/OrphanedWidgetTile.kt": {
+    "mtime": 1788141876.644196,
+    "seen": 1788674056.895093,
+    "ast_hash": "bc18c37d9903078d69091a93a7a070d8",
+    "semantic_hash": "bc18c37d9903078d69091a93a7a070d8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/WidgetGrabGesture.kt": {
+    "mtime": 1788544226.1599765,
+    "seen": 1788674056.895093,
+    "ast_hash": "b5526495fd958d4bf02dd722dd90490a",
+    "semantic_hash": "b5526495fd958d4bf02dd722dd90490a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/WidgetResizeHandle.kt": {
+    "mtime": 1788543146.4076803,
+    "seen": 1788674056.895094,
+    "ast_hash": "aca65f0e92e7c580d7893b48f7b63dfa",
+    "semantic_hash": "aca65f0e92e7c580d7893b48f7b63dfa"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt": {
+    "mtime": 1788401764.11197,
+    "seen": 1788674056.895094,
+    "ast_hash": "129e7603c7a97369b92a19cc3d7c5900",
+    "semantic_hash": "129e7603c7a97369b92a19cc3d7c5900"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt": {
+    "mtime": 1788226492.6919885,
+    "seen": 1788674056.895094,
+    "ast_hash": "c877b1b0fac52b92d2c4adf928780118",
+    "semantic_hash": "c877b1b0fac52b92d2c4adf928780118"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerViewModel.kt": {
+    "mtime": 1788352363.5198574,
+    "seen": 1788674056.895095,
+    "ast_hash": "5547d83f603c4c64b4436ea281f367cd",
+    "semantic_hash": "5547d83f603c4c64b4436ea281f367cd"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRoute.kt": {
+    "mtime": 1788660003.747127,
+    "seen": 1788674056.895095,
+    "ast_hash": "c1930b91261011b02d1d2bf90e6b79f9",
+    "semantic_hash": "c1930b91261011b02d1d2bf90e6b79f9"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt": {
+    "mtime": 1788612245.5685308,
+    "seen": 1788674056.895096,
+    "ast_hash": "abb5df1183245b321eb1824c78bbc860",
+    "semantic_hash": "abb5df1183245b321eb1824c78bbc860"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/navigation/LumenNavHost.kt": {
+    "mtime": 1788659981.075647,
+    "seen": 1788674056.895096,
+    "ast_hash": "9baba68359324678572ac57ccfa2eb79",
+    "semantic_hash": "9baba68359324678572ac57ccfa2eb79"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt": {
+    "mtime": 1788401722.6323264,
+    "seen": 1788674056.895096,
+    "ast_hash": "1fdf8400dce9dd887e623ca8b65e6077",
+    "semantic_hash": "1fdf8400dce9dd887e623ca8b65e6077"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerViewModel.kt": {
+    "mtime": 1788056194.288051,
+    "seen": 1788674056.895097,
+    "ast_hash": "a284fac76254243df5f25234fc23a6f3",
+    "semantic_hash": "a284fac76254243df5f25234fc23a6f3"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt": {
+    "mtime": 1788669122.6042664,
+    "seen": 1788674056.895097,
+    "ast_hash": "7feb7bd02742c6f2aeb2312871ddda0e",
+    "semantic_hash": "7feb7bd02742c6f2aeb2312871ddda0e"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselViewModel.kt": {
+    "mtime": 1788660697.0535207,
+    "seen": 1788674056.895097,
+    "ast_hash": "e48da141484a6a73e1add6f6775ed7ff",
+    "semantic_hash": "e48da141484a6a73e1add6f6775ed7ff"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileSettingsScreen.kt": {
+    "mtime": 1788600156.5470982,
+    "seen": 1788674056.8950982,
+    "ast_hash": "2d8d59ddfb7492f6b1335d1056dc7d34",
+    "semantic_hash": "2d8d59ddfb7492f6b1335d1056dc7d34"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileSettingsViewModel.kt": {
+    "mtime": 1788609509.448635,
+    "seen": 1788674056.8950982,
+    "ast_hash": "29794438e69026358f24959d015caaf8",
+    "semantic_hash": "29794438e69026358f24959d015caaf8"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/AppDrawerSettingsScreen.kt": {
+    "mtime": 1788600046.10054,
+    "seen": 1788674056.895099,
+    "ast_hash": "b2337b5f89ffb5a82e0db8e0110a35cf",
+    "semantic_hash": "b2337b5f89ffb5a82e0db8e0110a35cf"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/AppDrawerSettingsViewModel.kt": {
+    "mtime": 1788600012.9109085,
+    "seen": 1788674056.8950999,
+    "ast_hash": "6334b778c563053a22f6cfe23d69cc61",
+    "semantic_hash": "6334b778c563053a22f6cfe23d69cc61"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsScreen.kt": {
+    "mtime": 1788610535.794478,
+    "seen": 1788674056.8950999,
+    "ast_hash": "364b2dda0d8f8b1bf3c466d24af4cd93",
+    "semantic_hash": "364b2dda0d8f8b1bf3c466d24af4cd93"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsViewModel.kt": {
+    "mtime": 1788610152.64725,
+    "seen": 1788674056.8950999,
+    "ast_hash": "31f7924e1a6fdf3e318ecfb8f12ec870",
+    "semantic_hash": "31f7924e1a6fdf3e318ecfb8f12ec870"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/CalendarSettingsScreen.kt": {
+    "mtime": 1788587505.456551,
+    "seen": 1788674056.8951008,
+    "ast_hash": "813c1273c9ad536b98541bfb8bed2043",
+    "semantic_hash": "813c1273c9ad536b98541bfb8bed2043"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/CalendarSettingsViewModel.kt": {
+    "mtime": 1788583874.2848313,
+    "seen": 1788674056.8951008,
+    "ast_hash": "66f5afc92125818377ad1b945e804ade",
+    "semantic_hash": "66f5afc92125818377ad1b945e804ade"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/DockSettingsScreen.kt": {
+    "mtime": 1788599941.4974887,
+    "seen": 1788674056.8951008,
+    "ast_hash": "dbbf8287b5dfe289696449910299559c",
+    "semantic_hash": "dbbf8287b5dfe289696449910299559c"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/DockSettingsViewModel.kt": {
+    "mtime": 1788599912.90607,
+    "seen": 1788674056.895102,
+    "ast_hash": "5a3a37b8c2489ff7391fd77b17893ba6",
+    "semantic_hash": "5a3a37b8c2489ff7391fd77b17893ba6"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/HomeAppsListSettingsScreen.kt": {
+    "mtime": 1788599989.3107276,
+    "seen": 1788674056.895102,
+    "ast_hash": "98c012650af4e2872ad1fd75d27191cc",
+    "semantic_hash": "98c012650af4e2872ad1fd75d27191cc"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/HomeAppsListSettingsViewModel.kt": {
+    "mtime": 1788599952.2191005,
+    "seen": 1788674056.895103,
+    "ast_hash": "30003a37ac1b9aa818e63097f5501ddb",
+    "semantic_hash": "30003a37ac1b9aa818e63097f5501ddb"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/NotificationAccessExplanationScreen.kt": {
+    "mtime": 1788587505.4525075,
+    "seen": 1788674056.895103,
+    "ast_hash": "656ca645325e20a0cbb83aff8fcb579a",
+    "semantic_hash": "656ca645325e20a0cbb83aff8fcb579a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/NotificationAccessExplanationViewModel.kt": {
+    "mtime": 1788068521.7997952,
+    "seen": 1788674056.895103,
+    "ast_hash": "55751eed74b0ac55f7ffd4548ec37220",
+    "semantic_hash": "55751eed74b0ac55f7ffd4548ec37220"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/NotificationSettingsScreen.kt": {
+    "mtime": 1788587505.4352434,
+    "seen": 1788674056.895104,
+    "ast_hash": "e0cd45df9b4957f148903efb5fabd1e3",
+    "semantic_hash": "e0cd45df9b4957f148903efb5fabd1e3"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/NotificationSettingsViewModel.kt": {
+    "mtime": 1788068568.9981143,
+    "seen": 1788674056.895104,
+    "ast_hash": "94d54367e24bbd76a847a09c1e5076cb",
+    "semantic_hash": "94d54367e24bbd76a847a09c1e5076cb"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/PermissionsScreen.kt": {
+    "mtime": 1788587505.4678333,
+    "seen": 1788674056.895104,
+    "ast_hash": "3bd8680703c0923142d605e8072aa7e4",
+    "semantic_hash": "3bd8680703c0923142d605e8072aa7e4"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/PermissionsScreenState.kt": {
+    "mtime": 1788491749.8193011,
+    "seen": 1788674056.8951051,
+    "ast_hash": "52bb8a822cfe1176890320e51c8ad063",
+    "semantic_hash": "52bb8a822cfe1176890320e51c8ad063"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/PermissionsViewModel.kt": {
+    "mtime": 1788491761.7439342,
+    "seen": 1788674056.8951051,
+    "ast_hash": "3fee061c3c17cc2833ae5015970853ce",
+    "semantic_hash": "3fee061c3c17cc2833ae5015970853ce"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/SettingsScreen.kt": {
+    "mtime": 1788659786.4439714,
+    "seen": 1788674056.895106,
+    "ast_hash": "54644ea6007877ea53486891348f2ba0",
+    "semantic_hash": "54644ea6007877ea53486891348f2ba0"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/SettingsUiState.kt": {
+    "mtime": 1788056242.0814154,
+    "seen": 1788674056.895106,
+    "ast_hash": "d8491e6c130efb78554f8de3964c930a",
+    "semantic_hash": "d8491e6c130efb78554f8de3964c930a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/SettingsViewModel.kt": {
+    "mtime": 1788600064.8626366,
+    "seen": 1788674056.895106,
+    "ast_hash": "7515646df7e490cb138b9374d696bed9",
+    "semantic_hash": "7515646df7e490cb138b9374d696bed9"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/UsageAccessExplanationScreen.kt": {
+    "mtime": 1788587505.4430573,
+    "seen": 1788674056.895107,
+    "ast_hash": "c22096f872b964ffc3a9b01bac86245e",
+    "semantic_hash": "c22096f872b964ffc3a9b01bac86245e"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/UsageAccessExplanationViewModel.kt": {
+    "mtime": 1787984162.5210183,
+    "seen": 1788674056.895107,
+    "ast_hash": "5eeb0ad9ce40c2e32398f7848647d597",
+    "semantic_hash": "5eeb0ad9ce40c2e32398f7848647d597"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreScreen.kt": {
+    "mtime": 1788587505.471439,
+    "seen": 1788674056.895107,
+    "ast_hash": "6b28742fcf40cce864e7079057e79bf2",
+    "semantic_hash": "6b28742fcf40cce864e7079057e79bf2"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreUiState.kt": {
+    "mtime": 1788552725.0948172,
+    "seen": 1788674056.895108,
+    "ast_hash": "adfb539d786ab2a3e923c7f505b1d17a",
+    "semantic_hash": "adfb539d786ab2a3e923c7f505b1d17a"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModel.kt": {
+    "mtime": 1788552752.5475183,
+    "seen": 1788674056.895108,
+    "ast_hash": "e5916e4763ff713445a3c49d2fe82ee2",
+    "semantic_hash": "e5916e4763ff713445a3c49d2fe82ee2"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/AccentSwatch.kt": {
+    "mtime": 1788023197.9476645,
+    "seen": 1788674056.895108,
+    "ast_hash": "b174dcc6bcb8d0fc33769cff5035bc27",
+    "semantic_hash": "b174dcc6bcb8d0fc33769cff5035bc27"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/ClockColors.kt": {
+    "mtime": 1788543461.2066321,
+    "seen": 1788674056.8951092,
+    "ast_hash": "99739e0efb885b0458f2bd9128aba313",
+    "semantic_hash": "99739e0efb885b0458f2bd9128aba313"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/ClockFonts.kt": {
+    "mtime": 1788611565.419708,
+    "seen": 1788674056.8951092,
+    "ast_hash": "f7e930c1797472e186765affc51ce414",
+    "semantic_hash": "f7e930c1797472e186765affc51ce414"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/Color.kt": {
+    "mtime": 1788587439.8325512,
+    "seen": 1788674056.89511,
+    "ast_hash": "6cfd786370291d1d4a31f9588fc39e05",
+    "semantic_hash": "6cfd786370291d1d4a31f9588fc39e05"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/Theme.kt": {
+    "mtime": 1788670780.382639,
+    "seen": 1788674056.89511,
+    "ast_hash": "aef27efb370515847a3f5bec1d3b4101",
+    "semantic_hash": "aef27efb370515847a3f5bec1d3b4101"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/ThemeLocals.kt": {
+    "mtime": 1788094897.7397354,
+    "seen": 1788674056.89511,
+    "ast_hash": "b72c37b3295340c53f8071e106017232",
+    "semantic_hash": "b72c37b3295340c53f8071e106017232"
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/theme/Type.kt": {
+    "mtime": 1788609334.6327872,
+    "seen": 1788674056.8951108,
+    "ast_hash": "507489b0d5034ecc2b44cd4c49b5fb8f",
+    "semantic_hash": "507489b0d5034ecc2b44cd4c49b5fb8f"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/AppRepositoryTest.kt": {
+    "mtime": 1788097063.5241323,
+    "seen": 1788674056.8951108,
+    "ast_hash": "e531c4eb7a7acd2b3dedbabcc062567a",
+    "semantic_hash": "e531c4eb7a7acd2b3dedbabcc062567a"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/AppShortcutRepositoryTest.kt": {
+    "mtime": 1788005705.1545348,
+    "seen": 1788674056.8951108,
+    "ast_hash": "678c9da5016e80ef54e7bc5883113204",
+    "semantic_hash": "678c9da5016e80ef54e7bc5883113204"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/BackupRepositoryTest.kt": {
+    "mtime": 1788552947.2071285,
+    "seen": 1788674056.895112,
+    "ast_hash": "df46c8b3a5db23d9109c89e2013a8437",
+    "semantic_hash": "df46c8b3a5db23d9109c89e2013a8437"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/CalendarRepositoryTest.kt": {
+    "mtime": 1788024598.5960844,
+    "seen": 1788674056.895112,
+    "ast_hash": "a3273a7c401ab48d2fda4d00d2b8cc37",
+    "semantic_hash": "a3273a7c401ab48d2fda4d00d2b8cc37"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/ContactRepositoryTest.kt": {
+    "mtime": 1788453496.4512727,
+    "seen": 1788674056.895113,
+    "ast_hash": "52e785d3677e9112e44bb5adffb6fcf4",
+    "semantic_hash": "52e785d3677e9112e44bb5adffb6fcf4"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/DefaultFavoriteAppRepositoryTest.kt": {
+    "mtime": 1788552992.2829633,
+    "seen": 1788674056.895113,
+    "ast_hash": "82522dfe4b9614a7f1dbe100c2290284",
+    "semantic_hash": "82522dfe4b9614a7f1dbe100c2290284"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/DockAppRepositoryTest.kt": {
+    "mtime": 1788552988.0286593,
+    "seen": 1788674056.895113,
+    "ast_hash": "d3f4a85184320b76d135dae207e6c39c",
+    "semantic_hash": "d3f4a85184320b76d135dae207e6c39c"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/FavoriteAppRepositoryTest.kt": {
+    "mtime": 1788056568.7526686,
+    "seen": 1788674056.895114,
+    "ast_hash": "4bcd1ab4ad8af351b90dede37dce4697",
+    "semantic_hash": "4bcd1ab4ad8af351b90dede37dce4697"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/NotificationBadgeRepositoryTest.kt": {
+    "mtime": 1788070966.1241517,
+    "seen": 1788674056.895114,
+    "ast_hash": "166389e5de13d2f4bdf8cc0c48939c59",
+    "semantic_hash": "166389e5de13d2f4bdf8cc0c48939c59"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/NotificationShadeRepositoryTest.kt": {
+    "mtime": 1788027139.1810174,
+    "seen": 1788674056.895115,
+    "ast_hash": "b9d02c868a4e3837c15c1363e1b76add",
+    "semantic_hash": "b9d02c868a4e3837c15c1363e1b76add"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/ProfileRepositoryTest.kt": {
+    "mtime": 1788609838.4645631,
+    "seen": 1788674056.895115,
+    "ast_hash": "7b491ab688d7c8c4671ae70ec84d1453",
+    "semantic_hash": "7b491ab688d7c8c4671ae70ec84d1453"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/SettingsRepositoryTest.kt": {
+    "mtime": 1788609854.2004347,
+    "seen": 1788674056.895115,
+    "ast_hash": "afdcff13e8e87813765f367dea7f2cb4",
+    "semantic_hash": "afdcff13e8e87813765f367dea7f2cb4"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/UsageStatsRepositoryTest.kt": {
+    "mtime": 1788572544.5462594,
+    "seen": 1788674056.895116,
+    "ast_hash": "2968f4e1738550776e9d60b5dc327b30",
+    "semantic_hash": "2968f4e1738550776e9d60b5dc327b30"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/WidgetPlacementRepositoryTest.kt": {
+    "mtime": 1788138786.28817,
+    "seen": 1788674056.895116,
+    "ast_hash": "69c9e4c46d7f870b11840735bc0bc843",
+    "semantic_hash": "69c9e4c46d7f870b11840735bc0bc843"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/local/ConvertersTest.kt": {
+    "mtime": 1788543920.6357522,
+    "seen": 1788674056.895116,
+    "ast_hash": "ec7b0c4bed807e7f067403010daed8b2",
+    "semantic_hash": "ec7b0c4bed807e7f067403010daed8b2"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/local/DockAppDaoTest.kt": {
+    "mtime": 1787837243.213627,
+    "seen": 1788674056.895117,
+    "ast_hash": "a534f8d684278188565e6a56930c8d30",
+    "semantic_hash": "a534f8d684278188565e6a56930c8d30"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt": {
+    "mtime": 1787882125.454163,
+    "seen": 1788674056.895117,
+    "ast_hash": "384b3c811b32f5073a0159cc2d62c8dc",
+    "semantic_hash": "384b3c811b32f5073a0159cc2d62c8dc"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/local/ProfileDaoTest.kt": {
+    "mtime": 1788365552.2678552,
+    "seen": 1788674056.895118,
+    "ast_hash": "55a297553f49249a9f812e62a6e64b33",
+    "semantic_hash": "55a297553f49249a9f812e62a6e64b33"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/data/widget/AppWidgetRepositoryTest.kt": {
+    "mtime": 1788226583.3921928,
+    "seen": 1788674056.895118,
+    "ast_hash": "dc7ba5b88082a924d21bf897b31b35d2",
+    "semantic_hash": "dc7ba5b88082a924d21bf897b31b35d2"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/AssignCalendarColorsUseCaseTest.kt": {
+    "mtime": 1788023679.270623,
+    "seen": 1788674056.895118,
+    "ast_hash": "17764784c399e0562400025c8f01b501",
+    "semantic_hash": "17764784c399e0562400025c8f01b501"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/CleanUpUninstalledAppsUseCaseTest.kt": {
+    "mtime": 1788056587.6395245,
+    "seen": 1788674056.8951192,
+    "ast_hash": "3f7b449919dc0f030e48cf379acbe9e2",
+    "semantic_hash": "3f7b449919dc0f030e48cf379acbe9e2"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/CompactWidgetsUseCaseTest.kt": {
+    "mtime": 1788196161.1922388,
+    "seen": 1788674056.8951192,
+    "ast_hash": "f13cbd8b27db7533c607aaef2fca401b",
+    "semantic_hash": "f13cbd8b27db7533c607aaef2fca401b"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/DeleteWidgetUseCaseTest.kt": {
+    "mtime": 1788139228.3235586,
+    "seen": 1788674056.89512,
+    "ast_hash": "19cf310fb4f5d861169ec30a59a2937d",
+    "semantic_hash": "19cf310fb4f5d861169ec30a59a2937d"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/EnsureActiveProfileUseCaseTest.kt": {
+    "mtime": 1788552980.0608978,
+    "seen": 1788674056.89512,
+    "ast_hash": "4345436eb45ce338f8ed792cfdbdc7fc",
+    "semantic_hash": "4345436eb45ce338f8ed792cfdbdc7fc"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ExportBackupUseCaseTest.kt": {
+    "mtime": 1788585388.8250072,
+    "seen": 1788674056.89512,
+    "ast_hash": "2aa9dd67bd05f6969874ef063c22a697",
+    "semantic_hash": "2aa9dd67bd05f6969874ef063c22a697"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/GetInstalledAppsUseCaseTest.kt": {
+    "mtime": 1788572559.6632802,
+    "seen": 1788674056.8951209,
+    "ast_hash": "bdd55f015d9732dd798cadc9f0dec04a",
+    "semantic_hash": "bdd55f015d9732dd798cadc9f0dec04a"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/GroupAppsByLetterUseCaseTest.kt": {
+    "mtime": 1787982733.6167648,
+    "seen": 1788674056.8951209,
+    "ast_hash": "eec57f8cfbcd705d01ced6368e9fc048",
+    "semantic_hash": "eec57f8cfbcd705d01ced6368e9fc048"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt": {
+    "mtime": 1788585400.711141,
+    "seen": 1788674056.8951209,
+    "ast_hash": "4ddc4c296dbf469200c1f565682f82de",
+    "semantic_hash": "4ddc4c296dbf469200c1f565682f82de"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ObserveHomeScreenStateUseCaseTest.kt": {
+    "mtime": 1788667477.3853254,
+    "seen": 1788674056.8951218,
+    "ast_hash": "d67003ab885eba5f63e26b664b5912b5",
+    "semantic_hash": "d67003ab885eba5f63e26b664b5912b5"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ObserveHubStateUseCaseTest.kt": {
+    "mtime": 1788139258.3021395,
+    "seen": 1788674056.8951218,
+    "ast_hash": "fd1c6892491c4794a93e4f73daadf19e",
+    "semantic_hash": "fd1c6892491c4794a93e4f73daadf19e"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ObserveProfilePreviewsUseCaseTest.kt": {
+    "mtime": 1788667490.2945898,
+    "seen": 1788674056.895123,
+    "ast_hash": "0da239003840c7236b16ca76c38be610",
+    "semantic_hash": "0da239003840c7236b16ca76c38be610"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/PlaceWidgetUseCaseTest.kt": {
+    "mtime": 1788552877.6527858,
+    "seen": 1788674056.895123,
+    "ast_hash": "6518f28ccfc88d0ca291294394ed0b18",
+    "semantic_hash": "6518f28ccfc88d0ca291294394ed0b18"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ResolveWidgetDropUseCaseTest.kt": {
+    "mtime": 1788151875.6467214,
+    "seen": 1788674056.895123,
+    "ast_hash": "96381c6279c07d5bf6cb8df56af2e1d2",
+    "semantic_hash": "96381c6279c07d5bf6cb8df56af2e1d2"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/domain/ResolveWidgetResizeUseCaseTest.kt": {
+    "mtime": 1788540555.8588235,
+    "seen": 1788674056.895124,
+    "ast_hash": "09e0c70809df36f54f3304cd26a0698c",
+    "semantic_hash": "09e0c70809df36f54f3304cd26a0698c"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/drawer/AlphabetRailMappingTest.kt": {
+    "mtime": 1787838543.7650003,
+    "seen": 1788674056.895124,
+    "ast_hash": "2d6d6b869a37c8986c0aba74dec247b0",
+    "semantic_hash": "2d6d6b869a37c8986c0aba74dec247b0"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/drawer/DrawerViewModelTest.kt": {
+    "mtime": 1788488153.7256126,
+    "seen": 1788674056.895125,
+    "ast_hash": "c2c99476067cc378c37b2335776742e3",
+    "semantic_hash": "c2c99476067cc378c37b2335776742e3"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/home/HomeUiStateTest.kt": {
+    "mtime": 1788610080.9141977,
+    "seen": 1788674056.895125,
+    "ast_hash": "557fed31f94a1e73c3692bfaae14118a",
+    "semantic_hash": "557fed31f94a1e73c3692bfaae14118a"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/home/HomeViewModelTest.kt": {
+    "mtime": 1788612305.9513721,
+    "seen": 1788674056.895125,
+    "ast_hash": "205c5083bca5b9a0f5fbeacf23a2cea7",
+    "semantic_hash": "205c5083bca5b9a0f5fbeacf23a2cea7"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/home/clock/ClockStyleGalleryViewModelTest.kt": {
+    "mtime": 1788610126.3853412,
+    "seen": 1788674056.895126,
+    "ast_hash": "8a6ecfcacf453143e850b8dfa877554c",
+    "semantic_hash": "8a6ecfcacf453143e850b8dfa877554c"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/hub/HubViewModelTest.kt": {
+    "mtime": 1788540638.6569817,
+    "seen": 1788674056.895126,
+    "ast_hash": "0b09fafdadde4235f9c9b1d256db02d4",
+    "semantic_hash": "0b09fafdadde4235f9c9b1d256db02d4"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerViewModelTest.kt": {
+    "mtime": 1788352738.4557621,
+    "seen": 1788674056.895127,
+    "ast_hash": "74260fbc0cd9fbb345f150f82af9cd3d",
+    "semantic_hash": "74260fbc0cd9fbb345f150f82af9cd3d"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt": {
+    "mtime": 1788612291.486301,
+    "seen": 1788674056.895127,
+    "ast_hash": "6056a7cc0246f6c3ff9b573ef6603498",
+    "semantic_hash": "6056a7cc0246f6c3ff9b573ef6603498"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselUiStateTest.kt": {
+    "mtime": 1788406844.3776212,
+    "seen": 1788674056.895127,
+    "ast_hash": "32cf3a9ab93f7844dd8942f5200c9872",
+    "semantic_hash": "32cf3a9ab93f7844dd8942f5200c9872"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/AppDrawerSettingsViewModelTest.kt": {
+    "mtime": 1788600265.1815698,
+    "seen": 1788674056.895128,
+    "ast_hash": "12bc43d81c556f7a6b85db39091a30de",
+    "semantic_hash": "12bc43d81c556f7a6b85db39091a30de"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/AppearanceSettingsViewModelTest.kt": {
+    "mtime": 1788610165.4690998,
+    "seen": 1788674056.895128,
+    "ast_hash": "18a054f3eeac6740a47e167308c46a43",
+    "semantic_hash": "18a054f3eeac6740a47e167308c46a43"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/CalendarSettingsViewModelTest.kt": {
+    "mtime": 1788584756.4483113,
+    "seen": 1788674056.8951292,
+    "ast_hash": "4cc985cfe1e680592bbaa1c0a6eec198",
+    "semantic_hash": "4cc985cfe1e680592bbaa1c0a6eec198"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/DockSettingsViewModelTest.kt": {
+    "mtime": 1788600236.5548325,
+    "seen": 1788674056.8951292,
+    "ast_hash": "ba2e882033d2f5f747ac44809e3a884b",
+    "semantic_hash": "ba2e882033d2f5f747ac44809e3a884b"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/HomeAppsListSettingsViewModelTest.kt": {
+    "mtime": 1788600250.66045,
+    "seen": 1788674056.8951292,
+    "ast_hash": "438763b4cdc560d369ec482673f1b0ed",
+    "semantic_hash": "438763b4cdc560d369ec482673f1b0ed"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/PermissionsViewModelTest.kt": {
+    "mtime": 1788491802.4275858,
+    "seen": 1788674056.8951302,
+    "ast_hash": "da133da696945dacc413138a9e172ca0",
+    "semantic_hash": "da133da696945dacc413138a9e172ca0"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/SettingsViewModelTest.kt": {
+    "mtime": 1788600218.6433914,
+    "seen": 1788674056.8951302,
+    "ast_hash": "7905276dc3ff464eb143a03088c06e86",
+    "semantic_hash": "7905276dc3ff464eb143a03088c06e86"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt": {
+    "mtime": 1788553378.9033506,
+    "seen": 1788674056.8951302,
+    "ast_hash": "0890b3f5a122eaf5eca41754a5254537",
+    "semantic_hash": "0890b3f5a122eaf5eca41754a5254537"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/theme/ClockFontsTest.kt": {
+    "mtime": 1788534750.4963226,
+    "seen": 1788674056.8951309,
+    "ast_hash": "1a61d8acb932589dab56a7f805815558",
+    "semantic_hash": "1a61d8acb932589dab56a7f805815558"
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/theme/TypeTest.kt": {
+    "mtime": 1788609877.9135256,
+    "seen": 1788674056.8951309,
+    "ast_hash": "e1f0491e2847a2e75bc461dfd1836358",
+    "semantic_hash": "e1f0491e2847a2e75bc461dfd1836358"
+  },
+  "build.gradle.kts": {
+    "mtime": 1788548091.6211164,
+    "seen": 1788674056.8951309,
+    "ast_hash": "d2c77291a1c5a382d371732d80bf9bb0",
+    "semantic_hash": "d2c77291a1c5a382d371732d80bf9bb0"
+  },
+  "design_handoff_minimal_launcher/support.js": {
+    "mtime": 1787803628.2253776,
+    "seen": 1788674056.8951318,
+    "ast_hash": "951ae391b8ae72ef12e671c2fad23353",
+    "semantic_hash": "951ae391b8ae72ef12e671c2fad23353"
+  },
+  "gradlew": {
+    "mtime": 1787803852.3290017,
+    "seen": 1788674056.8951318,
+    "ast_hash": "780b1d3e23a3b82154795f73df943a14",
+    "semantic_hash": "780b1d3e23a3b82154795f73df943a14"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1787803834.9066002,
+    "seen": 1788674056.895133,
+    "ast_hash": "b990196352b55956d62dbd525c22feb3",
+    "semantic_hash": "b990196352b55956d62dbd525c22feb3"
+  },
+  ".artifacts/60cb353d-6cb8-4d22-8155-1466a7efb5d2/implementation_plan.artifact.md": {
+    "mtime": 1788149032.6072803,
+    "seen": 1788674056.895133,
+    "ast_hash": "2590ffc82994829cf9661ff457857661",
+    "semantic_hash": "2590ffc82994829cf9661ff457857661"
+  },
+  ".artifacts/75674885-a34f-47da-869a-e70b8bd5487f/implementation_plan.artifact.md": {
+    "mtime": 1788196184.8151438,
+    "seen": 1788674056.895133,
+    "ast_hash": "bc90ef3883c23bbb2027ed32ac481f09",
+    "semantic_hash": "bc90ef3883c23bbb2027ed32ac481f09"
+  },
+  "CLAUDE.md": {
+    "mtime": 1788675843.5838895,
+    "seen": 1788675976.771318,
+    "ast_hash": "39e1d16bcc1416af1c5ed104115c2092",
+    "semantic_hash": ""
+  },
+  "IMPLEMENTATION_PLAN.md": {
+    "mtime": 1788609919.2329164,
+    "seen": 1788674056.895134,
+    "ast_hash": "d35332de8adf9cf728301d387050acef",
+    "semantic_hash": "d35332de8adf9cf728301d387050acef"
+  },
+  "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
+    "mtime": 1788080116.9683175,
+    "seen": 1788674056.895135,
+    "ast_hash": "2fcaec0e88aa2184f928d27ff72284ed",
+    "semantic_hash": "2fcaec0e88aa2184f928d27ff72284ed"
+  },
+  "THIRD_PARTY_FONT_LICENSES/notosans_OFL.txt": {
+    "mtime": 1788080117.7591329,
+    "seen": 1788674056.895135,
+    "ast_hash": "ead60c8cdf357c455cf69725c35c3b2d",
+    "semantic_hash": "ead60c8cdf357c455cf69725c35c3b2d"
+  },
+  "THIRD_PARTY_FONT_LICENSES/poppins_OFL.txt": {
+    "mtime": 1788080116.1052957,
+    "seen": 1788674056.895135,
+    "ast_hash": "481fed197dac47775fb62cefafa2555e",
+    "semantic_hash": "481fed197dac47775fb62cefafa2555e"
+  },
+  "THIRD_PARTY_FONT_LICENSES/robotoflex_OFL.txt": {
+    "mtime": 1788080118.4910014,
+    "seen": 1788674056.895136,
+    "ast_hash": "6e1cd7edbe987e276142937e38395911",
+    "semantic_hash": "6e1cd7edbe987e276142937e38395911"
+  },
+  "design_handoff_minimal_launcher/Launcher Dark.dc.html": {
+    "mtime": 1787803628.2218313,
+    "seen": 1788674056.895136,
+    "ast_hash": "d3fcaf0f1a4e166571331a27b28acfa8",
+    "semantic_hash": "d3fcaf0f1a4e166571331a27b28acfa8"
+  },
+  "design_handoff_minimal_launcher/Launcher.dc.html": {
+    "mtime": 1787803628.2242794,
+    "seen": 1788674056.895137,
+    "ast_hash": "1af9517e1c90646210ee52fc35c69e8c",
+    "semantic_hash": "1af9517e1c90646210ee52fc35c69e8c"
+  },
+  "design_handoff_minimal_launcher/PRD.md": {
+    "mtime": 1788071518.844591,
+    "seen": 1788674056.895137,
+    "ast_hash": "6765127fa9644d9cbd9f2f20adabed2f",
+    "semantic_hash": "6765127fa9644d9cbd9f2f20adabed2f"
+  },
+  "design_handoff_minimal_launcher/README.md": {
+    "mtime": 1788071544.9434588,
+    "seen": 1788674056.895137,
+    "ast_hash": "e083e81fc2d8d256e70777e1d6a49bf5",
+    "semantic_hash": "e083e81fc2d8d256e70777e1d6a49bf5"
+  },
+  "design_handoff_minimal_launcher/screenshots/dark-turn1-home-and-drawer.png": {
+    "mtime": 1787803628.2033434,
+    "seen": 1788674056.895138,
+    "ast_hash": "cd538beae62beae7e1d1b166d0e2fece",
+    "semantic_hash": "cd538beae62beae7e1d1b166d0e2fece"
+  },
+  "design_handoff_minimal_launcher/screenshots/dark-turn2-sheet-and-settings.png": {
+    "mtime": 1787803628.2098644,
+    "seen": 1788674056.895138,
+    "ast_hash": "67281f584a66a0a784c91d34848ad775",
+    "semantic_hash": "67281f584a66a0a784c91d34848ad775"
+  },
+  "design_handoff_minimal_launcher/screenshots/dark-turn3-profiles-and-settings.png": {
+    "mtime": 1787803628.212127,
+    "seen": 1788674056.895138,
+    "ast_hash": "7278732f733424b22a9c81c6cc84f697",
+    "semantic_hash": "7278732f733424b22a9c81c6cc84f697"
+  },
+  "design_handoff_minimal_launcher/screenshots/dark-turn4-hub-onboarding-pickers.png": {
+    "mtime": 1787803628.206416,
+    "seen": 1788674056.895139,
+    "ast_hash": "a781c6ce0dddbbca6fb1e36341afc062",
+    "semantic_hash": "a781c6ce0dddbbca6fb1e36341afc062"
+  },
+  "design_handoff_minimal_launcher/screenshots/light-turn1-home-and-drawer.png": {
+    "mtime": 1787803628.2170427,
+    "seen": 1788674056.895139,
+    "ast_hash": "33bc060681ac3990aa0bb0609f1b6bda",
+    "semantic_hash": "33bc060681ac3990aa0bb0609f1b6bda"
+  },
+  "design_handoff_minimal_launcher/screenshots/light-turn2-sheet-and-settings.png": {
+    "mtime": 1787803628.220341,
+    "seen": 1788674056.8951402,
+    "ast_hash": "a3f9527741841022b9efb456a6078357",
+    "semantic_hash": "a3f9527741841022b9efb456a6078357"
+  },
+  "design_handoff_minimal_launcher/screenshots/light-turn3-profiles-and-settings.png": {
+    "mtime": 1787803628.218658,
+    "seen": 1788674056.8951402,
+    "ast_hash": "afc609a2b302f9d01d25ac07667b87d2",
+    "semantic_hash": "afc609a2b302f9d01d25ac07667b87d2"
+  },
+  "design_handoff_minimal_launcher/screenshots/light-turn4-hub-onboarding-pickers.png": {
+    "mtime": 1787803628.2143624,
+    "seen": 1788674056.8951411,
+    "ast_hash": "a2ea734ebdbbe633d5615f8659b88b80",
+    "semantic_hash": "a2ea734ebdbbe633d5615f8659b88b80"
+  },
+  ".claude/settings.json": {
+    "mtime": 1788677006.2214396,
+    "seen": 1788677017.484948,
+    "ast_hash": "b85c58d0a7f13ae954556940db88b2d4",
+    "semantic_hash": ""
+  }
+}
