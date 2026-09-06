@@ -215,6 +215,7 @@ fun LumenNavHost(
                     }
                 },
                 onEditProfile = { profileId -> navController.navigate(LumenDestinations.profileSettings(profileId)) },
+                onNavigateToSettings = { navController.navigate(LumenDestinations.SETTINGS) },
             )
         }
         composable(

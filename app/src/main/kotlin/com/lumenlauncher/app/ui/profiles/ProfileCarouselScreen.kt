@@ -25,11 +25,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -106,6 +106,7 @@ fun ProfileCarouselScreen(
     onBack: () -> Unit,
     onProfileApplied: () -> Unit,
     onEditProfile: (profileId: Long) -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileCarouselViewModel = hiltViewModel(),
 ) {
@@ -118,6 +119,7 @@ fun ProfileCarouselScreen(
         onAddProfile = viewModel::addProfile,
         onDeleteProfile = viewModel::deleteProfile,
         onReorder = viewModel::reorderProfiles,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier,
     )
 }
@@ -131,6 +133,7 @@ private fun ProfileCarouselContent(
     onAddProfile: () -> Unit,
     onDeleteProfile: (ProfileEntity) -> Unit,
     onReorder: (List<ProfileEntity>) -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val profiles = uiState.profiles
@@ -148,8 +151,6 @@ private fun ProfileCarouselContent(
     var deletingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
 
     BackHandler(enabled = isReordering) { isReordering = false }
-
-    val centeredProfile = profiles.getOrNull(pagerState.currentPage)
 
     Column(
         modifier = modifier
@@ -199,23 +200,21 @@ private fun ProfileCarouselContent(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
         } else {
-            Text(
-                text = "${(pagerState.currentPage + 1).coerceAtMost(profiles.size)} of ${profiles.size}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Muted,
-                modifier = Modifier.padding(start = 20.dp, bottom = 12.dp),
-            )
-
             HorizontalPager(
                 state = pagerState,
                 contentPadding = PaddingValues(horizontal = CAROUSEL_PAGE_INSET),
                 pageSpacing = CAROUSEL_PAGE_SPACING,
-                modifier = Modifier.weight(1f).fillMaxWidth().testTag("profile_carousel_pager"),
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp).testTag("profile_carousel_pager"),
             ) { page ->
-                // Uniform, position-independent scale for every page — see CARD_SCALE.
+                // Uniform, position-independent scale for every page — see CARD_SCALE. Anchored
+                // to top-center (not the default center) so the shrink only eats into the bottom
+                // of the page — the name/menu row now living right at each page's own top would
+                // otherwise get pushed down by half the scale's lost height too, reading as a big
+                // dead gap between the screen header and the name row (see chat history).
                 val visualModifier = Modifier.graphicsLayer {
                     scaleX = CARD_SCALE
                     scaleY = CARD_SCALE
+                    transformOrigin = TransformOrigin(0.5f, 0f)
                 }
 
                 if (page < profiles.size) {
@@ -235,6 +234,9 @@ private fun ProfileCarouselContent(
                         homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
                         dockApps = uiState.dockApps,
                         dockDisplayMode = uiState.dockDisplayMode,
+                        canDelete = uiState.canDeleteProfile,
+                        onEditProfileClick = { onEditProfile(profile.id) },
+                        onDeleteClick = { deletingProfile = profile },
                         modifier = visualModifier
                             .fillMaxSize()
                             .testTag("profile_page_${profile.id}")
@@ -248,44 +250,8 @@ private fun ProfileCarouselContent(
                 }
             }
 
-            // Always reserved (never conditionally omitted) so the pager's own height — driven
-            // by this Column's remaining weight(1f) space — stays identical whether the
-            // centered page is a real profile or the trailing Add page (which has no gear/trash
-            // row of its own); omitting the Row entirely on the Add page let the pager claim
-            // that space instead, making the Add card visibly taller than every profile card.
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(26.dp),
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .alpha(if (centeredProfile != null) 1f else 0f),
-                ) {
-                    IconButton(
-                        onClick = { centeredProfile?.let { onEditProfile(it.id) } },
-                        enabled = centeredProfile != null,
-                        modifier = Modifier.testTag("profile_carousel_gear"),
-                    ) {
-                        Icon(Icons.Default.Settings, contentDescription = "Edit profile", tint = Muted)
-                    }
-                    IconButton(
-                        onClick = { if (uiState.canDeleteProfile) centeredProfile?.let { deletingProfile = it } },
-                        enabled = uiState.canDeleteProfile && centeredProfile != null,
-                        modifier = Modifier.testTag("profile_carousel_trash"),
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete profile",
-                            tint = if (uiState.canDeleteProfile) Muted else Faint,
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.Center,
             ) {
                 profiles.indices.forEach { index ->
@@ -299,6 +265,13 @@ private fun ProfileCarouselContent(
                     )
                 }
             }
+
+            LauncherSettingsRow(
+                onClick = onNavigateToSettings,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+            )
         }
     }
 
@@ -453,6 +426,32 @@ private fun AddProfileRow(enabled: Boolean, onClick: () -> Unit, modifier: Modif
 }
 
 /**
+ * Pinned to the bottom of the carousel — reached here now instead of via the Home long-press
+ * sheet's own "Launcher settings" row (see chat history: that sheet is being replaced by a direct
+ * long-press-to-switch-profile action, so this screen absorbs the entry point it displaced).
+ */
+@Composable
+private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
+            .clip(MaterialTheme.shapes.medium)
+            .background(Surface)
+            .clickable(onClick = onClick)
+            .testTag("profile_carousel_launcher_settings")
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = "Launcher settings", style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Text(text = "Clock, favorites, drawer, badges", style = MaterialTheme.typography.bodyMedium, color = Muted)
+        }
+        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted)
+    }
+}
+
+/**
  * A live snapshot of what [profile]'s Home screen actually looks like — reuses the real
  * [ClockBlock] composable (not a redrawn lookalike) and renders its real favorites
  * ([favorites], from [com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase], one Flow per
@@ -473,70 +472,106 @@ private fun ProfilePreviewPage(
     homeAppsFontWeight: FontWeightOption,
     dockApps: List<AppInfo>,
     dockDisplayMode: DockDisplayMode,
+    canDelete: Boolean,
+    onEditProfileClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
-            // CLAUDE.md's Material 3 shape section.
-            .clip(MaterialTheme.shapes.extraLarge)
-            .background(Surface)
-            .padding(18.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = profile.name,
-            style = MaterialTheme.typography.titleMedium,
-            color = Ink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 24.dp),
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-        ClockBlock(
-            use24HourTime = use24HourTime,
-            templateId = clockTemplateId,
-            fontOption = clockFontOption,
-            colorOption = clockColorOption,
-            showMeridiem = clockShowMeridiem,
-            launcherFontOption = launcherFontOption,
-            modifier = Modifier.align(Alignment.Start)
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-            text = "FAVORITES",
-            style = MaterialTheme.typography.labelSmall,
-            color = Muted,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        )
-        if (favorites.isEmpty()) {
-            Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
-        } else {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                favorites.forEach { app -> PreviewAppRow(app) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    Column(modifier = modifier.fillMaxSize()) {
+        // Sits right above the card itself (on the carousel's own backdrop, not the card's
+        // Surface background) but still belongs to this page — swiping to a neighbor swaps in
+        // that page's own name/menu along with its card, per direct request (see chat history).
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = profile.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).testTag("profile_page_name_${profile.id}"),
+            )
+            Box {
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    modifier = Modifier.testTag("profile_page_menu_${profile.id}"),
+                ) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Profile options", tint = Muted)
+                }
+                ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    ThemedDropdownMenuItem(
+                        label = "Profile settings",
+                        onClick = { menuExpanded = false; onEditProfileClick() },
+                    )
+                    ThemedDropdownMenuItem(
+                        label = "Delete profile",
+                        enabled = canDelete,
+                        destructive = true,
+                        onClick = { menuExpanded = false; onDeleteClick() },
+                    )
+                }
             }
         }
 
-        // Dock is shared across all profiles (not per-profile), same 16dp gap + omit-when-empty
-        // + SpaceEvenly distribution as the real Home screen (ui/home/HomeScreen.kt) so this
-        // preview matches it.
-        Spacer(modifier = Modifier.height(16.dp))
-        if (dockApps.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                dockApps.forEach { app ->
-                    DockIcon(
-                        app = app,
-                        displayMode = dockDisplayMode,
-                        onClick = {},
-                        labelColor = appLabelColorOption.resolve(),
-                        labelFontWeight = homeAppsFontWeight.resolve(),
-                    )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
+                // CLAUDE.md's Material 3 shape section.
+                .clip(MaterialTheme.shapes.extraLarge)
+                .background(Surface)
+                .padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ClockBlock(
+                use24HourTime = use24HourTime,
+                templateId = clockTemplateId,
+                fontOption = clockFontOption,
+                colorOption = clockColorOption,
+                showMeridiem = clockShowMeridiem,
+                launcherFontOption = launcherFontOption,
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = "FAVORITES",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            )
+            if (favorites.isEmpty()) {
+                Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
+            } else {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    favorites.forEach { app -> PreviewAppRow(app) }
+                }
+            }
+
+            // Dock is shared across all profiles (not per-profile), same 16dp gap + omit-when-empty
+            // + SpaceEvenly distribution as the real Home screen (ui/home/HomeScreen.kt) so this
+            // preview matches it.
+            Spacer(modifier = Modifier.height(16.dp))
+            if (dockApps.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    dockApps.forEach { app ->
+                        DockIcon(
+                            app = app,
+                            displayMode = dockDisplayMode,
+                            onClick = {},
+                            labelColor = appLabelColorOption.resolve(),
+                            labelFontWeight = homeAppsFontWeight.resolve(),
+                        )
+                    }
                 }
             }
         }
@@ -613,6 +648,7 @@ private fun ProfileCarouselScreenPreview() {
             onAddProfile = {},
             onDeleteProfile = {},
             onReorder = {},
+            onNavigateToSettings = {},
         )
     }
 }

@@ -4,6 +4,7 @@ import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.geometry.Offset
@@ -46,6 +47,7 @@ class ProfileCarouselScreenTest {
         onBack: () -> Unit = {},
         onProfileApplied: () -> Unit = {},
         onEditProfile: (Long) -> Unit = {},
+        onNavigateToSettings: () -> Unit = {},
         seed: suspend (ProfileRepository, SettingsRepository) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, FavoriteAppRepository, DockAppRepository) -> Unit = { _, _, _ -> },
     ) {
@@ -93,6 +95,7 @@ class ProfileCarouselScreenTest {
                     onBack = onBack,
                     onProfileApplied = onProfileApplied,
                     onEditProfile = onEditProfile,
+                    onNavigateToSettings = onNavigateToSettings,
                     viewModel = viewModel,
                 )
             }
@@ -151,8 +154,8 @@ class ProfileCarouselScreenTest {
         // card applies it immediately, there's no separate Select step.
         swipeToNextPage()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Profile 2").assertExists()
-        composeRule.onNodeWithText("Profile 2").performClick()
+        composeRule.onNodeWithTag("profile_page_name_$secondProfileId", useUnmergedTree = true).assertTextEquals("Profile 2")
+        composeRule.onNodeWithTag("profile_page_$secondProfileId").performClick()
 
         // Then it becomes the active profile, and onProfileApplied fires — not onBack, so the
         // caller can always return to Home regardless of how the carousel was reached
@@ -168,13 +171,15 @@ class ProfileCarouselScreenTest {
         // Given two profiles, the first one active
         lateinit var settingsRepository: SettingsRepository
         var firstProfileId = 0L
+        var secondProfileId = 0L
         var backInvoked = false
         setContent(
             onBack = { backInvoked = true },
             seed = { profileRepository, settings ->
                 val first = profileRepository.addProfile()
-                profileRepository.addProfile()
+                val second = profileRepository.addProfile()
                 firstProfileId = first.id
+                secondProfileId = second.id
                 settings.setActiveProfileId(first.id)
                 settingsRepository = settings
             },
@@ -183,7 +188,7 @@ class ProfileCarouselScreenTest {
         // When browsing to the second page but pressing back instead of tapping it
         swipeToNextPage()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Profile 2").assertExists()
+        composeRule.onNodeWithTag("profile_page_name_$secondProfileId", useUnmergedTree = true).assertTextEquals("Profile 2")
         composeRule.onNodeWithTag("back_button").performClick()
 
         // Then back was invoked and the active profile is unchanged
@@ -208,33 +213,39 @@ class ProfileCarouselScreenTest {
     @Test
     fun deleteIsDisabledWithOnlyOneProfileRemaining() {
         // Given a single profile
+        var onlyProfileId = 0L
         setContent(
             seed = { profileRepository, settings ->
                 val only = profileRepository.addProfile()
+                onlyProfileId = only.id
                 settings.setActiveProfileId(only.id)
             },
         )
 
-        // Then the trash action is disabled — the last profile can't be removed
-        composeRule.onNodeWithTag("profile_carousel_trash").assertIsNotEnabled()
+        // Then the delete action is disabled — the last profile can't be removed
+        composeRule.onNodeWithTag("profile_page_menu_$onlyProfileId", useUnmergedTree = true).performClick()
+        composeRule.onNode(hasText("Delete profile")).assertIsNotEnabled()
     }
 
     @Test
     fun deletingAProfileRemovesItFromTheCarousel() {
         // Given two profiles, centered on the second
+        var secondProfileId = 0L
         setContent(
             seed = { profileRepository, settings ->
                 val first = profileRepository.addProfile()
-                profileRepository.addProfile()
+                val second = profileRepository.addProfile()
+                secondProfileId = second.id
                 settings.setActiveProfileId(first.id)
             },
         )
         swipeToNextPage()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Profile 2").assertExists()
+        composeRule.onNodeWithTag("profile_page_name_$secondProfileId", useUnmergedTree = true).assertTextEquals("Profile 2")
 
         // When deleting it and confirming
-        composeRule.onNodeWithTag("profile_carousel_trash").performClick()
+        composeRule.onNodeWithTag("profile_page_menu_$secondProfileId", useUnmergedTree = true).performClick()
+        composeRule.onNode(hasText("Delete profile")).performClick()
         composeRule.onNode(hasText("Delete")).performClick()
         composeRule.waitForIdle()
 
@@ -381,5 +392,46 @@ class ProfileCarouselScreenTest {
         // Then the preview card renders the favorite as a visible row and the dock app as an icon
         composeRule.onNodeWithText(favoriteLabel).assertExists()
         composeRule.onNodeWithContentDescription(dockLabel).assertExists()
+    }
+
+    @Test
+    fun profileSettingsFromTheCardMenuNavigatesToEditProfile() {
+        // Given a single profile
+        var profileId = 0L
+        var editedProfileId = -1L
+        setContent(
+            onEditProfile = { editedProfileId = it },
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                profileId = only.id
+                settings.setActiveProfileId(only.id)
+            },
+        )
+
+        // When opening the card's own overflow menu and choosing Profile settings
+        composeRule.onNodeWithTag("profile_page_menu_$profileId", useUnmergedTree = true).performClick()
+        composeRule.onNode(hasText("Profile settings")).performClick()
+
+        // Then the caller is asked to navigate to that profile's settings
+        assertEquals(profileId, editedProfileId)
+    }
+
+    @Test
+    fun launcherSettingsRowInvokesTheCallback() {
+        // Given the carousel
+        var navigatedToSettings = false
+        setContent(
+            onNavigateToSettings = { navigatedToSettings = true },
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                settings.setActiveProfileId(only.id)
+            },
+        )
+
+        // When tapping the "Launcher settings" row pinned at the bottom
+        composeRule.onNodeWithTag("profile_carousel_launcher_settings").performClick()
+
+        // Then the caller is asked to navigate there
+        assertEquals(true, navigatedToSettings)
     }
 }
