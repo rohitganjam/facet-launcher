@@ -183,7 +183,7 @@ fun AppDrawerScreen(
     var railHeightPx by remember { mutableFloatStateOf(0f) }
     val isSearching = query.isNotBlank()
     // Phase 9's connections sheet — hoisted here (not down in DrawerSearchResults/ContactRow) so
-    // it can overlay the *whole* screen, matching HomeDrawerRoute's LongPressSheet conventions.
+    // it can overlay the *whole* screen.
     var connectionsSheetContact by remember { mutableStateOf<ContactInfo?>(null) }
     var connections by remember { mutableStateOf<List<ContactConnection>>(emptyList()) }
     LaunchedEffect(connectionsSheetContact) {
@@ -338,7 +338,7 @@ fun AppDrawerScreen(
         }
     }
 
-    // Phase 9's connections sheet — same scrim/slide conventions as HomeDrawerRoute's LongPressSheet.
+    // Phase 9's connections sheet — scrim + slide-up-from-bottom overlay.
     AnimatedVisibility(
         visible = connectionsSheetContact != null,
         enter = fadeIn(animationSpec = tween(240)),

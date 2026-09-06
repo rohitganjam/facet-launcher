@@ -38,7 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
-import com.lumenlauncher.app.data.model.ThemeMode
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.SettingsCard
@@ -139,8 +138,16 @@ private fun SettingsContent(
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Appearance",
-                            subtitle = "${uiState.settings.themeMode.displayLabel()} · ${uiState.settings.launcherFontOption.displayName}",
+                            title = "Change wallpaper",
+                            subtitle = "Change your system wallpaper",
+                            onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
+                            testTag = "change_wallpaper_row",
+                            trailing = { NavigationChevron() },
+                        )
+                        CardDivider()
+                        ClickableRow(
+                            title = "Launcher Appearance",
+                            subtitle = "Theme, accent, icons, fonts",
                             onClick = onNavigateToAppearance,
                             testTag = "appearance_row",
                             trailing = { NavigationChevron() },
@@ -268,12 +275,6 @@ private fun SettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
         BackButton(onClick = onBack)
         Text(text = "Settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
-}
-
-private fun ThemeMode.displayLabel(): String = when (this) {
-    ThemeMode.LIGHT -> "Light"
-    ThemeMode.DARK -> "Dark"
-    ThemeMode.SYSTEM -> "System"
 }
 
 /** "4 Favorites"/"5 Most used"/"5 Recents" — the live count for whichever list content mode is active, not just its name. */

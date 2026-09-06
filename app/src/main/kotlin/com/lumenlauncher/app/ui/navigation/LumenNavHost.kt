@@ -122,9 +122,6 @@ fun LumenNavHost(
                 onAppClick = onAppClick,
                 onNavigateToSettings = { navController.navigate(LumenDestinations.SETTINGS) },
                 onNavigateToProfileCarousel = { navController.navigate(LumenDestinations.PROFILE_CAROUSEL) },
-                onNavigateToEditProfile = { profileId ->
-                    navController.navigate(LumenDestinations.profileSettings(profileId))
-                },
                 onNavigateToUsageAccessExplanation = {
                     navController.navigate(LumenDestinations.USAGE_ACCESS_EXPLANATION)
                 },

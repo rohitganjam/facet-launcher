@@ -73,6 +73,7 @@ import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -93,7 +94,7 @@ class HomeDrawerRouteTest {
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
     }
 
-    private fun setContent(seedHubWithOneWidget: Boolean = false) {
+    private fun setContent(seedHubWithOneWidget: Boolean = false, onNavigateToProfileCarousel: () -> Unit = {}) {
         composeRule.setContent {
             val context = LocalContext.current
             val homeViewModel = remember {
@@ -218,8 +219,7 @@ class HomeDrawerRouteTest {
                     apps = apps,
                     onAppClick = {},
                     onNavigateToSettings = {},
-                    onNavigateToProfileCarousel = {},
-                    onNavigateToEditProfile = {},
+                    onNavigateToProfileCarousel = onNavigateToProfileCarousel,
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
@@ -472,9 +472,12 @@ class HomeDrawerRouteTest {
     }
 
     @Test
-    fun holdingStillForTheFullDurationOpensTheSheet() {
-        // Given Home rendered
-        setContent()
+    fun holdingStillForTheFullDurationNavigatesToTheProfileCarousel() {
+        // Given Home rendered — long-press now goes straight to the profile carousel instead of
+        // opening an options sheet (see chat history: the sheet is gone, its other rows moved to
+        // the carousel screen itself and Settings).
+        var navigated = false
+        setContent(onNavigateToProfileCarousel = { navigated = true })
 
         // When the finger goes down and stays still past the platform long-press timeout —
         // advance Compose's own test clock rather than Thread.sleep, since the pointerInput
@@ -483,15 +486,16 @@ class HomeDrawerRouteTest {
         composeRule.mainClock.advanceTimeBy(1_000)
         composeRule.waitForIdle()
 
-        // Then the long-press sheet opens
-        composeRule.onNodeWithTag("long_press_sheet").assertExists()
+        // Then the caller is asked to navigate to the profile carousel
+        assertEquals(true, navigated)
         composeRule.onRoot().performTouchInput { up() }
     }
 
     @Test
-    fun releasingBeforeTheDurationDoesNotOpenTheSheet() {
+    fun releasingBeforeTheDurationDoesNotNavigate() {
         // Given Home rendered
-        setContent()
+        var navigated = false
+        setContent(onNavigateToProfileCarousel = { navigated = true })
 
         // When the finger lifts well before the long-press timeout
         composeRule.onRoot().performTouchInput { down(center) }
@@ -500,8 +504,8 @@ class HomeDrawerRouteTest {
         composeRule.mainClock.advanceTimeBy(1_000)
         composeRule.waitForIdle()
 
-        // Then the sheet never opens
-        composeRule.onNodeWithTag("long_press_sheet").assertDoesNotExist()
+        // Then nothing happens
+        assertEquals(false, navigated)
     }
 
     @Test

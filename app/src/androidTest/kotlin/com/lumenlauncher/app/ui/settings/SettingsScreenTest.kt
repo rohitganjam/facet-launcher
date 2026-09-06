@@ -121,14 +121,15 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun appearanceRowIsClickableAndReflectsCurrentThemeAndFont() {
-        // Given the settings screen, scrolled to the "Appearance" row — the theme/accent/icons/
-        // font block lives on its own screen, reached through this single summary row instead of
-        // inline controls.
+    fun appearanceRowIsClickableAndShowsAGenericSubtitle() {
+        // Given the settings screen, scrolled to the "Launcher Appearance" row — the theme/accent/
+        // icons/font block lives on its own screen, reached through this single summary row
+        // instead of inline controls. The subtitle is a static, generic description rather than
+        // the live theme/font values (see chat history — the dynamic subtitle wasn't wanted here).
         var navigated = false
         setContent(onNavigateToAppearance = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_row"))
-        composeRule.onNodeWithTag("appearance_row").assertTextContains("System · System", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Theme, accent, icons, fonts", substring = true)
 
         // When tapping it
         composeRule.onNodeWithTag("appearance_row").performClick()
@@ -265,5 +266,17 @@ class SettingsScreenTest {
 
         // Then the default-launcher row is genuinely interactive
         composeRule.onNodeWithTag("set_default_launcher_row").assertHasClickAction()
+    }
+
+    @Test
+    fun changeWallpaperRowIsInteractive() {
+        // Given the settings screen, scrolled to the "Change wallpaper" row — same category as
+        // "set_default_launcher_row" above, a system-intent launch that isn't itself verifiable
+        // from a Compose test.
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("change_wallpaper_row"))
+
+        // Then it's genuinely interactive
+        composeRule.onNodeWithTag("change_wallpaper_row").assertHasClickAction()
     }
 }

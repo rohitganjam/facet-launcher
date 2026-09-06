@@ -63,12 +63,10 @@ import com.lumenlauncher.app.ui.drawer.AppDrawerScreen
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.HomeScreen
 import com.lumenlauncher.app.ui.home.HomeViewModel
-import com.lumenlauncher.app.ui.home.LongPressSheet
 import com.lumenlauncher.app.ui.hub.HubScreen
 import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
-import com.lumenlauncher.app.ui.theme.Scrim
 import com.lumenlauncher.app.ui.theme.resolve
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -160,7 +158,6 @@ fun HomeDrawerRoute(
     onAppClick: (AppInfo) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToProfileCarousel: () -> Unit,
-    onNavigateToEditProfile: (profileId: Long) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
@@ -210,7 +207,6 @@ fun HomeDrawerRoute(
             hubAxis.close()
         }
     }
-    var showLongPressSheet by remember { mutableStateOf(false) }
     // Rendered in-place as an overlay below (not a NavHost destination — see chat history):
     // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
     // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
@@ -291,11 +287,10 @@ fun HomeDrawerRoute(
         }
     }
 
-    BackHandler(enabled = isDrawerOpen || isHubOpen || showLongPressSheet || showWidgetPicker) {
+    BackHandler(enabled = isDrawerOpen || isHubOpen || showWidgetPicker) {
         focusManager.clearFocus()
         when {
             showWidgetPicker -> showWidgetPicker = false
-            showLongPressSheet -> showLongPressSheet = false
             isDrawerOpen -> coroutineScope.launch { drawerAxis.close() }
             isHubOpen -> coroutineScope.launch { hubAxis.close() }
         }
@@ -403,9 +398,12 @@ fun HomeDrawerRoute(
                 // README specifies a 420ms/8px long-press. detectTapGestures's onLongPress is
                 // Compose's own primitive for exactly this — it uses the platform's default
                 // long-press timeout (~500ms) and touch slop instead of the literal 420ms/8px,
-                // a close enough match that it isn't perceptible.
+                // a close enough match that it isn't perceptible. Goes straight to the profile
+                // carousel now — the options sheet this used to open is gone (see chat history);
+                // Launcher settings and Change wallpaper moved to the carousel screen itself and
+                // Settings respectively.
                 .pointerInput(Unit) {
-                    detectTapGestures(onLongPress = { showLongPressSheet = true })
+                    detectTapGestures(onLongPress = { onNavigateToProfileCarousel() })
                 },
         )
 
@@ -478,60 +476,6 @@ fun HomeDrawerRoute(
                 .offset { IntOffset(0, ((1f - drawerAxis.progress.value) * containerHeightPx).toInt()) }
                 .nestedScroll(nestedScrollConnection),
         )
-
-        // Scrim
-        AnimatedVisibility(
-            visible = showLongPressSheet,
-            enter = fadeIn(animationSpec = tween(240)),
-            exit = fadeOut(animationSpec = tween(240))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Scrim)
-                    .testTag("long_press_sheet_scrim")
-                    .clickable(onClick = { showLongPressSheet = false })
-            )
-        }
-
-        // Sheet
-        AnimatedVisibility(
-            visible = showLongPressSheet,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
-            ),
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            val activeProfile = homeUiState.profiles.find { it.id == homeUiState.settings.activeProfileId }
-            val activeProfilePosition = homeUiState.profiles.indexOf(activeProfile) + 1
-            LongPressSheet(
-                activeProfileName = activeProfile?.name ?: "",
-                activeProfilePosition = activeProfilePosition,
-                profileCount = homeUiState.profiles.size,
-                onSwitchProfileClick = {
-                    showLongPressSheet = false
-                    onNavigateToProfileCarousel()
-                },
-                onEditProfileClick = {
-                    showLongPressSheet = false
-                    onNavigateToEditProfile(homeUiState.settings.activeProfileId)
-                },
-                onLauncherSettingsClick = {
-                    showLongPressSheet = false
-                    onNavigateToSettings()
-                },
-                onChangeWallpaperClick = {
-                    showLongPressSheet = false
-                    runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) }
-                },
-                modifier = Modifier.testTag("long_press_sheet")
-            )
-        }
 
         // Add-widget picker — an in-place overlay (see the showWidgetPicker declaration above for
         // why), sliding in over the Hub the same direction a NavHost push would have, so it still

@@ -183,7 +183,6 @@ class KeyboardDismissalTest {
                     onAppClick = {},
                     onNavigateToSettings = {},
                     onNavigateToProfileCarousel = {},
-                    onNavigateToEditProfile = {},
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,

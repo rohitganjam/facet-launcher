@@ -66,9 +66,8 @@ import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
 
 /**
- * Phase 9's connections sheet — replaces the old tap-to-expand chip row, styled after
- * [com.lumenlauncher.app.ui.home.LongPressSheet] (dividers between rows, a right chevron on
- * each). Dynamically sized: starts at 30% of the available height, grows to fit its rows, and
+ * Phase 9's connections sheet — replaces the old tap-to-expand chip row (dividers between rows, a
+ * right chevron on each). Dynamically sized: starts at 30% of the available height, grows to fit its rows, and
  * scrolls internally past a 70% cap rather than overflowing past it. A row whose [ContactConnection.detail]
  * is [ConnectionDetail.Multiple] (more than one phone number, say) doesn't fire anything directly —
  * it slides in a second, disambiguation page listing each option, matching the direction its own
