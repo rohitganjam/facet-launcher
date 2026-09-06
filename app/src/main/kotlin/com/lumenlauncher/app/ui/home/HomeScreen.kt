@@ -265,6 +265,13 @@ internal fun AppRow(
     // com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen) — long-press there must not open
     // Home's real Uninstall/App Info/shortcuts menu, since the preview isn't a place you manage apps.
     enableLongPressMenu: Boolean = true,
+    // 16dp matches App Drawer's own Regular list-item spacing exactly (base 8dp +
+    // DrawerListItemSize.REGULAR's 8dp extraRowPaddingDp), per direct request that Home's app list
+    // read as the same density as Drawer's default (see chat history) — that's Home's own real
+    // density and stays the default here. A caller rendering this inside a small preview card
+    // (the profile carousel, the Appearance screen's own live preview) overrides it tighter, since
+    // Home's real row height would read as oversized on a compact card (see chat history).
+    verticalPadding: Dp = 16.dp,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
@@ -284,10 +291,7 @@ internal fun AppRow(
                         Modifier.clickable(onClick = onClick)
                     }
                 )
-                // 16dp — matches App Drawer's own Regular list-item spacing exactly (base 8dp +
-                // DrawerListItemSize.REGULAR's 8dp extraRowPaddingDp), per direct request that
-                // Home's app list read as the same density as Drawer's default (see chat history).
-                .padding(horizontal = 8.dp, vertical = 16.dp),
+                .padding(horizontal = 8.dp, vertical = verticalPadding),
             verticalAlignment = Alignment.CenterVertically,
             // RIGHT packs the whole row's content against the trailing edge (not just reversed
             // order while left-anchored) so the row visually hugs the screen's right edge.

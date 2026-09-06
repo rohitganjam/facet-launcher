@@ -172,4 +172,37 @@ class AppearanceSettingsScreenTest {
             runBlocking { settingsRepository.settings.first().homeAppsFontWeight == FontWeightOption.SEMI_BOLD }
         }
     }
+
+    @Test
+    fun previewCardShowsSampleAppsAndDockIcon() {
+        // Given the screen — the live preview card (M4) reuses the real AppRow/DockIcon with
+        // synthetic sample apps, above the rest of the controls.
+        setContent()
+
+        // Then the preview card and its sample favorites row + dock icon all render
+        composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+        composeRule.onNodeWithText("Camera").assertExists()
+        composeRule.onNodeWithText("Messages").assertExists()
+        composeRule.onNodeWithContentDescription("Phone").assertExists()
+    }
+
+    @Test
+    fun previewCardStillRendersAfterChangingAppLabelColor() {
+        // Given the screen, App label color at its default
+        setContent()
+        composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+
+        // When changing App label color — the same value the preview's AppRow/DockIcon labelColor
+        // is wired from
+        composeRule.onNodeWithTag("appearance_app_label_color_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_label_color_row_option_THEME_INVERTED").performClick()
+
+        // Then the preview keeps rendering its sample content correctly through the recomposition
+        // (a wiring mistake here — e.g. a wrong param — would otherwise crash or blank the card)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithText("Camera").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+    }
 }

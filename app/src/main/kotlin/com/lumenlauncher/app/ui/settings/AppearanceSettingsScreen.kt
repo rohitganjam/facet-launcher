@@ -2,6 +2,7 @@ package com.lumenlauncher.app.ui.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,15 +34,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.ThemeMode
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
@@ -49,11 +56,17 @@ import com.lumenlauncher.app.ui.components.FontWeightSlider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
+import com.lumenlauncher.app.ui.home.AppRow
+import com.lumenlauncher.app.ui.home.DockIcon
 import com.lumenlauncher.app.ui.theme.AccentSwatch
+import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
+import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
 import com.lumenlauncher.app.ui.theme.SurfaceContainer
+import com.lumenlauncher.app.ui.theme.Wallpaper
+import com.lumenlauncher.app.ui.theme.resolve
 
 /**
  * Settings → Appearance (`3c`) — theme, accent color, icons, and launcher font/app-label-color,
@@ -107,6 +120,16 @@ private fun AppearanceSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
+                item {
+                    AppearancePreviewCard(
+                        appRowPosition = settings.appRowPosition,
+                        appRowPresentation = settings.appRowPresentation,
+                        appLabelColorOption = settings.appLabelColorOption,
+                        homeAppsFontWeight = settings.homeAppsFontWeight,
+                        dockDisplayMode = settings.dockDisplayMode,
+                        modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
+                    )
+                }
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
@@ -167,6 +190,83 @@ private fun AppearanceSettingsContent(
         },
     )
 }
+
+/**
+ * Shows how this screen's own settings actually render on Home/Dock, using real production
+ * components ([AppRow]/[DockIcon] — the latter already `internal` for the profile carousel's own
+ * live preview, the former promoted `internal` for exactly this reuse too) rather than a
+ * hand-drawn mockup. Needs no preview-only state: [AppearanceSettingsViewModel.settings] already
+ * updates immediately after every setter call, so this just reads the same live values the rest
+ * of the screen's controls write to. Backed by [Wallpaper] (Home's own real backdrop tone, not
+ * [Surface]/[SurfaceContainer]) so [AppRow]/[DockIcon]'s text-shadow treatment — tuned for
+ * legibility over an arbitrary wallpaper, not a flat card — renders exactly as it would on Home,
+ * not washed out against a plain light card. The two sample apps are synthetic (`icon = null`,
+ * same placeholder-icon convention already used by this file's own `@Preview`s) — Theme/Accent/
+ * Launcher Font/Font weight/App label color all render correctly from that alone, since none of
+ * them need a real icon bitmap to demonstrate; Icon render mode specifically has nothing to tint
+ * without one, so it isn't visually demonstrated here (this preview's own icons always fall back
+ * to the placeholder, regardless of that setting).
+ */
+@Composable
+private fun AppearancePreviewCard(
+    appRowPosition: AppRowPosition,
+    appRowPresentation: AppRowPresentation,
+    appLabelColorOption: ClockColorOption,
+    homeAppsFontWeight: FontWeightOption,
+    dockDisplayMode: DockDisplayMode,
+    modifier: Modifier = Modifier,
+) {
+    val labelColor = appLabelColorOption.resolve()
+    val labelFontWeight = homeAppsFontWeight.resolve()
+    val shape = MaterialTheme.shapes.medium
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(elevation = 4.dp, shape = shape)
+            .background(Wallpaper, shape)
+            .border(1.dp, Hairline, shape)
+            .padding(16.dp),
+    ) {
+        Text(
+            text = "PREVIEW",
+            style = MaterialTheme.typography.labelSmall,
+            color = Muted,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        PreviewApps.forEach { app ->
+            AppRow(
+                app = app,
+                onClick = {},
+                badgeCount = null,
+                badgeStyle = NotificationBadgeStyle.DOT,
+                onRequestShortcuts = { emptyList() },
+                onLaunchShortcut = {},
+                position = appRowPosition,
+                presentation = appRowPresentation,
+                labelColor = labelColor,
+                labelFontWeight = labelFontWeight,
+                enableLongPressMenu = false,
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            DockIcon(
+                app = PreviewDockApp,
+                displayMode = dockDisplayMode,
+                onClick = {},
+                labelColor = labelColor,
+                labelFontWeight = labelFontWeight,
+                enableLongPressMenu = false,
+            )
+        }
+    }
+}
+
+private val PreviewApps = listOf(
+    AppInfo(packageName = "preview.appearance.one", activityName = ".Main", label = "Camera", icon = null),
+    AppInfo(packageName = "preview.appearance.two", activityName = ".Main", label = "Messages", icon = null),
+)
+private val PreviewDockApp = AppInfo(packageName = "preview.appearance.dock", activityName = ".Main", label = "Phone", icon = null)
 
 @Composable
 private fun AppearanceSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {

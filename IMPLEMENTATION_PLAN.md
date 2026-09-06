@@ -610,8 +610,52 @@ Picking back up a feature explicitly deferred earlier this session: **"Along wit
 - `ui/components/FontWeightSlider.kt` converted from its mockup `selectedIndex: Int` API to the real `selected: FontWeightOption, onSelectedChange: (FontWeightOption) -> Unit` API — same slider mechanics/live preview/all `@Preview`s, just re-typed.
 - Tests: `TypeTest` (resolver, one assertion per stop), `SettingsRepositoryTest` round-trip test for both new setters (plus defaults assertion), `ProfileRepositoryTest` (`updateOverridingClock` extended + new `setCalendarFontWeight` test), `LumenDatabaseMigrationTest.migration11To12AddsCalendarFontWeightColumnWithoutLosingExistingRows`. `./gradlew test` green.
 
-### Remaining: M2 (Calendar weight wiring), M3 (Home Apps weight wiring), M4 (Appearance live preview)
-Not yet started — see the approved plan for the full breakdown (`ClockStyleGalleryViewModel`/`Screen` + `CalendarEventsBlock` threading for M2; `AppearanceSettingsViewModel`/`Screen` + `HomeScreen`'s `AppRow`/`DockIcon` + `AppDrawerScreen`'s app-label `Text`s + `HomeDrawerRoute` threading for M3; `AppRow` promoted `private` → `internal` and a `Wallpaper`-backed preview card reusing real components for M4).
+### ✅ M2 complete — Calendar weight wiring
+- `ClockStyleGalleryUiState`/`ViewModel` gained `calendarFontWeight` (profile-or-global resolution mirroring `calendarFontOption` exactly) + `setCalendarFontWeight`.
+- `ClockStyleGalleryScreen.kt`'s CALENDAR card gained a `FontWeightSlider` row (Font → Color → Weight → live preview); the preview's `CalendarEventsBlock` call now threads the resolved weight in.
+- Threaded into Home's real rendering too: `ClockBlock`/`HomeScreen`/`HomeUiState` all gained `calendarFontWeight`/`activeCalendarFontWeight` (mirrors `activeCalendarFontOption`'s own `overrideCalendar` gating exactly), wired through `HomeDrawerRoute`.
+- Tests: `ClockStyleGalleryViewModelTest` (global + profile-scoped setter/resolution), `HomeUiStateTest` (`activeCalendarFontWeight` inherit/override cases).
+
+### ✅ M3 complete — Home Apps weight wiring
+- `AppearanceSettingsViewModel` gained `setHomeAppsFontWeight`; `AppearanceSettingsScreen.kt` gained a `FontWeightSlider` row right after Launcher Font.
+- `HomeScreen.kt`'s `AppRow`/`DockIcon` gained `labelFontWeight` params; `HomeScreen`'s own signature gained `homeAppsFontWeight`, resolved once and passed to both.
+- `AppDrawerScreen.kt`'s two real app-label `Text`s (`DrawerAppRow`, `DrawerGridTile`) gained the same resolved weight, threaded down from `AppDrawerScreen`'s own top-level signature — the first time Drawer's app-label text became settings-driven at all. `DrawerSearchResults` picks it up for free since it already reuses `DrawerAppRow`/`DrawerGridTile` directly.
+- `HomeDrawerRoute.kt` threads `homeAppsFontWeight` into both `HomeScreen` and `AppDrawerScreen`; `ProfileCarouselScreen.kt`'s own `DockIcon` reuse verified to pick up the real global value too.
+- Tests: `AppearanceSettingsViewModelTest`/`AppearanceSettingsScreenTest` (setter + slider interaction).
+
+### ✅ M4 complete — Appearance live preview
+- New `AppearancePreviewCard` at the top of `AppearanceSettingsScreen.kt`'s list, above the existing controls — a `Wallpaper`-backed card (not `Surface`/`SurfaceContainer`, so `AppRow`/`DockIcon`'s text-shadow treatment renders exactly as it would on real Home, not washed out against a plain light card) reusing the real `AppRow` (promoted `private` → `internal`, matching `DockIcon`'s existing visibility) and `DockIcon` with two synthetic sample apps (`icon = null`, same placeholder convention this file's own `@Preview`s already use).
+- Needs no preview-only state: driven directly by the screen's own live `settings` (`appRowPosition`/`appRowPresentation`/`appLabelColorOption`/`homeAppsFontWeight`/`dockDisplayMode`), which already updates immediately after every setter call. Theme/Accent and Launcher Font aren't threaded as explicit params — they render correctly for free, since `AppRow`'s text already reads `MaterialTheme.typography`/the app's real `colorScheme`.
+- **Known scope boundary**: Icon render mode isn't visually demonstrated here — the sample apps have no real icon bitmap to tint, so their icon always falls back to the placeholder regardless of that setting.
+- Tests: `AppearanceSettingsScreenTest.previewCardShowsSampleAppsAndDockIcon`, `.previewCardStillRendersAfterChangingAppLabelColor` (a control change round-trips through recomposition without the preview breaking).
+
+---
+
+## Post-Phase-9 polish, continued — Cold-start loading gate & installed-apps perf fix
+
+Direct follow-up after noticing (and fixing) a flash of default-styled content on Home right after the launcher process starts.
+
+- **`LauncherUiState`/`HomeUiState` both gate on a real `isLoading` flag** (the former already existed but was never read; the latter is new) — `LauncherActivity`/`HomeDrawerRoute` now render nothing at all (the real wallpaper shows through, since the window is already `windowShowWallpaper`/transparent-background) until each ViewModel's first real settings/apps emission lands, instead of a frame styled with hardcoded defaults. A 3-second timeout safety net in both ViewModels forces `isLoading = false` regardless, so a stuck upstream flow can never leave the actual home screen permanently blank.
+- **Real root cause of a *second*, unrelated slowness this surfaced**: `AppRepository.getInstalledApps()` was decoding/flattening every installed app's icon sequentially in one coroutine — on a real phone with 100+ apps, multiple real seconds before the very first emission, previously invisible only because default content rendered over it in the meantime. Fixed by running each icon's decode as its own `async` on `Dispatchers.Default`'s thread pool instead of one after another.
+- Tests: `LauncherViewModelTest`/`HomeViewModelTest` (`isLoading` true→false transition, and the timeout-fallback case with a never-emitting flow).
+
+## Post-Phase-9 polish, continued — Profile switcher redesign & long-press rewiring
+
+Reworks `ProfileCarouselScreen` as prep for (and then completing) making it the Home long-press destination directly, replacing the old options sheet.
+
+- **Per-card name + 3-dot menu**: profile name and a "Profile settings"/"Delete profile" dropdown now sit right above each page's own card (on the carousel's backdrop, not inside the card's `Surface`), tied to that specific page — swiping swaps in that page's own header along with its card. Replaces the old standalone gear/trash icon row.
+- **"Launcher settings" row pinned to the bottom** of the carousel screen — this is where that option now lives, since the sheet it used to live in is gone.
+- **Long-press on Home now opens the profile carousel directly** — `LongPressSheet.kt` and its test deleted outright. Its other rows already had new homes: Launcher settings → the carousel screen itself (above); Change wallpaper → a new row in Settings, right below Profiles; Edit profile → reachable via the carousel's own per-card menu.
+- **Wallpaper option added to Settings**: a "Change wallpaper" row (opens the system picker via `ACTION_SET_WALLPAPER`) next to the renamed "Launcher Appearance" row, whose subtitle is now a static description instead of the live theme/font values.
+- **Card-scale/spacing fixes**: the carousel's `CARD_SCALE` `graphicsLayer` transform now anchors to top-center (not the default center), so the per-page name row isn't pushed down by half the scale's own lost height; a small fixed top gap and 16dp-below-the-card dot-indicator spacing were tuned to match.
+- **Full preview threading**: the preview card only reflected Clock style before. `ObserveProfilePreviewsUseCase` now also fans out each profile's calendar events (gated by calendar permission + `overrideCalendar`'s `showAllDayEvents`, mirroring `ObserveHomeScreenStateUseCase` exactly); `ProfileCarouselUiState` gained per-profile `calendarFontOption`/`calendarColorOption`/`calendarFontWeight`/`appRowPosition`/`appRowPresentation`/`listContentMode` helpers matching `HomeUiState`'s own gating; the preview card reuses the real `AppRow` (promoted `internal`) instead of a hand-drawn row, and its list header now shows FAVORITES/RECENTS/MOST USED matching the profile's actual mode.
+- **Real bug found and fixed while threading calendar data through**: `observeCalendarEvents` in both `ObserveHomeScreenStateUseCase` and `ObserveProfilePreviewsUseCase` always queried with the *global* `selectedCalendarIds`, even when a profile overrides calendar settings with its own selection — only `showAllDayEvents` actually respected the override. Both now resolve `selectedCalendarIds` the same way.
+- **Real bug found and fixed via direct user report**: reusing `AppRow`/`DockIcon` in the preview card meant their own click/long-press consumed the touch instead of letting it reach the card's own "apply this profile" tap — tapping directly on a favorite row or dock icon silently did nothing, and long-pressing one opened Home's real Uninstall/App Info menu inside what's meant to be a read-only preview. Fixed: their `onClick` now fires the same profile-apply action as the rest of the card; both gained an `enableLongPressMenu` flag (default `true`, matching Home's real behavior) that the preview sets `false`.
+- Tests: `ProfileCarouselScreenTest` (per-card menu tap/delete/settings-navigation, tap-on-favorite/dock-still-applies, long-press-on-favorite/dock-does-not-open-context-menu, Launcher-settings-row-navigates), `SettingsScreenTest`/`AppearanceSettingsScreenTest` updates, `ObserveProfilePreviewsUseCaseTest` (new — calendar-events fan-out, per-profile `selectedCalendarIds` override), `ObserveHomeScreenStateUseCaseTest` (`selectedCalendarIds` override case).
+
+## Post-Phase-9 polish, continued — App-wide ripple strengthened
+
+Material3's default ripple was too faint to notice, especially over Home's wallpaper. `LumenLauncherTheme` now overrides `LocalRippleConfiguration` app-wide with roughly double the default alpha levels. The tint itself is passed as `Ink` explicitly rather than left `Color.Unspecified` — this app's screens don't wrap content in a Material3 `Surface` (Home/Drawer rows are plain `Column`/`Box` + `.background()`), so `Color.Unspecified` would have deferred to `LocalContentColor`, which never actually gets set to the theme-aware `Ink` here and stays stuck at Compose's own fixed default — confirmed via direct on-device report that the ripple looked identically dark in both themes before this fix.
 
 ---
 

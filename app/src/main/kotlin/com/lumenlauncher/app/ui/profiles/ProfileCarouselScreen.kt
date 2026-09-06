@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,11 +46,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -544,84 +548,106 @@ private fun ProfilePreviewPage(
             }
         }
 
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
                 // CLAUDE.md's Material 3 shape section.
                 .clip(MaterialTheme.shapes.extraLarge)
-                .background(Surface)
-                .padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .background(Surface),
         ) {
-            ClockBlock(
-                use24HourTime = use24HourTime,
-                templateId = clockTemplateId,
-                fontOption = clockFontOption,
-                colorOption = clockColorOption,
-                showMeridiem = clockShowMeridiem,
-                events = calendarEvents,
-                calendarColors = calendarColors,
-                calendarFontOption = calendarFontOption,
-                calendarColorOption = calendarColorOption,
-                calendarFontWeight = calendarFontWeight,
-                launcherFontOption = launcherFontOption,
-                modifier = Modifier.align(Alignment.Start)
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = listContentMode.previewLabel(),
-                style = MaterialTheme.typography.labelSmall,
-                color = Muted,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            )
-            if (favorites.isEmpty()) {
-                Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
-            } else {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    favorites.forEach { app ->
-                        AppRow(
-                            app = app,
-                            onClick = onCardClick,
-                            badgeCount = null,
-                            badgeStyle = NotificationBadgeStyle.DOT,
-                            onRequestShortcuts = { emptyList() },
-                            onLaunchShortcut = {},
-                            position = appRowPosition,
-                            presentation = appRowPresentation,
-                            labelColor = appLabelColorOption.resolve(),
-                            labelFontWeight = homeAppsFontWeight.resolve(),
-                            // This card is a read-only preview of a profile's Home layout, not a
-                            // place to manage apps — long-press must not open the real
-                            // Uninstall/App Info/shortcuts menu (see chat history).
-                            enableLongPressMenu = false,
-                        )
-                    }
-                }
-            }
-
-            // Dock is shared across all profiles (not per-profile), same 16dp gap + omit-when-empty
-            // + SpaceEvenly distribution as the real Home screen (ui/home/HomeScreen.kt) so this
-            // preview matches it.
-            Spacer(modifier = Modifier.height(16.dp))
-            if (dockApps.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+            // This card renders at a fraction of Home's real on-screen size — first from sharing
+            // vertical space with the header/dots/settings row above, then from CARD_SCALE's own
+            // draw-time shrink on top of that. Rather than hand-picking fixed dp overrides for
+            // every size in here (which needed re-tuning by eye each time — see chat history), we
+            // measure how tall this card actually ends up on screen, compare it to the real
+            // screen height, and use that ratio to shrink every dp/sp value inside proportionally
+            // via a scaled LocalDensity — so all of the card's content (icon sizes, text sizes,
+            // paddings) scales down together, consistently, rather than one value at a time.
+            val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+            val visualCardHeight = maxHeight * CARD_SCALE
+            val contentScale = (visualCardHeight / screenHeight).coerceIn(0.4f, 1f)
+            val baseDensity = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(baseDensity.density * contentScale, baseDensity.fontScale),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    dockApps.forEach { app ->
-                        DockIcon(
-                            app = app,
-                            displayMode = dockDisplayMode,
-                            onClick = onCardClick,
-                            labelColor = appLabelColorOption.resolve(),
-                            labelFontWeight = homeAppsFontWeight.resolve(),
-                            // Same read-only-preview reasoning as the AppRow above.
-                            enableLongPressMenu = false,
-                        )
+                    ClockBlock(
+                        use24HourTime = use24HourTime,
+                        templateId = clockTemplateId,
+                        fontOption = clockFontOption,
+                        colorOption = clockColorOption,
+                        showMeridiem = clockShowMeridiem,
+                        events = calendarEvents,
+                        calendarColors = calendarColors,
+                        calendarFontOption = calendarFontOption,
+                        calendarColorOption = calendarColorOption,
+                        calendarFontWeight = calendarFontWeight,
+                        launcherFontOption = launcherFontOption,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Text(
+                        text = listContentMode.previewLabel(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Muted,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    )
+                    if (favorites.isEmpty()) {
+                        Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
+                    } else {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            favorites.forEach { app ->
+                                AppRow(
+                                    app = app,
+                                    onClick = onCardClick,
+                                    badgeCount = null,
+                                    badgeStyle = NotificationBadgeStyle.DOT,
+                                    onRequestShortcuts = { emptyList() },
+                                    onLaunchShortcut = {},
+                                    position = appRowPosition,
+                                    presentation = appRowPresentation,
+                                    labelColor = appLabelColorOption.resolve(),
+                                    labelFontWeight = homeAppsFontWeight.resolve(),
+                                    // This card is a read-only preview of a profile's Home layout,
+                                    // not a place to manage apps — long-press must not open the
+                                    // real Uninstall/App Info/shortcuts menu (see chat history).
+                                    enableLongPressMenu = false,
+                                    // Uses AppRow's own real Home density (16dp) — the scaled
+                                    // LocalDensity above shrinks it proportionally already, so no
+                                    // fixed override is needed here (see chat history).
+                                )
+                            }
+                        }
+                    }
+
+                    // Dock is shared across all profiles (not per-profile); omit-when-empty. Uses
+                    // Home's own real 16dp gap — the scaled LocalDensity above shrinks it along
+                    // with everything else, so no fixed override is needed (see chat history).
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (dockApps.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            dockApps.forEach { app ->
+                                DockIcon(
+                                    app = app,
+                                    displayMode = dockDisplayMode,
+                                    onClick = onCardClick,
+                                    labelColor = appLabelColorOption.resolve(),
+                                    labelFontWeight = homeAppsFontWeight.resolve(),
+                                    // Same read-only-preview reasoning as the AppRow above.
+                                    enableLongPressMenu = false,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -660,7 +686,7 @@ private fun AddProfilePage(onClick: () -> Unit, modifier: Modifier = Modifier) {
         }
         Text(text = "Add profile", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
         Text(
-            text = "Copies this profile's settings. Favorites start empty.",
+            text = "Starts with your launcher's default clock, calendar, favorite apps, and settings. Customize them per profile.",
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             textAlign = TextAlign.Center,
