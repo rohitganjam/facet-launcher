@@ -190,4 +190,23 @@ class ObserveHomeScreenStateUseCaseTest {
         // Then it queries with the profile's effective (overridden) setting and exposes the result
         assertEquals(listOf(event), result.calendarEvents)
     }
+
+    @Test
+    fun `calendar events reflect the active profile's own selected calendar ids when overriding`() = runTest {
+        // Given calendar access granted, and a profile overriding with its own calendar selection
+        val fixture = Fixture()
+        `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
+        val event = CalendarEvent(id = 1L, calendarId = "9", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
+        `when`(fixture.calendarRepository.getTodayEvents(setOf("9"), true)).thenReturn(listOf(event))
+        fixture.settingsFlow.value = LauncherSettings(activeProfileId = 1L, selectedCalendarIds = setOf("1", "2"))
+        fixture.profilesFlow.value = listOf(
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),
+        )
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then it queries with the profile's own selected calendar ids, not the global setting
+        assertEquals(listOf(event), result.calendarEvents)
+    }
 }

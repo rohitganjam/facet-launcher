@@ -12,6 +12,7 @@ import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
 import com.lumenlauncher.app.data.UsageStatsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.selectedCalendarIds
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.LauncherSettings
@@ -122,6 +123,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
     private fun observeCalendarEvents(profile: ProfileEntity?, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
         val includeAllDay = if (profile?.overrideCalendar == true) profile.showAllDayEvents else settings.showAllDayEvents
-        return flow { emit(calendarRepository.getTodayEvents(settings.selectedCalendarIds, includeAllDay)) }
+        val selectedCalendarIds = if (profile?.overrideCalendar == true) profile.selectedCalendarIds else settings.selectedCalendarIds
+        return flow { emit(calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)) }
     }
 }

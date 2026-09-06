@@ -130,4 +130,23 @@ class ObserveProfilePreviewsUseCaseTest {
         assertEquals(listOf(overriddenEvent), result.getValue(1L).calendarEvents)
         assertEquals(listOf(overriddenEvent, inheritedEvent), result.getValue(2L).calendarEvents)
     }
+
+    @Test
+    fun `calendar events reflect a profile's own selected calendar ids when overriding`() = runTest {
+        // Given calendar access granted, and a profile overriding with its own calendar selection
+        val fixture = Fixture()
+        `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
+        val event = CalendarEvent(id = 1L, calendarId = "9", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
+        `when`(fixture.calendarRepository.getTodayEvents(setOf("9"), true)).thenReturn(listOf(event))
+        fixture.settingsFlow.value = LauncherSettings(selectedCalendarIds = setOf("1", "2"))
+        fixture.profilesFlow.value = listOf(
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),
+        )
+
+        // When observing previews
+        val result = fixture.useCase().first()
+
+        // Then the profile's own selected calendar ids are used, not the global setting
+        assertEquals(listOf(event), result.getValue(1L).calendarEvents)
+    }
 }

@@ -13,6 +13,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
+import com.lumenlauncher.app.data.selectedCalendarIds
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,9 +35,8 @@ data class ProfilePreviewData(
  * Each profile's *effective* preview content, keyed by profile id — a profile overriding its own
  * content mode (Favorites/Recents/Most Used) or favorites shows those; one still inheriting
  * shows the launcher-wide default list instead, and the same for calendar events (gated by
- * `overrideCalendar`, mirroring [ObserveHomeScreenStateUseCase.observeCalendarEvents] exactly —
- * including that only `showAllDayEvents` actually respects the per-profile override today, not
- * `selectedCalendarIds`; see that function's own history). Spans [ProfileRepository],
+ * `overrideCalendar`, mirroring [ObserveHomeScreenStateUseCase.observeCalendarEvents] exactly,
+ * including which calendars are selected). Spans [ProfileRepository],
  * [SettingsRepository], [FavoriteAppRepository], [DefaultFavoriteAppRepository],
  * [UsageStatsRepository], [UsageAccessRepository], [CalendarPermissionRepository] and
  * [CalendarRepository], so it's a use case rather than something either the ViewModel or a
@@ -107,6 +107,7 @@ class ObserveProfilePreviewsUseCase @Inject constructor(
     private fun observeCalendarEvents(profile: ProfileEntity, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
         val includeAllDay = if (profile.overrideCalendar) profile.showAllDayEvents else settings.showAllDayEvents
-        return flow { emit(calendarRepository.getTodayEvents(settings.selectedCalendarIds, includeAllDay)) }
+        val selectedCalendarIds = if (profile.overrideCalendar) profile.selectedCalendarIds else settings.selectedCalendarIds
+        return flow { emit(calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)) }
     }
 }
