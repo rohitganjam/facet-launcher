@@ -112,6 +112,23 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
+    fun appListVerticalAlignmentDropdownSwitchesBetweenTopAndBottom() {
+        // Given the screen, "Bottom" selected by default
+        setContent()
+        composeRule.onNodeWithTag("app_list_vertical_alignment_row").assertTextContains("Bottom")
+
+        // When opening the dropdown and choosing "Top"
+        composeRule.onNodeWithTag("app_list_vertical_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("app_list_vertical_alignment_row_option_TOP").performClick()
+
+        // Then the row's own current-value label reflects it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_list_vertical_alignment_row").assertTextContains("Top") }.isSuccess
+        }
+    }
+
+    @Test
     fun defaultFavoritesRowIsClickable() {
         // Given the screen
         var navigated = false

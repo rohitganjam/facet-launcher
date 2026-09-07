@@ -132,6 +132,8 @@ class HomeDrawerRouteTest {
                         notificationAccessRepository,
                     ),
                     NotificationShadeRepository(context),
+                    settingsRepository,
+                    profileRepository,
                 )
             }
             val launcherViewModel = remember {

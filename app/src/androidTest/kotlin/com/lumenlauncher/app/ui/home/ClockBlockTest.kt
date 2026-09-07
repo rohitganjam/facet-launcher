@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.time.Clock
@@ -12,6 +13,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -168,6 +170,103 @@ class ClockBlockTest {
             }
         }
         composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun clockAndCalendarAlignmentsMoveIndependentlyOfEachOther() {
+        // Given a clock aligned right but a calendar explicitly kept left
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1,
+            calendarId = "1",
+            title = "Standup",
+            startTimeMillis = Instant.parse("2026-08-27T10:00:00Z").toEpochMilli(),
+            endTimeMillis = Instant.parse("2026-08-27T10:30:00Z").toEpochMilli(),
+            isAllDay = false,
+        )
+
+        // When the ClockBlock is composed with opposite alignments for each
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    events = listOf(event),
+                    clockAlignment = ClockAlignment.RIGHT,
+                    calendarAlignment = ClockAlignment.LEFT,
+                )
+            }
+        }
+
+        // Then the clock's time text sits further right than the calendar row — each obeys its
+        // own setting, unaffected by the other's
+        val clockLeft = composeRule.onNodeWithText("9:05").fetchSemanticsNode().boundsInRoot.left
+        val calendarRowLeft = composeRule.onNodeWithTag("clock_event_row_1").fetchSemanticsNode().boundsInRoot.left
+        assertTrue(clockLeft > calendarRowLeft)
+    }
+
+    @Test
+    fun calendarRightAlignmentReversesEventRowItemOrder() {
+        // Given a single event and the calendar aligned right
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1,
+            calendarId = "1",
+            title = "Standup",
+            startTimeMillis = Instant.parse("2026-08-27T10:00:00Z").toEpochMilli(),
+            endTimeMillis = Instant.parse("2026-08-27T10:30:00Z").toEpochMilli(),
+            isAllDay = false,
+        )
+
+        // When the ClockBlock is composed with calendarAlignment = RIGHT
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    events = listOf(event),
+                    calendarAlignment = ClockAlignment.RIGHT,
+                )
+            }
+        }
+
+        // Then the row reads title, then time, then indicator — the mirror of the normal order.
+        // useUnmergedTree = true everywhere: the row's own clickable merges all three
+        // descendants' semantics into itself, so a merged-tree text lookup would otherwise
+        // resolve to the row's own (identical) bounds for every child.
+        val titleLeft = composeRule.onNodeWithText("Standup", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        val timeLeft = composeRule.onNodeWithText("10:00", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        val indicatorLeft = composeRule.onNodeWithTag("clock_event_indicator_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        assertTrue(titleLeft < timeLeft)
+        assertTrue(timeLeft < indicatorLeft)
+    }
+
+    @Test
+    fun calendarLeftAlignmentKeepsTheNormalEventRowItemOrder() {
+        // Given a single event and the default (LEFT) calendar alignment
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1,
+            calendarId = "1",
+            title = "Standup",
+            startTimeMillis = Instant.parse("2026-08-27T10:00:00Z").toEpochMilli(),
+            endTimeMillis = Instant.parse("2026-08-27T10:30:00Z").toEpochMilli(),
+            isAllDay = false,
+        )
+
+        // When the ClockBlock is composed with the default calendar alignment
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, events = listOf(event))
+            }
+        }
+
+        // Then the row reads indicator, then time, then title — today's unchanged order
+        val indicatorLeft = composeRule.onNodeWithTag("clock_event_indicator_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        val timeLeft = composeRule.onNodeWithText("10:00", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        val titleLeft = composeRule.onNodeWithText("Standup", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        assertTrue(indicatorLeft < timeLeft)
+        assertTrue(timeLeft < titleLeft)
     }
 
     @Test

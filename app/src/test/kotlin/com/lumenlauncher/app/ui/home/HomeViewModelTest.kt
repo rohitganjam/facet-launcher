@@ -1,6 +1,9 @@
 package com.lumenlauncher.app.ui.home
 
 import com.lumenlauncher.app.data.NotificationShadeRepository
+import com.lumenlauncher.app.data.ProfileRepository
+import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.domain.HomeScreenState
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
@@ -42,22 +45,28 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun homeViewModel(notificationShadeRepository: NotificationShadeRepository): HomeViewModel {
+    private fun homeViewModel(
+        notificationShadeRepository: NotificationShadeRepository,
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
+        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
+        settings: LauncherSettings = LauncherSettings(),
+        profiles: List<ProfileEntity> = emptyList(),
+    ): HomeViewModel {
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(
             flowOf(
                 HomeScreenState(
-                    settings = LauncherSettings(),
+                    settings = settings,
                     dockApps = emptyList(),
                     appListItems = emptyList(),
-                    profiles = emptyList(),
+                    profiles = profiles,
                     usageAccessGranted = true,
                     calendarEvents = emptyList(),
                     badgeCounts = emptyMap(),
                 ),
             ),
         )
-        return HomeViewModel(observeHomeScreenState, notificationShadeRepository)
+        return HomeViewModel(observeHomeScreenState, notificationShadeRepository, settingsRepository, profileRepository)
     }
 
     @Test
@@ -95,7 +104,12 @@ class HomeViewModelTest {
         // is the actual home screen, so it must never stay blank forever (see chat history).
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(MutableSharedFlow())
-        val viewModel = HomeViewModel(observeHomeScreenState, mock(NotificationShadeRepository::class.java))
+        val viewModel = HomeViewModel(
+            observeHomeScreenState,
+            mock(NotificationShadeRepository::class.java),
+            mock(SettingsRepository::class.java),
+            mock(ProfileRepository::class.java),
+        )
 
         // Then it's still loading well before the timeout
         testDispatcher.scheduler.advanceTimeBy(2_000)
@@ -106,5 +120,42 @@ class HomeViewModelTest {
 
         // Then it stops loading anyway
         assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `onClockZoneHeightCommit delegates to the settings repository when no profile is overriding`() = runTest {
+        // Given a HomeViewModel with no active profile overriding the clock bundle
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
+
+        // When the clock's grab handle commits a new height
+        viewModel.onClockZoneHeightCommit(123.4f)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it delegates to the global settings repository rather than persisting anything itself
+        verify(settingsRepository).setClockZoneHeight(123.4f)
+    }
+
+    @Test
+    fun `onClockZoneHeightCommit delegates to the profile repository when the active profile overrides the clock bundle`() = runTest {
+        // Given a HomeViewModel whose active profile has overrideClock = true
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val profileRepository = mock(ProfileRepository::class.java)
+        val overridingProfile = ProfileEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val viewModel = homeViewModel(
+            notificationShadeRepository = mock(NotificationShadeRepository::class.java),
+            settingsRepository = settingsRepository,
+            profileRepository = profileRepository,
+            settings = LauncherSettings(activeProfileId = 1L),
+            profiles = listOf(overridingProfile),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When the clock's grab handle commits a new height
+        viewModel.onClockZoneHeightCommit(123.4f)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it writes to this profile's own override instead of the global setting
+        verify(profileRepository).setClockZoneHeight(overridingProfile, 123.4f)
     }
 }

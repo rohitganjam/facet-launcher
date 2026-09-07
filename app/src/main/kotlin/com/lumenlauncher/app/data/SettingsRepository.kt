@@ -9,8 +9,10 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -68,6 +70,10 @@ private object Keys {
     val CALENDAR_COLOR_OPTION = stringPreferencesKey("calendar_color_option")
     val CALENDAR_FONT_WEIGHT = stringPreferencesKey("calendar_font_weight")
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
+    val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
+    val CALENDAR_ALIGNMENT = stringPreferencesKey("calendar_alignment")
+    val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
+    val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
 }
 
 @Singleton
@@ -139,6 +145,13 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.calendarFontWeight,
             homeAppsFontWeight = preferences[Keys.HOME_APPS_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
                 ?: defaults.homeAppsFontWeight,
+            clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
+                ?: defaults.clockAlignment,
+            calendarAlignment = preferences[Keys.CALENDAR_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
+                ?: defaults.calendarAlignment,
+            clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
+            appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
+                ?: defaults.appListVerticalAlignment,
         )
     }
 
@@ -290,5 +303,28 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setHomeAppsFontWeight(weight: FontWeightOption) {
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
+    }
+
+    suspend fun setClockAlignment(alignment: ClockAlignment) {
+        dataStore.edit { it[Keys.CLOCK_ALIGNMENT] = alignment.name }
+    }
+
+    /** Independent of [setClockAlignment] — see [LauncherSettings.calendarAlignment]. */
+    suspend fun setCalendarAlignment(alignment: ClockAlignment) {
+        dataStore.edit { it[Keys.CALENDAR_ALIGNMENT] = alignment.name }
+    }
+
+    suspend fun setClockZoneHeight(heightDp: Float) {
+        dataStore.edit { it[Keys.CLOCK_ZONE_HEIGHT_DP] = heightDp }
+    }
+
+    /** Settings' "Reset clock height" row — restores [LauncherSettings.clockZoneHeightDp] to `null`, so the clock+calendar block and app list return to their original fixed-top, bottom-anchored layout. */
+    suspend fun resetClockZoneHeight() {
+        dataStore.edit { it.remove(Keys.CLOCK_ZONE_HEIGHT_DP) }
+    }
+
+    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */
+    suspend fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
+        dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
     }
 }

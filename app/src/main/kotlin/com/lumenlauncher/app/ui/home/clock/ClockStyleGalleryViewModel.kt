@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -33,6 +34,10 @@ data class ClockStyleGalleryUiState(
     val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /** Global only — resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview here regardless of whether this instance is profile-scoped. */
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    /** Home clock's horizontal placement — part of the same Clock+Calendar design bundle as [templateId]/etc, so it resolves and persists the same way (this profile's own value when scoped, the global default otherwise). */
+    val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
+    /** Home calendar strip's horizontal placement — independent of [clockAlignment], same resolution shape. */
+    val calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
 )
 
 /** Backs the global or profile-scoped clock style gallery. */
@@ -61,6 +66,8 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 calendarColorOption = profile.calendarColorOption,
                 calendarFontWeight = profile.calendarFontWeight,
                 launcherFontOption = settings.launcherFontOption,
+                clockAlignment = profile.clockAlignment,
+                calendarAlignment = profile.calendarAlignment,
             )
         } else {
             ClockStyleGalleryUiState(
@@ -73,6 +80,8 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 calendarColorOption = settings.calendarColorOption,
                 calendarFontWeight = settings.calendarFontWeight,
                 launcherFontOption = settings.launcherFontOption,
+                clockAlignment = settings.clockAlignment,
+                calendarAlignment = settings.calendarAlignment,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ClockStyleGalleryUiState())
@@ -138,6 +147,43 @@ class ClockStyleGalleryViewModel @Inject constructor(
             profileId?.let { pid ->
                 profileRepository.getById(pid)?.let { profileRepository.setCalendarFontWeight(it, weight) }
             } ?: settingsRepository.setCalendarFontWeight(weight)
+        }
+    }
+
+    fun setClockAlignment(alignment: ClockAlignment) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setClockAlignment(it, alignment) }
+            } ?: settingsRepository.setClockAlignment(alignment)
+        }
+    }
+
+    /** Independent of [setClockAlignment]. */
+    fun setCalendarAlignment(alignment: ClockAlignment) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setCalendarAlignment(it, alignment) }
+            } ?: settingsRepository.setCalendarAlignment(alignment)
+        }
+    }
+
+    /**
+     * "Reset clock widget position" — restores the whole clock+calendar widget to its original,
+     * untouched layout: the zone height back to `null` (fixed-top, bottom-anchored app list) and
+     * BOTH alignments (clock's and calendar's, independent settings otherwise — see
+     * [setClockAlignment]/[setCalendarAlignment]) back to `LEFT`, not just the height alone.
+     * Resets this profile's own values when scoped, the global defaults otherwise — same branching
+     * as every setter above.
+     */
+    fun resetClockPosition() {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.resetClockPosition(it) }
+            } ?: run {
+                settingsRepository.resetClockZoneHeight()
+                settingsRepository.setClockAlignment(ClockAlignment.LEFT)
+                settingsRepository.setCalendarAlignment(ClockAlignment.LEFT)
+            }
         }
     }
 }

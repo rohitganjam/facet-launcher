@@ -3,6 +3,8 @@ package com.lumenlauncher.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.NotificationShadeRepository
+import com.lumenlauncher.app.data.ProfileRepository
+import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,6 +34,8 @@ import kotlinx.coroutines.launch
 class HomeViewModel @Inject constructor(
     private val observeHomeScreenState: ObserveHomeScreenStateUseCase,
     private val notificationShadeRepository: NotificationShadeRepository,
+    private val settingsRepository: SettingsRepository,
+    private val profileRepository: ProfileRepository,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
@@ -73,6 +77,21 @@ class HomeViewModel @Inject constructor(
     /** Swipe-down-to-open-shade gesture, from [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute]. */
     fun expandNotificationShade() {
         viewModelScope.launch { notificationShadeRepository.expand() }
+    }
+
+    /**
+     * Fired once, on release, by the clock's grab handle ([com.lumenlauncher.app.ui.home.ClockZoneHandle])
+     * — see [com.lumenlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. Writes to the
+     * active profile's own override when one is actually governing the widget's position right
+     * now ([HomeUiState.clockPositionOwningProfile]); otherwise falls back to the global setting,
+     * same as every other profile-overridable value here.
+     */
+    fun onClockZoneHeightCommit(heightDp: Float) {
+        val owningProfile = _uiState.value.clockPositionOwningProfile
+        viewModelScope.launch {
+            owningProfile?.let { profileRepository.setClockZoneHeight(it, heightDp) }
+                ?: settingsRepository.setClockZoneHeight(heightDp)
+        }
     }
 
     private companion object {

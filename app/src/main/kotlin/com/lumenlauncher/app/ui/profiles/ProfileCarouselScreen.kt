@@ -28,8 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +49,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -63,6 +67,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
@@ -79,6 +84,8 @@ import com.lumenlauncher.app.ui.components.rememberDragReorderState
 import com.lumenlauncher.app.ui.home.AppRow
 import com.lumenlauncher.app.ui.home.ClockBlock
 import com.lumenlauncher.app.ui.home.DockIcon
+import com.lumenlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
+import com.lumenlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.CarouselBackdrop
 import com.lumenlauncher.app.ui.theme.Faint
@@ -239,6 +246,9 @@ private fun ProfileCarouselContent(
                         clockColorOption = uiState.clockColorOption(profile.id),
                         use24HourTime = uiState.effectiveUse24HourTime(profile.id),
                         clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
+                        clockAlignment = uiState.clockAlignment(profile.id),
+                        calendarAlignment = uiState.calendarAlignment(profile.id),
+                        clockZoneHeightDp = uiState.clockZoneHeightDp(profile.id),
                         calendarEvents = uiState.previewsByProfileId[profile.id]?.calendarEvents.orEmpty(),
                         calendarColors = uiState.globalSettings.calendarColors,
                         calendarFontOption = uiState.calendarFontOption(profile.id),
@@ -486,6 +496,12 @@ private fun ProfilePreviewPage(
     clockColorOption: ClockColorOption,
     use24HourTime: Boolean,
     clockShowMeridiem: Boolean,
+    /** This profile's own clock alignment, falling back to the global default when not overriding (see [com.lumenlauncher.app.data.model.LauncherSettings.clockAlignment]). */
+    clockAlignment: ClockAlignment,
+    /** Independent of [clockAlignment] (see [com.lumenlauncher.app.data.model.LauncherSettings.calendarAlignment]). */
+    calendarAlignment: ClockAlignment,
+    /** This profile's own clock zone height, falling back to the global default when not overriding (see [com.lumenlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]) — reproduces the same clock-position formula [com.lumenlauncher.app.ui.home.HomeScreen] uses, scaled to this card's own size. */
+    clockZoneHeightDp: Float?,
     calendarEvents: List<CalendarEvent>,
     calendarColors: Map<String, String>,
     calendarFontOption: ClockFontOption,
@@ -507,45 +523,21 @@ private fun ProfilePreviewPage(
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxSize()) {
         // Sits right above the card itself (on the carousel's own backdrop, not the card's
         // Surface background) but still belongs to this page — swiping to a neighbor swaps in
-        // that page's own name/menu along with its card, per direct request (see chat history).
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = profile.name,
-                style = MaterialTheme.typography.titleMedium,
-                color = Ink,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).testTag("profile_page_name_${profile.id}"),
-            )
-            Box {
-                IconButton(
-                    onClick = { menuExpanded = true },
-                    modifier = Modifier.testTag("profile_page_menu_${profile.id}"),
-                ) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Profile options", tint = Muted)
-                }
-                ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    ThemedDropdownMenuItem(
-                        label = "Profile settings",
-                        onClick = { menuExpanded = false; onEditProfileClick() },
-                    )
-                    ThemedDropdownMenuItem(
-                        label = "Delete profile",
-                        enabled = canDelete,
-                        destructive = true,
-                        onClick = { menuExpanded = false; onDeleteClick() },
-                    )
-                }
-            }
-        }
+        // that page's own name along with its card, per direct request (see chat history). The
+        // Profile settings/Delete icons sit below the card instead (see chat history —
+        // moved back down from here, mirroring this screen's original gear/trash row below the
+        // pager), so this row is name-only now.
+        Text(
+            text = profile.name,
+            style = MaterialTheme.typography.titleMedium,
+            color = Ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).testTag("profile_page_name_${profile.id}"),
+        )
 
         BoxWithConstraints(
             modifier = Modifier
@@ -574,6 +566,17 @@ private fun ProfilePreviewPage(
             CompositionLocalProvider(
                 LocalDensity provides Density(baseDensity.density * contentScale, baseDensity.fontScale),
             ) {
+                // Reproduces HomeScreen's own clockZoneHeightDp formula (dp values are
+                // density-independent, so the same numbers are meaningful here even though this
+                // card renders under the scaled density above) — a null value (never dragged)
+                // resolves to the clock's original fixed top offset, same as the real Home screen;
+                // a persisted value pushes the clock down by exactly as much here, proportionally
+                // shrunk along with everything else in this card.
+                var clockNaturalHeightDp by remember { mutableFloatStateOf(0f) }
+                val previewDensity = LocalDensity.current
+                val topOffsetDp = clockZoneHeightDp
+                    ?.let { (it - HOME_CLOCK_MIN_GAP.value - clockNaturalHeightDp).coerceAtLeast(0f) }
+                    ?: HOME_CLOCK_DEFAULT_TOP_OFFSET.value
                 Column(
                     modifier = Modifier.fillMaxSize().padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -584,13 +587,18 @@ private fun ProfilePreviewPage(
                         fontOption = clockFontOption,
                         colorOption = clockColorOption,
                         showMeridiem = clockShowMeridiem,
+                        clockAlignment = clockAlignment,
+                        calendarAlignment = calendarAlignment,
                         events = calendarEvents,
                         calendarColors = calendarColors,
                         calendarFontOption = calendarFontOption,
                         calendarColorOption = calendarColorOption,
                         calendarFontWeight = calendarFontWeight,
                         launcherFontOption = launcherFontOption,
-                        modifier = Modifier.align(Alignment.Start)
+                        modifier = Modifier
+                            .align(clockAlignment.resolve())
+                            .padding(top = topOffsetDp.dp)
+                            .onGloballyPositioned { clockNaturalHeightDp = with(previewDensity) { it.size.height.toDp().value } }
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -654,6 +662,36 @@ private fun ProfilePreviewPage(
                 }
             }
         }
+
+        // Below the card, not above it with the name — mirrors this screen's original gear/trash
+        // icon row sitting below the pager (see chat history), just per-page now instead of tied
+        // to a shared "centered profile" concept. Two direct icon buttons, not a "..." overflow
+        // menu — with only two actions and both worth surfacing at a glance, the extra tap to
+        // open a menu added nothing (see chat history).
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(26.dp)) {
+                IconButton(
+                    onClick = onEditProfileClick,
+                    modifier = Modifier.testTag("profile_page_settings_${profile.id}"),
+                ) {
+                    Icon(Icons.Default.Settings, contentDescription = "Profile settings", tint = Muted)
+                }
+                IconButton(
+                    onClick = onDeleteClick,
+                    enabled = canDelete,
+                    modifier = Modifier.testTag("profile_page_delete_${profile.id}"),
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete profile",
+                        tint = if (canDelete) Muted else Faint,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -667,20 +705,15 @@ private fun ListContentMode.previewLabel(): String = when (this) {
 @Composable
 private fun AddProfilePage(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize()) {
-        // Invisible stand-in for ProfilePreviewPage's own name+menu row — same Row/Text/IconButton
-        // structure so it measures to the exact same height, without hardcoding a dp guess. Without
-        // this, the Add-profile card (which has no header of its own) would start higher up than
-        // its neighboring profile cards and read as a different, taller size (see chat history).
-        Row(
+        // Invisible stand-in for ProfilePreviewPage's own name row — same Text structure so it
+        // measures to the exact same height, without hardcoding a dp guess. Without this, the
+        // Add-profile card (which has no header of its own) would start higher up than its
+        // neighboring profile cards and read as a different, taller size (see chat history).
+        Text(
+            text = "",
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = "", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.MoreVert, contentDescription = null)
-            }
-        }
+        )
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -710,6 +743,22 @@ private fun AddProfilePage(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 4.dp),
             )
+        }
+
+        // Invisible stand-in for ProfilePreviewPage's own bottom menu row — same reasoning as the
+        // header spacer above, now that the menu lives below the card instead of beside the name.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).alpha(0f),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(26.dp)) {
+                IconButton(onClick = {}, enabled = false) {
+                    Icon(Icons.Default.Settings, contentDescription = null)
+                }
+                IconButton(onClick = {}, enabled = false) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                }
+            }
         }
     }
 }

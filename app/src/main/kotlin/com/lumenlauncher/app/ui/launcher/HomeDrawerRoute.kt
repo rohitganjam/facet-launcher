@@ -3,6 +3,7 @@ package com.lumenlauncher.app.ui.launcher
 import android.content.ContentUris
 import android.content.Intent
 import android.net.Uri
+import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -323,6 +324,11 @@ fun HomeDrawerRoute(
             clockFontOption = homeUiState.clockFontOption,
             clockColorOption = homeUiState.clockColorOption,
             clockShowMeridiem = homeUiState.clockShowMeridiem,
+            clockAlignment = homeUiState.clockAlignment,
+            calendarAlignment = homeUiState.calendarAlignment,
+            clockZoneHeightDp = homeUiState.clockZoneHeightDp,
+            onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
+            appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
             calendarFontOption = homeUiState.activeCalendarFontOption,
@@ -331,6 +337,9 @@ fun HomeDrawerRoute(
             onEventClick = { event ->
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            },
+            onClockClick = {
+                runCatching { context.startActivity(Intent(AlarmClock.ACTION_SHOW_ALARMS)) }
             },
             onAppClick = onAppClick,
             launcherFontOption = homeUiState.settings.launcherFontOption,

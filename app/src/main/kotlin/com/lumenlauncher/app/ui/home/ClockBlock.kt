@@ -3,12 +3,14 @@ package com.lumenlauncher.app.ui.home
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -48,10 +50,14 @@ fun ClockBlock(
     calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     onEventClick: (CalendarEvent) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen]). */
+    clockAlignment: ClockAlignment = ClockAlignment.LEFT,
+    /** Settings → Clock & Calendar Style → "Calendar alignment" — entirely independent of [clockAlignment]; positions [CalendarEventsBlock] (and reverses its row order at [ClockAlignment.RIGHT]) without moving the clock. */
+    calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
 ) {
     val now by rememberTickingNow(clock)
     val clockTextColor = colorOption.resolve()
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ClockDisplay(
             templateId = templateId,
             fontOption = fontOption,
@@ -62,6 +68,7 @@ fun ClockBlock(
             mutedTextColor = clockTextColor.copy(alpha = 0.8f),
             locale = locale,
             launcherFontOption = launcherFontOption,
+            clockAlignment = clockAlignment,
         )
         CalendarEventsBlock(
             events = events,
@@ -72,6 +79,7 @@ fun ClockBlock(
             fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
             textColor = calendarColorOption.resolve(),
             fontWeight = calendarFontWeight.resolve(),
+            alignment = calendarAlignment,
             onEventClick = onEventClick,
         )
     }
