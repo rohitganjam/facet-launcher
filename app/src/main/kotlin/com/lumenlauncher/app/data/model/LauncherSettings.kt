@@ -69,6 +69,19 @@ enum class AppRowPresentation {
     TEXT_ONLY,
 }
 
+/** Home clock's horizontal placement within its zone. `LEFT` is today's unchanged default — the clock's containing Column has never applied any centering. */
+enum class ClockAlignment {
+    LEFT,
+    CENTER,
+    RIGHT,
+}
+
+/** Home app list's vertical anchor. `BOTTOM` is today's unchanged behavior (list sits right above the dock). `TOP` anchors it immediately below the clock's grab handle instead. */
+enum class AppListVerticalAlignment {
+    TOP,
+    BOTTOM,
+}
+
 /** No profile has been created/selected yet — [ProfileRepository][com.lumenlauncher.app.data.ProfileRepository]'s ids start at 1. */
 const val NO_ACTIVE_PROFILE_ID = 0L
 
@@ -156,4 +169,39 @@ data class LauncherSettings(
      * [launcherFontOption] itself reaches. Global only, same as [launcherFontOption].
      */
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    /**
+     * Home clock's horizontal placement — the default every profile inherits unless it overrides
+     * it (bundled into [ProfileEntity][com.lumenlauncher.app.data.local.ProfileEntity]'s
+     * `overrideClock`, alongside [clockTemplateId]/etc — see chat history: this and its siblings
+     * below used to be global-only, like [launcherFontOption]/[themeMode], before moving into that
+     * per-profile bundle).
+     */
+    val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
+    /**
+     * Home calendar events strip's horizontal placement — deliberately independent of
+     * [clockAlignment]: the clock and calendar are two separate blocks that can each be
+     * positioned on their own (see `ui/home/ClockBlock.kt`). `RIGHT` also reverses each event
+     * row's own internal item order (event name, then time, then the calendar-color indicator —
+     * the mirror image of the normal indicator/time/name order), the same way [AppRowPosition.RIGHT]
+     * reverses an app row's icon/label order. Profile-overridable, same as [clockAlignment].
+     */
+    val calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
+    /**
+     * Y-position (dp, measured from the top of Home's content area) of the drag handle sitting
+     * below the clock+calendar block — equivalently, where the app list's reserved region begins.
+     * `null` until the user drags it for the first time, in which case the block renders at its
+     * original fixed `top = 52.dp` position and the list bottom-anchors exactly as it always has
+     * (see `HomeScreen.kt` for how the default and persisted cases resolve to one formula). Once
+     * set, clamped to [the block's own measured height + 24dp, 50% of the available content
+     * height]. Profile-overridable, same as [clockAlignment].
+     */
+    val clockZoneHeightDp: Float? = null,
+    /**
+     * The default every profile inherits unless it overrides it (bundled with [AppRowPosition]/
+     * [AppRowPresentation]/[ListContentMode] under `overrideApps` on
+     * [ProfileEntity][com.lumenlauncher.app.data.local.ProfileEntity], same as those three) —
+     * whether the app list anchors to the bottom (today's behavior, right above the dock) or the
+     * top (right below the clock's grab handle).
+     */
+    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
 )

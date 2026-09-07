@@ -1,10 +1,13 @@
 package com.lumenlauncher.app.ui.home
 
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.local.resolveOverride
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -29,7 +32,7 @@ data class HomeUiState(
      *  catches up (see chat history). */
     val usageAccessPromptDismissed: Boolean = false,
 ) {
-    private val activeProfile: ProfileEntity?
+    val activeProfile: ProfileEntity?
         get() = profiles.find { it.id == settings.activeProfileId }
 
     /** The active profile's clock settings, falling back to the global defaults when not overriding. */
@@ -73,4 +76,24 @@ data class HomeUiState(
     /** True when the active profile's mode needs `PACKAGE_USAGE_STATS`, it isn't granted yet, and the user hasn't already dismissed this prompt by tapping its button. */
     val showUsageAccessPrompt: Boolean
         get() = activeListContentMode != ListContentMode.FAVORITES && !usageAccessGranted && !usageAccessPromptDismissed
+
+    /** The active profile's clock alignment, falling back to the global default when not overriding — mirrors [clockTemplateId]'s own resolution shape. */
+    val clockAlignment: ClockAlignment
+        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
+
+    /** The active profile's clock zone height, falling back to the global default when not overriding — see [clockAlignment]'s own doc. */
+    val clockZoneHeightDp: Float?
+        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp)
+
+    /** The active profile's calendar alignment, falling back to the global default when not overriding — independent of [clockAlignment], same as [com.lumenlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
+    val calendarAlignment: ClockAlignment
+        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.calendarAlignment }, settings.calendarAlignment)
+
+    /** The profile whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
+    val clockPositionOwningProfile: ProfileEntity?
+        get() = activeProfile?.takeIf { it.overrideClock }
+
+    /** The active profile's app-list vertical anchor, falling back to the global default when not overriding — mirrors [activeAppRowPosition]'s own resolution shape. */
+    val activeAppListVerticalAlignment: AppListVerticalAlignment
+        get() = activeProfile?.let { if (it.overrideApps) it.appListVerticalAlignment else settings.appListVerticalAlignment } ?: settings.appListVerticalAlignment
 }

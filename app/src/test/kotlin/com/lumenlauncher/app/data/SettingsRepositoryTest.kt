@@ -3,8 +3,10 @@ package com.lumenlauncher.app.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -78,6 +80,66 @@ class SettingsRepositoryTest {
         assertEquals(ClockColorOption.THEME, settings.appLabelColorOption)
         assertEquals(FontWeightOption.REGULAR, settings.calendarFontWeight)
         assertEquals(FontWeightOption.REGULAR, settings.homeAppsFontWeight)
+        assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
+        assertEquals(ClockAlignment.LEFT, settings.calendarAlignment)
+        assertEquals(null, settings.clockZoneHeightDp)
+        assertEquals(AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
+    }
+
+    @Test
+    fun `setClockAlignment and setAppListVerticalAlignment round-trip independently`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When each is changed
+        repository.setClockAlignment(ClockAlignment.CENTER)
+        repository.setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
+
+        // Then the new values come back, independently
+        val settings = repository.settings.first()
+        assertEquals(ClockAlignment.CENTER, settings.clockAlignment)
+        assertEquals(AppListVerticalAlignment.TOP, settings.appListVerticalAlignment)
+    }
+
+    @Test
+    fun `setCalendarAlignment round-trips independently of setClockAlignment`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When the calendar's alignment is changed but the clock's is left untouched
+        repository.setCalendarAlignment(ClockAlignment.RIGHT)
+
+        // Then only the calendar's alignment changes
+        val settings = repository.settings.first()
+        assertEquals(ClockAlignment.RIGHT, settings.calendarAlignment)
+        assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
+    }
+
+    @Test
+    fun `setClockZoneHeight persists and round-trips`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When a clock zone height is set
+        repository.setClockZoneHeight(180.5f)
+
+        // Then it round-trips exactly
+        val settings = repository.settings.first()
+        assertEquals(180.5f, settings.clockZoneHeightDp!!, 0.0001f)
+    }
+
+    @Test
+    fun `resetClockZoneHeight clears the value back to null`() = runTest {
+        // Given a repository with a previously-dragged clock zone height
+        val repository = createRepository()
+        repository.setClockZoneHeight(180.5f)
+
+        // When resetClockZoneHeight is called
+        repository.resetClockZoneHeight()
+
+        // Then the clock and app list return to their original fixed-top, bottom-anchored layout
+        val settings = repository.settings.first()
+        assertEquals(null, settings.clockZoneHeightDp)
     }
 
     @Test

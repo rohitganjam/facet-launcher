@@ -3,6 +3,7 @@ package com.lumenlauncher.app.ui.settings
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.LauncherSettings
@@ -99,6 +100,17 @@ class HomeAppsListSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setAppsToShowCount(7)
+    }
+
+    @Test
+    fun `changing app list vertical alignment calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
     }
 
     @Test

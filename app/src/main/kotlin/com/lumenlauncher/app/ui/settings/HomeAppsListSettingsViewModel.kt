@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.LauncherSettings
@@ -53,6 +54,11 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun setAppsToShowCount(count: Int) {
         viewModelScope.launch { settingsRepository.setAppsToShowCount(count) }
+    }
+
+    /** The default every profile inherits unless it sets its own override. */
+    fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
+        viewModelScope.launch { settingsRepository.setAppListVerticalAlignment(alignment) }
     }
 
     fun reorderDefaultFavorites(orderedApps: List<AppInfo>) {

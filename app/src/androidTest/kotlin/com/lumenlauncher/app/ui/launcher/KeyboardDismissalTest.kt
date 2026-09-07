@@ -110,6 +110,8 @@ class KeyboardDismissalTest {
                         notificationAccessRepository,
                     ),
                     NotificationShadeRepository(context),
+                    settingsRepository,
+                    profileRepository,
                 )
             }
             launcherViewModel = remember {

@@ -3,6 +3,7 @@ package com.lumenlauncher.app.ui.launcher
 import android.content.ContentUris
 import android.content.Intent
 import android.net.Uri
+import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -323,6 +324,11 @@ fun HomeDrawerRoute(
             clockFontOption = homeUiState.clockFontOption,
             clockColorOption = homeUiState.clockColorOption,
             clockShowMeridiem = homeUiState.clockShowMeridiem,
+            clockAlignment = homeUiState.clockAlignment,
+            calendarAlignment = homeUiState.calendarAlignment,
+            clockZoneHeightDp = homeUiState.clockZoneHeightDp,
+            onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
+            appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
             calendarFontOption = homeUiState.activeCalendarFontOption,
@@ -331,6 +337,24 @@ fun HomeDrawerRoute(
             onEventClick = { event ->
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            },
+            onClockClick = {
+                // AlarmClock.ACTION_SHOW_ALARMS is a semantic "jump straight to the alarms list"
+                // intent, by design — on this Samsung/One UI build it resolves to a narrow,
+                // single-purpose alarms screen with none of the Clock app's own tab navigation
+                // (Alarm/Clock/Timer/Stopwatch), unlike AOSP's Clock which still shows its full
+                // shell there. So: use that intent only to find WHICH app is "the clock app" on
+                // this device, then launch that package's own normal entry point instead — the
+                // same way tapping its icon would, landing on its full navigable UI rather than
+                // the walled-off alarms subview. No fallback to the alarms intent itself — every
+                // real clock app declares a launcher activity, so resolveActivity() finding a
+                // package but getLaunchIntentForPackage() returning null for it doesn't happen.
+                runCatching {
+                    Intent(AlarmClock.ACTION_SHOW_ALARMS).resolveActivity(context.packageManager)
+                        ?.packageName
+                        ?.let { context.packageManager.getLaunchIntentForPackage(it) }
+                        ?.let { context.startActivity(it) }
+                }
             },
             onAppClick = onAppClick,
             launcherFontOption = homeUiState.settings.launcherFontOption,

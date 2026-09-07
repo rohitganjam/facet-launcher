@@ -29,6 +29,13 @@
     <!-- Home swipe-down → notification shade — normal-level permission (auto-granted, no runtime prompt), required for StatusBarManager.expandNotificationsPanel(). -->
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
 
+    <!-- App context menu's Uninstall action (AppContextMenu.kt, ACTION_DELETE) — normal-level permission
+         (auto-granted, no runtime prompt). Without it, at least on this Samsung/One UI build, the
+         system's UninstallLaunch confirmation activity logs "does not have REQUEST_DELETE_PACKAGES or
+         DELETE_PACKAGES" and finishes itself before ever showing the dialog, so the uninstall trigger
+         silently does nothing. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
     <application
         android:name=".LumenApplication"
         android:allowBackup="true"

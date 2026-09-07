@@ -48,5 +48,35 @@ object Migrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_10_11, MIGRATION_11_12)
+    /**
+     * Adds `profiles.appListVerticalAlignment` — part of the same "Apps section" bundle as the
+     * existing `appRowPosition`/`appRowPresentation`/`listContentMode` columns (all gated by
+     * `overrideApps`), so it gets the same `NOT NULL DEFAULT` treatment: a real enum with a
+     * meaningful default (`BOTTOM`, today's unchanged behavior), not a placeholder `NULL`.
+     */
+    val MIGRATION_12_13: Migration = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles ADD COLUMN appListVerticalAlignment TEXT NOT NULL DEFAULT 'BOTTOM'")
+        }
+    }
+
+    /**
+     * Adds `profiles.clockAlignment`/`calendarAlignment`/`clockZoneHeightDp` — the clock widget's
+     * position settings move into the same Clock+Calendar design bundle (gated by `overrideClock`)
+     * as `clockTemplateId`/etc, so a profile can now override its own alignment/zone-height
+     * independent of the global default. The two alignment enums get the same `NOT NULL DEFAULT
+     * 'LEFT'` treatment as every other enum column in this bundle; `clockZoneHeightDp` stays
+     * nullable with no default, same reasoning as `selectedCalendarIdsCsv` in MIGRATION_10_11 —
+     * `NULL` here is itself meaningful ("never dragged, use the block's natural default position"),
+     * not a placeholder.
+     */
+    val MIGRATION_13_14: Migration = object : Migration(13, 14) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles ADD COLUMN clockAlignment TEXT NOT NULL DEFAULT 'LEFT'")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN calendarAlignment TEXT NOT NULL DEFAULT 'LEFT'")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN clockZoneHeightDp REAL")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
 }

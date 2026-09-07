@@ -2,8 +2,10 @@ package com.lumenlauncher.app.data
 
 import com.lumenlauncher.app.data.local.ProfileDao
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -86,13 +88,41 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(calendarFontWeight = weight))
     }
 
+    suspend fun setClockAlignment(profile: ProfileEntity, alignment: ClockAlignment) {
+        profileDao.upsert(profile.copy(clockAlignment = alignment))
+    }
+
+    /** Independent of [setClockAlignment] — see [ProfileEntity.calendarAlignment]. */
+    suspend fun setCalendarAlignment(profile: ProfileEntity, alignment: ClockAlignment) {
+        profileDao.upsert(profile.copy(calendarAlignment = alignment))
+    }
+
+    suspend fun setClockZoneHeight(profile: ProfileEntity, heightDp: Float) {
+        profileDao.upsert(profile.copy(clockZoneHeightDp = heightDp))
+    }
+
+    /** Restores this profile's clock+calendar block to its natural, undragged position. */
+    suspend fun resetClockZoneHeight(profile: ProfileEntity) {
+        profileDao.upsert(profile.copy(clockZoneHeightDp = null))
+    }
+
+    /**
+     * "Reset clock widget position" for this profile — the zone height back to `null` and BOTH
+     * alignments back to `LEFT`, in one atomic upsert (avoids the clobbering risk of three
+     * sequential single-field upserts against the same stale snapshot).
+     */
+    suspend fun resetClockPosition(profile: ProfileEntity) {
+        profileDao.upsert(profile.copy(clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, calendarAlignment = ClockAlignment.LEFT))
+    }
+
     /**
      * Seeds the profile's clock+calendar *design* settings from effective values and toggles the
      * override flag. One toggle for the whole Home clock/calendar block — it's a single visual
      * unit, not two independent design decisions — which is why `calendarFontOption`/
-     * `calendarColorOption` are seeded here too, not by [updateOverridingCalendar] (that one is
-     * calendar *selection* only — which calendars, which events — see its own doc comment).
-     * Atomic upsert to avoid clobbering.
+     * `calendarColorOption` (and, since they moved in from being global-only, `clockAlignment`/
+     * `calendarAlignment`/`clockZoneHeightDp`) are seeded here too, not by [updateOverridingCalendar]
+     * (that one is calendar *selection* only — which calendars, which events — see its own doc
+     * comment). Atomic upsert to avoid clobbering.
      */
     suspend fun updateOverridingClock(
         profile: ProfileEntity,
@@ -105,6 +135,9 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         calendarFontOption: ClockFontOption,
         calendarColorOption: ClockColorOption,
         calendarFontWeight: FontWeightOption,
+        clockAlignment: ClockAlignment = profile.clockAlignment,
+        calendarAlignment: ClockAlignment = profile.calendarAlignment,
+        clockZoneHeightDp: Float? = profile.clockZoneHeightDp,
     ) {
         profileDao.upsert(
             profile.copy(
@@ -117,6 +150,9 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
                 calendarFontOption = calendarFontOption,
                 calendarColorOption = calendarColorOption,
                 calendarFontWeight = calendarFontWeight,
+                clockAlignment = clockAlignment,
+                calendarAlignment = calendarAlignment,
+                clockZoneHeightDp = clockZoneHeightDp,
             ),
         )
     }
@@ -143,6 +179,10 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(appsToShowCount = count.coerceIn(4, 8)))
     }
 
+    suspend fun setAppListVerticalAlignment(profile: ProfileEntity, alignment: AppListVerticalAlignment) {
+        profileDao.upsert(profile.copy(appListVerticalAlignment = alignment))
+    }
+
     suspend fun setOverridingFavorites(profile: ProfileEntity, overriding: Boolean) {
         profileDao.upsert(profile.copy(overridingFavorites = overriding))
     }
@@ -159,6 +199,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         mode: ListContentMode,
         count: Int,
         overridingFavorites: Boolean,
+        verticalAlignment: AppListVerticalAlignment = profile.appListVerticalAlignment,
     ) {
         profileDao.upsert(
             profile.copy(
@@ -168,6 +209,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
                 listContentMode = mode,
                 appsToShowCount = count.coerceIn(4, 8),
                 overridingFavorites = overridingFavorites,
+                appListVerticalAlignment = verticalAlignment,
             ),
         )
     }

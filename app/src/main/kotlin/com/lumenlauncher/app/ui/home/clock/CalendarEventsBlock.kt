@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -24,12 +25,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.ui.home.rememberTickingNow
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.homeTextShadow
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.SMALL_TEXT_SHADOW_BLUR_RADIUS
+import com.lumenlauncher.app.ui.theme.resolve
 import com.lumenlauncher.app.ui.theme.resolvedColor
 import java.time.Clock
 import java.time.Instant
@@ -63,6 +66,12 @@ private const val MAX_VISIBLE_EVENTS = 3
  *
  * Owns its own live "now" (via [rememberTickingNow]) so it's fully self-contained — it doesn't
  * need a clock composable anywhere on screen to know which events have ended.
+ *
+ * [alignment] is entirely independent of [com.lumenlauncher.app.ui.home.ClockBlock]'s own clock
+ * alignment — the clock and this strip are positioned separately (see chat history). `RIGHT`
+ * both packs each row against the block's trailing edge and reverses that row's own item order
+ * (event name, then time, then the calendar-color indicator, mirroring [AppRowPosition]'s own
+ * icon/label reversal for `RIGHT`); `LEFT`/`CENTER` keep today's indicator/time/name order.
  */
 @Composable
 fun CalendarEventsBlock(
@@ -75,6 +84,7 @@ fun CalendarEventsBlock(
     fontFamily: FontFamily = FontFamily.SansSerif,
     fontWeight: FontWeight = FontWeight.SemiBold,
     textColor: Color = Ink,
+    alignment: ClockAlignment = ClockAlignment.LEFT,
     onEventClick: (CalendarEvent) -> Unit = {},
 ) {
     val now by rememberTickingNow(clock)
@@ -88,8 +98,9 @@ fun CalendarEventsBlock(
     if (visibleEvents.isEmpty()) return
 
     Column(
-        modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp),
+        modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(9.dp),
+        horizontalAlignment = alignment.resolve(),
     ) {
         visibleEvents.forEach { event ->
             EventRow(
@@ -103,6 +114,7 @@ fun CalendarEventsBlock(
                 fontFamily = fontFamily,
                 fontWeight = fontWeight,
                 textColor = textColor,
+                reversed = alignment == ClockAlignment.RIGHT,
                 onClick = { onEventClick(event) },
             )
         }
@@ -118,6 +130,7 @@ private fun EventRow(
     fontFamily: FontFamily,
     fontWeight: FontWeight,
     textColor: Color,
+    reversed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -126,25 +139,24 @@ private fun EventRow(
     } else {
         LocalDateTime.ofInstant(Instant.ofEpochMilli(event.startTimeMillis), clock.zone).format(timeFormatter)
     }
-    Row(
-        modifier = modifier
-            .testTag("clock_event_row_${event.id}")
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    val indicator: @Composable () -> Unit = {
         Column(
             modifier = Modifier
+                .testTag("clock_event_indicator_${event.id}")
                 .width(2.dp)
                 .height(13.dp)
                 .background(barColor),
         ) {}
+    }
+    val timeText: @Composable () -> Unit = {
         Text(
             text = time,
             style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 16.sp, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             modifier = Modifier.widthIn(min = 48.dp),
         )
+    }
+    val titleText: @Composable () -> Unit = {
         Text(
             text = event.title,
             style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 16.sp, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
@@ -152,5 +164,22 @@ private fun EventRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+    Row(
+        modifier = modifier
+            .testTag("clock_event_row_${event.id}")
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (reversed) {
+            titleText()
+            timeText()
+            indicator()
+        } else {
+            indicator()
+            timeText()
+            titleText()
+        }
     }
 }

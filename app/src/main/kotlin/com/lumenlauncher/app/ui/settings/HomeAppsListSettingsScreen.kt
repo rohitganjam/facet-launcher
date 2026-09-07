@@ -43,6 +43,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ListContentMode
@@ -77,6 +78,7 @@ fun HomeAppsListSettingsScreen(
         onAppRowPresentationChanged = viewModel::setAppRowPresentation,
         onListContentModeChanged = viewModel::setListContentMode,
         onAppsToShowCountChanged = viewModel::setAppsToShowCount,
+        onAppListVerticalAlignmentChanged = viewModel::setAppListVerticalAlignment,
         onReorderDefaultFavorites = viewModel::reorderDefaultFavorites,
         modifier = modifier,
     )
@@ -91,6 +93,7 @@ private fun HomeAppsListSettingsContent(
     onAppRowPresentationChanged: (AppRowPresentation) -> Unit,
     onListContentModeChanged: (ListContentMode) -> Unit,
     onAppsToShowCountChanged: (Int) -> Unit,
+    onAppListVerticalAlignmentChanged: (AppListVerticalAlignment) -> Unit,
     onReorderDefaultFavorites: (List<AppInfo>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -116,6 +119,15 @@ private fun HomeAppsListSettingsContent(
                             label = { it.homeAppsListDisplayLabel() },
                             onSelect = onAppRowPositionChanged,
                             testTag = "default_app_row_position_row",
+                        )
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = "List position",
+                            options = AppListVerticalAlignment.entries,
+                            selected = uiState.settings.appListVerticalAlignment,
+                            label = { it.homeAppsListDisplayLabel() },
+                            onSelect = onAppListVerticalAlignmentChanged,
+                            testTag = "app_list_vertical_alignment_row",
                         )
                         CardDivider()
                         LabeledDropdownRow(
@@ -196,6 +208,11 @@ private fun ListContentMode.homeAppsListDisplayLabel(): String = when (this) {
     ListContentMode.FAVORITES -> "Favorites"
     ListContentMode.RECENTS -> "Recents"
     ListContentMode.MOST_USED -> "Most used"
+}
+
+private fun AppListVerticalAlignment.homeAppsListDisplayLabel(): String = when (this) {
+    AppListVerticalAlignment.TOP -> "Top"
+    AppListVerticalAlignment.BOTTOM -> "Bottom"
 }
 
 @Composable
@@ -302,6 +319,7 @@ private fun HomeAppsListSettingsScreenPreview() {
             onAppRowPresentationChanged = {},
             onListContentModeChanged = {},
             onAppsToShowCountChanged = {},
+            onAppListVerticalAlignmentChanged = {},
             onReorderDefaultFavorites = {},
         )
     }

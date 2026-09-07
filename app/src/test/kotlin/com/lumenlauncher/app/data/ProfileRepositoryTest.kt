@@ -2,8 +2,10 @@ package com.lumenlauncher.app.data
 
 import com.lumenlauncher.app.data.local.ProfileDao
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ClockFontOption
@@ -115,6 +117,9 @@ class ProfileRepositoryTest {
             calendarFontOption = ClockFontOption.POPPINS,
             calendarColorOption = ClockColorOption.ACCENT_SECONDARY,
             calendarFontWeight = FontWeightOption.SEMI_BOLD,
+            clockAlignment = ClockAlignment.CENTER,
+            calendarAlignment = ClockAlignment.RIGHT,
+            clockZoneHeightDp = 180f,
         )
         val stored = repository.observeProfiles().first().single()
         assertEquals(true, stored.overrideClock)
@@ -126,6 +131,59 @@ class ProfileRepositoryTest {
         assertEquals(ClockFontOption.POPPINS, stored.calendarFontOption)
         assertEquals(ClockColorOption.ACCENT_SECONDARY, stored.calendarColorOption)
         assertEquals(FontWeightOption.SEMI_BOLD, stored.calendarFontWeight)
+        assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
+        assertEquals(ClockAlignment.RIGHT, stored.calendarAlignment)
+        assertEquals(180f, stored.clockZoneHeightDp)
+    }
+
+    @Test
+    fun `setClockAlignment and setCalendarAlignment round-trip independently`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setClockAlignment(profile, ClockAlignment.CENTER)
+
+        val stored = repository.observeProfiles().first().single()
+        assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
+        assertEquals(ClockAlignment.LEFT, stored.calendarAlignment)
+
+        repository.setCalendarAlignment(stored, ClockAlignment.RIGHT)
+
+        val restored = repository.observeProfiles().first().single()
+        assertEquals(ClockAlignment.CENTER, restored.clockAlignment)
+        assertEquals(ClockAlignment.RIGHT, restored.calendarAlignment)
+    }
+
+    @Test
+    fun `setClockZoneHeight and resetClockZoneHeight round-trip`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setClockZoneHeight(profile, 220f)
+        assertEquals(220f, repository.observeProfiles().first().single().clockZoneHeightDp)
+
+        repository.resetClockZoneHeight(repository.observeProfiles().first().single())
+        assertNull(repository.observeProfiles().first().single().clockZoneHeightDp)
+    }
+
+    @Test
+    fun `resetClockPosition clears the zone height and both alignments together`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+        repository.setClockZoneHeight(profile, 220f)
+        repository.setClockAlignment(profile, ClockAlignment.CENTER)
+        repository.setCalendarAlignment(profile, ClockAlignment.RIGHT)
+        val dragged = repository.observeProfiles().first().single()
+
+        repository.resetClockPosition(dragged)
+
+        val stored = repository.observeProfiles().first().single()
+        assertNull(stored.clockZoneHeightDp)
+        assertEquals(ClockAlignment.LEFT, stored.clockAlignment)
+        assertEquals(ClockAlignment.LEFT, stored.calendarAlignment)
     }
 
     @Test
@@ -168,6 +226,17 @@ class ProfileRepositoryTest {
         val stored = repository.observeProfiles().first().single()
         assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
         assertEquals(AppRowPresentation.ICON_ONLY, stored.appRowPresentation)
+    }
+
+    @Test
+    fun `setAppListVerticalAlignment round-trips`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setAppListVerticalAlignment(profile, AppListVerticalAlignment.TOP)
+
+        assertEquals(AppListVerticalAlignment.TOP, repository.observeProfiles().first().single().appListVerticalAlignment)
     }
 
     @Test

@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.CalendarEvent
+import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -90,6 +91,11 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         onCalendarFontOptionChanged = viewModel::setCalendarFontOption,
         onCalendarColorOptionChanged = viewModel::setCalendarColorOption,
         onCalendarFontWeightChanged = viewModel::setCalendarFontWeight,
+        clockAlignment = uiState.clockAlignment,
+        calendarAlignment = uiState.calendarAlignment,
+        onClockAlignmentChanged = viewModel::setClockAlignment,
+        onCalendarAlignmentChanged = viewModel::setCalendarAlignment,
+        onResetClockPosition = viewModel::resetClockPosition,
     )
 }
 
@@ -103,11 +109,16 @@ fun ProfileClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGall
 }
 
 /**
- * Stateless clock-style picker. Order: Calendar font/color controls + a live [CalendarEventsBlock]
- * preview first, then Clock font/color/24h/meridiem controls, then every [ClockTemplateId] as its
- * own selectable card — tapping one calls [onTemplateSelected] and gets an [Accent] border to show
- * it's the applied option. On [Surface] (the same theme-aware, light/dark-following background
- * every other screen uses).
+ * Stateless clock-style picker. Order: Calendar font/color/weight controls plus its own "Calendar
+ * alignment" row, then a live [CalendarEventsBlock] preview (which moves live with that alignment,
+ * same as every other calendar control here), then Clock font/color/24h/meridiem controls plus its
+ * own "Clock alignment" row, then every [ClockTemplateId] as its own selectable card — tapping one
+ * calls [onTemplateSelected] and gets an [Accent] border to show it's the applied option. Each
+ * alignment lives inside its own block's card (not a separate shared section) since it only ever
+ * affects that one block; both alignments and the "Reset clock widget position" action are part of
+ * the same Clock+Calendar design bundle as the font/color/template controls around them, so — like
+ * those — they're profile-overridable too, not global-only. On [Surface] (the same theme-aware,
+ * light/dark-following background every other screen uses).
  */
 @Composable
 private fun ClockStyleGalleryScreen(
@@ -130,6 +141,11 @@ private fun ClockStyleGalleryScreen(
     onCalendarColorOptionChanged: (ClockColorOption) -> Unit = {},
     onCalendarFontWeightChanged: (FontWeightOption) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    clockAlignment: ClockAlignment = ClockAlignment.LEFT,
+    calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
+    onClockAlignmentChanged: (ClockAlignment) -> Unit = {},
+    onCalendarAlignmentChanged: (ClockAlignment) -> Unit = {},
+    onResetClockPosition: () -> Unit = {},
 ) {
     val textColor = colorOption.resolve()
     val fixedClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
@@ -191,6 +207,15 @@ private fun ClockStyleGalleryScreen(
                         .testTag("calendar_style_weight_slider"),
                     sliderTestTag = "calendar_style_weight_slider_control",
                 )
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "Calendar alignment",
+                    options = ClockAlignment.entries,
+                    selected = calendarAlignment,
+                    label = { it.clockStyleGalleryDisplayLabel() },
+                    onSelect = onCalendarAlignmentChanged,
+                    testTag = "calendar_alignment_row",
+                )
             }
         }
         item {
@@ -200,6 +225,7 @@ private fun ClockStyleGalleryScreen(
                 fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
                 textColor = calendarColorOption.resolve(),
                 fontWeight = calendarFontWeight.resolve(),
+                alignment = calendarAlignment,
                 modifier = Modifier.testTag("calendar_style_preview"),
             )
         }
@@ -260,6 +286,28 @@ private fun ClockStyleGalleryScreen(
                         modifier = Modifier.testTag("clock_show_meridiem_toggle"),
                     )
                 }
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "Clock alignment",
+                    options = ClockAlignment.entries,
+                    selected = clockAlignment,
+                    label = { it.clockStyleGalleryDisplayLabel() },
+                    onSelect = onClockAlignmentChanged,
+                    testTag = "clock_alignment_row",
+                )
+            }
+        }
+
+        item {
+            Text(
+                text = "POSITION",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+            )
+        }
+        item {
+            SettingsCard {
+                ClockPositionResetRow(onClick = onResetClockPosition)
             }
         }
 
@@ -302,12 +350,40 @@ private fun ClockStyleGalleryScreen(
                     textColor = textColor,
                     mutedTextColor = textColor.copy(alpha = 0.8f),
                     launcherFontOption = launcherFontOption,
+                    clockAlignment = clockAlignment,
                 )
             }
         }
     }
         },
     )
+}
+
+private fun ClockAlignment.clockStyleGalleryDisplayLabel(): String = when (this) {
+    ClockAlignment.LEFT -> "Left"
+    ClockAlignment.CENTER -> "Center"
+    ClockAlignment.RIGHT -> "Right"
+}
+
+/**
+ * Direct one-tap action, no confirmation — restores the whole clock+calendar widget's position:
+ * `clockZoneHeightDp` back to `null` (the grab handle) AND both `clockAlignment`/`calendarAlignment`
+ * back to `LEFT`, not just the height alone. Consistent with this screen's other immediate-effect
+ * controls.
+ */
+@Composable
+private fun ClockPositionResetRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("reset_clock_position_row")
+            .padding(vertical = 13.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = "Reset clock widget position", style = MaterialTheme.typography.bodyLarge, color = Ink)
+    }
 }
 
 @Composable

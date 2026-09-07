@@ -76,8 +76,12 @@ class ClockStyleGalleryScreenTest {
 
     @Test
     fun tappingATemplateCardPersistsItAsTheChosenTemplate() {
-        // Given the gallery, Light stack applied by default
+        // Given the gallery, Light stack applied by default — scrolled into view since the new
+        // Position section (alignment picker + reset row) above it pushes the template list lower
+        // than the initially-composed viewport on some screen sizes.
         val (settingsRepository, _) = setContent()
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.LIGHT_STACK.name}"))
         composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.LIGHT_STACK.name}").assertExists()
 
         // When tapping a different template's card
@@ -121,6 +125,169 @@ class ClockStyleGalleryScreenTest {
             runBlocking { settingsRepository.settings.first().clockShowMeridiem }
         }
         composeRule.onNodeWithTag("clock_show_meridiem_toggle").assertIsOn()
+    }
+
+    @Test
+    fun globalClockAlignmentSelectionPersistsThroughSettingsRepository() {
+        // Given the global (non-profile-scoped) entry point, Left by default
+        val (settingsRepository, _) = setContent()
+
+        // When picking Center alignment
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_alignment_row"))
+        composeRule.onNodeWithTag("clock_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_alignment_row_option_CENTER").performClick()
+
+        // Then it's persisted to the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().clockAlignment == com.lumenlauncher.app.data.model.ClockAlignment.CENTER }
+        }
+    }
+
+    @Test
+    fun globalCalendarAlignmentSelectionPersistsThroughSettingsRepositoryIndependentlyOfClockAlignment() {
+        // Given the global (non-profile-scoped) entry point, Left by default for both
+        val (settingsRepository, _) = setContent()
+
+        // When picking Right alignment for the calendar only
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("calendar_alignment_row"))
+        composeRule.onNodeWithTag("calendar_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
+
+        // Then it's persisted to the real repository without touching the clock's own alignment
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().calendarAlignment == com.lumenlauncher.app.data.model.ClockAlignment.RIGHT }
+        }
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().clockAlignment })
+    }
+
+    @Test
+    fun calendarPreviewMovesLiveWhenCalendarAlignmentChanges() {
+        // Given the gallery, the calendar preview's own event row initially left-packed (default)
+        val (_, _) = setContent()
+        val leftBefore = composeRule.onNodeWithTag("clock_event_row_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+
+        // When selecting Right calendar alignment
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("calendar_alignment_row"))
+        composeRule.onNodeWithTag("calendar_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
+        composeRule.waitForIdle()
+
+        // Then the preview's own event row shifts further right — it moves live with the setting,
+        // not just on the real Home screen
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_event_row_1"))
+        val leftAfter = composeRule.onNodeWithTag("clock_event_row_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        org.junit.Assert.assertTrue(leftAfter > leftBefore)
+    }
+
+    @Test
+    fun tappingResetClockWidgetPositionClearsTheZoneHeightAndBothAlignments() {
+        // Given a previously-dragged clock zone height and non-default alignments, both persisted
+        val (settingsRepository, _) = setContent()
+        runBlocking {
+            settingsRepository.setClockZoneHeight(180f)
+            settingsRepository.setClockAlignment(com.lumenlauncher.app.data.model.ClockAlignment.RIGHT)
+            settingsRepository.setCalendarAlignment(com.lumenlauncher.app.data.model.ClockAlignment.CENTER)
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().clockZoneHeightDp != null }
+        }
+
+        // When "Reset clock widget position" is tapped
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("reset_clock_position_row"))
+        composeRule.onNodeWithTag("reset_clock_position_row").performClick()
+        composeRule.waitForIdle()
+
+        // Then the zone height clears AND both alignments return to Left — the whole widget's
+        // position resets, not just its height
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().clockZoneHeightDp == null }
+        }
+        val settings = runBlocking { settingsRepository.settings.first() }
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, settings.clockAlignment)
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, settings.calendarAlignment)
+    }
+
+    @Test
+    fun profileScopedClockAlignmentPersistsToTheProfileDirectly() {
+        // Given a profile-scoped entry point — alignment is now part of the same Clock+Calendar
+        // design bundle as font/color/template, so it's profile-overridable the same way (see
+        // chat history: this used to be global-only and hidden entirely on this variant).
+        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+
+        // When picking Center alignment for the clock
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_alignment_row"))
+        composeRule.onNodeWithTag("clock_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_alignment_row_option_CENTER").performClick()
+
+        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                profileRepository.observeProfiles().first().single().clockAlignment == com.lumenlauncher.app.data.model.ClockAlignment.CENTER
+            }
+        }
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().clockAlignment })
+    }
+
+    @Test
+    fun profileScopedCalendarAlignmentPersistsToTheProfileDirectly() {
+        // Given a profile-scoped entry point
+        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+
+        // When picking Right alignment for the calendar
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("calendar_alignment_row"))
+        composeRule.onNodeWithTag("calendar_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
+
+        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                profileRepository.observeProfiles().first().single().calendarAlignment == com.lumenlauncher.app.data.model.ClockAlignment.RIGHT
+            }
+        }
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().calendarAlignment })
+    }
+
+    @Test
+    fun profileScopedResetClockWidgetPositionClearsTheProfilesOwnHeightAndBothAlignments() {
+        // Given a profile-scoped entry point with a previously-dragged height and non-default alignments
+        val (_, profileRepository) = setContent(profileId = 1L)
+        runBlocking {
+            // Each setter re-fetches the current row rather than reusing one stale snapshot —
+            // otherwise the next call's copy() would silently clobber the previous field back to
+            // its original value (see chat history: this exact bug bit this test's first draft).
+            profileRepository.setClockZoneHeight(profileRepository.observeProfiles().first().single(), 180f)
+            profileRepository.setClockAlignment(profileRepository.observeProfiles().first().single(), com.lumenlauncher.app.data.model.ClockAlignment.RIGHT)
+            profileRepository.setCalendarAlignment(profileRepository.observeProfiles().first().single(), com.lumenlauncher.app.data.model.ClockAlignment.CENTER)
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { profileRepository.observeProfiles().first().single().clockZoneHeightDp != null }
+        }
+
+        // When "Reset clock widget position" is tapped
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("reset_clock_position_row"))
+        composeRule.onNodeWithTag("reset_clock_position_row").performClick()
+        composeRule.waitForIdle()
+
+        // Then this profile's own height and both alignments reset — the global default is untouched
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { profileRepository.observeProfiles().first().single().clockZoneHeightDp == null }
+        }
+        val profile = runBlocking { profileRepository.observeProfiles().first().single() }
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, profile.clockAlignment)
+        assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, profile.calendarAlignment)
     }
 
     @Test

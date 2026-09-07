@@ -228,8 +228,7 @@ class ProfileCarouselScreenTest {
         )
 
         // Then the delete action is disabled — the last profile can't be removed
-        composeRule.onNodeWithTag("profile_page_menu_$onlyProfileId", useUnmergedTree = true).performClick()
-        composeRule.onNode(hasText("Delete profile")).assertIsNotEnabled()
+        composeRule.onNodeWithTag("profile_page_delete_$onlyProfileId", useUnmergedTree = true).assertIsNotEnabled()
     }
 
     @Test
@@ -249,8 +248,7 @@ class ProfileCarouselScreenTest {
         composeRule.onNodeWithTag("profile_page_name_$secondProfileId", useUnmergedTree = true).assertTextEquals("Profile 2")
 
         // When deleting it and confirming
-        composeRule.onNodeWithTag("profile_page_menu_$secondProfileId", useUnmergedTree = true).performClick()
-        composeRule.onNode(hasText("Delete profile")).performClick()
+        composeRule.onNodeWithTag("profile_page_delete_$secondProfileId", useUnmergedTree = true).performClick()
         composeRule.onNode(hasText("Delete")).performClick()
         composeRule.waitForIdle()
 
@@ -510,7 +508,7 @@ class ProfileCarouselScreenTest {
     }
 
     @Test
-    fun profileSettingsFromTheCardMenuNavigatesToEditProfile() {
+    fun profileSettingsIconOnTheCardNavigatesToEditProfile() {
         // Given a single profile
         var profileId = 0L
         var editedProfileId = -1L
@@ -523,9 +521,8 @@ class ProfileCarouselScreenTest {
             },
         )
 
-        // When opening the card's own overflow menu and choosing Profile settings
-        composeRule.onNodeWithTag("profile_page_menu_$profileId", useUnmergedTree = true).performClick()
-        composeRule.onNode(hasText("Profile settings")).performClick()
+        // When tapping the card's own Settings icon
+        composeRule.onNodeWithTag("profile_page_settings_$profileId", useUnmergedTree = true).performClick()
 
         // Then the caller is asked to navigate to that profile's settings
         assertEquals(profileId, editedProfileId)

@@ -109,6 +109,77 @@ class LumenDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration12To13AddsAppListVerticalAlignmentColumnWithoutLosingExistingRows() {
+        // Given a v12 database with a real profile row (every column NOT NULL at that version)
+        val dbV12 = helper.createDatabase(TEST_DB, 12)
+        dbV12.execSQL(
+            """
+            INSERT INTO profiles (
+                id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption,
+                use24HourTime, clockShowMeridiem, overrideApps, appRowPosition, appRowPresentation,
+                listContentMode, appsToShowCount, overridingFavorites, overrideCalendar, showAllDayEvents,
+                calendarFontOption, calendarColorOption, selectedCalendarIdsCsv, calendarFontWeight
+            ) VALUES (
+                1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME',
+                0, 0, 0, 'LEFT', 'ICON_AND_TEXT',
+                'FAVORITES', 6, 0, 0, 1,
+                'LAUNCHER_DEFAULT', 'THEME', NULL, 'REGULAR'
+            )
+            """.trimIndent(),
+        )
+        dbV12.close()
+
+        // When migrating to v13
+        val dbV13 = helper.runMigrationsAndValidate(TEST_DB, 13, true, Migrations.MIGRATION_12_13)
+
+        // Then the existing row survived, and the new NOT NULL column defaults to 'BOTTOM' — today's
+        // unchanged app-list anchoring behavior.
+        val cursor = dbV13.query("SELECT name, appListVerticalAlignment FROM profiles WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(cursor.getColumnIndexOrThrow("name")))
+        assertEquals("BOTTOM", cursor.getString(cursor.getColumnIndexOrThrow("appListVerticalAlignment")))
+        cursor.close()
+    }
+
+    @Test
+    fun migration13To14AddsClockAlignmentCalendarAlignmentAndClockZoneHeightColumnsWithoutLosingExistingRows() {
+        // Given a v13 database with a real profile row (every column NOT NULL at that version)
+        val dbV13 = helper.createDatabase(TEST_DB, 13)
+        dbV13.execSQL(
+            """
+            INSERT INTO profiles (
+                id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption,
+                use24HourTime, clockShowMeridiem, overrideApps, appRowPosition, appRowPresentation,
+                listContentMode, appsToShowCount, overridingFavorites, overrideCalendar, showAllDayEvents,
+                calendarFontOption, calendarColorOption, selectedCalendarIdsCsv, calendarFontWeight,
+                appListVerticalAlignment
+            ) VALUES (
+                1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME',
+                0, 0, 0, 'LEFT', 'ICON_AND_TEXT',
+                'FAVORITES', 6, 0, 0, 1,
+                'LAUNCHER_DEFAULT', 'THEME', NULL, 'REGULAR',
+                'BOTTOM'
+            )
+            """.trimIndent(),
+        )
+        dbV13.close()
+
+        // When migrating to v14
+        val dbV14 = helper.runMigrationsAndValidate(TEST_DB, 14, true, Migrations.MIGRATION_13_14)
+
+        // Then the existing row survived: the two new NOT NULL enum columns default to 'LEFT'
+        // (today's unchanged position), and the new nullable REAL column defaults to NULL ("never
+        // dragged"), not some placeholder height.
+        val cursor = dbV14.query("SELECT name, clockAlignment, calendarAlignment, clockZoneHeightDp FROM profiles WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(cursor.getColumnIndexOrThrow("name")))
+        assertEquals("LEFT", cursor.getString(cursor.getColumnIndexOrThrow("clockAlignment")))
+        assertEquals("LEFT", cursor.getString(cursor.getColumnIndexOrThrow("calendarAlignment")))
+        assertTrue(cursor.isNull(cursor.getColumnIndexOrThrow("clockZoneHeightDp")))
+        cursor.close()
+    }
+
     private companion object {
         const val TEST_DB = "lumen-migration-test.db"
     }
