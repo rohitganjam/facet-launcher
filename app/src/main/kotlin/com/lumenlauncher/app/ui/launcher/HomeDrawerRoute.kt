@@ -339,7 +339,21 @@ fun HomeDrawerRoute(
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
             },
             onClockClick = {
-                runCatching { context.startActivity(Intent(AlarmClock.ACTION_SHOW_ALARMS)) }
+                // AlarmClock.ACTION_SHOW_ALARMS is a semantic "jump straight to the alarms list"
+                // intent, by design — on this Samsung/One UI build it resolves to a narrow,
+                // single-purpose alarms screen with none of the Clock app's own tab navigation
+                // (Alarm/Clock/Timer/Stopwatch), unlike AOSP's Clock which still shows its full
+                // shell there. So: use that intent only to find WHICH app is "the clock app" on
+                // this device, then launch that package's own normal entry point instead — the
+                // same way tapping its icon would, landing on its full navigable UI rather than
+                // the walled-off alarms subview. Falls back to the alarms intent itself if no
+                // launch intent is found (shouldn't happen for an app that resolved one at all).
+                runCatching {
+                    val alarmsIntent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
+                    val clockPackage = alarmsIntent.resolveActivity(context.packageManager)?.packageName
+                    val launchIntent = clockPackage?.let { context.packageManager.getLaunchIntentForPackage(it) }
+                    context.startActivity(launchIntent ?: alarmsIntent)
+                }
             },
             onAppClick = onAppClick,
             launcherFontOption = homeUiState.settings.launcherFontOption,
