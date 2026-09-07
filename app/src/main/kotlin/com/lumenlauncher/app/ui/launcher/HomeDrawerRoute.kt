@@ -346,13 +346,14 @@ fun HomeDrawerRoute(
                 // shell there. So: use that intent only to find WHICH app is "the clock app" on
                 // this device, then launch that package's own normal entry point instead — the
                 // same way tapping its icon would, landing on its full navigable UI rather than
-                // the walled-off alarms subview. Falls back to the alarms intent itself if no
-                // launch intent is found (shouldn't happen for an app that resolved one at all).
+                // the walled-off alarms subview. No fallback to the alarms intent itself — every
+                // real clock app declares a launcher activity, so resolveActivity() finding a
+                // package but getLaunchIntentForPackage() returning null for it doesn't happen.
                 runCatching {
-                    val alarmsIntent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
-                    val clockPackage = alarmsIntent.resolveActivity(context.packageManager)?.packageName
-                    val launchIntent = clockPackage?.let { context.packageManager.getLaunchIntentForPackage(it) }
-                    context.startActivity(launchIntent ?: alarmsIntent)
+                    Intent(AlarmClock.ACTION_SHOW_ALARMS).resolveActivity(context.packageManager)
+                        ?.packageName
+                        ?.let { context.packageManager.getLaunchIntentForPackage(it) }
+                        ?.let { context.startActivity(it) }
                 }
             },
             onAppClick = onAppClick,

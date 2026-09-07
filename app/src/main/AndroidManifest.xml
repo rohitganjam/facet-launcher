@@ -36,13 +36,6 @@
          silently does nothing. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
-    <!-- Tapping the Home clock opens the default clock app (HomeDrawerRoute.kt, ACTION_SHOW_ALARMS)
-         — normal-level permission (auto-granted, no runtime prompt). Without it, at least on this
-         Samsung/One UI build, the intent resolves to AlarmCTSHandleActivity (which requires this
-         permission from its caller) and startActivity throws SecurityException, silently caught by
-         the call's own runCatching, so the tap silently does nothing. -->
-    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
-
     <application
         android:name=".LumenApplication"
         android:allowBackup="true"
