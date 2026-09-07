@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,6 +70,17 @@ class AppearanceSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setCustomAccentSwatch("TEAL")
+    }
+
+    @Test
+    fun `changing wallpaper accent role calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setWallpaperAccentRole(WallpaperAccentRole.TERTIARY)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setWallpaperAccentRole(WallpaperAccentRole.TERTIARY)
     }
 
     @Test

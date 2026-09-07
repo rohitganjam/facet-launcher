@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 
 /**
  * App-wide ripple, stronger than Material3's own faint default (see chat history — the default
@@ -66,6 +67,8 @@ private fun lumenColorScheme(isDark: Boolean) = if (isDark) {
  * regardless of the device's own setting.
  * @param accentFromSystem Settings → Theme → Accent color's source — Material You when `true`
  * (default), [customAccentSwatch]'s fixed pick when `false`.
+ * @param wallpaperAccentRole Only meaningful when [accentFromSystem] is `true` — which of the
+ * wallpaper's three Material You tonal roles backs the accent color.
  * @param launcherFontOption Settings → Appearance → "Font" — the base font for every text role
  * app-wide (via [lumenTypography]) except the clock/calendar, which resolve their own font
  * independently (see `ClockFontOption.resolveFontFamily`).
@@ -75,6 +78,7 @@ fun LumenLauncherTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     accentFromSystem: Boolean = true,
     customAccentSwatch: AccentSwatch? = null,
+    wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     content: @Composable () -> Unit,
@@ -95,6 +99,7 @@ fun LumenLauncherTheme(
         LocalIsDarkTheme provides isDark,
         LocalAccentFromSystem provides accentFromSystem,
         LocalCustomAccentSwatch provides customAccentSwatch,
+        LocalWallpaperAccentRole provides wallpaperAccentRole,
         LocalDynamicColorRefreshSignal provides dynamicColorRefreshSignal,
         LocalIconRenderMode provides iconRenderMode,
     ) {

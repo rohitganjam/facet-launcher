@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
@@ -43,6 +44,7 @@ data class LauncherUiState(
     val accentFromSystem: Boolean = true,
     /** An `AccentSwatch` enum name — see [com.lumenlauncher.app.data.model.LauncherSettings.customAccentSwatch]. */
     val customAccentSwatch: String? = null,
+    val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
 )
@@ -76,6 +78,7 @@ class LauncherViewModel @Inject constructor(
                 themeMode = settings.themeMode,
                 accentFromSystem = settings.accentFromSystem,
                 customAccentSwatch = settings.customAccentSwatch,
+                wallpaperAccentRole = settings.wallpaperAccentRole,
                 iconRenderMode = settings.iconRenderMode,
                 launcherFontOption = settings.launcherFontOption,
             )

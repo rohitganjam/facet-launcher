@@ -28,6 +28,7 @@ import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.SearchBarPosition
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -52,6 +53,7 @@ private object Keys {
     val SEARCH_CONTACTS_ENABLED = booleanPreferencesKey("search_contacts_enabled")
     val ACCENT_FROM_SYSTEM = booleanPreferencesKey("accent_from_system")
     val CUSTOM_ACCENT_SWATCH = stringPreferencesKey("custom_accent_swatch")
+    val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
@@ -113,6 +115,8 @@ class SettingsRepository @Inject constructor(
             searchContactsEnabled = preferences[Keys.SEARCH_CONTACTS_ENABLED] ?: defaults.searchContactsEnabled,
             accentFromSystem = preferences[Keys.ACCENT_FROM_SYSTEM] ?: defaults.accentFromSystem,
             customAccentSwatch = preferences[Keys.CUSTOM_ACCENT_SWATCH],
+            wallpaperAccentRole = preferences[Keys.WALLPAPER_ACCENT_ROLE]?.let { runCatching { WallpaperAccentRole.valueOf(it) }.getOrNull() }
+                ?: defaults.wallpaperAccentRole,
             iconRenderMode = preferences[Keys.ICON_RENDER_MODE]?.let { runCatching { IconRenderMode.valueOf(it) }.getOrNull() }
                 ?: defaults.iconRenderMode,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
@@ -227,6 +231,10 @@ class SettingsRepository @Inject constructor(
     /** [swatchName] is an `AccentSwatch` enum name — kept as a plain string here, see [LauncherSettings.customAccentSwatch]. */
     suspend fun setCustomAccentSwatch(swatchName: String) {
         dataStore.edit { it[Keys.CUSTOM_ACCENT_SWATCH] = swatchName }
+    }
+
+    suspend fun setWallpaperAccentRole(role: WallpaperAccentRole) {
+        dataStore.edit { it[Keys.WALLPAPER_ACCENT_ROLE] = role.name }
     }
 
     suspend fun setIconRenderMode(mode: IconRenderMode) {

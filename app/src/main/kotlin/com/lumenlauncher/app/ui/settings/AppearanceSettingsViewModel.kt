@@ -9,6 +9,7 @@ import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -40,6 +41,10 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     fun setCustomAccentSwatch(swatch: AccentSwatch) {
         viewModelScope.launch { settingsRepository.setCustomAccentSwatch(swatch.name) }
+    }
+
+    fun setWallpaperAccentRole(role: WallpaperAccentRole) {
+        viewModelScope.launch { settingsRepository.setWallpaperAccentRole(role) }
     }
 
     fun setIconRenderMode(mode: IconRenderMode) {

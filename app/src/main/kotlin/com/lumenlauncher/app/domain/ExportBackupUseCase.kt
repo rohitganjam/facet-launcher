@@ -70,6 +70,7 @@ private fun LauncherSettings.toBackupSettings(activeProfileIndex: Int?): BackupS
     themeMode = themeMode.name,
     accentFromSystem = accentFromSystem,
     customAccentSwatch = customAccentSwatch,
+    wallpaperAccentRole = wallpaperAccentRole.name,
     iconRenderMode = iconRenderMode.name,
     launcherFontOption = launcherFontOption.name,
     appLabelColorOption = appLabelColorOption.name,

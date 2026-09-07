@@ -23,7 +23,7 @@ class BackupRepositoryTest {
         drawerListItemSize = "REGULAR", drawerOpacity = 0.6f, notificationDotsEnabled = true, notificationBadgeStyle = "DOT",
         showDrawerIcons = true, showDrawerLabels = true, searchBarPosition = "TOP", activeProfileIndex = null,
         showAllDayEvents = true, searchContactsEnabled = false, themeMode = "SYSTEM", accentFromSystem = true,
-        customAccentSwatch = null, iconRenderMode = "SYSTEM_DEFAULT", launcherFontOption = "SYSTEM",
+        customAccentSwatch = null, wallpaperAccentRole = "PRIMARY", iconRenderMode = "SYSTEM_DEFAULT", launcherFontOption = "SYSTEM",
         appLabelColorOption = "THEME", appRowPosition = "LEFT", appRowPresentation = "ICON_AND_TEXT",
         listContentMode = "FAVORITES", appsToShowCount = 5, clockTemplateId = "LIGHT_STACK",
         clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", clockShowMeridiem = false,

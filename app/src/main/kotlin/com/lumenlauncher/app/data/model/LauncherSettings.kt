@@ -82,6 +82,19 @@ enum class AppListVerticalAlignment {
     BOTTOM,
 }
 
+/**
+ * Which of the wallpaper's three Material You tonal roles (system_accent1/2/3) backs the accent
+ * color when [LauncherSettings.accentFromSystem] is `true`. Only meaningful in that case, the
+ * mirror image of [LauncherSettings.customAccentSwatch]'s "only meaningful when accentFromSystem
+ * is false" scoping. `PRIMARY` is today's only-ever behavior before this setting existed, so it's
+ * the default — nothing changes for anyone who hasn't touched the new picker.
+ */
+enum class WallpaperAccentRole {
+    PRIMARY,
+    SECONDARY,
+    TERTIARY,
+}
+
 /** No profile has been created/selected yet — [ProfileRepository][com.lumenlauncher.app.data.ProfileRepository]'s ids start at 1. */
 const val NO_ACTIVE_PROFILE_ID = 0L
 
@@ -118,6 +131,8 @@ data class LauncherSettings(
     val accentFromSystem: Boolean = true,
     /** The user's "Basic colors" pick when [accentFromSystem] is `false`, as an `AccentSwatch` enum name (kept as a plain string here — the enum itself is a `ui/theme` type, out of reach for this data-layer class). `null` until they've picked one. */
     val customAccentSwatch: String? = null,
+    /** Settings → Theme → Accent color's wallpaper-role pick — only meaningful when [accentFromSystem] is `true`. */
+    val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     /** F11 — Settings → Theme → "Icons"; global (not per-app) app-icon rendering mode. */
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     /**

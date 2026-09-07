@@ -22,6 +22,7 @@ import com.lumenlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.SearchBarPosition
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -273,6 +274,7 @@ class SettingsRepositoryTest {
         assertEquals(ThemeMode.SYSTEM, settings.themeMode)
         assertEquals(true, settings.accentFromSystem)
         assertEquals(null, settings.customAccentSwatch)
+        assertEquals(WallpaperAccentRole.PRIMARY, settings.wallpaperAccentRole)
     }
 
     @Test
@@ -290,5 +292,20 @@ class SettingsRepositoryTest {
         assertEquals(ThemeMode.DARK, settings.themeMode)
         assertEquals(false, settings.accentFromSystem)
         assertEquals("TEAL", settings.customAccentSwatch)
+    }
+
+    @Test
+    fun `setWallpaperAccentRole round-trips independently of the accent source`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When a wallpaper role other than the default is picked
+        repository.setWallpaperAccentRole(WallpaperAccentRole.SECONDARY)
+
+        // Then it comes back, without disturbing accentFromSystem/customAccentSwatch
+        val settings = repository.settings.first()
+        assertEquals(WallpaperAccentRole.SECONDARY, settings.wallpaperAccentRole)
+        assertEquals(true, settings.accentFromSystem)
+        assertEquals(null, settings.customAccentSwatch)
     }
 }

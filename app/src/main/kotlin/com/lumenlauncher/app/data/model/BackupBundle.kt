@@ -63,6 +63,7 @@ data class BackupSettings(
     val themeMode: String,
     val accentFromSystem: Boolean,
     val customAccentSwatch: String?,
+    val wallpaperAccentRole: String,
     val iconRenderMode: String,
     val launcherFontOption: String,
     val appLabelColorOption: String,

@@ -28,13 +28,18 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,6 +55,7 @@ import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.FontWeightSlider
@@ -61,12 +67,14 @@ import com.lumenlauncher.app.ui.home.DockIcon
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.Ink
+import com.lumenlauncher.app.ui.theme.LocalDynamicColorRefreshSignal
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
 import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import com.lumenlauncher.app.ui.theme.Wallpaper
 import com.lumenlauncher.app.ui.theme.resolve
+import com.lumenlauncher.app.ui.theme.toneOf
 
 /**
  * Settings → Appearance (`3c`) — theme, accent color, icons, and launcher font/app-label-color,
@@ -86,6 +94,7 @@ fun AppearanceSettingsScreen(
         onThemeModeChanged = viewModel::setThemeMode,
         onAccentFromSystemChanged = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChanged = viewModel::setCustomAccentSwatch,
+        onWallpaperAccentRoleChanged = viewModel::setWallpaperAccentRole,
         onIconRenderModeChanged = viewModel::setIconRenderMode,
         onLauncherFontOptionChanged = viewModel::setLauncherFontOption,
         onAppLabelColorOptionChanged = viewModel::setAppLabelColorOption,
@@ -101,6 +110,7 @@ private fun AppearanceSettingsContent(
     onThemeModeChanged: (ThemeMode) -> Unit,
     onAccentFromSystemChanged: (Boolean) -> Unit,
     onCustomAccentSwatchChanged: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChanged: (WallpaperAccentRole) -> Unit,
     onIconRenderModeChanged: (IconRenderMode) -> Unit,
     onLauncherFontOptionChanged: (LauncherFontOption) -> Unit,
     onAppLabelColorOptionChanged: (ClockColorOption) -> Unit,
@@ -144,8 +154,10 @@ private fun AppearanceSettingsContent(
                         AccentColorSection(
                             accentFromSystem = settings.accentFromSystem,
                             customAccentSwatch = settings.customAccentSwatch,
+                            wallpaperAccentRole = settings.wallpaperAccentRole,
                             onAccentFromSystemChanged = onAccentFromSystemChanged,
                             onCustomAccentSwatchChanged = onCustomAccentSwatchChanged,
+                            onWallpaperAccentRoleChanged = onWallpaperAccentRoleChanged,
                         )
                         CardDivider()
                         LabeledDropdownRow(
@@ -299,18 +311,21 @@ private fun ThemeMode.appearanceDisplayLabel(): String = when (this) {
 
 /**
  * Settings → Appearance → Accent color. Two sources, matching the system "Wallpaper & style"
- * picker's own interaction model: **Wallpaper colors** (Material You, the default) computes and
- * applies automatically — no picker shown; **Basic colors** reveals the curated [AccentSwatch]
- * grid below it. Each swatch renders both its light and dark half at once (see
- * [AccentSwatchCircle]) since picking one stores both — switching the theme mode restores the
- * right half for the *same* pick rather than needing to re-choose.
+ * picker's own interaction model: **Wallpaper colors** (Material You, the default) reveals
+ * [WallpaperAccentRoleGrid] — the wallpaper's own three derived tones, tappable just like Basic
+ * colors' preset swatches; **Basic colors** reveals the curated [AccentSwatch] grid instead. Each
+ * swatch (either grid) renders both its light and dark half at once (see [SplitColorCircle])
+ * since picking one stores both — switching the theme mode restores the right half for the *same*
+ * pick rather than needing to re-choose.
  */
 @Composable
 private fun AccentColorSection(
     accentFromSystem: Boolean,
     customAccentSwatch: String?,
+    wallpaperAccentRole: WallpaperAccentRole,
     onAccentFromSystemChanged: (Boolean) -> Unit,
     onCustomAccentSwatchChanged: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChanged: (WallpaperAccentRole) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
@@ -331,8 +346,10 @@ private fun AccentColorSection(
                 modifier = Modifier.weight(1f),
             )
         }
-        if (!accentFromSystem) {
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        if (accentFromSystem) {
+            WallpaperAccentRoleGrid(selected = wallpaperAccentRole, onSelect = onWallpaperAccentRoleChanged)
+        } else {
             AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChanged)
         }
     }
@@ -381,28 +398,89 @@ private fun AccentSwatchGrid(selected: String?, onSelect: (AccentSwatch) -> Unit
 
 @Composable
 private fun AccentSwatchCircle(swatch: AccentSwatch, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SplitColorCircle(
+        light = swatch.light,
+        dark = swatch.dark,
+        selected = selected,
+        checkedContentDescription = swatch.label,
+        testTag = "accent_swatch_${swatch.name}",
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+/**
+ * The shared visual behind every accent-color swatch (Basic colors' presets, and the wallpaper
+ * roles below) — both its light and dark half at once, side by side, with a checkmark overlay
+ * when selected.
+ */
+@Composable
+private fun SplitColorCircle(
+    light: Color,
+    dark: Color,
+    selected: Boolean,
+    checkedContentDescription: String,
+    testTag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier
             .size(44.dp)
             .clip(CircleShape)
             .clickable(onClick = onClick)
-            .testTag("accent_swatch_${swatch.name}"),
+            .testTag(testTag),
         contentAlignment = Alignment.Center,
     ) {
         Row(modifier = Modifier.matchParentSize()) {
-            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(swatch.light))
-            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(swatch.dark))
+            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(light))
+            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(dark))
         }
         if (selected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = swatch.label,
+                contentDescription = checkedContentDescription,
                 tint = Surface,
                 modifier = Modifier
                     .size(20.dp)
                     .clip(CircleShape)
                     .background(Ink.copy(alpha = 0.35f))
                     .padding(3.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The wallpaper-derived counterpart to [AccentSwatchGrid] — instead of a fixed preset palette,
+ * shows the wallpaper's own three Material You tonal roles ([WallpaperAccentRole.entries]) as
+ * tappable swatches, each with a real light/dark pair read live off the OS's dynamic color scheme
+ * (same [dynamicLightColorScheme]/[dynamicDarkColorScheme] + resume-signal-keyed `remember` +
+ * defensive fallback pattern as `ui/theme/Color.kt`'s own `accentTonalExtremes()` — see that
+ * function's doc for why the resume signal matters for a launcher specifically). No text labels,
+ * unlike the named Basic-colors presets — these are algorithmically derived, unnamed hues; the
+ * swatch itself is the only identifier a user needs to tell them apart.
+ */
+@Composable
+private fun WallpaperAccentRoleGrid(selected: WallpaperAccentRole, onSelect: (WallpaperAccentRole) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val refreshSignal = LocalDynamicColorRefreshSignal.current
+    val tones = remember(context, refreshSignal) {
+        WallpaperAccentRole.entries.associateWith { role ->
+            runCatching { role.toneOf(dynamicLightColorScheme(context)) }.getOrDefault(AccentSwatch.BLUE.light) to
+                runCatching { role.toneOf(dynamicDarkColorScheme(context)) }.getOrDefault(AccentSwatch.BLUE.dark)
+        }
+    }
+    Row(modifier = modifier.testTag("wallpaper_accent_role_grid"), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        WallpaperAccentRole.entries.forEach { role ->
+            val (light, dark) = tones.getValue(role)
+            SplitColorCircle(
+                light = light,
+                dark = dark,
+                selected = role == selected,
+                checkedContentDescription = "Wallpaper color ${role.ordinal + 1}",
+                testTag = "wallpaper_accent_role_${role.name}",
+                onClick = { onSelect(role) },
             )
         }
     }
@@ -419,6 +497,7 @@ private fun AppearanceSettingsScreenPreview() {
             onThemeModeChanged = {},
             onAccentFromSystemChanged = {},
             onCustomAccentSwatchChanged = {},
+            onWallpaperAccentRoleChanged = {},
             onIconRenderModeChanged = {},
             onLauncherFontOptionChanged = {},
             onAppLabelColorOptionChanged = {},

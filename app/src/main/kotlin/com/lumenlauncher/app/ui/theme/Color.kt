@@ -1,5 +1,6 @@
 package com.lumenlauncher.app.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
@@ -9,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 
 // Light/dark pairs — transcribed from design_handoff_minimal_launcher/README.md's Design
 // Tokens table (`### Light`/`### Dark`). Every public color below resolves through
@@ -92,11 +94,24 @@ val Hairline: Color @Composable get() = if (LocalIsDarkTheme.current) HairlineDa
 val IconTile: Color @Composable get() = if (LocalIsDarkTheme.current) IconTileDark else IconTileLight
 
 /**
+ * Maps a [WallpaperAccentRole] to its actual M3 tonal role on a wallpaper-derived [scheme] —
+ * shared by [accentTonalExtremes] and Settings' wallpaper-color picker row, which needs each
+ * role's live color to render its own swatch circles. `internal`, not `private` — same visibility
+ * as [accentTonalExtremes] itself, for the same reason (read from `ui/settings/AppearanceSettingsScreen.kt`).
+ */
+internal fun WallpaperAccentRole.toneOf(scheme: ColorScheme): Color = when (this) {
+    WallpaperAccentRole.PRIMARY -> scheme.primary
+    WallpaperAccentRole.SECONDARY -> scheme.secondary
+    WallpaperAccentRole.TERTIARY -> scheme.tertiary
+}
+
+/**
  * F11's accent handling — "one variable driving ~100 usages" per README. Settings → Theme →
  * Accent color offers two sources ([LocalAccentFromSystem]):
  * - **Wallpaper colors** (default): Material You ([dynamicLightColorScheme]/[dynamicDarkColorScheme],
- *   reading the system's wallpaper-derived `system_accent1_*` palette — always available since
- *   minSdk 33 ≥ API 31). No picker shown; it's computed and applied automatically.
+ *   reading the system's wallpaper-derived `system_accent1/2/3` palette — always available since
+ *   minSdk 33 ≥ API 31), with the user's own pick of which of the three tonal roles to use
+ *   ([LocalWallpaperAccentRole] — see Settings' wallpaper-color picker row).
  * - **Basic colors**: [LocalCustomAccentSwatch]'s fixed pick from the curated [AccentSwatch]
  *   palette — each swatch carries its own light/dark pair, so switching the app's theme mode
  *   restores the right value for the *same* swatch rather than needing to re-pick.
@@ -113,14 +128,16 @@ internal fun accentTonalExtremes(): Pair<Color, Color> {
         return swatch.light to swatch.dark
     }
     val context = LocalContext.current
+    val role = LocalWallpaperAccentRole.current
     // Keyed on the resume signal too (see its own doc) — otherwise this stays cached at
     // whatever the OS's dynamic palette was on first composition, and a wallpaper/theme change
     // made while Lumen sits resumed in the background (the common case for a launcher) wouldn't
-    // show up until a full force-stop.
+    // show up until a full force-stop. Also keyed on the role — switching which tonal role is
+    // picked inside the same composition must recompute too.
     val refreshSignal = LocalDynamicColorRefreshSignal.current
-    return remember(context, refreshSignal) {
-        val light = runCatching { dynamicLightColorScheme(context).primary }.getOrDefault(AccentLight)
-        val dark = runCatching { dynamicDarkColorScheme(context).primary }.getOrDefault(AccentDark)
+    return remember(context, refreshSignal, role) {
+        val light = runCatching { role.toneOf(dynamicLightColorScheme(context)) }.getOrDefault(AccentLight)
+        val dark = runCatching { role.toneOf(dynamicDarkColorScheme(context)) }.getOrDefault(AccentDark)
         light to dark
     }
 }

@@ -65,6 +65,7 @@ class ImportBackupUseCaseTest {
         themeMode = "DARK",
         accentFromSystem = false,
         customAccentSwatch = "BLUE",
+        wallpaperAccentRole = "SECONDARY",
         iconRenderMode = "MONOCHROME",
         launcherFontOption = "SYSTEM",
         appLabelColorOption = "ACCENT_SECONDARY",

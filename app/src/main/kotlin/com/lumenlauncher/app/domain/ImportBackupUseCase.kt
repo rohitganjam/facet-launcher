@@ -26,6 +26,7 @@ import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.data.model.SearchBarPosition
 import com.lumenlauncher.app.data.model.ThemeMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import javax.inject.Inject
 
 sealed interface ImportBackupResult {
@@ -112,6 +113,7 @@ class ImportBackupUseCase @Inject constructor(
             setThemeMode(settings.themeMode.toEnumOrDefault(ThemeMode.SYSTEM))
             setAccentFromSystem(settings.accentFromSystem)
             settings.customAccentSwatch?.let { setCustomAccentSwatch(it) }
+            setWallpaperAccentRole(settings.wallpaperAccentRole.toEnumOrDefault(WallpaperAccentRole.PRIMARY))
             setIconRenderMode(settings.iconRenderMode.toEnumOrDefault(IconRenderMode.SYSTEM_DEFAULT))
             setLauncherFontOption(settings.launcherFontOption.toEnumOrDefault(LauncherFontOption.SYSTEM))
             setAppLabelColorOption(settings.appLabelColorOption.toEnumOrDefault(ClockColorOption.THEME))

@@ -104,6 +104,50 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
+    fun wallpaperAccentRoleGridShowsByDefaultAndBasicColorsGridDoesNot() {
+        // Given the screen, "Wallpaper colors" selected by default
+        setContent()
+
+        // Then the wallpaper-role grid is shown, and the Basic-colors grid is not
+        composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
+        composeRule.onNodeWithTag("accent_swatch_grid").assertDoesNotExist()
+    }
+
+    @Test
+    fun wallpaperAccentRoleGridDisappearsWhenBasicColorsIsSelected() {
+        // Given the screen, "Wallpaper colors" selected by default
+        setContent()
+        composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
+
+        // When switching to "Basic colors"
+        composeRule.onNodeWithTag("accent_source_basic").performClick()
+
+        // Then the wallpaper-role grid is gone and the Basic-colors grid appears instead
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("accent_swatch_grid").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingAWallpaperAccentRoleSwatchPersistsTheChoice() {
+        // Given the screen, "Wallpaper colors" selected by default (PRIMARY role)
+        val settingsRepository = setContent()
+
+        // When picking the Secondary wallpaper role
+        composeRule.onNodeWithTag("wallpaper_accent_role_SECONDARY").performClick()
+
+        // Then it's persisted to the real repository — poll, same async-write reasoning as the
+        // Basic-colors test above. Deliberately not asserting the swatch's actual rendered color,
+        // which depends on the test device's own real wallpaper (see ColorTest.kt's own doc).
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                settingsRepository.settings.first().wallpaperAccentRole == com.lumenlauncher.app.data.model.WallpaperAccentRole.SECONDARY
+            }
+        }
+    }
+
+    @Test
     fun iconRenderModeRowChangesTheSetting() {
         // Given the screen, "System default" selected by default (F11)
         setContent()

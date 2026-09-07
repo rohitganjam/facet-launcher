@@ -3,6 +3,7 @@ package com.lumenlauncher.app.ui.theme
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.lumenlauncher.app.data.model.IconRenderMode
+import com.lumenlauncher.app.data.model.WallpaperAccentRole
 
 /**
  * Whether the app is currently rendering dark — resolved once by [LumenLauncherTheme] from
@@ -21,6 +22,9 @@ val LocalIsDarkTheme = staticCompositionLocalOf { false }
  */
 val LocalAccentFromSystem = staticCompositionLocalOf { true }
 val LocalCustomAccentSwatch = compositionLocalOf<AccentSwatch?> { null }
+
+/** Which wallpaper-derived tonal role [Accent] resolves to when [LocalAccentFromSystem] is `true` — see [WallpaperAccentRole]. */
+val LocalWallpaperAccentRole = staticCompositionLocalOf { WallpaperAccentRole.PRIMARY }
 
 /**
  * Bumped by [LumenLauncherTheme] on every `ON_RESUME` so [Accent]'s dynamic-color lookup re-reads
