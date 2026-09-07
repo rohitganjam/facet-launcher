@@ -20,7 +20,11 @@ enum class ClockTemplateId(val displayName: String) {
     TECH_DISTORTED("Tech Distorted"),
     VARIABLE_DIVIDER("Variable Divider"),
     FLUID_STACK("Fluid Stack"),
+    FLUID_STACK_INVERTED("Fluid Stack Inverted"),
     BRACKET_MINIMAL("Bracket Minimal"),
     TWO_LINE_DIVIDER("Two-Line Divider"),
     BOLD_COLON("Bold Colon"),
+    ACCENTED_FLUID_STACK("Accented Fluid Stack"),
+    ACCENTED_FLUID_STACK_INVERTED("Accented Fluid Stack Inverted"),
+    ACCENT_CONTRAST("Accent Contrast"),
 }

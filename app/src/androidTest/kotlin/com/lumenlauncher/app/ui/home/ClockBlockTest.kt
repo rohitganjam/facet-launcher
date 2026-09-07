@@ -173,6 +173,108 @@ class ClockBlockTest {
     }
 
     @Test
+    fun fluidStackInvertedTemplateRendersTheHourAndMinuteSeparately() {
+        // Given the inverted variant, which swaps FluidStackTemplate's thin/wide vs bold/narrow
+        // treatment between hour and minute (see chat history)
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.FLUID_STACK_INVERTED)
+            }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun accentedFluidStackTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ACCENTED_FLUID_STACK)
+            }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+        composeRule.onNodeWithText("Thursday, 27 August").assertExists()
+    }
+
+    @Test
+    fun accentedFluidStackInvertedTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ACCENTED_FLUID_STACK_INVERTED)
+            }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun accentContrastTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ACCENT_CONTRAST)
+            }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText(":05").assertExists()
+    }
+
+    @Test
+    fun verticalStackBoldHourStillRendersCorrectly() {
+        // Given the bold-hour variant, whose hour weight went from ExtraBold to Black (see chat history)
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.VERTICAL_STACK_BOLD_HOUR)
+            }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun flexNarrowLeftAlignmentRendersTimeBeforeDate() {
+        // Given the default (Left) clock alignment
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ROBOTO_FLEX_NARROW)
+            }
+        }
+
+        // Then the time digits sit to the left of the date column — today's unchanged reading order
+        val hourLeft = composeRule.onNodeWithText("9").fetchSemanticsNode().boundsInRoot.left
+        val dateLeft = composeRule.onNodeWithText("AUG", substring = true).fetchSemanticsNode().boundsInRoot.left
+        assertTrue(hourLeft < dateLeft)
+    }
+
+    @Test
+    fun flexNarrowRightAlignmentSwapsTimeAndDatePositions() {
+        // Given Right clock alignment — a straight slide-right of the same order would put the
+        // date, not the time, against the actual right edge
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    templateId = ClockTemplateId.ROBOTO_FLEX_NARROW,
+                    clockAlignment = ClockAlignment.RIGHT,
+                )
+            }
+        }
+
+        // Then the columns mirror instead: the date sits to the left, the time digits hug the right edge
+        val hourLeft = composeRule.onNodeWithText("9").fetchSemanticsNode().boundsInRoot.left
+        val dateLeft = composeRule.onNodeWithText("AUG", substring = true).fetchSemanticsNode().boundsInRoot.left
+        assertTrue(dateLeft < hourLeft)
+    }
+
+    @Test
     fun clockAndCalendarAlignmentsMoveIndependentlyOfEachOther() {
         // Given a clock aligned right but a calendar explicitly kept left
         val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)

@@ -20,12 +20,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.LauncherFontOption
+import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.homeTextShadow
 import com.lumenlauncher.app.ui.theme.resolve
@@ -77,10 +79,14 @@ fun ClockDisplay(
         ClockTemplateId.ROBOTO_FLEX_NARROW -> RobotoFlexNarrowTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
         ClockTemplateId.TECH_DISTORTED -> TechDistortedTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
         ClockTemplateId.VARIABLE_DIVIDER -> VariableDividerTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
-        ClockTemplateId.FLUID_STACK -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
+        ClockTemplateId.FLUID_STACK -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = false, accentHour = false, textColor, mutedTextColor, modifier, horizontalAlignment)
+        ClockTemplateId.FLUID_STACK_INVERTED -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = true, accentHour = false, textColor, mutedTextColor, modifier, horizontalAlignment)
         ClockTemplateId.BRACKET_MINIMAL -> BracketMinimalTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
         ClockTemplateId.TWO_LINE_DIVIDER -> TwoLineDividerTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
         ClockTemplateId.BOLD_COLON -> BoldColonTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
+        ClockTemplateId.ACCENTED_FLUID_STACK -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = false, accentHour = true, textColor, mutedTextColor, modifier, horizontalAlignment)
+        ClockTemplateId.ACCENTED_FLUID_STACK_INVERTED -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = true, accentHour = true, textColor, mutedTextColor, modifier, horizontalAlignment)
+        ClockTemplateId.ACCENT_CONTRAST -> AccentContrastTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment)
     }
 }
 
@@ -315,7 +321,7 @@ private fun VerticalStackTemplate(
         Column(verticalArrangement = Arrangement.spacedBy((-20).dp), horizontalAlignment = horizontalAlignment) {
             Text(
                 text = now.format(hourFormatter),
-                style = rowStyle.copy(fontWeight = if (boldHour) FontWeight.ExtraBold else FontWeight.Light),
+                style = rowStyle.copy(fontWeight = if (boldHour) FontWeight.Black else FontWeight.Light),
                 color = textColor,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -688,6 +694,15 @@ private fun VariableDividerTemplate(
     }
 }
 
+/**
+ * Hour and minute each on their own tightly-overlapped line (-12dp). [inverted] swaps which one
+ * gets the thin/wide treatment vs the bold/narrow one — [ClockTemplateId.FLUID_STACK] (hour
+ * thin/wide, minute bold/narrow) vs [ClockTemplateId.FLUID_STACK_INVERTED] (the reverse), the
+ * same shared-boolean-variant shape [VerticalStackTemplate]'s own `boldHour` already uses.
+ * [accentHour] additionally fixes the hour to [Accent] regardless of the user's chosen
+ * [textColor] — see [AccentContrastTemplate]'s own doc for why — backing
+ * [ClockTemplateId.ACCENTED_FLUID_STACK]/[ClockTemplateId.ACCENTED_FLUID_STACK_INVERTED].
+ */
 @Composable
 private fun FluidStackTemplate(
     now: LocalDateTime,
@@ -695,6 +710,8 @@ private fun FluidStackTemplate(
     meridiem: String?,
     locale: Locale,
     family: FontFamily,
+    inverted: Boolean,
+    accentHour: Boolean,
     textColor: Color,
     mutedTextColor: Color,
     modifier: Modifier,
@@ -702,17 +719,20 @@ private fun FluidStackTemplate(
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+    val hourFontFamily = if (inverted) RobotoFlexNarrowBlack else RobotoFlexWideThin
+    val minuteFontFamily = if (inverted) RobotoFlexWideThin else RobotoFlexNarrowBlack
+    val hourColor = if (accentHour) Accent else textColor
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy((-12).dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = now.format(hourFormatter),
                 style = TextStyle(
-                    fontFamily = RobotoFlexWideThin,
+                    fontFamily = hourFontFamily,
                     fontSize = 90.sp,
-                    shadow = homeTextShadow(textColor)
+                    shadow = homeTextShadow(hourColor)
                 ),
-                color = textColor
+                color = hourColor
             )
             if (meridiem != null) {
                 MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 16.dp, start = 8.dp))
@@ -721,7 +741,7 @@ private fun FluidStackTemplate(
         Text(
             text = now.format(minuteFormatter),
             style = TextStyle(
-                fontFamily = RobotoFlexNarrowBlack,
+                fontFamily = minuteFontFamily,
                 fontSize = 90.sp,
                 shadow = homeTextShadow(textColor)
             ),
@@ -797,11 +817,14 @@ private fun RobotoFlexNarrowTemplate(
     // side by side rather than stacked, so there's no single Column to hand horizontalAlignment
     // to — Arrangement.spacedBy(space, alignment) is the Row equivalent, positioning the whole
     // two-column unit within the available width the same way horizontalAlignment does elsewhere.
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp, horizontalAlignment),
-    ) {
+    // At Right alignment the two columns also swap order — a straight slide-right of the same
+    // Time-then-Date reading order would land the date, not the time, on the actual right edge;
+    // swapping mirrors the Left-alignment layout instead, so the time digits are always the
+    // element hugging the aligned edge. The date column's own internal alignment follows suit
+    // (Start normally; End when mirrored) so its text hugs that same edge, not just the column's
+    // outer position.
+    val isRightAligned = horizontalAlignment == Alignment.End
+    val timeColumn: @Composable () -> Unit = {
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = now.format(DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)),
@@ -814,7 +837,9 @@ private fun RobotoFlexNarrowTemplate(
                 color = textColor
             )
         }
-        Column {
+    }
+    val dateColumn: @Composable () -> Unit = {
+        Column(horizontalAlignment = if (isRightAligned) Alignment.End else Alignment.Start) {
             if (meridiem != null) {
                 MeridiemText(meridiem, RobotoFlexNarrow, textColor)
             }
@@ -827,8 +852,22 @@ private fun RobotoFlexNarrowTemplate(
                     lineHeight = 20.sp,
                     shadow = homeTextShadow(mutedTextColor)
                 ),
-                color = mutedTextColor
+                color = mutedTextColor,
+                textAlign = if (isRightAligned) TextAlign.End else TextAlign.Start,
             )
+        }
+    }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp, horizontalAlignment),
+    ) {
+        if (isRightAligned) {
+            dateColumn()
+            timeColumn()
+        } else {
+            timeColumn()
+            dateColumn()
         }
     }
 }
@@ -880,6 +919,50 @@ private fun TechDistortedTemplate(
             ),
             color = mutedTextColor,
             modifier = Modifier.padding(start = 2.dp)
+        )
+    }
+}
+
+/**
+ * [WeightContrastTemplate]'s own single-line hour+minute, but the hour is always rendered in
+ * [Accent] rather than the user's chosen [textColor] — a fixed accent color for the hour paired
+ * with user-choice color for the minute and date, per direct request (see chat history). Hour and
+ * minute keep that template's weight contrast (Black vs Light here) on top of the new color
+ * contrast. [FluidStackTemplate]'s own `accentHour` param applies this same idea to that
+ * template's shape instead ([ClockTemplateId.ACCENTED_FLUID_STACK]/`_INVERTED`).
+ */
+@Composable
+private fun AccentContrastTemplate(
+    now: LocalDateTime,
+    use24HourTime: Boolean,
+    meridiem: String?,
+    locale: Locale,
+    family: FontFamily,
+    textColor: Color,
+    mutedTextColor: Color,
+    modifier: Modifier,
+    horizontalAlignment: Alignment.Horizontal,
+) {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val baseStyle = TextStyle(fontSize = 70.sp, letterSpacing = (-2).sp)
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = horizontalAlignment) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = now.format(hourFormatter),
+                style = baseStyle.copy(fontFamily = family, fontWeight = FontWeight.Black, shadow = homeTextShadow(Accent)),
+                color = Accent,
+            )
+            Text(
+                text = now.format(DateTimeFormatter.ofPattern(":mm", locale)),
+                style = baseStyle.copy(fontFamily = family, fontWeight = FontWeight.Light, shadow = homeTextShadow(textColor)),
+                color = textColor,
+            )
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 6.dp, bottom = 8.dp))
+        }
+        Text(
+            text = now.format(dateFormatter(locale)).uppercase(locale),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, letterSpacing = 1.1.sp, shadow = homeTextShadow(mutedTextColor)),
+            color = mutedTextColor,
         )
     }
 }
