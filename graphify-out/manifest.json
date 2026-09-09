@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/navigation/LumenNavHost.kt": {
-    "mtime": 1788956137.020923,
-    "seen": 1788956278.1100318,
-    "ast_hash": "1559ce6cf798680fe34b72645bfe84cf",
+    "mtime": 1788965776.5859375,
+    "seen": 1788966156.6344872,
+    "ast_hash": "6b6292b566756db38ef511a591a6458f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt": {
@@ -1002,9 +1002,9 @@
     "semantic_hash": "a284fac76254243df5f25234fc23a6f3"
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt": {
-    "mtime": 1788964483.9680285,
-    "seen": 1788964811.835501,
-    "ast_hash": "fa6d178e8ab18a71c6238faf47cc963c",
+    "mtime": 1788966032.9594424,
+    "seen": 1788966156.634489,
+    "ast_hash": "5a25524e8774d7a0e58003795668170b",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselViewModel.kt": {
@@ -1572,9 +1572,9 @@
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1788964420.0041296,
-    "seen": 1788964427.672246,
-    "ast_hash": "782a80636fa7ffad017f596641748019",
+    "mtime": 1788966144.0148182,
+    "seen": 1788966156.634551,
+    "ast_hash": "6f6fd5a20138792eace89820502130de",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -1797,12 +1797,6 @@
     "mtime": 1788951927.517646,
     "seen": 1788951992.281343,
     "ast_hash": "951ae391b8ae72ef12e671c2fad23353",
-    "semantic_hash": ""
-  },
-  ".artifacts/6df2d3cb-caec-4822-91f0-92396989ad87/implementation_plan.artifact.md": {
-    "mtime": 1788881834.3018396,
-    "seen": 1788951992.2813451,
-    "ast_hash": "7fc20b4f04c03e342b7d739233221997",
     "semantic_hash": ""
   },
   "CLOCK_RESIZE_SPEC.md": {

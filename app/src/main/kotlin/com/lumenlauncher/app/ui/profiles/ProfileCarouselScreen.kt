@@ -164,6 +164,34 @@ fun ProfileCarouselScreen(
     )
 }
 
+/**
+ * The back-chevron + title row atop both the carousel and the reorder list. 24dp horizontal
+ * gutter to match every other screen's header (`SettingsHeader` et al.); [trailing] is the
+ * optional right-aligned slot (the carousel's "Reorder" link).
+ */
+@Composable
+private fun CarouselHeaderTitleRow(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BackButton(onClick = onBack)
+            // headlineSmall to match Settings' own header size (see chat history) — was titleMedium.
+            Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
+        }
+        trailing()
+    }
+}
+
 @Composable
 private fun ProfileCarouselContent(
     uiState: ProfileCarouselUiState,
@@ -178,13 +206,25 @@ private fun ProfileCarouselContent(
     modifier: Modifier = Modifier,
 ) {
     val profiles = uiState.profiles
+    val manageMode = mode == ProfileCarouselMode.MANAGE
     if (profiles.isEmpty()) {
-        // EnsureActiveProfileUseCase seeds the first profile on app launch — this is only
-        // visible for the brief window before that completes.
+        // EnsureActiveProfileUseCase seeds the first profile on app launch — only briefly empty
+        // before that resolves. Paint the backdrop + header now so the screen is opaque and
+        // reads as "arrived" during its slide-in (otherwise the transparent window shows the
+        // wallpaper through and it looks like a flash of Home when opened from Settings).
+        // No "profile_carousel_screen" test tag here — that marks the loaded screen, and tests
+        // wait on it to know the carousel content is ready.
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(CarouselBackdrop)
+                .windowInsetsPadding(WindowInsets.systemBars),
+        ) {
+            CarouselHeaderTitleRow(title = if (manageMode) "Manage Profiles" else "Switch Profiles", onBack = onBack)
+        }
         return
     }
 
-    val manageMode = mode == ProfileCarouselMode.MANAGE
     val pageCount = profiles.size + if (uiState.canAddProfile) 1 else 0
     val initialPage = profiles.indexOfFirst { it.id == uiState.activeProfileId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
@@ -203,23 +243,13 @@ private fun ProfileCarouselContent(
             .testTag("profile_carousel_screen")
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, start = 20.dp, end = 20.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        CarouselHeaderTitleRow(
+            title = if (manageMode) "Manage Profiles" else "Switch Profiles",
+            onBack = { if (isReordering && !manageMode) isReordering = false else onBack() },
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BackButton(onClick = { if (isReordering && !manageMode) isReordering = false else onBack() })
-                // headlineSmall to match Settings' own header size (see chat history) — was titleMedium.
-                Text(
-                    text = if (manageMode) "Manage Profiles" else "Switch Profiles",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Ink,
-                )
-            }
             // No "Done" counterpart once reordering — every drag-release autosaves via onCommit,
-            // so there's nothing left to confirm; the back button (above) already exits reorder
-            // mode, same as the system back gesture (see the BackHandler below).
+            // so there's nothing left to confirm; the back button already exits reorder mode,
+            // same as the system back gesture (see the BackHandler above).
             if (!isReordering) {
                 Text(
                     text = "Reorder",
@@ -332,7 +362,7 @@ private fun ProfileCarouselContent(
                 onClick = onNavigateToSettings,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 20.dp),
+                    .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 20.dp),
             )
 
             // Leftover space collects below the whole cluster, not as a dead band inside it.
@@ -382,7 +412,7 @@ private fun ProfileReorderList(
 
     LazyColumn(
         modifier = modifier.testTag("profile_reorder_list"),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(REORDER_ROW_SPACING),
     ) {
         item(key = "reorder_hint") {

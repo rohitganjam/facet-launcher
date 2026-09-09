@@ -732,3 +732,18 @@ Follow-up from an on-device dark-mode screenshot review of the `SWITCH` carousel
   - The horizontal inset (neighbour-card peek) is derived: `screenWidthDp * (1 − scale) / 2`. `CAROUSEL_PAGE_INSET` constant deleted.
   - The pager is content-sized — `height = screenHeightDp * scale + CAROUSEL_PAGE_CHROME_HEIGHT` (name row + gear/trash row) — not `weight(1f)`, so dots + Launcher-settings pack directly beneath it, with a trailing `Spacer(Modifier.weight(1f))` collecting surplus at the bottom. `CAROUSEL_HEIGHT_FRACTION` never shipped; `CARD_SCALE` deleted; `ProfilePreviewPage`'s `contentScale` divides by `maxHeight` directly.
 - Verified on `emulator-5554` in dark mode: row stands out, gap gone, the card is now visibly screen-shaped, content hugs the top. `ProfileCarouselScreenTest` 19/19 green (`launcherSettingsRowInvokesTheCallback` extended to assert the row's title/subtitle render).
+
+### Follow-ups — header gutter + Settings → Profiles transition
+
+- **Header now uses the app-standard 24dp horizontal gutter** (was a bespoke 20dp). The
+  back-chevron + title row is extracted to `CarouselHeaderTitleRow` (shared by the loaded
+  screen and the brief empty state); the Launcher-settings row and the reorder list moved
+  20dp → 24dp to stay aligned with it.
+- **Settings → Profiles no longer flashes the wallpaper/Home** on the way in. Two causes:
+  (1) `LumenNavHost`'s route transitions were slide **+ crossfade** — a fading layer over the
+  wallpaper-showing (transparent) window briefly reveals the wallpaper; removed `fadeIn`/
+  `fadeOut`, leaving a pure slide (two opaque screens sliding past each other always cover the
+  full width). (2) `ProfileCarouselContent`'s empty state (`profiles` still loading) painted
+  nothing; it now paints the backdrop + `CarouselHeaderTitleRow` so the screen is opaque and
+  reads as "arrived" during the slide. `ProfileCarouselScreenTest` 19/19 still green (the empty
+  state deliberately omits the `profile_carousel_screen` tag the test helper waits on).

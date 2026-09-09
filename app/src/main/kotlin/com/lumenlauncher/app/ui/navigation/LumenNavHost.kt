@@ -2,8 +2,6 @@ package com.lumenlauncher.app.ui.navigation
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
@@ -101,7 +99,6 @@ fun LumenNavHost(
     launcherViewModel: LauncherViewModel = hiltViewModel(),
 ) {
     val animationSpec = tween<IntOffset>(durationMillis = 340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
-    val fadeSpec = tween<Float>(durationMillis = 240)
 
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
@@ -113,10 +110,13 @@ fun LumenNavHost(
         navController = navController,
         startDestination = LumenDestinations.HOME,
         modifier = modifier,
-        enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = animationSpec) + fadeIn(animationSpec = fadeSpec) },
-        exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec) + fadeOut(animationSpec = fadeSpec) },
-        popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) + fadeIn(animationSpec = fadeSpec) },
-        popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) + fadeOut(animationSpec = fadeSpec) }
+        // Pure slide, no crossfade: the window shows the wallpaper through any partially-transparent
+        // layer, so a fading-out screen briefly reveals it — reads as a flash of Home. Two opaque
+        // screens sliding past each other always cover the full width, so there's nothing to bleed.
+        enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = animationSpec) },
+        exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec) },
+        popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
+        popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) }
     ) {
         composable(LumenDestinations.HOME) {
             HomeDrawerRoute(
