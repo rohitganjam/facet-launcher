@@ -1,6 +1,6 @@
 # Lumen Launcher — Implementation Plan
 
-Tracks work against [`design_handoff_minimal_launcher/PRD.md`](design_handoff_minimal_launcher/PRD.md) and [`design_handoff_minimal_launcher/README.md`](design_handoff_minimal_launcher/README.md). Engineering conventions (incl. the testing requirement every task below relies on) are in [`CLAUDE.md`](CLAUDE.md).
+Tracks work against [`Android launcher design planning/design_handoff_minimal_launcher/PRD.md`](<Android launcher design planning/design_handoff_minimal_launcher/PRD.md>) and [`README.md`](<Android launcher design planning/design_handoff_minimal_launcher/README.md>) — the current design handoff. (Historical entries below cite these by their old repo-root path; the content moved, not the meaning.) Engineering conventions (incl. the testing requirement every task below relies on) are in [`CLAUDE.md`](CLAUDE.md).
 
 Tick a box only once its deliverable is built **and** its listed tests are green.
 
@@ -707,7 +707,7 @@ Adds a scale factor alongside the existing zone-height *position* feature — co
 - [x] `clockAccentColorOption` + `clockDateStyle` (Full/Condensed) global + per-profile.
 - [x] 16 shape-based clock templates in `ClockTemplates.kt` + shared `HourText`/`MinuteText`/`SeparatorText`/`TemplateDateText` parts; clock hit-box narrowed to the rendered content only.
 
-**Known follow-up:** `HomeScreen` takes `clockPositionOwningProfile: ProfileEntity?` — a Room entity in a composable signature (pre-existing `HomeUiState` leak, extended here). Map it to a UI model (or pass id + `isOverridden`) when this area is next touched.
+- [x] `HomeScreen` no longer takes a Room entity — `clockPositionOwningProfile: ProfileEntity?` → `clockPositionOwnerProfileId: Long?` (all the composable needed). `HomeUiState`/`HomeViewModel` keep the entity internally.
 
 ---
 
@@ -813,3 +813,6 @@ screen (not a mode of the carousel sharing its ViewModel), and the `SWITCH` caro
   `reorderButtonNavigatesToManageProfiles` / `reorderButtonIsDisabledWithOnlyOneProfile`. Full
   unit suite + all 40 `ui.profiles` instrumented tests green on `emulator-5554`; verified the
   carousel/overlay + Manage Profiles screen on-device.
+- **Follow-up:** the Hub's translucent-overlay base colour switched `DrawerOverlay` → `SurfaceContainer`
+  so the Hub, the Switch Profiles carousel, and every settings page share one base tone
+  (`SurfaceContainer`); each keeps its own alpha. `DrawerOverlay` is now the App Drawer's only user.

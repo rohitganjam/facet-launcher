@@ -72,7 +72,7 @@ class ColorTest {
     fun `Surface resolves to the light and dark tokens`() {
         val (light, dark) = resolveBoth { Surface }
         assertEquals(0xFFFFFFFF.toInt(), light.toArgb())
-        assertEquals(0xFF171A21.toInt(), dark.toArgb())
+        assertEquals(0xFF20242D.toInt(), dark.toArgb())
     }
 
     @Test

@@ -1,8 +1,8 @@
 # Lumen Launcher — Engineering Conventions
 
 Native Android launcher app. Kotlin-only (no Java files), Jetpack Compose (no XML layouts), single `:app` module. MVVM throughout: composables → `ViewModel`s → `Repository`s → `domain/` use cases, strictly layered. Hilt for DI, Retrofit for networking, Room for persistence, Coroutines + `Flow` for async state (no `LiveData`).
-Requirements: [`design_handoff_minimal_launcher/PRD.md`](design_handoff_minimal_launcher/PRD.md).
-Design spec: [`design_handoff_minimal_launcher/README.md`](design_handoff_minimal_launcher/README.md).
+Requirements: [`Android launcher design planning/design_handoff_minimal_launcher/PRD.md`](<Android launcher design planning/design_handoff_minimal_launcher/PRD.md>).
+Design spec: [`Android launcher design planning/design_handoff_minimal_launcher/README.md`](<Android launcher design planning/design_handoff_minimal_launcher/README.md>).
 Build/task tracking: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — keep it ticked off as work lands.
 
 ## Project structure

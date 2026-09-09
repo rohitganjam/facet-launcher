@@ -154,8 +154,8 @@ fun HomeScreen(
     draggingHandle: Boolean = false,
     /** Fired when the user starts or stops actively dragging one of the adjustment handles. */
     onDraggingHandleChange: (Boolean) -> Unit = {},
-    /** The profile whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies. */
-    clockPositionOwningProfile: com.lumenlauncher.app.data.local.ProfileEntity? = null,
+    /** Id of the profile whose `overrideClock` bundle governs the clock widget's position/scale right now, or `null` if the global default applies. */
+    clockPositionOwnerProfileId: Long? = null,
     /** Fired by a plain tap on the clock (time/date), not a calendar event row — opens the device's default clock app. */
     onClockClick: () -> Unit = {},
     /** Fired when the user selects "Edit Styles" from the clock's adjustment menu. */
@@ -249,7 +249,7 @@ fun HomeScreen(
     // One-shot re-clamp: a style or position change resizes the clock's natural box, so a scale
     // that fit the old look can now overflow. After the new geometry settles, check once — and
     // only persist a smaller value if it genuinely clips. Never runs otherwise.
-    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwningProfile?.id) {
+    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwnerProfileId) {
         withTimeoutOrNull(3_000) {
             snapshotFlow { Triple(clockBoxSize, clockBoxOriginInRoot, rootSize) }
                 .filter { it.first != null && it.second != null && it.third != null }
@@ -323,6 +323,10 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without
+                // this the dock at the bottom draws under the gesture/nav bar. On the content
+                // Column, not the outer Box, so the Box stays truly full-screen for the resize
+                // handles' root-coordinate math.
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(bottom = 22.dp)
         ) {
@@ -618,7 +622,7 @@ fun HomeScreen(
             ClockAdjustSheet(
                 onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },
                 onEditStylesClick = onEditClockStyles,
-                isOverridden = clockPositionOwningProfile != null,
+                isOverridden = clockPositionOwnerProfileId != null,
             )
         }
     }

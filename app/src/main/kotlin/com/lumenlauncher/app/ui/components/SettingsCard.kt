@@ -18,13 +18,12 @@ import com.lumenlauncher.app.ui.theme.Surface
 
 /**
  * Groups related settings rows into a visually distinct card — M3's own default Card shape
- * ([MaterialTheme.shapes.medium], 12dp — see `CLAUDE.md`'s Material 3 shape section). The page
- * background is also [Surface], so neither a background-color change nor M3's usual tonal-elevation
- * color mix (this app uses fixed design tokens, not M3's dynamic surface-tint system) can make the
- * card read as raised — a real drop [shadow] is what actually lifts it off an identically-colored
- * page, on top of the 1px [Hairline] border (this is the first real use of [Hairline], which was
- * imported-but-unused in `SettingsScreen.kt` even though README's own row-separator spec called
- * for it).
+ * ([MaterialTheme.shapes.medium], 12dp — see `CLAUDE.md`'s Material 3 shape section). The card sits
+ * on a dimmer [SurfaceContainer] page and is filled with the lighter [Surface] tone, echoing M3's
+ * elevated-surface convention (this app uses fixed design tokens, not M3's dynamic surface-tint
+ * system); the 4dp drop [shadow] and 1px [Hairline] border reinforce that lift (this is the first
+ * real use of [Hairline], which was imported-but-unused in `SettingsScreen.kt` even though README's
+ * own row-separator spec called for it).
  */
 @Composable
 fun SettingsCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {

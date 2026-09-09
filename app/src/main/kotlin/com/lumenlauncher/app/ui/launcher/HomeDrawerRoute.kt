@@ -343,7 +343,7 @@ fun HomeDrawerRoute(
             clockZoneHeightDp = homeUiState.clockZoneHeightDp,
             onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
             clockScale = homeUiState.clockScale,
-            clockPositionOwningProfile = homeUiState.clockPositionOwningProfile,
+            clockPositionOwnerProfileId = homeUiState.clockPositionOwningProfile?.id,
             clockAdjustMode = clockAdjustMode,
             onAdjustModeChange = { clockAdjustMode = it },
             draggingHandle = draggingHandle,

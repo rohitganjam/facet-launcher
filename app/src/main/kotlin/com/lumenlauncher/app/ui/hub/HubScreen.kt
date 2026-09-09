@@ -18,14 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
-import com.lumenlauncher.app.ui.theme.DrawerOverlay
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 /**
- * The Launcher Hub (F5) — reached by swiping right from Home. Backed by the same [DrawerOverlay]
- * scrim the Drawer itself uses (see `AppDrawerScreen`'s own root `.background(...)`), but at its
- * own fixed opacity — deliberately *not* tied to `drawerSettings.drawerOpacity` (it happens to
- * currently match the Drawer's own default, but the two are independent values, not the same
- * source — see chat history).
+ * The Launcher Hub (F5) — reached by swiping right from Home. A translucent overlay on Home:
+ * [SurfaceContainer] (every settings screen's own page background, and the Switch Profiles
+ * carousel's) at its own fixed [opacity] — deliberately *not* tied to `drawerSettings.drawerOpacity`.
  */
 @Composable
 fun HubScreen(
@@ -71,7 +69,7 @@ private fun HubContent(
         // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this,
         // the header draws under the status bar and the grid's bottom row under the gesture/nav
         // bar, matching HomeScreen's/AppDrawerScreen's own systemBars inset handling.
-        modifier = modifier.background(DrawerOverlay.copy(alpha = opacity)).windowInsetsPadding(WindowInsets.systemBars),
+        modifier = modifier.background(SurfaceContainer.copy(alpha = opacity)).windowInsetsPadding(WindowInsets.systemBars),
         header = {
             HubHeader(
                 widgetCount = uiState.widgetCount,

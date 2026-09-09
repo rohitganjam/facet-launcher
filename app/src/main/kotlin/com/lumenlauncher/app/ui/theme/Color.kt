@@ -26,7 +26,11 @@ private val CarouselBackdropDark = Color(0xFF101319)
 private val CarouselBackdropDraggingLight = Color(0xFFD3D8E1)
 private val CarouselBackdropDraggingDark = Color(0xFF0D1015)
 private val SurfaceLight = Color(0xFFFFFFFF)
-private val SurfaceDark = Color(0xFF171A21)
+// Dark lifted a few steps above README's literal value (0xFF171A21) — that tone sat only ~1.03:1
+// against [SurfaceContainerDark], so a SettingsCard read as flush with its page despite the shadow
+// and hairline border. 0xFF20242D lands near M3's own dark `surfaceContainer` elevation step (see
+// chat history) — same category of deliberate spec departure as the Muted/Faint contrast bumps below.
+private val SurfaceDark = Color(0xFF20242D)
 // A page's own background, one step dimmer than the [Surface] cards floating on it — previously
 // both were the same [Surface] tone, distinguished only by a card's drop shadow/hairline border
 // (see `SettingsCard.kt`'s own doc comment). The card is always the *lighter* of the two in both

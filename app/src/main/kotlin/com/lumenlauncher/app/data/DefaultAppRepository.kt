@@ -32,7 +32,9 @@ class DefaultAppRepository @Inject constructor(@ApplicationContext private val c
      * arbitrary-but-installed pick still reads as more "this device's own home screen" than
      * [com.lumenlauncher.app.domain.SelectPreviewAppsUseCase]'s own plain alphabetical fallback.
      */
-    suspend fun getDefaultAppPackages(): List<String> = withContext(Dispatchers.Default) {
+    suspend fun getDefaultAppPackages(): List<String> = withContext(Dispatchers.IO) {
+        // resolveActivity/queryIntentActivities are blocking binder calls into the system package
+        // service — IO, not the CPU-bound Default pool.
         categoryIntents().mapNotNull(::resolvePackage).distinct()
     }
 
