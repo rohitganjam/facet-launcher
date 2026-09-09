@@ -168,9 +168,9 @@
     "semantic_hash": "8c10b27ff87b42f9514eff4f52b9ea24"
   },
   "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreenTest.kt": {
-    "mtime": 1788964235.051327,
-    "seen": 1788964319.949942,
-    "ast_hash": "8613ef0194c4afd9e36aa1ef30cf81eb",
+    "mtime": 1788973876.5041456,
+    "seen": 1788974591.358973,
+    "ast_hash": "dd71e01d064c37e3240f654f86038d22",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ProfileSettingsScreenTest.kt": {
@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/navigation/LumenNavHost.kt": {
-    "mtime": 1788965776.5859375,
-    "seen": 1788966156.6344872,
-    "ast_hash": "6b6292b566756db38ef511a591a6458f",
+    "mtime": 1788973730.7707288,
+    "seen": 1788974591.35905,
+    "ast_hash": "0a0e542475520459a50e4e52f1577f6a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt": {
@@ -1002,15 +1002,15 @@
     "semantic_hash": "a284fac76254243df5f25234fc23a6f3"
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt": {
-    "mtime": 1788966598.7207556,
-    "seen": 1788966706.848757,
-    "ast_hash": "360d818795ca0601cc988cb4871b89f5",
+    "mtime": 1788973665.1921282,
+    "seen": 1788974591.3590531,
+    "ast_hash": "a1516e3aa727712d31ef0cef17f47f66",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselViewModel.kt": {
-    "mtime": 1788917759.7861967,
-    "seen": 1788951992.281291,
-    "ast_hash": "442c4264a7dc6b396717d00c492696ec",
+    "mtime": 1788973764.4791212,
+    "seen": 1788974591.359054,
+    "ast_hash": "e90c4d9da9e28c4b2e9a0ea2e9971dc2",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileSettingsScreen.kt": {
@@ -1572,9 +1572,9 @@
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1788972273.409442,
-    "seen": 1788972290.906446,
-    "ast_hash": "18282ac7da00e6b448dd57ead9a6d27f",
+    "mtime": 1788974556.6494937,
+    "seen": 1788974591.3591151,
+    "ast_hash": "2490d160d8561e5162209a4ba1ead041",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -1824,9 +1824,9 @@
     "semantic_hash": ""
   },
   "design_handoff_minimal_launcher/README.md": {
-    "mtime": 1788964782.8179915,
-    "seen": 1788964811.8355699,
-    "ast_hash": "50255a4aeecb3e66fc043aafc482195d",
+    "mtime": 1788974577.0351667,
+    "seen": 1788974591.35912,
+    "ast_hash": "8f0fd37d18a6ac0ce0b4c5d7f8fe4d45",
     "semantic_hash": ""
   },
   "design_handoff_minimal_launcher/screenshots/dark-turn1-home-and-drawer.png": {
@@ -1875,6 +1875,30 @@
     "mtime": 1788951927.5170853,
     "seen": 1788951992.281366,
     "ast_hash": "a2ea734ebdbbe633d5615f8659b88b80",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ManageProfilesScreenTest.kt": {
+    "mtime": 1788973999.7915382,
+    "seen": 1788974591.3589709,
+    "ast_hash": "d1d11ed0e4545a8cc6e564d0781a72f9",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ManageProfilesScreen.kt": {
+    "mtime": 1788973431.5226164,
+    "seen": 1788974591.359052,
+    "ast_hash": "5867c098cfeea5adf6a6a812bd92edd2",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ManageProfilesViewModel.kt": {
+    "mtime": 1788973370.9360309,
+    "seen": 1788974591.3590531,
+    "ast_hash": "cb61dc652bc9b1834c6953134d212d04",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/lumenlauncher/app/ui/profiles/ManageProfilesViewModelTest.kt": {
+    "mtime": 1788974276.9637039,
+    "seen": 1788974591.359099,
+    "ast_hash": "85ad169ef6e66b732b3aced816b50d04",
     "semantic_hash": ""
   }
 }

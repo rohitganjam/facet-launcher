@@ -146,11 +146,4 @@ class ProfileCarouselViewModel @Inject constructor(
         }
     }
 
-    fun renameProfile(profile: ProfileEntity, newName: String) {
-        viewModelScope.launch { profileRepository.renameProfile(profile, newName) }
-    }
-
-    fun reorderProfiles(orderedProfiles: List<ProfileEntity>) {
-        viewModelScope.launch { profileRepository.reorderProfiles(orderedProfiles) }
-    }
 }

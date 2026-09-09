@@ -1,7 +1,13 @@
 package com.lumenlauncher.app.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
@@ -23,7 +29,7 @@ import com.lumenlauncher.app.ui.home.clock.ProfileClockStyleGalleryScreen
 import com.lumenlauncher.app.ui.launcher.HomeDrawerRoute
 import com.lumenlauncher.app.ui.launcher.LauncherViewModel
 import com.lumenlauncher.app.ui.profiles.FavoritesPickerScreen
-import com.lumenlauncher.app.ui.profiles.ProfileCarouselMode
+import com.lumenlauncher.app.ui.profiles.ManageProfilesScreen
 import com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen
 import com.lumenlauncher.app.ui.profiles.ProfileSettingsScreen
 import com.lumenlauncher.app.ui.settings.AppDrawerSettingsScreen
@@ -99,6 +105,7 @@ fun LumenNavHost(
     launcherViewModel: LauncherViewModel = hiltViewModel(),
 ) {
     val animationSpec = tween<IntOffset>(durationMillis = 340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
+    val fadeSpec = tween<Float>(durationMillis = 200)
 
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
@@ -113,10 +120,25 @@ fun LumenNavHost(
         // Pure slide, no crossfade: the window shows the wallpaper through any partially-transparent
         // layer, so a fading-out screen briefly reveals it — reads as a flash of Home. Two opaque
         // screens sliding past each other always cover the full width, so there's nothing to bleed.
-        enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = animationSpec) },
-        exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec) },
-        popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
-        popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) }
+        // Exception: the translucent Switch Profiles carousel (PROFILE_CAROUSEL) is meant to sit
+        // *over* a stationary Home, so Home doesn't animate when it's the counterpart — the
+        // carousel's own composable fades/scales instead.
+        enterTransition = {
+            if (initialState.destination.route == LumenDestinations.PROFILE_CAROUSEL) EnterTransition.None
+            else slideInHorizontally(initialOffsetX = { it }, animationSpec = animationSpec)
+        },
+        exitTransition = {
+            if (targetState.destination.route == LumenDestinations.PROFILE_CAROUSEL) ExitTransition.None
+            else slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec)
+        },
+        popEnterTransition = {
+            if (initialState.destination.route == LumenDestinations.PROFILE_CAROUSEL) EnterTransition.None
+            else slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec)
+        },
+        popExitTransition = {
+            if (targetState.destination.route == LumenDestinations.PROFILE_CAROUSEL) ExitTransition.None
+            else slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec)
+        },
     ) {
         composable(LumenDestinations.HOME) {
             HomeDrawerRoute(
@@ -205,12 +227,19 @@ fun LumenNavHost(
         composable(LumenDestinations.DOCK_PICKER) {
             DockAppPickerScreen(onDone = { navController.popBackStackSafely() })
         }
-        composable(LumenDestinations.PROFILE_CAROUSEL) {
+        composable(
+            LumenDestinations.PROFILE_CAROUSEL,
+            // A translucent overlay on Home — fades/scales in place rather than sliding, so it
+            // reads as sitting on top of Home (which stays put, thanks to the None branches in
+            // the NavHost-level transitions above).
+            enterTransition = { fadeIn(fadeSpec) + scaleIn(initialScale = 0.92f, animationSpec = fadeSpec) },
+            exitTransition = { fadeOut(fadeSpec) + scaleOut(targetScale = 0.92f, animationSpec = fadeSpec) },
+            popEnterTransition = { fadeIn(fadeSpec) + scaleIn(initialScale = 0.92f, animationSpec = fadeSpec) },
+            popExitTransition = { fadeOut(fadeSpec) + scaleOut(targetScale = 0.92f, animationSpec = fadeSpec) },
+        ) {
             ProfileCarouselScreen(
-                onBack = { navController.popBackStackSafely() },
-                // Applying a profile always lands on Home, regardless of how the carousel was
-                // reached (directly from Home, or via Settings → Profiles) — clears everything
-                // above Home off the back stack rather than just popping one level.
+                // Applying a profile always lands on Home — clears everything above Home off the
+                // back stack rather than just popping one level.
                 onProfileApplied = {
                     navController.navigate(LumenDestinations.HOME) {
                         popUpTo(LumenDestinations.HOME) { inclusive = false }
@@ -218,18 +247,15 @@ fun LumenNavHost(
                     }
                 },
                 onEditProfile = { profileId -> navController.navigate(LumenDestinations.profileSettings(profileId)) },
+                onReorderProfiles = { navController.navigate(LumenDestinations.PROFILE_MANAGE) },
                 onNavigateToSettings = { navController.navigate(LumenDestinations.SETTINGS) },
             )
         }
         composable(LumenDestinations.PROFILE_MANAGE) {
-            // Settings → Profiles: the reorderable list only, backing out to Settings. Applying a
-            // profile and the in-carousel "launcher settings" row don't exist in manage mode.
-            ProfileCarouselScreen(
-                mode = ProfileCarouselMode.MANAGE,
+            // Settings → Profiles (and the carousel's Reorder button): a normal settings screen.
+            ManageProfilesScreen(
                 onBack = { navController.popBackStackSafely() },
-                onProfileApplied = {},
                 onEditProfile = { profileId -> navController.navigate(LumenDestinations.profileSettings(profileId)) },
-                onNavigateToSettings = {},
             )
         }
         composable(

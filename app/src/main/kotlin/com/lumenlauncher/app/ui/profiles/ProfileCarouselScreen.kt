@@ -1,11 +1,10 @@
 package com.lumenlauncher.app.ui.profiles
 
 import android.content.res.Configuration
-import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,22 +21,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -51,7 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -62,7 +58,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.local.ProfileEntity
@@ -80,11 +75,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
-import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.ConfirmDialog
-import com.lumenlauncher.app.ui.components.ThemedDropdownMenu
-import com.lumenlauncher.app.ui.components.ThemedDropdownMenuItem
-import com.lumenlauncher.app.ui.components.rememberDragReorderState
 import com.lumenlauncher.app.ui.home.AppRow
 import com.lumenlauncher.app.ui.home.ClockBlock
 import com.lumenlauncher.app.ui.home.DockIcon
@@ -117,259 +108,203 @@ private const val CAROUSEL_CARD_SCALE = 0.55f
 /** The profile-name row above the card + the gear/trash row below it, inside every page. */
 private val CAROUSEL_PAGE_CHROME_HEIGHT = 104.dp
 
-private val REORDER_ROW_HEIGHT = 64.dp
-private val REORDER_ROW_SPACING = 10.dp
-
-/** Shared "picked up" drag-lift treatment, matching every other reorderable list in Settings. */
-private val REORDER_DRAG_ELEVATION = 6.dp
-private const val REORDER_DRAG_SCALE = 1.04f
+/** The carousel sits over Home as a translucent overlay — Home (and the wallpaper) show through. */
+private const val CAROUSEL_SCRIM_ALPHA = 0.6f
 
 /**
- * How [ProfileCarouselScreen] is entered:
- * - [SWITCH]: home long-press — the swipeable carousel for picking a profile ("Switch Profiles").
- *   Reordering is still reachable in-place via the "Reorder" link.
- * - [MANAGE]: Settings → Profiles — opens straight into the reorderable list ("Manage Profiles"),
- *   with no carousel; back returns to Settings.
- */
-enum class ProfileCarouselMode { SWITCH, MANAGE }
-
-/**
- * Profile carousel (`3a`, `3b`, `4n`, `4o`): switch, reorder, and reach per-profile settings.
- * [onBack] backs out one level without applying anything (e.g. reached via Settings → Profiles,
- * backs out to Settings). [onProfileApplied] fires once a card is actually tapped/applied — this
- * always returns to Home regardless of how the carousel was reached, since applying a profile is
- * meant to be felt on the home screen, not leave the user buried in Settings.
+ * Switch Profiles carousel (`3a`, `4n`, `4o`): a translucent overlay on Home for picking a
+ * profile. Tapping a card applies it and returns Home ([onProfileApplied]); [onReorderProfiles]
+ * opens the standalone Manage Profiles screen; there's no back button — system back / tapping a
+ * card is the way out.
  */
 @Composable
 fun ProfileCarouselScreen(
-    onBack: () -> Unit,
     onProfileApplied: () -> Unit,
     onEditProfile: (profileId: Long) -> Unit,
+    onReorderProfiles: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    mode: ProfileCarouselMode = ProfileCarouselMode.SWITCH,
     viewModel: ProfileCarouselViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ProfileCarouselContent(
         uiState = uiState,
-        mode = mode,
-        onBack = onBack,
         onSelect = { profileId -> viewModel.selectProfile(profileId); onProfileApplied() },
         onEditProfile = onEditProfile,
         onAddProfile = viewModel::addProfile,
         onDeleteProfile = viewModel::deleteProfile,
-        onReorder = viewModel::reorderProfiles,
+        onReorderProfiles = onReorderProfiles,
         onNavigateToSettings = onNavigateToSettings,
         modifier = modifier,
     )
 }
 
-/**
- * The back-chevron + title row atop both the carousel and the reorder list. 24dp horizontal
- * gutter to match every other screen's header (`SettingsHeader` et al.); [trailing] is the
- * optional right-aligned slot (the carousel's "Reorder" link).
- */
+/** Border + text on a light fill — a quieter counterpart to a filled button. */
 @Composable
-private fun CarouselHeaderTitleRow(
-    title: String,
-    onBack: () -> Unit,
+private fun SecondaryButton(
+    text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit = {},
+    enabled: Boolean = true,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        // M3 buttons are fully rounded — see CLAUDE.md's Material 3 shape section.
+        shape = CircleShape,
+        border = BorderStroke(1.dp, if (enabled) Ink.copy(alpha = 0.14f) else Hairline),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Surface,
+            contentColor = Ink,
+            disabledContainerColor = Surface,
+            disabledContentColor = Muted,
+        ),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            BackButton(onClick = onBack)
-            // headlineSmall to match Settings' own header size (see chat history) — was titleMedium.
-            Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
-        }
-        trailing()
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
 @Composable
 private fun ProfileCarouselContent(
     uiState: ProfileCarouselUiState,
-    mode: ProfileCarouselMode,
-    onBack: () -> Unit,
     onSelect: (Long) -> Unit,
     onEditProfile: (Long) -> Unit,
     onAddProfile: () -> Unit,
     onDeleteProfile: (ProfileEntity) -> Unit,
-    onReorder: (List<ProfileEntity>) -> Unit,
+    onReorderProfiles: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val profiles = uiState.profiles
-    val manageMode = mode == ProfileCarouselMode.MANAGE
     if (profiles.isEmpty()) {
         // EnsureActiveProfileUseCase seeds the first profile on app launch — only briefly empty
-        // before that resolves. Paint the backdrop + header now so the screen is opaque and
-        // reads as "arrived" during its slide-in (otherwise the transparent window shows the
-        // wallpaper through and it looks like a flash of Home when opened from Settings).
-        // No "profile_carousel_screen" test tag here — that marks the loaded screen, and tests
-        // wait on it to know the carousel content is ready.
-        Column(
+        // before that resolves. Paint the translucent scrim so the overlay reads as opaque-ish
+        // from the first frame of its fade-in.
+        Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(SurfaceContainer)
-                .windowInsetsPadding(WindowInsets.systemBars),
-        ) {
-            CarouselHeaderTitleRow(title = if (manageMode) "Manage Profiles" else "Switch Profiles", onBack = onBack)
-        }
+                .background(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA)),
+        )
         return
     }
 
     val pageCount = profiles.size + if (uiState.canAddProfile) 1 else 0
     val initialPage = profiles.indexOfFirst { it.id == uiState.activeProfileId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
-    // Manage mode is the reorderable list and nothing else — it opens there and stays there.
-    var isReordering by remember { mutableStateOf(manageMode) }
-    var reorderWorkingList by remember(profiles) { mutableStateOf(profiles) }
     var deletingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
-
-    // In manage mode there's no carousel to fall back to, so system back leaves to Settings.
-    BackHandler(enabled = isReordering && !manageMode) { isReordering = false }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            // Matches every settings-style screen's page background (SettingsScreen et al.).
-            .background(SurfaceContainer)
+            // Translucent overlay on Home — see CAROUSEL_SCRIM_ALPHA.
+            .background(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA))
             .testTag("profile_carousel_screen")
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
-        CarouselHeaderTitleRow(
-            title = if (manageMode) "Manage Profiles" else "Switch Profiles",
-            onBack = { if (isReordering && !manageMode) isReordering = false else onBack() },
+        // No header — just the Reorder affordance, right-aligned.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 20.dp, end = 20.dp),
+            horizontalArrangement = Arrangement.End,
         ) {
-            // No "Done" counterpart once reordering — every drag-release autosaves via onCommit,
-            // so there's nothing left to confirm; the back button already exits reorder mode,
-            // same as the system back gesture (see the BackHandler above).
-            if (!isReordering) {
-                Text(
-                    text = "Reorder",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (profiles.size > 1) Accent else Faint,
+            SecondaryButton(
+                text = "Reorder",
+                enabled = profiles.size > 1,
+                onClick = onReorderProfiles,
+                modifier = Modifier.testTag("profile_carousel_reorder"),
+            )
+        }
+
+        val config = LocalConfiguration.current
+        // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
+        // fraction of the screen width and the leftover half on each side is the neighbour peek.
+        val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
+        val pageInset = (config.screenWidthDp * (1f - CAROUSEL_CARD_SCALE) / 2f).dp
+        val pagerHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp + CAROUSEL_PAGE_CHROME_HEIGHT
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = pageInset),
+            pageSpacing = CAROUSEL_PAGE_SPACING,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .height(pagerHeight)
+                .testTag("profile_carousel_pager"),
+        ) { page ->
+            if (page < profiles.size) {
+                val profile = profiles[page]
+                // Recent-apps style: tapping any visible card — centered or peeking —
+                // applies it immediately. Browsing (without applying) is swipe-only.
+                ProfilePreviewPage(
+                    profile = profile,
+                    favorites = uiState.previewsByProfileId[profile.id]?.favorites.orEmpty(),
+                    listContentMode = uiState.listContentMode(profile.id),
+                    clockTemplateId = uiState.clockTemplateId(profile.id),
+                    clockFontOption = uiState.clockFontOption(profile.id),
+                    clockColorOption = uiState.clockColorOption(profile.id),
+                    clockAccentColorOption = uiState.clockAccentColorOption(profile.id),
+                    use24HourTime = uiState.effectiveUse24HourTime(profile.id),
+                    clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
+                    clockDateStyle = uiState.clockDateStyle(profile.id),
+                    clockAlignment = uiState.clockAlignment(profile.id),
+                    clockScale = uiState.clockScale(profile.id),
+                    calendarAlignment = uiState.calendarAlignment(profile.id),
+                    clockZoneHeightDp = uiState.clockZoneHeightDp(profile.id),
+                    calendarEvents = uiState.previewsByProfileId[profile.id]?.calendarEvents.orEmpty(),
+                    calendarColors = uiState.globalSettings.calendarColors,
+                    calendarFontOption = uiState.calendarFontOption(profile.id),
+                    calendarColorOption = uiState.calendarColorOption(profile.id),
+                    calendarFontWeight = uiState.calendarFontWeight(profile.id),
+                    launcherFontOption = uiState.globalSettings.launcherFontOption,
+                    appRowPosition = uiState.appRowPosition(profile.id),
+                    appRowPresentation = uiState.appRowPresentation(profile.id),
+                    appLabelColorOption = uiState.globalSettings.appLabelColorOption,
+                    homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
+                    dockApps = uiState.dockApps,
+                    dockDisplayMode = uiState.dockDisplayMode,
+                    canDelete = uiState.canDeleteProfile,
+                    onEditProfileClick = { onEditProfile(profile.id) },
+                    onDeleteClick = { deletingProfile = profile },
+                    onCardClick = { onSelect(profile.id) },
+                    screenAspectRatio = screenAspectRatio,
                     modifier = Modifier
-                        .testTag("profile_carousel_reorder")
-                        .clickable(enabled = profiles.size > 1) {
-                            reorderWorkingList = profiles
-                            isReordering = true
-                        },
+                        .fillMaxSize()
+                        .testTag("profile_page_${profile.id}"),
+                )
+            } else {
+                AddProfilePage(
+                    onClick = onAddProfile,
+                    modifier = Modifier.fillMaxSize().testTag("profile_carousel_add_page"),
                 )
             }
         }
 
-        if (isReordering) {
-            ProfileReorderList(
-                profiles = reorderWorkingList,
-                canAddProfile = uiState.canAddProfile,
-                canDeleteProfile = uiState.canDeleteProfile,
-                onOrderChanged = { reorderWorkingList = it },
-                onCommit = { onReorder(reorderWorkingList) },
-                onEditProfile = onEditProfile,
-                onDeleteRequest = { deletingProfile = it },
-                onAddProfile = onAddProfile,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            )
-        } else {
-            val config = LocalConfiguration.current
-            // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
-            // fraction of the screen width and the leftover half on each side is the neighbour peek.
-            val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
-            val pageInset = (config.screenWidthDp * (1f - CAROUSEL_CARD_SCALE) / 2f).dp
-            val pagerHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp + CAROUSEL_PAGE_CHROME_HEIGHT
-            HorizontalPager(
-                state = pagerState,
-                contentPadding = PaddingValues(horizontal = pageInset),
-                pageSpacing = CAROUSEL_PAGE_SPACING,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .height(pagerHeight)
-                    .testTag("profile_carousel_pager"),
-            ) { page ->
-                if (page < profiles.size) {
-                    val profile = profiles[page]
-                    // Recent-apps style: tapping any visible card — centered or peeking —
-                    // applies it immediately. Browsing (without applying) is swipe-only.
-                    ProfilePreviewPage(
-                        profile = profile,
-                        favorites = uiState.previewsByProfileId[profile.id]?.favorites.orEmpty(),
-                        listContentMode = uiState.listContentMode(profile.id),
-                        clockTemplateId = uiState.clockTemplateId(profile.id),
-                        clockFontOption = uiState.clockFontOption(profile.id),
-                        clockColorOption = uiState.clockColorOption(profile.id),
-                        clockAccentColorOption = uiState.clockAccentColorOption(profile.id),
-                        use24HourTime = uiState.effectiveUse24HourTime(profile.id),
-                        clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
-                        clockDateStyle = uiState.clockDateStyle(profile.id),
-                        clockAlignment = uiState.clockAlignment(profile.id),
-                        clockScale = uiState.clockScale(profile.id),
-                        calendarAlignment = uiState.calendarAlignment(profile.id),
-                        clockZoneHeightDp = uiState.clockZoneHeightDp(profile.id),
-                        calendarEvents = uiState.previewsByProfileId[profile.id]?.calendarEvents.orEmpty(),
-                        calendarColors = uiState.globalSettings.calendarColors,
-                        calendarFontOption = uiState.calendarFontOption(profile.id),
-                        calendarColorOption = uiState.calendarColorOption(profile.id),
-                        calendarFontWeight = uiState.calendarFontWeight(profile.id),
-                        launcherFontOption = uiState.globalSettings.launcherFontOption,
-                        appRowPosition = uiState.appRowPosition(profile.id),
-                        appRowPresentation = uiState.appRowPresentation(profile.id),
-                        appLabelColorOption = uiState.globalSettings.appLabelColorOption,
-                        homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
-                        dockApps = uiState.dockApps,
-                        dockDisplayMode = uiState.dockDisplayMode,
-                        canDelete = uiState.canDeleteProfile,
-                        onEditProfileClick = { onEditProfile(profile.id) },
-                        onDeleteClick = { deletingProfile = profile },
-                        onCardClick = { onSelect(profile.id) },
-                        screenAspectRatio = screenAspectRatio,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .testTag("profile_page_${profile.id}"),
-                    )
-                } else {
-                    AddProfilePage(
-                        onClick = onAddProfile,
-                        modifier = Modifier.fillMaxSize().testTag("profile_carousel_add_page"),
-                    )
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            profiles.indices.forEach { index ->
+                val active = index == pagerState.currentPage
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .size(width = if (active) 16.dp else 5.dp, height = 5.dp)
+                        .clip(RoundedCornerShape(2.5.dp))
+                        .background(if (active) Accent else Faint),
+                )
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                profiles.indices.forEach { index ->
-                    val active = index == pagerState.currentPage
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 3.dp)
-                            .size(width = if (active) 16.dp else 5.dp, height = 5.dp)
-                            .clip(RoundedCornerShape(2.5.dp))
-                            .background(if (active) Accent else Faint),
-                    )
-                }
-            }
-
-            LauncherSettingsRow(
-                onClick = onNavigateToSettings,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 20.dp),
-            )
-
-            // Leftover space collects below the whole cluster, not as a dead band inside it.
-            Spacer(modifier = Modifier.weight(1f))
         }
+
+        LauncherSettingsRow(
+            onClick = onNavigateToSettings,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 20.dp),
+        )
+
+        // Leftover space collects below the whole cluster, not as a dead band inside it.
+        Spacer(modifier = Modifier.weight(1f))
     }
 
     deletingProfile?.let { profile ->
@@ -380,153 +315,6 @@ private fun ProfileCarouselContent(
             onConfirm = { onDeleteProfile(profile); deletingProfile = null },
             onDismiss = { deletingProfile = null },
         )
-    }
-}
-
-/**
- * Reorder mode: a plain vertical list (never scrolls in practice — capped at
- * [com.lumenlauncher.app.data.ProfileRepository.MAX_PROFILES] rows) of drag-handle + name +
- * delete rows, with a non-reorderable "Add profile" row pinned at the bottom. Only the handle on
- * the left has a drag gesture attached — the rest of the row has no competing gesture, so there's
- * no long-press/axis-conflict to arbitrate the way there was for the carousel's own drag.
- */
-@Composable
-private fun ProfileReorderList(
-    profiles: List<ProfileEntity>,
-    canAddProfile: Boolean,
-    canDeleteProfile: Boolean,
-    onOrderChanged: (List<ProfileEntity>) -> Unit,
-    onCommit: () -> Unit,
-    onEditProfile: (Long) -> Unit,
-    onDeleteRequest: (ProfileEntity) -> Unit,
-    onAddProfile: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val rowSlotHeightPx = with(LocalDensity.current) { (REORDER_ROW_HEIGHT + REORDER_ROW_SPACING).toPx() }
-    val reorderState = rememberDragReorderState(
-        items = profiles,
-        key = { it.id },
-        axis = Orientation.Vertical,
-        slotSizePx = rowSlotHeightPx,
-        onOrderChanged = onOrderChanged,
-        onDragCommit = { onCommit() },
-    )
-
-    LazyColumn(
-        modifier = modifier.testTag("profile_reorder_list"),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(REORDER_ROW_SPACING),
-    ) {
-        item(key = "reorder_hint") {
-            Text(
-                text = "Drag to re-order profiles",
-                style = MaterialTheme.typography.bodySmall,
-                color = Muted,
-                modifier = Modifier.padding(bottom = 4.dp).testTag("profile_reorder_hint"),
-            )
-        }
-        items(profiles, key = { it.id }) { profile ->
-            val isDragged = reorderState.isDragging(profile)
-            ProfileReorderRow(
-                profile = profile,
-                canDelete = canDeleteProfile,
-                onEditProfileClick = { onEditProfile(profile.id) },
-                onDeleteClick = { onDeleteRequest(profile) },
-                dragHandleModifier = reorderState.dragModifier(profile),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(if (isDragged) Modifier else Modifier.animateItem())
-                    .graphicsLayer {
-                        translationY = if (isDragged) reorderState.dragOffset else 0f
-                        scaleX = if (isDragged) REORDER_DRAG_SCALE else 1f
-                        scaleY = if (isDragged) REORDER_DRAG_SCALE else 1f
-                        shadowElevation = if (isDragged) REORDER_DRAG_ELEVATION.toPx() else 0f
-                        shape = RoundedCornerShape(12.dp)
-                        clip = false
-                    }
-                    .zIndex(if (isDragged) 1f else 0f),
-            )
-        }
-        item(key = "add_profile_row") {
-            AddProfileRow(
-                enabled = canAddProfile,
-                onClick = onAddProfile,
-                modifier = Modifier.fillMaxWidth().testTag("profile_reorder_add_row"),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProfileReorderRow(
-    profile: ProfileEntity,
-    canDelete: Boolean,
-    onEditProfileClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    dragHandleModifier: Modifier,
-    modifier: Modifier = Modifier,
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = modifier
-            .height(REORDER_ROW_HEIGHT)
-            // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
-            .clip(MaterialTheme.shapes.medium)
-            .background(Surface)
-            .padding(horizontal = 12.dp)
-            .testTag("profile_reorder_row_${profile.id}"),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            Icons.Default.DragHandle,
-            contentDescription = "Drag to reorder",
-            tint = Faint,
-            modifier = Modifier
-                .padding(end = 12.dp)
-                .testTag("profile_reorder_handle_${profile.id}")
-                .then(dragHandleModifier),
-        )
-        Text(text = profile.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
-        Box {
-            IconButton(
-                onClick = { menuExpanded = true },
-                modifier = Modifier.testTag("profile_reorder_menu_${profile.id}"),
-            ) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Profile options", tint = Muted)
-            }
-            ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                ThemedDropdownMenuItem(
-                    label = "Profile settings",
-                    onClick = { menuExpanded = false; onEditProfileClick() },
-                )
-                ThemedDropdownMenuItem(
-                    label = "Delete",
-                    enabled = canDelete,
-                    destructive = true,
-                    onClick = { menuExpanded = false; onDeleteClick() },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AddProfileRow(enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    if (!enabled) return
-    Row(
-        modifier = modifier
-            .height(REORDER_ROW_HEIGHT)
-            // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
-            .clip(MaterialTheme.shapes.medium)
-            .background(Surface)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Icon(Icons.Default.Add, contentDescription = null, tint = Accent)
-        Text(text = "Add profile", style = MaterialTheme.typography.bodyLarge, color = Accent, modifier = Modifier.padding(start = 8.dp))
     }
 }
 
@@ -884,38 +672,11 @@ private fun ProfileCarouselScreenPreview() {
                 ),
                 activeProfileId = 1,
             ),
-            mode = ProfileCarouselMode.SWITCH,
-            onBack = {},
             onSelect = {},
             onEditProfile = {},
             onAddProfile = {},
             onDeleteProfile = {},
-            onReorder = {},
-            onNavigateToSettings = {},
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun ProfileManageScreenPreview() {
-    LumenLauncherTheme {
-        ProfileCarouselContent(
-            uiState = ProfileCarouselUiState(
-                profiles = listOf(
-                    ProfileEntity(id = 1, name = "Profile 1", position = 0),
-                    ProfileEntity(id = 2, name = "Work", position = 1),
-                ),
-                activeProfileId = 1,
-            ),
-            mode = ProfileCarouselMode.MANAGE,
-            onBack = {},
-            onSelect = {},
-            onEditProfile = {},
-            onAddProfile = {},
-            onDeleteProfile = {},
-            onReorder = {},
+            onReorderProfiles = {},
             onNavigateToSettings = {},
         )
     }

@@ -782,3 +782,34 @@ and logcat (Samsung's Glance clock widget throwing `NoSuchElementException` mid-
   suite + all `ui.hub` and `ui.launcher` instrumented tests green on `emulator-5554`.
 - **Note:** the span fix only affects *newly added* widgets — a widget already saved at 1×1 keeps
   its stored span until removed + re-added (or resized).
+
+---
+
+## Profiles: Manage Profiles is its own screen; Switch Profiles is a translucent overlay
+
+Follow-up to the `ProfileCarouselMode` split — the user wanted `MANAGE` to be a *real* settings
+screen (not a mode of the carousel sharing its ViewModel), and the `SWITCH` carousel restyled.
+
+- **`ManageProfilesScreen` + `ManageProfilesViewModel` are new, standalone.** The VM depends only
+  on `ProfileRepository` + `SettingsRepository` (no `ObserveProfilePreviewsUseCase` — the reorder
+  list never needed the expensive per-profile preview flow the carousel runs). The screen uses
+  `StickyHeaderLayout` + a `DockSettingsHeader`-shaped header on opaque `SurfaceContainer`, like
+  every other settings screen. `ProfileReorderList`/`ProfileReorderRow`/`AddProfileRow` moved
+  here from `ProfileCarouselScreen.kt`; all `profile_reorder_*` test tags preserved.
+- **`ProfileCarouselScreen` is SWITCH-only now** — `ProfileCarouselMode` enum, `mode`/`onBack`
+  params, `isReordering` state and the in-place reorder branch are all gone;
+  `ProfileCarouselViewModel.reorderProfiles`/`renameProfile` deleted (no callers left).
+- **Carousel restyle:** background is `SurfaceContainer.copy(alpha = 0.6f)` — a translucent
+  overlay; Home shows through. The header is replaced by a single right-aligned `SecondaryButton`
+  ("Reorder" — themed `OutlinedButton`, `CircleShape`, `Ink @14%` border, `Surface` fill,
+  disabled with one profile) that navigates to `PROFILE_MANAGE`. No back button — system back /
+  tapping a card is the way out. The "Launcher settings" row is unchanged.
+- **`LumenNavHost`:** `PROFILE_MANAGE` → `ManageProfilesScreen`. `PROFILE_CAROUSEL` gets its own
+  `fadeIn + scaleIn(0.92)` / `fadeOut + scaleOut(0.92)` transitions (200ms), and the NavHost-level
+  slide transitions return `EnterTransition.None`/`ExitTransition.None` when the counterpart route
+  is `PROFILE_CAROUSEL` — so Home holds still and the carousel reads as an overlay on top of it.
+- Tests: new `ManageProfilesViewModelTest` (4) + `ManageProfilesScreenTest` (6, the moved reorder
+  tests); `ProfileCarouselScreenTest` dropped the 7 MANAGE/in-place-reorder tests, gained
+  `reorderButtonNavigatesToManageProfiles` / `reorderButtonIsDisabledWithOnlyOneProfile`. Full
+  unit suite + all 40 `ui.profiles` instrumented tests green on `emulator-5554`; verified the
+  carousel/overlay + Manage Profiles screen on-device.
