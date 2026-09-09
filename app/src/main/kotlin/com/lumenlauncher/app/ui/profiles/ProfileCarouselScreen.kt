@@ -92,6 +92,7 @@ import com.lumenlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
 import com.lumenlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.Faint
+import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.LumenType
@@ -635,16 +636,21 @@ private fun ProfilePreviewPage(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).testTag("profile_page_name_${profile.id}"),
         )
 
+        // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
+        // CLAUDE.md's Material 3 shape section.
+        val cardShape = MaterialTheme.shapes.extraLarge
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 // Locked to the real screen's proportions — a genuine scale model, not a card
                 // shape that happens to fall out of the surrounding layout.
                 .aspectRatio(screenAspectRatio)
-                // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
-                // CLAUDE.md's Material 3 shape section.
-                .clip(MaterialTheme.shapes.extraLarge)
+                // Shadow + hairline border to lift it off the page, same as SettingsCard —
+                // the Surface/SurfaceContainer tone step alone is too small to read as raised.
+                .shadow(elevation = 4.dp, shape = cardShape)
+                .clip(cardShape)
                 .background(Surface)
+                .border(1.dp, Hairline, cardShape)
                 // Card-only tap/ripple target — kept off the name+menu header above so a
                 // long-press ripple doesn't bleed across the whole page (see chat history).
                 .clickable(onClick = onCardClick),
@@ -818,9 +824,12 @@ private fun AddProfilePage(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 .weight(1f)
                 .fillMaxWidth()
                 // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
-                // CLAUDE.md's Material 3 shape section.
+                // CLAUDE.md's Material 3 shape section. Shadow + hairline border to match the
+                // profile preview cards.
+                .shadow(elevation = 4.dp, shape = MaterialTheme.shapes.extraLarge)
                 .clip(MaterialTheme.shapes.extraLarge)
                 .background(Surface)
+                .border(1.dp, Hairline, MaterialTheme.shapes.extraLarge)
                 .clickable(onClick = onClick)
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

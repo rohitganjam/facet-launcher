@@ -751,3 +751,6 @@ Follow-up from an on-device dark-mode screenshot review of the `SWITCH` carousel
   token) — matches every settings-style screen (`SettingsScreen`, `ProfileSettingsScreen`, …),
   so navigating Settings ↔ Switch/Manage Profiles no longer steps to a darker surface. The
   `CarouselBackdrop` / `CarouselBackdropDragging` tokens are now unused.
+- **Preview cards (and the Add-profile card) now carry the `SettingsCard` lift** —
+  `shadow(4.dp)` + `border(1.dp, Hairline)` on the `extraLarge` shape — since the
+  `Surface`-on-`SurfaceContainer` tone step alone is too small to read as raised.

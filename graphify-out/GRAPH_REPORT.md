@@ -1,7 +1,7 @@
 # Graph Report - lumen-launcher  (2026-09-09)
 
 ## Corpus Check
-- 287 files · ~688,420 words
+- 287 files · ~688,518 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5a4e534f`
+- Built from commit: `d54a6082`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -29,12 +29,12 @@
 - DrawerGridSize
 - ComponentName
 - WidgetPlacementRepository
-- WidgetProviderOption
+- FavoriteAppRepository
 - AppWidgetRepository
 - Screens
 - WallpaperAccentRole
 - WidgetPlacementEntity
-- FavoriteAppRepository
+- BackupRestoreViewModelTest
 - ProfileEntity
 - LumenLauncherTheme
 - AppShortcutRepository
@@ -54,7 +54,7 @@
 - ClockTemplateId
 - ProfileCarouselViewModel.kt
 - ProfileSettingsScreen.kt
-- ClockFontOption
+- WidgetProviderOption
 - BackupRestoreViewModel
 - DefaultFavoriteAppRepository
 - Manrope Font License (SIL OFL 1.1)
@@ -70,7 +70,7 @@
 - BackupMapping.kt
 - DefaultFavoriteAppEntity
 - AccentSwatch
-- BackupRestoreViewModelTest
+- ClockFontOption
 - DockAppPickerScreen.kt
 - CalendarPermissionRepository
 - HomeDrawerRouteTest.kt
@@ -93,9 +93,9 @@
 - LabeledDropdownRow
 - Screens
 - .setContent
-- .setContent
+- LauncherViewModel
 - ProfileCarouselScreen.kt
-- FavoritesPickerScreen.kt
+- .setContent
 - DefaultAppRepository
 - PlaceWidgetUseCaseTest
 - ResolveWidgetDropUseCaseTest
@@ -103,18 +103,18 @@
 - Lumen Launcher Implementation Plan
 - Lumen Launcher Engineering Conventions (CLAUDE.md)
 - LauncherActivity.kt
-- .setContent
+- FavoritesPickerScreen.kt
 - AppearanceSettingsScreen.kt
 - PRD: Minimal Android Launcher
 - SettingsRepositoryTest.kt
-- .`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`
+- FavoriteAppDaoTest
 - .createViewModel
 - Handoff: Minimal Android Launcher
 - SelectPreviewAppsUseCaseTest
 - SettingsRepositoryTest
 - CompactWidgetsUseCaseTest
 - ResolveWidgetResizeUseCaseTest
-- HubAddWidgetEvent
+- .setContent
 - DrawerViewModel
 - ImportBackupUseCaseTest.kt
 - .setContent
@@ -126,19 +126,20 @@
 - FontWeightSlider
 - ClockAdjustSheet.kt
 - ClockAdjustMode
+- .`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`
+- HubAddWidgetEvent
 - ExportBackupUseCaseTest.kt
-- AddFailureReason
 - Design Tokens
 - LumenDatabaseMigrationTest
 - CalendarSettingsScreen.kt
 - BackButton
+- AddFailureReason
 - NotificationAccessExplanationViewModel.kt
 - PermissionKind
 - gradlew
 - LumenApplication.kt
 - Noto Sans Font License (SIL OFL 1.1)
 - Poppins Font License (SIL OFL 1.1)
-- LauncherViewModel
 - .createViewModel
 - .rendersOneEntryPerLetterProvided
 - Type.kt
@@ -146,7 +147,6 @@
 - CardDivider
 - FavoriteAppDao
 - .setContent
-- FavoriteAppDaoTest
 - HomeDrawerRoute
 
 ## God Nodes (most connected - your core abstractions)
@@ -239,9 +239,9 @@ Nodes (11): AppWidgetHostView, AppWidgetProviderInfo, Bitmap, Context, Flow, Int
 Cohesion: 0.18
 Nodes (5): Flow, WidgetPlacementRepository, FakeWidgetPlacementDao, Flow, WidgetPlacementRepositoryTest
 
-### Community 14 - "WidgetProviderOption"
-Cohesion: 0.37
-Nodes (10): WidgetProviderOption, HubWidgetPickerContent(), HubWidgetPickerHeader(), HubWidgetPickerScreen(), HubWidgetPickerScreenPreview(), Modifier, WidgetProviderGroupRow(), WidgetProviderOptionTile() (+2 more)
+### Community 14 - "FavoriteAppRepository"
+Cohesion: 0.19
+Nodes (3): FavoriteAppRepository, Flow, FavoriteAppEntity
 
 ### Community 15 - "AppWidgetRepository"
 Cohesion: 0.08
@@ -258,10 +258,6 @@ Nodes (17): IconRenderMode, MONOCHROME_ACCENT, MONOCHROME_BLACK_WHITE, SYSTEM_DE
 ### Community 18 - "WidgetPlacementEntity"
 Cohesion: 0.13
 Nodes (10): WidgetPlacementEntity, CompactWidgetsUseCase, HubDomainState, HubWidgetState, Flow, ObserveHubStateUseCase, ResolveWidgetDropUseCase, ResolveWidgetResizeUseCase (+2 more)
-
-### Community 19 - "FavoriteAppRepository"
-Cohesion: 0.19
-Nodes (3): FavoriteAppRepository, Flow, FavoriteAppEntity
 
 ### Community 20 - "ProfileEntity"
 Cohesion: 0.10
@@ -331,9 +327,9 @@ Nodes (6): Flow, ObserveProfilePreviewsUseCase, ProfilePreviewData, StateFlow, V
 Cohesion: 0.27
 Nodes (17): Modifier, RenameDialog(), AppsSection(), ClickableRow(), DisabledRow(), displayLabel(), FavoritesReorderList(), Composable (+9 more)
 
-### Community 39 - "ClockFontOption"
-Cohesion: 0.17
-Nodes (7): ClockFontOption, LAUNCHER_DEFAULT, MANROPE, NOTO_SANS, POPPINS, ROBOTO_FLEX, SYSTEM
+### Community 39 - "WidgetProviderOption"
+Cohesion: 0.37
+Nodes (10): WidgetProviderOption, HubWidgetPickerContent(), HubWidgetPickerHeader(), HubWidgetPickerScreen(), HubWidgetPickerScreenPreview(), Modifier, WidgetProviderGroupRow(), WidgetProviderOptionTile() (+2 more)
 
 ### Community 40 - "BackupRestoreViewModel"
 Cohesion: 0.10
@@ -378,6 +374,10 @@ Nodes (4): DefaultFavoriteAppEntity, DefaultFavoriteAppRepositoryTest, FakeDefau
 ### Community 54 - "AccentSwatch"
 Cohesion: 0.15
 Nodes (13): AccentSwatch, AMBER, BLUE, CYAN, GREEN, INDIGO, ORANGE, PINK (+5 more)
+
+### Community 55 - "ClockFontOption"
+Cohesion: 0.17
+Nodes (7): ClockFontOption, LAUNCHER_DEFAULT, MANROPE, NOTO_SANS, POPPINS, ROBOTO_FLEX, SYSTEM
 
 ### Community 56 - "DockAppPickerScreen.kt"
 Cohesion: 0.18
@@ -447,13 +447,13 @@ Nodes (12): Modifier, T, LabeledDropdownRow(), appDrawerDisplayLabel(), AppDrawe
 Cohesion: 0.13
 Nodes (15): App Drawer (`1a`, `1h`, `1i`), App long-press menu (`4i`), Clock card (`3d`) and Calendar settings (new screen, wraps `4l`), Clock variants, Favorites variants, First run (`4f`–`4h`), Home (`1a`), Launcher Hub (`4a`–`4e`) (+7 more)
 
+### Community 78 - "LauncherViewModel"
+Cohesion: 0.24
+Nodes (6): SharedFlow, StateFlow, ViewModel, LauncherUiState, LauncherViewModel, LauncherViewModelTest
+
 ### Community 79 - "ProfileCarouselScreen.kt"
 Cohesion: 0.20
 Nodes (22): Composable, Modifier, ThemedDropdownMenu(), ThemedDropdownMenuItem(), DrawerSearchBar(), AddProfilePage(), AddProfileRow(), CarouselHeaderTitleRow() (+14 more)
-
-### Community 80 - "FavoritesPickerScreen.kt"
-Cohesion: 0.61
-Nodes (7): FavoritesPickerContent(), FavoritesPickerHeader(), FavoritesPickerRow(), FavoritesPickerScreen(), FavoritesPickerScreenPreview(), Modifier, PickerSectionHeader()
 
 ### Community 81 - "DefaultAppRepository"
 Cohesion: 0.23
@@ -471,6 +471,10 @@ Nodes (12): Never disable device/emulator animation scales rule, Lumen Launcher 
 Cohesion: 0.43
 Nodes (4): Intent, LauncherActivity, Bundle, ComponentActivity
 
+### Community 88 - "FavoritesPickerScreen.kt"
+Cohesion: 0.61
+Nodes (7): FavoritesPickerContent(), FavoritesPickerHeader(), FavoritesPickerRow(), FavoritesPickerScreen(), FavoritesPickerScreenPreview(), Modifier, PickerSectionHeader()
+
 ### Community 89 - "AppearanceSettingsScreen.kt"
 Cohesion: 0.35
 Nodes (14): AccentColorSection(), AccentSwatchCircle(), AccentSwatchGrid(), appearanceDisplayLabel(), AppearancePreviewCard(), AppearanceSettingsContent(), AppearanceSettingsHeader(), AppearanceSettingsScreen() (+6 more)
@@ -486,10 +490,6 @@ Nodes (8): DataStoreModule, Context, EnsureActiveProfileUseCase, EnsureActivePro
 ### Community 94 - "Handoff: Minimal Android Launcher"
 Cohesion: 0.18
 Nodes (11): About the Design Files, Assets, Fidelity, Files, Handoff: Minimal Android Launcher, Interactions & Behavior, Open questions, Overview (+3 more)
-
-### Community 99 - "HubAddWidgetEvent"
-Cohesion: 0.40
-Nodes (5): AddFailed, HubAddWidgetEvent, LaunchBindPermission, LaunchConfigure, WidgetAdded
 
 ### Community 100 - "DrawerViewModel"
 Cohesion: 0.16
@@ -531,9 +531,9 @@ Nodes (8): AdjustRow(), ClockAdjustSheet(), ClockAdjustSheetPreview(), Modifier,
 Cohesion: 0.50
 Nodes (4): ClockAdjustMode, ADJUST, MENU, NONE
 
-### Community 112 - "AddFailureReason"
-Cohesion: 0.67
-Nodes (3): AddFailureReason, HUB_FULL, SETUP_CANCELLED
+### Community 112 - "HubAddWidgetEvent"
+Cohesion: 0.40
+Nodes (5): AddFailed, HubAddWidgetEvent, LaunchBindPermission, LaunchConfigure, WidgetAdded
 
 ### Community 114 - "Design Tokens"
 Cohesion: 0.33
@@ -547,6 +547,10 @@ Nodes (12): InheritOverrideCard(), Modifier, RadioDot(), RadioOptionRow(), Calen
 Cohesion: 0.29
 Nodes (10): BackButton(), Modifier, Modifier, NotificationAccessExplanationContent(), NotificationAccessExplanationScreen(), NotificationAccessExplanationScreenPreview(), Modifier, UsageAccessExplanationContent() (+2 more)
 
+### Community 118 - "AddFailureReason"
+Cohesion: 0.67
+Nodes (3): AddFailureReason, HUB_FULL, SETUP_CANCELLED
+
 ### Community 119 - "NotificationAccessExplanationViewModel.kt"
 Cohesion: 0.27
 Nodes (6): StateFlow, ViewModel, NotificationAccessExplanationViewModel, StateFlow, ViewModel, UsageAccessExplanationViewModel
@@ -558,10 +562,6 @@ Nodes (6): PermissionKind, CALENDAR, CONTACTS, NOTIFICATION_ACCESS, USAGE_ACCESS
 ### Community 124 - "gradlew"
 Cohesion: 0.83
 Nodes (3): gradlew script, die(), warn()
-
-### Community 131 - "LauncherViewModel"
-Cohesion: 0.24
-Nodes (6): SharedFlow, StateFlow, ViewModel, LauncherUiState, LauncherViewModel, LauncherViewModelTest
 
 ### Community 135 - "Type.kt"
 Cohesion: 0.47
@@ -583,11 +583,11 @@ Nodes (12): Axis, HORIZONTAL, VERTICAL, HomeDrawerRoute(), NestedScrollConnectio
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `LumenLauncherTheme()` connect `LumenLauncherTheme` to `HubGrid`, `combine`, `ContactConnection`, `LauncherFontOption`, `.rendersOneEntryPerLetterProvided`, `Type.kt`, `CalendarRepository`, `CardDivider`, `.setContent`, `AppWidgetRepository`, `WidgetProviderOption`, `WallpaperAccentRole`, `WidgetPlacementEntity`, `AppShortcutRepository`, `SettingsRepository`, `HomeScreen`, `AppDrawerScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `ProfileSettingsScreen.kt`, `BackupRestoreViewModel`, `HomeScreen.kt`, `StickyHeaderLayout`, `CalendarEvent`, `AppDrawerScreen`, `AccentSwatch`, `DockAppPickerScreen.kt`, `CalendarPermissionRepository`, `HomeDrawerRouteTest.kt`, `DockSettingsScreen.kt`, `.setContent`, `SettingsScreen.kt`, `DockAppRepository`, `ColorTest`, `LumenNavHost`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `LabeledDropdownRow`, `.setContent`, `.setContent`, `ProfileCarouselScreen.kt`, `FavoritesPickerScreen.kt`, `LauncherActivity.kt`, `.setContent`, `AppearanceSettingsScreen.kt`, `.setContent`, `.setContent`, `WidgetResizeHandle`, `AppInfo`, `FontWeightSlider`, `ClockAdjustSheet.kt`, `CalendarSettingsScreen.kt`, `BackButton`?**
+- **Why does `LumenLauncherTheme()` connect `LumenLauncherTheme` to `HubGrid`, `combine`, `ContactConnection`, `LauncherFontOption`, `.rendersOneEntryPerLetterProvided`, `Type.kt`, `CalendarRepository`, `CardDivider`, `.setContent`, `AppWidgetRepository`, `WallpaperAccentRole`, `WidgetPlacementEntity`, `AppShortcutRepository`, `SettingsRepository`, `HomeScreen`, `AppDrawerScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `ProfileSettingsScreen.kt`, `WidgetProviderOption`, `BackupRestoreViewModel`, `HomeScreen.kt`, `StickyHeaderLayout`, `CalendarEvent`, `AppDrawerScreen`, `AccentSwatch`, `DockAppPickerScreen.kt`, `CalendarPermissionRepository`, `HomeDrawerRouteTest.kt`, `DockSettingsScreen.kt`, `.setContent`, `SettingsScreen.kt`, `DockAppRepository`, `ColorTest`, `LumenNavHost`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `LabeledDropdownRow`, `.setContent`, `ProfileCarouselScreen.kt`, `.setContent`, `LauncherActivity.kt`, `FavoritesPickerScreen.kt`, `AppearanceSettingsScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `WidgetResizeHandle`, `AppInfo`, `FontWeightSlider`, `ClockAdjustSheet.kt`, `CalendarSettingsScreen.kt`, `BackButton`?**
   _High betweenness centrality (0.159) - this node is a cross-community bridge._
-- **Why does `AppInfo` connect `AppInfo` to `combine`, `ContactConnection`, `LauncherViewModel`, `FakeFavoriteAppDao`, `.createViewModel`, `ContactRepositoryTest`, `WallpaperAccentRole`, `FavoriteAppRepository`, `ProfileEntity`, `AppShortcutRepository`, `HomeScreen`, `AppDrawerScreen.kt`, `.setContent`, `HomeDrawerRoute`, `FavoritesPickerViewModel`, `NotificationBadgeRepository`, `ProfileCarouselViewModel.kt`, `ProfileSettingsScreen.kt`, `DefaultFavoriteAppRepository`, `HomeScreen.kt`, `CalendarEvent`, `AppDrawerScreen`, `DefaultFavoriteAppEntity`, `DockAppPickerScreen.kt`, `CalendarPermissionRepository`, `HomeDrawerRouteTest.kt`, `DockSettingsScreen.kt`, `ListContentMode`, `.setContent`, `SettingsScreen.kt`, `DockAppRepository`, `ObserveHomeScreenStateUseCase.kt`, `LumenNavHost`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `ProfileCarouselScreen.kt`, `FavoritesPickerScreen.kt`, `LauncherActivity.kt`, `AppearanceSettingsScreen.kt`, `SelectPreviewAppsUseCaseTest`, `DrawerViewModel`?**
+- **Why does `AppInfo` connect `AppInfo` to `combine`, `ContactConnection`, `.createViewModel`, `FakeFavoriteAppDao`, `ContactRepositoryTest`, `FavoriteAppRepository`, `WallpaperAccentRole`, `ProfileEntity`, `AppShortcutRepository`, `HomeScreen`, `AppDrawerScreen.kt`, `.setContent`, `HomeDrawerRoute`, `FavoritesPickerViewModel`, `NotificationBadgeRepository`, `ProfileCarouselViewModel.kt`, `ProfileSettingsScreen.kt`, `DefaultFavoriteAppRepository`, `HomeScreen.kt`, `CalendarEvent`, `AppDrawerScreen`, `DefaultFavoriteAppEntity`, `DockAppPickerScreen.kt`, `CalendarPermissionRepository`, `HomeDrawerRouteTest.kt`, `DockSettingsScreen.kt`, `ListContentMode`, `.setContent`, `SettingsScreen.kt`, `DockAppRepository`, `ObserveHomeScreenStateUseCase.kt`, `LumenNavHost`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `LauncherViewModel`, `ProfileCarouselScreen.kt`, `LauncherActivity.kt`, `FavoritesPickerScreen.kt`, `AppearanceSettingsScreen.kt`, `SelectPreviewAppsUseCaseTest`, `DrawerViewModel`?**
   _High betweenness centrality (0.099) - this node is a cross-community bridge._
-- **Why does `SettingsRepository` connect `SettingsRepository` to `combine`, `LauncherViewModel`, `LauncherFontOption`, `.createViewModel`, `CalendarRepository`, `DrawerGridSize`, `.setContent`, `AppWidgetRepository`, `WallpaperAccentRole`, `ProfileEntity`, `.setContent`, `.setContent`, `ProfileCarouselViewModel.kt`, `ClockFontOption`, `HomeViewModel`, `ClockStyleGalleryViewModel`, `CalendarPermissionRepository`, `HomeDrawerRouteTest.kt`, `ImportBackupUseCase.kt`, `ListContentMode`, `.setContent`, `DockAppRepository`, `ObserveHomeScreenStateUseCase.kt`, `.setContent`, `.setContent`, `AppDrawerSettingsViewModelTest`, `SettingsRepositoryTest.kt`, `.createViewModel`, `SettingsRepositoryTest`, `DrawerViewModel`, `ImportBackupUseCaseTest.kt`, `.setContent`, `ExportBackupUseCaseTest.kt`, `NotificationAccessExplanationViewModel.kt`?**
+- **Why does `SettingsRepository` connect `SettingsRepository` to `combine`, `LauncherFontOption`, `.createViewModel`, `CalendarRepository`, `DrawerGridSize`, `.setContent`, `AppWidgetRepository`, `WallpaperAccentRole`, `ProfileEntity`, `.setContent`, `.setContent`, `ProfileCarouselViewModel.kt`, `HomeViewModel`, `ClockStyleGalleryViewModel`, `ClockFontOption`, `CalendarPermissionRepository`, `HomeDrawerRouteTest.kt`, `ImportBackupUseCase.kt`, `ListContentMode`, `.setContent`, `DockAppRepository`, `ObserveHomeScreenStateUseCase.kt`, `.setContent`, `.setContent`, `LauncherViewModel`, `AppDrawerSettingsViewModelTest`, `SettingsRepositoryTest.kt`, `.createViewModel`, `SettingsRepositoryTest`, `DrawerViewModel`, `ImportBackupUseCaseTest.kt`, `.setContent`, `ExportBackupUseCaseTest.kt`, `NotificationAccessExplanationViewModel.kt`?**
   _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `LumenLauncherTheme()` (e.g. with `.themed()` and `lumenTypography()`) actually correct?**
   _`LumenLauncherTheme()` has 2 INFERRED edges - model-reasoned connections that need verification._

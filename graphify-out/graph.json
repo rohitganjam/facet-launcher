@@ -412,30 +412,95 @@
       "source_location": "L107"
     },
     {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest",
+      "label": "ImportBackupUseCaseTest",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 111,
+      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "file_type": "code",
+      "norm_label": "importbackupusecasetest",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
+      "source_location": "L32"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailed",
+      "label": "AddFailed",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "HubAddWidgetEvent",
+      "file_type": "code",
+      "norm_label": "addfailed",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L25"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_hubaddwidgetevent",
+      "label": "HubAddWidgetEvent",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "HubAddWidgetEvent",
+      "file_type": "code",
+      "norm_label": "hubaddwidgetevent",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_launchbindpermission",
+      "label": "LaunchBindPermission",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "HubAddWidgetEvent",
+      "file_type": "code",
+      "norm_label": "launchbindpermission",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L22"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_launchconfigure",
+      "label": "LaunchConfigure",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "HubAddWidgetEvent",
+      "file_type": "code",
+      "norm_label": "launchconfigure",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L23"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_widgetadded",
+      "label": "WidgetAdded",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "HubAddWidgetEvent",
+      "file_type": "code",
+      "norm_label": "widgetadded",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L24"
+    },
+    {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_exportbackupusecasetest_exportbackupusecasetest",
       "label": "ExportBackupUseCaseTest",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 111,
+      "community": 113,
       "community_name": "ExportBackupUseCaseTest.kt",
       "file_type": "code",
       "norm_label": "exportbackupusecasetest",
       "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ExportBackupUseCaseTest.kt",
       "source_location": "L27"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailurereason",
-      "label": "AddFailureReason",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 112,
-      "community_name": "AddFailureReason",
-      "file_type": "code",
-      "norm_label": "addfailurereason",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L18"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_data_local_lumendatabasemigrationtest_lumendatabasemigrationtest",
@@ -462,6 +527,19 @@
       "norm_label": "calendarsettingsuistate",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/settings/CalendarSettingsViewModel.kt",
       "source_location": "L25"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailurereason",
+      "label": "AddFailureReason",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 118,
+      "community_name": "AddFailureReason",
+      "file_type": "code",
+      "norm_label": "addfailurereason",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L18"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_settings_notificationaccessexplanationviewmodel_notificationaccessexplanationviewmodel",
@@ -568,45 +646,6 @@
       "source_location": "L35"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_launcheruistate",
-      "label": "LauncherUiState",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "launcheruistate",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
-      "source_location": "L39"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_launcherviewmodel",
-      "label": "LauncherViewModel",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "launcherviewmodel",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
-      "source_location": "L52"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest",
-      "label": "LauncherViewModelTest",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "launcherviewmodeltest",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
-      "source_location": "L26"
-    },
-    {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_homeappslistsettingsviewmodeltest_homeappslistsettingsviewmodeltest",
       "label": "HomeAppsListSettingsViewModelTest",
       "_callable": true,
@@ -659,43 +698,30 @@
       "source_location": "L18"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_widgetprovideroption_widgetprovideroption",
-      "label": "WidgetProviderOption",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository",
+      "label": "FavoriteAppRepository",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "widgetprovideroption",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/WidgetProviderOption.kt",
-      "source_location": "L7"
+      "norm_label": "favoriteapprepository",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L22"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_hubwidgetpickeruistate",
-      "label": "HubWidgetPickerUiState",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_local_favoriteappentity_favoriteappentity",
+      "label": "FavoriteAppEntity",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickeruistate",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L12"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_widgetprovidergroup",
-      "label": "WidgetProviderGroup",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "WidgetProviderOption",
-      "file_type": "code",
-      "norm_label": "widgetprovidergroup",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L7"
+      "norm_label": "favoriteappentity",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/local/FavoriteAppEntity.kt",
+      "source_location": "L8"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_local_favoriteappdao_favoriteappdao",
@@ -722,19 +748,6 @@
       "norm_label": "homeappslistsettingsscreentest",
       "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/HomeAppsListSettingsScreenTest.kt",
       "source_location": "L26"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest",
-      "label": "FavoriteAppDaoTest",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": "favoriteappdaotest",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L13"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestorescreentest_backuprestorescreentest",
@@ -1075,30 +1088,17 @@
       "source_location": "L28"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository",
-      "label": "FavoriteAppRepository",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest",
+      "label": "BackupRestoreViewModelTest",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": "favoriteapprepository",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L22"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_local_favoriteappentity_favoriteappentity",
-      "label": "FavoriteAppEntity",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "FavoriteAppRepository",
-      "file_type": "code",
-      "norm_label": "favoriteappentity",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/local/FavoriteAppEntity.kt",
-      "source_location": "L8"
+      "norm_label": "backuprestoreviewmodeltest",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L39"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_settings_notificationsettingsscreentest_notificationsettingsscreentest",
@@ -1881,17 +1881,43 @@
       "source_location": "L29"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption",
-      "label": "ClockFontOption",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_widgetprovideroption_widgetprovideroption",
+      "label": "WidgetProviderOption",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": "clockfontoption",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L16"
+      "norm_label": "widgetprovideroption",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/WidgetProviderOption.kt",
+      "source_location": "L7"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_hubwidgetpickeruistate",
+      "label": "HubWidgetPickerUiState",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "WidgetProviderOption",
+      "file_type": "code",
+      "norm_label": "hubwidgetpickeruistate",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L12"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_widgetprovidergroup",
+      "label": "WidgetProviderGroup",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "WidgetProviderOption",
+      "file_type": "code",
+      "norm_label": "widgetprovidergroup",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L7"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_launcherfontoption_launcherfontoption",
@@ -2362,17 +2388,17 @@
       "source_location": "L14"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest",
-      "label": "BackupRestoreViewModelTest",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption",
+      "label": "ClockFontOption",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
+      "community_name": "ClockFontOption",
       "file_type": "code",
-      "norm_label": "backuprestoreviewmodeltest",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L39"
+      "norm_label": "clockfontoption",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L16"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_dock_dockapppickerscreentest_dockapppickerscreentest",
@@ -3220,17 +3246,43 @@
       "source_location": "L35"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest",
-      "label": "FavoritesPickerScreenTest",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_launcheruistate",
+      "label": "LauncherUiState",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 78,
-      "community_name": ".setContent",
+      "community_name": "LauncherViewModel",
       "file_type": "code",
-      "norm_label": "favoritespickerscreentest",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L30"
+      "norm_label": "launcheruistate",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
+      "source_location": "L39"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_launcherviewmodel",
+      "label": "LauncherViewModel",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 78,
+      "community_name": "LauncherViewModel",
+      "file_type": "code",
+      "norm_label": "launcherviewmodel",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
+      "source_location": "L52"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest",
+      "label": "LauncherViewModelTest",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 78,
+      "community_name": "LauncherViewModel",
+      "file_type": "code",
+      "norm_label": "launcherviewmodeltest",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
+      "source_location": "L26"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilecarouselmode",
@@ -3243,7 +3295,7 @@
       "file_type": "code",
       "norm_label": "profilecarouselmode",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L133"
+      "source_location": "L134"
     },
     {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_data_apprepositorytest_apprepositorytest",
@@ -3296,6 +3348,19 @@
       "norm_label": "contactrepositorytest",
       "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/ContactRepositoryTest.kt",
       "source_location": "L29"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest",
+      "label": "FavoritesPickerScreenTest",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 80,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": "favoritespickerscreentest",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L30"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_defaultapprepository_defaultapprepository",
@@ -3374,19 +3439,6 @@
       "norm_label": "launcheractivity",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/LauncherActivity.kt",
       "source_location": "L21"
-    },
-    {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest",
-      "label": "HubWidgetPickerScreenTest",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 88,
-      "community_name": ".setContent",
-      "file_type": "code",
-      "norm_label": "hubwidgetpickerscreentest",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
-      "source_location": "L29"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_settings_calendarsettingsscreentest_calendarsettingsscreengrantedtest",
@@ -3571,17 +3623,17 @@
       "source_location": "L20"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest",
-      "label": "ImportBackupUseCaseTest",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest",
+      "label": "FavoriteAppDaoTest",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 92,
-      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "community_name": "FavoriteAppDaoTest",
       "file_type": "code",
-      "norm_label": "importbackupusecasetest",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
-      "source_location": "L32"
+      "norm_label": "favoriteappdaotest",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L13"
     },
     {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_appearancesettingsviewmodeltest_appearancesettingsviewmodeltest",
@@ -3649,69 +3701,17 @@
       "source_location": "L8"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailed",
-      "label": "AddFailed",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest",
+      "label": "HubWidgetPickerScreenTest",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 99,
-      "community_name": "HubAddWidgetEvent",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "addfailed",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L25"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_hubaddwidgetevent",
-      "label": "HubAddWidgetEvent",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 99,
-      "community_name": "HubAddWidgetEvent",
-      "file_type": "code",
-      "norm_label": "hubaddwidgetevent",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L21"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_launchbindpermission",
-      "label": "LaunchBindPermission",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 99,
-      "community_name": "HubAddWidgetEvent",
-      "file_type": "code",
-      "norm_label": "launchbindpermission",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L22"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_launchconfigure",
-      "label": "LaunchConfigure",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 99,
-      "community_name": "HubAddWidgetEvent",
-      "file_type": "code",
-      "norm_label": "launchconfigure",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L23"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_widgetadded",
-      "label": "WidgetAdded",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 99,
-      "community_name": "HubAddWidgetEvent",
-      "file_type": "code",
-      "norm_label": "widgetadded",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L24"
+      "norm_label": "hubwidgetpickerscreentest",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
+      "source_location": "L29"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_components_dashedborder_dashedborder",
@@ -6150,11 +6150,71 @@
       "source_location": "L43"
     },
     {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_a_backup_from_a_newer_app_version_is_rejected_without_touching_any_repository",
+      "label": ".`a backup from a newer app version is rejected without touching any repository`()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 111,
+      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "file_type": "code",
+      "norm_label": ".`a backup from a newer app version is rejected without touching any repository`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
+      "source_location": "L95"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_a_valid_backup_replaces_every_profile_dock_and_default_favorite_then_reports_what_was_restored",
+      "label": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 111,
+      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "file_type": "code",
+      "norm_label": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
+      "source_location": "L115"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_an_unreadable_or_non_backup_file_returns_invalidfile_without_touching_any_repository",
+      "label": ".`an unreadable or non-backup file returns InvalidFile without touching any repository`()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 111,
+      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "file_type": "code",
+      "norm_label": ".`an unreadable or non-backup file returns invalidfile without touching any repository`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
+      "source_location": "L84"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_an_unrecognized_enum_string_in_the_backup_falls_back_to_that_field_s_default_instead_of_failing_the_import",
+      "label": ".`an unrecognized enum string in the backup falls back to that field's default instead of failing the import`()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 111,
+      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "file_type": "code",
+      "norm_label": ".`an unrecognized enum string in the backup falls back to that field's default instead of failing the import`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
+      "source_location": "L175"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_minimalsettings",
+      "label": ".minimalSettings()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 111,
+      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "file_type": "code",
+      "norm_label": ".minimalsettings()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
+      "source_location": "L50"
+    },
+    {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_exportbackupusecasetest_exportbackupusecasetest_bundles_every_repository_s_data_and_hands_it_to_backuprepository",
       "label": ".`bundles every repository's data and hands it to BackupRepository`()",
       "_callable": true,
       "_origin": "ast",
-      "community": 111,
+      "community": 113,
       "community_name": "ExportBackupUseCaseTest.kt",
       "file_type": "code",
       "norm_label": ".`bundles every repository's data and hands it to backuprepository`()",
@@ -6166,7 +6226,7 @@
       "label": ".`no active profile leaves activeProfileIndex null`()",
       "_callable": true,
       "_origin": "ast",
-      "community": 111,
+      "community": 113,
       "community_name": "ExportBackupUseCaseTest.kt",
       "file_type": "code",
       "norm_label": ".`no active profile leaves activeprofileindex null`()",
@@ -6774,66 +6834,6 @@
       "source_location": "L61"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_launcherviewmodel_onhomepressed",
-      "label": ".onHomePressed()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": ".onhomepressed()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
-      "source_location": "L66"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_exposes_loading_state_until_the_use_case_resolves_then_the_fetched_apps",
-      "label": ".`exposes loading state until the use case resolves, then the fetched apps`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": ".`exposes loading state until the use case resolves, then the fetched apps`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
-      "source_location": "L41"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_setup",
-      "label": ".setUp()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": ".setup()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
-      "source_location": "L31"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_stops_loading_on_its_own_after_the_timeout_even_if_the_underlying_flows_never_emit",
-      "label": ".`stops loading on its own after the timeout even if the underlying flows never emit`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": ".`stops loading on its own after the timeout even if the underlying flows never emit`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
-      "source_location": "L73"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_teardown",
-      "label": ".tearDown()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": ".teardown()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
-      "source_location": "L36"
-    },
-    {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_homeappslistsettingsviewmodeltest_homeappslistsettingsviewmodeltest_appinfo",
       "label": ".appInfo()",
       "_callable": true,
@@ -7086,88 +7086,148 @@
       "source_location": "L146"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickercontent",
-      "label": "HubWidgetPickerContent()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_addfavorite",
+      "label": ".addFavorite()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickercontent()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
-      "source_location": "L117"
+      "norm_label": ".addfavorite()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L61"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickerheader",
-      "label": "HubWidgetPickerHeader()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_getrawfavoritesforprofile",
+      "label": ".getRawFavoritesForProfile()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickerheader()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
-      "source_location": "L178"
+      "norm_label": ".getrawfavoritesforprofile()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L98"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickerscreen",
-      "label": "HubWidgetPickerScreen()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_hydrate",
+      "label": ".hydrate()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickerscreen()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
-      "source_location": "L68"
+      "norm_label": ".hydrate()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L55"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickerscreenpreview",
-      "label": "HubWidgetPickerScreenPreview()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_observefavoritesforprofile",
+      "label": ".observeFavoritesForProfile()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickerscreenpreview()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
-      "source_location": "L274"
+      "norm_label": ".observefavoritesforprofile()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L32"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_widgetprovidergrouprow",
-      "label": "WidgetProviderGroupRow()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_observefavoritesforprofiles",
+      "label": ".observeFavoritesForProfiles()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "widgetprovidergrouprow()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
-      "source_location": "L203"
+      "norm_label": ".observefavoritesforprofiles()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L47"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_widgetprovideroptiontile",
-      "label": "WidgetProviderOptionTile()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_removebypackage",
+      "label": ".removeByPackage()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "widgetprovideroptiontile()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
-      "source_location": "L230"
+      "norm_label": ".removebypackage()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L83"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerviewmodel_hubwidgetpickerviewmodel_onproviderselected",
-      "label": ".onProviderSelected()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_removefavorite",
+      "label": ".removeFavorite()",
       "_callable": true,
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": ".onproviderselected()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerViewModel.kt",
-      "source_location": "L84"
+      "norm_label": ".removefavorite()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L72"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_reorderfavorites",
+      "label": ".reorderFavorites()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "FavoriteAppRepository",
+      "file_type": "code",
+      "norm_label": ".reorderfavorites()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L106"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_replacefavorites",
+      "label": ".replaceFavorites()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "FavoriteAppRepository",
+      "file_type": "code",
+      "norm_label": ".replacefavorites()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L88"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_restorefavorite",
+      "label": ".restoreFavorite()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "FavoriteAppRepository",
+      "file_type": "code",
+      "norm_label": ".restorefavorite()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
+      "source_location": "L102"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_favoriteapprepositorytest_fakefavoriteappdao_delete",
+      "label": ".delete()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "FavoriteAppRepository",
+      "file_type": "code",
+      "norm_label": ".delete()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/FavoriteAppRepositoryTest.kt",
+      "source_location": "L33"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_favoriteapprepositorytest_fakefavoriteappdao_upsert",
+      "label": ".upsert()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "FavoriteAppRepository",
+      "file_type": "code",
+      "norm_label": ".upsert()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/FavoriteAppRepositoryTest.kt",
+      "source_location": "L26"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_local_favoriteappdao_favoriteappdao_delete",
@@ -7336,66 +7396,6 @@
       "norm_label": ".setcontent()",
       "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/settings/HomeAppsListSettingsScreenTest.kt",
       "source_location": "L31"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_createdatabase",
-      "label": ".createDatabase()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": ".createdatabase()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L16"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_deletebycomponent_removes_only_the_matching_profile_s_entry",
-      "label": ".`deleteByComponent removes only the matching profile's entry`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": ".`deletebycomponent removes only the matching profile's entry`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L72"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_deleting_a_profile_cascades_to_its_favorites",
-      "label": ".`deleting a profile cascades to its favorites`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": ".`deleting a profile cascades to its favorites`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L56"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_favorites_are_scoped_per_profile_not_shared",
-      "label": ".`favorites are scoped per profile, not shared`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": ".`favorites are scoped per profile, not shared`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L38"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_insert_then_observe_returns_the_inserted_favorite_scoped_to_its_profile",
-      "label": ".`insert then observe returns the inserted favorite scoped to its profile`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": ".`insert then observe returns the inserted favorite scoped to its profile`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L21"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestorescreentest_backuprestorescreentest_backbuttoninvokesonback",
@@ -8130,148 +8130,172 @@
       "source_location": "L39"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_addfavorite",
-      "label": ".addFavorite()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_backup_from_a_newer_app_version_shows_the_unsupported_version_message",
+      "label": ".`a backup from a newer app version shows the unsupported-version message`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".addfavorite()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L61"
+      "norm_label": ".`a backup from a newer app version shows the unsupported-version message`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L103"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_getrawfavoritesforprofile",
-      "label": ".getRawFavoritesForProfile()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_null_export_destination_picker_cancelled_is_a_no_op",
+      "label": ".`a null export destination (picker cancelled) is a no-op`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".getrawfavoritesforprofile()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L98"
+      "norm_label": ".`a null export destination (picker cancelled) is a no-op`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L62"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_hydrate",
-      "label": ".hydrate()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_pending_widget_whose_provider_isn_t_installed_is_marked_unavailable_not_re_addable",
+      "label": ".`a pending widget whose provider isn't installed is marked unavailable, not re-addable`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".hydrate()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L55"
+      "norm_label": ".`a pending widget whose provider isn't installed is marked unavailable, not re-addable`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L132"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_observefavoritesforprofile",
-      "label": ".observeFavoritesForProfile()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_successful_export_shows_the_success_message",
+      "label": ".`a successful export shows the success message`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".observefavoritesforprofile()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L32"
+      "norm_label": ".`a successful export shows the success message`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L70"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_observefavoritesforprofiles",
-      "label": ".observeFavoritesForProfiles()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_successful_import_with_a_pending_widget_whose_provider_is_installed_marks_it_re_addable",
+      "label": ".`a successful import with a pending widget whose provider is installed marks it re-addable`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".observefavoritesforprofiles()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L47"
+      "norm_label": ".`a successful import with a pending widget whose provider is installed marks it re-addable`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L114"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_removebypackage",
-      "label": ".removeByPackage()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_an_export_that_throws_shows_the_failure_message_instead_of_propagating",
+      "label": ".`an export that throws shows the failure message instead of propagating`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".removebypackage()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L83"
+      "norm_label": ".`an export that throws shows the failure message instead of propagating`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L81"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_removefavorite",
-      "label": ".removeFavorite()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_an_invalid_backup_file_shows_the_invalid_file_message",
+      "label": ".`an invalid backup file shows the invalid-file message`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".removefavorite()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L72"
+      "norm_label": ".`an invalid backup file shows the invalid-file message`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L92"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_reorderfavorites",
-      "label": ".reorderFavorites()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_givenonependingwidget",
+      "label": ".givenOnePendingWidget()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".reorderfavorites()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L106"
+      "norm_label": ".givenonependingwidget()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L144"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_replacefavorites",
-      "label": ".replaceFavorites()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_re_adding_a_widget_needing_the_system_bind_dialog_emits_launchbindpermission_and_does_not_place_it_yet",
+      "label": ".`re-adding a widget needing the system bind dialog emits LaunchBindPermission and does not place it yet`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".replacefavorites()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L88"
+      "norm_label": ".`re-adding a widget needing the system bind dialog emits launchbindpermission and does not place it yet`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L187"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_favoriteapprepository_restorefavorite",
-      "label": ".restoreFavorite()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_re_adding_a_widget_that_binds_synchronously_with_no_configure_activity_places_it_at_the_backup_s_own_recorded_position",
+      "label": ".`re-adding a widget that binds synchronously with no configure activity places it at the backup's own recorded position`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".restorefavorite()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L102"
+      "norm_label": ".`re-adding a widget that binds synchronously with no configure activity places it at the backup's own recorded position`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L165"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_favoriteapprepositorytest_fakefavoriteappdao_delete",
-      "label": ".delete()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_re_adding_a_widget_whose_provider_is_not_installed_is_a_no_op",
+      "label": ".`re-adding a widget whose provider is not installed is a no-op`()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".delete()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/FavoriteAppRepositoryTest.kt",
-      "source_location": "L33"
+      "norm_label": ".`re-adding a widget whose provider is not installed is a no-op`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L205"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_favoriteapprepositorytest_fakefavoriteappdao_upsert",
-      "label": ".upsert()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_setup",
+      "label": ".setUp()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "FavoriteAppRepository",
+      "community_name": "BackupRestoreViewModelTest",
       "file_type": "code",
-      "norm_label": ".upsert()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/FavoriteAppRepositoryTest.kt",
-      "source_location": "L26"
+      "norm_label": ".setup()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L45"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_skipping_a_pending_widget_marks_it_done_without_touching_appwidgetrepository",
+      "label": ".`skipping a pending widget marks it done without touching AppWidgetRepository`()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "BackupRestoreViewModelTest",
+      "file_type": "code",
+      "norm_label": ".`skipping a pending widget marks it done without touching appwidgetrepository`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L154"
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_teardown",
+      "label": ".tearDown()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "BackupRestoreViewModelTest",
+      "file_type": "code",
+      "norm_label": ".teardown()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
+      "source_location": "L48"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_settings_notificationsettingsscreentest_notificationsettingsscreentest_backbuttoninvokesonback",
@@ -14166,52 +14190,88 @@
       "source_location": "L239"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_profilerepository_profilerepository_setcalendarfontoption",
-      "label": ".setCalendarFontOption()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickercontent",
+      "label": "HubWidgetPickerContent()",
       "_callable": true,
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": ".setcalendarfontoption()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/ProfileRepository.kt",
-      "source_location": "L90"
+      "norm_label": "hubwidgetpickercontent()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "source_location": "L117"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_profilerepository_profilerepository_setclockfontoption",
-      "label": ".setClockFontOption()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickerheader",
+      "label": "HubWidgetPickerHeader()",
       "_callable": true,
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": ".setclockfontoption()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/ProfileRepository.kt",
-      "source_location": "L64"
+      "norm_label": "hubwidgetpickerheader()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "source_location": "L178"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_settingsrepository_settingsrepository_setcalendarfontoption",
-      "label": ".setCalendarFontOption()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickerscreen",
+      "label": "HubWidgetPickerScreen()",
       "_callable": true,
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": ".setcalendarfontoption()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/SettingsRepository.kt",
-      "source_location": "L318"
+      "norm_label": "hubwidgetpickerscreen()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "source_location": "L68"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_settingsrepository_settingsrepository_setclockfontoption",
-      "label": ".setClockFontOption()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_hubwidgetpickerscreenpreview",
+      "label": "HubWidgetPickerScreenPreview()",
       "_callable": true,
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": ".setclockfontoption()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/SettingsRepository.kt",
-      "source_location": "L297"
+      "norm_label": "hubwidgetpickerscreenpreview()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "source_location": "L274"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_widgetprovidergrouprow",
+      "label": "WidgetProviderGroupRow()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "WidgetProviderOption",
+      "file_type": "code",
+      "norm_label": "widgetprovidergrouprow()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "source_location": "L203"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_widgetprovideroptiontile",
+      "label": "WidgetProviderOptionTile()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "WidgetProviderOption",
+      "file_type": "code",
+      "norm_label": "widgetprovideroptiontile()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "source_location": "L230"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerviewmodel_hubwidgetpickerviewmodel_onproviderselected",
+      "label": ".onProviderSelected()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "WidgetProviderOption",
+      "file_type": "code",
+      "norm_label": ".onproviderselected()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerViewModel.kt",
+      "source_location": "L84"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_settingsrepository_settingsrepository_setlauncherfontoption",
@@ -16674,172 +16734,52 @@
       "source_location": "L32"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_backup_from_a_newer_app_version_shows_the_unsupported_version_message",
-      "label": ".`a backup from a newer app version shows the unsupported-version message`()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_profilerepository_profilerepository_setcalendarfontoption",
+      "label": ".setCalendarFontOption()",
       "_callable": true,
       "_origin": "ast",
       "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
+      "community_name": "ClockFontOption",
       "file_type": "code",
-      "norm_label": ".`a backup from a newer app version shows the unsupported-version message`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L103"
+      "norm_label": ".setcalendarfontoption()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/ProfileRepository.kt",
+      "source_location": "L90"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_null_export_destination_picker_cancelled_is_a_no_op",
-      "label": ".`a null export destination (picker cancelled) is a no-op`()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_profilerepository_profilerepository_setclockfontoption",
+      "label": ".setClockFontOption()",
       "_callable": true,
       "_origin": "ast",
       "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
+      "community_name": "ClockFontOption",
       "file_type": "code",
-      "norm_label": ".`a null export destination (picker cancelled) is a no-op`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L62"
+      "norm_label": ".setclockfontoption()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/ProfileRepository.kt",
+      "source_location": "L64"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_pending_widget_whose_provider_isn_t_installed_is_marked_unavailable_not_re_addable",
-      "label": ".`a pending widget whose provider isn't installed is marked unavailable, not re-addable`()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_settingsrepository_settingsrepository_setcalendarfontoption",
+      "label": ".setCalendarFontOption()",
       "_callable": true,
       "_origin": "ast",
       "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
+      "community_name": "ClockFontOption",
       "file_type": "code",
-      "norm_label": ".`a pending widget whose provider isn't installed is marked unavailable, not re-addable`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L132"
+      "norm_label": ".setcalendarfontoption()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/SettingsRepository.kt",
+      "source_location": "L318"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_successful_export_shows_the_success_message",
-      "label": ".`a successful export shows the success message`()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_settingsrepository_settingsrepository_setclockfontoption",
+      "label": ".setClockFontOption()",
       "_callable": true,
       "_origin": "ast",
       "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
+      "community_name": "ClockFontOption",
       "file_type": "code",
-      "norm_label": ".`a successful export shows the success message`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L70"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_a_successful_import_with_a_pending_widget_whose_provider_is_installed_marks_it_re_addable",
-      "label": ".`a successful import with a pending widget whose provider is installed marks it re-addable`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`a successful import with a pending widget whose provider is installed marks it re-addable`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L114"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_an_export_that_throws_shows_the_failure_message_instead_of_propagating",
-      "label": ".`an export that throws shows the failure message instead of propagating`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`an export that throws shows the failure message instead of propagating`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L81"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_an_invalid_backup_file_shows_the_invalid_file_message",
-      "label": ".`an invalid backup file shows the invalid-file message`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`an invalid backup file shows the invalid-file message`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L92"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_givenonependingwidget",
-      "label": ".givenOnePendingWidget()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".givenonependingwidget()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L144"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_re_adding_a_widget_needing_the_system_bind_dialog_emits_launchbindpermission_and_does_not_place_it_yet",
-      "label": ".`re-adding a widget needing the system bind dialog emits LaunchBindPermission and does not place it yet`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`re-adding a widget needing the system bind dialog emits launchbindpermission and does not place it yet`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L187"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_re_adding_a_widget_that_binds_synchronously_with_no_configure_activity_places_it_at_the_backup_s_own_recorded_position",
-      "label": ".`re-adding a widget that binds synchronously with no configure activity places it at the backup's own recorded position`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`re-adding a widget that binds synchronously with no configure activity places it at the backup's own recorded position`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L165"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_re_adding_a_widget_whose_provider_is_not_installed_is_a_no_op",
-      "label": ".`re-adding a widget whose provider is not installed is a no-op`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`re-adding a widget whose provider is not installed is a no-op`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L205"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_setup",
-      "label": ".setUp()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".setup()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L45"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_skipping_a_pending_widget_marks_it_done_without_touching_appwidgetrepository",
-      "label": ".`skipping a pending widget marks it done without touching AppWidgetRepository`()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".`skipping a pending widget marks it done without touching appwidgetrepository`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L154"
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_backup_backuprestoreviewmodeltest_backuprestoreviewmodeltest_teardown",
-      "label": ".tearDown()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 55,
-      "community_name": "BackupRestoreViewModelTest",
-      "file_type": "code",
-      "norm_label": ".teardown()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt",
-      "source_location": "L48"
+      "norm_label": ".setclockfontoption()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/SettingsRepository.kt",
+      "source_location": "L297"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_dock_dockapppickerscreentest_dockapppickerscreentest_backbuttoninvokesondone",
@@ -21570,88 +21510,64 @@
       "source_location": "L141"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_checkinganappaddsittofavorites",
-      "label": ".checkingAnAppAddsItToFavorites()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_launcherviewmodel_onhomepressed",
+      "label": ".onHomePressed()",
       "_callable": true,
       "_origin": "ast",
       "community": 78,
-      "community_name": ".setContent",
+      "community_name": "LauncherViewModel",
       "file_type": "code",
-      "norm_label": ".checkinganappaddsittofavorites()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L65"
+      "norm_label": ".onhomepressed()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
+      "source_location": "L66"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_checkingisblockedattheeightappcap",
-      "label": ".checkingIsBlockedAtTheEightAppCap()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_exposes_loading_state_until_the_use_case_resolves_then_the_fetched_apps",
+      "label": ".`exposes loading state until the use case resolves, then the fetched apps`()",
       "_callable": true,
       "_origin": "ast",
       "community": 78,
-      "community_name": ".setContent",
+      "community_name": "LauncherViewModel",
       "file_type": "code",
-      "norm_label": ".checkingisblockedattheeightappcap()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L131"
+      "norm_label": ".`exposes loading state until the use case resolves, then the fetched apps`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
+      "source_location": "L41"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_favoritedappsrenderfirstundertheirownsectionheader",
-      "label": ".favoritedAppsRenderFirstUnderTheirOwnSectionHeader()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_setup",
+      "label": ".setUp()",
       "_callable": true,
       "_origin": "ast",
       "community": 78,
-      "community_name": ".setContent",
+      "community_name": "LauncherViewModel",
       "file_type": "code",
-      "norm_label": ".favoritedappsrenderfirstundertheirownsectionheader()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L111"
+      "norm_label": ".setup()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
+      "source_location": "L31"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_headerstaysvisibleafterscrollingtoallapps",
-      "label": ".headerStaysVisibleAfterScrollingToAllApps()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_stops_loading_on_its_own_after_the_timeout_even_if_the_underlying_flows_never_emit",
+      "label": ".`stops loading on its own after the timeout even if the underlying flows never emit`()",
       "_callable": true,
       "_origin": "ast",
       "community": 78,
-      "community_name": ".setContent",
+      "community_name": "LauncherViewModel",
       "file_type": "code",
-      "norm_label": ".headerstaysvisibleafterscrollingtoallapps()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L92"
+      "norm_label": ".`stops loading on its own after the timeout even if the underlying flows never emit`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
+      "source_location": "L73"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_setcontent",
-      "label": ".setContent()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodeltest_launcherviewmodeltest_teardown",
+      "label": ".tearDown()",
       "_callable": true,
       "_origin": "ast",
       "community": 78,
-      "community_name": ".setContent",
+      "community_name": "LauncherViewModel",
       "file_type": "code",
-      "norm_label": ".setcontent()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L38"
-    },
-    {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_setcontentfordefaultfavorites",
-      "label": ".setContentForDefaultFavorites()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": ".setContent",
-      "file_type": "code",
-      "norm_label": ".setcontentfordefaultfavorites()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L163"
-    },
-    {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_withnoprofileidthescreeneditsthelauncherwidedefaultlist",
-      "label": ".withNoProfileIdTheScreenEditsTheLauncherWideDefaultList()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": ".setContent",
-      "file_type": "code",
-      "norm_label": ".withnoprofileidthescreeneditsthelauncherwidedefaultlist()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
-      "source_location": "L184"
+      "norm_label": ".teardown()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModelTest.kt",
+      "source_location": "L36"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_components_themeddropdownmenu_themeddropdownmenu",
@@ -21699,7 +21615,7 @@
       "file_type": "code",
       "norm_label": "addprofilepage()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L804"
+      "source_location": "L810"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_addprofilerow",
@@ -21711,7 +21627,7 @@
       "file_type": "code",
       "norm_label": "addprofilerow()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L513"
+      "source_location": "L514"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_carouselheadertitlerow",
@@ -21723,7 +21639,7 @@
       "file_type": "code",
       "norm_label": "carouselheadertitlerow()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L172"
+      "source_location": "L173"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_launchersettingsrow",
@@ -21735,7 +21651,7 @@
       "file_type": "code",
       "norm_label": "launchersettingsrow()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L539"
+      "source_location": "L540"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_previewlabel",
@@ -21747,7 +21663,7 @@
       "file_type": "code",
       "norm_label": "previewlabel()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L798"
+      "source_location": "L804"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilecarouselcontent",
@@ -21759,7 +21675,7 @@
       "file_type": "code",
       "norm_label": "profilecarouselcontent()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L195"
+      "source_location": "L196"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilecarouselscreen",
@@ -21771,7 +21687,7 @@
       "file_type": "code",
       "norm_label": "profilecarouselscreen()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L142"
+      "source_location": "L143"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilemanagescreenpreview",
@@ -21783,7 +21699,7 @@
       "file_type": "code",
       "norm_label": "profilemanagescreenpreview()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L890"
+      "source_location": "L899"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilepreviewpage",
@@ -21795,7 +21711,7 @@
       "file_type": "code",
       "norm_label": "profilepreviewpage()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579"
+      "source_location": "L580"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilereorderlist",
@@ -21807,7 +21723,7 @@
       "file_type": "code",
       "norm_label": "profilereorderlist()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L392"
+      "source_location": "L393"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilereorderrow",
@@ -21819,7 +21735,7 @@
       "file_type": "code",
       "norm_label": "profilereorderrow()",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L459"
+      "source_location": "L460"
     },
     {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_data_apprepositorytest_any",
@@ -22242,76 +22158,88 @@
       "source_location": "L267"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickercontent",
-      "label": "FavoritesPickerContent()",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_checkinganappaddsittofavorites",
+      "label": ".checkingAnAppAddsItToFavorites()",
       "_callable": true,
       "_origin": "ast",
       "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "favoritespickercontent()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L66"
+      "norm_label": ".checkinganappaddsittofavorites()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L65"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerheader",
-      "label": "FavoritesPickerHeader()",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_checkingisblockedattheeightappcap",
+      "label": ".checkingIsBlockedAtTheEightAppCap()",
       "_callable": true,
       "_origin": "ast",
       "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "favoritespickerheader()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L132"
+      "norm_label": ".checkingisblockedattheeightappcap()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L131"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerrow",
-      "label": "FavoritesPickerRow()",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_favoritedappsrenderfirstundertheirownsectionheader",
+      "label": ".favoritedAppsRenderFirstUnderTheirOwnSectionHeader()",
       "_callable": true,
       "_origin": "ast",
       "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "favoritespickerrow()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L167"
+      "norm_label": ".favoritedappsrenderfirstundertheirownsectionheader()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L111"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerscreen",
-      "label": "FavoritesPickerScreen()",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_headerstaysvisibleafterscrollingtoallapps",
+      "label": ".headerStaysVisibleAfterScrollingToAllApps()",
       "_callable": true,
       "_origin": "ast",
       "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "favoritespickerscreen()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L50"
+      "norm_label": ".headerstaysvisibleafterscrollingtoallapps()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L92"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerscreenpreview",
-      "label": "FavoritesPickerScreenPreview()",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_setcontent",
+      "label": ".setContent()",
       "_callable": true,
       "_origin": "ast",
       "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "favoritespickerscreenpreview()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L189"
+      "norm_label": ".setcontent()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L38"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_pickersectionheader",
-      "label": "PickerSectionHeader()",
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_setcontentfordefaultfavorites",
+      "label": ".setContentForDefaultFavorites()",
       "_callable": true,
       "_origin": "ast",
       "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
+      "community_name": ".setContent",
       "file_type": "code",
-      "norm_label": "pickersectionheader()",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L157"
+      "norm_label": ".setcontentfordefaultfavorites()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L163"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreentest_favoritespickerscreentest_withnoprofileidthescreeneditsthelauncherwidedefaultlist",
+      "label": ".withNoProfileIdTheScreenEditsTheLauncherWideDefaultList()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 80,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": ".withnoprofileidthescreeneditsthelauncherwidedefaultlist()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreenTest.kt",
+      "source_location": "L184"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_defaultapprepository_defaultapprepository_categoryintents",
@@ -22818,64 +22746,76 @@
       "source_location": "L58"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_afailedaddshowsanerrormessageinsteadofsilentlydoingnothing",
-      "label": ".aFailedAddShowsAnErrorMessageInsteadOfSilentlyDoingNothing()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickercontent",
+      "label": "FavoritesPickerContent()",
       "_callable": true,
       "_origin": "ast",
       "community": 88,
-      "community_name": ".setContent",
+      "community_name": "FavoritesPickerScreen.kt",
       "file_type": "code",
-      "norm_label": ".afailedaddshowsanerrormessageinsteadofsilentlydoingnothing()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
-      "source_location": "L92"
+      "norm_label": "favoritespickercontent()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L66"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_backbuttoninvokesondone",
-      "label": ".backButtonInvokesOnDone()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerheader",
+      "label": "FavoritesPickerHeader()",
       "_callable": true,
       "_origin": "ast",
       "community": 88,
-      "community_name": ".setContent",
+      "community_name": "FavoritesPickerScreen.kt",
       "file_type": "code",
-      "norm_label": ".backbuttoninvokesondone()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
-      "source_location": "L65"
+      "norm_label": "favoritespickerheader()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L132"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_renderstheheaderandsearchfield",
-      "label": ".rendersTheHeaderAndSearchField()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerrow",
+      "label": "FavoritesPickerRow()",
       "_callable": true,
       "_origin": "ast",
       "community": 88,
-      "community_name": ".setContent",
+      "community_name": "FavoritesPickerScreen.kt",
       "file_type": "code",
-      "norm_label": ".renderstheheaderandsearchfield()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
-      "source_location": "L54"
+      "norm_label": "favoritespickerrow()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L167"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_setcontent",
-      "label": ".setContent()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerscreen",
+      "label": "FavoritesPickerScreen()",
       "_callable": true,
       "_origin": "ast",
       "community": 88,
-      "community_name": ".setContent",
+      "community_name": "FavoritesPickerScreen.kt",
       "file_type": "code",
-      "norm_label": ".setcontent()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
-      "source_location": "L34"
+      "norm_label": "favoritespickerscreen()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L50"
     },
     {
-      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_typingaqueryupdatesthesearchfield",
-      "label": ".typingAQueryUpdatesTheSearchField()",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_favoritespickerscreenpreview",
+      "label": "FavoritesPickerScreenPreview()",
       "_callable": true,
       "_origin": "ast",
       "community": 88,
-      "community_name": ".setContent",
+      "community_name": "FavoritesPickerScreen.kt",
       "file_type": "code",
-      "norm_label": ".typingaqueryupdatesthesearchfield()",
-      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
-      "source_location": "L78"
+      "norm_label": "favoritespickerscreenpreview()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L189"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_pickersectionheader",
+      "label": "PickerSectionHeader()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 88,
+      "community_name": "FavoritesPickerScreen.kt",
+      "file_type": "code",
+      "norm_label": "pickersectionheader()",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L157"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_settings_appearancesettingsscreen_accentcolorsection",
@@ -23610,64 +23550,64 @@
       "source_location": "L26"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_a_backup_from_a_newer_app_version_is_rejected_without_touching_any_repository",
-      "label": ".`a backup from a newer app version is rejected without touching any repository`()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_createdatabase",
+      "label": ".createDatabase()",
       "_callable": true,
       "_origin": "ast",
       "community": 92,
-      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "community_name": "FavoriteAppDaoTest",
       "file_type": "code",
-      "norm_label": ".`a backup from a newer app version is rejected without touching any repository`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
-      "source_location": "L95"
+      "norm_label": ".createdatabase()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L16"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_a_valid_backup_replaces_every_profile_dock_and_default_favorite_then_reports_what_was_restored",
-      "label": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_deletebycomponent_removes_only_the_matching_profile_s_entry",
+      "label": ".`deleteByComponent removes only the matching profile's entry`()",
       "_callable": true,
       "_origin": "ast",
       "community": 92,
-      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "community_name": "FavoriteAppDaoTest",
       "file_type": "code",
-      "norm_label": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
-      "source_location": "L115"
+      "norm_label": ".`deletebycomponent removes only the matching profile's entry`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L72"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_an_unreadable_or_non_backup_file_returns_invalidfile_without_touching_any_repository",
-      "label": ".`an unreadable or non-backup file returns InvalidFile without touching any repository`()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_deleting_a_profile_cascades_to_its_favorites",
+      "label": ".`deleting a profile cascades to its favorites`()",
       "_callable": true,
       "_origin": "ast",
       "community": 92,
-      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "community_name": "FavoriteAppDaoTest",
       "file_type": "code",
-      "norm_label": ".`an unreadable or non-backup file returns invalidfile without touching any repository`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
-      "source_location": "L84"
+      "norm_label": ".`deleting a profile cascades to its favorites`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L56"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_an_unrecognized_enum_string_in_the_backup_falls_back_to_that_field_s_default_instead_of_failing_the_import",
-      "label": ".`an unrecognized enum string in the backup falls back to that field's default instead of failing the import`()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_favorites_are_scoped_per_profile_not_shared",
+      "label": ".`favorites are scoped per profile, not shared`()",
       "_callable": true,
       "_origin": "ast",
       "community": 92,
-      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "community_name": "FavoriteAppDaoTest",
       "file_type": "code",
-      "norm_label": ".`an unrecognized enum string in the backup falls back to that field's default instead of failing the import`()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
-      "source_location": "L175"
+      "norm_label": ".`favorites are scoped per profile, not shared`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L38"
     },
     {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_importbackupusecasetest_importbackupusecasetest_minimalsettings",
-      "label": ".minimalSettings()",
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest_favoriteappdaotest_insert_then_observe_returns_the_inserted_favorite_scoped_to_its_profile",
+      "label": ".`insert then observe returns the inserted favorite scoped to its profile`()",
       "_callable": true,
       "_origin": "ast",
       "community": 92,
-      "community_name": ".`a valid backup replaces every profile, dock, and default favorite, then reports what was restored`",
+      "community_name": "FavoriteAppDaoTest",
       "file_type": "code",
-      "norm_label": ".minimalsettings()",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ImportBackupUseCaseTest.kt",
-      "source_location": "L50"
+      "norm_label": ".`insert then observe returns the inserted favorite scoped to its profile`()",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L21"
     },
     {
       "id": "app_src_test_kotlin_com_lumenlauncher_app_ui_settings_appearancesettingsviewmodeltest_appearancesettingsviewmodeltest_changing_accent_source_calls_the_repository_setter",
@@ -24304,6 +24244,66 @@
       "norm_label": ".`shrinking below the provider's own declared minimum is still accepted \u2014 widgets adapt to whatever size the user picks`()",
       "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ResolveWidgetResizeUseCaseTest.kt",
       "source_location": "L34"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_afailedaddshowsanerrormessageinsteadofsilentlydoingnothing",
+      "label": ".aFailedAddShowsAnErrorMessageInsteadOfSilentlyDoingNothing()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 99,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": ".afailedaddshowsanerrormessageinsteadofsilentlydoingnothing()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
+      "source_location": "L92"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_backbuttoninvokesondone",
+      "label": ".backButtonInvokesOnDone()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 99,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": ".backbuttoninvokesondone()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
+      "source_location": "L65"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_renderstheheaderandsearchfield",
+      "label": ".rendersTheHeaderAndSearchField()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 99,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": ".renderstheheaderandsearchfield()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
+      "source_location": "L54"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_setcontent",
+      "label": ".setContent()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 99,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": ".setcontent()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
+      "source_location": "L34"
+    },
+    {
+      "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest_hubwidgetpickerscreentest_typingaqueryupdatesthesearchfield",
+      "label": ".typingAQueryUpdatesTheSearchField()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 99,
+      "community_name": ".setContent",
+      "file_type": "code",
+      "norm_label": ".typingaqueryupdatesthesearchfield()",
+      "source_file": "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreenTest.kt",
+      "source_location": "L78"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_components_dashedborder",
@@ -25310,34 +25310,12 @@
       "id": "app_src_test_kotlin_com_lumenlauncher_app_domain_exportbackupusecasetest",
       "label": "ExportBackupUseCaseTest.kt",
       "_origin": "ast",
-      "community": 111,
+      "community": 113,
       "community_name": "ExportBackupUseCaseTest.kt",
       "file_type": "code",
       "norm_label": "exportbackupusecasetest.kt",
       "source_file": "app/src/test/kotlin/com/lumenlauncher/app/domain/ExportBackupUseCaseTest.kt",
       "source_location": "L1"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailurereason_hub_full",
-      "label": "HUB_FULL",
-      "_origin": "ast",
-      "community": 112,
-      "community_name": "AddFailureReason",
-      "file_type": "code",
-      "norm_label": "hub_full",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L18"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailurereason_setup_cancelled",
-      "label": "SETUP_CANCELLED",
-      "_origin": "ast",
-      "community": 112,
-      "community_name": "AddFailureReason",
-      "file_type": "code",
-      "norm_label": "setup_cancelled",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
-      "source_location": "L18"
     },
     {
       "id": "design_handoff_minimal_launcher_readme_accent_handling",
@@ -25542,6 +25520,28 @@
       "norm_label": "modifier",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailurereason_hub_full",
+      "label": "HUB_FULL",
+      "_origin": "ast",
+      "community": 118,
+      "community_name": "AddFailureReason",
+      "file_type": "code",
+      "norm_label": "hub_full",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L18"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate_addfailurereason_setup_cancelled",
+      "label": "SETUP_CANCELLED",
+      "_origin": "ast",
+      "community": 118,
+      "community_name": "AddFailureReason",
+      "file_type": "code",
+      "norm_label": "setup_cancelled",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L18"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_settings_notificationaccessexplanationviewmodel",
@@ -25967,50 +25967,6 @@
       "source_location": "L1"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel",
-      "label": "LauncherViewModel.kt",
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "launcherviewmodel.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_kt_sharedflow",
-      "label": "SharedFlow",
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "sharedflow",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_kt_stateflow",
-      "label": "StateFlow",
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "stateflow",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_kt_viewmodel",
-      "label": "ViewModel",
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "LauncherViewModel",
-      "file_type": "code",
-      "norm_label": "viewmodel",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_drawer_alphabetrailtest",
       "label": "AlphabetRailTest.kt",
       "_origin": "ast",
@@ -26121,36 +26077,36 @@
       "source_location": ""
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen",
-      "label": "HubWidgetPickerScreen.kt",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository",
+      "label": "FavoriteAppRepository.kt",
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickerscreen.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
+      "norm_label": "favoriteapprepository.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
       "source_location": "L1"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_kt_modifier",
-      "label": "Modifier",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_kt_flow",
+      "label": "Flow",
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "modifier",
+      "norm_label": "flow",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate",
-      "label": "HubWidgetPickerUiState.kt",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_local_favoriteappentity",
+      "label": "FavoriteAppEntity.kt",
       "_origin": "ast",
       "community": 14,
-      "community_name": "WidgetProviderOption",
+      "community_name": "FavoriteAppRepository",
       "file_type": "code",
-      "norm_label": "hubwidgetpickeruistate.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "norm_label": "favoriteappentity.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/local/FavoriteAppEntity.kt",
       "source_location": "L1"
     },
     {
@@ -26174,17 +26130,6 @@
       "norm_label": "flow",
       "source_file": "",
       "source_location": ""
-    },
-    {
-      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest",
-      "label": "FavoriteAppDaoTest.kt",
-      "_origin": "ast",
-      "community": 145,
-      "community_name": "FavoriteAppDaoTest",
-      "file_type": "code",
-      "norm_label": "favoriteappdaotest.kt",
-      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
-      "source_location": "L1"
     },
     {
       "id": "app_src_androidtest_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreentest",
@@ -27097,39 +27042,6 @@
       "file_type": "code",
       "norm_label": "hubviewmodeltest.kt",
       "source_file": "app/src/test/kotlin/com/lumenlauncher/app/ui/hub/HubViewModelTest.kt",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository",
-      "label": "FavoriteAppRepository.kt",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "FavoriteAppRepository",
-      "file_type": "code",
-      "norm_label": "favoriteapprepository.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/FavoriteAppRepository.kt",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_favoriteapprepository_kt_flow",
-      "label": "Flow",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "FavoriteAppRepository",
-      "file_type": "code",
-      "norm_label": "flow",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_local_favoriteappentity",
-      "label": "FavoriteAppEntity.kt",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "FavoriteAppRepository",
-      "file_type": "code",
-      "norm_label": "favoriteappentity.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/local/FavoriteAppEntity.kt",
       "source_location": "L1"
     },
     {
@@ -29508,81 +29420,37 @@
       "source_location": ""
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption",
-      "label": "ClockFontOption.kt",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen",
+      "label": "HubWidgetPickerScreen.kt",
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": "clockfontoption.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "norm_label": "hubwidgetpickerscreen.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerScreen.kt",
       "source_location": "L1"
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_launcher_default",
-      "label": "LAUNCHER_DEFAULT",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickerscreen_kt_modifier",
+      "label": "Modifier",
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": "launcher_default",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L17"
+      "norm_label": "modifier",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_manrope",
-      "label": "MANROPE",
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_hub_picker_hubwidgetpickeruistate",
+      "label": "HubWidgetPickerUiState.kt",
       "_origin": "ast",
       "community": 39,
-      "community_name": "ClockFontOption",
+      "community_name": "WidgetProviderOption",
       "file_type": "code",
-      "norm_label": "manrope",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L21"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_noto_sans",
-      "label": "NOTO_SANS",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "ClockFontOption",
-      "file_type": "code",
-      "norm_label": "noto_sans",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L20"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_poppins",
-      "label": "POPPINS",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "ClockFontOption",
-      "file_type": "code",
-      "norm_label": "poppins",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L22"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_roboto_flex",
-      "label": "ROBOTO_FLEX",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "ClockFontOption",
-      "file_type": "code",
-      "norm_label": "roboto_flex",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L19"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_system",
-      "label": "SYSTEM",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "ClockFontOption",
-      "file_type": "code",
-      "norm_label": "system",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
-      "source_location": "L18"
+      "norm_label": "hubwidgetpickeruistate.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/picker/HubWidgetPickerUiState.kt",
+      "source_location": "L1"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_launcherfontoption",
@@ -30669,6 +30537,83 @@
       "norm_label": "color",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption",
+      "label": "ClockFontOption.kt",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "clockfontoption.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_launcher_default",
+      "label": "LAUNCHER_DEFAULT",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "launcher_default",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L17"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_manrope",
+      "label": "MANROPE",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "manrope",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_noto_sans",
+      "label": "NOTO_SANS",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "noto_sans",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L20"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_poppins",
+      "label": "POPPINS",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "poppins",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L22"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_roboto_flex",
+      "label": "ROBOTO_FLEX",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "roboto_flex",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L19"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_data_model_clockfontoption_clockfontoption_system",
+      "label": "SYSTEM",
+      "_origin": "ast",
+      "community": 55,
+      "community_name": "ClockFontOption",
+      "file_type": "code",
+      "norm_label": "system",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/data/model/ClockFontOption.kt",
+      "source_location": "L18"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_dock_dockapppickerscreen",
@@ -32499,6 +32444,50 @@
       "source_location": "L62"
     },
     {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel",
+      "label": "LauncherViewModel.kt",
+      "_origin": "ast",
+      "community": 78,
+      "community_name": "LauncherViewModel",
+      "file_type": "code",
+      "norm_label": "launcherviewmodel.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/LauncherViewModel.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_kt_sharedflow",
+      "label": "SharedFlow",
+      "_origin": "ast",
+      "community": 78,
+      "community_name": "LauncherViewModel",
+      "file_type": "code",
+      "norm_label": "sharedflow",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_kt_stateflow",
+      "label": "StateFlow",
+      "_origin": "ast",
+      "community": 78,
+      "community_name": "LauncherViewModel",
+      "file_type": "code",
+      "norm_label": "stateflow",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_launcher_launcherviewmodel_kt_viewmodel",
+      "label": "ViewModel",
+      "_origin": "ast",
+      "community": 78,
+      "community_name": "LauncherViewModel",
+      "file_type": "code",
+      "norm_label": "viewmodel",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_components_themeddropdownmenu",
       "label": "ThemedDropdownMenu.kt",
       "_origin": "ast",
@@ -32562,7 +32551,7 @@
       "file_type": "code",
       "norm_label": "manage",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L133"
+      "source_location": "L134"
     },
     {
       "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_profilecarouselscreen_profilecarouselmode_switch",
@@ -32573,7 +32562,7 @@
       "file_type": "code",
       "norm_label": "switch",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L133"
+      "source_location": "L134"
     },
     {
       "id": "paddingvalues",
@@ -32649,28 +32638,6 @@
       "community_name": "ContactRepositoryTest",
       "file_type": "code",
       "norm_label": "matrixcursor",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen",
-      "label": "FavoritesPickerScreen.kt",
-      "_origin": "ast",
-      "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
-      "file_type": "code",
-      "norm_label": "favoritespickerscreen.kt",
-      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_kt_modifier",
-      "label": "Modifier",
-      "_origin": "ast",
-      "community": 80,
-      "community_name": "FavoritesPickerScreen.kt",
-      "file_type": "code",
-      "norm_label": "modifier",
       "source_file": "",
       "source_location": ""
     },
@@ -32794,6 +32761,28 @@
       "community_name": "LauncherActivity.kt",
       "file_type": "code",
       "norm_label": "componentactivity",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen",
+      "label": "FavoritesPickerScreen.kt",
+      "_origin": "ast",
+      "community": 88,
+      "community_name": "FavoritesPickerScreen.kt",
+      "file_type": "code",
+      "norm_label": "favoritespickerscreen.kt",
+      "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/FavoritesPickerScreen.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_src_main_kotlin_com_lumenlauncher_app_ui_profiles_favoritespickerscreen_kt_modifier",
+      "label": "Modifier",
+      "_origin": "ast",
+      "community": 88,
+      "community_name": "FavoritesPickerScreen.kt",
+      "file_type": "code",
+      "norm_label": "modifier",
       "source_file": "",
       "source_location": ""
     },
@@ -33148,6 +33137,17 @@
       "norm_label": "preferences",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "app_src_test_kotlin_com_lumenlauncher_app_data_local_favoriteappdaotest",
+      "label": "FavoriteAppDaoTest.kt",
+      "_origin": "ast",
+      "community": 92,
+      "community_name": "FavoriteAppDaoTest",
+      "file_type": "code",
+      "norm_label": "favoriteappdaotest.kt",
+      "source_file": "app/src/test/kotlin/com/lumenlauncher/app/data/local/FavoriteAppDaoTest.kt",
+      "source_location": "L1"
     },
     {
       "id": "design_handoff_minimal_launcher_readme_about_the_design_files",
@@ -50137,7 +50137,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L187",
+      "source_location": "L188",
       "weight": 1.0
     },
     {
@@ -50149,7 +50149,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L223",
+      "source_location": "L224",
       "weight": 1.0
     },
     {
@@ -50161,7 +50161,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L270",
+      "source_location": "L271",
       "weight": 1.0
     },
     {
@@ -50173,7 +50173,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L290",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -50185,7 +50185,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L302",
+      "source_location": "L303",
       "weight": 1.0
     },
     {
@@ -50197,7 +50197,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L339",
+      "source_location": "L340",
       "weight": 1.0
     },
     {
@@ -50209,7 +50209,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L362",
+      "source_location": "L363",
       "weight": 1.0
     },
     {
@@ -50221,7 +50221,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L375",
+      "source_location": "L376",
       "weight": 1.0
     },
     {
@@ -50233,7 +50233,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L153",
+      "source_location": "L154",
       "weight": 1.0
     },
     {
@@ -50245,7 +50245,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L894",
+      "source_location": "L903",
       "weight": 1.0
     },
     {
@@ -50257,7 +50257,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L895",
+      "source_location": "L904",
       "weight": 1.0
     },
     {
@@ -50269,7 +50269,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L896",
+      "source_location": "L905",
       "weight": 1.0
     },
     {
@@ -50281,7 +50281,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L898",
+      "source_location": "L907",
       "weight": 1.0
     },
     {
@@ -50293,7 +50293,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L663",
+      "source_location": "L669",
       "weight": 1.0
     },
     {
@@ -50305,7 +50305,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L680",
+      "source_location": "L686",
       "weight": 1.0
     },
     {
@@ -50317,7 +50317,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L706",
+      "source_location": "L712",
       "weight": 1.0
     },
     {
@@ -50329,7 +50329,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L716",
+      "source_location": "L722",
       "weight": 1.0
     },
     {
@@ -50341,7 +50341,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L749",
+      "source_location": "L755",
       "weight": 1.0
     },
     {
@@ -50353,7 +50353,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L405",
+      "source_location": "L406",
       "weight": 1.0
     },
     {
@@ -50365,7 +50365,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L416",
+      "source_location": "L417",
       "weight": 1.0
     },
     {
@@ -50377,7 +50377,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L429",
+      "source_location": "L430",
       "weight": 1.0
     },
     {
@@ -50389,7 +50389,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L450",
+      "source_location": "L451",
       "weight": 1.0
     },
     {
@@ -50401,7 +50401,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L497",
+      "source_location": "L498",
       "weight": 1.0
     },
     {
@@ -50413,7 +50413,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L498",
+      "source_location": "L499",
       "weight": 1.0
     },
     {
@@ -62641,7 +62641,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -62653,7 +62653,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -62665,7 +62665,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L392",
+      "source_location": "L393",
       "weight": 1.0
     },
     {
@@ -83938,7 +83938,7 @@
         "target_fqn": "com.lumenlauncher.app.ui.theme.LumenLauncherTheme"
       },
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L96",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -84148,7 +84148,7 @@
         "target_fqn": "com.lumenlauncher.app.ui.theme.LumenType"
       },
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L97",
+      "source_location": "L98",
       "weight": 1.0
     },
     {
@@ -92248,7 +92248,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L804",
+      "source_location": "L810",
       "weight": 1.0
     },
     {
@@ -92260,7 +92260,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L513",
+      "source_location": "L514",
       "weight": 1.0
     },
     {
@@ -92272,7 +92272,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L172",
+      "source_location": "L173",
       "weight": 1.0
     },
     {
@@ -92284,7 +92284,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L539",
+      "source_location": "L540",
       "weight": 1.0
     },
     {
@@ -92296,7 +92296,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L195",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -92308,7 +92308,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L195",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -92320,7 +92320,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L195",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -92332,7 +92332,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L142",
+      "source_location": "L143",
       "weight": 1.0
     },
     {
@@ -92344,7 +92344,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L142",
+      "source_location": "L143",
       "weight": 1.0
     },
     {
@@ -92356,7 +92356,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L142",
+      "source_location": "L143",
       "weight": 1.0
     },
     {
@@ -92368,7 +92368,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92380,7 +92380,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92392,7 +92392,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92404,7 +92404,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92416,7 +92416,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92428,7 +92428,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92440,7 +92440,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92452,7 +92452,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92464,7 +92464,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92476,7 +92476,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92488,7 +92488,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92500,7 +92500,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92512,7 +92512,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -92524,7 +92524,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L392",
+      "source_location": "L393",
       "weight": 1.0
     },
     {
@@ -92536,7 +92536,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L459",
+      "source_location": "L460",
       "weight": 1.0
     },
     {
@@ -92548,7 +92548,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L459",
+      "source_location": "L460",
       "weight": 1.0
     },
     {
@@ -97201,7 +97201,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L133",
+      "source_location": "L134",
       "weight": 1.0
     },
     {
@@ -97212,7 +97212,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L133",
+      "source_location": "L134",
       "weight": 1.0
     },
     {
@@ -103526,7 +103526,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L133",
+      "source_location": "L134",
       "weight": 1.0
     },
     {
@@ -103537,7 +103537,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L142",
+      "source_location": "L143",
       "weight": 1.0
     },
     {
@@ -103548,7 +103548,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L172",
+      "source_location": "L173",
       "weight": 1.0
     },
     {
@@ -103559,7 +103559,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L195",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -103570,7 +103570,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L392",
+      "source_location": "L393",
       "weight": 1.0
     },
     {
@@ -103581,7 +103581,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L459",
+      "source_location": "L460",
       "weight": 1.0
     },
     {
@@ -103592,7 +103592,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L513",
+      "source_location": "L514",
       "weight": 1.0
     },
     {
@@ -103603,7 +103603,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L539",
+      "source_location": "L540",
       "weight": 1.0
     },
     {
@@ -103614,7 +103614,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -103625,7 +103625,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L798",
+      "source_location": "L804",
       "weight": 1.0
     },
     {
@@ -103636,7 +103636,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L804",
+      "source_location": "L810",
       "weight": 1.0
     },
     {
@@ -103647,7 +103647,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L890",
+      "source_location": "L899",
       "weight": 1.0
     },
     {
@@ -124281,7 +124281,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L849",
+      "source_location": "L858",
       "weight": 1.0
     },
     {
@@ -124293,7 +124293,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L516",
+      "source_location": "L517",
       "weight": 1.0
     },
     {
@@ -124305,7 +124305,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L179",
+      "source_location": "L180",
       "weight": 1.0
     },
     {
@@ -124317,7 +124317,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L543",
+      "source_location": "L544",
       "weight": 1.0
     },
     {
@@ -124329,7 +124329,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L346",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -124341,7 +124341,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L744",
+      "source_location": "L750",
       "weight": 1.0
     },
     {
@@ -124353,7 +124353,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt",
-      "source_location": "L470",
+      "source_location": "L471",
       "weight": 1.0
     },
     {
@@ -127792,5 +127792,5 @@
       "source_file": "CLAUDE.md"
     }
   ],
-  "built_at_commit": "5a4e534f81dcfe7f1285557abd54a5b5c00118a9"
+  "built_at_commit": "d54a6082cdc609e5ff439c20d3f4cc24503802f8"
 }
