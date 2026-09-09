@@ -115,6 +115,7 @@ import com.lumenlauncher.app.ui.theme.LumenType
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Scrim
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import kotlinx.coroutines.launch
 
 private const val MAX_APP_SEARCH_RESULTS = 5
@@ -223,7 +224,7 @@ fun AppDrawerScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DrawerOverlay.copy(alpha = opacity))
+            .background(SurfaceContainer.copy(alpha = opacity))
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
         if (searchBarPosition == SearchBarPosition.TOP) {

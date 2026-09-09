@@ -1,7 +1,6 @@
 package com.lumenlauncher.app.ui.profiles
 
 import android.content.res.Configuration
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,18 +22,15 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -76,6 +72,7 @@ import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.components.ConfirmDialog
+import com.lumenlauncher.app.ui.components.TonalButton
 import com.lumenlauncher.app.ui.home.AppRow
 import com.lumenlauncher.app.ui.home.ClockBlock
 import com.lumenlauncher.app.ui.home.DockIcon
@@ -139,33 +136,6 @@ fun ProfileCarouselScreen(
     )
 }
 
-/** Border + text on a light fill — a quieter counterpart to a filled button. */
-@Composable
-private fun SecondaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
-    OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier,
-        // M3 buttons are fully rounded — see CLAUDE.md's Material 3 shape section.
-        shape = CircleShape,
-        border = BorderStroke(1.dp, if (enabled) Ink.copy(alpha = 0.14f) else Hairline),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Surface,
-            contentColor = Ink,
-            disabledContainerColor = Surface,
-            disabledContentColor = Muted,
-        ),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-    ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
 @Composable
 private fun ProfileCarouselContent(
     uiState: ProfileCarouselUiState,
@@ -208,7 +178,7 @@ private fun ProfileCarouselContent(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 20.dp, end = 20.dp),
             horizontalArrangement = Arrangement.End,
         ) {
-            SecondaryButton(
+            TonalButton(
                 text = "Reorder",
                 enabled = profiles.size > 1,
                 onClick = onReorderProfiles,

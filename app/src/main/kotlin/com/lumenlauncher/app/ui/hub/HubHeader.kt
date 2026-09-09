@@ -1,7 +1,6 @@
 package com.lumenlauncher.app.ui.hub
 
 import android.content.res.Configuration
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.domain.HUB_MAX_WIDGETS
-import com.lumenlauncher.app.ui.theme.Accent
+import com.lumenlauncher.app.ui.components.TonalButton
 import com.lumenlauncher.app.ui.theme.HomeAppTextColor
 import com.lumenlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
@@ -64,13 +63,11 @@ fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick:
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
-        Text(
+        TonalButton(
             text = "Add",
-            style = MaterialTheme.typography.bodyLarge.copy(shadow = homeAppLabelShadow(if (isAtCapacity) HomeAppTextColorFaint else Accent)),
-            color = if (isAtCapacity) HomeAppTextColorFaint else Accent,
-            modifier = Modifier
-                .testTag("hub_add_button")
-                .clickable(enabled = !isAtCapacity, onClick = onAddClick),
+            enabled = !isAtCapacity,
+            onClick = onAddClick,
+            modifier = Modifier.testTag("hub_add_button"),
         )
     }
 }

@@ -813,6 +813,29 @@ screen (not a mode of the carousel sharing its ViewModel), and the `SWITCH` caro
   `reorderButtonNavigatesToManageProfiles` / `reorderButtonIsDisabledWithOnlyOneProfile`. Full
   unit suite + all 40 `ui.profiles` instrumented tests green on `emulator-5554`; verified the
   carousel/overlay + Manage Profiles screen on-device.
-- **Follow-up:** the Hub's translucent-overlay base colour switched `DrawerOverlay` → `SurfaceContainer`
-  so the Hub, the Switch Profiles carousel, and every settings page share one base tone
-  (`SurfaceContainer`); each keeps its own alpha. `DrawerOverlay` is now the App Drawer's only user.
+- **Follow-up:** the Hub's translucent-overlay base colour switched `DrawerOverlay` → `SurfaceContainer`,
+  and then the App Drawer's did too — so the Hub, App Drawer, the Switch Profiles carousel, and
+  every settings page all share one base tone (`SurfaceContainer`); each keeps its own alpha.
+  `DrawerOverlay` is now unused.
+
+---
+
+## Secondary actions use a shared tonal-accent square button (`TonalButton`)
+
+The carousel's *Reorder*, the Hub header's *Add*, and the Hub empty-state's *Add widget* were
+three different one-off treatments (a bordered `OutlinedButton`; plain clickable text; an
+`Accent`-filled `Box`). Unified into one component, `ui/components/TonalButton.kt`:
+
+- **M3 filled-tonal role** — accent-tinted container + `Accent` text/icon. This app maps no
+  `secondaryContainer` slot, so the fill is `Accent.copy(alpha = 0.28f).compositeOver(Surface)`
+  — composited to an **opaque** colour so the button looks the same on the translucent Switch
+  Profiles scrim, straight on the wallpaper (Hub), or on an opaque card. A `1dp` `Accent @ 32%`
+  hairline keeps the edge defined on any background. (First cut used a bare `alpha` fill and was
+  invisible on the translucent carousel — a translucent layer over a translucent scrim.)
+- **M3 Expressive square shape** — `MaterialTheme.shapes.medium` (12dp), a **deliberate
+  departure** from `CLAUDE.md`'s "buttons = Full/`CircleShape`" rule, per direct request. M3
+  Expressive supports both round and square button shapes; noted in the component KDoc.
+- `ProfileCarouselScreen`'s inline `SecondaryButton` deleted; `HubHeader` / `HubEmptyState`
+  dropped their `clickable`/`background`/`Accent`/`Surface` imports.
+- Tests: existing `hub_add_button` / `hub_empty_add_widget` / `profile_carousel_reorder` test
+  tags preserved, so `ui.hub` + `ui.profiles` instrumented suites cover it unchanged.
