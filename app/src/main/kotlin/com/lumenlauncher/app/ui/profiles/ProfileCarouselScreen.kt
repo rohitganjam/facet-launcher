@@ -91,13 +91,13 @@ import com.lumenlauncher.app.ui.home.DockIcon
 import com.lumenlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
 import com.lumenlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.lumenlauncher.app.ui.theme.Accent
-import com.lumenlauncher.app.ui.theme.CarouselBackdrop
 import com.lumenlauncher.app.ui.theme.Faint
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.LumenType
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import com.lumenlauncher.app.ui.theme.resolve
 
 private val CAROUSEL_PAGE_SPACING = 8.dp
@@ -217,7 +217,7 @@ private fun ProfileCarouselContent(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(CarouselBackdrop)
+                .background(SurfaceContainer)
                 .windowInsetsPadding(WindowInsets.systemBars),
         ) {
             CarouselHeaderTitleRow(title = if (manageMode) "Manage Profiles" else "Switch Profiles", onBack = onBack)
@@ -239,7 +239,8 @@ private fun ProfileCarouselContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(CarouselBackdrop)
+            // Matches every settings-style screen's page background (SettingsScreen et al.).
+            .background(SurfaceContainer)
             .testTag("profile_carousel_screen")
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {

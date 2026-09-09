@@ -747,3 +747,7 @@ Follow-up from an on-device dark-mode screenshot review of the `SWITCH` carousel
   nothing; it now paints the backdrop + `CarouselHeaderTitleRow` so the screen is opaque and
   reads as "arrived" during the slide. `ProfileCarouselScreenTest` 19/19 still green (the empty
   state deliberately omits the `profile_carousel_screen` tag the test helper waits on).
+- **Page background now `SurfaceContainer`** (was the dimmer, carousel-only `CarouselBackdrop`
+  token) — matches every settings-style screen (`SettingsScreen`, `ProfileSettingsScreen`, …),
+  so navigating Settings ↔ Switch/Manage Profiles no longer steps to a darker surface. The
+  `CarouselBackdrop` / `CarouselBackdropDragging` tokens are now unused.
