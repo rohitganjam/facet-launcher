@@ -11,6 +11,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Bundle
+import android.util.SizeF
 import com.lumenlauncher.app.data.model.WidgetProviderOption
 import com.lumenlauncher.app.domain.HUB_COLUMNS
 import com.lumenlauncher.app.domain.calculateHubCellWidth
@@ -47,21 +49,35 @@ class AppWidgetRepository @Inject constructor(
     private fun dpToCells(dp: Int, cellUnitDp: Int): Int =
         ((dp + WIDGET_CELL_PADDING_DP) / cellUnitDp).coerceAtLeast(1)
 
+    /**
+     * A provider's default span, in Hub grid cells (columns to rows). Prefers `targetCellWidth`/
+     * `targetCellHeight` (API 31+): a modern clock/weather widget commonly declares `minWidth`
+     * near 0 and its real intent as `4 x 2` cells — the legacy dp math would place it 1x1, far
+     * too small for it to render. Falls back to `minWidth`/`minHeight` for older providers.
+     */
+    fun defaultSpanFor(info: AppWidgetProviderInfo): Pair<Int, Int> {
+        val cellUnitDp = calculateHubCellWidth(context)
+        val columns = (info.targetCellWidth.takeIf { it > 0 } ?: dpToCells(info.minWidth, cellUnitDp))
+            .coerceIn(1, HUB_COLUMNS)
+        val rows = (info.targetCellHeight.takeIf { it > 0 } ?: dpToCells(info.minHeight, cellUnitDp))
+            .coerceAtLeast(1)
+        return columns to rows
+    }
+
+    /** [defaultSpanFor] by id — `null` when the id is orphaned (its provider was uninstalled). */
+    fun defaultSpan(appWidgetId: Int): Pair<Int, Int>? = getAppWidgetInfo(appWidgetId)?.let(::defaultSpanFor)
+
     fun getInstalledProviders(): List<AppWidgetProviderInfo> = appWidgetManager.installedProviders
 
     /** Stable UI options for the add-widget picker (README `4c`) — grouped by the picker's own owning-app logic, not here. */
     fun getWidgetProviderOptions(): List<WidgetProviderOption> {
         val packageManager = context.packageManager
-        val cellUnitDp = calculateHubCellWidth(context)
         return getInstalledProviders().mapNotNull { info ->
             val appLabel = runCatching {
                 packageManager.getApplicationLabel(packageManager.getApplicationInfo(info.provider.packageName, 0)).toString()
             }.getOrNull() ?: return@mapNotNull null
-            
-            // A widget's span must never exceed the grid's own column count, even if its
-            // minWidth metadata is large (e.g. a 6-column requirement on a 5-column grid).
-            val columns = dpToCells(info.minWidth, cellUnitDp).coerceAtMost(HUB_COLUMNS)
-            val rows = dpToCells(info.minHeight, cellUnitDp)
+
+            val (columns, rows) = defaultSpanFor(info)
 
             WidgetProviderOption(
                 provider = info.provider,
@@ -112,6 +128,31 @@ class AppWidgetRepository @Inject constructor(
     fun startListening() = host.startListening()
 
     fun stopListening() = host.stopListening()
+
+    /**
+     * Pushes a hosted widget's on-screen size (dp) into its options. Sets `OPTION_APPWIDGET_SIZES`
+     * (API 31+) explicitly: modern RemoteViews/Glance widgets (Samsung's clock, battery, ...) read
+     * it to pick a responsive layout, and an *empty* list makes them throw `NoSuchElementException`
+     * mid-recomposition so the host just shows "Can't show content". `AppWidgetHostView`'s own
+     * `updateAppWidgetSize` leaves the list `[]` on One UI (confirmed via `dumpsys appwidget` —
+     * every other launcher populates it), so the Hub has to set it here.
+     */
+    fun updateWidgetSize(appWidgetId: Int, widthDp: Int, heightDp: Int) {
+        if (widthDp <= 0 || heightDp <= 0) return
+        appWidgetManager.updateAppWidgetOptions(
+            appWidgetId,
+            Bundle().apply {
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDp)
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDp)
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widthDp)
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDp)
+                putParcelableArrayList(
+                    AppWidgetManager.OPTION_APPWIDGET_SIZES,
+                    arrayListOf(SizeF(widthDp.toFloat(), heightDp.toFloat())),
+                )
+            },
+        )
+    }
 
     fun createHostView(context: Context, appWidgetId: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
         host.createView(context, appWidgetId, info)

@@ -42,7 +42,7 @@ class HubWidgetPickerScreenTest {
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                 )
-                HubWidgetPickerViewModel(context, appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
+                HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
             LumenLauncherTheme {
                 HubWidgetPickerScreen(onDone = onDone, viewModel = viewModel)

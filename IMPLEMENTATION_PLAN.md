@@ -754,3 +754,31 @@ Follow-up from an on-device dark-mode screenshot review of the `SWITCH` carousel
 - **Preview cards (and the Add-profile card) now carry the `SettingsCard` lift** —
   `shadow(4.dp)` + `border(1.dp, Hairline)` on the `extraLarge` shape — since the
   `Surface`-on-`SurfaceContainer` tone step alone is too small to read as raised.
+
+---
+
+## Hub — "Can't show content" / widgets placed 1×1 (found via on-device Samsung logs)
+
+Two bugs, both in how the Hub sizes hosted `AppWidgetHostView`s. Confirmed against `dumpsys
+appwidget` (Lumen's widgets had `appWidgetSizes=[]` while every other launcher's were populated)
+and logcat (Samsung's Glance clock widget throwing `NoSuchElementException` mid-recomposition).
+
+- **`OPTION_APPWIDGET_SIZES` was never set** → modern RemoteViews/Glance widgets (Samsung clock,
+  battery, weather, …) do `sizes.first()` on an empty list and fail to render, so the host shows
+  "Can't show content". `AppWidgetHostView.updateAppWidgetSize` leaves it `[]` on One UI. New
+  `AppWidgetRepository.updateWidgetSize(appWidgetId, w, h)` calls `appWidgetManager.updateAppWidgetOptions`
+  with an explicit `[SizeF(w, h)]` (+ min/max); `HubWidgetTile` now calls it (via a new
+  `onSizeChanged` lambda threaded through `HubScreen`/`HubGrid`) on every size change, guarded on
+  `w > 0 && h > 0`, as the *last* write so it wins the merged options bundle.
+- **Widgets were placed 1×1** because the span came from `minWidth`/`minHeight` only — a modern
+  widget declares those near 0 and its real intent in `targetCellWidth`/`targetCellHeight`
+  (API 31+). New `AppWidgetRepository.defaultSpanFor(info)` prefers the target cells, clamped to
+  `HUB_COLUMNS`, and falls back to the dp math. Used by both the picker display
+  (`getWidgetProviderOptions`) and placement (`HubWidgetPickerViewModel.finishPlacing`, which
+  dropped its own copy of the dp math and its now-unused `@ApplicationContext`).
+- Tests: `AppWidgetRepositoryTest` (`updateWidgetSize` sets a non-empty `OPTION_APPWIDGET_SIZES`
+  / ignores a 0-size tile; `defaultSpanFor` prefers/clamps target cells, falls back to minWidth);
+  `HubWidgetPickerViewModelTest` updated for the new constructor + `defaultSpan` stub. Full unit
+  suite + all `ui.hub` and `ui.launcher` instrumented tests green on `emulator-5554`.
+- **Note:** the span fix only affects *newly added* widgets — a widget already saved at 1×1 keeps
+  its stored span until removed + re-added (or resized).

@@ -58,6 +58,10 @@ class HubViewModel @Inject constructor(
         appWidgetRepository.stopListening()
     }
 
+    /** The tile's live on-screen size (dp) — see [AppWidgetRepository.updateWidgetSize]. */
+    fun updateWidgetSize(appWidgetId: Int, widthDp: Int, heightDp: Int) =
+        appWidgetRepository.updateWidgetSize(appWidgetId, widthDp, heightDp)
+
     /** `null` when the widget id has no resolvable provider (e.g. it's orphaned). */
     fun createHostView(context: Context, appWidgetId: Int): AppWidgetHostView? =
         appWidgetRepository.getAppWidgetInfo(appWidgetId)?.let { info ->

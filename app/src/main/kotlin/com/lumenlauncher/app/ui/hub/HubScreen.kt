@@ -39,6 +39,7 @@ fun HubScreen(
     HubContent(
         uiState = uiState,
         createHostView = viewModel::createHostView,
+        onWidgetSizeChanged = viewModel::updateWidgetSize,
         onAddClick = onAddClick,
         onManageClick = onManageClick,
         onRemoveOrphan = viewModel::onRemoveOrphan,
@@ -55,6 +56,7 @@ fun HubScreen(
 private fun HubContent(
     uiState: HubUiState,
     createHostView: (Context, Int) -> AppWidgetHostView?,
+    onWidgetSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     onAddClick: () -> Unit,
     onManageClick: () -> Unit,
     onRemoveOrphan: (Int) -> Unit,
@@ -94,6 +96,7 @@ private fun HubContent(
                             widgets = uiState.widgets,
                             columns = uiState.columns,
                             createHostView = createHostView,
+                            onWidgetSizeChanged = onWidgetSizeChanged,
                             onRemoveOrphan = onRemoveOrphan,
                             onKeepOrphanSpace = onKeepOrphanSpace,
                             onWidgetDropped = onWidgetDropped,

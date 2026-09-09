@@ -6,14 +6,10 @@ import com.lumenlauncher.app.data.WidgetPlacementRepository
 import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.model.WidgetProviderOption
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
-import com.lumenlauncher.app.domain.HUB_COLUMNS
 import com.lumenlauncher.app.domain.HUB_MAX_WIDGETS
 import com.lumenlauncher.app.domain.PlaceWidgetResult
 import com.lumenlauncher.app.domain.PlaceWidgetUseCase
-import com.lumenlauncher.app.domain.calculateHubCellWidth
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import android.content.Context
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +31,6 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class HubWidgetPickerViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val appWidgetRepository: AppWidgetRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val placeWidget: PlaceWidgetUseCase,
@@ -124,7 +119,7 @@ class HubWidgetPickerViewModel @Inject constructor(
                 failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
                 return@launch
             }
-            finishPlacing(appWidgetId, info.provider.packageName, info.provider.className, info.minWidth, info.minHeight)
+            finishPlacing(appWidgetId, info.provider.packageName, info.provider.className)
         }
     }
 
@@ -140,14 +135,14 @@ class HubWidgetPickerViewModel @Inject constructor(
             _events.emit(HubAddWidgetEvent.LaunchConfigure(configureIntentSender))
             return
         }
-        finishPlacing(appWidgetId, info.provider.packageName, info.provider.className, info.minWidth, info.minHeight)
+        finishPlacing(appWidgetId, info.provider.packageName, info.provider.className)
     }
 
-    private suspend fun finishPlacing(appWidgetId: Int, providerPackageName: String, providerClassName: String, minWidthDp: Int, minHeightDp: Int) {
+    private suspend fun finishPlacing(appWidgetId: Int, providerPackageName: String, providerClassName: String) {
         val existing = widgetPlacementRepository.observeAll().first()
-        val cellUnitDp = calculateHubCellWidth(context)
-        val colSpan = ((minWidthDp + 30) / cellUnitDp).coerceIn(1, HUB_COLUMNS)
-        val rowSpan = ((minHeightDp + 30) / cellUnitDp).coerceAtLeast(1)
+        // Prefers the provider's declared targetCellWidth/Height (API 31+) over the legacy
+        // minWidth/minHeight dp math — see AppWidgetRepository.defaultSpanFor.
+        val (colSpan, rowSpan) = appWidgetRepository.defaultSpan(appWidgetId) ?: (1 to 1)
         when (val result = placeWidget(existing, colSpan, rowSpan)) {
             is PlaceWidgetResult.Placed -> {
                 widgetPlacementRepository.upsert(

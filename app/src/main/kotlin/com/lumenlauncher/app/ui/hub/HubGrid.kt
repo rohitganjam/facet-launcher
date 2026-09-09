@@ -108,6 +108,7 @@ fun HubGrid(
     widgets: List<HubWidgetUi>,
     columns: Int,
     createHostView: (Context, Int) -> AppWidgetHostView?,
+    onWidgetSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     onRemoveOrphan: (Int) -> Unit,
     onKeepOrphanSpace: (Int) -> Unit,
     onWidgetDropped: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
@@ -436,7 +437,8 @@ fun HubGrid(
                                     tileWidth = tileWidth,
                                     tileHeight = tileHeight,
                                     isInteracting = isGrabbed || isResizing,
-                                    createHostView = createHostView
+                                    createHostView = createHostView,
+                                    onSizeChanged = onWidgetSizeChanged,
                                 )
                             }
 

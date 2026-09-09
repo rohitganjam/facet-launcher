@@ -245,7 +245,7 @@ class HomeDrawerRouteTest {
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                 )
-                HubWidgetPickerViewModel(context, appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
+                HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
 
             LumenLauncherTheme {
