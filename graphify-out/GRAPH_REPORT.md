@@ -1,7 +1,7 @@
 # Graph Report - lumen-launcher  (2026-09-09)
 
 ## Corpus Check
-- 288 files · ~457,725 words
+- 288 files · ~459,441 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2bff14c6`
+- Built from commit: `703bcecb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -170,16 +170,16 @@
 10. `ClockDateStyle` - 59 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Reset Drawer State on Close or App Launch (fix plan)` --references--> `HomeDrawerRoute()`  [EXTRACTED]
-  .artifacts/75674885-a34f-47da-869a-e70b8bd5487f/implementation_plan.artifact.md → app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRoute.kt
 - `Keyboard Dismissal on Home Gesture (fix plan)` --references--> `AppDrawerScreen()`  [EXTRACTED]
   .artifacts/60cb353d-6cb8-4d22-8155-1466a7efb5d2/implementation_plan.artifact.md → app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/AppDrawerScreen.kt
+- `Reset Drawer State on Close or App Launch (fix plan)` --references--> `HomeDrawerRoute()`  [EXTRACTED]
+  .artifacts/75674885-a34f-47da-869a-e70b8bd5487f/implementation_plan.artifact.md → app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRoute.kt
 - `Keyboard Dismissal on Home Gesture (fix plan)` --references--> `HomeDrawerRoute()`  [EXTRACTED]
   .artifacts/60cb353d-6cb8-4d22-8155-1466a7efb5d2/implementation_plan.artifact.md → app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRoute.kt
 - `Phase 10 — Advanced Clock Templates (F1 follow-up)` --references--> `Roboto Flex Font License (SIL OFL 1.1)`  [INFERRED]
   IMPLEMENTATION_PLAN.md → THIRD_PARTY_FONT_LICENSES/robotoflex_OFL.txt
-- `DefaultAppRepositoryTest` --calls--> `DefaultAppRepository`  [INFERRED]
-  app/src/test/kotlin/com/lumenlauncher/app/data/DefaultAppRepositoryTest.kt → app/src/main/kotlin/com/lumenlauncher/app/data/DefaultAppRepository.kt
+- `Fixture` --calls--> `ObserveHomeScreenStateUseCase`  [INFERRED]
+  app/src/test/kotlin/com/lumenlauncher/app/domain/ObserveHomeScreenStateUseCaseTest.kt → app/src/main/kotlin/com/lumenlauncher/app/domain/ObserveHomeScreenStateUseCase.kt
 
 ## Import Cycles
 - None detected.
@@ -253,7 +253,7 @@ Nodes (15): ClockColorOption, ACCENT_PRIMARY, ACCENT_SECONDARY, THEME, THEME_INV
 
 ### Community 16 - "Screens"
 Cohesion: 0.06
-Nodes (32): About the Design Files, Accent handling, App Drawer (`1a`, `1h`, `1i`), App long-press menu (`4i`), Assets, Clock style page (`3e` default, `3f` profile override), Clock variants, Dark (`Launcher Dark.dc.html`) (+24 more)
+Nodes (32): About the Design Files, Accent handling, App Drawer (`1a`, `1h`, `1i`), App long-press menu (`4i`), Assets, Clock card (`3d`) and Calendar settings (new screen, wraps `4l`), Clock variants, Dark (`Launcher Dark.dc.html`) (+24 more)
 
 ### Community 17 - "WallpaperAccentRole"
 Cohesion: 0.08
@@ -552,7 +552,7 @@ Cohesion: 0.43
 Nodes (4): DockSettingsUiState, DockSettingsViewModel, StateFlow, ViewModel
 
 ## Knowledge Gaps
-- **247 isolated node(s):** `NONE`, `MENU`, `ADJUST`, `VERTICAL`, `HORIZONTAL` (+242 more)
+- **247 isolated node(s):** `1. Overview`, `2. Goals`, `3. Non-Goals (v1)`, `3a. Parked for Future Consideration`, `F1. Home clock widget + calendar integration` (+242 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 514 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **51 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -560,16 +560,16 @@ Nodes (4): DockSettingsUiState, DockSettingsViewModel, StateFlow, ViewModel
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `LumenLauncherTheme()` connect `LumenLauncherTheme` to `HomeScreen`, `SettingsScreenTest.kt`, `.setContent`, `LauncherFontOption`, `.setContent`, `FontWeightOption`, `ContactConnection`, `AppInfo`, `CalendarSettingsScreen.kt`, `DrawerGridSize`, `CardDivider`, `DockSettingsScreen.kt`, `.setContent`, `.setContent`, `HomeDrawerRouteTest.kt`, `LauncherActivity.kt`, `WallpaperAccentRole`, `.setContent`, `DrawerViewModel`, `HomeScreenTest`, `AppDrawerScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `ProfileSettingsScreen.kt`, `.setContent`, `DefaultFavoriteAppRepository`, `AccentSwatch`, `.setContent`, `AppDrawerScreen`, `DockAppPickerScreen.kt`, `SettingsRepository`, `LauncherAppWidgetHost`, `.setContent`, `AppearanceSettingsViewModelTest.kt`, `ClockFontOption`, `.setContent`, `SettingsScreen.kt`, `BackupRestoreViewModel`, `ColorTest`, `HomeDrawerRoute`, `HomeAppsListSettingsScreen.kt`, `AppDrawerSettingsScreen.kt`, `.setContent`, `.setContent`, `CalendarInfo`, `AppearanceSettingsScreen.kt`, `Type.kt`, `HubWidgetPickerViewModel`, `.setContent`, `ClockAdjustSheet.kt`, `WidgetResizeHandle`, `StickyHeaderLayout`, `ManageProfilesScreen.kt`, `BackButton`, `.rendersOneEntryPerLetterProvided`, `.setContent`?**
-  _High betweenness centrality (0.183) - this node is a cross-community bridge._
-- **Why does `SettingsRepository` connect `SettingsRepository` to `SettingsScreenTest.kt`, `.setContent`, `LauncherFontOption`, `.createViewModel`, `FontWeightOption`, `DrawerGridSize`, `.setContent`, `.setContent`, `HomeDrawerRouteTest.kt`, `ClockColorOption`, `WallpaperAccentRole`, `.setContent`, `LauncherSettings`, `DockSettingsViewModel`, `DrawerViewModel`, `ProfileEntity`, `AppDrawerScreen.kt`, `CalendarSettingsViewModel`, `ProfileCarouselViewModel.kt`, `.setContent`, `.setContent`, `.createViewModel`, `.setContent`, `ExportBackupUseCase.kt`, `ManageProfilesViewModel`, `DefaultFavoriteAppRepository`, `.setContent`, `ClockStyleGalleryViewModelTest`, `.createViewModel`, `.setContent`, `AppearanceSettingsViewModelTest.kt`, `ClockFontOption`, `HomeAppsListSettingsViewModel`, `.setContent`, `HomeViewModel`, `.setContent`, `.createViewModel`, `NotificationSettingsViewModel`, `AppDrawerSettingsViewModelTest`, `CalendarInfo`, `SettingsRepositoryTest.kt`, `SettingsRepositoryTest`, `ExportBackupUseCaseTest.kt`, `LauncherViewModel`, `NotificationAccessExplanationViewModel.kt`, `.setContent`?**
-  _High betweenness centrality (0.084) - this node is a cross-community bridge._
+  _High betweenness centrality (0.181) - this node is a cross-community bridge._
 - **Why does `AppInfo` connect `AppInfo` to `SettingsScreenTest.kt`, `FavoriteAppRepository`, `.createViewModel`, `.setContent`, `FontWeightOption`, `DrawerGridSize`, `DockSettingsScreen.kt`, `LauncherActivity.kt`, `HomeDrawerRouteTest.kt`, `WallpaperAccentRole`, `.setContent`, `LauncherSettings`, `DockSettingsViewModel`, `DrawerViewModel`, `HomeScreenTest`, `AppDrawerScreen.kt`, `ProfileCarouselViewModel.kt`, `.setContent`, `.refresh`, `ProfileSettingsScreen.kt`, `DockAppRepository`, `AppIcon`, `DefaultFavoriteAppRepository`, `HubGrid`, `AppDrawerScreen`, `FakeDefaultFavoriteAppDao`, `AppRepository`, `DockAppPickerScreen.kt`, `SettingsRepository`, `AppearanceSettingsViewModelTest.kt`, `ClockFontOption`, `HomeAppsListSettingsViewModel`, `.setContent`, `SettingsScreen.kt`, `FakeDockAppDao`, `LumenNavHost`, `HomeAppsListSettingsScreen.kt`, `SelectPreviewAppsUseCaseTest`, `.createViewModel`, `AppearanceSettingsScreen.kt`, `SettingsViewModelTest`, `Fixture`, `LauncherViewModel`?**
-  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `SettingsRepository` connect `SettingsRepository` to `SettingsScreenTest.kt`, `.setContent`, `LauncherFontOption`, `.createViewModel`, `FontWeightOption`, `DrawerGridSize`, `.setContent`, `.setContent`, `HomeDrawerRouteTest.kt`, `ClockColorOption`, `WallpaperAccentRole`, `.setContent`, `LauncherSettings`, `DockSettingsViewModel`, `DrawerViewModel`, `ProfileEntity`, `AppDrawerScreen.kt`, `CalendarSettingsViewModel`, `ProfileCarouselViewModel.kt`, `.setContent`, `.setContent`, `.createViewModel`, `.setContent`, `ExportBackupUseCase.kt`, `ManageProfilesViewModel`, `DefaultFavoriteAppRepository`, `.setContent`, `ClockStyleGalleryViewModelTest`, `.createViewModel`, `.setContent`, `AppearanceSettingsViewModelTest.kt`, `ClockFontOption`, `HomeAppsListSettingsViewModel`, `.setContent`, `HomeViewModel`, `.setContent`, `.createViewModel`, `NotificationSettingsViewModel`, `AppDrawerSettingsViewModelTest`, `CalendarInfo`, `SettingsRepositoryTest.kt`, `SettingsRepositoryTest`, `ExportBackupUseCaseTest.kt`, `LauncherViewModel`, `NotificationAccessExplanationViewModel.kt`, `.setContent`?**
+  _High betweenness centrality (0.099) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `LumenLauncherTheme()` (e.g. with `.themed()` and `HomeScreenTextOnlyPresentationPreview()`) actually correct?**
   _`LumenLauncherTheme()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 9 inferred relationships involving `ProfileEntity` (e.g. with `.`deleteByComponent removes only the matching profile's entry`()` and `.`deleting a profile cascades to its favorites`()`) actually correct?**
   _`ProfileEntity` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 101 inferred relationships involving `Row` (e.g. with `.dynamicConnections()` and `AppContextMenu()`) actually correct?**
   _`Row` has 101 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `NONE`, `MENU`, `ADJUST` to the rest of the system?**
+- **What connects `1. Overview`, `2. Goals`, `3. Non-Goals (v1)` to the rest of the system?**
   _247 weakly-connected nodes found - possible documentation gaps or missing edges._
