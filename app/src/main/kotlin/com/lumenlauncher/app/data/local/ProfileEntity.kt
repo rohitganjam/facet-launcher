@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -28,8 +29,12 @@ data class ProfileEntity(
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val clockColorOption: ClockColorOption = ClockColorOption.THEME,
+    /** See [com.lumenlauncher.app.data.model.LauncherSettings.clockAccentColorOption]. */
+    val clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     val use24HourTime: Boolean = false,
     val clockShowMeridiem: Boolean = false,
+    /** See [com.lumenlauncher.app.data.model.LauncherSettings.clockDateStyle]. */
+    val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
     val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
     val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -39,6 +44,8 @@ data class ProfileEntity(
     val calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until this profile drags the clock's grab handle for the first time — see [com.lumenlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. */
     val clockZoneHeightDp: Float? = null,
+    /** Home clock's scale factor — see [com.lumenlauncher.app.data.model.LauncherSettings.clockScale]. */
+    val clockScale: Float = 0.8f,
 
     // Apps section
     val overrideApps: Boolean = false,

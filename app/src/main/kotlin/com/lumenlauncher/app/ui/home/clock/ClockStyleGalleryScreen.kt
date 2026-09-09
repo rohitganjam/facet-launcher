@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -77,8 +78,10 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         templateId = uiState.templateId,
         fontOption = uiState.fontOption,
         colorOption = uiState.colorOption,
+        accentColorOption = uiState.accentColorOption,
         use24HourTime = uiState.use24HourTime,
         showMeridiem = uiState.showMeridiem,
+        dateStyle = uiState.dateStyle,
         calendarFontOption = uiState.calendarFontOption,
         calendarColorOption = uiState.calendarColorOption,
         calendarFontWeight = uiState.calendarFontWeight,
@@ -86,8 +89,10 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         onTemplateSelected = viewModel::setClockTemplateId,
         onFontOptionChanged = viewModel::setClockFontOption,
         onColorOptionChanged = viewModel::setClockColorOption,
+        onAccentColorOptionChanged = viewModel::setClockAccentColorOption,
         onUse24HourTimeChanged = viewModel::setUse24HourTime,
         onShowMeridiemChanged = viewModel::setClockShowMeridiem,
+        onDateStyleChanged = viewModel::setClockDateStyle,
         onCalendarFontOptionChanged = viewModel::setCalendarFontOption,
         onCalendarColorOptionChanged = viewModel::setCalendarColorOption,
         onCalendarFontWeightChanged = viewModel::setCalendarFontWeight,
@@ -134,6 +139,11 @@ private fun ClockStyleGalleryScreen(
     onUse24HourTimeChanged: (Boolean) -> Unit,
     onShowMeridiemChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    /** Always shown; only actually meaningful for templates where [com.lumenlauncher.app.data.model.usesAccentColor] is true — inert for every other template's rendering. */
+    accentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
+    onAccentColorOptionChanged: (ClockColorOption) -> Unit = {},
+    dateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    onDateStyleChanged: (ClockDateStyle) -> Unit = {},
     calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     calendarColorOption: ClockColorOption = ClockColorOption.THEME,
     calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -148,6 +158,7 @@ private fun ClockStyleGalleryScreen(
     onResetClockPosition: () -> Unit = {},
 ) {
     val textColor = colorOption.resolve()
+    val accentColor = accentColorOption.resolve()
     val fixedClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
     val now = remember { LocalDateTime.now(fixedClock) }
     val calendarPreviewClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
@@ -253,12 +264,26 @@ private fun ClockStyleGalleryScreen(
                 )
                 CardDivider()
                 LabeledDropdownRow(
-                    title = "Color",
+                    title = "Primary font color",
                     options = ClockColorOption.entries,
                     selected = colorOption,
                     label = { it.displayName },
                     onSelect = onColorOptionChanged,
                     testTag = "clock_color_row",
+                )
+                CardDivider()
+                // Always visible, even for templates with no accent element in their design —
+                // per direct request, so picking one isn't gated behind first scrolling down to
+                // an accent-using template and back up (see chat history). It's simply inert
+                // (unused) for a non-accent template's rendering, same as e.g. "Show meridiem"
+                // stays visible (dimmed) rather than disappearing when 24-hour time is on.
+                LabeledDropdownRow(
+                    title = "Accent color",
+                    options = ClockColorOption.entries,
+                    selected = accentColorOption,
+                    label = { it.displayName },
+                    onSelect = onAccentColorOptionChanged,
+                    testTag = "clock_accent_color_row",
                 )
                 CardDivider()
                 Row(
@@ -288,6 +313,15 @@ private fun ClockStyleGalleryScreen(
                 }
                 CardDivider()
                 LabeledDropdownRow(
+                    title = "Date style",
+                    options = ClockDateStyle.entries,
+                    selected = dateStyle,
+                    label = { it.displayName },
+                    onSelect = onDateStyleChanged,
+                    testTag = "clock_date_style_row",
+                )
+                CardDivider()
+                LabeledDropdownRow(
                     title = "Clock alignment",
                     options = ClockAlignment.entries,
                     selected = clockAlignment,
@@ -312,11 +346,18 @@ private fun ClockStyleGalleryScreen(
         }
 
         item {
-            Text(
-                text = "CLOCK STYLES — TAP TO SELECT",
-                style = MaterialTheme.typography.labelSmall,
-                color = Muted,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "CLOCK STYLES — TAP TO SELECT",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Muted,
+                )
+                Text(
+                    text = "Long-press clock on home screen to adjust size and vertical position.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted,
+                )
+            }
         }
 
         items(ClockTemplateId.entries.toList()) { id ->
@@ -349,6 +390,13 @@ private fun ClockStyleGalleryScreen(
                     showMeridiem = showMeridiem,
                     textColor = textColor,
                     mutedTextColor = textColor.copy(alpha = 0.8f),
+                    accentColor = accentColor,
+                    dateStyle = dateStyle,
+                    // Every template's own root lost its `fillMaxWidth()` (see HomeScreen.kt's own
+                    // doc on the clock hit-box fix), so this Column's shared `horizontalAlignment`
+                    // no longer moves each card's preview — an explicit per-child align is needed
+                    // here, same as ClockBlock's own real Home usage.
+                    modifier = Modifier.align(clockAlignment.resolve()),
                     launcherFontOption = launcherFontOption,
                     clockAlignment = clockAlignment,
                 )

@@ -10,6 +10,7 @@ import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.FontWeightOption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -120,6 +121,7 @@ class ProfileRepositoryTest {
             clockAlignment = ClockAlignment.CENTER,
             calendarAlignment = ClockAlignment.RIGHT,
             clockZoneHeightDp = 180f,
+            clockScale = 1.2f,
         )
         val stored = repository.observeProfiles().first().single()
         assertEquals(true, stored.overrideClock)
@@ -134,6 +136,26 @@ class ProfileRepositoryTest {
         assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
         assertEquals(ClockAlignment.RIGHT, stored.calendarAlignment)
         assertEquals(180f, stored.clockZoneHeightDp)
+        assertEquals(1.2f, stored.clockScale, 0.001f)
+    }
+
+    @Test
+    fun `setClockAccentColorOption and setClockDateStyle round-trip independently`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setClockAccentColorOption(profile, ClockColorOption.ACCENT_SECONDARY)
+
+        val stored = repository.observeProfiles().first().single()
+        assertEquals(ClockColorOption.ACCENT_SECONDARY, stored.clockAccentColorOption)
+        assertEquals(ClockDateStyle.FULL, stored.clockDateStyle)
+
+        repository.setClockDateStyle(stored, ClockDateStyle.CONDENSED)
+
+        val restored = repository.observeProfiles().first().single()
+        assertEquals(ClockColorOption.ACCENT_SECONDARY, restored.clockAccentColorOption)
+        assertEquals(ClockDateStyle.CONDENSED, restored.clockDateStyle)
     }
 
     @Test
@@ -169,13 +191,27 @@ class ProfileRepositoryTest {
     }
 
     @Test
-    fun `resetClockPosition clears the zone height and both alignments together`() = runTest {
+    fun `setClockScale and resetClockPosition round-trip`() = runTest {
+        val dao = FakeProfileDao()
+        val repository = ProfileRepository(dao)
+        val profile = repository.addProfile()
+
+        repository.setClockScale(profile, 1.5f)
+        assertEquals(1.5f, repository.observeProfiles().first().single().clockScale, 0.001f)
+
+        repository.resetClockPosition(repository.observeProfiles().first().single())
+        assertEquals(0.8f, repository.observeProfiles().first().single().clockScale, 0.001f)
+    }
+
+    @Test
+    fun `resetClockPosition clears the zone height, both alignments, and scale together`() = runTest {
         val dao = FakeProfileDao()
         val repository = ProfileRepository(dao)
         val profile = repository.addProfile()
         repository.setClockZoneHeight(profile, 220f)
         repository.setClockAlignment(profile, ClockAlignment.CENTER)
         repository.setCalendarAlignment(profile, ClockAlignment.RIGHT)
+        repository.setClockScale(profile, 1.5f)
         val dragged = repository.observeProfiles().first().single()
 
         repository.resetClockPosition(dragged)
@@ -184,6 +220,7 @@ class ProfileRepositoryTest {
         assertNull(stored.clockZoneHeightDp)
         assertEquals(ClockAlignment.LEFT, stored.clockAlignment)
         assertEquals(ClockAlignment.LEFT, stored.calendarAlignment)
+        assertEquals(0.8f, stored.clockScale, 0.001f)
     }
 
     @Test

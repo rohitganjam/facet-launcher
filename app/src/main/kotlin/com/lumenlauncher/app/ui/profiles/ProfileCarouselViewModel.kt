@@ -12,6 +12,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
@@ -52,11 +53,19 @@ data class ProfileCarouselUiState(
     fun clockColorOption(profileId: Long): ClockColorOption =
         profile(profileId)?.let { if (it.overrideClock) it.clockColorOption else globalSettings.clockColorOption } ?: globalSettings.clockColorOption
 
+    /** See [com.lumenlauncher.app.data.model.LauncherSettings.clockAccentColorOption]. */
+    fun clockAccentColorOption(profileId: Long): ClockColorOption =
+        profile(profileId)?.let { if (it.overrideClock) it.clockAccentColorOption else globalSettings.clockAccentColorOption } ?: globalSettings.clockAccentColorOption
+
     fun effectiveUse24HourTime(profileId: Long): Boolean =
         profile(profileId)?.let { if (it.overrideClock) it.use24HourTime else globalSettings.use24HourTime } ?: globalSettings.use24HourTime
 
     fun clockShowMeridiem(profileId: Long): Boolean =
         profile(profileId)?.let { if (it.overrideClock) it.clockShowMeridiem else globalSettings.clockShowMeridiem } ?: globalSettings.clockShowMeridiem
+
+    /** See [com.lumenlauncher.app.data.model.LauncherSettings.clockDateStyle]. */
+    fun clockDateStyle(profileId: Long): ClockDateStyle =
+        profile(profileId)?.let { if (it.overrideClock) it.clockDateStyle else globalSettings.clockDateStyle } ?: globalSettings.clockDateStyle
 
     fun clockAlignment(profileId: Long): ClockAlignment =
         profile(profileId).resolveOverride({ it.overrideClock }, { it.clockAlignment }, globalSettings.clockAlignment)
@@ -67,6 +76,9 @@ data class ProfileCarouselUiState(
 
     fun clockZoneHeightDp(profileId: Long): Float? =
         profile(profileId).resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, globalSettings.clockZoneHeightDp)
+
+    fun clockScale(profileId: Long): Float =
+        profile(profileId).resolveOverride({ it.overrideClock }, { it.clockScale }, globalSettings.clockScale)
 
     /** Mirrors [com.lumenlauncher.app.ui.home.HomeUiState.activeCalendarFontOption]'s own gating exactly — same `overrideCalendar` flag. */
     fun calendarFontOption(profileId: Long): ClockFontOption =

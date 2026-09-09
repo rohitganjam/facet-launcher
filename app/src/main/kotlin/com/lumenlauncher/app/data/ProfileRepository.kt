@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -68,8 +69,18 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(clockColorOption = option))
     }
 
+    /** See [ProfileEntity.clockAccentColorOption]. */
+    suspend fun setClockAccentColorOption(profile: ProfileEntity, option: ClockColorOption) {
+        profileDao.upsert(profile.copy(clockAccentColorOption = option))
+    }
+
     suspend fun setUse24HourTime(profile: ProfileEntity, enabled: Boolean) {
         profileDao.upsert(profile.copy(use24HourTime = enabled))
+    }
+
+    /** See [ProfileEntity.clockDateStyle]. */
+    suspend fun setClockDateStyle(profile: ProfileEntity, dateStyle: ClockDateStyle) {
+        profileDao.upsert(profile.copy(clockDateStyle = dateStyle))
     }
 
     suspend fun setClockShowMeridiem(profile: ProfileEntity, enabled: Boolean) {
@@ -106,13 +117,24 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(clockZoneHeightDp = null))
     }
 
+    suspend fun setClockScale(profile: ProfileEntity, scale: Float) {
+        profileDao.upsert(profile.copy(clockScale = scale))
+    }
+
     /**
-     * "Reset clock widget position" for this profile — the zone height back to `null` and BOTH
-     * alignments back to `LEFT`, in one atomic upsert (avoids the clobbering risk of three
-     * sequential single-field upserts against the same stale snapshot).
+     * "Reset clock widget position" for this profile — the zone height back to `null`, BOTH
+     * alignments back to `LEFT`, and scale back to `0.8f`, in one atomic upsert (avoids the
+     * clobbering risk of sequential single-field upserts against the same stale snapshot).
      */
     suspend fun resetClockPosition(profile: ProfileEntity) {
-        profileDao.upsert(profile.copy(clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, calendarAlignment = ClockAlignment.LEFT))
+        profileDao.upsert(
+            profile.copy(
+                clockZoneHeightDp = null,
+                clockAlignment = ClockAlignment.LEFT,
+                calendarAlignment = ClockAlignment.LEFT,
+                clockScale = 0.8f,
+            ),
+        )
     }
 
     /**
@@ -138,6 +160,9 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         clockAlignment: ClockAlignment = profile.clockAlignment,
         calendarAlignment: ClockAlignment = profile.calendarAlignment,
         clockZoneHeightDp: Float? = profile.clockZoneHeightDp,
+        clockScale: Float = profile.clockScale,
+        accentColorOption: ClockColorOption = profile.clockAccentColorOption,
+        dateStyle: ClockDateStyle = profile.clockDateStyle,
     ) {
         profileDao.upsert(
             profile.copy(
@@ -153,6 +178,9 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
                 clockAlignment = clockAlignment,
                 calendarAlignment = calendarAlignment,
                 clockZoneHeightDp = clockZoneHeightDp,
+                clockScale = clockScale,
+                clockAccentColorOption = accentColorOption,
+                clockDateStyle = dateStyle,
             ),
         )
     }

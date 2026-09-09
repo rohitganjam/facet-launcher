@@ -6,7 +6,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -96,6 +98,30 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
+    fun accentColorRowIsAlwaysVisibleRegardlessOfTheSelectedTemplate() {
+        // Given the gallery, Light stack applied by default — no accent element in its own design,
+        // but the row still shows (rather than requiring a scroll-down-and-back-up to a
+        // template that has one before it's reachable at all — see chat history)
+        val (settingsRepository, _) = setContent()
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_accent_color_row"))
+        composeRule.onNodeWithTag("clock_accent_color_row").assertExists()
+
+        // When switching to Accent Field, which does have one
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.ACCENT_FIELD.name}"))
+        composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.ACCENT_FIELD.name}").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().clockTemplateId == ClockTemplateId.ACCENT_FIELD }
+        }
+
+        // Then the Accent color row is still there, unchanged
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_accent_color_row"))
+        composeRule.onNodeWithTag("clock_accent_color_row").assertExists()
+    }
+
+    @Test
     fun toggling24HourTimePersistsAndDisablesTheMeridiemToggle() {
         // Given the gallery, 24-hour time off by default
         val (settingsRepository, _) = setContent()
@@ -167,7 +193,7 @@ class ClockStyleGalleryScreenTest {
     @Test
     fun calendarPreviewMovesLiveWhenCalendarAlignmentChanges() {
         // Given the gallery, the calendar preview's own event row initially left-packed (default)
-        val (_, _) = setContent()
+        val (settingsRepository, _) = setContent()
         val leftBefore = composeRule.onNodeWithTag("clock_event_row_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
 
         // When selecting Right calendar alignment
@@ -176,6 +202,14 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("calendar_alignment_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
+        // waitForIdle() alone only settles Compose's own pipeline — it doesn't wait for the
+        // ViewModel's async DataStore write to land and re-emit, which is what actually drives
+        // the recomposition this test is asserting on (see CLAUDE.md's own guidance on this exact
+        // pattern). Waiting on the real repository value directly is the reliable way to know the
+        // write has landed before reading the now-recomposed UI.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().calendarAlignment == com.lumenlauncher.app.data.model.ClockAlignment.RIGHT }
+        }
         composeRule.waitForIdle()
 
         // Then the preview's own event row shifts further right — it moves live with the setting,
@@ -183,6 +217,42 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("clock_style_gallery_list")
             .performScrollToNode(hasTestTag("clock_event_row_1"))
         val leftAfter = composeRule.onNodeWithTag("clock_event_row_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+        org.junit.Assert.assertTrue(leftAfter > leftBefore)
+    }
+
+    @Test
+    fun clockTemplateCardPreviewMovesLiveWhenClockAlignmentChanges() {
+        // Given the gallery, the LIGHT_STACK card's own time text initially left-packed (default).
+        // Every template's root lost its `fillMaxWidth()` as part of the clock hit-box fix (see
+        // HomeScreen.kt's own doc comment), which means ClockStyleGalleryScreen.kt needs its own
+        // explicit `Modifier.align(clockAlignment.resolve())` per card for this to still move —
+        // this test locks that one-line fix in.
+        val (settingsRepository, _) = setContent()
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_template_card_LIGHT_STACK"))
+        val lightStackTime = hasText("9:05", substring = true) and hasAnyAncestor(hasTestTag("clock_template_card_LIGHT_STACK"))
+        val leftBefore = composeRule.onNode(lightStackTime, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+
+        // When selecting Right clock alignment
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_alignment_row"))
+        composeRule.onNodeWithTag("clock_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_alignment_row_option_RIGHT").performClick()
+        // waitForIdle() alone only settles Compose's own pipeline — it doesn't wait for the
+        // ViewModel's async DataStore write to land and re-emit, which is what actually drives
+        // the recomposition this test is asserting on (see the calendar-alignment test above for
+        // the same pattern, and CLAUDE.md's own guidance on async-on-top-of-recomposition races).
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().clockAlignment == com.lumenlauncher.app.data.model.ClockAlignment.RIGHT }
+        }
+        composeRule.waitForIdle()
+
+        // Then the LIGHT_STACK card's own preview shifts further right — it moves live with the
+        // setting, not just on the real Home screen
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_template_card_LIGHT_STACK"))
+        val leftAfter = composeRule.onNode(lightStackTime, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
         org.junit.Assert.assertTrue(leftAfter > leftBefore)
     }
 
@@ -206,9 +276,19 @@ class ClockStyleGalleryScreenTest {
         composeRule.waitForIdle()
 
         // Then the zone height clears AND both alignments return to Left — the whole widget's
-        // position resets, not just its height
+        // position resets, not just its height. resetClockPosition() issues these as three
+        // separate sequential DataStore writes in one coroutine (zone height, then clock
+        // alignment, then calendar alignment) — waiting on zone height alone raced ahead of the
+        // other two, which could still be mid-flight when the assertions below ran (see chat
+        // history: this is what "expected LEFT but was CENTER" on calendarAlignment meant). Waiting
+        // on the actual condition being asserted — all three reset — is what makes this reliable.
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().clockZoneHeightDp == null }
+            runBlocking {
+                val settings = settingsRepository.settings.first()
+                settings.clockZoneHeightDp == null &&
+                    settings.clockAlignment == com.lumenlauncher.app.data.model.ClockAlignment.LEFT &&
+                    settings.calendarAlignment == com.lumenlauncher.app.data.model.ClockAlignment.LEFT
+            }
         }
         val settings = runBlocking { settingsRepository.settings.first() }
         assertEquals(com.lumenlauncher.app.data.model.ClockAlignment.LEFT, settings.clockAlignment)

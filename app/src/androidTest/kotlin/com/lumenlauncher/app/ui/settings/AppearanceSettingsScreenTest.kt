@@ -1,5 +1,6 @@
 package com.lumenlauncher.app.ui.settings
 
+import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsActions
@@ -17,8 +18,14 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.lumenlauncher.app.data.AppRepository
+import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.FontWeightOption
+import com.lumenlauncher.app.data.model.LUMEN_LAUNCHER_PACKAGE_NAME
+import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.SelectPreviewAppsUseCase
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -31,6 +38,9 @@ class AppearanceSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private lateinit var appRepository: AppRepository
+    private lateinit var defaultAppRepository: DefaultAppRepository
+
     private fun setContent(onBack: () -> Unit = {}): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -41,13 +51,29 @@ class AppearanceSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "appearance-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                AppearanceSettingsViewModel(settingsRepository)
+                appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                defaultAppRepository = DefaultAppRepository(context)
+                AppearanceSettingsViewModel(settingsRepository, GetInstalledAppsUseCase(appRepository), defaultAppRepository, SelectPreviewAppsUseCase())
             }
             LumenLauncherTheme {
                 AppearanceSettingsScreen(onBack = onBack, viewModel = viewModel)
             }
         }
         return settingsRepository
+    }
+
+    /**
+     * Mirrors [AppearanceSettingsViewModel.previewApps]'s own selection — same exclusion and same
+     * [SelectPreviewAppsUseCase] call — but via [AppRepository.getInstalledApps] rather than
+     * [GetInstalledAppsUseCase.observe]: the latter registers a
+     * [android.content.pm.LauncherApps.Callback], which needs a `Looper` on whatever thread calls
+     * it; the production [AppearanceSettingsViewModel] always collects on the main thread (which
+     * has one), but this test's `runBlocking` runs on the instrumentation thread, which doesn't.
+     */
+    private suspend fun installedPreviewApps(): List<AppInfo> {
+        val installed = appRepository.getInstalledApps().filterNot { it.packageName == LUMEN_LAUNCHER_PACKAGE_NAME }
+        val preferred = defaultAppRepository.getDefaultAppPackages()
+        return SelectPreviewAppsUseCase()(installed, preferred, count = 5)
     }
 
     @Test
@@ -218,16 +244,18 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun previewCardShowsSampleAppsAndDockIcon() {
-        // Given the screen — the live preview card (M4) reuses the real AppRow/DockIcon with
-        // synthetic sample apps, above the rest of the controls.
+    fun previewCardShowsRealInstalledAppsAndDockIcon() {
+        // Given the screen — the live preview card (M4) reuses the real AppRow/DockIcon, now
+        // backed by the device's own real installed apps instead of placeholder objects
         setContent()
+        val installedApps = runBlocking { installedPreviewApps() }
 
-        // Then the preview card and its sample favorites row + dock icon all render
+        // Then the preview card renders, with its favorites row and dock icon labeled from the
+        // real installed-app list's own first entries (same slicing AppearancePreviewCard uses)
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
-        composeRule.onNodeWithText("Camera").assertExists()
-        composeRule.onNodeWithText("Messages").assertExists()
-        composeRule.onNodeWithContentDescription("Phone").assertExists()
+        composeRule.onNodeWithText(installedApps[0].label).assertExists()
+        composeRule.onNodeWithText(installedApps[1].label).assertExists()
+        composeRule.onNodeWithContentDescription(installedApps[2].label).assertExists()
     }
 
     @Test
@@ -235,6 +263,7 @@ class AppearanceSettingsScreenTest {
         // Given the screen, App label color at its default
         setContent()
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+        val firstAppLabel = runBlocking { installedPreviewApps()[0].label }
 
         // When changing App label color — the same value the preview's AppRow/DockIcon labelColor
         // is wired from
@@ -242,10 +271,10 @@ class AppearanceSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_label_color_row_option_THEME_INVERTED").performClick()
 
-        // Then the preview keeps rendering its sample content correctly through the recomposition
+        // Then the preview keeps rendering its content correctly through the recomposition
         // (a wiring mistake here — e.g. a wrong param — would otherwise crash or blank the card)
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Camera").assertExists() }.isSuccess
+            runCatching { composeRule.onNodeWithText(firstAppLabel).assertExists() }.isSuccess
         }
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
     }

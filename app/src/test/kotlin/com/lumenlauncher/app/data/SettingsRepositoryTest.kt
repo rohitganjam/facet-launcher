@@ -8,6 +8,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
@@ -84,6 +85,7 @@ class SettingsRepositoryTest {
         assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
         assertEquals(ClockAlignment.LEFT, settings.calendarAlignment)
         assertEquals(null, settings.clockZoneHeightDp)
+        assertEquals(0.8f, settings.clockScale, 0.0001f)
         assertEquals(AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
     }
 
@@ -103,6 +105,22 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `setClockAccentColorOption and setClockDateStyle round-trip independently`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When each is changed
+        repository.setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
+        repository.setClockDateStyle(ClockDateStyle.CONDENSED)
+
+        // Then the new values come back, independently of each other and of the main color option
+        val settings = repository.settings.first()
+        assertEquals(ClockColorOption.ACCENT_SECONDARY, settings.clockAccentColorOption)
+        assertEquals(ClockDateStyle.CONDENSED, settings.clockDateStyle)
+        assertEquals(ClockColorOption.THEME, settings.clockColorOption)
+    }
+
+    @Test
     fun `setCalendarAlignment round-trips independently of setClockAlignment`() = runTest {
         // Given a repository
         val repository = createRepository()
@@ -114,6 +132,31 @@ class SettingsRepositoryTest {
         val settings = repository.settings.first()
         assertEquals(ClockAlignment.RIGHT, settings.calendarAlignment)
         assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
+    }
+
+    @Test
+    fun `setClockScale persists and round-trips`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When the clock scale is set
+        repository.setClockScale(1.5f)
+
+        // Then it round-trips exactly
+        assertEquals(1.5f, repository.settings.first().clockScale, 0.0001f)
+    }
+
+    @Test
+    fun `resetClockScale clears the value back to the default`() = runTest {
+        // Given a repository with a non-default scale
+        val repository = createRepository()
+        repository.setClockScale(1.5f)
+
+        // When resetClockScale is called
+        repository.resetClockScale()
+
+        // Then it returns to the 0.8f default
+        assertEquals(0.8f, repository.settings.first().clockScale, 0.0001f)
     }
 
     @Test

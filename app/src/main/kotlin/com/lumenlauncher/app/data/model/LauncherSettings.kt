@@ -170,8 +170,16 @@ data class LauncherSettings(
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val clockColorOption: ClockColorOption = ClockColorOption.THEME,
+    /**
+     * The color a template's own accent glyph/shape renders in — see [ClockTemplateId.usesAccentColor]
+     * for which templates actually read this (every other template ignores it entirely). Same
+     * option set as [clockColorOption], independently pickable.
+     */
+    val clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     /** Ignored (no AM/PM to show) whenever [use24HourTime] is on, regardless of this value. */
     val clockShowMeridiem: Boolean = false,
+    /** "Full" ("Thursday, 27 August") vs "Condensed" ("Thu, 27 Aug") — applies to every template that renders its date line through `ClockTemplates.kt`'s shared `dateFormatter()`. */
+    val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
     /** Calendar events block (`ui/home/clock/CalendarEventsBlock`) — configured independently of the clock's own font/color. */
     val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -219,4 +227,9 @@ data class LauncherSettings(
      * top (right below the clock's grab handle).
      */
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+    /**
+     * Home clock's scale factor — the default every profile inherits.
+     * Uniform scaling ensures proportions are preserved.
+     */
+    val clockScale: Float = 0.8f,
 )

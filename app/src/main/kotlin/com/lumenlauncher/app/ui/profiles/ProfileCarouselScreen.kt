@@ -3,6 +3,7 @@ package com.lumenlauncher.app.ui.profiles
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,7 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -69,6 +72,7 @@ import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
@@ -96,12 +100,21 @@ import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
 import com.lumenlauncher.app.ui.theme.resolve
 
-/** Every page (profile or Add) renders at a fixed, position-independent scale — smaller than a
- *  full-size card so more of each neighbor peeks in on either side, recent-apps style. */
-private const val CARD_SCALE = 0.855f
-
-private val CAROUSEL_PAGE_INSET = 60.dp
 private val CAROUSEL_PAGE_SPACING = 8.dp
+
+/**
+ * The preview card is a scale model of the real screen — this fraction of the device's own
+ * width *and* height — so it keeps whatever aspect ratio the current phone has, on any phone.
+ * Everything else about the carousel's footprint derives from it: the horizontal inset (the
+ * strip of each neighbour card that peeks in) is `(1 − scale) / 2` of the screen width, and the
+ * pager's height is `scale` of the screen height plus [CAROUSEL_PAGE_CHROME_HEIGHT]. The pager
+ * is content-sized (not `weight(1f)`), so the dots + Launcher-settings row pack directly beneath
+ * it and the leftover space collects at the bottom (a trailing weighted spacer).
+ */
+private const val CAROUSEL_CARD_SCALE = 0.55f
+
+/** The profile-name row above the card + the gear/trash row below it, inside every page. */
+private val CAROUSEL_PAGE_CHROME_HEIGHT = 104.dp
 
 private val REORDER_ROW_HEIGHT = 64.dp
 private val REORDER_ROW_SPACING = 10.dp
@@ -109,6 +122,15 @@ private val REORDER_ROW_SPACING = 10.dp
 /** Shared "picked up" drag-lift treatment, matching every other reorderable list in Settings. */
 private val REORDER_DRAG_ELEVATION = 6.dp
 private const val REORDER_DRAG_SCALE = 1.04f
+
+/**
+ * How [ProfileCarouselScreen] is entered:
+ * - [SWITCH]: home long-press — the swipeable carousel for picking a profile ("Switch Profiles").
+ *   Reordering is still reachable in-place via the "Reorder" link.
+ * - [MANAGE]: Settings → Profiles — opens straight into the reorderable list ("Manage Profiles"),
+ *   with no carousel; back returns to Settings.
+ */
+enum class ProfileCarouselMode { SWITCH, MANAGE }
 
 /**
  * Profile carousel (`3a`, `3b`, `4n`, `4o`): switch, reorder, and reach per-profile settings.
@@ -124,11 +146,13 @@ fun ProfileCarouselScreen(
     onEditProfile: (profileId: Long) -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    mode: ProfileCarouselMode = ProfileCarouselMode.SWITCH,
     viewModel: ProfileCarouselViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ProfileCarouselContent(
         uiState = uiState,
+        mode = mode,
         onBack = onBack,
         onSelect = { profileId -> viewModel.selectProfile(profileId); onProfileApplied() },
         onEditProfile = onEditProfile,
@@ -143,6 +167,7 @@ fun ProfileCarouselScreen(
 @Composable
 private fun ProfileCarouselContent(
     uiState: ProfileCarouselUiState,
+    mode: ProfileCarouselMode,
     onBack: () -> Unit,
     onSelect: (Long) -> Unit,
     onEditProfile: (Long) -> Unit,
@@ -159,14 +184,17 @@ private fun ProfileCarouselContent(
         return
     }
 
+    val manageMode = mode == ProfileCarouselMode.MANAGE
     val pageCount = profiles.size + if (uiState.canAddProfile) 1 else 0
     val initialPage = profiles.indexOfFirst { it.id == uiState.activeProfileId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
-    var isReordering by remember { mutableStateOf(false) }
+    // Manage mode is the reorderable list and nothing else — it opens there and stays there.
+    var isReordering by remember { mutableStateOf(manageMode) }
     var reorderWorkingList by remember(profiles) { mutableStateOf(profiles) }
     var deletingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
 
-    BackHandler(enabled = isReordering) { isReordering = false }
+    // In manage mode there's no carousel to fall back to, so system back leaves to Settings.
+    BackHandler(enabled = isReordering && !manageMode) { isReordering = false }
 
     Column(
         modifier = modifier
@@ -181,9 +209,13 @@ private fun ProfileCarouselContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BackButton(onClick = { if (isReordering) isReordering = false else onBack() })
+                BackButton(onClick = { if (isReordering && !manageMode) isReordering = false else onBack() })
                 // headlineSmall to match Settings' own header size (see chat history) — was titleMedium.
-                Text(text = "Profiles", style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(
+                    text = if (manageMode) "Manage Profiles" else "Switch Profiles",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Ink,
+                )
             }
             // No "Done" counterpart once reordering — every drag-release autosaves via onCommit,
             // so there's nothing left to confirm; the back button (above) already exits reorder
@@ -216,23 +248,22 @@ private fun ProfileCarouselContent(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
         } else {
+            val config = LocalConfiguration.current
+            // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
+            // fraction of the screen width and the leftover half on each side is the neighbour peek.
+            val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
+            val pageInset = (config.screenWidthDp * (1f - CAROUSEL_CARD_SCALE) / 2f).dp
+            val pagerHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp + CAROUSEL_PAGE_CHROME_HEIGHT
             HorizontalPager(
                 state = pagerState,
-                contentPadding = PaddingValues(horizontal = CAROUSEL_PAGE_INSET),
+                contentPadding = PaddingValues(horizontal = pageInset),
                 pageSpacing = CAROUSEL_PAGE_SPACING,
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp).testTag("profile_carousel_pager"),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .height(pagerHeight)
+                    .testTag("profile_carousel_pager"),
             ) { page ->
-                // Uniform, position-independent scale for every page — see CARD_SCALE. Anchored
-                // to top-center (not the default center) so the shrink only eats into the bottom
-                // of the page — the name/menu row now living right at each page's own top would
-                // otherwise get pushed down by half the scale's lost height too, reading as a big
-                // dead gap between the screen header and the name row (see chat history).
-                val visualModifier = Modifier.graphicsLayer {
-                    scaleX = CARD_SCALE
-                    scaleY = CARD_SCALE
-                    transformOrigin = TransformOrigin(0.5f, 0f)
-                }
-
                 if (page < profiles.size) {
                     val profile = profiles[page]
                     // Recent-apps style: tapping any visible card — centered or peeking —
@@ -244,9 +275,12 @@ private fun ProfileCarouselContent(
                         clockTemplateId = uiState.clockTemplateId(profile.id),
                         clockFontOption = uiState.clockFontOption(profile.id),
                         clockColorOption = uiState.clockColorOption(profile.id),
+                        clockAccentColorOption = uiState.clockAccentColorOption(profile.id),
                         use24HourTime = uiState.effectiveUse24HourTime(profile.id),
                         clockShowMeridiem = uiState.clockShowMeridiem(profile.id),
+                        clockDateStyle = uiState.clockDateStyle(profile.id),
                         clockAlignment = uiState.clockAlignment(profile.id),
+                        clockScale = uiState.clockScale(profile.id),
                         calendarAlignment = uiState.calendarAlignment(profile.id),
                         clockZoneHeightDp = uiState.clockZoneHeightDp(profile.id),
                         calendarEvents = uiState.previewsByProfileId[profile.id]?.calendarEvents.orEmpty(),
@@ -265,14 +299,15 @@ private fun ProfileCarouselContent(
                         onEditProfileClick = { onEditProfile(profile.id) },
                         onDeleteClick = { deletingProfile = profile },
                         onCardClick = { onSelect(profile.id) },
-                        modifier = visualModifier
+                        screenAspectRatio = screenAspectRatio,
+                        modifier = Modifier
                             .fillMaxSize()
                             .testTag("profile_page_${profile.id}"),
                     )
                 } else {
                     AddProfilePage(
                         onClick = onAddProfile,
-                        modifier = visualModifier.fillMaxSize().testTag("profile_carousel_add_page"),
+                        modifier = Modifier.fillMaxSize().testTag("profile_carousel_add_page"),
                     )
                 }
             }
@@ -297,8 +332,11 @@ private fun ProfileCarouselContent(
                 onClick = onNavigateToSettings,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 20.dp),
             )
+
+            // Leftover space collects below the whole cluster, not as a dead band inside it.
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 
@@ -347,6 +385,14 @@ private fun ProfileReorderList(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(REORDER_ROW_SPACING),
     ) {
+        item(key = "reorder_hint") {
+            Text(
+                text = "Drag to re-order profiles",
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                modifier = Modifier.padding(bottom = 4.dp).testTag("profile_reorder_hint"),
+            )
+        }
         items(profiles, key = { it.id }) { profile ->
             val isDragged = reorderState.isDragging(profile)
             ProfileReorderRow(
@@ -453,28 +499,41 @@ private fun AddProfileRow(enabled: Boolean, onClick: () -> Unit, modifier: Modif
 }
 
 /**
- * Pinned to the bottom of the carousel — reached here now instead of via the Home long-press
- * sheet's own "Launcher settings" row (see chat history: that sheet is being replaced by a direct
- * long-press-to-switch-profile action, so this screen absorbs the entry point it displaced).
+ * The launcher-wide settings entry point, sitting just below the carousel. Carries the same
+ * shadow + hairline-border lift as [com.lumenlauncher.app.ui.components.SettingsCard] (a bare
+ * [Surface] fill is invisible against this screen's dimmer backdrop, especially in dark mode) and
+ * a leading [Icons.Default.Tune] glyph — `Tune`, not a gear, so it doesn't read as a second
+ * "profile settings" control next to each card's own gear.
  */
 @Composable
 private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
+    val shape = MaterialTheme.shapes.medium
     Row(
         modifier = modifier
-            // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
-            .clip(MaterialTheme.shapes.medium)
+            .shadow(elevation = 4.dp, shape = shape)
+            .clip(shape)
             .background(Surface)
+            .border(1.dp, Ink.copy(alpha = 0.14f), shape)
             .clickable(onClick = onClick)
             .testTag("profile_carousel_launcher_settings")
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = "Launcher settings", style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = "Clock, favorites, drawer, badges", style = MaterialTheme.typography.bodyMedium, color = Muted)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Tune,
+                contentDescription = null,
+                tint = Muted,
+                modifier = Modifier.padding(end = 14.dp).size(24.dp),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(text = "Launcher settings", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                Text(text = "Default clock, favorites, drawer, badges", style = MaterialTheme.typography.bodyMedium, color = Muted)
+            }
         }
-        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted)
+        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Ink)
     }
 }
 
@@ -494,10 +553,14 @@ private fun ProfilePreviewPage(
     clockTemplateId: ClockTemplateId,
     clockFontOption: ClockFontOption,
     clockColorOption: ClockColorOption,
+    clockAccentColorOption: ClockColorOption,
     use24HourTime: Boolean,
     clockShowMeridiem: Boolean,
+    clockDateStyle: ClockDateStyle,
     /** This profile's own clock alignment, falling back to the global default when not overriding (see [com.lumenlauncher.app.data.model.LauncherSettings.clockAlignment]). */
     clockAlignment: ClockAlignment,
+    /** This profile's own clock scale — see [com.lumenlauncher.app.data.model.LauncherSettings.clockScale]. */
+    clockScale: Float = 0.8f,
     /** Independent of [clockAlignment] (see [com.lumenlauncher.app.data.model.LauncherSettings.calendarAlignment]). */
     calendarAlignment: ClockAlignment,
     /** This profile's own clock zone height, falling back to the global default when not overriding (see [com.lumenlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]) — reproduces the same clock-position formula [com.lumenlauncher.app.ui.home.HomeScreen] uses, scaled to this card's own size. */
@@ -521,6 +584,8 @@ private fun ProfilePreviewPage(
      *  favorite row or dock icon, whose own [AppRow]/[DockIcon] click would otherwise consume the
      *  touch instead of letting it reach the card's own clickable underneath. */
     onCardClick: () -> Unit,
+    /** The device's own width:height — the card is locked to it so it stays a true scale model of the screen. */
+    screenAspectRatio: Float,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -541,8 +606,10 @@ private fun ProfilePreviewPage(
 
         BoxWithConstraints(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
+                // Locked to the real screen's proportions — a genuine scale model, not a card
+                // shape that happens to fall out of the surrounding layout.
+                .aspectRatio(screenAspectRatio)
                 // A large hero surface — M3's Dialog/ModalBottomSheet-class extraLarge shape, see
                 // CLAUDE.md's Material 3 shape section.
                 .clip(MaterialTheme.shapes.extraLarge)
@@ -551,17 +618,15 @@ private fun ProfilePreviewPage(
                 // long-press ripple doesn't bleed across the whole page (see chat history).
                 .clickable(onClick = onCardClick),
         ) {
-            // This card renders at a fraction of Home's real on-screen size — first from sharing
-            // vertical space with the header/dots/settings row above, then from CARD_SCALE's own
-            // draw-time shrink on top of that. Rather than hand-picking fixed dp overrides for
+            // This card renders at a fraction of Home's real on-screen size (it's the screen
+            // scaled by [CAROUSEL_CARD_SCALE]). Rather than hand-picking fixed dp overrides for
             // every size in here (which needed re-tuning by eye each time — see chat history), we
             // measure how tall this card actually ends up on screen, compare it to the real
             // screen height, and use that ratio to shrink every dp/sp value inside proportionally
-            // via a scaled LocalDensity — so all of the card's content (icon sizes, text sizes,
-            // paddings) scales down together, consistently, rather than one value at a time.
+            // via a scaled LocalDensity — so all of the card's content (icon
+            // sizes, text sizes, paddings) scales down together, consistently.
             val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-            val visualCardHeight = maxHeight * CARD_SCALE
-            val contentScale = (visualCardHeight / screenHeight).coerceIn(0.4f, 1f)
+            val contentScale = (maxHeight / screenHeight).coerceIn(0.4f, 1f)
             val baseDensity = LocalDensity.current
             CompositionLocalProvider(
                 LocalDensity provides Density(baseDensity.density * contentScale, baseDensity.fontScale),
@@ -586,7 +651,9 @@ private fun ProfilePreviewPage(
                         templateId = clockTemplateId,
                         fontOption = clockFontOption,
                         colorOption = clockColorOption,
+                        accentColorOption = clockAccentColorOption,
                         showMeridiem = clockShowMeridiem,
+                        dateStyle = clockDateStyle,
                         clockAlignment = clockAlignment,
                         calendarAlignment = calendarAlignment,
                         events = calendarEvents,
@@ -595,6 +662,7 @@ private fun ProfilePreviewPage(
                         calendarColorOption = calendarColorOption,
                         calendarFontWeight = calendarFontWeight,
                         launcherFontOption = launcherFontOption,
+                        clockScale = clockScale,
                         modifier = Modifier
                             .align(clockAlignment.resolve())
                             .padding(top = topOffsetDp.dp)
@@ -776,6 +844,32 @@ private fun ProfileCarouselScreenPreview() {
                 ),
                 activeProfileId = 1,
             ),
+            mode = ProfileCarouselMode.SWITCH,
+            onBack = {},
+            onSelect = {},
+            onEditProfile = {},
+            onAddProfile = {},
+            onDeleteProfile = {},
+            onReorder = {},
+            onNavigateToSettings = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ProfileManageScreenPreview() {
+    LumenLauncherTheme {
+        ProfileCarouselContent(
+            uiState = ProfileCarouselUiState(
+                profiles = listOf(
+                    ProfileEntity(id = 1, name = "Profile 1", position = 0),
+                    ProfileEntity(id = 2, name = "Work", position = 1),
+                ),
+                activeProfileId = 1,
+            ),
+            mode = ProfileCarouselMode.MANAGE,
             onBack = {},
             onSelect = {},
             onEditProfile = {},

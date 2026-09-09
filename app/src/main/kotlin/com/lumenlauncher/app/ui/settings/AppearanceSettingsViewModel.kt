@@ -2,7 +2,9 @@ package com.lumenlauncher.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.IconRenderMode
@@ -10,13 +12,20 @@ import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ThemeMode
 import com.lumenlauncher.app.data.model.WallpaperAccentRole
+import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.SelectPreviewAppsUseCase
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+/** Appearance screen's preview card home-row (2) + dock-icon (3) slots — see [AppearanceSettingsViewModel.previewApps]. */
+private const val PREVIEW_APP_COUNT = 5
 
 /**
  * Settings → Appearance (`3c`'s theme/accent/icons/font block, split into its own screen — see
@@ -26,10 +35,30 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class AppearanceSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    getInstalledApps: GetInstalledAppsUseCase,
+    private val defaultAppRepository: DefaultAppRepository,
+    selectPreviewApps: SelectPreviewAppsUseCase,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LauncherSettings())
+
+    /** Seeded once from [DefaultAppRepository.getDefaultAppPackages] — this device's default-app
+     * picks don't change mid-session, so a one-shot fetch (same pattern as
+     * [com.lumenlauncher.app.ui.dock.DockAppPickerViewModel]'s own installed-apps seed) is enough. */
+    private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
+
+    /** Backs the Appearance preview card's sample rows/dock icons with the device's own real
+     * installed apps instead of placeholder objects — live via [GetInstalledAppsUseCase.observe]
+     * (same source the App Drawer itself reads from), biased toward recognizable apps first via
+     * [SelectPreviewAppsUseCase]. */
+    val previewApps: StateFlow<List<AppInfo>> = combine(getInstalledApps.observe(), preferredPreviewPackages) { installed, preferred ->
+        selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    init {
+        viewModelScope.launch { preferredPreviewPackages.value = defaultAppRepository.getDefaultAppPackages() }
+    }
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { settingsRepository.setThemeMode(mode) }

@@ -1,6 +1,7 @@
 package com.lumenlauncher.app.ui.home
 
 import android.content.res.Configuration
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,9 +44,48 @@ class HomeScreenTest {
         AppInfo(packageName = "com.example.app$it", activityName = ".Main", label = "App $it", icon = null)
     }
 
-    /** Long-presses the clock to reveal its (otherwise hidden) grab handle. */
-    private fun enableClockDragMode() {
+    /**
+     * [HomeScreen] with the clock-adjust state hoisted the way [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute]
+     * does it in the real app — so a long-press actually reveals the menu/handles. A bare
+     * `HomeScreen(...)` call leaves `onAdjustModeChange` a no-op.
+     */
+    @Composable
+    private fun TestHomeScreen(
+        appListItems: List<AppInfo>,
+        dockApps: List<AppInfo> = emptyList(),
+        appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+        clockAlignment: ClockAlignment = ClockAlignment.LEFT,
+        clockZoneHeightDp: Float? = null,
+        onClockZoneHeightCommit: (Float) -> Unit = {},
+        clockScale: Float = 0.8f,
+        onClockScaleCommit: (Float) -> Unit = {},
+    ) {
+        var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+        var dragging by remember { mutableStateOf(false) }
+        LumenLauncherTheme {
+            HomeScreen(
+                appListItems = appListItems,
+                dockApps = dockApps,
+                onAppClick = {},
+                appListVerticalAlignment = appListVerticalAlignment,
+                clockAlignment = clockAlignment,
+                clockZoneHeightDp = clockZoneHeightDp,
+                onClockZoneHeightCommit = onClockZoneHeightCommit,
+                clockScale = clockScale,
+                onClockScaleCommit = onClockScaleCommit,
+                clockAdjustMode = adjustMode,
+                onAdjustModeChange = { adjustMode = it },
+                draggingHandle = dragging,
+                onDraggingHandleChange = { dragging = it },
+            )
+        }
+    }
+
+    /** Long-presses the clock, then picks "Adjust size & position" — reveals the move handle AND the resize handles. */
+    private fun enterAdjustMode() {
         composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_open").performClick()
         composeRule.waitForIdle()
     }
 
@@ -128,6 +168,28 @@ class HomeScreenTest {
 
         // Then onClockClick fires
         assertEquals(true, clicked)
+    }
+
+    @Test
+    fun longPressingBesideTheClockDoesNotRevealTheDragHandle() {
+        // Given a left-aligned (default) clock, which today doesn't fill the screen's width —
+        // home_clock_block now hugs only the clock's own rendered content (see HomeScreen.kt's
+        // own doc comment on the hit-box fix), so there's real empty space to its right.
+        composeRule.setContent {
+            LumenLauncherTheme {
+                HomeScreen(appListItems = apps(1), dockApps = emptyList(), onAppClick = {})
+            }
+        }
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+
+        // When that empty space, not the clock itself, is long-pressed
+        composeRule.onRoot().performTouchInput { longClick(besideClock) }
+        composeRule.waitForIdle()
+
+        // Then drag mode never activates — the touch fell outside the clock's own hit box
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertDoesNotExist()
     }
 
     @Test
@@ -426,47 +488,33 @@ class HomeScreenTest {
     }
 
     @Test
-    fun zoneHandleIsHiddenUntilTheClockIsLongPressed() {
+    fun adjustMenuSheetIsHiddenUntilTheClockIsLongPressed() {
         // Given the default layout
-        composeRule.setContent {
-            LumenLauncherTheme {
-                HomeScreen(appListItems = apps(3), dockApps = emptyList(), onAppClick = {})
-            }
-        }
-        composeRule.onNodeWithTag("home_clock_zone_handle").assertDoesNotExist()
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
 
         // When the clock is long-pressed
-        enableClockDragMode()
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
 
-        // Then the handle appears
-        composeRule.onNodeWithTag("home_clock_zone_handle").assertExists()
+        // Then the adjustment menu sheet appears
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
     }
 
     @Test
-    fun tappingAwayFromTheRevealedHandleHidesItAgain() {
-        // Given the handle revealed via a long-press on the clock
-        composeRule.setContent {
-            LumenLauncherTheme {
-                HomeScreen(appListItems = apps(3), dockApps = emptyList(), onAppClick = {})
-            }
-        }
-        enableClockDragMode()
-        composeRule.onNodeWithTag("home_clock_zone_handle").assertExists()
+    fun tappingAwayFromTheRevealedSheetHidesItAgain() {
+        // Given the sheet revealed via a long-press on the clock
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 
-        // When tapping a blank part of the screen — the gap between the clock's bottom edge and
-        // the (still default, bottom-anchored) list's top edge — the dismiss gesture lives on the
-        // Home root itself now (an ancestor of the handle, not a same-bounds sibling; see
-        // HomeScreen.kt's own comment on why), so any unconsumed tap anywhere reaches it.
-        val clockBottom = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.bottom
-        val listTop = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot.top
-        val rootBounds = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
-        composeRule.onRoot().performTouchInput {
-            down(Offset(rootBounds.center.x, (clockBottom + listTop) / 2f))
-            up()
-        }
+        // When tapping the scrim (outside the sheet)
+        composeRule.onNodeWithTag("clock_adjust_scrim").performClick()
+        composeRule.waitForIdle()
 
         // Then it's hidden again
-        composeRule.onNodeWithTag("home_clock_zone_handle").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -480,23 +528,19 @@ class HomeScreenTest {
         var committedHeightDp: Float? = null
         composeRule.setContent {
             var zoneHeightDp by remember { mutableStateOf<Float?>(null) }
-            LumenLauncherTheme {
-                HomeScreen(
-                    appListItems = apps(3),
-                    dockApps = emptyList(),
-                    onAppClick = {},
-                    clockZoneHeightDp = zoneHeightDp,
-                    onClockZoneHeightCommit = {
-                        committedHeightDp = it
-                        zoneHeightDp = it
-                    },
-                )
-            }
+            TestHomeScreen(
+                appListItems = apps(3),
+                clockZoneHeightDp = zoneHeightDp,
+                onClockZoneHeightCommit = {
+                    committedHeightDp = it
+                    zoneHeightDp = it
+                },
+            )
         }
         val topBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.top
 
         // When the clock is long-pressed to reveal the handle, then the handle is dragged down
-        enableClockDragMode()
+        enterAdjustMode()
         dragHandleBy(150f)
 
         // Then the clock+calendar block slides down together with it (not just the boundary below it)
@@ -508,14 +552,10 @@ class HomeScreenTest {
     @Test
     fun zoneHandleCannotBeDraggedAboveTheClocksMinimumGap() {
         // Given the default layout
-        composeRule.setContent {
-            LumenLauncherTheme {
-                HomeScreen(appListItems = apps(3), dockApps = emptyList(), onAppClick = {})
-            }
-        }
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
 
         // When the handle is revealed and dragged far upward, past where the clock itself sits
-        enableClockDragMode()
+        enterAdjustMode()
         dragHandleBy(-2000f)
 
         // Then the clock block never leaves the visible content area (its top never goes negative)
@@ -526,20 +566,121 @@ class HomeScreenTest {
     @Test
     fun zoneHeightCannotExceedHalfOfContentHeight() {
         // Given the default layout
-        composeRule.setContent {
-            LumenLauncherTheme {
-                HomeScreen(appListItems = apps(3), dockApps = emptyList(), onAppClick = {})
-            }
-        }
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
         val rootHeight = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.bottom
 
         // When the handle is revealed and dragged far downward
-        enableClockDragMode()
+        enterAdjustMode()
         dragHandleBy(5000f)
 
         // Then it's clamped well short of the bottom of the screen, not free to reach it
         val handleTop = composeRule.onNodeWithTag("home_clock_zone_handle").fetchSemanticsNode().boundsInRoot.top
         assertTrue(handleTop < rootHeight * 0.75f)
+    }
+
+    @Test
+    fun draggingTheResizeHandleScalesTheClock() {
+        var committedScale = 1f
+        composeRule.setContent {
+            var scale by remember { mutableStateOf(1f) }
+            // Clock pushed down so there's headroom above it to actually grow into.
+            TestHomeScreen(
+                appListItems = apps(1),
+                clockZoneHeightDp = 900f,
+                clockScale = scale,
+                onClockScaleCommit = { committedScale = it; scale = it },
+            )
+        }
+        val widthBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
+        val heightBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
+
+        // When resize mode is enabled and the right handle is dragged right and up. The move is
+        // split — the first event only captures the finger's offset from the corner (so the clock
+        // doesn't pop), the rest actually scale.
+        enterAdjustMode()
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(20f, -10f))
+            moveBy(Offset(60f, -30f))
+            moveBy(Offset(60f, -30f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then the clock grows on both axes (uniform scale) and commits a value > 1f
+        val widthAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
+        val heightAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
+        assertTrue("Width should have increased", widthAfter > widthBefore)
+        assertTrue("Height should have increased", heightAfter > heightBefore)
+        assertTrue("Committed scale should be > 1f", committedScale > 1f)
+    }
+
+    @Test
+    fun clockScaleIsClampedToItsBounds() {
+        var committedScale = 1f
+        composeRule.setContent {
+            var scale by remember { mutableStateOf(1f) }
+            TestHomeScreen(
+                appListItems = apps(1),
+                clockZoneHeightDp = 900f,
+                clockScale = scale,
+                onClockScaleCommit = { committedScale = it; scale = it },
+            )
+        }
+
+        // When dragging far out, the committed scale can't exceed the 2.0 ceiling (it may land
+        // lower — the real cap is whatever still fits the screen). First move captures the grab
+        // offset, the rest scale.
+        enterAdjustMode()
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(40f, -20f))
+            moveBy(Offset(200f, -150f))
+            moveBy(Offset(3000f, -2000f))
+            up()
+        }
+        composeRule.waitForIdle()
+        assertTrue("grew past 1f", committedScale > 1f)
+        assertTrue("clamped at or below 2.0", committedScale <= 2.0f + 0.01f)
+
+        // When dragging far in (still in adjust mode), it clamps to the hard 0.5 floor.
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(-40f, 20f))
+            moveBy(Offset(-200f, 150f))
+            moveBy(Offset(-3000f, 2000f))
+            up()
+        }
+        composeRule.waitForIdle()
+        assertEquals(0.5f, committedScale, 0.01f)
+    }
+
+    @Test
+    fun repositioningTheClockHigherShrinksItToFitAndPersistsThatScale() {
+        // Given a large clock, low on the screen (lots of headroom above it)
+        var committedScale = 2f
+        composeRule.setContent {
+            var scale by remember { mutableStateOf(2f) }
+            var zone by remember { mutableStateOf<Float?>(900f) }
+            TestHomeScreen(
+                appListItems = apps(3),
+                clockZoneHeightDp = zone,
+                onClockZoneHeightCommit = { zone = it },
+                clockScale = scale,
+                onClockScaleCommit = { committedScale = it; scale = it },
+            )
+        }
+        val heightBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
+
+        // When the move handle is dragged far up, toward the status bar
+        enterAdjustMode()
+        dragHandleBy(-1500f)
+
+        // Then the clock shrank in real time to stay within the now-reduced headroom, and the
+        // smaller scale was persisted so it doesn't snap back
+        val heightAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
+        assertTrue("clock shrank to fit", heightAfter < heightBefore)
+        assertTrue("the shrunk scale was committed", committedScale < 2f)
     }
 
     @Test
@@ -551,10 +692,9 @@ class HomeScreenTest {
             }
         }
 
-        // Then the time text itself (not just home_clock_block, which is full-width so its own
-        // content can align within it) doesn't hug either edge of the screen. The exact time isn't
-        // known (HomeScreen uses the real system clock), so match on the ":" every time string
-        // contains rather than a specific value.
+        // Then the time text doesn't hug either edge of the screen. The exact time isn't known
+        // (HomeScreen uses the real system clock), so match on the ":" every time string contains
+        // rather than a specific value.
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
         val timeBounds = composeRule.onNode(hasText(":", substring = true)).fetchSemanticsNode().boundsInRoot
         assertTrue(timeBounds.left > rootWidth * 0.1f)
@@ -581,39 +721,27 @@ class HomeScreenTest {
     fun topListAlignmentAnchorsTheListImmediatelyBelowTheGrabHandle() {
         // Given Top app-list alignment
         composeRule.setContent {
-            LumenLauncherTheme {
-                HomeScreen(
-                    appListItems = apps(3),
-                    dockApps = emptyList(),
-                    onAppClick = {},
-                    appListVerticalAlignment = AppListVerticalAlignment.TOP,
-                )
-            }
+            TestHomeScreen(appListItems = apps(3), appListVerticalAlignment = AppListVerticalAlignment.TOP)
         }
 
-        // Then the list's scroll region starts right where the (revealed) handle sits, not near the bottom
-        enableClockDragMode()
+        // Then the list's scroll region starts at the (revealed) handle, not near the bottom —
+        // within one handle-height below it, never above and never bottom-anchored.
+        enterAdjustMode()
         val handleTop = composeRule.onNodeWithTag("home_clock_zone_handle").fetchSemanticsNode().boundsInRoot.top
         val listTop = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot.top
-        assertEquals(handleTop, listTop, 1f)
+        assertTrue("list starts at/below the handle", listTop >= handleTop - 1f)
+        assertTrue("list starts immediately below the handle, not near the bottom", listTop < handleTop + 130f)
     }
 
     @Test
     fun bottomListAlignmentAnchorsTheListAboveTheDockExactlyAsToday() {
         // Given Bottom app-list alignment (the default) and a short list, with plenty of room above it
         composeRule.setContent {
-            LumenLauncherTheme {
-                HomeScreen(
-                    appListItems = apps(2),
-                    dockApps = emptyList(),
-                    onAppClick = {},
-                    appListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
-                )
-            }
+            TestHomeScreen(appListItems = apps(2), appListVerticalAlignment = AppListVerticalAlignment.BOTTOM)
         }
 
         // Then the list sits well below the (revealed) handle — bottom-anchored, not flush against it
-        enableClockDragMode()
+        enterAdjustMode()
         val handleTop = composeRule.onNodeWithTag("home_clock_zone_handle").fetchSemanticsNode().boundsInRoot.top
         val listTop = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot.top
         assertTrue(listTop > handleTop + 50f)

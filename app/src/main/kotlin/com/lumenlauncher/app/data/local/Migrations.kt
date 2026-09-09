@@ -78,5 +78,19 @@ object Migrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+    /**
+     * Adds the current Clock+Calendar design columns to `profiles` (all gated by `overrideClock`):
+     * `clockAccentColorOption`/`clockDateStyle` (same `NOT NULL DEFAULT` treatment as every other
+     * enum column in that bundle) and `clockScale` (uniform Home-clock scaling). One migration —
+     * nothing shipped between v14 and v15.
+     */
+    val MIGRATION_14_15: Migration = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles ADD COLUMN clockAccentColorOption TEXT NOT NULL DEFAULT 'ACCENT_PRIMARY'")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN clockDateStyle TEXT NOT NULL DEFAULT 'FULL'")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN clockScale REAL NOT NULL DEFAULT 0.8")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
 }

@@ -62,6 +62,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.ui.drawer.AppDrawerScreen
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
+import com.lumenlauncher.app.ui.home.ClockAdjustMode
 import com.lumenlauncher.app.ui.home.HomeScreen
 import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.hub.HubScreen
@@ -160,6 +161,8 @@ fun HomeDrawerRoute(
     onNavigateToSettings: () -> Unit,
     onNavigateToProfileCarousel: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
+    /** Navigates to the clock style gallery, either global (null) or profile-scoped. */
+    onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
@@ -212,6 +215,8 @@ fun HomeDrawerRoute(
     // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
     // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
     var showWidgetPicker by remember { mutableStateOf(false) }
+    var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    var draggingHandle by remember { mutableStateOf(false) }
     var drawerQuery by remember { mutableStateOf("") }
     var homeDragStartedClosed by remember { mutableStateOf(false) }
     var homeRawDragDistance by remember { mutableFloatStateOf(0f) }
@@ -288,6 +293,13 @@ fun HomeDrawerRoute(
         }
     }
 
+    // Cancel clock adjustment when navigating away from Home.
+    LaunchedEffect(isDrawerOpen, isHubOpen) {
+        if (isDrawerOpen || isHubOpen) {
+            clockAdjustMode = ClockAdjustMode.NONE
+        }
+    }
+
     BackHandler(enabled = isDrawerOpen || isHubOpen || showWidgetPicker) {
         focusManager.clearFocus()
         when {
@@ -323,11 +335,24 @@ fun HomeDrawerRoute(
             clockTemplateId = homeUiState.clockTemplateId,
             clockFontOption = homeUiState.clockFontOption,
             clockColorOption = homeUiState.clockColorOption,
+            clockAccentColorOption = homeUiState.clockAccentColorOption,
             clockShowMeridiem = homeUiState.clockShowMeridiem,
+            clockDateStyle = homeUiState.clockDateStyle,
             clockAlignment = homeUiState.clockAlignment,
             calendarAlignment = homeUiState.calendarAlignment,
             clockZoneHeightDp = homeUiState.clockZoneHeightDp,
             onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
+            clockScale = homeUiState.clockScale,
+            clockPositionOwningProfile = homeUiState.clockPositionOwningProfile,
+            clockAdjustMode = clockAdjustMode,
+            onAdjustModeChange = { clockAdjustMode = it },
+            draggingHandle = draggingHandle,
+            onDraggingHandleChange = { draggingHandle = it },
+            onClockScaleCommit = homeViewModel::onClockScaleCommit,
+            onEditClockStyles = {
+                clockAdjustMode = ClockAdjustMode.NONE
+                onNavigateToClockStyleGallery(homeUiState.clockPositionOwningProfile?.id)
+            },
             appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
@@ -370,7 +395,11 @@ fun HomeDrawerRoute(
                     scaleX = scale
                     scaleY = scale
                 }
-                .pointerInput(Unit) {
+                .pointerInput(draggingHandle, clockAdjustMode) {
+                    // Suppress screen-wide gestures if we're in any adjustment mode
+                    // or actively dragging a handle.
+                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
+
                     detectDragGestures(
                         onDragStart = {
                             homeDragAxis = null
@@ -407,6 +436,12 @@ fun HomeDrawerRoute(
                         if (homeDragAxis == null) {
                             homeDragAxis = if (abs(dragAmount.x) > abs(dragAmount.y)) Axis.HORIZONTAL else Axis.VERTICAL
                         }
+                        // If a screen gesture successfully starts (crosses slop) while we're in
+                        // an adjustment mode (but not holding a handle), cancel adjustment.
+                        if (clockAdjustMode != ClockAdjustMode.NONE) {
+                            clockAdjustMode = ClockAdjustMode.NONE
+                        }
+
                         when (homeDragAxis) {
                             Axis.VERTICAL -> {
                                 drawerAxis.dragBy(-dragAmount.y)

@@ -88,8 +88,10 @@ fun AppearanceSettingsScreen(
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsState()
+    val previewApps by viewModel.previewApps.collectAsState()
     AppearanceSettingsContent(
         settings = settings,
+        previewApps = previewApps,
         onBack = onBack,
         onThemeModeChanged = viewModel::setThemeMode,
         onAccentFromSystemChanged = viewModel::setAccentFromSystem,
@@ -106,6 +108,7 @@ fun AppearanceSettingsScreen(
 @Composable
 private fun AppearanceSettingsContent(
     settings: LauncherSettings,
+    previewApps: List<AppInfo>,
     onBack: () -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onAccentFromSystemChanged: (Boolean) -> Unit,
@@ -137,6 +140,7 @@ private fun AppearanceSettingsContent(
                         appLabelColorOption = settings.appLabelColorOption,
                         homeAppsFontWeight = settings.homeAppsFontWeight,
                         dockDisplayMode = settings.dockDisplayMode,
+                        previewApps = previewApps,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
@@ -207,17 +211,19 @@ private fun AppearanceSettingsContent(
  * Shows how this screen's own settings actually render on Home/Dock, using real production
  * components ([AppRow]/[DockIcon] — the latter already `internal` for the profile carousel's own
  * live preview, the former promoted `internal` for exactly this reuse too) rather than a
- * hand-drawn mockup. Needs no preview-only state: [AppearanceSettingsViewModel.settings] already
- * updates immediately after every setter call, so this just reads the same live values the rest
- * of the screen's controls write to. Backed by [Wallpaper] (Home's own real backdrop tone, not
- * [Surface]/[SurfaceContainer]) so [AppRow]/[DockIcon]'s text-shadow treatment — tuned for
- * legibility over an arbitrary wallpaper, not a flat card — renders exactly as it would on Home,
- * not washed out against a plain light card. The two sample apps are synthetic (`icon = null`,
- * same placeholder-icon convention already used by this file's own `@Preview`s) — Theme/Accent/
- * Launcher Font/Font weight/App label color all render correctly from that alone, since none of
- * them need a real icon bitmap to demonstrate; Icon render mode specifically has nothing to tint
- * without one, so it isn't visually demonstrated here (this preview's own icons always fall back
- * to the placeholder, regardless of that setting).
+ * hand-drawn mockup. Needs no preview-only state beyond [previewApps]:
+ * [AppearanceSettingsViewModel.settings] already updates immediately after every setter call, so
+ * the rest of this just reads the same live values the rest of the screen's controls write to.
+ * Backed by [Wallpaper] (Home's own real backdrop tone, not [Surface]/[SurfaceContainer]) so
+ * [AppRow]/[DockIcon]'s text-shadow treatment — tuned for legibility over an arbitrary wallpaper,
+ * not a flat card — renders exactly as it would on Home, not washed out against a plain light
+ * card. [previewApps] are the device's own real installed apps ([AppearanceSettingsViewModel.previewApps],
+ * sourced the same way the App Drawer is, then biased toward recognizable ones — a browser,
+ * messaging, camera, mail, phone app, plus a few near-ubiquitous Google apps — via
+ * [com.lumenlauncher.app.domain.SelectPreviewAppsUseCase], falling back to the installed list's
+ * own remaining apps) rather than placeholder objects, so their icons render too — Icon render
+ * mode is now visually demonstrated here as well, alongside Theme/Accent/Launcher Font/Font
+ * weight/App label color.
  */
 @Composable
 private fun AppearancePreviewCard(
@@ -226,6 +232,7 @@ private fun AppearancePreviewCard(
     appLabelColorOption: ClockColorOption,
     homeAppsFontWeight: FontWeightOption,
     dockDisplayMode: DockDisplayMode,
+    previewApps: List<AppInfo>,
     modifier: Modifier = Modifier,
 ) {
     val labelColor = appLabelColorOption.resolve()
@@ -245,7 +252,7 @@ private fun AppearancePreviewCard(
             color = Muted,
             modifier = Modifier.padding(bottom = 8.dp),
         )
-        PreviewApps.forEach { app ->
+        previewApps.take(PREVIEW_HOME_APP_COUNT).forEach { app ->
             AppRow(
                 app = app,
                 onClick = {},
@@ -262,7 +269,7 @@ private fun AppearancePreviewCard(
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            PreviewDockApps.forEach { app ->
+            previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT).forEach { app ->
                 DockIcon(
                     app = app,
                     displayMode = dockDisplayMode,
@@ -276,11 +283,15 @@ private fun AppearancePreviewCard(
     }
 }
 
-private val PreviewApps = listOf(
+private const val PREVIEW_HOME_APP_COUNT = 2
+private const val PREVIEW_DOCK_APP_COUNT = 3
+
+/** Design-time stand-ins for [AppearanceSettingsScreenPreview] — Android Studio's `@Preview`
+ * rendering has no real [com.lumenlauncher.app.data.AppRepository] to query, unlike the screen's
+ * own live [AppearancePreviewCard], which sources real installed apps instead (see its doc). */
+private val DesignTimePreviewApps = listOf(
     AppInfo(packageName = "preview.appearance.one", activityName = ".Main", label = "Camera", icon = null),
     AppInfo(packageName = "preview.appearance.two", activityName = ".Main", label = "Messages", icon = null),
-)
-private val PreviewDockApps = listOf(
     AppInfo(packageName = "preview.appearance.dock.one", activityName = ".Main", label = "Phone", icon = null),
     AppInfo(packageName = "preview.appearance.dock.two", activityName = ".Main", label = "Browser", icon = null),
     AppInfo(packageName = "preview.appearance.dock.three", activityName = ".Main", label = "Mail", icon = null),
@@ -493,6 +504,7 @@ private fun AppearanceSettingsScreenPreview() {
     LumenLauncherTheme {
         AppearanceSettingsContent(
             settings = LauncherSettings(),
+            previewApps = DesignTimePreviewApps,
             onBack = {},
             onThemeModeChanged = {},
             onAccentFromSystemChanged = {},

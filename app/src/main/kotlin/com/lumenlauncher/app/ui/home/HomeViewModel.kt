@@ -94,6 +94,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /** Fired once, on release, by the clock's resize handles — see [com.lumenlauncher.app.data.model.LauncherSettings.clockScale]. */
+    fun onClockScaleCommit(scale: Float) {
+        val owningProfile = _uiState.value.clockPositionOwningProfile
+        viewModelScope.launch {
+            owningProfile?.let { profileRepository.setClockScale(it, scale) }
+                ?: settingsRepository.setClockScale(scale)
+        }
+    }
+
     private companion object {
         const val LOADING_TIMEOUT_MS = 3_000L
     }

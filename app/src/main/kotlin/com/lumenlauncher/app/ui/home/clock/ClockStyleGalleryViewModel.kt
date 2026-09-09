@@ -8,6 +8,7 @@ import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -26,8 +27,11 @@ data class ClockStyleGalleryUiState(
     val templateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val fontOption: ClockFontOption = ClockFontOption.SYSTEM,
     val colorOption: ClockColorOption = ClockColorOption.THEME,
+    /** Only meaningful for templates where [com.lumenlauncher.app.data.model.usesAccentColor] is true. */
+    val accentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     val use24HourTime: Boolean = false,
     val showMeridiem: Boolean = false,
+    val dateStyle: ClockDateStyle = ClockDateStyle.FULL,
     /** The calendar events strip's own font/color — part of this same Clock+Calendar design block/override, not a separate one (see chat history). */
     val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -60,8 +64,10 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 templateId = profile.clockTemplateId,
                 fontOption = profile.clockFontOption,
                 colorOption = profile.clockColorOption,
+                accentColorOption = profile.clockAccentColorOption,
                 use24HourTime = profile.use24HourTime,
                 showMeridiem = profile.clockShowMeridiem,
+                dateStyle = profile.clockDateStyle,
                 calendarFontOption = profile.calendarFontOption,
                 calendarColorOption = profile.calendarColorOption,
                 calendarFontWeight = profile.calendarFontWeight,
@@ -74,8 +80,10 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 templateId = settings.clockTemplateId,
                 fontOption = settings.clockFontOption,
                 colorOption = settings.clockColorOption,
+                accentColorOption = settings.clockAccentColorOption,
                 use24HourTime = settings.use24HourTime,
                 showMeridiem = settings.clockShowMeridiem,
+                dateStyle = settings.clockDateStyle,
                 calendarFontOption = settings.calendarFontOption,
                 calendarColorOption = settings.calendarColorOption,
                 calendarFontWeight = settings.calendarFontWeight,
@@ -110,6 +118,14 @@ class ClockStyleGalleryViewModel @Inject constructor(
         }
     }
 
+    fun setClockAccentColorOption(option: ClockColorOption) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setClockAccentColorOption(it, option) }
+            } ?: settingsRepository.setClockAccentColorOption(option)
+        }
+    }
+
     fun setUse24HourTime(enabled: Boolean) {
         viewModelScope.launch {
             profileId?.let { pid ->
@@ -123,6 +139,14 @@ class ClockStyleGalleryViewModel @Inject constructor(
             profileId?.let { pid ->
                 profileRepository.getById(pid)?.let { profileRepository.setClockShowMeridiem(it, enabled) }
             } ?: settingsRepository.setClockShowMeridiem(enabled)
+        }
+    }
+
+    fun setClockDateStyle(dateStyle: ClockDateStyle) {
+        viewModelScope.launch {
+            profileId?.let { pid ->
+                profileRepository.getById(pid)?.let { profileRepository.setClockDateStyle(it, dateStyle) }
+            } ?: settingsRepository.setClockDateStyle(dateStyle)
         }
     }
 
@@ -169,9 +193,8 @@ class ClockStyleGalleryViewModel @Inject constructor(
 
     /**
      * "Reset clock widget position" — restores the whole clock+calendar widget to its original,
-     * untouched layout: the zone height back to `null` (fixed-top, bottom-anchored app list) and
-     * BOTH alignments (clock's and calendar's, independent settings otherwise — see
-     * [setClockAlignment]/[setCalendarAlignment]) back to `LEFT`, not just the height alone.
+     * untouched layout: the zone height back to `null` (fixed-top, bottom-anchored app list),
+     * BOTH alignments back to `LEFT`, and scale back to `0.8f`.
      * Resets this profile's own values when scoped, the global defaults otherwise — same branching
      * as every setter above.
      */
@@ -181,6 +204,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 profileRepository.getById(pid)?.let { profileRepository.resetClockPosition(it) }
             } ?: run {
                 settingsRepository.resetClockZoneHeight()
+                settingsRepository.resetClockScale()
                 settingsRepository.setClockAlignment(ClockAlignment.LEFT)
                 settingsRepository.setCalendarAlignment(ClockAlignment.LEFT)
             }

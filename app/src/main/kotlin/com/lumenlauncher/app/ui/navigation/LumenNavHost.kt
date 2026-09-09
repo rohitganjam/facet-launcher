@@ -25,6 +25,7 @@ import com.lumenlauncher.app.ui.home.clock.ProfileClockStyleGalleryScreen
 import com.lumenlauncher.app.ui.launcher.HomeDrawerRoute
 import com.lumenlauncher.app.ui.launcher.LauncherViewModel
 import com.lumenlauncher.app.ui.profiles.FavoritesPickerScreen
+import com.lumenlauncher.app.ui.profiles.ProfileCarouselMode
 import com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen
 import com.lumenlauncher.app.ui.profiles.ProfileSettingsScreen
 import com.lumenlauncher.app.ui.settings.AppDrawerSettingsScreen
@@ -44,6 +45,7 @@ object LumenDestinations {
     const val SETTINGS = "settings"
     const val DOCK_PICKER = "dockPicker"
     const val PROFILE_CAROUSEL = "profileCarousel"
+    const val PROFILE_MANAGE = "profileManage"
     const val PROFILE_SETTINGS = "profileSettings/{profileId}"
     const val FAVORITES_PICKER = "favoritesPicker?profileId={profileId}"
     const val CALENDAR_SETTINGS = "calendarSettings?profileId={profileId}"
@@ -125,6 +127,10 @@ fun LumenNavHost(
                 onNavigateToUsageAccessExplanation = {
                     navController.navigate(LumenDestinations.USAGE_ACCESS_EXPLANATION)
                 },
+                onNavigateToClockStyleGallery = { profileId ->
+                    val dest = if (profileId != null) LumenDestinations.profileClockStyleGallery(profileId) else LumenDestinations.CLOCK_STYLE_GALLERY
+                    navController.navigate(dest)
+                },
                 launcherViewModel = launcherViewModel,
             )
         }
@@ -134,7 +140,7 @@ fun LumenNavHost(
         composable(LumenDestinations.SETTINGS) {
             SettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onViewProfiles = { navController.navigate(LumenDestinations.PROFILE_CAROUSEL) },
+                onViewProfiles = { navController.navigate(LumenDestinations.PROFILE_MANAGE) },
                 onNavigateToAppearance = { navController.navigate(LumenDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToClockStyleGallery = { navController.navigate(LumenDestinations.CLOCK_STYLE_GALLERY) },
                 onNavigateToCalendarSettings = { navController.navigate(LumenDestinations.calendarSettings()) },
@@ -213,6 +219,17 @@ fun LumenNavHost(
                 },
                 onEditProfile = { profileId -> navController.navigate(LumenDestinations.profileSettings(profileId)) },
                 onNavigateToSettings = { navController.navigate(LumenDestinations.SETTINGS) },
+            )
+        }
+        composable(LumenDestinations.PROFILE_MANAGE) {
+            // Settings → Profiles: the reorderable list only, backing out to Settings. Applying a
+            // profile and the in-carousel "launcher settings" row don't exist in manage mode.
+            ProfileCarouselScreen(
+                mode = ProfileCarouselMode.MANAGE,
+                onBack = { navController.popBackStackSafely() },
+                onProfileApplied = {},
+                onEditProfile = { profileId -> navController.navigate(LumenDestinations.profileSettings(profileId)) },
+                onNavigateToSettings = {},
             )
         }
         composable(

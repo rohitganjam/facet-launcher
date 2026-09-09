@@ -6,6 +6,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockAlignment
+import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.time.Clock
@@ -397,5 +399,205 @@ class ClockBlockTest {
         composeRule.onNodeWithText("Event 3").assertExists()
         composeRule.onNodeWithText("Event 4").assertDoesNotExist()
         composeRule.onNodeWithText("Event 5").assertDoesNotExist()
+    }
+
+    // The 16 shape-based templates (ClockTemplates.kt's own "Accent Field" through "Half
+    // Immersed") — one smoke test each, matching this file's existing rigor level: assert the
+    // hour/minute render somewhere in the tree without crashing, not pixel-perfect shape checks.
+
+    @Test
+    fun accentFieldTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ACCENT_FIELD) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun hourTileTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.HOUR_TILE) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun chipTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.CHIP) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun duotoneOverlapTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.DUOTONE_OVERLAP) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun cornerFrameTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.CORNER_FRAME) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun stubTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.STUB) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun haloTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.HALO) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun digitCellsTemplateRendersEachDigitSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.DIGIT_CELLS) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("0").assertExists()
+        composeRule.onNodeWithText("5").assertExists()
+    }
+
+    @Test
+    fun negativePanelTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.NEGATIVE_PANEL) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun hollowHourTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.HOLLOW_HOUR) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun highlighterTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.HIGHLIGHTER) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun columnRuleTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.COLUMN_RULE) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun colonMarkTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.COLON_MARK) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun pillPairTemplateRendersTheHourAndMinuteSeparately() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.PILL_PAIR) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
+    }
+
+    @Test
+    fun shelfTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.SHELF) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun halfImmersedTemplateRendersTheCombinedTime() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.HALF_IMMERSED) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+    }
+
+    @Test
+    fun condensedDateStyleAbbreviatesTheDayAndMonth() {
+        // Given the condensed date style, on a template that renders its date through the shared
+        // dateFormatter() helper
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, dateStyle = ClockDateStyle.CONDENSED)
+            }
+        }
+
+        // Then the date reads "Thu, 27 Aug", not "Thursday, 27 August"
+        composeRule.onNodeWithText("Thu, 27 Aug").assertExists()
+        composeRule.onNodeWithText("Thursday, 27 August").assertDoesNotExist()
+    }
+
+    @Test
+    fun fullDateStyleIsTheUnchangedDefault() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US) }
+        }
+        composeRule.onNodeWithText("Thursday, 27 August").assertExists()
+    }
+
+    @Test
+    fun accentUsingTemplateStillRendersWithACustomAccentColorOption() {
+        // Given ACCENT_FIELD (an accent-using template) with a non-default accent color option
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            LumenLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    templateId = ClockTemplateId.ACCENT_FIELD,
+                    accentColorOption = ClockColorOption.ACCENT_SECONDARY,
+                )
+            }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText("05").assertExists()
     }
 }

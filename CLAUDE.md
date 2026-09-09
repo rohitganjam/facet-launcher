@@ -37,6 +37,7 @@ Naming: screen composables/wrappers end in `Screen` (`HomeScreen`), their `ViewM
 - Inject dependencies (Repositories into ViewModels/use cases, DAOs/services into Repositories) with Hilt via constructor injection — no manual singletons or service locators.
 - Coroutines: suspend functions for anything doing I/O or calling a blocking system API, dispatched on `Dispatchers.IO` — never block the main thread. Expose state via `StateFlow`/`Flow` only (never `LiveData`), collected in Compose with `collectAsStateWithLifecycle()`.
 - Favor small, named functions over long ones with inline comments explaining sections — the section boundary itself should be the function boundary.
+- Keep comments short. A one-line comment for genuinely non-obvious rationale; skip it otherwise. Some existing code carries long multi-paragraph comments — don't extend that style or add to it when editing nearby; trim it down where you touch it.
 
 ## Compose conventions
 

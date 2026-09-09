@@ -13,6 +13,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -34,8 +35,10 @@ data class ProfileSettingsUiState(
     val globalClockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val globalClockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
     val globalClockColorOption: ClockColorOption = ClockColorOption.THEME,
+    val globalClockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     val globalUse24HourTime: Boolean = false,
     val globalClockShowMeridiem: Boolean = false,
+    val globalClockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
     /** The calendar events strip's own font/color — part of the same Clock+Calendar design block/override, not a separate one (see chat history). */
     val globalCalendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val globalCalendarColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -54,8 +57,10 @@ data class ProfileSettingsUiState(
     val clockTemplateId: ClockTemplateId get() = if (isOverridingClock) profile?.clockTemplateId ?: globalClockTemplateId else globalClockTemplateId
     val clockFontOption: ClockFontOption get() = if (isOverridingClock) profile?.clockFontOption ?: globalClockFontOption else globalClockFontOption
     val clockColorOption: ClockColorOption get() = if (isOverridingClock) profile?.clockColorOption ?: globalClockColorOption else globalClockColorOption
+    val clockAccentColorOption: ClockColorOption get() = if (isOverridingClock) profile?.clockAccentColorOption ?: globalClockAccentColorOption else globalClockAccentColorOption
     val effectiveUse24HourTime: Boolean get() = if (isOverridingClock) profile?.use24HourTime ?: globalUse24HourTime else globalUse24HourTime
     val clockShowMeridiem: Boolean get() = if (isOverridingClock) profile?.clockShowMeridiem ?: globalClockShowMeridiem else globalClockShowMeridiem
+    val clockDateStyle: ClockDateStyle get() = if (isOverridingClock) profile?.clockDateStyle ?: globalClockDateStyle else globalClockDateStyle
     val calendarFontOption: ClockFontOption get() = if (isOverridingClock) profile?.calendarFontOption ?: globalCalendarFontOption else globalCalendarFontOption
     val calendarColorOption: ClockColorOption get() = if (isOverridingClock) profile?.calendarColorOption ?: globalCalendarColorOption else globalCalendarColorOption
     val calendarFontWeight: FontWeightOption get() = if (isOverridingClock) profile?.calendarFontWeight ?: globalCalendarFontWeight else globalCalendarFontWeight
@@ -97,8 +102,10 @@ class ProfileSettingsViewModel @Inject constructor(
             globalClockTemplateId = settings.clockTemplateId,
             globalClockFontOption = settings.clockFontOption,
             globalClockColorOption = settings.clockColorOption,
+            globalClockAccentColorOption = settings.clockAccentColorOption,
             globalUse24HourTime = settings.use24HourTime,
             globalClockShowMeridiem = settings.clockShowMeridiem,
+            globalClockDateStyle = settings.clockDateStyle,
             globalCalendarFontOption = settings.calendarFontOption,
             globalCalendarColorOption = settings.calendarColorOption,
             globalCalendarFontWeight = settings.calendarFontWeight,
@@ -136,6 +143,8 @@ class ProfileSettingsViewModel @Inject constructor(
                 clockAlignment = state.clockAlignment,
                 calendarAlignment = state.calendarAlignment,
                 clockZoneHeightDp = state.clockZoneHeightDp,
+                accentColorOption = state.clockAccentColorOption,
+                dateStyle = state.clockDateStyle,
             )
         }
     }

@@ -22,3 +22,6 @@ graphify-out/.rebuild.lock
 
 # Claude Code session lock, not project config
 .claude/scheduled_tasks.lock
+
+# Claude Code local scratch/artifacts
+.artifacts/

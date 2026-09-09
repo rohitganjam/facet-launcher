@@ -17,6 +17,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -72,10 +73,14 @@ import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 
 /**
  * Home and Drawer are one merged composable now ([HomeDrawerRoute]) rather than two NavHost
@@ -97,19 +102,58 @@ class HomeDrawerRouteTest {
     private fun setContent(seedHubWithOneWidget: Boolean = false, onNavigateToProfileCarousel: () -> Unit = {}) {
         composeRule.setContent {
             val context = LocalContext.current
-            val homeViewModel = remember {
-                val settingsRepository = SettingsRepository(
+            // Every repository below is a real @Singleton in production (Hilt hands every
+            // ViewModel the same instance) — HomeViewModel and LauncherViewModel must share
+            // these same instances here too, not each get their own throwaway copy, or
+            // LauncherViewModel's EnsureActiveProfileUseCase (which creates the profile and
+            // sets activeProfileId) writes to a database/DataStore HomeViewModel never sees,
+            // leaving its own activeProfile permanently null and its app list permanently
+            // empty (see chat history: this is why "FAVORITES" never rendered no matter how
+            // long a test waited for it).
+            val database = remember {
+                Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
+            }
+            val settingsRepository = remember {
+                SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "test-settings-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
-                val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val profileRepository = ProfileRepository(database.profileDao())
+            }
+            val profileRepository = remember { ProfileRepository(database.profileDao()) }
+            // A real AppRepository here would hit the actual on-device LauncherApps service —
+            // AppRepositoryTest already covers that integration (mapping/sorting/icon-flatten/
+            // live re-emission) against a mocked LauncherApps at the unit level, so there's no
+            // correctness value in re-exercising the real system call in every UI test here too,
+            // only real cost: LauncherApps.getActivityList() triggers a full package-visibility
+            // pass across every package on the AVD (200+ BLOCKED entries in logcat per call) plus
+            // real icon decoding, measured at 18+ real seconds on a loaded machine (see chat
+            // history). Mocking AppRepository itself to return this test's own fake `apps` list
+            // keeps everything downstream of it (Room, DataStore, the actual gesture/ViewModel
+            // logic under test) real, while cutting out only the expensive, already-tested-
+            // elsewhere system call.
+            val appRepository = remember {
+                mock(AppRepository::class.java).also { repo ->
+                    `when`(repo.observeInstalledApps()).thenReturn(flowOf(apps))
+                    runBlocking { `when`(repo.getInstalledApps()).thenReturn(apps) }
+                    // Every Flow-returning method needs a stub — an unstubbed mock method
+                    // returns null, and CleanUpUninstalledAppsUseCase collecting a null Flow
+                    // NPEs immediately. No real uninstalls happen in these tests, so an empty,
+                    // never-emitting Flow is the correct fake here.
+                    `when`(repo.observeUninstalledPackages()).thenReturn(emptyFlow())
+                }
+            }
+            val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), appRepository) }
+            val favoriteAppRepository = remember { FavoriteAppRepository(database.favoriteAppDao(), appRepository) }
+            val defaultFavoriteAppRepository = remember {
+                DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository).also { repo ->
+                    // Never seeded otherwise — observeDefaultFavorites() combines DB rows against
+                    // installed apps, so with zero rows the list (and "FAVORITES") stays
+                    // permanently empty regardless of how fast/slow the installed-apps side is.
+                    runBlocking { repo.addFavorite(apps.first(), position = 0) }
+                }
+            }
+            val homeViewModel = remember {
                 val usageStatsRepository = UsageStatsRepository(
                     context.getSystemService(UsageStatsManager::class.java),
                     appRepository,
@@ -137,18 +181,6 @@ class HomeDrawerRouteTest {
                 )
             }
             val launcherViewModel = remember {
-                val settingsRepository = SettingsRepository(
-                    PreferenceDataStoreFactory.create(
-                        produceFile = { File(context.cacheDir, "test-launcher-settings-${System.nanoTime()}.preferences_pb") },
-                    ),
-                )
-                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
-                val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val profileRepository = ProfileRepository(database.profileDao())
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveProfileUseCase(profileRepository, settingsRepository),
@@ -237,6 +269,16 @@ class HomeDrawerRouteTest {
         // needs to wait it out before interacting rather than assuming instant content.
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithTag("drawer_search_field").fetchSemanticsNodes().isNotEmpty()
+        }
+        // drawer_search_field only tells you DrawerViewModel is up — Home's own favorites list
+        // depends on a separate chain through the now-shared profileRepository/settingsRepository:
+        // LauncherViewModel's EnsureActiveProfileUseCase creates the profile (Room insert) and
+        // writes activeProfileId (DataStore), which HomeViewModel's ObserveHomeScreenStateUseCase
+        // must observe before it resolves a non-null active profile. With AppRepository mocked
+        // (see above), the installed-apps side is instant, so this is just Room/DataStore's own
+        // ordinary emission latency, not a real system call — a short timeout is enough.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -508,6 +550,31 @@ class HomeDrawerRouteTest {
 
         // Then nothing happens
         assertEquals(false, navigated)
+    }
+
+    @Test
+    fun longPressBesideTheClockStillReachesTheProfileCarousel() {
+        // Given Home rendered — the default clock template is left-aligned and doesn't fill the
+        // screen's width, so there's real empty space to its right today (see HomeScreen.kt's own
+        // doc on why the clock's tap/long-press box now hugs only its rendered content instead of
+        // the old full-width box, which used to swallow a long-press landing anywhere in that
+        // empty space before it ever reached this outer gesture).
+        var navigated = false
+        setContent(onNavigateToProfileCarousel = { navigated = true })
+
+        val rootRight = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootRight) / 2f, clockBounds.center.y)
+
+        // When the finger goes down beside the clock (not on it) and stays still past the
+        // long-press timeout
+        composeRule.onRoot().performTouchInput { down(besideClock) }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        // Then the caller is still asked to navigate to the profile carousel
+        assertEquals(true, navigated)
+        composeRule.onRoot().performTouchInput { up() }
     }
 
     @Test

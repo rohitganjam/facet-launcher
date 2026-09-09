@@ -14,6 +14,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
@@ -67,7 +68,9 @@ private object Keys {
     val CLOCK_TEMPLATE_ID = stringPreferencesKey("clock_template_id")
     val CLOCK_FONT_OPTION = stringPreferencesKey("clock_font_option")
     val CLOCK_COLOR_OPTION = stringPreferencesKey("clock_color_option")
+    val CLOCK_ACCENT_COLOR_OPTION = stringPreferencesKey("clock_accent_color_option")
     val CLOCK_SHOW_MERIDIEM = booleanPreferencesKey("clock_show_meridiem")
+    val CLOCK_DATE_STYLE = stringPreferencesKey("clock_date_style")
     val CALENDAR_FONT_OPTION = stringPreferencesKey("calendar_font_option")
     val CALENDAR_COLOR_OPTION = stringPreferencesKey("calendar_color_option")
     val CALENDAR_FONT_WEIGHT = stringPreferencesKey("calendar_font_weight")
@@ -75,6 +78,7 @@ private object Keys {
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CALENDAR_ALIGNMENT = stringPreferencesKey("calendar_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
+    val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
 }
 
@@ -140,7 +144,11 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.clockFontOption,
             clockColorOption = preferences[Keys.CLOCK_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
                 ?: defaults.clockColorOption,
+            clockAccentColorOption = preferences[Keys.CLOCK_ACCENT_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
+                ?: defaults.clockAccentColorOption,
             clockShowMeridiem = preferences[Keys.CLOCK_SHOW_MERIDIEM] ?: defaults.clockShowMeridiem,
+            clockDateStyle = preferences[Keys.CLOCK_DATE_STYLE]?.let { runCatching { ClockDateStyle.valueOf(it) }.getOrNull() }
+                ?: defaults.clockDateStyle,
             calendarFontOption = preferences[Keys.CALENDAR_FONT_OPTION]?.let { runCatching { ClockFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.calendarFontOption,
             calendarColorOption = preferences[Keys.CALENDAR_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
@@ -154,6 +162,7 @@ class SettingsRepository @Inject constructor(
             calendarAlignment = preferences[Keys.CALENDAR_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.calendarAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
+            clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
         )
@@ -293,8 +302,17 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.CLOCK_COLOR_OPTION] = colorOption.name }
     }
 
+    /** See [LauncherSettings.clockAccentColorOption]. */
+    suspend fun setClockAccentColorOption(colorOption: ClockColorOption) {
+        dataStore.edit { it[Keys.CLOCK_ACCENT_COLOR_OPTION] = colorOption.name }
+    }
+
     suspend fun setClockShowMeridiem(enabled: Boolean) {
         dataStore.edit { it[Keys.CLOCK_SHOW_MERIDIEM] = enabled }
+    }
+
+    suspend fun setClockDateStyle(dateStyle: ClockDateStyle) {
+        dataStore.edit { it[Keys.CLOCK_DATE_STYLE] = dateStyle.name }
     }
 
     suspend fun setCalendarFontOption(fontOption: ClockFontOption) {
@@ -329,6 +347,18 @@ class SettingsRepository @Inject constructor(
     /** Settings' "Reset clock height" row — restores [LauncherSettings.clockZoneHeightDp] to `null`, so the clock+calendar block and app list return to their original fixed-top, bottom-anchored layout. */
     suspend fun resetClockZoneHeight() {
         dataStore.edit { it.remove(Keys.CLOCK_ZONE_HEIGHT_DP) }
+    }
+
+    suspend fun setClockScale(scale: Float) {
+        dataStore.edit {
+            it[Keys.CLOCK_SCALE] = scale
+        }
+    }
+
+    suspend fun resetClockScale() {
+        dataStore.edit {
+            it.remove(Keys.CLOCK_SCALE)
+        }
     }
 
     /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */

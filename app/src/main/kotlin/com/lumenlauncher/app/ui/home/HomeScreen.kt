@@ -1,8 +1,17 @@
 package com.lumenlauncher.app.ui.home
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -12,42 +21,53 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppListVerticalAlignment
@@ -57,6 +77,7 @@ import com.lumenlauncher.app.data.model.AppShortcut
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
@@ -72,9 +93,18 @@ import com.lumenlauncher.app.ui.theme.HomeAppTextColor
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
+import com.lumenlauncher.app.ui.theme.Scrim
 import com.lumenlauncher.app.ui.theme.homeAppLabelShadow
 import com.lumenlauncher.app.ui.theme.resolve
+import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** [MENU] shows the long-press bottom sheet; [ADJUST] shows the move handle *and* the resize handles together. */
+enum class ClockAdjustMode { NONE, MENU, ADJUST }
 
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
@@ -102,16 +132,34 @@ fun HomeScreen(
     clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
     clockColorOption: ClockColorOption = ClockColorOption.THEME,
+    clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     clockShowMeridiem: Boolean = false,
+    clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** Independent of [clockAlignment] — positions the calendar events strip separately from the clock. */
     calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
+    /** Home clock's scale factor — see [com.lumenlauncher.app.data.model.LauncherSettings.clockScale]. */
+    clockScale: Float = 0.8f,
+    /** Current adjustment mode — hoisted to the caller (e.g. [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute]) so screen gestures can be coordinated. */
+    clockAdjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     /** `null` until the user drags the clock's grab handle for the first time — see [ClockZoneHandle] and this composable's own body for how the default and persisted cases resolve to one shared position formula. */
     clockZoneHeightDp: Float? = null,
     /** Fired once, on release, by the clock's grab handle. */
     onClockZoneHeightCommit: (Float) -> Unit = {},
+    /** Fired once, on release, by the clock's resize handles. */
+    onClockScaleCommit: (Float) -> Unit = { _ -> },
+    /** Fired whenever the adjustment mode changes (e.g. via the bottom sheet or tap-away). */
+    onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
+    /** True when a handle is actively being dragged — used to suppress screen gestures. */
+    draggingHandle: Boolean = false,
+    /** Fired when the user starts or stops actively dragging one of the adjustment handles. */
+    onDraggingHandleChange: (Boolean) -> Unit = {},
+    /** The profile whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies. */
+    clockPositionOwningProfile: com.lumenlauncher.app.data.local.ProfileEntity? = null,
     /** Fired by a plain tap on the clock (time/date), not a calendar event row — opens the device's default clock app. */
     onClockClick: () -> Unit = {},
+    /** Fired when the user selects "Edit Styles" from the clock's adjustment menu. */
+    onEditClockStyles: () -> Unit = {},
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     calendarEvents: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
@@ -138,11 +186,30 @@ fun HomeScreen(
     // ui/components/DragReorderState's own onOrderChanged/onDragCommit split: cheap local state
     // during the drag, one persisting call on release).
     var liveDragDeltaPx by remember { mutableFloatStateOf(0f) }
-    // The grab handle is hidden until a long-press on the clock reveals it, and disappears again
-    // the moment the user taps anywhere else on the screen — it isn't a permanent fixture.
-    var dragModeEnabled by remember { mutableStateOf(false) }
+
+    // The clock's live scale while resizing, as an absolute value (not a delta — a delta briefly
+    // double-counts against the committed clockScale in the frame the commit lands). Held past the
+    // drag's end until clockScale round-trips back through the repo/StateFlow, then released so any
+    // external change to clockScale (reset, profile switch) takes effect.
+    var liveScale by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(clockScale) { liveScale = null }
+
+    // Stored as primitives, not the LayoutCoordinates object: onGloballyPositioned reuses one
+    // instance across layout passes and only mutates its size/position, so `state = it` would
+    // structurally dedupe to a no-op and never recompose when the clock box changed size (e.g. on
+    // a template switch). IntSize/Offset are value types with real equals.
+    var rootSize by remember { mutableStateOf<IntSize?>(null) }
+    var rootOriginInRoot by remember { mutableStateOf<Offset?>(null) }
+    var clockBoxSize by remember { mutableStateOf<IntSize?>(null) }
+    var clockBoxOriginInRoot by remember { mutableStateOf<Offset?>(null) }
+
+    // NaN until the first drag event captures the offset between where the finger grabbed and the
+    // scale that point implies, so the clock doesn't pop on the first move.
+    var dragGrabOffset by remember { mutableFloatStateOf(Float.NaN) }
+
     val defaultTopOffsetPx = with(density) { HOME_CLOCK_DEFAULT_TOP_OFFSET.toPx() }
     val minGapPx = with(density) { HOME_CLOCK_MIN_GAP.toPx() }
+    val topInsetPx = WindowInsets.systemBars.getTop(density).toFloat()
 
     // One formula covers both the persisted and default (null) cases: when clockZoneHeightDp is
     // null, this evaluates to "the default top offset + the clock's natural height + the minimum
@@ -157,12 +224,86 @@ fun HomeScreen(
     val ceilingPx = maxOf(floorPx, HOME_CLOCK_ZONE_MAX_FRACTION * contentHeightPx)
     val handlePx = (basePersistedHandlePx + liveDragDeltaPx).coerceIn(floorPx, ceilingPx)
 
+    // The clock renders at its persisted [clockScale] and nothing recomputes it frame to frame.
+    // The largest scale that still fits — headroom above the pinned bottom (past the status bar,
+    // plus room for the resize handle to clear the notification-shade strip) and room to the sides
+    // — is only needed while dragging a handle, and once when the style/position changes (below).
+    val clockTopReservePx = topInsetPx + with(density) { (HOME_CLOCK_RESIZE_HANDLE_INSET + 12.dp).toPx() }
+    val sideMarginPx = with(density) { 24.dp.toPx() }
+    val maxScaleThatFits: (natSize: IntSize, natTopLeft: Offset, rootW: Int) -> Float = { natSize, natTopLeft, rootW ->
+        val natW = natSize.width.toFloat()
+        val natH = natSize.height.toFloat()
+        if (natW <= 0f || natH <= 0f) {
+            HOME_CLOCK_MAX_SCALE
+        } else {
+            val byHeight = (natTopLeft.y + natH - clockTopReservePx) / natH
+            val byWidth = when (clockAlignment) {
+                ClockAlignment.CENTER -> (rootW - 2f * sideMarginPx) / natW
+                ClockAlignment.LEFT -> (rootW - sideMarginPx - natTopLeft.x) / natW
+                ClockAlignment.RIGHT -> (natTopLeft.x + natW - sideMarginPx) / natW
+            }
+            minOf(HOME_CLOCK_MAX_SCALE, byHeight, byWidth).coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
+        }
+    }
+
+    // One-shot re-clamp: a style or position change resizes the clock's natural box, so a scale
+    // that fit the old look can now overflow. After the new geometry settles, check once — and
+    // only persist a smaller value if it genuinely clips. Never runs otherwise.
+    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwningProfile?.id) {
+        withTimeoutOrNull(3_000) {
+            snapshotFlow { Triple(clockBoxSize, clockBoxOriginInRoot, rootSize) }
+                .filter { it.first != null && it.second != null && it.third != null }
+                .debounce(150)
+                .first()
+        }
+        val size = clockBoxSize ?: return@LaunchedEffect
+        val origin = clockBoxOriginInRoot ?: return@LaunchedEffect
+        val rootW = rootSize?.width ?: return@LaunchedEffect
+        val fit = maxScaleThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
+        if (clockScale > fit + 0.01f) onClockScaleCommit(fit)
+    }
+
+    // Fade in once, after the clock's measured box has held steady for a beat — not just when it's
+    // first non-null. The box is measured twice on a cold start (a variable font finishes loading
+    // between passes), and uniformScale anchors the glyph to its bottom edge, so revealing between
+    // the passes shows it grow upward from the bottom. This is a one-time wait, not a per-frame
+    // recompute. M3 emphasized-decelerate; honours "remove animations" for free (Compose scales
+    // tween durations by ANIMATOR_DURATION_SCALE). One-way; reset with the composable on a rebuild.
+    var clockRevealed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        withTimeoutOrNull(1_500) {
+            snapshotFlow { clockBoxSize }.filter { it != null }.debounce(120).first()
+        }
+        clockRevealed = true
+    }
+    // Not `by` — read .value only inside graphicsLayer below, so the fade animates in the draw
+    // phase without recomposing this (large) composable every frame.
+    val clockAppearAlpha = animateFloatAsState(
+        targetValue = if (clockRevealed) 1f else 0f,
+        animationSpec = tween(durationMillis = 250, easing = EmphasizedDecelerateEasing),
+        label = "clockAppearance",
+    )
+
+    // The scale the clock actually renders at. Normally just the persisted value (constant, no
+    // geometry read). While ADJUST mode is live it's also clamped to whatever currently fits —
+    // reading the clock's live position — so dragging the move handle upward shrinks the clock in
+    // real time instead of letting it clip.
+    val effectiveClockScale = run {
+        val raw = liveScale ?: clockScale
+        val size = clockBoxSize
+        val origin = clockBoxOriginInRoot
+        val rootW = rootSize?.width
+        if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
+            raw.coerceIn(HOME_CLOCK_MIN_SCALE, maxScaleThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW))
+        } else {
+            raw.coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without
-            // this, the dock at the bottom draws under the gesture/nav bar.
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .onGloballyPositioned { rootSize = it.size; rootOriginInRoot = it.positionInRoot() }
             // Dismisses drag mode on a tap anywhere else on the screen. Attached to this outer Box
             // (an ancestor of every child, including the handle below) rather than a separate
             // full-size sibling Box — Compose dispatches pointer events child-before-parent, so the
@@ -172,14 +313,19 @@ fun HomeScreen(
             // same bounds as the handle would instead receive the same events independently and
             // could interfere with the handle's own gesture recognition (see chat history).
             .then(
-                if (dragModeEnabled) {
-                    Modifier.pointerInput(Unit) { detectTapGestures(onTap = { dragModeEnabled = false }) }
+                if (clockAdjustMode == ClockAdjustMode.ADJUST) {
+                    Modifier.pointerInput(Unit) { detectTapGestures(onTap = { onAdjustModeChange(ClockAdjustMode.NONE) }) }
                 } else {
                     Modifier
                 }
             ),
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(bottom = 22.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(bottom = 22.dp)
+        ) {
             // Everything but the dock keeps the screen's own 24dp side margin. The dock row is
             // deliberately outside this padding (see below) so Arrangement.SpaceEvenly can space its
             // icons against the true screen edge, not this inset.
@@ -192,35 +338,52 @@ fun HomeScreen(
             ) {
                 ClockBlock(
                     modifier = Modifier
-                        .align(clockAlignment.toBoxAlignment())
                         .offset { IntOffset(0, (handlePx - minGapPx - clockNaturalHeightPx).roundToInt()) }
                         .onGloballyPositioned { clockNaturalHeightPx = it.size.height.toFloat() }
-                        // A plain tap opens the default clock app; a long-press instead reveals the
-                        // grab handle ("drag mode"). Both live in the SAME detector deliberately —
-                        // an earlier attempt put the tap on a separate, nested pointerInput/clickable
-                        // around just ClockDisplay, but any child gesture recognizer (even a bare
-                        // detectTapGestures with no clickable/ripple involved) claims/consumes the
-                        // down event as soon as it starts watching it, which silently prevented this
-                        // ancestor's long-press from ever completing (see chat history — broke every
-                        // drag-mode test the moment the clock became independently tappable). A tap
-                        // that lands on one of CalendarEventsBlock's own event rows is unaffected —
-                        // those are a genuine descendant clickable, which (per Compose's
-                        // child-before-parent dispatch) claims the gesture before this detector ever
-                        // sees it, so onTap correctly never fires for an event tap.
+                        .graphicsLayer { alpha = clockAppearAlpha.value },
+                    // A plain tap opens the default clock app; a long-press instead reveals the
+                    // grab handle ("drag mode"). Both live in the SAME detector deliberately — an
+                    // earlier attempt put the tap on a separate, nested pointerInput/clickable
+                    // around just ClockDisplay, but any child gesture recognizer (even a bare
+                    // detectTapGestures with no clickable/ripple involved) claims/consumes the down
+                    // event as soon as it starts watching it, which silently prevented this
+                    // ancestor's long-press from ever completing (see chat history — broke every
+                    // drag-mode test the moment the clock became independently tappable). A tap
+                    // that lands on one of CalendarEventsBlock's own event rows is unaffected —
+                    // those are a genuine descendant clickable, which (per Compose's
+                    // child-before-parent dispatch) claims the gesture before this detector ever
+                    // sees it, so onTap correctly never fires for an event tap. Deliberately scoped
+                    // to just the rendered clock content (via ClockBlock's own clockContentModifier
+                    // param, applied inside ClockBlock to a wrap-content box around ClockDisplay
+                    // only) rather than the old full-width ClockBlock modifier — the old full-width
+                    // box swallowed every long-press landing in the empty space beside/around the
+                    // actual clock text, which silently prevented HomeDrawerRoute's own outer
+                    // long-press (open the profile carousel) from ever firing there (see chat
+                    // history). Only the clock's own visible bounds are tappable now; everything
+                    // outside — including beside a Left/Right-aligned clock, and beside/below the
+                    // independently-aligned CalendarEventsBlock — falls through untouched.
+                    clockContentModifier = Modifier
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onTap = { onClockClick() },
-                                onLongPress = { dragModeEnabled = true },
+                                onLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) },
                             )
                         }
                         .testTag("home_clock_block"),
+                    clockBoxModifier = Modifier.onGloballyPositioned {
+                        clockBoxSize = it.size
+                        clockBoxOriginInRoot = it.positionInRoot()
+                    },
                     use24HourTime = use24HourTime,
                     templateId = clockTemplateId,
                     fontOption = clockFontOption,
                     colorOption = clockColorOption,
+                    accentColorOption = clockAccentColorOption,
                     showMeridiem = clockShowMeridiem,
+                    dateStyle = clockDateStyle,
                     clockAlignment = clockAlignment,
                     calendarAlignment = calendarAlignment,
+                    clockScale = effectiveClockScale,
                     events = calendarEvents,
                     calendarColors = calendarColors,
                     calendarFontOption = calendarFontOption,
@@ -318,16 +481,144 @@ fun HomeScreen(
             }
         }
 
-        if (dragModeEnabled) {
+        if (clockAdjustMode == ClockAdjustMode.ADJUST) {
+            // Move handle — always present in adjust mode. On release it also persists the scale if
+            // the reposition forced a shrink-to-fit, so it doesn't snap back.
             ClockZoneHandle(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .offset { IntOffset(0, handlePx.roundToInt()) },
-                onDrag = { deltaDp -> liveDragDeltaPx += with(density) { deltaDp.dp.toPx() } },
+                onDragStart = { onDraggingHandleChange(true) },
+                onDrag = { deltaDp ->
+                    liveDragDeltaPx += with(density) { deltaDp.dp.toPx() }
+                },
                 onDragEnd = {
+                    onDraggingHandleChange(false)
                     onClockZoneHeightCommit(with(density) { handlePx.toDp().value })
                     liveDragDeltaPx = 0f
+                    if (effectiveClockScale < clockScale - 0.005f) onClockScaleCommit(effectiveClockScale)
                 },
+            )
+        }
+
+        if (clockAdjustMode == ClockAdjustMode.ADJUST && clockBoxSize != null && clockBoxOriginInRoot != null && rootOriginInRoot != null && rootSize != null) {
+            val rootOrigin = rootOriginInRoot!!
+            // The clock's natural (unscaled) box in root coords — stable throughout a drag (uniformScale
+            // keeps the layout footprint at natural size). Everything below is a pure function of this
+            // box and `eff`, so the handles/border stay locked to the glyph with no lag and nothing
+            // reflows on release.
+            val natW = clockBoxSize!!.width.toFloat()
+            val natH = clockBoxSize!!.height.toFloat()
+            val natTopLeft = clockBoxOriginInRoot!! - rootOrigin
+            val clockMaxScale = maxScaleThatFits(clockBoxSize!!, natTopLeft, rootSize!!.width)
+            val eff = effectiveClockScale
+
+            val natBottom = natTopLeft.y + natH
+            // The x that stays put as the glyph scales (matches uniformScale's transformOrigin).
+            val anchorX = when (clockAlignment) {
+                ClockAlignment.LEFT -> natTopLeft.x
+                ClockAlignment.RIGHT -> natTopLeft.x + natW
+                ClockAlignment.CENTER -> natTopLeft.x + natW / 2f
+            }
+
+            val visualWidth = natW * eff
+            val visualHeight = natH * eff
+            val visualTopLeftY = natBottom - visualHeight
+            val visualTopLeftX = when (clockAlignment) {
+                ClockAlignment.LEFT -> anchorX
+                ClockAlignment.RIGHT -> anchorX - visualWidth
+                ClockAlignment.CENTER -> anchorX - visualWidth / 2f
+            }
+
+            // Scale a touch point in root coords implies, if that point were the dragged corner.
+            val scaleAtTouch: (Offset) -> Float = { t ->
+                val sx = when (clockAlignment) {
+                    ClockAlignment.LEFT -> (t.x - anchorX) / natW
+                    ClockAlignment.RIGHT -> (anchorX - t.x) / natW
+                    ClockAlignment.CENTER -> abs(t.x - anchorX) * 2f / natW
+                }
+                val sy = (natBottom - t.y) / natH
+                (sx + sy) / 2f
+            }
+            val onHandleDragStart: () -> Unit = {
+                dragGrabOffset = Float.NaN
+                onDraggingHandleChange(true)
+            }
+            val onHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
+                val implied = scaleAtTouch(touchInAbsolute - rootOrigin)
+                // First move: capture where the finger sits vs the corner, so the clock doesn't pop.
+                if (dragGrabOffset.isNaN()) dragGrabOffset = implied - (liveScale ?: clockScale)
+                liveScale = (implied - dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale)
+            }
+            val onHandleDragEnd: () -> Unit = {
+                onDraggingHandleChange(false)
+                // liveScale is held until LaunchedEffect(clockScale) sees the commit land.
+                onClockScaleCommit((liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale))
+            }
+
+            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
+            // Safety net for the top handles: never let them sit in the status-bar strip even if
+            // clockMaxScale is momentarily stale (e.g. right after a template switch).
+            val handleTopPx = (visualTopLeftY - handleInsetPx).coerceAtLeast(topInsetPx)
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(visualTopLeftX.roundToInt(), visualTopLeftY.roundToInt()) }
+                    .size(with(density) { visualWidth.toDp() }, with(density) { visualHeight.toDp() })
+                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+            )
+            ClockCornerHandle(
+                isRightSide = false,
+                modifier = Modifier.offset {
+                    IntOffset((visualTopLeftX - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
+                },
+                onDragStart = onHandleDragStart,
+                onDrag = onHandleDrag,
+                onDragEnd = onHandleDragEnd,
+            )
+            ClockCornerHandle(
+                isRightSide = true,
+                modifier = Modifier.offset {
+                    IntOffset((visualTopLeftX + visualWidth - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
+                },
+                onDragStart = onHandleDragStart,
+                onDrag = onHandleDrag,
+                onDragEnd = onHandleDragEnd,
+            )
+        }
+
+        // Adjustment menu sheet
+        AnimatedVisibility(
+            visible = clockAdjustMode == ClockAdjustMode.MENU,
+            enter = fadeIn(tween(240)),
+            exit = fadeOut(tween(240)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Scrim)
+                    .testTag("clock_adjust_scrim")
+                    .clickable { onAdjustModeChange(ClockAdjustMode.NONE) }
+            )
+        }
+
+        AnimatedVisibility(
+            visible = clockAdjustMode == ClockAdjustMode.MENU,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
+        ) {
+            ClockAdjustSheet(
+                onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },
+                onEditStylesClick = onEditClockStyles,
+                isOverridden = clockPositionOwningProfile != null,
             )
         }
     }
@@ -371,12 +662,15 @@ internal val HOME_CLOCK_MIN_GAP = 24.dp
 /** The grab handle's position (measured from the top of the content area) can never exceed this fraction of the content area's own height. */
 private const val HOME_CLOCK_ZONE_MAX_FRACTION = 0.5f
 
-/** `TopStart`/`TopCenter`/`TopEnd`, never `Center*` — vertical position is governed entirely by the explicit offset applied alongside this alignment, not by Box alignment. */
-private fun ClockAlignment.toBoxAlignment(): Alignment = when (this) {
-    ClockAlignment.LEFT -> Alignment.TopStart
-    ClockAlignment.CENTER -> Alignment.TopCenter
-    ClockAlignment.RIGHT -> Alignment.TopEnd
-}
+/** Shared clamp for the clock's scale factor — live render, handle positioning, and the committed value all use this pair. */
+private const val HOME_CLOCK_MIN_SCALE = 0.5f
+private const val HOME_CLOCK_MAX_SCALE = 2.0f
+
+/** Half the resize handle's hit box — the amount it extends past the clock corner it sits on. */
+private val HOME_CLOCK_RESIZE_HANDLE_INSET = 20.dp
+
+/** M3 emphasized-decelerate easing (`cubic-bezier(.05,.7,.1,1)`) — an element coming to rest as it enters. */
+private val EmphasizedDecelerateEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
 
 private fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: Dp = 1.dp): Modifier = drawBehind {
     drawRoundRect(

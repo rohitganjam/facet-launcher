@@ -60,7 +60,7 @@ fun HubEmptyState(onAddClick: () -> Unit, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(top = 22.dp),
         )
         Text(
-            text = "Add one from any installed app. It lands on the 5-column grid you set in launcher settings.",
+            text = "Add a widget to get started.",
             style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
             color = Muted,
             textAlign = TextAlign.Center,

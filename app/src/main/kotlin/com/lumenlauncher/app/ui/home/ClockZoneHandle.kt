@@ -47,6 +47,7 @@ fun ClockZoneHandle(
     onDrag: (deltaDp: Float) -> Unit,
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
+    onDragStart: () -> Unit = {},
 ) {
     val density = LocalDensity.current
     // pointerInput(Unit) launches its gesture-detection coroutine once and never restarts it, so
@@ -54,6 +55,7 @@ fun ClockZoneHandle(
     // calling whichever onDrag/onDragEnd instance was passed in on the very first composition,
     // silently going stale the moment HomeScreen recomposes with fresh closures (same reasoning
     // com.lumenlauncher.app.ui.components.DragReorderState already applies to its own callbacks).
+    val currentOnDragStart by rememberUpdatedState(onDragStart)
     val currentOnDrag by rememberUpdatedState(onDrag)
     val currentOnDragEnd by rememberUpdatedState(onDragEnd)
     Box(
@@ -62,6 +64,7 @@ fun ClockZoneHandle(
             .height(48.dp)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
+                    onDragStart = { currentOnDragStart() },
                     onDragEnd = { currentOnDragEnd() },
                     onDragCancel = { currentOnDragEnd() },
                 ) { change, dragAmountPx ->

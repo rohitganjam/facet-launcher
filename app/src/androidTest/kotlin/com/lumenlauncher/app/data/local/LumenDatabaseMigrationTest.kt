@@ -180,6 +180,44 @@ class LumenDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration14To15AddsClockAccentColorOptionClockDateStyleAndClockScaleColumnsWithoutLosingExistingRows() {
+        // Given a v14 database with a real profile row (every column NOT NULL at that version)
+        val dbV14 = helper.createDatabase(TEST_DB, 14)
+        dbV14.execSQL(
+            """
+            INSERT INTO profiles (
+                id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption,
+                use24HourTime, clockShowMeridiem, overrideApps, appRowPosition, appRowPresentation,
+                listContentMode, appsToShowCount, overridingFavorites, overrideCalendar, showAllDayEvents,
+                calendarFontOption, calendarColorOption, selectedCalendarIdsCsv, calendarFontWeight,
+                appListVerticalAlignment, clockAlignment, calendarAlignment, clockZoneHeightDp
+            ) VALUES (
+                1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME',
+                0, 0, 0, 'LEFT', 'ICON_AND_TEXT',
+                'FAVORITES', 6, 0, 0, 1,
+                'LAUNCHER_DEFAULT', 'THEME', NULL, 'REGULAR',
+                'BOTTOM', 'LEFT', 'LEFT', NULL
+            )
+            """.trimIndent(),
+        )
+        dbV14.close()
+
+        // When migrating to v15
+        val dbV15 = helper.runMigrationsAndValidate(TEST_DB, 15, true, Migrations.MIGRATION_14_15)
+
+        // Then the existing row survived, and all three new NOT NULL columns default to their
+        // documented values — today's unchanged look for a no-accent template, every template's
+        // date line, and the shipped 0.8 clock scale.
+        val cursor = dbV15.query("SELECT name, clockAccentColorOption, clockDateStyle, clockScale FROM profiles WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(cursor.getColumnIndexOrThrow("name")))
+        assertEquals("ACCENT_PRIMARY", cursor.getString(cursor.getColumnIndexOrThrow("clockAccentColorOption")))
+        assertEquals("FULL", cursor.getString(cursor.getColumnIndexOrThrow("clockDateStyle")))
+        assertEquals(0.8f, cursor.getFloat(cursor.getColumnIndexOrThrow("clockScale")), 0.0001f)
+        cursor.close()
+    }
+
     private companion object {
         const val TEST_DB = "lumen-migration-test.db"
     }

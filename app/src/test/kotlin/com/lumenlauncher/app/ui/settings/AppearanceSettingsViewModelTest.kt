@@ -1,5 +1,6 @@
 package com.lumenlauncher.app.ui.settings
 
+import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -8,6 +9,8 @@ import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ThemeMode
 import com.lumenlauncher.app.data.model.WallpaperAccentRole
+import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.SelectPreviewAppsUseCase
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,9 +37,15 @@ class AppearanceSettingsViewModelTest {
     @After
     fun tearDown() { Dispatchers.resetMain() }
 
-    private fun createViewModel(settingsRepository: SettingsRepository = mock(SettingsRepository::class.java)): AppearanceSettingsViewModel {
+    private suspend fun createViewModel(
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
+        getInstalledApps: GetInstalledAppsUseCase = mock(GetInstalledAppsUseCase::class.java),
+        defaultAppRepository: DefaultAppRepository = mock(DefaultAppRepository::class.java),
+    ): AppearanceSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        return AppearanceSettingsViewModel(settingsRepository)
+        `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
+        `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
+        return AppearanceSettingsViewModel(settingsRepository, getInstalledApps, defaultAppRepository, SelectPreviewAppsUseCase())
     }
 
     @Test

@@ -45,6 +45,7 @@ class ProfileCarouselScreenTest {
      * they're seeded together rather than via a second [ProfileRepository]/[SettingsRepository]-only hook).
      */
     private fun setContent(
+        mode: ProfileCarouselMode = ProfileCarouselMode.SWITCH,
         onBack: () -> Unit = {},
         onProfileApplied: () -> Unit = {},
         onEditProfile: (Long) -> Unit = {},
@@ -101,6 +102,7 @@ class ProfileCarouselScreenTest {
                     onProfileApplied = onProfileApplied,
                     onEditProfile = onEditProfile,
                     onNavigateToSettings = onNavigateToSettings,
+                    mode = mode,
                     viewModel = viewModel,
                 )
             }
@@ -292,6 +294,65 @@ class ProfileCarouselScreenTest {
         composeRule.onNodeWithTag("profile_carousel_pager").assertExists()
         composeRule.onNodeWithTag("profile_reorder_list").assertDoesNotExist()
         composeRule.onNodeWithTag("profile_carousel_reorder").assertExists()
+    }
+
+    @Test
+    fun switchModeShowsTheSwitchProfilesHeaderOverTheCarousel() {
+        // Given the carousel opened from the home long-press
+        setContent(
+            mode = ProfileCarouselMode.SWITCH,
+            seed = { profileRepository, _ -> profileRepository.addProfile() },
+        )
+
+        // Then it's the switch carousel, titled "Switch Profiles"
+        composeRule.onNodeWithText("Switch Profiles").assertExists()
+        composeRule.onNodeWithText("Manage Profiles").assertDoesNotExist()
+        composeRule.onNodeWithTag("profile_carousel_pager").assertExists()
+    }
+
+    @Test
+    fun manageModeOpensDirectlyToTheReorderListTitledManageProfiles() {
+        // Given the screen opened from Settings -> Profiles
+        setContent(
+            mode = ProfileCarouselMode.MANAGE,
+            seed = { profileRepository, settings ->
+                val first = profileRepository.addProfile()
+                profileRepository.addProfile()
+                settings.setActiveProfileId(first.id)
+            },
+        )
+
+        // Then it lands straight on the reorderable list, titled "Manage Profiles", with no
+        // carousel and no separate "Reorder" entry point
+        composeRule.onNodeWithText("Manage Profiles").assertExists()
+        composeRule.onNodeWithText("Switch Profiles").assertDoesNotExist()
+        composeRule.onNodeWithTag("profile_reorder_list").assertExists()
+        composeRule.onNodeWithText("Drag to re-order profiles").assertExists()
+        composeRule.onNodeWithTag("profile_carousel_pager").assertDoesNotExist()
+        composeRule.onNodeWithTag("profile_carousel_reorder").assertDoesNotExist()
+    }
+
+    @Test
+    fun manageModeBackButtonLeavesTheScreenRatherThanExitingReorder() {
+        // Given the manage list
+        var backPressed = false
+        setContent(
+            mode = ProfileCarouselMode.MANAGE,
+            onBack = { backPressed = true },
+            seed = { profileRepository, _ ->
+                profileRepository.addProfile()
+                profileRepository.addProfile()
+            },
+        )
+
+        // When tapping the back button
+        composeRule.onNodeWithTag("back_button").performClick()
+        composeRule.waitForIdle()
+
+        // Then it backs out of the screen entirely (to Settings) instead of dropping into a carousel
+        assertEquals(true, backPressed)
+        composeRule.onNodeWithTag("profile_reorder_list").assertExists()
+        composeRule.onNodeWithTag("profile_carousel_pager").assertDoesNotExist()
     }
 
     @Test
@@ -540,7 +601,11 @@ class ProfileCarouselScreenTest {
             },
         )
 
-        // When tapping the "Launcher settings" row pinned at the bottom
+        // Then the row renders its title + subtitle
+        composeRule.onNodeWithText("Launcher settings").assertExists()
+        composeRule.onNodeWithText("Default clock, favorites, drawer, badges").assertExists()
+
+        // When tapping the "Launcher settings" row below the carousel
         composeRule.onNodeWithTag("profile_carousel_launcher_settings").performClick()
 
         // Then the caller is asked to navigate there

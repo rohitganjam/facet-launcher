@@ -6,6 +6,7 @@ import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -83,6 +84,28 @@ class ClockStyleGalleryViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setClockColorOption(ClockColorOption.THEME_INVERTED)
+    }
+
+    @Test
+    fun `changing the clock accent color calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
+    }
+
+    @Test
+    fun `changing the date style calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setClockDateStyle(ClockDateStyle.CONDENSED)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setClockDateStyle(ClockDateStyle.CONDENSED)
     }
 
     @Test
@@ -285,6 +308,29 @@ class ClockStyleGalleryViewModelTest {
 
         assertEquals(ClockAlignment.CENTER, viewModel.uiState.value.clockAlignment)
         assertEquals(ClockAlignment.RIGHT, viewModel.uiState.value.calendarAlignment)
+    }
+
+    @Test
+    fun `uiState resolves accent color and date style from the profile when scoped`() = runTest {
+        val profile = ProfileEntity(
+            id = 5L,
+            name = "Work",
+            position = 0,
+            overrideClock = true,
+            clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY,
+            clockDateStyle = ClockDateStyle.CONDENSED,
+        )
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val profileRepository = mock(ProfileRepository::class.java)
+        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
+        val savedStateHandle = SavedStateHandle(mapOf("profileId" to 5L))
+        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(ClockColorOption.ACCENT_SECONDARY, viewModel.uiState.value.accentColorOption)
+        assertEquals(ClockDateStyle.CONDENSED, viewModel.uiState.value.dateStyle)
     }
 
     @Test

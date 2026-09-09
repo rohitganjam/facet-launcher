@@ -9,6 +9,7 @@ import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.CalendarEvent
 import com.lumenlauncher.app.data.model.ClockAlignment
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.FontWeightOption
@@ -44,6 +45,14 @@ data class HomeUiState(
 
     val clockColorOption: ClockColorOption
         get() = activeProfile?.let { if (it.overrideClock) it.clockColorOption else settings.clockColorOption } ?: settings.clockColorOption
+
+    /** The active profile's clock accent color, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
+    val clockAccentColorOption: ClockColorOption
+        get() = activeProfile?.let { if (it.overrideClock) it.clockAccentColorOption else settings.clockAccentColorOption } ?: settings.clockAccentColorOption
+
+    /** The active profile's date style, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
+    val clockDateStyle: ClockDateStyle
+        get() = activeProfile?.let { if (it.overrideClock) it.clockDateStyle else settings.clockDateStyle } ?: settings.clockDateStyle
 
     /** The active profile's calendar font, falling back to the global default when not overriding — mirrors [clockFontOption] but gated by [com.lumenlauncher.app.data.local.ProfileEntity.overrideCalendar], not `overrideClock`. */
     val activeCalendarFontOption: ClockFontOption
@@ -84,6 +93,10 @@ data class HomeUiState(
     /** The active profile's clock zone height, falling back to the global default when not overriding — see [clockAlignment]'s own doc. */
     val clockZoneHeightDp: Float?
         get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp)
+
+    /** The active profile's clock scale factor, falling back to the global default when not overriding. */
+    val clockScale: Float
+        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
 
     /** The active profile's calendar alignment, falling back to the global default when not overriding — independent of [clockAlignment], same as [com.lumenlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
     val calendarAlignment: ClockAlignment

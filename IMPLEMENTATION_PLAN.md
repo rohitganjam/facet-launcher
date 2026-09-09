@@ -676,3 +676,59 @@ A second, later audit against the full PRD (see chat history) found two more gap
 - ~~**Home swipe-down → notification shade**~~ — **resolved and built** (by a separate concurrent session, not tracked under any phase above): `data/NotificationShadeRepository.kt` + `SWIPE_DOWN_SHADE_DISTANCE` wiring in `HomeDrawerRoute.kt`/`HomeViewModel.kt`. Not verified end-to-end by this session; worth a manual on-device check and a dedicated write-up next time this area is touched.
 
 Whichever phase picks one of these up should also un-disable the corresponding Settings row(s) built in Phase 2, where applicable.
+
+---
+
+## Post-Phase-10 polish — 16 shape-based clock templates + clock hit-box/gesture fix
+
+Direct follow-up to Phase 10: the 16 templates originally speced in the design mockup's "Eleven new clock templates" / "Eight more" rounds, plus a real, long-standing gesture bug found while componentizing the widget for them.
+
+- **16 new `ClockTemplateId` entries** (`ClockTemplateId.kt`) — `ACCENT_FIELD`, `HOUR_TILE`, `CHIP`, `DUOTONE_OVERLAP`, `CORNER_FRAME`, `STUB`, `HALO`, `DIGIT_CELLS`, `NEGATIVE_PANEL`, `HOLLOW_HOUR`, `HIGHLIGHTER`, `COLUMN_RULE`, `COLON_MARK`, `PILL_PAIR`, `SHELF`, `HALF_IMMERSED` — the first templates in `ClockTemplates.kt` to use a shape (`clip`/`background`/`border`) rather than pure typography; every fill is either the resolved `Accent` or the caller's own `textColor`, with `Surface` as the knockout tone for digits sitting on a filled field (matching `Theme.kt`'s own `onPrimary = Surface` convention). `HollowHourTemplate` uses `TextStyle`'s `drawStyle = Stroke(...)` for an outline-only glyph; `HalfImmersedTemplate` uses a real `BlendMode.Multiply` inside an offscreen `graphicsLayer` so the blend composites against the glyph's own rasterized pixels rather than the wallpaper.
+- **Shared "clock part" composables** (`ClockGlyphText`/`HourText`/`MinuteText`/`SeparatorText`/`TemplateDateText`, next to the existing `MeridiemText`) — hour/minute/separator/date each theme and position independently now; `WeightContrastTemplate`/`AccentContrastTemplate` migrated onto them as the zero-visual-diff pattern-setters.
+- **Real bug found and fixed**: the clock's tap-to-open/long-press-to-drag hit box (`home_clock_block`) was full-width regardless of `clockAlignment`, because `ClockBlock`'s own Column and every template's own root called `.fillMaxWidth()`. Any long-press landing in the empty space beside a Left/Right-aligned clock was silently swallowed by this box before `HomeDrawerRoute`'s own outer long-press (open the profile carousel) ever saw it. Fixed by dropping `fillMaxWidth()` from every template root (20 existing + 16 new) and giving `ClockBlock` a new `clockContentModifier` param, applied to a wrap-content box around just `ClockDisplay` (positioned via `Modifier.align(clockAlignment.resolve())` inside `ClockBlock`'s still-`fillMaxWidth()` outer Column, so `CalendarEventsBlock`'s own independent `calendarAlignment` is untouched) — only the clock's actual rendered content is tappable now, everything else falls through. `ClockStyleGalleryScreen.kt`'s per-card preview needed the same explicit per-child `Modifier.align(...)`, since the shared `horizontalAlignment` it used to lean on no longer has any effect once every template lost its own `fillMaxWidth()`.
+- Tests: one smoke test per new template (`ClockBlockTest`), a `HomeScreenTest` case proving a long-press beside the clock no longer reveals the drag handle, a `HomeDrawerRouteTest` case proving that same long-press still reaches the profile carousel, and a `ClockStyleGalleryScreenTest` case locking in the gallery's own per-card alignment fix.
+
+---
+
+## ✅ Clock widget resize — complete, verified on-device
+
+Adds a scale factor alongside the existing zone-height *position* feature — corner-drag resize of the clock+date only (not `CalendarEventsBlock`), global + per-profile override via the existing `overrideClock` bundle. Long-press on the clock opens a bottom sheet ("Change widget position" / "Resize clock widget" / "Edit styles") instead of directly revealing the move handle.
+
+- [x] Single uniform `clockScale` field (default `0.8f`) on `LauncherSettings`/`ProfileEntity` + `SettingsRepository`/`ProfileRepository` persistence, folded into `resetClockPosition`.
+- [x] DB: `MIGRATION_14_15` adds `clockAccentColorOption` + `clockDateStyle` + `clockScale` in one step (nothing shipped between 14 and 15; `VERSION = 15`, `15.json` is the export). `DatabaseModule` back on `fallbackToDestructiveMigrationOnDowngrade` (destructive on *upgrade* was silently wiping real data).
+- [x] `HomeUiState`/`ProfileCarouselViewModel` override resolution + `ProfileCarouselScreen` preview card wiring.
+- [x] **`uniformScale` is draw-only** — reports the *natural* footprint to layout and scales the glyph via a graphics layer anchored to the alignment-facing bottom corner (`TransformOrigin` 0/0.5/1 · 1). Nothing positioned relative to the clock reflows when the scale changes; the clock grows up/out into empty space, its bottom stays pinned.
+- [x] `ClockCornerHandle.kt` (top-left + top-right). Handle geometry is a pure function of the clock's natural box (from primitive `IntSize`/`Offset` state, not the reused `LayoutCoordinates` object) × the live scale — no frame lag, no jump on release. First-move grab-offset capture so it doesn't pop.
+- [x] `liveScale: Float?` (absolute, held until the committed value round-trips) — no scale collapse/flicker on release.
+- [x] Long-press → `ClockAdjustSheet.kt` ("Adjust size & position" / "Edit … styles"); `dragModeEnabled` → `ClockAdjustMode` enum (`NONE`/`MENU`/`ADJUST`). **One combined `ADJUST` mode** shows the move handle *and* the two resize handles together — either can be used, and dragging the clock upward with the move handle **shrinks it to fit in real time** (`effectiveClockScale` clamps to `maxScaleThatFits` live *only while in `ADJUST`*), persisting the shrunk scale on release. Exits only on tap-away from all handles.
+- [x] Fit math (`maxScaleThatFits`) runs **only** while dragging a handle and once per style/position change (`LaunchedEffect`-keyed one-shot that re-clamps + persists only if the saved scale actually clips). `HOME_CLOCK_MIN_SCALE`/`MAX_SCALE` = `0.5`..`2.0`; the max also reserves room for the top handle to clear the status-bar / notification-shade strip.
+- [x] Appearance: fade in once (M3 emphasized-decelerate, 250ms, draw-phase alpha) after the measured box holds steady for 120ms — waits out the variable-font remeasure so the clock doesn't visibly "grow from the bottom".
+- [x] Unit tests green (`SettingsRepositoryTest`/`ProfileRepositoryTest`); instrumented `LumenDatabaseMigrationTest.migration14To15...` covers all three columns.
+- [x] `clockAccentColorOption` + `clockDateStyle` (Full/Condensed) global + per-profile.
+- [x] 16 shape-based clock templates in `ClockTemplates.kt` + shared `HourText`/`MinuteText`/`SeparatorText`/`TemplateDateText` parts; clock hit-box narrowed to the rendered content only.
+
+**Known follow-up:** `HomeScreen` takes `clockPositionOwningProfile: ProfileEntity?` — a Room entity in a composable signature (pre-existing `HomeUiState` leak, extended here). Map it to a UI model (or pass id + `isOverridden`) when this area is next touched.
+
+---
+
+## "Switch Profiles" vs "Manage Profiles" — split the two carousel entry points
+
+The one `ProfileCarouselScreen` is now entered in one of two modes (`ProfileCarouselMode`, param on the screen; default `SWITCH`):
+
+- **`SWITCH`** — Home long-press (`LumenDestinations.PROFILE_CAROUSEL`, unchanged route). Header renamed `"Profiles"` → `"Switch Profiles"`. The swipeable carousel and its in-place `"Reorder"` link are unchanged.
+- **`MANAGE`** — Settings → Profiles (new `LumenDestinations.PROFILE_MANAGE` route; `SettingsScreen`'s `onViewProfiles` now points here instead of `PROFILE_CAROUSEL`). Opens straight into the existing reorderable list (`isReordering` starts `true`), header `"Manage Profiles"`, no carousel and no separate `"Reorder"` link. The back button always exits the screen (to Settings) rather than toggling out of reorder mode, and the `isReordering` `BackHandler` is disabled in this mode for the same reason. `onProfileApplied`/`onNavigateToSettings` are unused here (no card-apply, no in-carousel Launcher-settings row) — wired to no-ops in `LumenNavHost`.
+
+- A `"Drag to re-order profiles"` hint (`bodySmall`/`Muted`, testTag `profile_reorder_hint`) is pinned as the first `LazyColumn` item above the profile rows in `ProfileReorderList` — shows in both the `MANAGE` list and the `SWITCH` carousel's in-place reorder view.
+
+- Tests: `ProfileCarouselScreenTest` — `switchModeShowsTheSwitchProfilesHeaderOverTheCarousel`, `manageModeOpensDirectlyToTheReorderListTitledManageProfiles` (also asserts the hint text), `manageModeBackButtonLeavesTheScreenRatherThanExitingReorder`; `setContent` gained a `mode` param. Full `ProfileCarouselScreenTest` (19 cases) green on `Medium_Phone_API_36.1`. New light+dark `@Preview` for the manage mode.
+
+### Switch Profiles — Launcher-settings row visibility + bottom-cluster layout
+
+Follow-up from an on-device dark-mode screenshot review of the `SWITCH` carousel:
+
+- **`LauncherSettingsRow` was invisible in dark mode** — a bare `Surface` fill on `CarouselBackdrop` is a ~7-luminance-unit delta on OLED. Now carries the `SettingsCard` lift (`shadow(4.dp)` + `Surface` + a `border(1.dp, Ink.copy(alpha = 0.14f))` — a real value, not the 7%-alpha `Hairline`), a leading `Icons.Default.Tune` glyph (`Muted`; `Tune` not a gear, so it doesn't read as a second per-profile "settings" control), and an `Ink` (was `Muted`) chevron.
+- **Dead vertical band between the per-profile gear/trash row and the dots** — root cause was the pager taking `weight(1f)` (all spare height) while each page drew at a top-anchored `graphicsLayer` scale, so the bottom ~14.5% of the over-tall pager rendered empty. Removed the `graphicsLayer` page scale entirely and made the preview card a **true scale model of the device screen**:
+  - `CAROUSEL_CARD_SCALE = 0.5f` — the card is that fraction of the screen's width *and* height, so it keeps the current phone's own aspect ratio (`BoxWithConstraints` in `ProfilePreviewPage` now carries `Modifier.aspectRatio(screenWidthDp / screenHeightDp)`, passed in as `screenAspectRatio`).
+  - The horizontal inset (neighbour-card peek) is derived: `screenWidthDp * (1 − scale) / 2`. `CAROUSEL_PAGE_INSET` constant deleted.
+  - The pager is content-sized — `height = screenHeightDp * scale + CAROUSEL_PAGE_CHROME_HEIGHT` (name row + gear/trash row) — not `weight(1f)`, so dots + Launcher-settings pack directly beneath it, with a trailing `Spacer(Modifier.weight(1f))` collecting surplus at the bottom. `CAROUSEL_HEIGHT_FRACTION` never shipped; `CARD_SCALE` deleted; `ProfilePreviewPage`'s `contentScale` divides by `maxHeight` directly.
+- Verified on `emulator-5554` in dark mode: row stands out, gap gone, the card is now visibly screen-shaped, content hugs the top. `ProfileCarouselScreenTest` 19/19 green (`launcherSettingsRowInvokesTheCallback` extended to assert the row's title/subtitle render).

@@ -127,7 +127,7 @@ Four rows, each `13px 24px` with `1px` separators, title `400 16px` and subtitle
 
 > **Revised from the original mock, decided during implementation:** the carousel now behaves like a recent-apps switcher rather than a browse-then-confirm picker. There's no **Select** button — tapping any visible card applies it immediately and closes. Since tapping a card now always applies it, long-press-to-reorder-in-place is gone; reordering moved to a dedicated list screen (`3b`, redefined below), reached via a **Reorder** header link instead of a sub-line hint. Tap-the-name-to-rename is also gone — rename now lives in Per-profile settings (`3d`), reached from the carousel's gear icon or the reorder list's overflow menu.
 
-**Header.** Back chevron + `500 15px` "Profiles" left, `500 12px` accent-when-enabled **Reorder** right (greyed out and inert with only one profile — nothing to reorder). Sub-line `400 11.5px`: `2 of 3` (position only; no "long press to reorder" hint here now — see `3b`).
+**Header.** Back chevron + `500 15px` title left. The title is **"Switch Profiles"** when reached from the home long-press (the swipeable carousel), or **"Manage Profiles"** when reached from Settings → Profiles — the latter opens straight into the reorderable list (`3b`) with no carousel and no **Reorder** link. In the carousel, a `500 12px` accent-when-enabled **Reorder** link sits at the right (greyed out and inert with only one profile). Sub-line `400 11.5px`: `2 of 3` (position only).
 
 **Carousel.** Every page (profile or the trailing Add page) renders at one uniform scale (~85% of the phone frame, `border-radius: 20px`) — no separate centred/neighbour tiers, so more of each neighbour peeks in on both sides as you browse. Each page is a **live snapshot of that profile**, not a static shell: the real `ClockBlock` (same component Home uses) plus that profile's actual favorite apps with icons — or `No favorites yet` if it has none. The profile name sits above the clock as a plain label (no rename affordance here anymore).
 
@@ -153,7 +153,7 @@ Canonical settings screen. Scrolls well past one viewport. Title `500 26px`, `le
 
 | Section | Contents |
 |---|---|
-| **PROFILES** | View profiles → `3a` (`Opens the profile carousel`) |
+| **PROFILES** | Profiles → the **Manage Profiles** list (`3b`) — reorder, add/remove, reach per-profile settings. (The swipeable **Switch Profiles** carousel is the home long-press instead.) |
 | **CLOCK** | Default clock style → `3e` (disabled — see Known Gap, `IMPLEMENTATION_PLAN.md`). **24-hour time** (real toggle). **Calendar** [revised — was "Calendar events" disabled, now a real row navigating to Calendar settings] → subtitle reflects whether all-day events are shown. |
 | **NOTIFICATIONS** [new, split out of "Shared across profiles"] | **Notifications** [revised — now a `ClickableRow` navigating to its own dedicated Notification Settings page, not an inline toggle] subtitle shows `On · Dot`/`On · Count`/`Off`. That page holds the real on/off switch (turning it on without access granted routes to the notification-access explanation screen first) plus a **Badge style** dropdown (Dot / Count). |
 | **DOCK** | `4 apps · shared across profiles`; icon row + `+` slot → `4k`; `Drag to reorder · long-press to remove · up to 5 apps`; **Display style** [revised — was "Show apps as", now a dropdown, not a two-pill toggle] Icons (default) / Text |
