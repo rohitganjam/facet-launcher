@@ -2,7 +2,9 @@ package com.lumenlauncher.app.ui.settings
 
 import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.data.model.ClockColorOption
+import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
@@ -20,6 +22,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -37,15 +40,22 @@ class AppearanceSettingsViewModelTest {
     @After
     fun tearDown() { Dispatchers.resetMain() }
 
+    /** A real (not Mockito) stub — plain Mockito can't reliably stub a `suspend` return. */
+    private fun fakeWallpaperRepository(value: HomeWallpaper = HomeWallpaper.Unavailable) =
+        object : WallpaperRepository(mock(android.app.WallpaperManager::class.java)) {
+            override suspend fun currentHomeWallpaper(): HomeWallpaper = value
+        }
+
     private suspend fun createViewModel(
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         getInstalledApps: GetInstalledAppsUseCase = mock(GetInstalledAppsUseCase::class.java),
         defaultAppRepository: DefaultAppRepository = mock(DefaultAppRepository::class.java),
+        wallpaperRepository: WallpaperRepository = fakeWallpaperRepository(),
     ): AppearanceSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
-        return AppearanceSettingsViewModel(settingsRepository, getInstalledApps, defaultAppRepository, SelectPreviewAppsUseCase())
+        return AppearanceSettingsViewModel(settingsRepository, getInstalledApps, defaultAppRepository, wallpaperRepository, SelectPreviewAppsUseCase())
     }
 
     @Test
@@ -134,5 +144,15 @@ class AppearanceSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setHomeAppsFontWeight(FontWeightOption.SEMI_BOLD)
+    }
+
+    @Test
+    fun `home wallpaper reflects the repository value once loaded`() = runTest {
+        val tones = HomeWallpaper.Tones(listOf(0x33FF0000))
+        val viewModel = createViewModel(wallpaperRepository = fakeWallpaperRepository(tones))
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(tones, viewModel.homeWallpaper.value)
     }
 }

@@ -69,10 +69,12 @@ import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
+import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.components.ConfirmDialog
 import com.lumenlauncher.app.ui.components.TonalButton
+import com.lumenlauncher.app.ui.components.WallpaperBackground
 import com.lumenlauncher.app.ui.home.AppRow
 import com.lumenlauncher.app.ui.home.ClockBlock
 import com.lumenlauncher.app.ui.home.DockIcon
@@ -237,6 +239,7 @@ private fun ProfileCarouselContent(
                     onEditProfileClick = { onEditProfile(profile.id) },
                     onDeleteClick = { deletingProfile = profile },
                     onCardClick = { onSelect(profile.id) },
+                    homeWallpaper = uiState.homeWallpaper,
                     screenAspectRatio = screenAspectRatio,
                     modifier = Modifier
                         .fillMaxSize()
@@ -374,6 +377,8 @@ private fun ProfilePreviewPage(
      *  favorite row or dock icon, whose own [AppRow]/[DockIcon] click would otherwise consume the
      *  touch instead of letting it reach the card's own clickable underneath. */
     onCardClick: () -> Unit,
+    /** The live system wallpaper, painted behind this card's content the same way it sits behind real Home. */
+    homeWallpaper: HomeWallpaper,
     /** The device's own width:height — the card is locked to it so it stays a true scale model of the screen. */
     screenAspectRatio: Float,
     modifier: Modifier = Modifier,
@@ -407,12 +412,15 @@ private fun ProfilePreviewPage(
                 // the Surface/SurfaceContainer tone step alone is too small to read as raised.
                 .shadow(elevation = 4.dp, shape = cardShape)
                 .clip(cardShape)
-                .background(Surface)
                 .border(1.dp, Hairline, cardShape)
                 // Card-only tap/ripple target — kept off the name+menu header above so a
                 // long-press ripple doesn't bleed across the whole page (see chat history).
                 .clickable(onClick = onCardClick),
         ) {
+            // The real system wallpaper, behind the content — the same backdrop the profile's
+            // Home screen actually shows, since a card can't get it from the window compositor.
+            WallpaperBackground(homeWallpaper, Modifier.matchParentSize())
+
             // This card renders at a fraction of Home's real on-screen size (it's the screen
             // scaled by [CAROUSEL_CARD_SCALE]). Rather than hand-picking fixed dp overrides for
             // every size in here (which needed re-tuning by eye each time — see chat history), we

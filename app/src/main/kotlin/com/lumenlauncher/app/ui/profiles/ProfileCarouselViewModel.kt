@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.local.resolveOverride
 import com.lumenlauncher.app.data.model.AppInfo
@@ -18,11 +19,13 @@ import com.lumenlauncher.app.data.model.ClockTemplateId
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase
 import com.lumenlauncher.app.domain.ProfilePreviewData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -38,6 +41,9 @@ data class ProfileCarouselUiState(
     // preview card renders the same dockApps/dockDisplayMode rather than one entry per profile.
     val dockApps: List<AppInfo> = emptyList(),
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+    // The live system wallpaper, rendered behind each preview card (Home's own window-level
+    // wallpaper compositing can't reach a card). Loaded once when the carousel opens.
+    val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
 ) {
     val canAddProfile: Boolean get() = profiles.size < ProfileRepository.MAX_PROFILES
     val canDeleteProfile: Boolean get() = profiles.size > ProfileRepository.MIN_PROFILES
@@ -106,15 +112,19 @@ class ProfileCarouselViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
     private val dockAppRepository: DockAppRepository,
+    private val wallpaperRepository: WallpaperRepository,
     observeProfilePreviews: ObserveProfilePreviewsUseCase,
 ) : ViewModel() {
+
+    private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
 
     val uiState: StateFlow<ProfileCarouselUiState> = combine(
         profileRepository.observeProfiles(),
         settingsRepository.settings,
         observeProfilePreviews(),
         dockAppRepository.observeDockApps(),
-    ) { profiles, settings, previewsByProfileId, dockApps ->
+        homeWallpaper,
+    ) { profiles, settings, previewsByProfileId, dockApps, wallpaper ->
         ProfileCarouselUiState(
             profiles = profiles,
             activeProfileId = settings.activeProfileId,
@@ -122,8 +132,13 @@ class ProfileCarouselViewModel @Inject constructor(
             globalSettings = settings,
             dockApps = dockApps,
             dockDisplayMode = settings.dockDisplayMode,
+            homeWallpaper = wallpaper,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileCarouselUiState())
+
+    init {
+        viewModelScope.launch { homeWallpaper.value = wallpaperRepository.currentHomeWallpaper() }
+    }
 
     /** Applies the given profile as active — the carousel's browse position never persists on its own. */
     fun selectProfile(profileId: Long) {

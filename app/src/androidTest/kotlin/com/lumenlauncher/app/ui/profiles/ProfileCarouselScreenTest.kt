@@ -77,12 +77,16 @@ class ProfileCarouselScreenTest {
                 val calendarPermissionRepository = com.lumenlauncher.app.data.CalendarPermissionRepository(context)
                 val calendarRepository = com.lumenlauncher.app.data.CalendarRepository(context.contentResolver)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val wallpaperRepository = com.lumenlauncher.app.data.WallpaperRepository(
+                    android.app.WallpaperManager.getInstance(context),
+                )
                 runBlocking { seed(profileRepository, settingsRepository) }
                 runBlocking { seedApps(appRepository, favoriteAppRepository, dockAppRepository) }
                 ProfileCarouselViewModel(
                     profileRepository,
                     settingsRepository,
                     dockAppRepository,
+                    wallpaperRepository,
                     ObserveProfilePreviewsUseCase(
                         profileRepository,
                         settingsRepository,
@@ -314,6 +318,28 @@ class ProfileCarouselScreenTest {
         // Then the preview card renders the favorite as a visible row and the dock app as an icon
         composeRule.onNodeWithText(favoriteLabel).assertExists()
         composeRule.onNodeWithContentDescription(dockLabel).assertExists()
+    }
+
+    @Test
+    fun previewCardRendersTheWallpaperBehindItsContent() {
+        // Given one profile
+        var profileId = 0L
+        setContent(
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                profileId = only.id
+                settings.setActiveProfileId(only.id)
+            },
+        )
+
+        // Then the card paints a wallpaper backdrop, with the profile's own content still on top.
+        // Unmerged tree: the card's own `clickable` merges its descendants' semantics, so the
+        // backdrop's testTag is only visible as a standalone node in the unmerged tree.
+        val wallpaperNodes = composeRule
+            .onAllNodesWithTag("wallpaper_background", useUnmergedTree = true)
+            .fetchSemanticsNodes().size
+        assertEquals(true, wallpaperNodes > 0)
+        composeRule.onNodeWithTag("profile_page_$profileId").assertExists()
     }
 
     @Test

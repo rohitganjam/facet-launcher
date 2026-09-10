@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.IconRenderMode
@@ -37,11 +39,18 @@ class AppearanceSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     getInstalledApps: GetInstalledAppsUseCase,
     private val defaultAppRepository: DefaultAppRepository,
+    private val wallpaperRepository: WallpaperRepository,
     selectPreviewApps: SelectPreviewAppsUseCase,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LauncherSettings())
+
+    private val _homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
+
+    /** The live system wallpaper, painted behind the preview card so it reads as real Home,
+     *  not a flat slab. Loaded once when the screen opens. */
+    val homeWallpaper: StateFlow<HomeWallpaper> = _homeWallpaper
 
     /** Seeded once from [DefaultAppRepository.getDefaultAppPackages] — this device's default-app
      * picks don't change mid-session, so a one-shot fetch (same pattern as
@@ -58,6 +67,7 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { preferredPreviewPackages.value = defaultAppRepository.getDefaultAppPackages() }
+        viewModelScope.launch { _homeWallpaper.value = wallpaperRepository.currentHomeWallpaper() }
     }
 
     fun setThemeMode(mode: ThemeMode) {

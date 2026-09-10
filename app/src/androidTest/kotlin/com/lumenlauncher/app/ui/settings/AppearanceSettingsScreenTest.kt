@@ -53,7 +53,10 @@ class AppearanceSettingsScreenTest {
                 )
                 appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
                 defaultAppRepository = DefaultAppRepository(context)
-                AppearanceSettingsViewModel(settingsRepository, GetInstalledAppsUseCase(appRepository), defaultAppRepository, SelectPreviewAppsUseCase())
+                val wallpaperRepository = com.lumenlauncher.app.data.WallpaperRepository(
+                    android.app.WallpaperManager.getInstance(context),
+                )
+                AppearanceSettingsViewModel(settingsRepository, GetInstalledAppsUseCase(appRepository), defaultAppRepository, wallpaperRepository, SelectPreviewAppsUseCase())
             }
             LumenLauncherTheme {
                 AppearanceSettingsScreen(onBack = onBack, viewModel = viewModel)
@@ -277,5 +280,17 @@ class AppearanceSettingsScreenTest {
             runCatching { composeRule.onNodeWithText(firstAppLabel).assertExists() }.isSuccess
         }
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+    }
+
+    @Test
+    fun previewCardRendersTheWallpaperBehindItsContent() {
+        // Given the screen
+        setContent()
+        val firstAppLabel = runBlocking { installedPreviewApps()[0].label }
+
+        // Then the preview card paints a wallpaper backdrop, with its sample content still on top
+        composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_background").assertExists()
+        composeRule.onNodeWithText(firstAppLabel).assertExists()
     }
 }

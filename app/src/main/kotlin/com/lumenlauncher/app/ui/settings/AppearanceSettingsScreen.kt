@@ -50,6 +50,7 @@ import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
+import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.LauncherFontOption
 import com.lumenlauncher.app.data.model.LauncherSettings
@@ -62,6 +63,7 @@ import com.lumenlauncher.app.ui.components.FontWeightSlider
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
+import com.lumenlauncher.app.ui.components.WallpaperBackground
 import com.lumenlauncher.app.ui.home.AppRow
 import com.lumenlauncher.app.ui.home.DockIcon
 import com.lumenlauncher.app.ui.theme.AccentSwatch
@@ -72,7 +74,6 @@ import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
 import com.lumenlauncher.app.ui.theme.SurfaceContainer
-import com.lumenlauncher.app.ui.theme.Wallpaper
 import com.lumenlauncher.app.ui.theme.resolve
 import com.lumenlauncher.app.ui.theme.toneOf
 
@@ -89,9 +90,11 @@ fun AppearanceSettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     val previewApps by viewModel.previewApps.collectAsState()
+    val homeWallpaper by viewModel.homeWallpaper.collectAsState()
     AppearanceSettingsContent(
         settings = settings,
         previewApps = previewApps,
+        homeWallpaper = homeWallpaper,
         onBack = onBack,
         onThemeModeChanged = viewModel::setThemeMode,
         onAccentFromSystemChanged = viewModel::setAccentFromSystem,
@@ -109,6 +112,7 @@ fun AppearanceSettingsScreen(
 private fun AppearanceSettingsContent(
     settings: LauncherSettings,
     previewApps: List<AppInfo>,
+    homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onAccentFromSystemChanged: (Boolean) -> Unit,
@@ -141,6 +145,7 @@ private fun AppearanceSettingsContent(
                         homeAppsFontWeight = settings.homeAppsFontWeight,
                         dockDisplayMode = settings.dockDisplayMode,
                         previewApps = previewApps,
+                        homeWallpaper = homeWallpaper,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
@@ -214,10 +219,10 @@ private fun AppearanceSettingsContent(
  * hand-drawn mockup. Needs no preview-only state beyond [previewApps]:
  * [AppearanceSettingsViewModel.settings] already updates immediately after every setter call, so
  * the rest of this just reads the same live values the rest of the screen's controls write to.
- * Backed by [Wallpaper] (Home's own real backdrop tone, not [Surface]/[SurfaceContainer]) so
- * [AppRow]/[DockIcon]'s text-shadow treatment — tuned for legibility over an arbitrary wallpaper,
- * not a flat card — renders exactly as it would on Home, not washed out against a plain light
- * card. [previewApps] are the device's own real installed apps ([AppearanceSettingsViewModel.previewApps],
+ * Backed by [WallpaperBackground] — the device's actual system wallpaper (falling back to the
+ * `Wallpaper` token), not [Surface]/[SurfaceContainer] — so [AppRow]/[DockIcon]'s text-shadow
+ * treatment, tuned for legibility over an arbitrary wallpaper rather than a flat card, renders
+ * exactly as it would on Home. [previewApps] are the device's own real installed apps ([AppearanceSettingsViewModel.previewApps],
  * sourced the same way the App Drawer is, then biased toward recognizable ones — a browser,
  * messaging, camera, mail, phone app, plus a few near-ubiquitous Google apps — via
  * [com.lumenlauncher.app.domain.SelectPreviewAppsUseCase], falling back to the installed list's
@@ -233,51 +238,59 @@ private fun AppearancePreviewCard(
     homeAppsFontWeight: FontWeightOption,
     dockDisplayMode: DockDisplayMode,
     previewApps: List<AppInfo>,
+    homeWallpaper: HomeWallpaper,
     modifier: Modifier = Modifier,
 ) {
     val labelColor = appLabelColorOption.resolve()
     val labelFontWeight = homeAppsFontWeight.resolve()
     val shape = MaterialTheme.shapes.medium
-    Column(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .shadow(elevation = 4.dp, shape = shape)
-            .background(Wallpaper, shape)
-            .border(1.dp, Hairline, shape)
-            .padding(16.dp),
+            .clip(shape)
+            .border(1.dp, Hairline, shape),
     ) {
-        Text(
-            text = "PREVIEW",
-            style = MaterialTheme.typography.labelSmall,
-            color = Muted,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        previewApps.take(PREVIEW_HOME_APP_COUNT).forEach { app ->
-            AppRow(
-                app = app,
-                onClick = {},
-                badgeCount = null,
-                badgeStyle = NotificationBadgeStyle.DOT,
-                onRequestShortcuts = { emptyList() },
-                onLaunchShortcut = {},
-                position = appRowPosition,
-                presentation = appRowPresentation,
-                labelColor = labelColor,
-                labelFontWeight = labelFontWeight,
-                enableLongPressMenu = false,
+        // The real system wallpaper — same backdrop Home renders these components over, so their
+        // text-shadow treatment reads exactly as it would there. Falls back to the Wallpaper
+        // token when no bitmap is available (see WallpaperBackground). Bottom-anchored: this card
+        // is a short band, so it shows the wallpaper's lower part (where Home's dock sits).
+        WallpaperBackground(homeWallpaper, Modifier.matchParentSize(), alignment = Alignment.BottomCenter)
+
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(
+                text = "PREVIEW",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+                modifier = Modifier.padding(bottom = 8.dp),
             )
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT).forEach { app ->
-                DockIcon(
+            previewApps.take(PREVIEW_HOME_APP_COUNT).forEach { app ->
+                AppRow(
                     app = app,
-                    displayMode = dockDisplayMode,
                     onClick = {},
+                    badgeCount = null,
+                    badgeStyle = NotificationBadgeStyle.DOT,
+                    onRequestShortcuts = { emptyList() },
+                    onLaunchShortcut = {},
+                    position = appRowPosition,
+                    presentation = appRowPresentation,
                     labelColor = labelColor,
                     labelFontWeight = labelFontWeight,
                     enableLongPressMenu = false,
                 )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT).forEach { app ->
+                    DockIcon(
+                        app = app,
+                        displayMode = dockDisplayMode,
+                        onClick = {},
+                        labelColor = labelColor,
+                        labelFontWeight = labelFontWeight,
+                        enableLongPressMenu = false,
+                    )
+                }
             }
         }
     }
@@ -505,6 +518,7 @@ private fun AppearanceSettingsScreenPreview() {
         AppearanceSettingsContent(
             settings = LauncherSettings(),
             previewApps = DesignTimePreviewApps,
+            homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onThemeModeChanged = {},
             onAccentFromSystemChanged = {},

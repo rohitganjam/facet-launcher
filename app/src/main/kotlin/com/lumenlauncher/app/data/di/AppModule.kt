@@ -1,6 +1,7 @@
 package com.lumenlauncher.app.data.di
 
 import android.app.AppOpsManager
+import android.app.WallpaperManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.LauncherApps
@@ -32,6 +33,12 @@ object AppModule {
     fun provideAppOpsManager(@ApplicationContext context: Context): AppOpsManager =
         context.getSystemService(AppOpsManager::class.java)
             ?: error("AppOpsManager service unavailable on this device")
+
+    @Provides
+    @Singleton
+    fun provideWallpaperManager(@ApplicationContext context: Context): WallpaperManager =
+        WallpaperManager.getInstance(context)
+            ?: error("WallpaperManager service unavailable on this device")
 
     @Provides
     @Singleton
