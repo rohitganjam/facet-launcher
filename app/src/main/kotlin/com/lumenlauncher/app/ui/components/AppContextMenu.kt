@@ -15,12 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Dock
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Dock
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -42,7 +41,6 @@ import com.lumenlauncher.app.data.model.AppShortcut
 import com.lumenlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.lumenlauncher.app.ui.theme.ErrorColor
 import com.lumenlauncher.app.ui.theme.Faint
-import com.lumenlauncher.app.ui.theme.Hairline
 import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Scrim
@@ -56,17 +54,18 @@ private const val MAX_SHORTCUTS = 3
  * 28dp (see `CLAUDE.md`'s Material 3 shape section) — written as a literal [RoundedCornerShape]
  * since [MaterialTheme.shapes] has no per-corner variant to reference directly. */
 private val SHEET_SHAPE = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomEnd = 0.dp, bottomStart = 0.dp)
-private val ITEM_PADDING = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
+private val ITEM_PADDING = PaddingValues(horizontal = 24.dp, vertical = 16.dp)
 
 /**
  * F12's long-press context menu (`4i`) — a bottom sheet rather than a floating popup (decided
  * explicitly by the user over [ThemedDropdownMenu], see chat history). The header (app icon +
- * name) sits at the top with "App info" as a row directly beneath it — grouped with the header
- * (no divider between them) rather than mixed in among the app's own quick actions
- * ([AppShortcut]s, capped at [MAX_SHORTCUTS]) below; Uninstall is always the last item. Widgets is
- * deliberately omitted (Phase 7 isn't built yet). [onRequestShortcuts] is fetched fresh each time
- * the sheet opens rather than precomputed for every app up front, since most long-presses never
- * open it.
+ * name) sits at the top with "App info" as a row directly beneath it, then the app's own quick
+ * actions ([AppShortcut]s, capped at [MAX_SHORTCUTS]); Uninstall is always the last item. Rows are
+ * separated by whitespace only (no dividers) with outlined, single-tone icons throughout —
+ * mirrors Niagara Launcher's own sheet, decided explicitly by the user over the busier
+ * divider-per-row/filled-icon look this had before (see chat history). Widgets is deliberately
+ * omitted (Phase 7 isn't built yet). [onRequestShortcuts] is fetched fresh each time the sheet
+ * opens rather than precomputed for every app up front, since most long-presses never open it.
  *
  * "Add to Favorites"/"Add to Dock" (from [com.lumenlauncher.app.domain.ObserveQuickAddStateUseCase])
  * sit between "App info" and the shortcuts — [addToFavoritesOverride]/[addToDockOverride] being
@@ -117,51 +116,48 @@ fun AppContextMenu(
         dragHandle = { AppContextMenuDragHandle() },
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AppIcon(icon = app.icon, size = AppIconSize.ROW_SPACIOUS, contentDescription = null)
             Text(
                 text = app.label,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = Ink,
-                modifier = Modifier.padding(start = 12.dp),
+                modifier = Modifier.padding(start = 16.dp),
             )
         }
         AppContextMenuItem(
             label = "App info",
             modifier = Modifier.testTag("app_context_menu_app_info"),
-            leadingIcon = { Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = Muted) },
+            leadingIcon = { Icon(imageVector = Icons.Outlined.Info, contentDescription = null, tint = Muted) },
             onClick = {
                 onDismissRequest()
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", app.packageName, null))
                 runCatching { context.startActivity(intent) }
             },
         )
-        HorizontalDivider(color = Hairline)
         if (addToFavoritesOverride != null) {
             AppContextMenuItem(
                 label = if (addToFavoritesOverride) "Add to profile favorites" else "Add to Favorites",
                 modifier = Modifier.testTag("app_context_menu_add_to_favorites"),
-                leadingIcon = { Icon(imageVector = Icons.Default.StarBorder, contentDescription = null, tint = Muted) },
+                leadingIcon = { Icon(imageVector = Icons.Outlined.StarBorder, contentDescription = null, tint = Muted) },
                 onClick = {
                     onDismissRequest()
                     onAddToFavorites(app)
                 },
             )
-            HorizontalDivider(color = Hairline)
         }
         if (addToDockOverride != null) {
             AppContextMenuItem(
                 label = if (addToDockOverride) "Add to profile dock" else "Add to Dock",
                 modifier = Modifier.testTag("app_context_menu_add_to_dock"),
-                leadingIcon = { Icon(imageVector = Icons.Default.Dock, contentDescription = null, tint = Muted) },
+                leadingIcon = { Icon(imageVector = Icons.Outlined.Dock, contentDescription = null, tint = Muted) },
                 onClick = {
                     onDismissRequest()
                     onAddToDock(app)
                 },
             )
-            HorizontalDivider(color = Hairline)
         }
         shortcuts.take(MAX_SHORTCUTS).forEach { shortcut ->
             AppContextMenuItem(
@@ -173,13 +169,12 @@ fun AppContextMenu(
                     onLaunchShortcut(shortcut)
                 },
             )
-            HorizontalDivider(color = Hairline)
         }
         AppContextMenuItem(
             label = "Uninstall",
             destructive = true,
             modifier = Modifier.testTag("app_context_menu_uninstall"),
-            leadingIcon = { Icon(imageVector = Icons.Default.Delete, contentDescription = null, tint = ErrorColor) },
+            leadingIcon = { Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = null, tint = ErrorColor) },
             onClick = {
                 onDismissRequest()
                 val intent = Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null))
