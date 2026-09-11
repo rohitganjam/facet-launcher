@@ -32,7 +32,7 @@ fun SurfaceButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         elevation = null,
         border = BorderStroke(1.dp, Hairline),
         colors = ButtonDefaults.buttonColors(
@@ -41,7 +41,7 @@ fun SurfaceButton(
             disabledContainerColor = Surface,
             disabledContentColor = Muted,
         ),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }

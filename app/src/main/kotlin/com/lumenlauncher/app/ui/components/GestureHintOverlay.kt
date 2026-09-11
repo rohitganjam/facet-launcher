@@ -53,24 +53,24 @@ fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Switch profiles", style = MaterialTheme.typography.labelLarge, color = Ink)
-                Text(text = "←", style = MaterialTheme.typography.headlineSmall, color = Muted)
+                Text(text = "Switch profiles", style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(text = "←", style = MaterialTheme.typography.headlineMedium, color = Muted)
             }
             Row(
                 modifier = Modifier.padding(top = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "→", style = MaterialTheme.typography.headlineSmall, color = Muted)
-                Text(text = "Widgets", style = MaterialTheme.typography.labelLarge, color = Ink)
+                Text(text = "→", style = MaterialTheme.typography.headlineMedium, color = Muted)
+                Text(text = "Widgets", style = MaterialTheme.typography.headlineSmall, color = Ink)
             }
             Column(
                 modifier = Modifier.weight(1f).padding(bottom = 120.dp),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Text(text = "All your apps", style = MaterialTheme.typography.headlineSmall, color = Ink)
                 Text(text = "↑", style = MaterialTheme.typography.headlineMedium, color = Muted)
-                Text(text = "All your apps", style = MaterialTheme.typography.labelLarge, color = Ink)
             }
         }
         SurfaceButton(
