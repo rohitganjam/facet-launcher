@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
  * every other reorderable list in Settings") — see chat history.
  */
 object ReorderRowDefaults {
-    val DOCK_TILE_SIZE = 44.dp
+    /** Tile size for the dock's own reorder row is [AppIconSize.TILE] — shared with App Drawer's grid and the real Home Dock, not repeated here. */
     val DOCK_TILE_SPACING = 10.dp
     val FAVORITE_ROW_HEIGHT = 52.dp
 

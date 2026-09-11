@@ -39,6 +39,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppListLimits
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.AppIconSize
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.ReorderRowDefaults
 import com.lumenlauncher.app.ui.components.rememberDragReorderState
@@ -176,7 +177,7 @@ private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
 private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = dockApps.map { it.packageName to it.activityName }
     var order by remember(componentsKey) { mutableStateOf(dockApps) }
-    val slotWidthPx = with(LocalDensity.current) { (ReorderRowDefaults.DOCK_TILE_SIZE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
+    val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
         key = { it.packageName to it.activityName },
@@ -187,7 +188,7 @@ private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo
     )
 
     LazyRow(
-        modifier = modifier.height(ReorderRowDefaults.DOCK_TILE_SIZE),
+        modifier = modifier.height(AppIconSize.TILE),
         horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
         userScrollEnabled = false,
     ) {
@@ -195,8 +196,7 @@ private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo
             val isDragging = reorderState.isDragging(app)
             AppIcon(
                 icon = app.icon,
-                size = ReorderRowDefaults.DOCK_TILE_SIZE,
-                cornerRadius = 15.dp,
+                size = AppIconSize.TILE,
                 contentDescription = app.label,
                 modifier = Modifier
                     .testTag("onboarding_dock_tile_${app.packageName}")

@@ -48,6 +48,7 @@ import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.AppIconSize
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.HomeSurfacePreview
@@ -309,7 +310,7 @@ private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (Li
                         .testTag("default_favorite_reorder_handle_${app.packageName}")
                         .then(reorderState.dragModifier(app)),
                 )
-                AppIcon(icon = app.icon, size = 32.dp, cornerRadius = 9.dp, contentDescription = null)
+                AppIcon(icon = app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
                 Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             }
         }

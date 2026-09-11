@@ -100,6 +100,7 @@ import com.lumenlauncher.app.domain.GroupedApps
 import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.lumenlauncher.app.ui.components.AppContextMenu
 import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.AppIconSize
 import com.lumenlauncher.app.ui.components.NotificationBadge
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenu
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -823,13 +824,11 @@ private fun DrawerAppRow(
         ) {
             if (showIcon) {
                 // Icon grows alongside the row height for Regular/Spacious (see
-                // DrawerListItemSize's own doc) — corner radius scaled at the same ~28% ratio
-                // the base 32dp/9dp pair already uses, not just carried over unchanged.
-                val iconSize = itemSize.iconSizeDp.dp
+                // DrawerListItemSize's own doc) — corner radius follows from size via AppIcon's
+                // own M3 shape-scale default, not a hand-picked ratio (see chat history).
                 AppIcon(
                     icon = app.icon,
-                    size = iconSize,
-                    cornerRadius = (itemSize.iconSizeDp * 9 / 32).dp,
+                    size = itemSize.iconSizeDp.dp,
                     contentDescription = null,
                 )
             }
@@ -938,8 +937,7 @@ private fun DrawerGridTile(
         ) {
             AppIcon(
                 icon = app.icon,
-                size = 44.dp,
-                cornerRadius = 13.dp,
+                size = AppIconSize.TILE,
                 contentDescription = null,
                 notificationCount = badgeCount,
                 badgeStyle = badgeStyle,

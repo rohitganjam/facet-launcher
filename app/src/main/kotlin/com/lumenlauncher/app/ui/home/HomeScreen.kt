@@ -87,6 +87,7 @@ import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.components.AppContextMenu
 import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.AppIconSize
 import com.lumenlauncher.app.ui.components.NotificationBadge
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.HomeAppTextColor
@@ -522,6 +523,7 @@ fun HomeScreen(
                                         labelColor = appLabelColor,
                                         labelFontWeight = appLabelFontWeight,
                                         verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                        iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
                                     )
                                 }
                             }
@@ -823,6 +825,10 @@ internal fun AppRow(
     // carousel, the Appearance screen's own live preview) overrides it tighter for its own reasons
     // (see chat history).
     verticalPadding: Dp = HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+    // App Drawer's own Regular tier — matches [verticalPadding]'s own default density. Home
+    // overrides this to [AppIconSize.ROW_COMPACT] alongside the padding once the compact-spacing
+    // check finds the list would otherwise need to scroll (see chat history).
+    iconSize: Dp = AppIconSize.ROW_REGULAR,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
@@ -856,8 +862,7 @@ internal fun AppRow(
                 if (showIcon) {
                     AppIcon(
                         icon = app.icon,
-                        size = 34.dp,
-                        cornerRadius = 10.dp,
+                        size = iconSize,
                         // No visible label to carry the a11y name when text is hidden — mirrors
                         // the Dock's own icons-only mode (see DockIcon below).
                         contentDescription = if (showLabel) null else app.label,
@@ -934,8 +939,7 @@ internal fun DockIcon(
             ) {
                 AppIcon(
                     icon = app.icon,
-                    size = 50.dp,
-                    cornerRadius = 15.dp,
+                    size = AppIconSize.TILE,
                     contentDescription = app.label,
                     notificationCount = badgeCount,
                     badgeStyle = badgeStyle,

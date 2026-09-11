@@ -72,7 +72,7 @@ fun AppContextMenu(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppIcon(icon = app.icon, size = 40.dp, cornerRadius = 12.dp, contentDescription = null)
+            AppIcon(icon = app.icon, size = AppIconSize.ROW_SPACIOUS, contentDescription = null)
             Text(text = app.label, style = MaterialTheme.typography.titleMedium, color = Ink, modifier = Modifier.padding(start = 12.dp))
         }
         HorizontalDivider(color = Hairline)
@@ -105,7 +105,7 @@ fun AppContextMenu(
             ThemedDropdownMenuItem(
                 label = shortcut.label,
                 modifier = Modifier.testTag("app_context_menu_shortcut_${shortcut.id}"),
-                leadingIcon = { AppIcon(icon = shortcut.icon, size = 20.dp, cornerRadius = 6.dp, contentDescription = null) },
+                leadingIcon = { AppIcon(icon = shortcut.icon, size = AppIconSize.SHORTCUT, contentDescription = null) },
                 contentPadding = CONTEXT_MENU_ITEM_PADDING,
                 onClick = {
                     onDismissRequest()

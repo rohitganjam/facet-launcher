@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.lumenlauncher.app.data.model.DrawerListItemSize
 import com.lumenlauncher.app.data.model.IconRenderMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.theme.Accent
@@ -29,6 +31,46 @@ import com.lumenlauncher.app.ui.theme.Surface
 
 /** F13's badge count is capped at a single digit for legibility at these icon sizes — "9+" beyond that, not the more common "99+". */
 private fun badgeLabel(count: Int): String = if (count > 9) "9+" else count.toString()
+
+/**
+ * The app's full set of standard [AppIcon] sizes — every icon tile in the app should be one of
+ * these rather than a bespoke `Dp` picked by eye (see chat history: this replaced ~9 slightly
+ * different hand-picked radii/sizes across the app with 5 named sizes and 3 M3-derived radii).
+ * [ROW_COMPACT]/[ROW_REGULAR]/[ROW_SPACIOUS] deliberately equal [DrawerListItemSize]'s own
+ * `iconSizeDp` tiers (that enum is the one place a user actually chooses an icon size) rather than
+ * repeating those numbers here.
+ */
+object AppIconSize {
+    /** The smallest icon in the app — a shortcut's leading icon inside [AppContextMenu]'s menu row. */
+    val SHORTCUT = 20.dp
+
+    /** One icon in a list row — App Drawer's own Compact tier, Home's app list when it needs to
+     *  compact (see `HomeScreen.kt`'s own compact-spacing check), and every reorder/picker row
+     *  (Settings' Default Favorites, the Favorites/Dock pickers). */
+    val ROW_COMPACT = DrawerListItemSize.COMPACT.iconSizeDp.dp
+
+    /** App Drawer's own Regular tier; Home's app list in its normal (non-compacted) state. */
+    val ROW_REGULAR = DrawerListItemSize.REGULAR.iconSizeDp.dp
+
+    /** App Drawer's own Spacious tier; also [AppContextMenu]'s header icon, which already happened to match. */
+    val ROW_SPACIOUS = DrawerListItemSize.SPACIOUS.iconSizeDp.dp
+
+    /** Grid-tile-scale UI: App Drawer's Grid layout, the real Home Dock, and its Settings/onboarding management tiles. */
+    val TILE = 44.dp
+}
+
+/**
+ * [AppIcon]'s default corner radius, derived from [size] via the M3 shape scale (CLAUDE.md's
+ * Material 3 shape section) rather than a hand-picked ratio — `extraSmall` (4dp) for
+ * [AppIconSize.SHORTCUT]-scale icons, `small` (8dp) for row-scale icons, `medium` (12dp) for
+ * tile-scale icons. A departure from this app's earlier convention of exempting icon/avatar tiles
+ * from the M3 shape scale (decided explicitly by the user — see chat history).
+ */
+private fun appIconCornerRadiusFor(size: Dp): Dp = when {
+    size <= 24.dp -> 4.dp
+    size <= 36.dp -> 8.dp
+    else -> 12.dp
+}
 
 /**
  * The single app-icon renderer used everywhere an [icon] bitmap is shown — Home's favorites/dock,
@@ -48,9 +90,9 @@ private fun badgeLabel(count: Int): String = if (count > 9) "9+" else count.toSt
 fun AppIcon(
     icon: ImageBitmap?,
     size: Dp,
-    cornerRadius: Dp,
     contentDescription: String?,
     modifier: Modifier = Modifier,
+    cornerRadius: Dp = appIconCornerRadiusFor(size),
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
 ) {

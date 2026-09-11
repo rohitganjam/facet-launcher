@@ -44,6 +44,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.AppIconSize
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.HomeSurfacePreview
@@ -194,7 +195,7 @@ private fun DockAppsRow(
         // the raw list would reset drag state mid-drag on re-emissions unrelated to the dock.
         val componentsKey = dockApps.map { it.packageName to it.activityName }
         var order by remember(componentsKey) { mutableStateOf(dockApps) }
-        val slotWidthPx = with(LocalDensity.current) { (ReorderRowDefaults.DOCK_TILE_SIZE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
+        val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
         val reorderState = rememberDragReorderState(
             items = order,
             key = { it.packageName to it.activityName },
@@ -205,7 +206,7 @@ private fun DockAppsRow(
         )
 
         LazyRow(
-            modifier = Modifier.height(ReorderRowDefaults.DOCK_TILE_SIZE),
+            modifier = Modifier.height(AppIconSize.TILE),
             horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
             verticalAlignment = Alignment.CenterVertically,
             userScrollEnabled = false,
@@ -227,7 +228,7 @@ private fun DockAppsRow(
                         .then(if (isDragging) Modifier else Modifier.animateItem())
                         .then(reorderState.dragModifier(app)),
                 ) {
-                    AppIcon(icon = app.icon, size = ReorderRowDefaults.DOCK_TILE_SIZE, cornerRadius = 14.dp, contentDescription = app.label)
+                    AppIcon(icon = app.icon, size = AppIconSize.TILE, contentDescription = app.label)
                 }
             }
         }

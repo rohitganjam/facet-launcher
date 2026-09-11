@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.AppIconSize
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.theme.Muted
@@ -175,7 +176,7 @@ private fun FavoritesPickerRow(app: AppInfo, checked: Boolean, enabled: Boolean,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        AppIcon(icon = app.icon, size = 32.dp, cornerRadius = 9.dp, contentDescription = null)
+        AppIcon(icon = app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
         Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
         Checkbox(
             checked = checked,
