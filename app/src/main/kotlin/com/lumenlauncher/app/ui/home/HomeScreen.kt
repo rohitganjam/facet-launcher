@@ -846,6 +846,11 @@ internal fun AppRow(
     // overrides this to [AppIconSize.ROW_COMPACT] alongside the padding once the compact-spacing
     // check finds the list would otherwise need to scroll (see chat history).
     iconSize: Dp = AppIconSize.ROW_REGULAR,
+    // Distinguishes this row's testTags from another AppRow rendering the same app elsewhere in
+    // the same semantics tree — e.g. a profile carousel preview card can be present alongside
+    // Home's own real AppRow for the same favorite app. Callers other than Home's own real list
+    // must override this to something unique to their surface.
+    testTagPrefix: String = "home_",
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
@@ -883,7 +888,7 @@ internal fun AppRow(
                         // No visible label to carry the a11y name when text is hidden — mirrors
                         // the Dock's own icons-only mode (see DockIcon below).
                         contentDescription = if (showLabel) null else app.label,
-                        modifier = Modifier.testTag("home_app_icon_${app.packageName}"),
+                        modifier = Modifier.testTag("${testTagPrefix}app_icon_${app.packageName}"),
                     )
                 }
             }
@@ -893,7 +898,7 @@ internal fun AppRow(
                         text = app.label,
                         style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
                         color = labelColor,
-                        modifier = Modifier.testTag("home_app_label_${app.packageName}"),
+                        modifier = Modifier.testTag("${testTagPrefix}app_label_${app.packageName}"),
                     )
                 }
             }

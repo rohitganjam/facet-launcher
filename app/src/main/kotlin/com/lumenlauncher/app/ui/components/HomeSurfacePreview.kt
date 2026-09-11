@@ -96,6 +96,9 @@ fun HomeSurfacePreview(
                     labelFontWeight = labelFontWeight,
                     enableLongPressMenu = false,
                     verticalPadding = 6.dp,
+                    // Distinguishes this preview card's rows from Home's own real AppRow for the
+                    // same app, in case both are ever present in one semantics tree.
+                    testTagPrefix = "home_surface_preview_",
                 )
             }
             if (dockApps.isNotEmpty()) {

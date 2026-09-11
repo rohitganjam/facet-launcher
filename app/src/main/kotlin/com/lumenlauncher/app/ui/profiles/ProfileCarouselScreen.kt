@@ -582,6 +582,10 @@ private fun ProfilePreviewPage(
                                     // Uses AppRow's own real Home density (16dp) — the scaled
                                     // LocalDensity above shrinks it proportionally already, so no
                                     // fixed override is needed here (see chat history).
+                                    // This card can be present in the same semantics tree as
+                                    // Home's own real AppRow for the same favorite app — a
+                                    // distinct prefix keeps onNodeWithTag lookups unambiguous.
+                                    testTagPrefix = "profile_preview_",
                                 )
                             }
                         }
