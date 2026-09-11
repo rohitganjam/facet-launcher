@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -17,7 +18,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.ui.dock.DockAppPickerScreen
@@ -41,6 +45,30 @@ private enum class OnboardingSubScreen {
     DOCK_PICKER,
     FAVORITES_PICKER,
 }
+
+/** The step a "Back" action (on-screen, system, or a right swipe) lands on — every step but [OnboardingStep.INTRO] can go back. */
+private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
+    OnboardingStep.INTRO -> OnboardingStep.INTRO
+    OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
+    OnboardingStep.PROFILES -> OnboardingStep.HOME_SETUP
+    OnboardingStep.SET_DEFAULT -> OnboardingStep.PROFILES
+}
+
+/**
+ * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.SET_DEFAULT] has
+ * no next step — finishing there has a real side effect (launching the default-launcher role
+ * request), so it's deliberately reachable only via its own explicit "Set as default"/"Later"
+ * buttons, never a swipe.
+ */
+private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
+    OnboardingStep.INTRO -> OnboardingStep.HOME_SETUP
+    OnboardingStep.HOME_SETUP -> OnboardingStep.PROFILES
+    OnboardingStep.PROFILES -> OnboardingStep.SET_DEFAULT
+    OnboardingStep.SET_DEFAULT -> OnboardingStep.SET_DEFAULT
+}
+
+/** A swipe shorter than this is treated as a scroll/drag within the step's own content, not a page change. */
+private val SWIPE_COMMIT_DISTANCE = 80.dp
 
 /**
  * First-run flow host (`ONBOARDING_FLOW.md`) — a top-level branch in [com.lumenlauncher.app.LauncherActivity],
@@ -66,16 +94,43 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler(enabled = subScreen != null) { subScreen = null }
-    BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO) {
-        step = when (step) {
-            OnboardingStep.INTRO -> OnboardingStep.INTRO
-            OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
-            OnboardingStep.PROFILES -> OnboardingStep.HOME_SETUP
-            OnboardingStep.SET_DEFAULT -> OnboardingStep.PROFILES
-        }
-    }
+    BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO) { step = previousStep(step) }
 
-    Box(modifier = modifier.fillMaxSize().background(Wallpaper).testTag("onboarding_screen")) {
+    val density = LocalDensity.current
+    val swipeCommitPx = with(density) { SWIPE_COMMIT_DISTANCE.toPx() }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Wallpaper)
+            .testTag("onboarding_screen")
+            // Disabled while a full-screen picker sits on top — that screen's own gestures (its
+            // list scroll, its own back handling) should be the only thing responding to touches
+            // there. Re-keyed on `step` so each new step starts its own clean drag-total tally
+            // rather than carrying one over from the page just swiped away.
+            .then(
+                if (subScreen == null) {
+                    Modifier.pointerInput(step) {
+                        var totalDrag = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { totalDrag = 0f },
+                            onHorizontalDrag = { change, dragAmount ->
+                                totalDrag += dragAmount
+                                change.consume()
+                            },
+                            onDragEnd = {
+                                when {
+                                    totalDrag <= -swipeCommitPx -> step = nextStep(step)
+                                    totalDrag >= swipeCommitPx -> step = previousStep(step)
+                                }
+                            },
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+            ),
+    ) {
         AnimatedContent(
             targetState = step,
             transitionSpec = {
@@ -91,25 +146,31 @@ fun OnboardingScreen(
             modifier = Modifier.fillMaxSize(),
         ) { currentStep ->
             when (currentStep) {
-                OnboardingStep.INTRO -> OnboardingIntroPage(onNext = { step = OnboardingStep.HOME_SETUP })
+                OnboardingStep.INTRO -> OnboardingIntroPage(onNext = { step = nextStep(step) })
                 OnboardingStep.HOME_SETUP -> OnboardingHomeSetupPage(
                     uiState = uiState,
                     onReorderDockApps = viewModel::reorderDockApps,
                     onOpenDockPicker = { subScreen = OnboardingSubScreen.DOCK_PICKER },
                     onListContentModeChanged = viewModel::setListContentMode,
                     onAppsToShowCountChanged = viewModel::setAppsToShowCount,
+                    drawerPresentation = uiState.drawerPresentation,
+                    onDrawerPresentationChanged = viewModel::setDrawerPresentation,
                     onOpenFavoritesPicker = { subScreen = OnboardingSubScreen.FAVORITES_PICKER },
                     onReorderFavorites = viewModel::reorderFavorites,
-                    onSkip = { step = OnboardingStep.PROFILES },
-                    onNext = { step = OnboardingStep.PROFILES },
+                    onClearFavorites = viewModel::clearFavorites,
+                    onClearDockApps = viewModel::clearDockApps,
+                    onBack = { step = previousStep(step) },
+                    onNext = { step = nextStep(step) },
                 )
                 OnboardingStep.PROFILES -> OnboardingProfilesPage(
                     uiState = uiState,
-                    onNext = { step = OnboardingStep.SET_DEFAULT },
+                    onBack = { step = previousStep(step) },
+                    onNext = { step = nextStep(step) },
                 )
                 OnboardingStep.SET_DEFAULT -> SetDefaultLauncherSheet(
                     uiState = uiState,
                     requestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
+                    onBack = { step = previousStep(step) },
                     onFinish = onFinish,
                 )
             }

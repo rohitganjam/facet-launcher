@@ -43,6 +43,9 @@ import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
+import com.lumenlauncher.app.domain.AddAppToDockUseCase
+import com.lumenlauncher.app.domain.AddAppToFavoritesUseCase
+import com.lumenlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
@@ -150,6 +153,13 @@ class KeyboardDismissalTest {
                         produceFile = { File(context.cacheDir, "test-drawer-settings-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
+                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
+                val profileRepository = ProfileRepository(database.profileDao())
                 DrawerViewModel(
                     settingsRepository,
                     ContactPermissionRepository(context),
@@ -158,6 +168,16 @@ class KeyboardDismissalTest {
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
+                    ObserveQuickAddStateUseCase(
+                        settingsRepository,
+                        profileRepository,
+                        favoriteAppRepository,
+                        defaultFavoriteAppRepository,
+                        dockAppRepository,
+                        profileDockAppRepository,
+                    ),
+                    AddAppToFavoritesUseCase(settingsRepository, profileRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    AddAppToDockUseCase(settingsRepository, profileRepository, dockAppRepository, profileDockAppRepository),
                 )
             }
             val hubViewModel = remember {

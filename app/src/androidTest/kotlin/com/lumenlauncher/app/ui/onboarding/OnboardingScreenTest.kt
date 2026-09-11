@@ -7,10 +7,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
@@ -57,7 +61,10 @@ class OnboardingScreenTest {
     }
 
     /** [seed] runs against real (throwaway, in-memory/temp-file) repositories before the screen renders. */
-    private fun setContent(onFinish: () -> Unit = {}, seed: suspend (AppRepository, DockAppRepository) -> Unit = { _, _ -> }) {
+    private fun setContent(
+        onFinish: () -> Unit = {},
+        seed: suspend (AppRepository, DockAppRepository, DefaultFavoriteAppRepository) -> Unit = { _, _, _ -> },
+    ) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModels = remember {
@@ -74,7 +81,7 @@ class OnboardingScreenTest {
                 )
                 val wallpaperRepository = WallpaperRepository(WallpaperManager.getInstance(context))
                 val defaultLauncherRepository = DefaultLauncherRepository(context)
-                runBlocking { seed(appRepository, dockAppRepository) }
+                runBlocking { seed(appRepository, dockAppRepository, defaultFavoriteAppRepository) }
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
                 Triple(
                     OnboardingViewModel(
@@ -148,15 +155,96 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Skip on the home-setup step jumps to profiles`() {
+    fun `Back on the home-setup step returns to intro`() {
         setContent()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("onboarding_skip").performClick()
+        composeRule.onNodeWithTag("onboarding_back").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
+    }
+
+    @Test
+    fun `Back on the profiles step returns to home setup`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_back").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+    }
+
+    @Test
+    fun `Back on the set-default step returns to profiles`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_back").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("onboarding_profiles_page").assertExists()
+    }
+
+    @Test
+    fun `swiping left advances to the next step`() {
+        setContent()
+
+        composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+    }
+
+    @Test
+    fun `swiping right returns to the previous step`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
+    }
+
+    @Test
+    fun `swiping right on the first step does nothing`() {
+        setContent()
+
+        composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
+    }
+
+    @Test
+    fun `swiping left on the last step does nothing`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
     }
 
     @Test
@@ -189,7 +277,7 @@ class OnboardingScreenTest {
     @Test
     fun `tapping Manage dock apps opens the full-screen dock picker`() {
         var seededApp: AppInfo? = null
-        setContent { appRepository, dockAppRepository ->
+        setContent { appRepository, dockAppRepository, _ ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
             dockAppRepository.addDockApp(app, 0)
@@ -206,6 +294,64 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("dock_app_picker_screen").assertExists()
+    }
+
+    @Test
+    fun `Clear all removes every dock app after confirming`() {
+        var seededApp: AppInfo? = null
+        setContent { appRepository, dockAppRepository, _ ->
+            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            seededApp = app
+            dockAppRepository.addDockApp(app, 0)
+        }
+        requireNotNull(seededApp)
+
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onNodeWithTag("onboarding_clear_dock").let { runCatching { it.assertExists() }.isSuccess }
+        }
+
+        // When tapping Clear all and confirming the destructive dialog
+        composeRule.onNodeWithTag("onboarding_clear_dock").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
+        composeRule.waitForIdle()
+
+        // Then the dock is empty and the Clear all action disappears with it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onNodeWithText("0 of ${DockAppRepository.MAX_APPS}").let { runCatching { it.assertExists() }.isSuccess }
+        }
+        composeRule.onNodeWithTag("onboarding_clear_dock").assertDoesNotExist()
+    }
+
+    @Test
+    fun `Clear all removes every favorite after confirming`() {
+        var seededApp: AppInfo? = null
+        setContent { appRepository, _, defaultFavoriteAppRepository ->
+            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            seededApp = app
+            defaultFavoriteAppRepository.addFavorite(app, 0)
+        }
+        requireNotNull(seededApp)
+
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onNodeWithTag("onboarding_clear_favorites").let { runCatching { it.assertExists() }.isSuccess }
+        }
+
+        // When tapping Clear all and confirming the destructive dialog
+        composeRule.onNodeWithTag("onboarding_clear_favorites").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
+        composeRule.waitForIdle()
+
+        // Then the favorites list is empty and the Clear all action disappears with it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("onboarding_favorite_reorder_row_${seededApp?.packageName}").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithTag("onboarding_clear_favorites").assertDoesNotExist()
     }
 
     @Test

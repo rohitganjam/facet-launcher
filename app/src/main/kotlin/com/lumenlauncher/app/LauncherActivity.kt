@@ -8,11 +8,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.ui.launcher.LauncherViewModel
+import com.lumenlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.lumenlauncher.app.ui.navigation.LumenNavHost
 import com.lumenlauncher.app.ui.onboarding.OnboardingScreen
 import com.lumenlauncher.app.ui.theme.AccentSwatch
@@ -30,34 +32,36 @@ class LauncherActivity : ComponentActivity() {
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            LumenLauncherTheme(
-                themeMode = uiState.themeMode,
-                accentFromSystem = uiState.accentFromSystem,
-                customAccentSwatch = uiState.customAccentSwatch?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
-                wallpaperAccentRole = uiState.wallpaperAccentRole,
-                iconRenderMode = uiState.iconRenderMode,
-                launcherFontOption = uiState.launcherFontOption,
-            ) {
-                when {
-                    uiState.isLoading -> {
-                        // Real settings/apps haven't loaded yet — render nothing rather than a
-                        // frame styled with defaults that don't match the user's actual choices
-                        // (see chat history). The window already shows the wallpaper through it
-                        // (windowShowWallpaper + a transparent windowBackground in themes.xml), so
-                        // an empty Box is a blank Home, not a black/white flash.
-                        Box(modifier = Modifier.fillMaxSize())
-                    }
-                    !uiState.onboardingCompleted -> {
-                        // A top-level branch, outside LumenNavHost entirely — never lands on the
-                        // back stack, same isolation HomeDrawerRoute gets. See ONBOARDING_FLOW.md.
-                        OnboardingScreen(onFinish = viewModel::completeOnboarding)
-                    }
-                    else -> {
-                        LumenNavHost(
-                            apps = uiState.apps,
-                            onAppClick = { app -> launchApp(app) },
-                            launcherViewModel = viewModel,
-                        )
+            CompositionLocalProvider(LocalHomePressedEvent provides viewModel.homePressedEvent) {
+                LumenLauncherTheme(
+                    themeMode = uiState.themeMode,
+                    accentFromSystem = uiState.accentFromSystem,
+                    customAccentSwatch = uiState.customAccentSwatch?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
+                    wallpaperAccentRole = uiState.wallpaperAccentRole,
+                    iconRenderMode = uiState.iconRenderMode,
+                    launcherFontOption = uiState.launcherFontOption,
+                ) {
+                    when {
+                        uiState.isLoading -> {
+                            // Real settings/apps haven't loaded yet — render nothing rather than a
+                            // frame styled with defaults that don't match the user's actual choices
+                            // (see chat history). The window already shows the wallpaper through it
+                            // (windowShowWallpaper + a transparent windowBackground in themes.xml), so
+                            // an empty Box is a blank Home, not a black/white flash.
+                            Box(modifier = Modifier.fillMaxSize())
+                        }
+                        !uiState.onboardingCompleted -> {
+                            // A top-level branch, outside LumenNavHost entirely — never lands on the
+                            // back stack, same isolation HomeDrawerRoute gets. See ONBOARDING_FLOW.md.
+                            OnboardingScreen(onFinish = viewModel::completeOnboarding)
+                        }
+                        else -> {
+                            LumenNavHost(
+                                apps = uiState.apps,
+                                onAppClick = { app -> launchApp(app) },
+                                launcherViewModel = viewModel,
+                            )
+                        }
                     }
                 }
             }
