@@ -313,6 +313,32 @@ class ProfileCarouselScreenTest {
     }
 
     @Test
+    fun headerShowsTheTitleAndLiveProfileCountSingularAndPlural() {
+        // Given a single profile (singular count wording)
+        setContent(
+            seed = { profileRepository, settings ->
+                val only = profileRepository.addProfile()
+                settings.setActiveProfileId(only.id)
+            },
+        )
+        composeRule.onNodeWithText("Switch Profiles").assertExists()
+        composeRule.onNodeWithText("1 profile available").assertExists()
+    }
+
+    @Test
+    fun headerShowsThePluralCountWithMultipleProfiles() {
+        // Given two profiles (plural count wording)
+        setContent(
+            seed = { profileRepository, settings ->
+                val first = profileRepository.addProfile()
+                profileRepository.addProfile()
+                settings.setActiveProfileId(first.id)
+            },
+        )
+        composeRule.onNodeWithText("2 profiles available").assertExists()
+    }
+
+    @Test
     fun addProfilePageIsHiddenOnceTheMaximumIsReached() {
         // Given the maximum of 3 profiles already exist
         setContent(

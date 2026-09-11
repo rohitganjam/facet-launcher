@@ -79,6 +79,7 @@ import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.model.NotificationBadgeStyle
 import com.lumenlauncher.app.ui.components.ConfirmDialog
+import com.lumenlauncher.app.ui.components.ScreenHeader
 import com.lumenlauncher.app.ui.components.TonalButton
 import com.lumenlauncher.app.ui.components.WallpaperBackground
 import com.lumenlauncher.app.ui.home.AppRow
@@ -238,18 +239,11 @@ private fun ProfileCarouselContent(
             .nestedScroll(dismissOnSwipeBack)
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
-        // No header — just the Reorder affordance, right-aligned.
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 20.dp, end = 20.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TonalButton(
-                text = "Reorder",
-                enabled = profiles.size > 1,
-                onClick = onReorderProfiles,
-                modifier = Modifier.testTag("profile_carousel_reorder"),
-            )
-        }
+        ProfileCarouselHeader(
+            profileCount = profiles.size,
+            canReorder = profiles.size > 1,
+            onReorderClick = onReorderProfiles,
+        )
 
         // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
         // fraction of the screen width and the leftover half on each side is the neighbour peek.
@@ -260,9 +254,10 @@ private fun ProfileCarouselContent(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = pageInset),
             pageSpacing = CAROUSEL_PAGE_SPACING,
+            // Flush against the header, no extra top gap — matches the Hub's own header-to-grid
+            // transition (HubScreen.kt's content starts exactly at headerHeight, zero padding).
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
                 .height(pagerHeight)
                 .testTag("profile_carousel_pager"),
         ) { page ->
@@ -351,6 +346,28 @@ private fun ProfileCarouselContent(
             onDismiss = { deletingProfile = null },
         )
     }
+}
+
+/**
+ * "Switch Profiles" — [ScreenHeader] with its default `onWallpaper = false`, since this screen
+ * already sits on its own dimming [CAROUSEL_SCRIM_ALPHA] scrim rather than directly on the raw
+ * wallpaper (unlike [com.lumenlauncher.app.ui.hub.HubHeader], which uses `onWallpaper = true`).
+ */
+@Composable
+private fun ProfileCarouselHeader(profileCount: Int, canReorder: Boolean, onReorderClick: () -> Unit, modifier: Modifier = Modifier) {
+    ScreenHeader(
+        title = "Switch Profiles",
+        subtitle = if (profileCount == 1) "1 profile available" else "$profileCount profiles available",
+        modifier = modifier,
+        trailingAction = {
+            TonalButton(
+                text = "Reorder",
+                enabled = canReorder,
+                onClick = onReorderClick,
+                modifier = Modifier.testTag("profile_carousel_reorder"),
+            )
+        },
+    )
 }
 
 /**
