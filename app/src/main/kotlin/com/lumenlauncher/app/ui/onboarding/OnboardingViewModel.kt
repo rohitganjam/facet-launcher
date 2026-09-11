@@ -9,6 +9,7 @@ import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.ListContentMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -54,6 +55,7 @@ class OnboardingViewModel @Inject constructor(
             appsToShowCount = settings.appsToShowCount,
             homeWallpaper = wallpaper,
             dockDisplayMode = settings.dockDisplayMode,
+            drawerPresentation = settings.drawerPresentation,
             appLabelColorOption = settings.appLabelColorOption,
             homeAppsFontWeight = settings.homeAppsFontWeight,
             isDefaultLauncher = isDefault,
@@ -76,11 +78,25 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setAppsToShowCount(count) }
     }
 
+    fun setDrawerPresentation(presentation: DrawerPresentation) {
+        viewModelScope.launch { settingsRepository.setDrawerPresentation(presentation) }
+    }
+
     fun reorderDockApps(orderedApps: List<AppInfo>) {
         viewModelScope.launch { dockAppRepository.reorderDockApps(orderedApps) }
     }
 
     fun reorderFavorites(orderedApps: List<AppInfo>) {
         viewModelScope.launch { defaultFavoriteAppRepository.reorderFavorites(orderedApps) }
+    }
+
+    /** Clears the default favorites list in one action, instead of unchecking every app in the picker. */
+    fun clearFavorites() {
+        viewModelScope.launch { defaultFavoriteAppRepository.deleteAllDefaultFavorites() }
+    }
+
+    /** Clears the default dock in one action, instead of unchecking every app in the picker. */
+    fun clearDockApps() {
+        viewModelScope.launch { dockAppRepository.deleteAllDockApps() }
     }
 }

@@ -6,6 +6,7 @@ import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
@@ -140,6 +141,29 @@ class OnboardingViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(f.settingsRepository).setAppsToShowCount(4)
+    }
+
+    @Test
+    fun `uiState reflects the current drawer presentation`() = runTest {
+        // Given settings already set to Grid (the default is List)
+        val f = fixture(settings = LauncherSettings(drawerPresentation = DrawerPresentation.GRID))
+        backgroundScope.launch { f.viewModel.uiState.collect {} }
+        runCurrent()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(DrawerPresentation.GRID, f.viewModel.uiState.value.drawerPresentation)
+    }
+
+    @Test
+    fun `setDrawerPresentation delegates to the settings repository`() = runTest {
+        val f = fixture()
+        backgroundScope.launch { f.viewModel.uiState.collect {} }
+        runCurrent()
+
+        f.viewModel.setDrawerPresentation(DrawerPresentation.GRID)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(f.settingsRepository).setDrawerPresentation(DrawerPresentation.GRID)
     }
 
     @Test

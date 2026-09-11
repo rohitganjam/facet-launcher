@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -51,7 +50,7 @@ fun OnboardingIntroPage(onNext: () -> Unit, modifier: Modifier = Modifier) {
         Column(modifier = Modifier.weight(1f).padding(top = 72.dp)) {
             Text(
                 text = "A home screen that focuses on you.",
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Light),
+                style = MaterialTheme.typography.headlineLarge,
                 color = Ink,
             )
             Spacer(modifier = Modifier.height(20.dp))
@@ -109,7 +108,7 @@ private fun HomeDiagram(modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = "9:41",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Light),
+                style = MaterialTheme.typography.headlineMedium,
                 color = Ink,
             )
             Spacer(modifier = Modifier.height(6.dp))

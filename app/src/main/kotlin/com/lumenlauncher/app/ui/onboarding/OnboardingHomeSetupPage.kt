@@ -37,11 +37,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppListLimits
+import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.AppIconSize
+import com.lumenlauncher.app.ui.components.CardDivider
+import com.lumenlauncher.app.ui.components.ConfirmDialog
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.ReorderRowDefaults
+import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.rememberDragReorderState
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.Faint
@@ -65,19 +69,23 @@ fun OnboardingHomeSetupPage(
     onOpenDockPicker: () -> Unit,
     onListContentModeChanged: (ListContentMode) -> Unit,
     onAppsToShowCountChanged: (Int) -> Unit,
+    drawerPresentation: DrawerPresentation,
+    onDrawerPresentationChanged: (DrawerPresentation) -> Unit,
     onOpenFavoritesPicker: () -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
-    onSkip: () -> Unit,
+    onClearFavorites: () -> Unit,
+    onClearDockApps: () -> Unit,
+    onBack: () -> Unit,
     onNext: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_home_setup_page")) {
-        Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 56.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 32.dp)) {
             Text(text = "Set up your home screen", style = MaterialTheme.typography.headlineSmall, color = Ink)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Pick the apps you want on Home. You can change all of this later.",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = Muted,
             )
         }
@@ -94,6 +102,7 @@ fun OnboardingHomeSetupPage(
                     favoriteCountLabel = uiState.favoriteCountLabel,
                     onEditFavoritesClick = onOpenFavoritesPicker,
                     onReorderFavorites = onReorderFavorites,
+                    onClearFavorites = onClearFavorites,
                 )
                 Spacer(modifier = Modifier.height(40.dp))
                 DockSection(
@@ -101,6 +110,12 @@ fun OnboardingHomeSetupPage(
                     countLabel = uiState.dockCountLabel,
                     onReorder = onReorderDockApps,
                     onManageClick = onOpenDockPicker,
+                    onClearDockApps = onClearDockApps,
+                )
+                Spacer(modifier = Modifier.height(40.dp))
+                AppDrawerSection(
+                    presentation = drawerPresentation,
+                    onPresentationChanged = onDrawerPresentationChanged,
                 )
             }
             item { Spacer(modifier = Modifier.height(96.dp)) }
@@ -114,10 +129,10 @@ fun OnboardingHomeSetupPage(
             OnboardingDots(step = 1, totalSteps = 4)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(
-                    text = "Skip",
+                    text = "Back",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Muted,
-                    modifier = Modifier.clickable(onClick = onSkip).testTag("onboarding_skip"),
+                    modifier = Modifier.clickable(onClick = onBack).testTag("onboarding_back"),
                 )
                 Text(
                     text = "Next",
@@ -136,31 +151,91 @@ private fun DockSection(
     countLabel: String,
     onReorder: (List<AppInfo>) -> Unit,
     onManageClick: () -> Unit,
+    onClearDockApps: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showClearConfirm by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "DOCK", style = MaterialTheme.typography.labelSmall, color = Faint)
-            Text(text = countLabel, style = MaterialTheme.typography.labelSmall, color = Muted)
+            Text(text = "DOCK", style = MaterialTheme.typography.labelSmall, color = Muted)
+            if (dockApps.isNotEmpty()) {
+                Text(
+                    text = "Clear all",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Accent,
+                    modifier = Modifier.clickable { showClearConfirm = true }.testTag("onboarding_clear_dock"),
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        if (dockApps.isNotEmpty()) {
-            DockAppsReorderRow(dockApps = dockApps, onReorder = onReorder)
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        Text(
-            text = "Manage dock apps",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Accent,
-            modifier = Modifier.clickable(onClick = onManageClick).testTag("onboarding_manage_dock"),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "The default dock — each profile can customize its own later. Drag to reorder.",
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = Muted,
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        SettingsCard {
+            DockClickableRow(countLabel = countLabel, onClick = onManageClick)
+            if (dockApps.isNotEmpty()) {
+                CardDivider()
+                DockAppsReorderRow(dockApps = dockApps, onReorder = onReorder, modifier = Modifier.padding(vertical = 12.dp))
+            }
+        }
+
     }
+    if (showClearConfirm) {
+        ConfirmDialog(
+            title = "Clear the dock?",
+            message = "Removes every app from the default dock. You can add apps back anytime.",
+            confirmLabel = "Clear all",
+            onConfirm = { onClearDockApps(); showClearConfirm = false },
+            onDismiss = { showClearConfirm = false },
+        )
+    }
+}
+
+/** Mirrors `HomeAppsSection`'s own [FavoritesClickableRow] shape — title left, count + chevron trailing. */
+@Composable
+private fun DockClickableRow(countLabel: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("onboarding_manage_dock")
+            .padding(vertical = 13.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = "Manage dock apps", style = MaterialTheme.typography.bodyLarge, color = Ink)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = countLabel, style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted)
+        }
+    }
+}
+
+/** Mirrors `AppDrawerSettingsScreen`'s own "Show apps as" row — List vs Grid, default List. */
+@Composable
+private fun AppDrawerSection(presentation: DrawerPresentation, onPresentationChanged: (DrawerPresentation) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(text = "APP DRAWER", style = MaterialTheme.typography.labelSmall, color = Muted)
+        Spacer(modifier = Modifier.height(8.dp))
+        SettingsCard {
+            LabeledDropdownRow(
+                title = "Show apps as",
+                options = DrawerPresentation.entries,
+                selected = presentation,
+                label = { it.onboardingDisplayLabel() },
+                onSelect = onPresentationChanged,
+                testTag = "onboarding_drawer_presentation_row",
+            )
+        }
+    }
+}
+
+private fun DrawerPresentation.onboardingDisplayLabel(): String = when (this) {
+    DrawerPresentation.LIST -> "List"
+    DrawerPresentation.GRID -> "Grid"
 }
 
 private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
@@ -225,34 +300,60 @@ private fun HomeAppsSection(
     favoriteCountLabel: String,
     onEditFavoritesClick: () -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
+    onClearFavorites: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showClearConfirm by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = "HOME APPS", style = MaterialTheme.typography.labelSmall, color = Faint)
-        LabeledDropdownRow(
-            title = "Show",
-            options = ListContentMode.entries,
-            selected = listContentMode,
-            label = { it.onboardingDisplayLabel() },
-            onSelect = onListContentModeChanged,
-            testTag = "onboarding_list_content_mode_row",
-        )
-        if (listContentMode == ListContentMode.FAVORITES) {
-            FavoritesClickableRow(countLabel = favoriteCountLabel, onClick = onEditFavoritesClick)
-            if (favoriteApps.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                FavoritesReorderList(favorites = favoriteApps, onReorder = onReorderFavorites)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = "HOME APPS", style = MaterialTheme.typography.labelSmall, color = Muted)
+            if (listContentMode == ListContentMode.FAVORITES && favoriteApps.isNotEmpty()) {
+                Text(
+                    text = "Clear all",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Accent,
+                    modifier = Modifier.clickable { showClearConfirm = true }.testTag("onboarding_clear_favorites"),
+                )
             }
-        } else {
-            LabeledDropdownRow(
-                title = "Apps to show",
-                options = AppListLimits.APPS_TO_SHOW_OPTIONS,
-                selected = appsToShowCount,
-                label = { it.toString() },
-                onSelect = onAppsToShowCountChanged,
-                testTag = "onboarding_apps_to_show_row",
-            )
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        SettingsCard {
+            LabeledDropdownRow(
+                title = "Show",
+                options = ListContentMode.entries,
+                selected = listContentMode,
+                label = { it.onboardingDisplayLabel() },
+                onSelect = onListContentModeChanged,
+                testTag = "onboarding_list_content_mode_row",
+            )
+            if (listContentMode == ListContentMode.FAVORITES) {
+                CardDivider()
+                FavoritesClickableRow(countLabel = favoriteCountLabel, onClick = onEditFavoritesClick)
+                if (favoriteApps.isNotEmpty()) {
+                    CardDivider()
+                    FavoritesReorderList(favorites = favoriteApps, onReorder = onReorderFavorites, modifier = Modifier.padding(vertical = 8.dp))
+                }
+            } else {
+                CardDivider()
+                LabeledDropdownRow(
+                    title = "Apps to show",
+                    options = AppListLimits.APPS_TO_SHOW_OPTIONS,
+                    selected = appsToShowCount,
+                    label = { it.toString() },
+                    onSelect = onAppsToShowCountChanged,
+                    testTag = "onboarding_apps_to_show_row",
+                )
+            }
+        }
+    }
+    if (showClearConfirm) {
+        ConfirmDialog(
+            title = "Clear favorites?",
+            message = "Removes every app from your default favorites. You can add apps back anytime.",
+            confirmLabel = "Clear all",
+            onConfirm = { onClearFavorites(); showClearConfirm = false },
+            onDismiss = { showClearConfirm = false },
+        )
     }
 }
 
@@ -351,9 +452,13 @@ private fun OnboardingHomeSetupPagePreview() {
             onOpenDockPicker = {},
             onListContentModeChanged = {},
             onAppsToShowCountChanged = {},
+            drawerPresentation = DrawerPresentation.LIST,
+            onDrawerPresentationChanged = {},
             onOpenFavoritesPicker = {},
             onReorderFavorites = {},
-            onSkip = {},
+            onClearFavorites = {},
+            onClearDockApps = {},
+            onBack = {},
             onNext = {},
         )
     }

@@ -35,7 +35,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
@@ -65,7 +64,7 @@ import kotlinx.coroutines.isActive
  * automatic (no user input needed to see it).
  */
 @Composable
-fun OnboardingProfilesPage(uiState: OnboardingUiState, onNext: () -> Unit, modifier: Modifier = Modifier) {
+fun OnboardingProfilesPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_profiles_page").padding(horizontal = 24.dp)) {
         Column(modifier = Modifier.weight(1f).padding(top = 64.dp)) {
             Text(text = "More than one home screen", style = MaterialTheme.typography.headlineSmall, color = Ink)
@@ -89,12 +88,20 @@ fun OnboardingProfilesPage(uiState: OnboardingUiState, onNext: () -> Unit, modif
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OnboardingDots(step = 2, totalSteps = 4)
-            Text(
-                text = "Next",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Accent,
-                modifier = Modifier.clickable(onClick = onNext).testTag("onboarding_next"),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Text(
+                    text = "Back",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Muted,
+                    modifier = Modifier.clickable(onClick = onBack).testTag("onboarding_back"),
+                )
+                Text(
+                    text = "Next",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Accent,
+                    modifier = Modifier.clickable(onClick = onNext).testTag("onboarding_next"),
+                )
+            }
         }
     }
 }
@@ -215,7 +222,7 @@ private fun MockProfileCard(profile: MockProfile, modifier: Modifier = Modifier)
             .border(1.dp, Hairline, shape)
             .padding(14.dp),
     ) {
-        Text(text = profile.time, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Light), color = Ink)
+        Text(text = profile.time, style = MaterialTheme.typography.titleLarge, color = Ink)
         Text(text = profile.date, style = MaterialTheme.typography.labelSmall, color = Muted)
         Spacer(modifier = Modifier.height(14.dp))
         Text(text = "FAVORITES", style = MaterialTheme.typography.labelSmall, color = Faint)
@@ -241,6 +248,6 @@ private fun MockProfileCard(profile: MockProfile, modifier: Modifier = Modifier)
 @Composable
 private fun OnboardingProfilesPagePreview() {
     LumenLauncherTheme {
-        OnboardingProfilesPage(uiState = OnboardingUiState(), onNext = {})
+        OnboardingProfilesPage(uiState = OnboardingUiState(), onBack = {}, onNext = {})
     }
 }

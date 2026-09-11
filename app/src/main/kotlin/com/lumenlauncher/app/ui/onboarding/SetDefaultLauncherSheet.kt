@@ -53,6 +53,7 @@ import com.lumenlauncher.app.ui.theme.resolve
 fun SetDefaultLauncherSheet(
     uiState: OnboardingUiState,
     requestDefaultLauncherIntent: () -> Intent,
+    onBack: () -> Unit,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -98,7 +99,19 @@ fun SetDefaultLauncherSheet(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            OnboardingDots(step = 3, totalSteps = 4)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OnboardingDots(step = 3, totalSteps = 4)
+                Text(
+                    text = "Back",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Muted,
+                    modifier = Modifier.clickable(onClick = onBack).testTag("onboarding_back"),
+                )
+            }
         }
     }
 }
@@ -187,6 +200,7 @@ private fun SetDefaultLauncherSheetPreview() {
         SetDefaultLauncherSheet(
             uiState = OnboardingUiState(),
             requestDefaultLauncherIntent = { Intent() },
+            onBack = {},
             onFinish = {},
         )
     }
@@ -199,6 +213,7 @@ private fun SetDefaultLauncherSheetAlreadyDefaultPreview() {
         SetDefaultLauncherSheet(
             uiState = OnboardingUiState(isDefaultLauncher = true),
             requestDefaultLauncherIntent = { Intent() },
+            onBack = {},
             onFinish = {},
         )
     }

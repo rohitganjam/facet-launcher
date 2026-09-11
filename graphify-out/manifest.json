@@ -168,9 +168,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreenTest.kt": {
-    "mtime": 1789114290.8056529,
-    "seen": 1789116537.860956,
-    "ast_hash": "a730fdbb577f2dea6bb7f761d558cc73",
+    "mtime": 1789118807.549959,
+    "seen": 1789119084.972407,
+    "ast_hash": "e68cdc9864c7a27f240cb6e39d921861",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/lumenlauncher/app/ui/profiles/ProfileSettingsScreenTest.kt": {
@@ -906,9 +906,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubHeader.kt": {
-    "mtime": 1788976556.0110989,
-    "seen": 1788976913.4528341,
-    "ast_hash": "febb5b79ef8877cbe2811afc05bd3a6d",
+    "mtime": 1789118755.6748154,
+    "seen": 1789119084.972478,
+    "ast_hash": "818e6cd06cb1b18c1ac6799fd074842a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/hub/HubScreen.kt": {
@@ -1002,9 +1002,9 @@
     "semantic_hash": "a284fac76254243df5f25234fc23a6f3"
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselScreen.kt": {
-    "mtime": 1789114263.0515916,
-    "seen": 1789116537.861046,
-    "ast_hash": "391a6cda9f8dbded7e8a0957878702d8",
+    "mtime": 1789118931.890449,
+    "seen": 1789119084.972491,
+    "ast_hash": "223b6b1345c5ce884dcfe423070f58a0",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/profiles/ProfileCarouselViewModel.kt": {
@@ -2091,6 +2091,12 @@
     "mtime": 1789115891.1793525,
     "seen": 1789116537.861065,
     "ast_hash": "322b258d8093b3d399cad7f8bc49a8f8",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/lumenlauncher/app/ui/components/ScreenHeader.kt": {
+    "mtime": 1789118738.4915812,
+    "seen": 1789119084.972464,
+    "ast_hash": "ff95f3a6b463f5b361c3ca3b464b1430",
     "semantic_hash": ""
   }
 }

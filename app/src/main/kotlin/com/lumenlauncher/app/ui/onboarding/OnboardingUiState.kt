@@ -6,6 +6,7 @@ import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.AppListLimits
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.DrawerPresentation
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.data.model.ListContentMode
@@ -30,6 +31,8 @@ data class OnboardingUiState(
     /** For the live "your home screen so far" preview (steps 2–4) — see `ui/components/HomeSurfacePreview.kt`. */
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+    /** List vs Grid — see `AppDrawerSettingsScreen`'s own identical "Show apps as" row. */
+    val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /** Set-as-default step (`4h`) — whether Lumen already holds the `HOME` role (e.g. a reinstall), swapping in the "already default" sheet variant. */

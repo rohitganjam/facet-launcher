@@ -115,7 +115,7 @@ private fun AppDrawerSettingsContent(
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
-                            title = "Presentation",
+                            title = "Show apps as",
                             options = DrawerPresentation.entries,
                             selected = presentation,
                             label = { it.appDrawerDisplayLabel() },

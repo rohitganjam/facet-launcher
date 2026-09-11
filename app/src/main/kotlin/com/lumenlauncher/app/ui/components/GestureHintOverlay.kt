@@ -73,7 +73,7 @@ fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
                 Text(text = "All your apps", style = MaterialTheme.typography.labelLarge, color = Ink)
             }
         }
-        TonalButton(
+        SurfaceButton(
             text = "Got it",
             onClick = onDismiss,
             modifier = Modifier
