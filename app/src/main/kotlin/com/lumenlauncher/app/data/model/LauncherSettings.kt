@@ -164,8 +164,8 @@ data class LauncherSettings(
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
-    /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES]. Range 4…8 per README's `3d` spec. */
-    val appsToShowCount: Int = 5,
+    /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES] — see [AppListLimits]. */
+    val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     /** Global default clock look — see the clock template gallery, reached from Settings' Clock card. */
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
@@ -232,4 +232,10 @@ data class LauncherSettings(
      * Uniform scaling ensures proportions are preserved.
      */
     val clockScale: Float = 0.8f,
+    /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.lumenlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */
+    val onboardingCompleted: Boolean = false,
+    /** One-shot guard for [SeedDefaultDockUseCase][com.lumenlauncher.app.domain.SeedDefaultDockUseCase] — set once the dock's default apps have been seeded, so a re-run (or a later manual empty-dock) never re-seeds. Install-local — excluded from the backup bundle. */
+    val defaultsSeeded: Boolean = false,
+    /** Ids of dismissed post-onboarding coach marks (e.g. `"HOME_GESTURES"`) — additive, never cleared. Install-local — excluded from the backup bundle. */
+    val coachMarksSeen: Set<String> = emptySet(),
 )

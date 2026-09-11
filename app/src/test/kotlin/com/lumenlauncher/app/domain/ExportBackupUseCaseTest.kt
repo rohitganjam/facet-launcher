@@ -5,12 +5,14 @@ import com.lumenlauncher.app.data.BackupRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.WidgetPlacementRepository
 import com.lumenlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.lumenlauncher.app.data.local.DockAppEntity
 import com.lumenlauncher.app.data.local.FavoriteAppEntity
+import com.lumenlauncher.app.data.local.ProfileDockAppEntity
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.model.ClockColorOption
@@ -30,6 +32,7 @@ class ExportBackupUseCaseTest {
     private val profileRepository = mock(ProfileRepository::class.java)
     private val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
     private val dockAppRepository = mock(DockAppRepository::class.java)
+    private val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
     private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
     private val backupRepository = mock(BackupRepository::class.java)
@@ -39,6 +42,7 @@ class ExportBackupUseCaseTest {
         profileRepository,
         favoriteAppRepository,
         dockAppRepository,
+        profileDockAppRepository,
         defaultFavoriteAppRepository,
         widgetPlacementRepository,
         backupRepository,
@@ -55,6 +59,9 @@ class ExportBackupUseCaseTest {
         )
         `when`(dockAppRepository.getRawDockApps()).thenReturn(
             listOf(DockAppEntity(id = 1, packageName = "com.example.b", activityName = ".Main", position = 0)),
+        )
+        `when`(profileDockAppRepository.getRawDockAppsForProfile(7)).thenReturn(
+            listOf(ProfileDockAppEntity(id = 1, profileId = 7, packageName = "com.example.d", activityName = ".Main", position = 0)),
         )
         `when`(defaultFavoriteAppRepository.getRawDefaultFavorites()).thenReturn(
             listOf(DefaultFavoriteAppEntity(id = 1, packageName = "com.example.c", activityName = ".Main", position = 0)),
@@ -78,6 +85,8 @@ class ExportBackupUseCaseTest {
         assertEquals(0, bundle.settings.activeProfileIndex)
         assertEquals(1, bundle.dockApps.size)
         assertEquals("com.example.b", bundle.dockApps[0].packageName)
+        assertEquals(1, bundle.profiles[0].dockApps.size)
+        assertEquals("com.example.d", bundle.profiles[0].dockApps[0].packageName)
         assertEquals(1, bundle.defaultFavoriteApps.size)
         assertEquals(1, bundle.widgetPlacements.size)
         assertEquals("com.example.widgets", bundle.widgetPlacements[0].providerPackageName)

@@ -3,8 +3,10 @@ package com.lumenlauncher.app.domain
 import com.lumenlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.lumenlauncher.app.data.local.DockAppEntity
 import com.lumenlauncher.app.data.local.FavoriteAppEntity
+import com.lumenlauncher.app.data.local.ProfileDockAppEntity
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.local.WidgetPlacementEntity
+import com.lumenlauncher.app.data.model.AppListLimits
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
 import com.lumenlauncher.app.data.model.BackupAppEntry
@@ -13,6 +15,7 @@ import com.lumenlauncher.app.data.model.BackupWidgetPlacement
 import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import com.lumenlauncher.app.data.selectedCalendarIds
@@ -22,6 +25,11 @@ import com.lumenlauncher.app.data.selectedCalendarIds
 fun FavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
 
 fun DockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
+
+fun ProfileDockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
+
+fun BackupAppEntry.toProfileDockAppEntity(profileId: Long): ProfileDockAppEntity =
+    ProfileDockAppEntity(profileId = profileId, packageName = packageName, activityName = activityName, position = position)
 
 fun DefaultFavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
 
@@ -36,7 +44,7 @@ fun BackupAppEntry.toDefaultFavoriteAppEntity(): DefaultFavoriteAppEntity =
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
     BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan)
 
-fun ProfileEntity.toBackupProfile(favorites: List<BackupAppEntry>): BackupProfile = BackupProfile(
+fun ProfileEntity.toBackupProfile(favorites: List<BackupAppEntry>, dockApps: List<BackupAppEntry>): BackupProfile = BackupProfile(
     name = name,
     position = position,
     overrideClock = overrideClock,
@@ -51,6 +59,9 @@ fun ProfileEntity.toBackupProfile(favorites: List<BackupAppEntry>): BackupProfil
     listContentMode = listContentMode.name,
     appsToShowCount = appsToShowCount,
     overridingFavorites = overridingFavorites,
+    overrideDock = overrideDock,
+    dockDisplayMode = dockDisplayMode.name,
+    dockApps = dockApps,
     overrideCalendar = overrideCalendar,
     showAllDayEvents = showAllDayEvents,
     calendarFontOption = calendarFontOption.name,
@@ -75,8 +86,10 @@ fun BackupProfile.toProfileEntity(): ProfileEntity = ProfileEntity(
     appRowPosition = appRowPosition.toEnumOrDefault(AppRowPosition.LEFT),
     appRowPresentation = appRowPresentation.toEnumOrDefault(AppRowPresentation.ICON_AND_TEXT),
     listContentMode = listContentMode.toEnumOrDefault(ListContentMode.FAVORITES),
-    appsToShowCount = appsToShowCount.coerceIn(4, 8),
+    appsToShowCount = appsToShowCount.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
     overridingFavorites = overridingFavorites,
+    overrideDock = overrideDock,
+    dockDisplayMode = dockDisplayMode.toEnumOrDefault(DockDisplayMode.ICONS),
     overrideCalendar = overrideCalendar,
     showAllDayEvents = showAllDayEvents,
     calendarFontOption = calendarFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT),

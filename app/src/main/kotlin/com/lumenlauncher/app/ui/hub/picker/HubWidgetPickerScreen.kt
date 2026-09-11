@@ -231,14 +231,14 @@ private fun WidgetProviderGroupRow(group: WidgetProviderGroup, onProviderSelecte
 private fun WidgetProviderOptionTile(option: WidgetProviderOption, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .width(78.dp)
+            .width(96.dp)
             .testTag("hub_widget_option_${option.provider.flattenToShortString()}")
             .clickable(onClick = onClick),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp)
+                .height(66.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, Hairline, RoundedCornerShape(12.dp))
                 .padding(4.dp),

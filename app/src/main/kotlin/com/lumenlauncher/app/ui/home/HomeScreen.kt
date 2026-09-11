@@ -91,7 +91,9 @@ import com.lumenlauncher.app.ui.components.NotificationBadge
 import com.lumenlauncher.app.ui.theme.Accent
 import com.lumenlauncher.app.ui.theme.HomeAppTextColor
 import com.lumenlauncher.app.ui.theme.Ink
+import com.lumenlauncher.app.ui.theme.LUMEN_TRANSITION_DURATION_MS
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
+import com.lumenlauncher.app.ui.theme.LumenTransitionEasing
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Scrim
 import com.lumenlauncher.app.ui.theme.homeAppLabelShadow
@@ -160,6 +162,10 @@ fun HomeScreen(
     onClockClick: () -> Unit = {},
     /** Fired when the user selects "Edit Styles" from the clock's adjustment menu. */
     onEditClockStyles: () -> Unit = {},
+    /** Fired when the user selects "Launcher settings" from the long-press menu. */
+    onNavigateToSettings: () -> Unit = {},
+    /** Fired when the user selects "Profile settings" from the long-press menu — the caller resolves this to the active profile. */
+    onNavigateToProfileSettings: () -> Unit = {},
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     calendarEvents: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
@@ -181,6 +187,13 @@ fun HomeScreen(
     // this is a stable one-frame-lag measurement, same pattern as e.g. ui/components/HubGrid.kt).
     var contentHeightPx by remember { mutableFloatStateOf(0f) }
     var clockNaturalHeightPx by remember { mutableFloatStateOf(0f) }
+    // Natural (unconstrained) height of the app-list content, measured inside the scrollable
+    // region — see the one-shot compact-spacing check below.
+    var appListNaturalHeightPx by remember { mutableFloatStateOf(0f) }
+    // Whether the app list's rows render at App Drawer's own COMPACT row density (8dp vertical
+    // padding, matching DrawerListItemSize.COMPACT) instead of Home's default 16dp — see the
+    // one-shot check below.
+    var useCompactAppSpacing by remember { mutableStateOf(false) }
     // Live delta accumulated for the drag gesture in progress only — added to the persisted
     // clockZoneHeightDp for the live preview position, then zeroed on commit (mirrors
     // ui/components/DragReorderState's own onOrderChanged/onDragCommit split: cheap local state
@@ -248,12 +261,14 @@ fun HomeScreen(
 
     // One-shot re-clamp: a style or position change resizes the clock's natural box, so a scale
     // that fit the old look can now overflow. After the new geometry settles, check once — and
-    // only persist a smaller value if it genuinely clips. Never runs otherwise.
+    // only persist a smaller value if it genuinely clips. Never runs otherwise. Shares its
+    // settle-wait timing (GEOMETRY_SETTLE_*) with the compact-spacing check below — same pattern,
+    // same tuning.
     LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwnerProfileId) {
-        withTimeoutOrNull(3_000) {
+        withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
             snapshotFlow { Triple(clockBoxSize, clockBoxOriginInRoot, rootSize) }
                 .filter { it.first != null && it.second != null && it.third != null }
-                .debounce(150)
+                .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
                 .first()
         }
         val size = clockBoxSize ?: return@LaunchedEffect
@@ -261,6 +276,46 @@ fun HomeScreen(
         val rootW = rootSize?.width ?: return@LaunchedEffect
         val fit = maxScaleThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
         if (clockScale > fit + 0.01f) onClockScaleCommit(fit)
+    }
+
+    // Stable identity for appListItems — AppInfo.icon (an ImageBitmap) has no structural equality,
+    // so the raw list "changes" on every incidental relist even when its actual membership/order
+    // hasn't (same reasoning as the drag-jump bug fixed elsewhere via this exact pattern — see
+    // e.g. DockSettingsScreen's own componentsKey). Keying on this instead of appListItems itself
+    // keeps the effect below from re-firing (and re-hiding the list) on every such relist.
+    val appListKey = appListItems.map { it.packageName to it.activityName }
+
+    // Hidden until the compact-spacing decision below has actually been made for the current
+    // list, then fades in once — same reveal mechanism as the clock's own clockAppearAlpha. Without
+    // this, the list would render at regular spacing first and visibly snap to compact once the
+    // measurement settles; gating visibility on the same one-shot decision means only the already-
+    // decided result is ever shown. Keyed (not manually reset) so a new list starts hidden again.
+    var appListRevealed by remember(appListKey, appRowPresentation, showUsageAccessPrompt) { mutableStateOf(false) }
+    val appListAppearAlpha = animateFloatAsState(
+        targetValue = if (appListRevealed) 1f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = EmphasizedDecelerateEasing),
+        label = "appListAppearance",
+    )
+
+    // One-shot compact-spacing check, same pattern as the re-clamp above: this profile's own app
+    // list (a different list each time this key set changes — a profile switch, a favorites edit,
+    // a content-mode/presentation change) is first measured at Home's regular row density, off-
+    // screen (see appListRevealed above). Once that measurement settles, compare its natural
+    // (unconstrained) height against the space actually available, switch every row to App
+    // Drawer's tighter COMPACT density if it would otherwise need to scroll, then reveal. Evaluated
+    // once per key-set change, not continuously — flipping to compact shrinks the content and
+    // re-triggers this same measurement, but this effect has already finished by then, so it
+    // doesn't see its own result and flip back.
+    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt) {
+        useCompactAppSpacing = false
+        withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
+            snapshotFlow { appListNaturalHeightPx to (contentHeightPx - handlePx) }
+                .filter { (natural, available) -> natural > 0f && available > 0f }
+                .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
+                .first()
+        }
+        useCompactAppSpacing = appListNaturalHeightPx > (contentHeightPx - handlePx)
+        appListRevealed = true
     }
 
     // Fade in once, after the clock's measured box has held steady for a beat — not just when it's
@@ -304,21 +359,30 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .onGloballyPositioned { rootSize = it.size; rootOriginInRoot = it.positionInRoot() }
-            // Dismisses drag mode on a tap anywhere else on the screen. Attached to this outer Box
-            // (an ancestor of every child, including the handle below) rather than a separate
-            // full-size sibling Box — Compose dispatches pointer events child-before-parent, so the
-            // handle's own drag detector (and any other child's gesture/clickable) always gets
-            // first claim on a touch landing on it; only an up event that reaches this ancestor
-            // unconsumed counts as "away from" everything else. A sibling overlay occupying the
-            // same bounds as the handle would instead receive the same events independently and
-            // could interfere with the handle's own gesture recognition (see chat history).
+            // Dismisses drag mode on a tap anywhere else on the screen, or (when nothing is active)
+            // opens the same long-press menu the clock itself opens on a long-press elsewhere in
+            // this empty space — README's original "long-press empty home space" gesture, now
+            // repurposed to reach the clock adjust sheet instead of the old removed sheet. Attached
+            // to this outer Box (an ancestor of every child, including the handle below) rather than
+            // a separate full-size sibling Box — Compose dispatches pointer events child-before-
+            // parent, so any descendant's own gesture/clickable (an app icon, the dock, the clock's
+            // own tap/long-press detector) always gets first claim on a touch landing on it; only a
+            // touch that reaches this ancestor unconsumed counts as "empty space." A sibling overlay
+            // occupying the same bounds as the handle would instead receive the same events
+            // independently and could interfere with the handle's own gesture recognition (see chat
+            // history).
             .then(
-                if (clockAdjustMode == ClockAdjustMode.ADJUST) {
-                    Modifier.pointerInput(Unit) { detectTapGestures(onTap = { onAdjustModeChange(ClockAdjustMode.NONE) }) }
-                } else {
-                    Modifier
+                when (clockAdjustMode) {
+                    ClockAdjustMode.ADJUST -> Modifier.pointerInput(Unit) {
+                        detectTapGestures(onTap = { onAdjustModeChange(ClockAdjustMode.NONE) })
+                    }
+                    ClockAdjustMode.NONE -> Modifier.pointerInput(Unit) {
+                        detectTapGestures(onLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) })
+                    }
+                    ClockAdjustMode.MENU -> Modifier
                 }
-            ),
+            )
+            .testTag("home_screen_root"),
     ) {
         Column(
             modifier = Modifier
@@ -414,39 +478,52 @@ fun HomeScreen(
                         .verticalScroll(rememberScrollState())
                         .testTag("home_app_list_scroll_region"),
                 ) {
-                    if (appListItems.isNotEmpty()) {
-                        val listLabelColor = Muted
-                        Text(
-                            text = when (listContentMode) {
-                                ListContentMode.FAVORITES -> "FAVORITES"
-                                ListContentMode.RECENTS -> "RECENTS"
-                                ListContentMode.MOST_USED -> "MOST USED"
-                            },
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                shadow = homeAppLabelShadow(listLabelColor),
-                                textAlign = if (appRowPosition == AppRowPosition.RIGHT) TextAlign.End else TextAlign.Start,
-                            ),
-                            color = listLabelColor,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        )
-                    }
-                    if (showUsageAccessPrompt) {
-                        UsageAccessStrip(onClick = onUsageAccessPromptClick)
-                    } else {
-                        Column {
-                            appListItems.forEach { app ->
-                                AppRow(
-                                    app = app,
-                                    onClick = { onAppClick(app) },
-                                    badgeCount = badgeCounts[app.packageName],
-                                    badgeStyle = notificationBadgeStyle,
-                                    onRequestShortcuts = onRequestShortcuts,
-                                    onLaunchShortcut = onLaunchShortcut,
-                                    position = appRowPosition,
-                                    presentation = appRowPresentation,
-                                    labelColor = appLabelColor,
-                                    labelFontWeight = appLabelFontWeight,
-                                )
+                    // A scrollable Column measures its content at its natural, unconstrained
+                    // height regardless of the heightIn(max=...) clamp above — wrapping the real
+                    // content in this inner Column lets the compact-spacing check above read that
+                    // natural height directly, even while only part of it is visible on screen.
+                    // graphicsLayer alpha is a draw-phase property only, so this stays fully
+                    // measured (and the check above keeps working) while invisible pre-reveal.
+                    Column(
+                        modifier = Modifier
+                            .onGloballyPositioned { appListNaturalHeightPx = it.size.height.toFloat() }
+                            .graphicsLayer { alpha = appListAppearAlpha.value },
+                    ) {
+                        if (appListItems.isNotEmpty()) {
+                            val listLabelColor = Muted
+                            Text(
+                                text = when (listContentMode) {
+                                    ListContentMode.FAVORITES -> "FAVORITES"
+                                    ListContentMode.RECENTS -> "RECENTS"
+                                    ListContentMode.MOST_USED -> "MOST USED"
+                                },
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    shadow = homeAppLabelShadow(listLabelColor),
+                                    textAlign = if (appRowPosition == AppRowPosition.RIGHT) TextAlign.End else TextAlign.Start,
+                                ),
+                                color = listLabelColor,
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            )
+                        }
+                        if (showUsageAccessPrompt) {
+                            UsageAccessStrip(onClick = onUsageAccessPromptClick)
+                        } else {
+                            Column {
+                                appListItems.forEach { app ->
+                                    AppRow(
+                                        app = app,
+                                        onClick = { onAppClick(app) },
+                                        badgeCount = badgeCounts[app.packageName],
+                                        badgeStyle = notificationBadgeStyle,
+                                        onRequestShortcuts = onRequestShortcuts,
+                                        onLaunchShortcut = onLaunchShortcut,
+                                        position = appRowPosition,
+                                        presentation = appRowPresentation,
+                                        labelColor = appLabelColor,
+                                        labelFontWeight = appLabelFontWeight,
+                                        verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                    )
+                                }
                             }
                         }
                     }
@@ -609,11 +686,11 @@ fun HomeScreen(
             visible = clockAdjustMode == ClockAdjustMode.MENU,
             enter = slideInVertically(
                 initialOffsetY = { it },
-                animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
+                animationSpec = tween(LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)
             ),
             exit = slideOutVertically(
                 targetOffsetY = { it },
-                animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
+                animationSpec = tween(LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)
             ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -622,6 +699,14 @@ fun HomeScreen(
             ClockAdjustSheet(
                 onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },
                 onEditStylesClick = onEditClockStyles,
+                onProfileSettingsClick = {
+                    onAdjustModeChange(ClockAdjustMode.NONE)
+                    onNavigateToProfileSettings()
+                },
+                onLauncherSettingsClick = {
+                    onAdjustModeChange(ClockAdjustMode.NONE)
+                    onNavigateToSettings()
+                },
                 isOverridden = clockPositionOwnerProfileId != null,
             )
         }
@@ -673,6 +758,21 @@ private const val HOME_CLOCK_MAX_SCALE = 2.0f
 /** Half the resize handle's hit box — the amount it extends past the clock corner it sits on. */
 private val HOME_CLOCK_RESIZE_HANDLE_INSET = 20.dp
 
+/** Shared timing for this file's "wait for layout geometry to settle, then decide once" checks (the clock's own re-clamp and the app list's compact-spacing check) — long enough to skip transient double-measurement, bounded so a check that never gets valid geometry doesn't hang. */
+private const val GEOMETRY_SETTLE_DEBOUNCE_MS = 150L
+private const val GEOMETRY_SETTLE_TIMEOUT_MS = 3_000L
+
+/** [AppRow]'s regular per-row vertical padding — Home's own default density. See [HOME_APP_ROW_COMPACT_VERTICAL_PADDING]. */
+internal val HOME_APP_ROW_REGULAR_VERTICAL_PADDING = 16.dp
+
+/**
+ * [AppRow]'s tighter per-row vertical padding, switched to automatically (see this file's
+ * one-shot compact-spacing check) when the regular density would make the app list need to
+ * scroll. Matches App Drawer's own `DrawerListItemSize.COMPACT` total row padding (base 8dp +
+ * 0 extra), so Home's compact density reads the same as Drawer's.
+ */
+internal val HOME_APP_ROW_COMPACT_VERTICAL_PADDING = 8.dp
+
 /** M3 emphasized-decelerate easing (`cubic-bezier(.05,.7,.1,1)`) — an element coming to rest as it enters. */
 private val EmphasizedDecelerateEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
 
@@ -717,10 +817,12 @@ internal fun AppRow(
     // 16dp matches App Drawer's own Regular list-item spacing exactly (base 8dp +
     // DrawerListItemSize.REGULAR's 8dp extraRowPaddingDp), per direct request that Home's app list
     // read as the same density as Drawer's default (see chat history) — that's Home's own real
-    // density and stays the default here. A caller rendering this inside a small preview card
-    // (the profile carousel, the Appearance screen's own live preview) overrides it tighter, since
-    // Home's real row height would read as oversized on a compact card (see chat history).
-    verticalPadding: Dp = 16.dp,
+    // density and stays the default here. Home itself overrides this to
+    // HOME_APP_ROW_COMPACT_VERTICAL_PADDING once its own one-shot check finds the list would
+    // otherwise need to scroll; a caller rendering this inside a small preview card (the profile
+    // carousel, the Appearance screen's own live preview) overrides it tighter for its own reasons
+    // (see chat history).
+    verticalPadding: Dp = HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY

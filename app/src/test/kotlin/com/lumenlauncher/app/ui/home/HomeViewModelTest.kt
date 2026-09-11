@@ -158,4 +158,18 @@ class HomeViewModelTest {
         // Then it writes to this profile's own override instead of the global setting
         verify(profileRepository).setClockZoneHeight(overridingProfile, 123.4f)
     }
+
+    @Test
+    fun `dismissGestureHint marks the HOME_GESTURES coach mark seen`() = runTest {
+        // Given a HomeViewModel
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository = settingsRepository)
+
+        // When the gesture hint is dismissed (first gesture or "Got it")
+        viewModel.dismissGestureHint()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it persists via the same coach-mark mechanism the hint's visibility reads from
+        verify(settingsRepository).markCoachMarkSeen("HOME_GESTURES")
+    }
 }

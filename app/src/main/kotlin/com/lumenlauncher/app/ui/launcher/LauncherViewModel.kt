@@ -11,6 +11,7 @@ import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.SeedDefaultDockUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -47,6 +48,8 @@ data class LauncherUiState(
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    /** Gates [com.lumenlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.lumenlauncher.app.data.model.LauncherSettings.onboardingCompleted]. */
+    val onboardingCompleted: Boolean = false,
 )
 
 @HiltViewModel
@@ -54,7 +57,8 @@ class LauncherViewModel @Inject constructor(
     getInstalledApps: GetInstalledAppsUseCase,
     private val ensureActiveProfile: EnsureActiveProfileUseCase,
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
-    settingsRepository: SettingsRepository,
+    private val seedDefaultDock: SeedDefaultDockUseCase,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LauncherUiState())
@@ -65,6 +69,11 @@ class LauncherViewModel @Inject constructor(
 
     fun onHomePressed() {
         _homePressedEvent.tryEmit(Unit)
+    }
+
+    /** Called once, from the final onboarding step ("Set as default" or "Later") — see [com.lumenlauncher.app.LauncherActivity]. */
+    fun completeOnboarding() {
+        viewModelScope.launch { settingsRepository.setOnboardingCompleted(true) }
     }
 
     init {
@@ -81,12 +90,16 @@ class LauncherViewModel @Inject constructor(
                 wallpaperAccentRole = settings.wallpaperAccentRole,
                 iconRenderMode = settings.iconRenderMode,
                 launcherFontOption = settings.launcherFontOption,
+                onboardingCompleted = settings.onboardingCompleted,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
         viewModelScope.launch { ensureActiveProfile() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }
+        // Not gated on the onboarding UI being shown or completed — a fresh install's dock is
+        // seeded even if onboarding is killed/skipped partway through, see SeedDefaultDockUseCase.
+        viewModelScope.launch { seedDefaultDock() }
 
         viewModelScope.launch {
             delay(LOADING_TIMEOUT_MS)

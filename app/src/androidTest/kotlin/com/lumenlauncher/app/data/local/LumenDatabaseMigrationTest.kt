@@ -218,6 +218,55 @@ class LumenDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration15To16AddsProfileDockOverrideColumnsAndTheProfileDockAppsTableWithoutLosingExistingRows() {
+        // Given a v15 database with a real profile row (every column NOT NULL at that version)
+        val dbV15 = helper.createDatabase(TEST_DB, 15)
+        dbV15.execSQL(
+            """
+            INSERT INTO profiles (
+                id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption,
+                use24HourTime, clockShowMeridiem, overrideApps, appRowPosition, appRowPresentation,
+                listContentMode, appsToShowCount, overridingFavorites, overrideCalendar, showAllDayEvents,
+                calendarFontOption, calendarColorOption, selectedCalendarIdsCsv, calendarFontWeight,
+                appListVerticalAlignment, clockAlignment, calendarAlignment, clockZoneHeightDp,
+                clockAccentColorOption, clockDateStyle, clockScale
+            ) VALUES (
+                1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME',
+                0, 0, 0, 'LEFT', 'ICON_AND_TEXT',
+                'FAVORITES', 6, 0, 0, 1,
+                'LAUNCHER_DEFAULT', 'THEME', NULL, 'REGULAR',
+                'BOTTOM', 'LEFT', 'LEFT', NULL,
+                'ACCENT_PRIMARY', 'FULL', 0.8
+            )
+            """.trimIndent(),
+        )
+        dbV15.close()
+
+        // When migrating to v16
+        val dbV16 = helper.runMigrationsAndValidate(TEST_DB, 16, true, Migrations.MIGRATION_15_16)
+
+        // Then the existing row survived: the two new columns default to today's unchanged
+        // behavior (not overriding, Icons style)...
+        val cursor = dbV16.query("SELECT name, overrideDock, dockDisplayMode FROM profiles WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(cursor.getColumnIndexOrThrow("name")))
+        assertEquals(0, cursor.getInt(cursor.getColumnIndexOrThrow("overrideDock")))
+        assertEquals("ICONS", cursor.getString(cursor.getColumnIndexOrThrow("dockDisplayMode")))
+        cursor.close()
+
+        // ...and the new per-profile dock table exists, cascades on the FK, and enforces its
+        // unique (profileId, packageName, activityName) index.
+        dbV16.execSQL(
+            "INSERT INTO profile_dock_apps (profileId, packageName, activityName, position) " +
+                "VALUES (1, 'com.example.a', '.Main', 0)",
+        )
+        val dockCursor = dbV16.query("SELECT packageName FROM profile_dock_apps WHERE profileId = 1")
+        assertTrue(dockCursor.moveToFirst())
+        assertEquals("com.example.a", dockCursor.getString(dockCursor.getColumnIndexOrThrow("packageName")))
+        dockCursor.close()
+    }
+
     private companion object {
         const val TEST_DB = "lumen-migration-test.db"
     }

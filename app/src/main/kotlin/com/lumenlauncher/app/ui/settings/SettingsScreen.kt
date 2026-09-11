@@ -2,7 +2,7 @@ package com.lumenlauncher.app.ui.settings
 
 import android.content.Intent
 import android.content.res.Configuration
-import android.provider.Settings as AndroidSettings
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -87,6 +87,7 @@ fun SettingsScreen(
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
+        onRequestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
         modifier = modifier,
     )
 }
@@ -105,6 +106,7 @@ private fun SettingsContent(
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
+    onRequestDefaultLauncherIntent: () -> Intent,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -170,7 +172,8 @@ private fun SettingsContent(
                         CardDivider()
                         ClickableRow(
                             title = "Calendars to display",
-                            subtitle = if (uiState.settings.showAllDayEvents) "All-day events shown" else "All-day events hidden",
+                            subtitle = "${uiState.selectedCalendarCount} calendars selected · " +
+                                if (uiState.settings.showAllDayEvents) "All-day events visible" else "All-day events hidden",
                             onClick = onNavigateToCalendarSettings,
                             testTag = "calendar_settings_row",
                             trailing = { NavigationChevron() },
@@ -241,11 +244,7 @@ private fun SettingsContent(
                         ClickableRow(
                             title = "Set as default launcher",
                             subtitle = if (uiState.isDefaultLauncher) "Active" else "Not set",
-                            onClick = {
-                                runCatching {
-                                    context.startActivity(Intent(AndroidSettings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
-                                }
-                            },
+                            onClick = { runCatching { context.startActivity(onRequestDefaultLauncherIntent()) } },
                             testTag = "set_default_launcher_row",
                             trailing = { NavigationChevron() },
                         )
@@ -368,6 +367,7 @@ private fun SettingsScreenPreview() {
             onNavigateToNotificationSettings = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
+            onRequestDefaultLauncherIntent = { Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS) },
         )
     }
 }

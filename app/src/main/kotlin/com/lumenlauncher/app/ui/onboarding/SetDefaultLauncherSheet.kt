@@ -1,0 +1,205 @@
+package com.lumenlauncher.app.ui.onboarding
+
+import android.content.Intent
+import android.content.res.Configuration
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.lumenlauncher.app.ui.components.AppIcon
+import com.lumenlauncher.app.ui.components.HomeSurfacePreview
+import com.lumenlauncher.app.ui.theme.Accent
+import com.lumenlauncher.app.ui.theme.Faint
+import com.lumenlauncher.app.ui.theme.Hairline
+import com.lumenlauncher.app.ui.theme.Ink
+import com.lumenlauncher.app.ui.theme.InkInverted
+import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
+import com.lumenlauncher.app.ui.theme.Muted
+import com.lumenlauncher.app.ui.theme.Scrim
+import com.lumenlauncher.app.ui.theme.Surface
+import com.lumenlauncher.app.ui.theme.SuccessColor
+import com.lumenlauncher.app.ui.theme.resolve
+
+/**
+ * Onboarding step 4 (`4h`) — the one that matters. A bottom sheet over the user's real Home so
+ * far (their step-2 picks, dimmed under [Scrim]). "Set as default" launches
+ * [requestDefaultLauncherIntent] via [rememberLauncherForActivityResult]; **any** result (granted,
+ * denied, or dismissed) — same as "Later" — calls [onFinish]. If Lumen already holds the role
+ * (reinstall), swaps in a Success-colored "already default" variant with a single Done button.
+ */
+@Composable
+fun SetDefaultLauncherSheet(
+    uiState: OnboardingUiState,
+    requestDefaultLauncherIntent: () -> Intent,
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { onFinish() }
+
+    Box(modifier = modifier.fillMaxSize().testTag("onboarding_set_default_page")) {
+        HomeSurfacePreview(
+            appList = uiState.favoriteApps,
+            dockApps = uiState.dockApps,
+            labelColor = uiState.appLabelColorOption.resolve(),
+            labelFontWeight = uiState.homeAppsFontWeight.resolve(),
+            homeWallpaper = uiState.homeWallpaper,
+            dockDisplayMode = uiState.dockDisplayMode,
+            maxAppRows = 5,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Box(modifier = Modifier.fillMaxSize().background(Scrim))
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(Surface, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .padding(horizontal = 24.dp)
+                .padding(top = 20.dp, bottom = 34.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 16.dp)
+                    .size(width = 34.dp, height = 4.dp)
+                    .background(Faint, RoundedCornerShape(2.dp)),
+            )
+
+            if (uiState.isDefaultLauncher) {
+                AlreadyDefaultContent(onDone = onFinish)
+            } else {
+                SetDefaultContent(
+                    onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) },
+                    onLater = onFinish,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            OnboardingDots(step = 3, totalSteps = 4)
+        }
+    }
+}
+
+@Composable
+private fun SetDefaultContent(onSetDefault: () -> Unit, onLater: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(text = "Make Lumen your home screen", style = MaterialTheme.typography.titleMedium, color = Ink)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Android will ask you to confirm. You can switch back to your old launcher any time from Settings.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, Hairline, RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            AppIcon(icon = null, size = 28.dp, cornerRadius = 8.dp, contentDescription = null)
+            Text(text = "Lumen Launcher", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+            Text(text = "Home app", style = MaterialTheme.typography.bodySmall, color = Muted)
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Set as default",
+            style = MaterialTheme.typography.bodyLarge,
+            color = InkInverted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Accent, CircleShape)
+                .clickable(onClick = onSetDefault)
+                .testTag("onboarding_set_default")
+                .padding(vertical = 14.dp),
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Later",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Muted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onLater).testTag("onboarding_later").padding(vertical = 8.dp),
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Permissions come later, one at a time, only when a feature needs them.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Faint,
+        )
+    }
+}
+
+@Composable
+private fun AlreadyDefaultContent(onDone: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(text = "✓", style = MaterialTheme.typography.titleMedium, color = SuccessColor)
+            Text(text = "Lumen is already your home screen", style = MaterialTheme.typography.titleMedium, color = Ink)
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Done",
+            style = MaterialTheme.typography.bodyLarge,
+            color = InkInverted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Accent, CircleShape)
+                .clickable(onClick = onDone)
+                .testTag("onboarding_done")
+                .padding(vertical = 14.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun SetDefaultLauncherSheetPreview() {
+    LumenLauncherTheme {
+        SetDefaultLauncherSheet(
+            uiState = OnboardingUiState(),
+            requestDefaultLauncherIntent = { Intent() },
+            onFinish = {},
+        )
+    }
+}
+
+@Preview(name = "AlreadyDefault", showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun SetDefaultLauncherSheetAlreadyDefaultPreview() {
+    LumenLauncherTheme {
+        SetDefaultLauncherSheet(
+            uiState = OnboardingUiState(isDefaultLauncher = true),
+            requestDefaultLauncherIntent = { Intent() },
+            onFinish = {},
+        )
+    }
+}

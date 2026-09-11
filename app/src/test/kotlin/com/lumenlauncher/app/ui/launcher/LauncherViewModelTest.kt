@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.SeedDefaultDockUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -49,12 +50,14 @@ class LauncherViewModelTest {
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(apps))
         val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
             ensureActiveProfile,
             cleanUpUninstalledApps,
+            seedDefaultDock,
             settingsRepository,
         )
 
@@ -78,12 +81,14 @@ class LauncherViewModelTest {
         `when`(repository.observeInstalledApps()).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
         val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
             ensureActiveProfile,
             cleanUpUninstalledApps,
+            seedDefaultDock,
             settingsRepository,
         )
 
@@ -97,5 +102,35 @@ class LauncherViewModelTest {
         // Then it stops loading anyway, still with the (empty/default) state it had
         assertFalse(viewModel.uiState.value.isLoading)
         assertEquals(emptyList<AppInfo>(), viewModel.uiState.value.apps)
+    }
+
+    @Test
+    fun `reflects onboardingCompleted from settings, and completeOnboarding persists it`() = runTest {
+        // Given settings with onboarding not yet completed
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(onboardingCompleted = false)))
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveProfile,
+            cleanUpUninstalledApps,
+            seedDefaultDock,
+            settingsRepository,
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the ui state reflects it
+        assertFalse(viewModel.uiState.value.onboardingCompleted)
+
+        // When onboarding completes
+        viewModel.completeOnboarding()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the repository is told to persist it
+        org.mockito.Mockito.verify(settingsRepository).setOnboardingCompleted(true)
     }
 }

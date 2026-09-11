@@ -3,7 +3,9 @@ package com.lumenlauncher.app.domain
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.CalendarRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
+import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
@@ -35,6 +37,10 @@ class ObserveProfilePreviewsUseCaseTest {
             .also { `when`(it.observeFavoritesForProfiles(anyList())).thenReturn(flowOf(emptyMap())) }
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
             .also { `when`(it.observeDefaultFavorites()).thenReturn(flowOf(emptyList())) }
+        val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
+            .also { `when`(it.observeDockAppsForProfiles(anyList())).thenReturn(flowOf(emptyMap())) }
+        val dockAppRepository = mock(DockAppRepository::class.java)
+            .also { `when`(it.observeDockApps()).thenReturn(flowOf(emptyList())) }
         val profilesFlow = MutableStateFlow<List<ProfileEntity>>(emptyList())
         val profileRepository = mock(ProfileRepository::class.java).also { `when`(it.observeProfiles()).thenReturn(profilesFlow) }
         val usageStatsRepository = mock(UsageStatsRepository::class.java)
@@ -47,6 +53,8 @@ class ObserveProfilePreviewsUseCaseTest {
             settingsRepository,
             favoriteAppRepository,
             defaultFavoriteAppRepository,
+            profileDockAppRepository,
+            dockAppRepository,
             usageStatsRepository,
             usageAccessRepository,
             calendarPermissionRepository,
@@ -72,6 +80,26 @@ class ObserveProfilePreviewsUseCaseTest {
         // Then each resolves to its own effective list — profile 1's own override, profile 2's default
         assertEquals(listOf(appInfo('a')), result.getValue(1L).favorites)
         assertEquals(listOf(appInfo('d')), result.getValue(2L).favorites)
+    }
+
+    @Test
+    fun `resolves each profile's own effective dock independently`() = runTest {
+        // Given two profiles, one overriding its dock, one inheriting the launcher-wide default
+        val fixture = Fixture()
+        `when`(fixture.profileDockAppRepository.observeDockAppsForProfiles(listOf(1L, 2L)))
+            .thenReturn(flowOf(mapOf(1L to listOf(appInfo('a')), 2L to emptyList())))
+        `when`(fixture.dockAppRepository.observeDockApps()).thenReturn(flowOf(listOf(appInfo('d'))))
+        fixture.profilesFlow.value = listOf(
+            ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = true),
+            ProfileEntity(id = 2L, name = "P2", position = 1, overrideDock = false),
+        )
+
+        // When observing previews for every profile
+        val result = fixture.useCase().first()
+
+        // Then each resolves to its own effective dock — profile 1's own list, profile 2's default
+        assertEquals(listOf(appInfo('a')), result.getValue(1L).dockApps)
+        assertEquals(listOf(appInfo('d')), result.getValue(2L).dockApps)
     }
 
     @Test

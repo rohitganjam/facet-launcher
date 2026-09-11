@@ -1,5 +1,6 @@
 package com.lumenlauncher.app.ui.settings
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.DefaultLauncherRepository
@@ -45,4 +46,7 @@ class SettingsViewModel @Inject constructor(
             isDefaultLauncher.value = defaultLauncherRepository.isDefaultLauncher()
         }
     }
+
+    /** The "Set as default launcher" row's target — an in-place role request when available, a Settings screen otherwise. See [DefaultLauncherRepository.requestDefaultLauncherIntent]. */
+    fun requestDefaultLauncherIntent(): Intent = defaultLauncherRepository.requestDefaultLauncherIntent()
 }

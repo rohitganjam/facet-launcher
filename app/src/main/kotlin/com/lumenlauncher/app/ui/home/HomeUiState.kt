@@ -12,9 +12,11 @@ import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
+import com.lumenlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 
 data class HomeUiState(
     val settings: LauncherSettings = LauncherSettings(),
@@ -109,4 +111,12 @@ data class HomeUiState(
     /** The active profile's app-list vertical anchor, falling back to the global default when not overriding — mirrors [activeAppRowPosition]'s own resolution shape. */
     val activeAppListVerticalAlignment: AppListVerticalAlignment
         get() = activeProfile?.let { if (it.overrideApps) it.appListVerticalAlignment else settings.appListVerticalAlignment } ?: settings.appListVerticalAlignment
+
+    /** The active profile's dock display style, falling back to the global default when not overriding — [dockApps] itself is already resolved per-profile upstream in [com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase]. */
+    val activeDockDisplayMode: DockDisplayMode
+        get() = activeProfile?.let { if (it.overrideDock) it.dockDisplayMode else settings.dockDisplayMode } ?: settings.dockDisplayMode
+
+    /** Shown once, immediately after onboarding finishes — scoped by `onboardingCompleted &&` rather than a launch counter, so it never reappears once dismissed (persisted in [LauncherSettings.coachMarksSeen]). */
+    val showGestureHint: Boolean
+        get() = settings.onboardingCompleted && HOME_GESTURES_COACH_MARK_ID !in settings.coachMarksSeen
 }

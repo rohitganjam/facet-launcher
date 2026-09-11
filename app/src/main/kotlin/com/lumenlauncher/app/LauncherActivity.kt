@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.ui.launcher.LauncherViewModel
 import com.lumenlauncher.app.ui.navigation.LumenNavHost
+import com.lumenlauncher.app.ui.onboarding.OnboardingScreen
 import com.lumenlauncher.app.ui.theme.AccentSwatch
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -37,19 +38,27 @@ class LauncherActivity : ComponentActivity() {
                 iconRenderMode = uiState.iconRenderMode,
                 launcherFontOption = uiState.launcherFontOption,
             ) {
-                if (uiState.isLoading) {
-                    // Real settings/apps haven't loaded yet — render nothing rather than a frame
-                    // styled with defaults that don't match the user's actual choices (see chat
-                    // history). The window already shows the wallpaper through it
-                    // (windowShowWallpaper + a transparent windowBackground in themes.xml), so an
-                    // empty Box is a blank Home, not a black/white flash.
-                    Box(modifier = Modifier.fillMaxSize())
-                } else {
-                    LumenNavHost(
-                        apps = uiState.apps,
-                        onAppClick = { app -> launchApp(app) },
-                        launcherViewModel = viewModel,
-                    )
+                when {
+                    uiState.isLoading -> {
+                        // Real settings/apps haven't loaded yet — render nothing rather than a
+                        // frame styled with defaults that don't match the user's actual choices
+                        // (see chat history). The window already shows the wallpaper through it
+                        // (windowShowWallpaper + a transparent windowBackground in themes.xml), so
+                        // an empty Box is a blank Home, not a black/white flash.
+                        Box(modifier = Modifier.fillMaxSize())
+                    }
+                    !uiState.onboardingCompleted -> {
+                        // A top-level branch, outside LumenNavHost entirely — never lands on the
+                        // back stack, same isolation HomeDrawerRoute gets. See ONBOARDING_FLOW.md.
+                        OnboardingScreen(onFinish = viewModel::completeOnboarding)
+                    }
+                    else -> {
+                        LumenNavHost(
+                            apps = uiState.apps,
+                            onAppClick = { app -> launchApp(app) },
+                            launcherViewModel = viewModel,
+                        )
+                    }
                 }
             }
         }

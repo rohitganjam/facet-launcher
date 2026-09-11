@@ -108,7 +108,9 @@ App names are invented. No real products are depicted.
 
 **No results (`4q`).** `400 16px` "Nothing matches "zqx"", explanatory line at `400 12.5px/1.6`, and a Clear search outline button. No web fallback.
 
-### Long-press sheet (`2a`)
+### Long-press sheet (`2a`) — removed
+
+> **Superseded.** This bottom sheet was deleted during implementation: three of its rows found other homes (Launcher settings → the carousel screen; Change wallpaper → a Settings row; Edit profile → the carousel's per-card menu) and the last, **Switch profile**, became the whole gesture's target — first as a direct long-press to the carousel, now as a **left swipe on Home** (the long-press was too hard to land in the gaps between the clock, app list and dock). The original spec is kept below for reference only.
 
 Long-press empty space on the home surface for **420ms**; movement over 8px cancels. The home layer dims under `rgba(2,8,23,.28)`; the sheet rises from the bottom, `border-radius: 20px 20px 0 0`, `transform .3s cubic-bezier(.32,.72,0,1)`, `box-shadow: 0 -8px 24px rgba(2,8,23,.1)`. A `34×4` grab handle sits centred above the rows.
 
@@ -128,7 +130,7 @@ Four rows, each `13px 24px` with `1px` separators, title `400 16px` and subtitle
 > **Revised from the original mock, decided during implementation:** the carousel now behaves like a recent-apps switcher rather than a browse-then-confirm picker. There's no **Select** button — tapping any visible card applies it immediately and closes. Since tapping a card now always applies it, long-press-to-reorder-in-place is gone; reordering moved to a dedicated list screen (`3b`, redefined below), reached via a **Reorder** header link instead of a sub-line hint. Tap-the-name-to-rename is also gone — rename now lives in Per-profile settings (`3d`), reached from the carousel's gear icon or the reorder list's overflow menu.
 
 > **Revised again during implementation:** `3a` (Switch Profiles) and `3b` (Manage Profiles) are now two separate screens.
-> - **`3a` Switch Profiles** — the home long-press. A **translucent overlay** (60% `SurfaceContainer` over Home, which stays put behind it) that **fades + scales in** rather than sliding. **No header** — just a right-aligned secondary **Reorder** button (border + light fill, disabled with one profile) that opens `3b`. No back button: system back, or tapping a card (which applies it and returns Home), is the way out.
+> - **`3a` Switch Profiles** — opened by a **left swipe on Home** *(revised — was the empty-space long-press)*. **Revised once more:** no longer a `NavHost` destination at all — like the Hub, it's a permanent **follow-finger panel** to Home's right (translucent, 60% `SurfaceContainer`), tracking the finger continuously rather than committing on release-then-animating. The left swipe that opens it and the rightward swipe that closes it (in empty space, or on the first profile's card, where the pager has nowhere to browse) drive the exact same axis live — no separate "slide in" transition step any more, since there's no navigation event to transition between. Home stays put behind it. **No header** — just a right-aligned secondary **Reorder** button (border + light fill, disabled with one profile) that opens `3b`. No back button: system back, that rightward swipe, or tapping a card (which applies it and closes the panel), is the way out.
 > - **`3b` Manage Profiles** — a normal settings screen (sticky header "Manage Profiles" + back chevron, opaque `SurfaceContainer`), reached from Settings → Profiles *and* the carousel's Reorder button. The drag-to-reorder / add / per-profile-settings / delete list.
 
 **Carousel.** Every page (profile or the trailing Add page) is a scale model of the device screen (`CAROUSEL_CARD_SCALE` of its width *and* height, so it keeps the phone's own aspect ratio), with `shadow` + hairline border. Each page is a **live snapshot of that profile**: the real `ClockBlock` plus that profile's actual favorites — or `No favorites yet`. The profile name sits above the card as a plain label; gear/trash sit below it.
@@ -155,7 +157,7 @@ Canonical settings screen. Scrolls well past one viewport. Title `500 26px`, `le
 
 | Section | Contents |
 |---|---|
-| **PROFILES** | Profiles → the **Manage Profiles** list (`3b`) — reorder, add/remove, reach per-profile settings. (The swipeable **Switch Profiles** carousel is the home long-press instead.) |
+| **PROFILES** | Profiles → the **Manage Profiles** list (`3b`) — reorder, add/remove, reach per-profile settings. (The swipeable **Switch Profiles** carousel opens on a left swipe on Home instead.) |
 | **CLOCK** | Default clock style → `3e` (disabled — see Known Gap, `IMPLEMENTATION_PLAN.md`). **24-hour time** (real toggle). **Calendar** [revised — was "Calendar events" disabled, now a real row navigating to Calendar settings] → subtitle reflects whether all-day events are shown. |
 | **NOTIFICATIONS** [new, split out of "Shared across profiles"] | **Notifications** [revised — now a `ClickableRow` navigating to its own dedicated Notification Settings page, not an inline toggle] subtitle shows `On · Dot`/`On · Count`/`Off`. That page holds the real on/off switch (turning it on without access granted routes to the notification-access explanation screen first) plus a **Badge style** dropdown (Dot / Count). |
 | **DOCK** | `4 apps · shared across profiles`; icon row + `+` slot → `4k`; `Drag to reorder · long-press to remove · up to 5 apps`; **Display style** [revised — was "Show apps as", now a dropdown, not a two-pill toggle] Icons (default) / Text |
@@ -252,7 +254,9 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 |---|---|
 | Swipe up on home (>55px) | Open drawer |
 | Swipe down in drawer, `scrollTop <= 2` | Close drawer, clear query |
-| Long-press empty home space (420ms, <8px movement) | Long-press sheet |
+| Swipe left on home (past ~20% width), follow-finger | Open Switch Profiles carousel (`3a`) *(revised — replaced the empty-space long-press, which was too hard to land between the clock, app list and dock; then revised again from a fling-to-navigate `NavHost` push to this follow-finger panel, mirroring the Hub; see `IMPLEMENTATION_PLAN.md`)* |
+| Swipe right on the carousel (empty space, or on the first profile's card), follow-finger | Close the carousel back to Home, applying nothing — the mirror of the left swipe that opened it |
+| ~~Long-press empty home space (420ms, <8px movement)~~ | ~~Long-press sheet~~ *(removed — the sheet was already gone; the long-press that replaced it is now a left swipe, above)* |
 | Long-press app icon | App context menu (`4i`) |
 | Drag alphabet rail | Scrub to letter, scroll its header into view, show the large letter indicator |
 | Type in drawer search | Filter apps, then contacts; contact actions inline |
@@ -265,7 +269,7 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 
 **Timings.** Drawer `.34s cubic-bezier(.32,.72,0,1)` transform, `.24s ease` opacity. Sheet `.3s` same curve. Overlays `.22–.26s ease`. Rail indicator `.15s`. Long-press threshold 420ms.
 
-**Profile switching does not use swipe on the home screen.** Horizontal swipe there is deliberately unassigned — profiles change only by opening the sheet → carousel and tapping a card. *(Revised: within the carousel itself, swipe now browses — see the table above — but browsing alone still never applies anything; only a tap does.)*
+**Home horizontal swipe [revised — this now IS assigned].** Left swipe opens the Switch Profiles carousel (`3a`), follow-finger, exactly like the right swipe that opens the Hub (`F5`) — whichever one a drag's first frame engages keeps owning it for the rest of the gesture, even through a direction reversal. Releasing commits open/closed once the drag has cleared ~20% of the screen width from wherever it started (the same rule the Hub uses); short of that it springs back. Home stays composed behind either panel throughout. *(Was: "profile switching does not use swipe on the home screen" — reversed after the empty-space long-press proved too hard to target, then the carousel itself moved from a `NavHost` destination to this follow-finger panel. Within the carousel itself, swipe still only browses between profiles; only a tap applies one.)*
 
 ## State Management
 

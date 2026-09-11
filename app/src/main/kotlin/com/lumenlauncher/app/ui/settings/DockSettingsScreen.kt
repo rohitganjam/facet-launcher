@@ -42,10 +42,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.DockDisplayMode
+import com.lumenlauncher.app.data.model.HomeWallpaper
 import com.lumenlauncher.app.ui.components.AppIcon
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
+import com.lumenlauncher.app.ui.components.HomeSurfacePreview
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
+import com.lumenlauncher.app.ui.components.ReorderRowDefaults
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.components.rememberDragReorderState
@@ -53,6 +56,7 @@ import com.lumenlauncher.app.ui.theme.Ink
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.SurfaceContainer
+import com.lumenlauncher.app.ui.theme.resolve
 
 /** Settings → Home & Apps → Dock. */
 @Composable
@@ -96,11 +100,22 @@ private fun DockSettingsContent(
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
                 item {
+                    HomeSurfacePreview(
+                        appList = emptyList(),
+                        dockApps = uiState.dockApps,
+                        dockDisplayMode = uiState.dockDisplayMode,
+                        labelColor = uiState.appLabelColorOption.resolve(),
+                        labelFontWeight = uiState.homeAppsFontWeight.resolve(),
+                        homeWallpaper = uiState.homeWallpaper,
+                        modifier = Modifier.padding(bottom = 20.dp).testTag("dock_settings_preview_card"),
+                    )
+                }
+                item {
                     SettingsCard {
                         LabeledDropdownRow(
                             title = "Display style",
                             options = DockDisplayMode.entries,
-                            selected = uiState.settings.dockDisplayMode,
+                            selected = uiState.dockDisplayMode,
                             label = { it.dockDisplayLabel() },
                             onSelect = onDockDisplayModeChanged,
                             testTag = "dock_display_style_row",
@@ -165,11 +180,7 @@ private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Un
     }
 }
 
-private const val DOCK_ICON_SIZE_DP = 44
-private const val DOCK_ICON_SPACING_DP = 10
 private val DOCK_TILE_SHAPE = RoundedCornerShape(14.dp)
-private val REORDER_DRAG_ELEVATION = 6.dp
-private const val REORDER_DRAG_SCALE = 1.04f
 
 @Composable
 private fun DockAppsRow(
@@ -178,12 +189,12 @@ private fun DockAppsRow(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
-        // Keyed on component identity only, not the raw `dockApps` list — see FavoritesReorderList's
-        // doc comment (ProfileSettingsScreen.kt) for why keying on the raw list resets drag state
-        // mid-drag on incidental re-emissions.
+        // Keyed on component identity only, not the raw `dockApps` list — that list's AppInfo.icon
+        // is a freshly-decoded bitmap on every LauncherApps re-emission, so keying `remember` on
+        // the raw list would reset drag state mid-drag on re-emissions unrelated to the dock.
         val componentsKey = dockApps.map { it.packageName to it.activityName }
         var order by remember(componentsKey) { mutableStateOf(dockApps) }
-        val slotWidthPx = with(LocalDensity.current) { (DOCK_ICON_SIZE_DP + DOCK_ICON_SPACING_DP).dp.toPx() }
+        val slotWidthPx = with(LocalDensity.current) { (ReorderRowDefaults.DOCK_TILE_SIZE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
         val reorderState = rememberDragReorderState(
             items = order,
             key = { it.packageName to it.activityName },
@@ -194,8 +205,8 @@ private fun DockAppsRow(
         )
 
         LazyRow(
-            modifier = Modifier.height(DOCK_ICON_SIZE_DP.dp),
-            horizontalArrangement = Arrangement.spacedBy(DOCK_ICON_SPACING_DP.dp),
+            modifier = Modifier.height(ReorderRowDefaults.DOCK_TILE_SIZE),
+            horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
             verticalAlignment = Alignment.CenterVertically,
             userScrollEnabled = false,
         ) {
@@ -207,16 +218,16 @@ private fun DockAppsRow(
                         .zIndex(if (isDragging) 1f else 0f)
                         .graphicsLayer {
                             translationX = if (isDragging) reorderState.dragOffset else 0f
-                            scaleX = if (isDragging) REORDER_DRAG_SCALE else 1f
-                            scaleY = if (isDragging) REORDER_DRAG_SCALE else 1f
-                            shadowElevation = if (isDragging) REORDER_DRAG_ELEVATION.toPx() else 0f
+                            scaleX = if (isDragging) ReorderRowDefaults.DRAG_SCALE else 1f
+                            scaleY = if (isDragging) ReorderRowDefaults.DRAG_SCALE else 1f
+                            shadowElevation = if (isDragging) ReorderRowDefaults.DRAG_ELEVATION.toPx() else 0f
                             shape = DOCK_TILE_SHAPE
                             clip = false
                         }
                         .then(if (isDragging) Modifier else Modifier.animateItem())
                         .then(reorderState.dragModifier(app)),
                 ) {
-                    AppIcon(icon = app.icon, size = DOCK_ICON_SIZE_DP.dp, cornerRadius = 14.dp, contentDescription = app.label)
+                    AppIcon(icon = app.icon, size = ReorderRowDefaults.DOCK_TILE_SIZE, cornerRadius = 14.dp, contentDescription = app.label)
                 }
             }
         }

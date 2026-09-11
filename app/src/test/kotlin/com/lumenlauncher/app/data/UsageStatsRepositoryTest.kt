@@ -33,7 +33,7 @@ class UsageStatsRepositoryTest {
 
     /**
      * [lastTimeUsed] is added to "now" rather than used as an absolute epoch millis value — the
-     * repository queries a rolling 30-day window ending now, and the shadow's own [queryUsageStats]
+     * repository queries a rolling 7-day window ending now, and the shadow's own [queryUsageStats]
      * filters by whether `[firstTimeStamp, lastTimeStamp]` overlaps that window, so an absolute
      * value like `1_000L` (1970) would silently fall outside it and never come back.
      */

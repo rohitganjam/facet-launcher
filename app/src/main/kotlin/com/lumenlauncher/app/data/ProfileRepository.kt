@@ -2,6 +2,7 @@ package com.lumenlauncher.app.data
 
 import com.lumenlauncher.app.data.local.ProfileDao
 import com.lumenlauncher.app.data.local.ProfileEntity
+import com.lumenlauncher.app.data.model.AppListLimits
 import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
@@ -10,6 +11,7 @@ import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
 import kotlinx.coroutines.flow.Flow
@@ -202,9 +204,9 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         profileDao.upsert(profile.copy(listContentMode = mode))
     }
 
-    /** Coerced into README's `3d` 4…8 range. */
+    /** Coerced into [AppListLimits]' range (reduced from README's original `3d` 4…8 — see chat history). */
     suspend fun setAppsToShowCount(profile: ProfileEntity, count: Int) {
-        profileDao.upsert(profile.copy(appsToShowCount = count.coerceIn(4, 8)))
+        profileDao.upsert(profile.copy(appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW)))
     }
 
     suspend fun setAppListVerticalAlignment(profile: ProfileEntity, alignment: AppListVerticalAlignment) {
@@ -235,11 +237,27 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
                 appRowPosition = position,
                 appRowPresentation = presentation,
                 listContentMode = mode,
-                appsToShowCount = count.coerceIn(4, 8),
+                appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
                 overridingFavorites = overridingFavorites,
                 appListVerticalAlignment = verticalAlignment,
             ),
         )
+    }
+
+    suspend fun setDockDisplayMode(profile: ProfileEntity, mode: DockDisplayMode) {
+        profileDao.upsert(profile.copy(dockDisplayMode = mode))
+    }
+
+    /**
+     * The Dock card's single Inherit/Override switch — governs both the dock's app list (this
+     * profile's own [com.lumenlauncher.app.data.local.ProfileDockAppEntity] rows) and its
+     * Icons/Text display style, as one unit. Seeds the display mode from the current effective
+     * value and toggles the flag in one atomic upsert; seeding the app list itself (copying the
+     * default dock when the profile's own is empty) is the caller's job, mirroring
+     * [updateOverridingApps]/favorites.
+     */
+    suspend fun updateOverridingDock(profile: ProfileEntity, overriding: Boolean, displayMode: DockDisplayMode) {
+        profileDao.upsert(profile.copy(overrideDock = overriding, dockDisplayMode = displayMode))
     }
 
     /** Reverts this profile to inheriting the global default or switches to overriding. */

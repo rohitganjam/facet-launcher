@@ -3,7 +3,7 @@ package com.lumenlauncher.app.data.model
 import kotlinx.serialization.Serializable
 
 /** Bumped whenever [BackupBundle]'s shape changes — [com.lumenlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands. */
-const val CURRENT_BACKUP_VERSION = 1
+const val CURRENT_BACKUP_VERSION = 2
 
 /**
  * The full exported/imported settings snapshot for F14 Backup & Restore (PRD: "not limited to
@@ -31,6 +31,9 @@ const val CURRENT_BACKUP_VERSION = 1
  *   permission-request history, not a user preference — restoring `true` onto a device that was
  *   never actually asked would wrongly skip straight to the "go to App Info" fallback instead of
  *   firing the real system permission dialog.
+ * - `onboardingCompleted`/`defaultsSeeded`/`coachMarksSeen`: this install's own first-run
+ *   progress, not a user preference — restoring `true`/a populated set onto a fresh install would
+ *   skip the first-run flow and its dock-seeding/coach-mark introductions entirely.
  */
 @Serializable
 data class BackupBundle(
@@ -99,6 +102,11 @@ data class BackupProfile(
     val listContentMode: String,
     val appsToShowCount: Int,
     val overridingFavorites: Boolean,
+    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a v1 backup from before per-profile dock existed still deserializes cleanly, inheriting the launcher-wide dock). */
+    val overrideDock: Boolean = false,
+    val dockDisplayMode: String = DockDisplayMode.ICONS.name,
+    /** This profile's own dock — only meaningful when [overrideDock], but exported unconditionally for simplicity; restoring is harmless either way since the launcher-wide dock governs whenever it isn't. */
+    val dockApps: List<BackupAppEntry> = emptyList(),
     val overrideCalendar: Boolean,
     val showAllDayEvents: Boolean,
     val calendarFontOption: String,

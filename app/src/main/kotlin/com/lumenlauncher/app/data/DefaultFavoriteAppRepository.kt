@@ -3,6 +3,7 @@ package com.lumenlauncher.app.data
 import com.lumenlauncher.app.data.local.DefaultFavoriteAppDao
 import com.lumenlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.lumenlauncher.app.data.model.AppInfo
+import com.lumenlauncher.app.data.model.AppListLimits
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -24,7 +25,7 @@ class DefaultFavoriteAppRepository @Inject constructor(
 ) {
 
     companion object {
-        const val MAX_FAVORITES = 8
+        const val MAX_FAVORITES = AppListLimits.MAX_FAVORITES
     }
 
     fun observeDefaultFavorites(): Flow<List<AppInfo>> {

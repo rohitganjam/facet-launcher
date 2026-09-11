@@ -129,16 +129,18 @@ class FavoritesPickerScreenTest {
     }
 
     @Test
-    fun checkingIsBlockedAtTheEightAppCap() {
-        // Given favorites already at the 8-app cap
-        var ninthApp: AppInfo? = null
+    fun checkingIsBlockedAtTheMaxFavoritesCap() {
+        // Given favorites already at the cap
+        var overflowApp: AppInfo? = null
         setContent { appRepository, favoriteAppRepository ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             val capApps = installed.take(FavoriteAppRepository.MAX_FAVORITES)
-            ninthApp = installed.getOrNull(FavoriteAppRepository.MAX_FAVORITES)
+            overflowApp = installed.getOrNull(FavoriteAppRepository.MAX_FAVORITES)
             runBlocking { capApps.forEachIndexed { index, app -> favoriteAppRepository.addFavorite(profileId, app, index) } }
         }
-        val app = requireNotNull(ninthApp) { "test needs at least 9 installed apps visible to the test APK" }
+        val app = requireNotNull(overflowApp) {
+            "test needs at least ${FavoriteAppRepository.MAX_FAVORITES + 1} installed apps visible to the test APK"
+        }
         val rowTag = "favorites_picker_row_${app.packageName}"
 
         // See checkingAnAppAddsItToFavorites — wait for the real installed-apps fetch to land
@@ -150,7 +152,7 @@ class FavoritesPickerScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(rowTag).assertIsOff()
 
-        // When trying to check a 9th app
+        // When trying to check one more app past the cap
         composeRule.onNodeWithTag(rowTag).performClick()
         composeRule.waitForIdle()
         Thread.sleep(500) // let a (correctly) blocked write's absence settle before asserting

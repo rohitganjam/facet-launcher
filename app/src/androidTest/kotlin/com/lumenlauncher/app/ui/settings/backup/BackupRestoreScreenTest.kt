@@ -16,6 +16,7 @@ import com.lumenlauncher.app.data.BackupRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.WidgetPlacementRepository
@@ -50,6 +51,7 @@ class BackupRestoreScreenTest {
                 val profileRepository = ProfileRepository(database.profileDao())
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
                 val backupRepository = BackupRepository(context)
@@ -57,11 +59,11 @@ class BackupRestoreScreenTest {
                 BackupRestoreViewModel(
                     ExportBackupUseCase(
                         settingsRepository, profileRepository, favoriteAppRepository, dockAppRepository,
-                        defaultFavoriteAppRepository, widgetPlacementRepository, backupRepository,
+                        profileDockAppRepository, defaultFavoriteAppRepository, widgetPlacementRepository, backupRepository,
                     ),
                     ImportBackupUseCase(
                         backupRepository, settingsRepository, profileRepository, favoriteAppRepository,
-                        dockAppRepository, defaultFavoriteAppRepository,
+                        dockAppRepository, profileDockAppRepository, defaultFavoriteAppRepository,
                     ),
                     appWidgetRepository,
                     widgetPlacementRepository,

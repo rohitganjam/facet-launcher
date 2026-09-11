@@ -3,7 +3,9 @@ package com.lumenlauncher.app.domain
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.CalendarRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
+import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
@@ -24,9 +26,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/** A single profile's effective preview content — everything the carousel's own preview card needs beyond clock/dock. */
+/** A single profile's effective preview content — everything the carousel's own preview card needs beyond the clock. */
 data class ProfilePreviewData(
     val favorites: List<AppInfo> = emptyList(),
+    /** This profile's effective dock — its own list when it overrides the dock, the launcher-wide default otherwise. */
+    val dockApps: List<AppInfo> = emptyList(),
     /** Today's events for this profile's effective calendar settings — empty when ungranted or none selected, same as [HomeScreenState.calendarEvents]. */
     val calendarEvents: List<CalendarEvent> = emptyList(),
 )
@@ -36,8 +40,11 @@ data class ProfilePreviewData(
  * content mode (Favorites/Recents/Most Used) or favorites shows those; one still inheriting
  * shows the launcher-wide default list instead, and the same for calendar events (gated by
  * `overrideCalendar`, mirroring [ObserveHomeScreenStateUseCase.observeCalendarEvents] exactly,
- * including which calendars are selected). Spans [ProfileRepository],
+ * including which calendars are selected). The dock follows the same shape — a profile overriding
+ * its own dock (`overrideDock`) shows that list, one still inheriting shows the launcher-wide
+ * default. Spans [ProfileRepository],
  * [SettingsRepository], [FavoriteAppRepository], [DefaultFavoriteAppRepository],
+ * [ProfileDockAppRepository], [DockAppRepository],
  * [UsageStatsRepository], [UsageAccessRepository], [CalendarPermissionRepository] and
  * [CalendarRepository], so it's a use case rather than something either the ViewModel or a
  * composable computes directly. Unlike [ObserveHomeScreenStateUseCase], which resolves state for
@@ -50,6 +57,8 @@ class ObserveProfilePreviewsUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val profileDockAppRepository: ProfileDockAppRepository,
+    private val dockAppRepository: DockAppRepository,
     private val usageStatsRepository: UsageStatsRepository,
     private val usageAccessRepository: UsageAccessRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
@@ -60,32 +69,46 @@ class ObserveProfilePreviewsUseCase @Inject constructor(
         val profiles = profileRepository.observeProfiles().distinctUntilChanged()
         val settings = settingsRepository.settings.distinctUntilChanged()
 
-        val ownFavoritesByProfile = profiles
-            .map { it.map { profile -> profile.id } }
-            .distinctUntilChanged()
-            .flatMapLatest { profileIds -> favoriteAppRepository.observeFavoritesForProfiles(profileIds) }
+        val profileIds = profiles.map { it.map { profile -> profile.id } }.distinctUntilChanged()
+        val ownFavoritesByProfile = profileIds.flatMapLatest { favoriteAppRepository.observeFavoritesForProfiles(it) }
+        val ownDockByProfile = profileIds.flatMapLatest { profileDockAppRepository.observeDockAppsForProfiles(it) }
 
         return combine(
             profiles,
             settings,
             ownFavoritesByProfile,
-            defaultFavoriteAppRepository.observeDefaultFavorites()
-        ) { profileList, launcherSettings, ownFavorites, defaultFavorites ->
-            profileList to launcherSettings to ownFavorites to defaultFavorites
-        }.flatMapLatest { (triple, defaultFavorites) ->
-            val (pair, ownFavorites) = triple
-            val (profileList, launcherSettings) = pair
-
-            val flows = profileList.map { profile ->
+            defaultFavoriteAppRepository.observeDefaultFavorites(),
+            ownDockByProfile,
+            dockAppRepository.observeDockApps(),
+        ) { profileList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock ->
+            Inputs(profileList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock)
+        }.flatMapLatest { inputs ->
+            val flows = inputs.profiles.map { profile ->
+                val effectiveDock =
+                    if (profile.overrideDock) inputs.ownDock[profile.id].orEmpty() else inputs.defaultDock
                 combine(
-                    observeAppListItems(profile, launcherSettings, ownFavorites[profile.id].orEmpty(), defaultFavorites),
-                    observeCalendarEvents(profile, launcherSettings),
-                ) { apps, events -> profile.id to ProfilePreviewData(apps, events) }
+                    observeAppListItems(
+                        profile,
+                        inputs.settings,
+                        inputs.ownFavorites[profile.id].orEmpty(),
+                        inputs.defaultFavorites,
+                    ),
+                    observeCalendarEvents(profile, inputs.settings),
+                ) { apps, events -> profile.id to ProfilePreviewData(apps, effectiveDock, events) }
             }
 
             combine(flows) { it.toMap() }
         }
     }
+
+    private data class Inputs(
+        val profiles: List<ProfileEntity>,
+        val settings: LauncherSettings,
+        val ownFavorites: Map<Long, List<AppInfo>>,
+        val defaultFavorites: List<AppInfo>,
+        val ownDock: Map<Long, List<AppInfo>>,
+        val defaultDock: List<AppInfo>,
+    )
 
     private fun observeAppListItems(
         profile: ProfileEntity,

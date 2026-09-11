@@ -71,7 +71,7 @@ class SettingsRepositoryTest {
         assertEquals(AppRowPosition.LEFT, settings.appRowPosition)
         assertEquals(AppRowPresentation.ICON_AND_TEXT, settings.appRowPresentation)
         assertEquals(ListContentMode.FAVORITES, settings.listContentMode)
-        assertEquals(5, settings.appsToShowCount)
+        assertEquals(6, settings.appsToShowCount)
         assertEquals(ClockTemplateId.LIGHT_STACK, settings.clockTemplateId)
         assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.clockFontOption)
         assertEquals(ClockColorOption.THEME, settings.clockColorOption)
@@ -87,6 +87,37 @@ class SettingsRepositoryTest {
         assertEquals(null, settings.clockZoneHeightDp)
         assertEquals(0.8f, settings.clockScale, 0.0001f)
         assertEquals(AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
+        assertFalse(settings.onboardingCompleted)
+        assertFalse(settings.defaultsSeeded)
+        assertEquals(emptySet<String>(), settings.coachMarksSeen)
+    }
+
+    @Test
+    fun `setOnboardingCompleted and setDefaultsSeeded round-trip independently`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When only one is set
+        repository.setOnboardingCompleted(true)
+
+        // Then it round-trips and the other stays at its default
+        val settings = repository.settings.first()
+        assertEquals(true, settings.onboardingCompleted)
+        assertFalse(settings.defaultsSeeded)
+    }
+
+    @Test
+    fun `markCoachMarkSeen is additive`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When two different coach marks are marked seen, one after the other
+        repository.markCoachMarkSeen("HOME_GESTURES")
+        repository.markCoachMarkSeen("SOME_OTHER_MARK")
+
+        // Then both persist, neither overwriting the other
+        val settings = repository.settings.first()
+        assertEquals(setOf("HOME_GESTURES", "SOME_OTHER_MARK"), settings.coachMarksSeen)
     }
 
     @Test
@@ -252,7 +283,7 @@ class SettingsRepositoryTest {
         repository.setAppRowPosition(AppRowPosition.RIGHT)
         repository.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
         repository.setListContentMode(ListContentMode.MOST_USED)
-        repository.setAppsToShowCount(7)
+        repository.setAppsToShowCount(6)
 
         // Then the new values come back
         val settings = repository.settings.first()
@@ -278,21 +309,21 @@ class SettingsRepositoryTest {
         assertEquals(AppRowPosition.RIGHT, settings.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, settings.appRowPresentation)
         assertEquals(ListContentMode.MOST_USED, settings.listContentMode)
-        assertEquals(7, settings.appsToShowCount)
+        assertEquals(6, settings.appsToShowCount)
     }
 
     @Test
-    fun `default apps-to-show count is coerced into the 4 to 8 range`() = runTest {
+    fun `default apps-to-show count is coerced into the 3 to 6 range`() = runTest {
         // Given a repository
         val repository = createRepository()
 
-        // When set below the floor, it's coerced up to 4
+        // When set below the floor, it's coerced up to 3
         repository.setAppsToShowCount(1)
-        assertEquals(4, repository.settings.first().appsToShowCount)
+        assertEquals(3, repository.settings.first().appsToShowCount)
 
-        // When set above the ceiling, it's coerced down to 8
+        // When set above the ceiling, it's coerced down to 6
         repository.setAppsToShowCount(99)
-        assertEquals(8, repository.settings.first().appsToShowCount)
+        assertEquals(6, repository.settings.first().appsToShowCount)
     }
 
     @Test

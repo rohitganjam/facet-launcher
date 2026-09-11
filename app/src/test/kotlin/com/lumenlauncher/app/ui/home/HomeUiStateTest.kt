@@ -193,4 +193,25 @@ class HomeUiStateTest {
 
         assertEquals(FontWeightOption.SEMI_BOLD, state.activeCalendarFontWeight)
     }
+
+    @Test
+    fun `gesture hint is hidden before onboarding has completed`() {
+        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = false))
+
+        assertEquals(false, state.showGestureHint)
+    }
+
+    @Test
+    fun `gesture hint shows once onboarding completes and hasn't been dismissed`() {
+        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = emptySet()))
+
+        assertEquals(true, state.showGestureHint)
+    }
+
+    @Test
+    fun `gesture hint stays hidden once its id is in coachMarksSeen`() {
+        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = setOf("HOME_GESTURES")))
+
+        assertEquals(false, state.showGestureHint)
+    }
 }

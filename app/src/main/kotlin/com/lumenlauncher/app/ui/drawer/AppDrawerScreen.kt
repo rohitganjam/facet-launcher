@@ -6,7 +6,6 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -110,7 +109,9 @@ import com.lumenlauncher.app.ui.theme.DrawerHeaderTextColor
 import com.lumenlauncher.app.ui.theme.DrawerOverlay
 import com.lumenlauncher.app.ui.theme.IconTile
 import com.lumenlauncher.app.ui.theme.Ink
+import com.lumenlauncher.app.ui.theme.LUMEN_TRANSITION_DURATION_MS
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
+import com.lumenlauncher.app.ui.theme.LumenTransitionEasing
 import com.lumenlauncher.app.ui.theme.LumenType
 import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Scrim
@@ -174,6 +175,8 @@ fun AppDrawerScreen(
     /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
     showContactsPermissionPrompt: Boolean = false,
     onContactsPermissionPromptClick: () -> Unit = {},
+    /** True while the drawer itself is open/opening (caller's own `isDrawerOpen`). Used only to reset the connections sheet once the drawer is fully closed — see the `LaunchedEffect` below. */
+    isDrawerOpen: Boolean = true,
 ) {
     val rankBySearchRelevance = remember { RankBySearchRelevanceUseCase() }
     val filteredApps = remember(apps, query) { rankBySearchRelevance(apps, query) { it.label } }
@@ -191,6 +194,12 @@ fun AppDrawerScreen(
     LaunchedEffect(connectionsSheetContact) {
         val contact = connectionsSheetContact
         connections = if (contact != null) onRequestConnections(contact) else emptyList()
+    }
+    // Otherwise this composable never leaves composition when the drawer closes (it's only
+    // translated off-screen), so a contact left open here would still be showing the next time
+    // the drawer reopens.
+    LaunchedEffect(isDrawerOpen) {
+        if (!isDrawerOpen) connectionsSheetContact = null
     }
 
     // First back-press while searching clears the query and stays in the drawer (browse mode,
@@ -356,8 +365,8 @@ fun AppDrawerScreen(
     }
     AnimatedVisibility(
         visible = connectionsSheetContact != null,
-        enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
-        exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
+        enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)),
+        exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)),
         modifier = Modifier.align(Alignment.BottomCenter),
     ) {
         connectionsSheetContact?.let { contact ->

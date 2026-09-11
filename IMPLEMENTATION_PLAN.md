@@ -459,7 +459,7 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 - [ ] ** **Return to Home Navigation** : Implementation done to return to home screen from any screen in launcher on receiving home button/gesture input. not yet tested.
   - Test: To be determined.
 
-## ✅ Phase 8, F14 Backup & Restore complete — onboarding/accessibility still open (see below)
+## ✅ Phase 8, F14 Backup & Restore + First-run onboarding complete — accessibility pass still open (see below)
 
 - [x] F14 Backup & Restore: full-settings JSON export/import, guided widget re-add on import.
   - **Export** (`domain/ExportBackupUseCase.kt`) composes every settings/data `Repository` (`SettingsRepository`, `ProfileRepository`, `FavoriteAppRepository`, `DockAppRepository`, `DefaultFavoriteAppRepository`, `WidgetPlacementRepository`) into one `BackupBundle` (`data/model/BackupBundle.kt`), written as JSON (kotlinx.serialization) to a user-picked destination via `BackupRepository.kt` (`ContentResolver`/SAF `CreateDocument`, never a guessed path).
@@ -473,8 +473,126 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
     - `HomeDrawerRouteTest.kt` had the identical `widgetPickerViewModel` default-Hilt-param gap already found and fixed in `KeyboardDismissalTest.kt` earlier this session (`HomeDrawerRoute`'s `widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel()` never overridden) — the whole test class was silently crashing on every run; fixed the same way (a manually-constructed `HubWidgetPickerViewModel` passed in explicitly). **Fixing it surfaced 5 real, previously-masked failures** (`swipingUpPastHalfwayCommitsTheDrawerOpen`, `releasingBeforeHalfwaySpringsBackClosed`, `systemBackClosesAnOpenDrawer`, `swipingDownAtDrawerTopReturnsToHome`, `lowVelocitySwipePastTwentyPercentStillClosesTheDrawer` — all assert Home's "FAVORITES" heading exists at some point, but this test's `homeViewModel` never seeds any favorite apps, and that heading only renders when non-empty) — flagged as a separate follow-up task, not fixed here (out of scope for this feature).
     - `HubHeader.kt` accepted a `columns: Int` parameter but never actually rendered it — `HubScreenTest.headerAlwaysShowsTheTitleAndCurrentCount` expected a "· N columns" suffix that had never been implemented. Decided (direct correction, see chat history) to drop the expectation rather than add the text: fixed the test to match the header's real, intended copy (`"$widgetCount of $HUB_MAX_WIDGETS widgets"`, no column count) instead of adding column text to the UI.
     - `HubScreenTest.removingAnOrphanedWidgetDeletesItsPlacement` times out waiting for the orphaned tile to disappear after tapping Remove — confirmed real (not flaky) across two isolated runs on a healthy emulator. Not investigated further; flagged as a separate follow-up task (out of scope for this feature).
-- [ ] First-run flow (`4f`–`4h`): what-this-is → pick favorites → set-as-default, permissions deferred to just-in-time.
-  - Test: first-run does not request any runtime permission; completing it does not immediately prompt any of F1/F2/F6/F13's permissions.
+- [x] First-run flow (`4f`–`4h`, extended to a 4-screen flow — see `ONBOARDING_FLOW.md` and the design
+  canvas `Launcher.dc.html` turn 5): intro → home setup (dock + favorites) → profiles teaser →
+  set-as-default, permissions deferred to just-in-time.
+  - **Data**: `LauncherSettings` gained `onboardingCompleted`/`defaultsSeeded`/`coachMarksSeen`
+    (install-local, backup-excluded — see `BackupBundle.kt`'s own doc comment) via
+    `SettingsRepository`'s usual key/getter/setter triple. `domain/SeedDefaultDockUseCase.kt` pre-fills
+    the shared dock with this device's own resolved default browser/messaging/camera/mail/phone apps,
+    called unconditionally from `LauncherViewModel.init` (not gated on the onboarding UI actually
+    being shown), so a killed/skipped onboarding still leaves Home populated.
+  - **Default-launcher request**: `DefaultLauncherRepository` (already existed, with only
+    `isDefaultLauncher()`) gained `requestDefaultLauncherIntent()` — `RoleManager.ROLE_HOME`'s
+    in-place system dialog when available and unheld, falling back to the exact
+    `ACTION_MANAGE_DEFAULT_APPS_SETTINGS` intent the Settings screen's own row already used; that row
+    now shares this method instead of duplicating the fallback.
+  - **UI** (`ui/onboarding/`): `OnboardingScreen.kt` (stateless host, `rememberSaveable` step,
+    `AnimatedContent` slide/fade with `HomeDrawerRoute`'s own 340ms `CubicBezierEasing(.32,.72,0,1)`,
+    system-back per step) + `OnboardingViewModel`/`OnboardingUiState` (always the global/default
+    repositories — no `profileId` concept at all) + four step composables. The intro step's Home
+    diagram is a real mini "9:41" clock card with leader lines to Clock/Your apps/Dock labels,
+    matching the design canvas artboard `5b` pixel-for-pixel (not a placeholder text list — an
+    earlier pass under-built this and was corrected against the actual mock).
+  - **Home-setup step redesigned after initial ship** (direct feedback): the original single search
+    list toggled between Favorites/Dock via `OnboardingPickTarget` was replaced entirely. HOME APPS
+    now comes first, DOCK second (40dp gap between, up from 28dp — also direct feedback), and both
+    sections mirror their Settings counterparts instead of a bespoke onboarding-only picker: HOME
+    APPS gets a `ListContentMode` dropdown (Favorites/Recently used/Most used, `LabeledDropdownRow`,
+    same enum/repository call `HomeAppsListSettingsScreen` already used) and, in Favorites mode, a
+    "Favorites" row; DOCK gets a "Manage dock apps" row (no more inline `+`). Both rows open the
+    *actual* `FavoritesPickerScreen`/`DockAppPickerScreen` full-screen (reused unmodified — own
+    search, own Hilt ViewModel) as a `subScreen` overlay inside `OnboardingScreen`, then return here;
+    once apps are picked, both sections render a live drag-to-reorder list/row
+    (`DragReorderState`, same headless mechanics `DockSettingsScreen`/`HomeAppsListSettingsScreen`
+    use, each keeping its own row-rendering copy per established precedent). `OnboardingViewModel`
+    correspondingly shrank to reorder + content-mode delegation only (`reorderDockApps`,
+    `reorderFavorites`, `setListContentMode`) — no more `getInstalledApps`/search/pick-target state,
+    since picking now happens entirely inside the reused picker screens. `OnboardingScreen` exposes
+    `dockPickerViewModel`/`favoritesPickerViewModel` as nullable testing-seam params (always `null`
+    in production) so `OnboardingScreenTest`'s non-Hilt compose host can supply hand-built instances
+    the same way it already does for `OnboardingViewModel`.
+  - **Profiles teaser redesigned twice**: shipped first with three `HomeSurfacePreview` cards (center
+    = the user's real step-2 picks, two empty neighbors) since a fresh install only has one real
+    profile — honest but static. Replaced per direct feedback with a fabricated, animated mockup:
+    `OnboardingProfilesPage.kt`'s `ProfileSwitchDemo` cycles three invented `MockProfile` cards
+    (own clock/date/favorites/dock, no real products — same call the original design brief made)
+    through a fully automatic, looping demo of the actual gesture — focus → zoom out → swipe → tap-
+    pulse "select" → zoom in → hold → **the same sequence in reverse** (zoom out → swipe back →
+    pulse → zoom in) rather than jump-cutting back to the start, so the loop always animates
+    continuously in both directions.
+  - **Coach marks**: `ui/components/GestureHintOverlay.kt` (one-time, over Home right after
+    onboarding — dismisses on tap, "Got it", or the first frame of any drag, so a swipe attempt just
+    clears the hint rather than also completing the real navigation underneath) and
+    `ui/components/FirstRunCallout.kt` (dismissible inline card, first carousel open). Both read/write
+    `coachMarksSeen` directly as computed properties on `HomeUiState`/`ProfileCarouselUiState` — no
+    extra ViewModel state needed since the persisted set already does the job.
+  - **Gesture map correction folded in**: mid-build, the user flagged that the onboarding docs/mocks
+    taught profile-switching via swipe-left, while `PRD.md` §5 still described the older empty-space
+    long-press sheet. Traced to a real, already-shipped decision (`HomeDrawerRoute`'s `profileAxis`)
+    that had never been backported into the PRD — fixed `PRD.md` §5 (and F4/F9) to match reality
+    before writing any onboarding code, so the intro screen's gesture list and the coach mark teach
+    the gestures that actually work.
+  - **Dock-is-no-longer-purely-shared correction** (post-review): the dock gained per-profile
+    overrides in a change that landed concurrently with this build (see "Dock gains per-profile
+    overrides" above) — onboarding still correctly seeds/edits the launcher-wide *default*
+    `DockAppRepository` (unchanged, still what a fresh profile inherits), but its UI copy claiming
+    the dock is "shared by every profile" was no longer accurate once a profile can override its own.
+    Fixed the home-setup step's hint and the profiles-teaser body copy to describe it as the default
+    every profile starts from rather than an immutable shared resource.
+  - Test: `SettingsRepositoryTest`, `SeedDefaultDockUseCaseTest`, `OnboardingViewModelTest` (starts
+    from live favorites/dock, reflects `listContentMode`, `setListContentMode`/`reorderDockApps`/
+    `reorderFavorites` delegate correctly — add/remove/search coverage now lives entirely in
+    `DockAppPickerViewModel`'s/`FavoritesPickerViewModel`'s own existing tests, since onboarding
+    reuses those screens wholesale rather than re-implementing picking), `DefaultLauncherRepositoryTest`
+    (Robolectric `ShadowRoleManager`), `HomeUiStateTest`/`HomeViewModelTest`
+    (`showGestureHint`/`dismissGestureHint`), `ProfileCarouselUiStateTest`/`ProfileCarouselViewModelTest`
+    (`showIntroCallout`/`onIntroDismissed`) — all unit-level, all green. `OnboardingScreenTest`
+    (instrumented): full step navigation, Skip, tapping Favorites/Manage dock apps opens the real
+    full-screen pickers and Done/back returns, Later, system back, and **`completing onboarding
+    requests no runtime permission`** (Espresso-Intents, `times(0)` on
+    `REQUEST_PERMISSIONS`/`ACTION_USAGE_ACCESS_SETTINGS`) — satisfies this task's original test
+    requirement; builds `DockAppPickerViewModel`/`FavoritesPickerViewModel` by hand against the same
+    in-memory repositories as `OnboardingViewModel` (mirrors `DockAppPickerScreenTest`'s/
+    `FavoritesPickerScreenTest`'s own non-Hilt pattern), passed via the new testing-seam params.
+    `HomeDrawerRouteTest`/`ProfileCarouselScreenTest` gained coach-mark show/dismiss cases; every
+    *pre-existing* test in the latter now defaults to "already seen" so the new callout doesn't
+    change their established assumptions.
+  - **Real bugs found and fixed while building this:**
+    - A `StateFlow` built via `stateIn(viewModelScope, SharingStarted.WhileSubscribed(...), ...)`
+      needs an active collector to start its upstream — `backgroundScope.launch { uiState.collect {} }`
+      alone wasn't enough in instrumented/unit tests alike, because that launch runs on the test's own
+      internal scheduler, a *different* one from the `StandardTestDispatcher` wired via
+      `Dispatchers.setMain(...)`. `runCurrent()` (on the test's own scope) right after the launch
+      closes the gap; `testDispatcher.scheduler.advanceUntilIdle()` alone silently never ran it,
+      producing tests that "passed" while asserting against the never-updated default state.
+    - `GestureHintOverlay`'s own internal `.testTag("gesture_hint_overlay")` was being shadowed by a
+      second, redundant `.testTag(...)` applied to the `modifier` parameter at its call site in
+      `HomeDrawerRoute` — two `testTag()` calls on the same node's modifier chain silently resolve to
+      the *outer* one, not the inner one closest to the actual element, so the node was findable only
+      by the (wrong, unused-by-any-test) outer tag. Removing the redundant call site tag fixed it.
+    - A second Claude Code session was concurrently editing unrelated files (`SettingsViewModel`'s
+      calendar-count feature, Room schema migrations, a `ProfileCarouselScreen` subtitle string) in
+      this same working tree throughout the build, twice leaving the module transiently
+      non-compiling and once leaving one pre-existing, unrelated `ProfileCarouselScreenTest` case
+      failing on a text assertion its own author hadn't updated yet — not fixed here (not this
+      feature's code), each resolved on its own once that session's edits settled.
+    - `swipingUpStartingOnAnAppIconStillOpensTheDrawer` (`HomeDrawerRouteTest`, pre-existing, not
+      touched by this feature) intermittently finds two `home_app_icon_com.example.A` nodes instead
+      of one — reproduced twice, not investigated further, flagged as a separate follow-up.
+    - Home-setup redesign: the dock tile row originally kept its old tap-to-remove alongside the new
+      drag-to-reorder on the same tile — both gestures competing for the same `pointerInput` region
+      is a real conflict (a stationary tap can register as a zero-distance drag). Resolved by
+      dropping tap-to-remove entirely in favor of matching Settings' own `DockSettingsScreen`
+      exactly: the tile row is drag-only, add/remove happens by unchecking in the full-screen picker.
+    - While iterating on `OnboardingHomeSetupPage.kt`, a background instrumented test run
+      (`connectedDebugAndroidTest`) was mistaken for idle emulator time and manually poked
+      (`pm clear`/`am start`/screenshots) mid-suite, crashing the test instrumentation process for a
+      handful of unrelated tests (`DockAppPickerScreenTest`, two `AppDrawerScreenTest` cases) with
+      "Test instrumentation process crashed" — confirmed environmental, not a real regression, by
+      re-running those classes alone afterward (all green). Moved manual on-device verification to
+      the connected physical phone for the rest of this pass once the collision was caught, per the
+      user's own direction.
 - [ ] Accessibility pass: TalkBack labels on icon-only UI (dock, favorites, alphabet rail), layout survives large system font scale.
   - Test: semantic content-description assertions on dock/favorites/rail; a layout test at 200% font scale doesn't clip/overlap the alphabet rail (per README's noted open question — may motivate a condensed-rail fallback here).
 
@@ -840,3 +958,234 @@ three different one-off treatments (a bordered `OutlinedButton`; plain clickable
   dropped their `clickable`/`background`/`Accent`/`Surface` imports.
 - Tests: existing `hub_add_button` / `hub_empty_add_widget` / `profile_carousel_reorder` test
   tags preserved, so `ui.hub` + `ui.profiles` instrumented suites cover it unchanged.
+
+---
+
+## Switch Profiles moves from a Home long-press to a left swipe
+
+Per direct UX report: long-pressing "empty" Home space to reach the Switch Profiles carousel was
+too hard to land — the clock/calendar own the top, the favorites `AppRow`s take a full-width hit
+slab through the middle, and the dock owns the bottom, leaving only thin gutters that the user
+can't see. The gesture was invisible *and* its target was fragmented.
+
+- **`HomeDrawerRoute`** — the outer `detectTapGestures(onLongPress = …)` on the Home surface is
+  gone (its import too). The existing horizontal-axis branch of the Home `detectDragGestures`
+  now splits by direction: a net-**rightward** drag drives the Home↔Hub follow-finger axis as
+  before; a net-**leftward** drag from a closed Hub accrues in a new `homeHorizontalDragDistance`
+  and, on release, calls `onNavigateToProfileCarousel()` once it has cleared
+  `COMMIT_TRAVEL_FRACTION` (20%) of the container width — the same fraction the Hub itself
+  commits on. The Hub axis is never fed a leftward delta from a closed state, so its `progress`
+  stays exactly `0f` and the release check is unambiguous. The carousel is still a NavHost
+  destination reached by a fling-to-navigate trigger (not a follow-finger panel), but its
+  transition now **slides in from the right** like the Hub (see the transition note below).
+- **Symmetry:** Home horizontal swipe is now fully assigned — left = Switch Profiles (`3a`),
+  right = Hub (`F5`). README's "profile switching does not use swipe on the home screen" line and
+  the gestures table were revised.
+- Tests (`HomeDrawerRouteTest`): the 3 long-press cases
+  (`holdingStillForTheFullDurationNavigatesToTheProfileCarousel`,
+  `releasingBeforeTheDurationDoesNotNavigate`, `longPressBesideTheClockStillReachesTheProfileCarousel`)
+  removed; replaced with `swipingLeftPastThresholdOpensTheProfileCarousel`,
+  `releasingALeftDragBeforeThresholdDoesNotOpenTheProfileCarousel`,
+  `swipingLeftOpensTheProfileCarouselNotTheHub`, and
+  `aDiagonalSwipeMostlyLeftOpensTheProfileCarouselNotTheDrawer` (axis-lock guard, mirroring the
+  existing mostly-right case). `HomeScreenTest`'s long-press-beside-clock / context-menu cases
+  are unaffected — those exercise `HomeScreen`'s own clock/`AppRow` detectors, not this route.
+
+### …and a rightward swipe on the carousel dismisses it back to Home
+
+The mirror gesture: left swipe on Home opens the carousel, right swipe on the carousel closes it
+(applies nothing — same as system back). Handles the two "the pager isn't in the way" cases the
+user called out:
+
+- **`ProfileCarouselScreen`** gains an `onDismiss` param (wired to `navController.popBackStackSafely()`
+  in `LumenNavHost`). Two mechanisms feed it, kept from overlapping because the pager consumes its
+  own drags:
+  - **Empty space** (the scrim around/below the pager — Reorder row, dots, settings row, trailing
+    spacer, insets): a `detectHorizontalDragGestures` on the outer `Column` accumulates signed x
+    and calls `onDismiss()` on release once it passes `DISMISS_SWIPE_FRACTION` (15%) of screen
+    width. A drag that starts on the pager gets consumed there, so the parent detector cancels
+    and never double-fires.
+  - **On the first profile's card**: a `NestedScrollConnection` on the same `Column` intercepts
+    rightward pre-scroll while `pagerState.currentPage == 0` (nowhere to browse to), takes the
+    delta before the pager makes it a dead overscroll, and dismisses in `onPreFling` on a
+    decisive drag distance or a rightward fling past `DISMISS_FLING_VELOCITY`. Swiping right from
+    any *other* page still browses to the previous profile, untouched.
+- Tests (`ProfileCarouselScreenTest`): `swipingRightOnTheFirstProfileCardReturnsHome`,
+  `swipingRightInEmptySpaceReturnsHome`,
+  `swipingRightOnANonFirstProfileCardBrowsesInsteadOfDismissing`. `onDismiss` added to the test
+  helper's defaults.
+
+### …then a same-session animation tweak (slide instead of fade), superseded below
+
+Briefly: `PROFILE_CAROUSEL`'s `NavHost` transition changed from `fadeIn + scaleIn(0.92)` to
+`slideInHorizontally { it }` / `slideOutHorizontally { it }`, so the carousel slid in from the
+right and back out, matching the left-swipe-in / right-swipe-out gesture direction, on the same
+340ms `cubic-bezier(.32,.72,0,1)` `animationSpec` the drawer/Hub use. Still a fling-to-navigate
+`NavHost` destination at that point, not a follow-finger panel. Superseded minutes later, same
+session, by the section below — kept here only so the "Real bug found" trail stays intact.
+
+### …then made an actual follow-finger panel, like the Hub — superseding both sections above
+
+Per direct follow-up request: "make it a follow-finger panel like the hub." The carousel is no
+longer a `NavHost` destination at all — it's merged into `HomeDrawerRoute` exactly like the Hub,
+permanently composed and just offset off-screen when closed, driven by a third `SwipeAxisState`
+(`profileAxis`, sized by `containerWidthPx` like `hubAxis`) instead of a threshold-then-navigate
+callback.
+
+- **`HomeDrawerRoute`** — new params `onNavigateToProfileSettings: (Long) -> Unit` and
+  `onNavigateToManageProfiles: () -> Unit` replace `onNavigateToProfileCarousel`; new
+  `profileViewModel: ProfileCarouselViewModel = hiltViewModel()` param, mirroring `hubViewModel`.
+  `profileAxis` gets folded into every place `hubAxis`/`drawerAxis` already were: the
+  home-pressed-event close-all effect, the focus-clear effect, the clock-adjust-cancel effect,
+  and `BackHandler`.
+  - **Two-axis ownership on Home's own horizontal drag**: previously the branch only ever fed
+    `hubAxis` (rightward) and separately accumulated a distance for a release-time carousel
+    navigation. Now it feeds `hubAxis` *or* `profileAxis` live, frame by frame. Whichever axis a
+    gesture's first horizontal delta engages (`dragActive` flips true) keeps owning every
+    subsequent frame regardless of a direction reversal — `dragBy()` already tolerates negative
+    deltas fine (walks progress back down), so there's no risk of a wavering swipe handing control
+    to the other panel mid-drag. `onDragEnd`/`onDragCancel` settle whichever of the two is
+    `dragActive` (exactly one, never both, per gesture).
+  - **New panel `Box`**, drawn last (frontmost — it used to sit above everything as a modal
+    `NavHost` destination, and staying frontmost here preserves that read), offset
+    `(1f - profileAxis.progress.value) * containerWidthPx` — 0 at rest-open, full width at
+    rest-closed, the mirror of the Hub's own `(hubAxis.progress.value - 1f) * containerWidthPx`.
+    Its own `detectHorizontalDragGestures` handles empty-space swipes back to Home exactly like
+    the Hub's own Box does.
+  - `ProfileCarouselScreen`'s three "leaves the panel" callbacks (`onProfileApplied`,
+    `onEditProfile`, `onReorderProfiles`) now resolve locally instead of navigating away from a
+    destination: applying closes `profileAxis` (`coroutineScope.launch { profileAxis.close() }`);
+    edit-profile/reorder call the new nav params directly and *don't* close the panel first — like
+    the Hub's own add-widget-picker overlay, navigating to a child screen and coming back (via its
+    own `onBack`) lands you right back in the still-open carousel, not back at Home.
+- **`ProfileCarouselScreen`** no longer owns opening/closing at all (no more `onDismiss`,
+  `DISMISS_SWIPE_FRACTION`/`DISMISS_FLING_VELOCITY` constants, or its own outer
+  `detectHorizontalDragGestures` for empty space — that's the host `Box`'s job now). It keeps only
+  the one thing it's uniquely positioned to detect: a rightward drag landing *on the pager* while
+  settled on the first page, which the pager would otherwise eat as a dead overscroll. Two new
+  params, `onDismissDrag: (deltaPx: Float) -> Unit` and `onDismissDragEnd: () -> Unit`, forward
+  that `NestedScrollConnection`'s raw deltas up to the host, which feeds them into the very same
+  `profileAxis.dragBy(-deltaPx)` / `.settle()` the empty-space Box uses — so that specific gesture
+  is genuinely follow-finger too, not a separate threshold check. The `gestureMovedPager` latch
+  (don't treat flinging *through* page 0 from another page as a dismiss) is unchanged.
+- **Real bug found**: the preview cards are a *genuine live copy* of Home's own content (clock,
+  FAVORITES/RECENTS/MOST USED list, dock) — unlike the Hub, whose content never happened to
+  textually collide with Home's. Being permanently composed (not a `NavHost` destination torn
+  down when not navigated to) put that content in the semantics tree even while fully closed and
+  off-screen, so `onNodeWithText("FAVORITES")` in `HomeDrawerRouteTest` started matching two nodes
+  (Home's real list and the carousel card's copy) and multiple pre-existing tests broke. Fixed
+  with `Modifier.clearAndSetSemantics {}` on the panel `Box`, applied only while
+  `!isProfileOpen` — Compose's own `assertIsNotDisplayed()` already treats "node doesn't exist" as
+  passing, so this needed no test-side workaround, just the production fix.
+- **`LumenNavHost`**: `PROFILE_CAROUSEL` destination, its `LumenDestinations` constant, and the
+  `fadeIn`/`fadeOut`/`fadeSpec` machinery that existed only for it are all deleted. The NavHost-
+  level transitions lose their `PROFILE_CAROUSEL`-conditional `EnterTransition.None`/
+  `ExitTransition.None` branches (nothing needs them any more) and go back to the plain slide
+  every other destination uses.
+- Tests: `HomeDrawerRouteTest` swaps its lambda-based assertions
+  (`onNavigateToProfileCarousel`/`onDismiss` firing) for panel-visibility ones
+  (`onNodeWithTag("profile_carousel_screen").assertIsDisplayed()/.assertIsNotDisplayed()`),
+  matching how the Hub's own tests already worked; gains `profileViewModel` construction in its
+  `setContent` (sharing the same `profileRepository`/`settingsRepository`/app-backed repos as
+  `homeViewModel`/`launcherViewModel`, same reasoning as that block's own doc), plus new cases
+  `swipingRightInEmptySpaceOnTheOpenCarouselReturnsToHome`,
+  `swipingRightOnTheFirstProfileCardWhileOpenReturnsToHome`,
+  `systemBackClosesAnOpenProfileCarousel`. `KeyboardDismissalTest` (unrelated to carousel
+  behavior) just gains a throwaway `profileViewModel` so it still constructs.
+  `ProfileCarouselScreenTest`'s three dismiss-drag tests are renamed and reworked to assert the
+  `onDismissDrag`/`onDismissDragEnd` forwarding contract directly instead of a boolean
+  "dismissed" flag; its empty-space case is deleted outright (that gesture no longer lives in this
+  screen — `HomeDrawerRouteTest`'s new empty-space case covers it at the host level instead).
+  Full suite: 354 JVM unit tests green; 43/43 targeted instrumented tests
+  (`ProfileCarouselScreenTest` + `HomeDrawerRouteTest` + `KeyboardDismissalTest`) green on
+  `emulator-5554` (one run crashed mid-suite from a concurrent `adb install` racing the same
+  device from unrelated work elsewhere — not a regression, confirmed clean on immediate retry).
+
+---
+
+## Dock gains per-profile overrides (mirrors per-profile favorites) + a live preview on the profile settings screen
+
+The dock was the last Home surface with no per-profile override — favorites, app-list
+position/presentation/content-mode, clock/calendar design, and calendar selection all already
+resolve per active profile, but every profile shared one dock (`DockAppRepository`/`dock_apps`)
+and one `dockDisplayMode`. Now a profile can override both, behind a single **DOCK** Inherit/
+Override card on its settings screen, exactly the shape of the existing **APPS LIST** card.
+
+- **Schema v15 → v16** (`Migrations.MIGRATION_15_16`, migration test added):
+  `profiles.overrideDock` (`INTEGER NOT NULL DEFAULT 0`) + `profiles.dockDisplayMode`
+  (`TEXT NOT NULL DEFAULT 'ICONS'`), plus a new `profile_dock_apps` table — the per-profile
+  counterpart to the global `dock_apps`, structurally identical to `favorite_apps` (profileId
+  FK, cascade delete, unique `(profileId, packageName, activityName)` index).
+- **`ProfileDockAppRepository`** (new) is to `DockAppRepository` exactly what `FavoriteAppRepository`
+  is to `DefaultFavoriteAppRepository`: `observeDockAppsForProfile` / `observeDockAppsForProfiles`
+  (live-hydrated, uninstall-collapsing), `add`/`remove`/`replace`/`reorder`, plus raw/restore for
+  backup. `DockAppRepository` is unchanged and stays the launcher-wide default dock. Tests:
+  `ProfileDockAppRepositoryTest` + `ProfileDockAppDaoTest` mirror the favorites ones.
+- **`ObserveHomeScreenStateUseCase`** resolves the dock per active profile via `flatMapLatest`
+  (mirroring `observeAppListItems`); `HomeUiState.activeDockDisplayMode` resolves the style,
+  consumed by `HomeDrawerRoute`. **`ObserveProfilePreviewsUseCase`** gained `ProfilePreviewData.dockApps`
+  so every carousel preview card renders its own profile's effective dock (previously all cards
+  shared one) — `ProfileCarouselViewModel` dropped its `DockAppRepository` dependency and its
+  shared `dockApps`/`dockDisplayMode`, replaced by a per-profile `dockDisplayMode(profileId)`
+  resolver. Tests added to both use-case test classes.
+- **`ProfileSettingsScreen`** — new **DOCK** section (`DockSection`): Inherit/Override card, a
+  `LabeledDropdownRow<DockDisplayMode>` "Display style", a "Select dock apps" row →
+  `DockAppPickerScreen` scoped to this profile, and a drag-reorder list. The old
+  `FavoritesReorderList` was generalized to `AppReorderList(apps, onReorder, testTagPrefix)` and
+  is now shared by favorites + dock. `ProfileRepository.updateOverridingDock`/`setDockDisplayMode`
+  added; `setOverridingDock` seeds the display mode + copies the default dock in when the
+  profile's own is empty (mirrors `setOverridingApps`).
+- **`DockAppPickerViewModel`** is now profile-aware exactly like `FavoritesPickerViewModel` —
+  `SavedStateHandle`'s `profileId` (`NO_ACTIVE_PROFILE_ID` sentinel = global) routes reads/writes
+  to `ProfileDockAppRepository` or `DockAppRepository`. Route `dockPicker?profileId={profileId}`
+  + `LumenDestinations.dockPicker(profileId)`. The global picker's header is now "Default dock"
+  (matching "Default favorites"); the profile one stays "Dock".
+- **Backup**: `BackupProfile` gained `overrideDock` / `dockDisplayMode` / `dockApps` (all
+  defaulted — a v1 backup still deserializes, inheriting the launcher-wide dock);
+  `CURRENT_BACKUP_VERSION` 1 → 2. Export/import round-trip each profile's dock. Tests updated.
+- **Live preview card** (requested mid-build): `ProfilePreviewCard` at the top of the profile
+  settings screen — same idea as Settings → Appearance's own preview, scoped to one profile. Real
+  production `AppRow` + `DockIcon` over the device's actual `WallpaperBackground`, driven by the
+  profile's *effective* values so toggling any override updates it live. Shows the real apps that
+  will appear on Home: `previewAppListItems` (favorites/recents/most-used, resolved via
+  `ObserveProfilePreviewsUseCase` — now injected into `ProfileSettingsViewModel` alongside
+  `WallpaperRepository`) and `effectiveDockApps`.
+- Instrumented tests: `ProfileSettingsScreenTest` (dock card defaults to inherit, override
+  enables its rows + persists, "Select dock apps" navigates, preview card renders near the top);
+  `DockAppPickerScreenTest` (`profileScopedPickerTitlesItselfDockAndWritesToThatProfilesOwnDock`,
+  plus the global picker's title assertion updated to "Default dock").
+- `CleanUpUninstalledAppsUseCase` also purges `profile_dock_apps` on a genuine uninstall.
+
+---
+
+## Profile settings restructured — Apps-list & Dock reuse the launcher's own settings screens
+
+Follow-up to the above: the per-profile settings screen had grown into one long inline scroll
+(preview + APPS LIST card + DOCK card + CLOCK card). Restructured to match how `ClockStyleGallery`
+is already reused for both the global and per-profile cases:
+
+- **`ProfileSettingsScreen`** is now a short nav list — Rename, then per area an
+  `InheritOverrideCard` (the override switch *stays here*) + a single row into that area's own
+  screen. No preview, no inline controls.
+- **`HomeAppsListSettingsScreen` / `HomeAppsListSettingsViewModel` and `DockSettingsScreen` /
+  `DockSettingsViewModel` are now profile-aware** via the `SavedStateHandle` `profileId` sentinel
+  (`NO_ACTIVE_PROFILE_ID` = the launcher-wide default), exactly like `ClockStyleGalleryViewModel`.
+  A real id reads/writes that profile's own row + `FavoriteAppRepository` /
+  `ProfileDockAppRepository`; no id writes `SettingsRepository` + the default lists. Routes gained
+  `?profileId={profileId}` + `LumenDestinations.homeAppsListSettings(id)` / `dockSettings(id)`
+  builders; `ProfileSettingsScreen`'s rows navigate with the profile id, the global Settings
+  screen without. `HomeAppsListSettingsScreen(onEditDefaultFavorites)` → `onEditFavorites`.
+- **`HomeSurfacePreview`** (`ui/components/`) — the "this is how Home looks" card extracted from
+  the two copies that existed (`AppearancePreviewCard`, the profile `ProfilePreviewCard`) into
+  one shared component (real `AppRow`/`DockIcon` over `WallpaperBackground`; empty `appList` or
+  `dockApps` omits that surface). Now on **four** screens: Appearance, Home Apps List (app rows;
+  `previewApps` = the favorites in Favorites mode, `SelectPreviewAppsUseCase` sample otherwise),
+  Dock (dock icons; the real `dockApps`), and each of those in its profile-scoped form.
+- **`ProfileSettingsViewModel` slimmed** — dropped the preview flow, `WallpaperRepository`,
+  `ObserveProfilePreviewsUseCase`, and the per-control setters (those live on the reused VMs
+  now); keeps `uiState` (for the override subtitles + seed values), `renameProfile`, and the
+  three `setOverriding*` seed-and-toggle actions. `ProfileSettingsComponents.kt` holds the shared
+  header/row/section-header helpers.
+- Tests: `ProfileSettingsScreenTest` rewritten for the nav list; `HomeAppsListSettingsScreenTest` /
+  `DockSettingsScreenTest` / their VM tests cover both the global and a profile-scoped instance
+  (setter routing, preview renders); `AppearanceSettingsScreenTest` unchanged.

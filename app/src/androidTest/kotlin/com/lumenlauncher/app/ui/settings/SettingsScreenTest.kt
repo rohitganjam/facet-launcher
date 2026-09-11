@@ -23,6 +23,7 @@ import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -44,11 +45,12 @@ class SettingsScreenTest {
         onNavigateToNotificationSettings: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
-    ) {
+    ): SettingsRepository {
+        lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
-                val settingsRepository = SettingsRepository(
+                settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "settings-screen-test-${System.nanoTime()}.preferences_pb") },
                     ),
@@ -79,6 +81,8 @@ class SettingsScreenTest {
                 )
             }
         }
+        composeRule.waitForIdle()
+        return settingsRepository
     }
 
     @Test
@@ -205,8 +209,7 @@ class SettingsScreenTest {
 
     @Test
     fun calendarRowNavigatesToCalendarSettings() {
-        // Given the settings screen — Calendar is functional as of this pass (UI shell, see
-        // IMPLEMENTATION_PLAN.md — no real permission/CalendarContract query yet)
+        // Given the settings screen
         var navigated = false
         setContent(onNavigateToCalendarSettings = { navigated = true })
 
@@ -215,6 +218,31 @@ class SettingsScreenTest {
 
         // Then its callback fires
         assertEquals(true, navigated)
+    }
+
+    @Test
+    fun calendarRowSubtitleShowsZeroSelectedWhenNothingHasBeenExplicitlyChosenYet() {
+        // Given a fresh install — selectedCalendarIds is `null` (never touched), which is "none decided", not "all"
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("calendar_settings_row"))
+
+        // Then the row shows a literal zero, not a device calendar total standing in for "all"
+        composeRule.onNodeWithTag("calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
+    }
+
+    @Test
+    fun calendarRowSubtitleReflectsAnExplicitSelection() {
+        // Given 2 calendars explicitly selected
+        val settingsRepository = setContent()
+        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("calendar_settings_row"))
+
+        // Then the row reflects that exact count and the all-day events visibility
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching {
+                composeRule.onNodeWithTag("calendar_settings_row").assertTextContains("2 calendars selected · All-day events visible", substring = true)
+            }.isSuccess
+        }
     }
 
     @Test

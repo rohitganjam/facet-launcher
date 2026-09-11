@@ -8,6 +8,7 @@ import com.lumenlauncher.app.data.local.FavoriteAppDao
 import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.local.Migrations
 import com.lumenlauncher.app.data.local.ProfileDao
+import com.lumenlauncher.app.data.local.ProfileDockAppDao
 import com.lumenlauncher.app.data.local.WidgetPlacementDao
 import dagger.Module
 import dagger.Provides
@@ -45,6 +46,9 @@ object DatabaseModule {
 
     @Provides
     fun provideDockAppDao(database: LumenDatabase): DockAppDao = database.dockAppDao()
+
+    @Provides
+    fun provideProfileDockAppDao(database: LumenDatabase): ProfileDockAppDao = database.profileDockAppDao()
 
     @Provides
     fun provideDefaultFavoriteAppDao(database: LumenDatabase): DefaultFavoriteAppDao = database.defaultFavoriteAppDao()

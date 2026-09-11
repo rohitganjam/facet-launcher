@@ -21,6 +21,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.lumenlauncher.app.data.AppRepository
+import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.AppShortcutRepository
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.CalendarRepository
@@ -29,6 +30,7 @@ import com.lumenlauncher.app.data.ContactRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.NotificationBadgeRepository
 import com.lumenlauncher.app.data.NotificationShadeRepository
@@ -52,10 +54,14 @@ import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.PlaceWidgetUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
+import com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase
+import com.lumenlauncher.app.domain.SeedDefaultDockUseCase
+import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.lumenlauncher.app.ui.profiles.ProfileCarouselViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import org.junit.Rule
 import org.junit.Test
@@ -85,6 +91,7 @@ class KeyboardDismissalTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 val profileRepository = ProfileRepository(database.profileDao())
@@ -99,6 +106,7 @@ class KeyboardDismissalTest {
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
                         dockAppRepository,
+                        profileDockAppRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
                         profileRepository,
@@ -124,13 +132,15 @@ class KeyboardDismissalTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 val profileRepository = ProfileRepository(database.profileDao())
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveProfileUseCase(profileRepository, settingsRepository),
-                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, profileDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                 )
             }
@@ -178,18 +188,56 @@ class KeyboardDismissalTest {
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
+            // A throwaway set of repos, same as this file's other view models — none of this
+            // test's cases touch the carousel itself, so correctness here doesn't matter, only
+            // that it constructs.
+            val profileViewModel = remember {
+                val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
+                val settingsRepository = SettingsRepository(
+                    PreferenceDataStoreFactory.create(
+                        produceFile = { File(context.cacheDir, "test-profile-settings-${System.nanoTime()}.preferences_pb") },
+                    ),
+                )
+                val launcherApps = context.getSystemService(LauncherApps::class.java)
+                val appRepository = AppRepository(launcherApps)
+                val profileRepository = ProfileRepository(database.profileDao())
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
+                ProfileCarouselViewModel(
+                    profileRepository,
+                    settingsRepository,
+                    wallpaperRepository,
+                    ObserveProfilePreviewsUseCase(
+                        profileRepository,
+                        settingsRepository,
+                        favoriteAppRepository,
+                        defaultFavoriteAppRepository,
+                        profileDockAppRepository,
+                        dockAppRepository,
+                        UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
+                        UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                        CalendarPermissionRepository(context),
+                        CalendarRepository(context.contentResolver),
+                    ),
+                )
+            }
 
             LumenLauncherTheme {
                 HomeDrawerRoute(
                     apps = apps,
                     onAppClick = {},
                     onNavigateToSettings = {},
-                    onNavigateToProfileCarousel = {},
+                    onNavigateToProfileSettings = {},
+                    onNavigateToManageProfiles = {},
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
+                    profileViewModel = profileViewModel,
                     launcherViewModel = launcherViewModel,
                 )
             }

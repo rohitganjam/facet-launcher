@@ -1707,7 +1707,7 @@ private fun HalfImmersedTemplate(
                             color = immersionColor,
                             topLeft = Offset(0f, bandTop),
                             size = Size(size.width, size.height - bandTop),
-                            blendMode = BlendMode.Multiply,
+                            blendMode = BlendMode.Hardlight,
                         )
                     },
             )

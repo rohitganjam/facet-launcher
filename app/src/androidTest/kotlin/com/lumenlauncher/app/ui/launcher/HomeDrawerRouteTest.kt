@@ -35,6 +35,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.lumenlauncher.app.data.AppRepository
+import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.AppShortcutRepository
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.CalendarRepository
@@ -43,6 +44,7 @@ import com.lumenlauncher.app.data.ContactRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.NotificationBadgeRepository
 import com.lumenlauncher.app.data.NotificationShadeRepository
@@ -67,10 +69,14 @@ import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.lumenlauncher.app.domain.CompactWidgetsUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetDropUseCase
 import com.lumenlauncher.app.domain.PlaceWidgetUseCase
+import com.lumenlauncher.app.domain.ObserveProfilePreviewsUseCase
+import com.lumenlauncher.app.domain.SeedDefaultDockUseCase
+import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.HomeViewModel
 import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.lumenlauncher.app.ui.profiles.ProfileCarouselViewModel
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.emptyFlow
@@ -99,7 +105,12 @@ class HomeDrawerRouteTest {
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
     }
 
-    private fun setContent(seedHubWithOneWidget: Boolean = false, onNavigateToProfileCarousel: () -> Unit = {}) {
+    private fun setContent(
+        seedHubWithOneWidget: Boolean = false,
+        onNavigateToProfileSettings: (Long) -> Unit = {},
+        onNavigateToManageProfiles: () -> Unit = {},
+        onboardingCompleted: Boolean = false,
+    ) {
         composeRule.setContent {
             val context = LocalContext.current
             // Every repository below is a real @Singleton in production (Hilt hands every
@@ -118,7 +129,7 @@ class HomeDrawerRouteTest {
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "test-settings-${System.nanoTime()}.preferences_pb") },
                     ),
-                )
+                ).also { repo -> if (onboardingCompleted) runBlocking { repo.setOnboardingCompleted(true) } }
             }
             val profileRepository = remember { ProfileRepository(database.profileDao()) }
             // A real AppRepository here would hit the actual on-device LauncherApps service —
@@ -144,6 +155,7 @@ class HomeDrawerRouteTest {
                 }
             }
             val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), appRepository) }
+            val profileDockAppRepository = remember { ProfileDockAppRepository(database.profileDockAppDao(), appRepository) }
             val favoriteAppRepository = remember { FavoriteAppRepository(database.favoriteAppDao(), appRepository) }
             val defaultFavoriteAppRepository = remember {
                 DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository).also { repo ->
@@ -165,6 +177,7 @@ class HomeDrawerRouteTest {
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
                         dockAppRepository,
+                        profileDockAppRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
                         profileRepository,
@@ -184,7 +197,8 @@ class HomeDrawerRouteTest {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveProfileUseCase(profileRepository, settingsRepository),
-                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, profileDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                 )
             }
@@ -247,18 +261,44 @@ class HomeDrawerRouteTest {
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
+            // Shares the same profileRepository/settingsRepository/app-backed repos as
+            // homeViewModel/launcherViewModel above — same reasoning as that block's own doc: a
+            // separate throwaway copy here would observe a different activeProfileId than what
+            // EnsureActiveProfileUseCase actually wrote.
+            val profileViewModel = remember {
+                val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
+                ProfileCarouselViewModel(
+                    profileRepository,
+                    settingsRepository,
+                    wallpaperRepository,
+                    ObserveProfilePreviewsUseCase(
+                        profileRepository,
+                        settingsRepository,
+                        favoriteAppRepository,
+                        defaultFavoriteAppRepository,
+                        profileDockAppRepository,
+                        dockAppRepository,
+                        UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
+                        UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                        CalendarPermissionRepository(context),
+                        CalendarRepository(context.contentResolver),
+                    ),
+                )
+            }
 
             LumenLauncherTheme {
                 HomeDrawerRoute(
                     apps = apps,
                     onAppClick = {},
                     onNavigateToSettings = {},
-                    onNavigateToProfileCarousel = onNavigateToProfileCarousel,
+                    onNavigateToProfileSettings = onNavigateToProfileSettings,
+                    onNavigateToManageProfiles = onNavigateToManageProfiles,
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
+                    profileViewModel = profileViewModel,
                     launcherViewModel = launcherViewModel,
                 )
             }
@@ -300,6 +340,30 @@ class HomeDrawerRouteTest {
 
         // Then the drawer commits fully open — the rail is always composed (offset off-screen
         // when closed, per the follow-finger drag design), so displayed-ness is what matters
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipingUpStartingOnAnAppIconStillOpensTheDrawer() {
+        // Given the launcher starts on Home, with a favorite app icon rendered in the swipe area
+        // (regression test: HomeDrawerRoute's swipe detector used to run on Compose's default
+        // Main pass, so a finger coming down on the icon's own combinedClickable claimed the
+        // touch first and the drag never started — only empty space between icons worked)
+        setContent()
+        val iconBounds = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val rootHeight = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.height
+
+        // When swiping up starting exactly on top of that icon, well past the halfway commit point
+        composeRule.onRoot().performTouchInput {
+            down(iconBounds.center)
+            moveTo(iconBounds.center - Offset(0f, rootHeight * 0.6f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the drawer still commits open
         composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
     }
 
@@ -516,65 +580,137 @@ class HomeDrawerRouteTest {
     }
 
     @Test
-    fun holdingStillForTheFullDurationNavigatesToTheProfileCarousel() {
-        // Given Home rendered — long-press now goes straight to the profile carousel instead of
-        // opening an options sheet (see chat history: the sheet is gone, its other rows moved to
-        // the carousel screen itself and Settings).
-        var navigated = false
-        setContent(onNavigateToProfileCarousel = { navigated = true })
+    fun swipingLeftPastThresholdOpensTheProfileCarousel() {
+        // Given Home rendered — a left swipe on Home is the way into Switch Profiles, a
+        // follow-finger panel to Home's right (mirroring the Hub, to Home's left; see chat
+        // history — this replaced the old empty-space long-press, which was too hard to land
+        // between the clock, app list and dock, and before that a NavHost destination).
+        setContent()
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
 
-        // When the finger goes down and stays still past the platform long-press timeout —
-        // advance Compose's own test clock rather than Thread.sleep, since the pointerInput
-        // coroutine's internal timer is driven by that clock, not real wall-clock time
-        composeRule.onRoot().performTouchInput { down(center) }
-        composeRule.mainClock.advanceTimeBy(1_000)
-        composeRule.waitForIdle()
+        // When swiping left across most of the screen (Compose's default swipeLeft() travels
+        // well past the commit fraction)
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        settleAnimation()
 
-        // Then the caller is asked to navigate to the profile carousel
-        assertEquals(true, navigated)
-        composeRule.onRoot().performTouchInput { up() }
+        // Then the carousel commits fully open
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
     }
 
     @Test
-    fun releasingBeforeTheDurationDoesNotNavigate() {
+    fun releasingALeftDragBeforeThresholdDoesNotOpenTheProfileCarousel() {
         // Given Home rendered
-        var navigated = false
-        setContent(onNavigateToProfileCarousel = { navigated = true })
+        setContent()
 
-        // When the finger lifts well before the long-press timeout
-        composeRule.onRoot().performTouchInput { down(center) }
-        composeRule.mainClock.advanceTimeBy(100)
-        composeRule.onRoot().performTouchInput { up() }
-        composeRule.mainClock.advanceTimeBy(1_000)
-        composeRule.waitForIdle()
+        // When dragging left only a small fraction of the screen and releasing
+        composeRule.onRoot().performTouchInput {
+            down(centerRight)
+            moveTo(centerRight - Offset(40f, 0f))
+            up()
+        }
+        settleAnimation()
 
-        // Then nothing happens
-        assertEquals(false, navigated)
+        // Then it springs back closed
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
     }
 
     @Test
-    fun longPressBesideTheClockStillReachesTheProfileCarousel() {
-        // Given Home rendered — the default clock template is left-aligned and doesn't fill the
-        // screen's width, so there's real empty space to its right today (see HomeScreen.kt's own
-        // doc on why the clock's tap/long-press box now hugs only its rendered content instead of
-        // the old full-width box, which used to swallow a long-press landing anywhere in that
-        // empty space before it ever reached this outer gesture).
-        var navigated = false
-        setContent(onNavigateToProfileCarousel = { navigated = true })
+    fun swipingLeftOpensTheProfileCarouselNotTheHub() {
+        // Given Home rendered — regression guard for the horizontal axis split: rightward is the
+        // Hub, leftward is Switch Profiles, and one gesture must never do both.
+        setContent()
 
-        val rootRight = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
-        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
-        val besideClock = Offset((clockBounds.right + rootRight) / 2f, clockBounds.center.y)
+        // When swiping left
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        settleAnimation()
 
-        // When the finger goes down beside the clock (not on it) and stays still past the
-        // long-press timeout
-        composeRule.onRoot().performTouchInput { down(besideClock) }
-        composeRule.mainClock.advanceTimeBy(1_000)
-        composeRule.waitForIdle()
+        // Then the carousel opened and the Hub stayed closed
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
+    }
 
-        // Then the caller is still asked to navigate to the profile carousel
-        assertEquals(true, navigated)
-        composeRule.onRoot().performTouchInput { up() }
+    @Test
+    fun aDiagonalSwipeMostlyLeftOpensTheProfileCarouselNotTheDrawer() {
+        // Given Home rendered
+        setContent()
+
+        // When dragging mostly left with a small vertical component — the axis-lock must commit
+        // to the horizontal (Switch Profiles) gesture alone, never also the Drawer
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = centerRight,
+                end = centerRight + Offset(-visibleSize.width * 0.6f, visibleSize.height * 0.1f),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        settleAnimation()
+
+        // Then the carousel opened and the Drawer did not
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingRightInEmptySpaceOnTheOpenCarouselReturnsToHome() {
+        // Given the carousel is open
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        settleAnimation()
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+
+        // When swiping right low on the screen, below the card cluster (the trailing spacer) —
+        // the carousel's own host-level Box (mirroring the Hub's) catches this, not the pager
+        composeRule.onNodeWithTag("profile_carousel_screen").performTouchInput {
+            val startX = width * 0.15f
+            val y = height * 0.94f
+            down(Offset(startX, y))
+            repeat(15) { step -> moveTo(Offset(startX + width * 0.7f * (step + 1) / 15f, y)) }
+            up()
+        }
+        settleAnimation()
+
+        // Then it closes back to Home
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingRightOnTheFirstProfileCardWhileOpenReturnsToHome() {
+        // Given the carousel is open, on the only (first) profile's page — nowhere to browse to
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        settleAnimation()
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+
+        // When swiping right on the pager itself
+        val pager = composeRule.onNodeWithTag("profile_carousel_pager")
+        val pagerWidth = pager.fetchSemanticsNode().size.width.toFloat()
+        pager.performTouchInput {
+            down(centerLeft)
+            repeat(15) { step -> moveTo(centerLeft + Offset(pagerWidth * 0.6f * (step + 1) / 15f, 0f)) }
+            up()
+        }
+        settleAnimation()
+
+        // Then it closes back to Home — ProfileCarouselScreen forwarded the drag through
+        // onDismissDrag/onDismissDragEnd into the very same axis the empty-space swipe above uses
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun systemBackClosesAnOpenProfileCarousel() {
+        // Given the carousel is open
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        settleAnimation()
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+
+        // When the system back gesture fires
+        Espresso.pressBack()
+        settleAnimation()
+
+        // Then it closes back to Home
+        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
     }
 
     @Test
@@ -681,5 +817,40 @@ class HomeDrawerRouteTest {
         // so we check the field's semantics.
         composeRule.onNodeWithTag("drawer_search_field").assert(hasText(""))
         composeRule.onNodeWithTag("header_A").assertIsDisplayed()
+    }
+
+    @Test
+    fun gestureHintShowsOnceOnboardingHasCompletedAndDismissesOnGotIt() {
+        // Given onboarding has just completed
+        setContent(onboardingCompleted = true)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the one-time gesture hint overlay shows over Home (HomeViewModel's own combine is
+        // real async work, same as everywhere else in this file — not reliably caught by a single
+        // waitForIdle())
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("gesture_hint_overlay").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("gesture_hint_overlay").assertIsDisplayed()
+
+        // When tapping "Got it"
+        composeRule.onNodeWithTag("gesture_hint_got_it").performClick()
+
+        // Then it's dismissed and doesn't come back
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("gesture_hint_overlay").fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    @Test
+    fun gestureHintDoesNotShowBeforeOnboardingHasCompleted() {
+        // Given onboarding has not completed (the default for every other test in this file)
+        setContent(onboardingCompleted = false)
+        composeRule.onNodeWithText("FAVORITES").assertExists()
+
+        // Then no gesture hint overlay renders
+        composeRule.onNodeWithTag("gesture_hint_overlay").assertDoesNotExist()
     }
 }

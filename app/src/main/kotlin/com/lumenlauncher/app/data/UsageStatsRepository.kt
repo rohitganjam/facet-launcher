@@ -58,6 +58,6 @@ class UsageStatsRepository @Inject constructor(
     }
 
     private companion object {
-        val LOOKBACK_MS = TimeUnit.DAYS.toMillis(30)
+        val LOOKBACK_MS = TimeUnit.DAYS.toMillis(7)
     }
 }

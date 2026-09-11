@@ -60,6 +60,7 @@ import com.lumenlauncher.app.data.model.WallpaperAccentRole
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.CardDivider
 import com.lumenlauncher.app.ui.components.FontWeightSlider
+import com.lumenlauncher.app.ui.components.HomeSurfacePreview
 import com.lumenlauncher.app.ui.components.LabeledDropdownRow
 import com.lumenlauncher.app.ui.components.SettingsCard
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
@@ -138,14 +139,16 @@ private fun AppearanceSettingsContent(
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
                 item {
-                    AppearancePreviewCard(
+                    HomeSurfacePreview(
+                        appList = previewApps.take(PREVIEW_HOME_APP_COUNT),
+                        dockApps = previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT),
                         appRowPosition = settings.appRowPosition,
                         appRowPresentation = settings.appRowPresentation,
-                        appLabelColorOption = settings.appLabelColorOption,
-                        homeAppsFontWeight = settings.homeAppsFontWeight,
                         dockDisplayMode = settings.dockDisplayMode,
-                        previewApps = previewApps,
+                        labelColor = settings.appLabelColorOption.resolve(),
+                        labelFontWeight = settings.homeAppsFontWeight.resolve(),
                         homeWallpaper = homeWallpaper,
+                        maxAppRows = PREVIEW_HOME_APP_COUNT,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
@@ -210,90 +213,6 @@ private fun AppearanceSettingsContent(
             }
         },
     )
-}
-
-/**
- * Shows how this screen's own settings actually render on Home/Dock, using real production
- * components ([AppRow]/[DockIcon] — the latter already `internal` for the profile carousel's own
- * live preview, the former promoted `internal` for exactly this reuse too) rather than a
- * hand-drawn mockup. Needs no preview-only state beyond [previewApps]:
- * [AppearanceSettingsViewModel.settings] already updates immediately after every setter call, so
- * the rest of this just reads the same live values the rest of the screen's controls write to.
- * Backed by [WallpaperBackground] — the device's actual system wallpaper (falling back to the
- * `Wallpaper` token), not [Surface]/[SurfaceContainer] — so [AppRow]/[DockIcon]'s text-shadow
- * treatment, tuned for legibility over an arbitrary wallpaper rather than a flat card, renders
- * exactly as it would on Home. [previewApps] are the device's own real installed apps ([AppearanceSettingsViewModel.previewApps],
- * sourced the same way the App Drawer is, then biased toward recognizable ones — a browser,
- * messaging, camera, mail, phone app, plus a few near-ubiquitous Google apps — via
- * [com.lumenlauncher.app.domain.SelectPreviewAppsUseCase], falling back to the installed list's
- * own remaining apps) rather than placeholder objects, so their icons render too — Icon render
- * mode is now visually demonstrated here as well, alongside Theme/Accent/Launcher Font/Font
- * weight/App label color.
- */
-@Composable
-private fun AppearancePreviewCard(
-    appRowPosition: AppRowPosition,
-    appRowPresentation: AppRowPresentation,
-    appLabelColorOption: ClockColorOption,
-    homeAppsFontWeight: FontWeightOption,
-    dockDisplayMode: DockDisplayMode,
-    previewApps: List<AppInfo>,
-    homeWallpaper: HomeWallpaper,
-    modifier: Modifier = Modifier,
-) {
-    val labelColor = appLabelColorOption.resolve()
-    val labelFontWeight = homeAppsFontWeight.resolve()
-    val shape = MaterialTheme.shapes.medium
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(elevation = 4.dp, shape = shape)
-            .clip(shape)
-            .border(1.dp, Hairline, shape),
-    ) {
-        // The real system wallpaper — same backdrop Home renders these components over, so their
-        // text-shadow treatment reads exactly as it would there. Falls back to the Wallpaper
-        // token when no bitmap is available (see WallpaperBackground). Bottom-anchored: this card
-        // is a short band, so it shows the wallpaper's lower part (where Home's dock sits).
-        WallpaperBackground(homeWallpaper, Modifier.matchParentSize(), alignment = Alignment.BottomCenter)
-
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(
-                text = "PREVIEW",
-                style = MaterialTheme.typography.labelSmall,
-                color = Muted,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-            previewApps.take(PREVIEW_HOME_APP_COUNT).forEach { app ->
-                AppRow(
-                    app = app,
-                    onClick = {},
-                    badgeCount = null,
-                    badgeStyle = NotificationBadgeStyle.DOT,
-                    onRequestShortcuts = { emptyList() },
-                    onLaunchShortcut = {},
-                    position = appRowPosition,
-                    presentation = appRowPresentation,
-                    labelColor = labelColor,
-                    labelFontWeight = labelFontWeight,
-                    enableLongPressMenu = false,
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT).forEach { app ->
-                    DockIcon(
-                        app = app,
-                        displayMode = dockDisplayMode,
-                        onClick = {},
-                        labelColor = labelColor,
-                        labelFontWeight = labelFontWeight,
-                        enableLongPressMenu = false,
-                    )
-                }
-            }
-        }
-    }
 }
 
 private const val PREVIEW_HOME_APP_COUNT = 2

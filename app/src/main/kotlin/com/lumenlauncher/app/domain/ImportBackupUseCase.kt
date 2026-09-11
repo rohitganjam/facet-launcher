@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.BackupRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.AppRowPosition
@@ -62,6 +63,7 @@ class ImportBackupUseCase @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val dockAppRepository: DockAppRepository,
+    private val profileDockAppRepository: ProfileDockAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
@@ -76,6 +78,9 @@ class ImportBackupUseCase @Inject constructor(
             val newId = profileRepository.restoreProfile(backupProfile.toProfileEntity())
             backupProfile.favorites.forEach { entry ->
                 favoriteAppRepository.restoreFavorite(entry.toFavoriteAppEntity(newId))
+            }
+            backupProfile.dockApps.forEach { entry ->
+                profileDockAppRepository.restoreDockApp(entry.toProfileDockAppEntity(newId))
             }
             if (index == bundle.settings.activeProfileIndex) activeProfileId = newId
         }

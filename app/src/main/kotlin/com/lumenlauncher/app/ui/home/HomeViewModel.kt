@@ -6,6 +6,7 @@ import com.lumenlauncher.app.data.NotificationShadeRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
+import com.lumenlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -72,6 +73,11 @@ class HomeViewModel @Inject constructor(
     /** Called the moment the usage-access prompt's own button is tapped — hides it for the rest of this ViewModel's lifetime regardless of whether the permission actually ends up granted (see chat history). */
     fun dismissUsageAccessPrompt() {
         usageAccessPromptDismissed.value = true
+    }
+
+    /** First gesture on Home after onboarding, or a "Got it" tap — see [HomeUiState.showGestureHint]. */
+    fun dismissGestureHint() {
+        viewModelScope.launch { settingsRepository.markCoachMarkSeen(HOME_GESTURES_COACH_MARK_ID) }
     }
 
     /** Swipe-down-to-open-shade gesture, from [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute]. */

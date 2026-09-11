@@ -7,14 +7,17 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.lumenlauncher.app.data.AppRepository
 import com.lumenlauncher.app.data.DockAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.local.LumenDatabase
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
@@ -28,8 +31,16 @@ class DockAppPickerScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    /** [seed] runs against real (throwaway, in-memory) repositories before the screen renders. */
-    private fun setContent(onDone: () -> Unit = {}, seed: (AppRepository, DockAppRepository) -> Unit = { _, _ -> }) {
+    /**
+     * [seed] runs against real (throwaway, in-memory) repositories before the screen renders.
+     * A non-null [profileId] scopes the picker to that profile's own dock (as reached from a
+     * profile's settings) rather than the launcher-wide default dock (as reached from Settings).
+     */
+    private fun setContent(
+        onDone: () -> Unit = {},
+        profileId: Long? = null,
+        seed: (AppRepository, DockAppRepository, ProfileDockAppRepository) -> Unit = { _, _, _ -> },
+    ) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -37,8 +48,17 @@ class DockAppPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                seed(appRepository, dockAppRepository)
-                DockAppPickerViewModel(GetInstalledAppsUseCase(appRepository), dockAppRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                if (profileId != null) {
+                    runBlocking { database.profileDao().upsert(com.lumenlauncher.app.data.local.ProfileEntity(id = profileId, name = "P", position = 0)) }
+                }
+                seed(appRepository, dockAppRepository, profileDockAppRepository)
+                DockAppPickerViewModel(
+                    SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+                    GetInstalledAppsUseCase(appRepository),
+                    dockAppRepository,
+                    profileDockAppRepository,
+                )
             }
             LumenLauncherTheme {
                 DockAppPickerScreen(onDone = onDone, viewModel = viewModel)
@@ -66,7 +86,7 @@ class DockAppPickerScreenTest {
         // repository the ViewModel uses, rather than assuming a specific package is visible —
         // package-visibility rules can differ between this test APK and the app under test)
         var targetApp: AppInfo? = null
-        setContent { appRepository, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "dock_picker_row_${app.packageName}"
 
@@ -92,7 +112,7 @@ class DockAppPickerScreenTest {
     @Test
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already in the dock, so both "IN DOCK" and "ALL APPS" render
-        setContent { appRepository, dockAppRepository ->
+        setContent { appRepository, dockAppRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             installed.take(2).forEachIndexed { index, app -> runBlocking { dockAppRepository.addDockApp(app, index) } }
         }
@@ -104,7 +124,7 @@ class DockAppPickerScreenTest {
         composeRule.onNodeWithText("ALL APPS").performScrollTo()
 
         // Then the pinned header (title + Done) is still on screen, not scrolled away
-        composeRule.onNodeWithText("Dock").assertIsDisplayed()
+        composeRule.onNodeWithText("Default dock").assertIsDisplayed()
         composeRule.onNodeWithTag("dock_picker_done").assertIsDisplayed()
     }
 
@@ -112,7 +132,7 @@ class DockAppPickerScreenTest {
     fun inDockAppsRenderFirstUnderTheirOwnSectionHeader() {
         // Given two real apps already in the dock
         var dockApps: List<AppInfo> = emptyList()
-        setContent { appRepository, dockAppRepository ->
+        setContent { appRepository, dockAppRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             dockApps = installed.take(2)
             dockApps.forEachIndexed { index, app -> runBlocking { dockAppRepository.addDockApp(app, index) } }
@@ -132,7 +152,7 @@ class DockAppPickerScreenTest {
     fun uncheckingIsAllowedDownToAnEmptyDock() {
         // Given a dock with a single app — no floor blocks removing it (MIN_APPS = 0)
         var onlyDockApp: AppInfo? = null
-        setContent { appRepository, dockAppRepository ->
+        setContent { appRepository, dockAppRepository, _ ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             onlyDockApp = app
             runBlocking { dockAppRepository.addDockApp(app, 0) }
@@ -155,6 +175,33 @@ class DockAppPickerScreenTest {
         // Then it's removed, leaving the dock empty
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertIsOff() }.isSuccess
+        }
+    }
+
+    @Test
+    fun profileScopedPickerTitlesItselfDockAndWritesToThatProfilesOwnDock() {
+        // Given the picker opened for profile 7 (not the launcher-wide default) with one app
+        // already in profile 7's own dock and NOT in the shared default dock
+        var seededApp: AppInfo? = null
+        setContent(profileId = 7L) { appRepository, dockAppRepository, profileDockAppRepository ->
+            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            seededApp = app
+            runBlocking { profileDockAppRepository.addDockApp(7L, app, 0) }
+            // deliberately leave the shared default dock empty
+        }
+        val app = requireNotNull(seededApp)
+        val rowTag = "dock_picker_row_${app.packageName}"
+
+        // Then the header reads "Dock" (this profile's own), not the global "Default dock"
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Dock").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Default dock").assertDoesNotExist()
+
+        // And the seeded app shows as already checked — proof the picker is reading profile 7's
+        // own dock, not the (empty) shared one
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag(rowTag).assertIsOn() }.isSuccess
         }
     }
 }

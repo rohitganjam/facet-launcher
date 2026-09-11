@@ -38,12 +38,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -52,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -90,6 +96,7 @@ import com.lumenlauncher.app.ui.theme.Muted
 import com.lumenlauncher.app.ui.theme.Surface
 import com.lumenlauncher.app.ui.theme.SurfaceContainer
 import com.lumenlauncher.app.ui.theme.resolve
+import kotlin.math.abs
 
 private val CAROUSEL_PAGE_SPACING = 8.dp
 
@@ -111,10 +118,21 @@ private val CAROUSEL_PAGE_CHROME_HEIGHT = 104.dp
 private const val CAROUSEL_SCRIM_ALPHA = 0.6f
 
 /**
- * Switch Profiles carousel (`3a`, `4n`, `4o`): a translucent overlay on Home for picking a
- * profile. Tapping a card applies it and returns Home ([onProfileApplied]); [onReorderProfiles]
- * opens the standalone Manage Profiles screen; there's no back button — system back / tapping a
- * card is the way out.
+ * Switch Profiles carousel (`3a`, `4n`, `4o`): a follow-finger panel to Home's right (see
+ * [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute] — this screen is never a `NavHost`
+ * destination, it's always composed and just offset off-screen when closed, exactly like the
+ * Hub). Tapping a card applies it and returns Home ([onProfileApplied]); [onReorderProfiles]
+ * opens the standalone Manage Profiles screen.
+ *
+ * This screen doesn't own opening/closing itself — its host does, via
+ * [com.lumenlauncher.app.ui.launcher.HomeDrawerRoute]'s own `profileAxis` — except for one
+ * gesture it's uniquely positioned to detect: a rightward swipe
+ * that lands *on the pager* while it's settled on the first profile's page. There's no previous
+ * profile to browse to there, so without this, the pager would just eat the drag as a dead
+ * overscroll before the host's own empty-space detector ever saw it. [onDismissDrag] forwards
+ * that drag's raw signed pixel deltas to the host (which feeds them into the same `profileAxis`
+ * a swipe in empty space would), and [onDismissDragEnd] tells it the gesture ended so it can
+ * settle open/closed. Swiping right from any *other* page still just browses backward.
  */
 @Composable
 fun ProfileCarouselScreen(
@@ -122,6 +140,8 @@ fun ProfileCarouselScreen(
     onEditProfile: (profileId: Long) -> Unit,
     onReorderProfiles: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onDismissDrag: (deltaPx: Float) -> Unit,
+    onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileCarouselViewModel = hiltViewModel(),
 ) {
@@ -134,6 +154,8 @@ fun ProfileCarouselScreen(
         onDeleteProfile = viewModel::deleteProfile,
         onReorderProfiles = onReorderProfiles,
         onNavigateToSettings = onNavigateToSettings,
+        onDismissDrag = onDismissDrag,
+        onDismissDragEnd = onDismissDragEnd,
         modifier = modifier,
     )
 }
@@ -147,6 +169,8 @@ private fun ProfileCarouselContent(
     onDeleteProfile: (ProfileEntity) -> Unit,
     onReorderProfiles: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onDismissDrag: (deltaPx: Float) -> Unit,
+    onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val profiles = uiState.profiles
@@ -167,12 +191,51 @@ private fun ProfileCarouselContent(
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
     var deletingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
 
+    val config = LocalConfiguration.current
+    val currentOnDismissDrag by rememberUpdatedState(onDismissDrag)
+    val currentOnDismissDragEnd by rememberUpdatedState(onDismissDragEnd)
+    // Rightward drags that land on the pager while it's settled on the first page have nowhere to
+    // browse to — take them here before the pager turns them into a dead overscroll, and forward
+    // them to the host's own profileAxis instead (see this file's top-level doc). A gesture that
+    // ever moved the pager (a real browse from another page) is left alone for its whole
+    // duration, even once it reaches page 0, so flinging back through the first page doesn't turn
+    // into a close. Empty-space drags never reach here at all — the pager is the only scrollable
+    // in this screen, so nothing else dispatches into this connection.
+    val dismissOnSwipeBack = remember(pagerState) {
+        object : NestedScrollConnection {
+            var gestureMovedPager = false
+            var didDismissDrag = false
+
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (source != NestedScrollSource.Drag) return Offset.Zero
+                val settledOnFirstPage = pagerState.currentPage == 0 &&
+                    abs(pagerState.currentPageOffsetFraction) < 0.0001f
+                if (!settledOnFirstPage) gestureMovedPager = true
+                return if (available.x > 0f && settledOnFirstPage && !gestureMovedPager) {
+                    didDismissDrag = true
+                    currentOnDismissDrag(available.x)
+                    Offset(available.x, 0f)
+                } else {
+                    Offset.Zero
+                }
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (didDismissDrag) currentOnDismissDragEnd()
+                gestureMovedPager = false
+                didDismissDrag = false
+                return Velocity.Zero
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             // Translucent overlay on Home — see CAROUSEL_SCRIM_ALPHA.
             .background(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA))
             .testTag("profile_carousel_screen")
+            .nestedScroll(dismissOnSwipeBack)
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
         // No header — just the Reorder affordance, right-aligned.
@@ -188,7 +251,6 @@ private fun ProfileCarouselContent(
             )
         }
 
-        val config = LocalConfiguration.current
         // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
         // fraction of the screen width and the leftover half on each side is the neighbour peek.
         val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
@@ -233,8 +295,8 @@ private fun ProfileCarouselContent(
                     appRowPresentation = uiState.appRowPresentation(profile.id),
                     appLabelColorOption = uiState.globalSettings.appLabelColorOption,
                     homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
-                    dockApps = uiState.dockApps,
-                    dockDisplayMode = uiState.dockDisplayMode,
+                    dockApps = uiState.previewsByProfileId[profile.id]?.dockApps.orEmpty(),
+                    dockDisplayMode = uiState.dockDisplayMode(profile.id),
                     canDelete = uiState.canDeleteProfile,
                     onEditProfileClick = { onEditProfile(profile.id) },
                     onDeleteClick = { deletingProfile = profile },
@@ -283,7 +345,7 @@ private fun ProfileCarouselContent(
     deletingProfile?.let { profile ->
         ConfirmDialog(
             title = "Delete ${profile.name}?",
-            message = "This can't be undone. Its favorites will be removed too.",
+            message = "This can't be undone. Its favorites also be removed.",
             confirmLabel = "Delete",
             onConfirm = { onDeleteProfile(profile); deletingProfile = null },
             onDismiss = { deletingProfile = null },
@@ -323,7 +385,7 @@ private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifi
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(text = "Launcher settings", style = MaterialTheme.typography.bodyLarge, color = Ink)
-                Text(text = "Default clock, favorites, drawer, badges", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                Text(text = "Appearance, Default clock, favorites, drawer and more", style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
         }
         Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Ink)
@@ -656,6 +718,8 @@ private fun ProfileCarouselScreenPreview() {
             onDeleteProfile = {},
             onReorderProfiles = {},
             onNavigateToSettings = {},
+            onDismissDrag = {},
+            onDismissDragEnd = {},
         )
     }
 }

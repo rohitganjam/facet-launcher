@@ -234,7 +234,7 @@ class ProfileRepositoryTest {
             position = AppRowPosition.RIGHT,
             presentation = AppRowPresentation.TEXT_ONLY,
             mode = ListContentMode.MOST_USED,
-            count = 7,
+            count = 6,
             overridingFavorites = true
         )
         val stored = repository.observeProfiles().first().single()
@@ -242,7 +242,7 @@ class ProfileRepositoryTest {
         assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, stored.appRowPresentation)
         assertEquals(ListContentMode.MOST_USED, stored.listContentMode)
-        assertEquals(7, stored.appsToShowCount)
+        assertEquals(6, stored.appsToShowCount)
         assertEquals(true, stored.overridingFavorites)
     }
 
@@ -277,16 +277,16 @@ class ProfileRepositoryTest {
     }
 
     @Test
-    fun `setAppsToShowCount coerces into the 4 to 8 range`() = runTest {
+    fun `setAppsToShowCount coerces into the 3 to 6 range`() = runTest {
         val dao = FakeProfileDao()
         val repository = ProfileRepository(dao)
         val profile = repository.addProfile()
-        repository.setAppsToShowCount(profile, 6)
-        assertEquals(6, repository.observeProfiles().first().single().appsToShowCount)
+        repository.setAppsToShowCount(profile, 5)
+        assertEquals(5, repository.observeProfiles().first().single().appsToShowCount)
         repository.setAppsToShowCount(profile, 1)
-        assertEquals(4, repository.observeProfiles().first().single().appsToShowCount)
+        assertEquals(3, repository.observeProfiles().first().single().appsToShowCount)
         repository.setAppsToShowCount(profile, 99)
-        assertEquals(8, repository.observeProfiles().first().single().appsToShowCount)
+        assertEquals(6, repository.observeProfiles().first().single().appsToShowCount)
     }
 
     @Test

@@ -92,5 +92,36 @@ object Migrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+    /**
+     * Per-profile dock overrides. Adds `profiles.overrideDock` (the single flag gating the whole
+     * Dock section, same `NOT NULL DEFAULT 0` treatment as `overrideApps`/`overrideClock`) and
+     * `profiles.dockDisplayMode` (this profile's own Icons/Text style, `NOT NULL DEFAULT 'ICONS'`
+     * — today's unchanged look — same treatment as every other enum column in the profile bundles),
+     * plus the new `profile_dock_apps` table: the per-profile counterpart to the existing global
+     * `dock_apps`, structurally identical to `favorite_apps` (profileId FK, cascade delete, unique
+     * (profileId, packageName, activityName) index).
+     */
+    val MIGRATION_15_16: Migration = object : Migration(15, 16) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles ADD COLUMN overrideDock INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN dockDisplayMode TEXT NOT NULL DEFAULT 'ICONS'")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `profile_dock_apps` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`profileId` INTEGER NOT NULL, " +
+                    "`packageName` TEXT NOT NULL, " +
+                    "`activityName` TEXT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`profileId`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_profile_dock_apps_profileId_packageName_activityName` " +
+                    "ON `profile_dock_apps` (`profileId`, `packageName`, `activityName`)",
+            )
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(
+        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
+    )
 }

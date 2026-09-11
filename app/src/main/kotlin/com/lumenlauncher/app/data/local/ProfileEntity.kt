@@ -2,6 +2,7 @@ package com.lumenlauncher.app.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.lumenlauncher.app.data.model.AppListLimits
 import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
@@ -10,6 +11,7 @@ import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
 
@@ -52,7 +54,7 @@ data class ProfileEntity(
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
-    val appsToShowCount: Int = 5,
+    val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     /** Whether this profile's app list anchors to the bottom (above the dock) or the top (below the clock's grab handle) — see [com.lumenlauncher.app.data.model.LauncherSettings.appListVerticalAlignment]. */
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     /** 
@@ -61,6 +63,13 @@ data class ProfileEntity(
      * [false] = use global default favorites; [true] = use this profile's own list.
      */
     val overridingFavorites: Boolean = false,
+
+    // Dock section — one override flag for the whole Home dock: which apps it holds (this
+    // profile's own [com.lumenlauncher.app.data.local.ProfileDockAppEntity] list rather than the
+    // launcher-wide default) plus its Icons/Text display style. Mirrors the Apps section's single
+    // `overrideApps` flag exactly.
+    val overrideDock: Boolean = false,
+    val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
 
     // Calendar selection section — content/productivity concerns (which calendars, which kinds
     // of events), deliberately separate from the Clock+Calendar *design* section above (see

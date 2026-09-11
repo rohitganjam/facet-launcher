@@ -9,7 +9,6 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,9 +18,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -44,7 +43,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -52,6 +56,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -60,6 +65,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.model.DrawerPresentation
+import com.lumenlauncher.app.ui.components.GestureHintOverlay
 import com.lumenlauncher.app.ui.drawer.AppDrawerScreen
 import com.lumenlauncher.app.ui.drawer.DrawerViewModel
 import com.lumenlauncher.app.ui.home.ClockAdjustMode
@@ -69,13 +75,17 @@ import com.lumenlauncher.app.ui.hub.HubScreen
 import com.lumenlauncher.app.ui.hub.HubViewModel
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.lumenlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.lumenlauncher.app.ui.profiles.ProfileCarouselScreen
+import com.lumenlauncher.app.ui.profiles.ProfileCarouselViewModel
+import com.lumenlauncher.app.ui.theme.LUMEN_TRANSITION_DURATION_MS
+import com.lumenlauncher.app.ui.theme.LumenTransitionEasing
 import com.lumenlauncher.app.ui.theme.resolve
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /** README's drawer-transform timing/easing (`.34s cubic-bezier(.32,.72,0,1)`), reused for the settle animation. */
-private val DRAWER_SETTLE_SPEC = tween<Float>(durationMillis = 340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))
+private val DRAWER_SETTLE_SPEC = tween<Float>(durationMillis = LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)
 
 /** A drag needs to travel at least this fraction of the container size, in either direction, to commit open/closed. */
 private const val COMMIT_TRAVEL_FRACTION = 0.20f
@@ -140,26 +150,83 @@ private class SwipeAxisState(private val containerSizePx: () -> Float, private v
 private enum class Axis { VERTICAL, HORIZONTAL }
 
 /**
- * Home + Drawer + Hub, merged into one composable/route rather than separate `NavHost`
- * destinations. A follow-finger drag needs continuous, cancellable animation (an [Animatable]
- * driving each layer's position every frame) — `NavHost`'s declarative enter/exit transitions
- * only animate already-committed navigation events, and F10 already frames the Drawer as "an
- * overlay on top of the home background," not a distinct screen; the Hub (F5, to Home's left)
- * follows the same model on its own horizontal axis. Dragging up on Home (or down on the
- * Drawer's own list, only once scrolled to the top) opens/closes the Drawer; dragging right on
- * Home (or left on the Hub) opens/closes the Hub — whichever direction a drag on Home's own
- * surface resolves to first wins for that gesture (see [Axis]), so a diagonal swipe can't
- * trigger both. Releasing commits open/closed once the drag has travelled at least
- * [COMMIT_TRAVEL_FRACTION] of the container size *from wherever this particular drag started*
- * (not a fixed 50% of the full range — that felt too hard to trigger); anything short of that
- * springs back to that starting state instead.
+ * Same drag-gesture semantics as [androidx.compose.foundation.gestures.detectDragGestures], but
+ * watches every event at [PointerEventPass.Initial] instead of the default (post-child) Main pass
+ * — otherwise a finger coming down on a descendant's own clickable/combinedClickable (an app
+ * icon's tap-or-long-press detector, e.g. [com.lumenlauncher.app.ui.home.AppRow]) claims the touch
+ * before this ancestor's Main-pass detector ever sees it, so a swipe starting on top of a home
+ * screen app icon was silently swallowed and only empty space between icons could open the
+ * Drawer/Hub/carousel. Below touch slop nothing is consumed, so a plain tap or long-press on that
+ * icon still reaches it untouched; only once the drag actually commits does this detector start
+ * winning the race — the same Initial-pass technique already used by
+ * [com.lumenlauncher.app.ui.hub.detectGrabOrResizeGesture] for Hub widget tiles.
+ */
+private suspend fun PointerInputScope.detectHomeSwipeGestures(
+    onDragStart: () -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
+    onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
+) {
+    val slop = viewConfiguration.touchSlop
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var accumulated = Offset.Zero
+        var dragging = false
+        var completedCleanly = true
+        while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull { it.id == down.id }
+            if (change == null) {
+                completedCleanly = false
+                break
+            }
+            if (change.changedToUpIgnoreConsumed()) break
+            if (!dragging) {
+                accumulated += change.positionChange()
+                if (accumulated.getDistance() > slop) {
+                    dragging = true
+                    change.consume()
+                    onDragStart()
+                    onDrag(change, accumulated)
+                }
+            } else {
+                val delta = change.positionChange()
+                change.consume()
+                onDrag(change, delta)
+            }
+        }
+        if (dragging) {
+            if (completedCleanly) onDragEnd() else onDragCancel()
+        }
+    }
+}
+
+/**
+ * Home + Drawer + Hub + Switch Profiles, merged into one composable/route rather than separate
+ * `NavHost` destinations. A follow-finger drag needs continuous, cancellable animation (an
+ * [Animatable] driving each layer's position every frame) — `NavHost`'s declarative enter/exit
+ * transitions only animate already-committed navigation events, and F10 already frames the
+ * Drawer as "an overlay on top of the home background," not a distinct screen; the Hub (F5, to
+ * Home's left) and the Switch Profiles carousel (to Home's right) follow the same model, each on
+ * its own share of the horizontal axis. Dragging up on Home (or down on the Drawer's own list,
+ * only once scrolled to the top) opens/closes the Drawer; dragging right on Home (or left on the
+ * Hub) opens/closes the Hub; dragging left on Home (or right on the carousel, in empty space or
+ * on its first page's card — see [ProfileCarouselScreen]'s own doc) opens/closes the carousel —
+ * whichever direction a drag on Home's own surface resolves to first wins for that gesture (see
+ * [Axis]), and whichever of Hub/carousel a horizontal drag engages first (by its very first
+ * frame's direction) keeps owning it for the rest of the gesture even through a reversal, so a
+ * diagonal or wavering swipe never drives two surfaces at once. Releasing commits open/closed
+ * once the drag has travelled at least [COMMIT_TRAVEL_FRACTION] of the container size *from
+ * wherever this particular drag started* (not a fixed 50% of the full range — that felt too hard
+ * to trigger); anything short of that springs back to that starting state instead.
  */
 @Composable
 fun HomeDrawerRoute(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToProfileCarousel: () -> Unit,
+    onNavigateToProfileSettings: (profileId: Long) -> Unit,
+    onNavigateToManageProfiles: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Navigates to the clock style gallery, either global (null) or profile-scoped. */
     onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
@@ -168,6 +235,7 @@ fun HomeDrawerRoute(
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
     widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
+    profileViewModel: ProfileCarouselViewModel = hiltViewModel(),
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -203,12 +271,14 @@ fun HomeDrawerRoute(
     var containerWidthPx by remember { mutableFloatStateOf(1000f) }
     val drawerAxis = remember { SwipeAxisState({ containerHeightPx }, coroutineScope) }
     val hubAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
+    val profileAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
 
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
             focusManager.clearFocus()
             drawerAxis.close()
             hubAxis.close()
+            profileAxis.close()
         }
     }
     // Rendered in-place as an overlay below (not a NavHost destination — see chat history):
@@ -259,6 +329,7 @@ fun HomeDrawerRoute(
 
     val isDrawerOpen by remember { derivedStateOf { drawerAxis.progress.value > 0f } }
     val isHubOpen by remember { derivedStateOf { hubAxis.progress.value > 0f } }
+    val isProfileOpen by remember { derivedStateOf { profileAxis.progress.value > 0f } }
 
     // AppWidgetHost.startListening() is what actually makes hosted AppWidgetHostViews render/
     // update — without it, widget tiles stay blank. Only listen while the Hub is actually
@@ -268,9 +339,9 @@ fun HomeDrawerRoute(
         onDispose { if (isHubOpen) hubViewModel.onHubHidden() }
     }
 
-    // Clear focus whenever the drawer or hub starts closing via a drag.
-    LaunchedEffect(drawerAxis.dragActive, hubAxis.dragActive) {
-        if (drawerAxis.dragActive || hubAxis.dragActive) {
+    // Clear focus whenever the drawer, hub, or profile carousel starts moving via a drag.
+    LaunchedEffect(drawerAxis.dragActive, hubAxis.dragActive, profileAxis.dragActive) {
+        if (drawerAxis.dragActive || hubAxis.dragActive || profileAxis.dragActive) {
             focusManager.clearFocus()
         }
     }
@@ -294,18 +365,19 @@ fun HomeDrawerRoute(
     }
 
     // Cancel clock adjustment when navigating away from Home.
-    LaunchedEffect(isDrawerOpen, isHubOpen) {
-        if (isDrawerOpen || isHubOpen) {
+    LaunchedEffect(isDrawerOpen, isHubOpen, isProfileOpen) {
+        if (isDrawerOpen || isHubOpen || isProfileOpen) {
             clockAdjustMode = ClockAdjustMode.NONE
         }
     }
 
-    BackHandler(enabled = isDrawerOpen || isHubOpen || showWidgetPicker) {
+    BackHandler(enabled = isDrawerOpen || isHubOpen || isProfileOpen || showWidgetPicker) {
         focusManager.clearFocus()
         when {
             showWidgetPicker -> showWidgetPicker = false
             isDrawerOpen -> coroutineScope.launch { drawerAxis.close() }
             isHubOpen -> coroutineScope.launch { hubAxis.close() }
+            isProfileOpen -> coroutineScope.launch { profileAxis.close() }
         }
     }
 
@@ -328,7 +400,7 @@ fun HomeDrawerRoute(
                 onNavigateToUsageAccessExplanation()
             },
             dockApps = homeUiState.dockApps,
-            dockDisplayMode = homeUiState.settings.dockDisplayMode,
+            dockDisplayMode = homeUiState.activeDockDisplayMode,
             notificationBadgeStyle = homeUiState.settings.notificationBadgeStyle,
             badgeCounts = homeUiState.badgeCounts,
             use24HourTime = homeUiState.effectiveUse24HourTime,
@@ -352,6 +424,10 @@ fun HomeDrawerRoute(
             onEditClockStyles = {
                 clockAdjustMode = ClockAdjustMode.NONE
                 onNavigateToClockStyleGallery(homeUiState.clockPositionOwningProfile?.id)
+            },
+            onNavigateToSettings = onNavigateToSettings,
+            onNavigateToProfileSettings = {
+                homeUiState.activeProfile?.let { onNavigateToProfileSettings(it.id) }
             },
             appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
             calendarEvents = homeUiState.calendarEvents,
@@ -400,7 +476,7 @@ fun HomeDrawerRoute(
                     // or actively dragging a handle.
                     if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
 
-                    detectDragGestures(
+                    detectHomeSwipeGestures(
                         onDragStart = {
                             homeDragAxis = null
                             velocityTracker.resetTracking()
@@ -418,14 +494,23 @@ fun HomeDrawerRoute(
                                         homeViewModel.expandNotificationShade()
                                     }
                                 }
-                                Axis.HORIZONTAL -> hubAxis.settle(velocity = velocityTracker.calculateVelocity().x)
+                                // Exactly one of these is ever dragActive per gesture (see the
+                                // ownership rule in the drag callback below) — settle whichever
+                                // one it is.
+                                Axis.HORIZONTAL -> {
+                                    if (hubAxis.dragActive) hubAxis.settle()
+                                    if (profileAxis.dragActive) profileAxis.settle()
+                                }
                                 null -> Unit
                             }
                         },
                         onDragCancel = {
                             when (homeDragAxis) {
                                 Axis.VERTICAL -> drawerAxis.settle()
-                                Axis.HORIZONTAL -> hubAxis.settle()
+                                Axis.HORIZONTAL -> {
+                                    if (hubAxis.dragActive) hubAxis.settle()
+                                    if (profileAxis.dragActive) profileAxis.settle()
+                                }
                                 null -> Unit
                             }
                         },
@@ -448,21 +533,23 @@ fun HomeDrawerRoute(
                                 homeRawDragDistance += dragAmount.y
                                 velocityTracker.addPosition(change.uptimeMillis, change.position)
                             }
-                            Axis.HORIZONTAL -> hubAxis.dragBy(dragAmount.x)
+                            Axis.HORIZONTAL -> {
+                                // Whichever axis this gesture engages first (by its very first
+                                // horizontal delta) owns it for the rest of the gesture, even
+                                // through a direction reversal — dragBy() already handles negative
+                                // deltas fine (it just walks progress back down), so once an axis
+                                // goes dragActive it keeps tracking the finger instead of control
+                                // flipping to the other panel mid-drag.
+                                when {
+                                    hubAxis.dragActive || (!profileAxis.dragActive && dragAmount.x > 0f) ->
+                                        hubAxis.dragBy(dragAmount.x)
+                                    profileAxis.dragActive || (!hubAxis.dragActive && dragAmount.x < 0f) ->
+                                        profileAxis.dragBy(-dragAmount.x)
+                                }
+                            }
                             null -> Unit
                         }
-                        change.consume()
                     }
-                }
-                // README specifies a 420ms/8px long-press. detectTapGestures's onLongPress is
-                // Compose's own primitive for exactly this — it uses the platform's default
-                // long-press timeout (~500ms) and touch slop instead of the literal 420ms/8px,
-                // a close enough match that it isn't perceptible. Goes straight to the profile
-                // carousel now — the options sheet this used to open is gone (see chat history);
-                // Launcher settings and Change wallpaper moved to the carousel screen itself and
-                // Settings respectively.
-                .pointerInput(Unit) {
-                    detectTapGestures(onLongPress = { onNavigateToProfileCarousel() })
                 },
         )
 
@@ -530,6 +617,7 @@ fun HomeDrawerRoute(
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
                 )
             },
+            isDrawerOpen = isDrawerOpen,
             modifier = Modifier
                 .fillMaxSize()
                 .offset { IntOffset(0, ((1f - drawerAxis.progress.value) * containerHeightPx).toInt()) }
@@ -541,14 +629,67 @@ fun HomeDrawerRoute(
         // reads as "opening a sub-screen" even though Hub itself never leaves composition.
         AnimatedVisibility(
             visible = showWidgetPicker,
-            enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
-            exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(340, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))),
+            enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)),
+            exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(LUMEN_TRANSITION_DURATION_MS, easing = LumenTransitionEasing)),
             modifier = Modifier.testTag("hub_widget_picker_overlay"),
         ) {
             HubWidgetPickerScreen(
                 onDone = { showWidgetPicker = false },
                 viewModel = widgetPickerViewModel,
             )
+        }
+
+        // Switch Profiles — sits to Home's right: off-screen at progress 0, flush with the screen
+        // at progress 1. Drawn last so it's frontmost when open, over Hub/Drawer/the widget picker
+        // alike (it used to be a modal NavHost destination above everything; this keeps that same
+        // read). Its own surface handles empty-space swipes back to Home the same way Hub's own
+        // Box does; the first-page-card case (no previous profile to browse to) is handled inside
+        // ProfileCarouselScreen itself via a NestedScrollConnection that forwards raw drag deltas
+        // here through onDismissDrag/onDismissDragEnd, since the pager underneath would otherwise
+        // swallow that drag as a dead overscroll before it ever reached this Box.
+        //
+        // Real bug found: unlike Hub, each preview card here is a genuine live copy of Home's own
+        // content (clock, FAVORITES/RECENTS/MOST USED list, dock) — being permanently composed
+        // (just off-screen) instead of a NavHost destination means that content sits in the
+        // semantics tree even while fully closed, so e.g. onNodeWithText("FAVORITES") could match
+        // either Home's real list or this card's copy of it. clearAndSetSemantics wipes this
+        // whole subtree from the tree while closed; Compose's own assertIsNotDisplayed() already
+        // treats "node doesn't exist" as passing, so nothing here needs a test-only workaround.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset { IntOffset(((1f - profileAxis.progress.value) * containerWidthPx).toInt(), 0) }
+                .then(if (isProfileOpen) Modifier else Modifier.clearAndSetSemantics {})
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = { profileAxis.settle() },
+                        onDragCancel = { profileAxis.settle() },
+                    ) { change, dragAmount ->
+                        profileAxis.dragBy(-dragAmount)
+                        change.consume()
+                    }
+                },
+        ) {
+            ProfileCarouselScreen(
+                onProfileApplied = { coroutineScope.launch { profileAxis.close() } },
+                onEditProfile = onNavigateToProfileSettings,
+                onReorderProfiles = onNavigateToManageProfiles,
+                onNavigateToSettings = onNavigateToSettings,
+                onDismissDrag = { deltaPx -> profileAxis.dragBy(-deltaPx) },
+                onDismissDragEnd = { profileAxis.settle() },
+                modifier = Modifier.fillMaxSize(),
+                viewModel = profileViewModel,
+            )
+        }
+
+        // One-time post-onboarding gesture hint — only while Home is genuinely at rest, same
+        // overlay-on-top-of-already-composed-content precedent as the widget picker above.
+        AnimatedVisibility(
+            visible = homeUiState.showGestureHint && !isDrawerOpen && !isHubOpen && !isProfileOpen,
+            enter = fadeIn(animationSpec = tween(240)),
+            exit = fadeOut(animationSpec = tween(240)),
+        ) {
+            GestureHintOverlay(onDismiss = homeViewModel::dismissGestureHint)
         }
     }
 }

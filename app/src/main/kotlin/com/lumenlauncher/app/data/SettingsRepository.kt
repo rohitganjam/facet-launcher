@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import com.lumenlauncher.app.data.model.AppListLimits
 import com.lumenlauncher.app.data.model.AppListVerticalAlignment
 import com.lumenlauncher.app.data.model.AppRowPosition
 import com.lumenlauncher.app.data.model.AppRowPresentation
@@ -80,6 +81,9 @@ private object Keys {
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
     val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
+    val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+    val DEFAULTS_SEEDED = booleanPreferencesKey("defaults_seeded")
+    val COACH_MARKS_SEEN = stringSetPreferencesKey("coach_marks_seen")
 }
 
 @Singleton
@@ -165,6 +169,9 @@ class SettingsRepository @Inject constructor(
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
+            onboardingCompleted = preferences[Keys.ONBOARDING_COMPLETED] ?: defaults.onboardingCompleted,
+            defaultsSeeded = preferences[Keys.DEFAULTS_SEEDED] ?: defaults.defaultsSeeded,
+            coachMarksSeen = preferences[Keys.COACH_MARKS_SEEN] ?: defaults.coachMarksSeen,
         )
     }
 
@@ -285,9 +292,9 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.LIST_CONTENT_MODE] = mode.name }
     }
 
-    /** Coerced into README's `3d` 4…8 range. */
+    /** Coerced into [AppListLimits]' range (reduced from README's original `3d` 4…8 — see chat history). */
     suspend fun setAppsToShowCount(count: Int) {
-        dataStore.edit { it[Keys.APPS_TO_SHOW_COUNT] = count.coerceIn(4, 8) }
+        dataStore.edit { it[Keys.APPS_TO_SHOW_COUNT] = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW) }
     }
 
     suspend fun setClockTemplateId(templateId: ClockTemplateId) {
@@ -364,5 +371,18 @@ class SettingsRepository @Inject constructor(
     /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */
     suspend fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
         dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { it[Keys.ONBOARDING_COMPLETED] = completed }
+    }
+
+    suspend fun setDefaultsSeeded(seeded: Boolean) {
+        dataStore.edit { it[Keys.DEFAULTS_SEEDED] = seeded }
+    }
+
+    /** Additive — adds [id] to the dismissed-coach-marks set without disturbing any other id already in it. */
+    suspend fun markCoachMarkSeen(id: String) {
+        dataStore.edit { it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + id }
     }
 }

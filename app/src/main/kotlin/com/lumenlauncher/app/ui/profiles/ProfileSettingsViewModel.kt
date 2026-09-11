@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
+import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
@@ -16,8 +18,10 @@ import com.lumenlauncher.app.data.model.ClockColorOption
 import com.lumenlauncher.app.data.model.ClockDateStyle
 import com.lumenlauncher.app.data.model.ClockFontOption
 import com.lumenlauncher.app.data.model.ClockTemplateId
+import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.ListContentMode
+import com.lumenlauncher.app.data.selectedCalendarIds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +36,11 @@ data class ProfileSettingsUiState(
     val favorites: List<AppInfo> = emptyList(),
     /** The launcher-wide default Favorites list — shown read-only while inheriting. */
     val defaultFavorites: List<AppInfo> = emptyList(),
+    /** This profile's own dock — only meaningful/used while [isOverridingDock] is true. */
+    val dockApps: List<AppInfo> = emptyList(),
+    /** The launcher-wide default dock — shown read-only while inheriting, and copied in when the profile switches to Override with an empty list. */
+    val defaultDockApps: List<AppInfo> = emptyList(),
+    val globalDockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val globalClockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val globalClockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
     val globalClockColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -51,6 +60,9 @@ data class ProfileSettingsUiState(
     val globalAppRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
     val globalAppsToShowCount: Int = 5,
+    val globalShowAllDayEvents: Boolean = true,
+    /** `null` means nothing has been explicitly chosen yet — see [com.lumenlauncher.app.data.model.LauncherSettings.selectedCalendarIds]. */
+    val globalSelectedCalendarIds: Set<String>? = null,
 ) {
     /** The Clock card's single inherit/override switch — governs template, font, color, 24h, and meridiem. */
     val isOverridingClock: Boolean get() = profile?.overrideClock ?: false
@@ -76,6 +88,19 @@ data class ProfileSettingsUiState(
     val appsToShowCount: Int get() = if (isOverridingApps) profile?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
     val effectiveFavorites: List<AppInfo> get() = if (profile?.overridingFavorites == true) favorites else defaultFavorites
     val favoritesLabel: String get() = "${effectiveFavorites.size} of ${FavoriteAppRepository.MAX_FAVORITES}"
+
+    /** The Dock card's single inherit/override switch — governs the dock's app list and its Icons/Text display style together. */
+    val isOverridingDock: Boolean get() = profile?.overrideDock ?: false
+    val dockDisplayMode: DockDisplayMode get() = if (isOverridingDock) profile?.dockDisplayMode ?: globalDockDisplayMode else globalDockDisplayMode
+    val effectiveDockApps: List<AppInfo> get() = if (isOverridingDock) dockApps else defaultDockApps
+    val dockLabel: String get() = "${effectiveDockApps.size} of ${DockAppRepository.MAX_APPS}"
+
+    /** Calendar *selection* has its own override flag, independent of [isOverridingClock] — see `CalendarSettingsUiState`'s own doc comment. */
+    val isOverridingCalendar: Boolean get() = profile?.overrideCalendar ?: false
+    val effectiveShowAllDayEvents: Boolean get() = if (isOverridingCalendar) profile?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
+    val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverridingCalendar) profile?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
+    /** `null` (nothing explicitly chosen yet) counts as zero here — it isn't the same as "every calendar", it's "none decided". */
+    val selectedCalendarCount: Int get() = effectiveSelectedCalendarIds?.size ?: 0
 }
 
 @HiltViewModel
@@ -85,20 +110,35 @@ class ProfileSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val profileDockAppRepository: ProfileDockAppRepository,
+    private val dockAppRepository: DockAppRepository,
 ) : ViewModel() {
 
     val profileId: Long = checkNotNull(savedStateHandle["profileId"])
 
     val uiState: StateFlow<ProfileSettingsUiState> = combine(
         profileRepository.observeProfiles(),
-        favoriteAppRepository.observeFavoritesForProfile(profileId),
-        defaultFavoriteAppRepository.observeDefaultFavorites(),
         settingsRepository.settings,
-    ) { profiles, favorites, defaultFavorites, settings ->
+        combine(
+            favoriteAppRepository.observeFavoritesForProfile(profileId),
+            defaultFavoriteAppRepository.observeDefaultFavorites(),
+            ::Pair,
+        ),
+        combine(
+            profileDockAppRepository.observeDockAppsForProfile(profileId),
+            dockAppRepository.observeDockApps(),
+            ::Pair,
+        ),
+    ) { profiles, settings, favs, docks ->
+        val (favorites, defaultFavorites) = favs
+        val (dockApps, defaultDockApps) = docks
         ProfileSettingsUiState(
             profile = profiles.find { it.id == profileId },
             favorites = favorites,
             defaultFavorites = defaultFavorites,
+            dockApps = dockApps,
+            defaultDockApps = defaultDockApps,
+            globalDockDisplayMode = settings.dockDisplayMode,
             globalClockTemplateId = settings.clockTemplateId,
             globalClockFontOption = settings.clockFontOption,
             globalClockColorOption = settings.clockColorOption,
@@ -116,6 +156,8 @@ class ProfileSettingsViewModel @Inject constructor(
             globalAppRowPresentation = settings.appRowPresentation,
             globalListContentMode = settings.listContentMode,
             globalAppsToShowCount = settings.appsToShowCount,
+            globalShowAllDayEvents = settings.showAllDayEvents,
+            globalSelectedCalendarIds = settings.selectedCalendarIds,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileSettingsUiState())
 
@@ -174,28 +216,20 @@ class ProfileSettingsViewModel @Inject constructor(
         }
     }
 
-    fun setAppRowPosition(position: AppRowPosition) {
+    /**
+     * The Dock card's single Inherit/Override switch — governs the dock's app list and its
+     * Icons/Text display style as one unit. Switching to Override seeds the display mode from the
+     * current effective value and copies the default dock list in when the profile's own is empty,
+     * so the card doesn't suddenly go blank — mirrors [setOverridingApps].
+     */
+    fun setOverridingDock(overriding: Boolean) {
         val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setAppRowPosition(profile, position) }
-    }
-
-    fun setAppRowPresentation(presentation: AppRowPresentation) {
-        val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setAppRowPresentation(profile, presentation) }
-    }
-
-    fun setListContentMode(mode: ListContentMode) {
-        val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setListContentMode(profile, mode) }
-    }
-
-    fun setAppsToShowCount(count: Int) {
-        val profile = uiState.value.profile ?: return
-        viewModelScope.launch { profileRepository.setAppsToShowCount(profile, count) }
-    }
-
-    /** Drag-reorder only — adding/removing favorites happens on the picker screen, not here. */
-    fun reorderFavorites(orderedApps: List<AppInfo>) {
-        viewModelScope.launch { favoriteAppRepository.reorderFavorites(profileId, orderedApps) }
+        val state = uiState.value
+        viewModelScope.launch {
+            if (overriding && state.dockApps.isEmpty()) {
+                profileDockAppRepository.replaceDockApps(profileId, state.defaultDockApps)
+            }
+            profileRepository.updateOverridingDock(profile, overriding, state.dockDisplayMode)
+        }
     }
 }

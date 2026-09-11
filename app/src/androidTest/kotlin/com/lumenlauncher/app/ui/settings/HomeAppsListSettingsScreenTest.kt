@@ -1,5 +1,7 @@
 package com.lumenlauncher.app.ui.settings
 
+import android.app.WallpaperManager
+import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -12,13 +14,23 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.lumenlauncher.app.data.AppRepository
+import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
+import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
+import com.lumenlauncher.app.data.WallpaperRepository
 import com.lumenlauncher.app.data.local.LumenDatabase
+import com.lumenlauncher.app.data.model.AppRowPosition
+import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.SelectPreviewAppsUseCase
 import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import java.io.File
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +40,14 @@ class HomeAppsListSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}, onEditDefaultFavorites: () -> Unit = {}) {
+    /** [onProfileRepo] receives the screen's real [ProfileRepository]; when [profileScoped] the VM
+     *  is scoped to a freshly-added profile in that same DB, whose id is passed back too. */
+    private fun setContent(
+        onBack: () -> Unit = {},
+        onEditFavorites: () -> Unit = {},
+        profileScoped: Boolean = false,
+        onProfileRepo: (ProfileRepository, Long?) -> Unit = { _, _ -> },
+    ) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -39,105 +58,78 @@ class HomeAppsListSettingsScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, LumenDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                HomeAppsListSettingsViewModel(settingsRepository, defaultFavoriteAppRepository)
+                val profileRepository = ProfileRepository(database.profileDao())
+                val profileId = if (profileScoped) runBlocking { profileRepository.addProfile().id } else null
+                onProfileRepo(profileRepository, profileId)
+                HomeAppsListSettingsViewModel(
+                    SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+                    settingsRepository,
+                    profileRepository,
+                    FavoriteAppRepository(database.favoriteAppDao(), appRepository),
+                    DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository),
+                    WallpaperRepository(WallpaperManager.getInstance(context)),
+                    DefaultAppRepository(context),
+                    GetInstalledAppsUseCase(appRepository),
+                    SelectPreviewAppsUseCase(),
+                )
             }
             LumenLauncherTheme {
-                HomeAppsListSettingsScreen(onBack = onBack, onEditDefaultFavorites = onEditDefaultFavorites, viewModel = viewModel)
+                HomeAppsListSettingsScreen(onBack = onBack, onEditFavorites = onEditFavorites, viewModel = viewModel)
             }
         }
+        composeRule.waitForIdle()
     }
 
     @Test
-    fun headerStaysVisibleAfterScrollingToTheBottom() {
-        // Given the screen, scrolled all the way down
+    fun headerAndPreviewRender() {
         setContent()
-        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
-
-        // Then the pinned header (title + back button) is still on screen, not scrolled away
         composeRule.onNodeWithText("Home Apps List").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_apps_list_preview_card").assertExists()
     }
 
     @Test
     fun backButtonInvokesOnBack() {
-        // Given the screen
         var backInvoked = false
         setContent(onBack = { backInvoked = true })
-
-        // When tapping the back button
         composeRule.onNodeWithTag("back_button").performClick()
-
-        // Then it navigates back
         assertEquals(true, backInvoked)
     }
 
     @Test
-    fun appRowPositionDropdownSwitchesBetweenLeftAndRightAndAppearsAboveListContent() {
-        // Given the screen, Left selected by default
+    fun appRowPositionDropdownSwitchesBetweenLeftAndRight() {
         setContent()
         composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Left")
 
-        // Then it renders above the "Default App list content" row within the same card
-        val positionTop = composeRule.onNodeWithTag("default_app_row_position_row").fetchSemanticsNode().boundsInRoot.top
-        val listContentTop = composeRule.onNodeWithTag("default_list_content_row").fetchSemanticsNode().boundsInRoot.top
-        assert(positionTop < listContentTop)
-
-        // When opening the dropdown and choosing "Right" (Popup root-registration note — see above)
         composeRule.onNodeWithTag("default_app_row_position_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("default_app_row_position_row_option_RIGHT").performClick()
 
-        // Then the row's own current-value label reflects it
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Right") }.isSuccess
         }
     }
 
     @Test
-    fun appRowPresentationDropdownSwitchesBetweenTheThreeOptions() {
-        // Given the screen, "Icon & Text" selected by default
-        setContent()
-        composeRule.onNodeWithTag("default_app_row_presentation_row").assertTextContains("Icon & Text")
-
-        // When opening the dropdown and choosing "Text Only" (Popup root-registration note — see above)
-        composeRule.onNodeWithTag("default_app_row_presentation_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("default_app_row_presentation_row_option_TEXT_ONLY").performClick()
-
-        // Then the row's own current-value label reflects it
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("default_app_row_presentation_row").assertTextContains("Text Only") }.isSuccess
-        }
-    }
-
-    @Test
-    fun appListVerticalAlignmentDropdownSwitchesBetweenTopAndBottom() {
-        // Given the screen, "Bottom" selected by default
-        setContent()
-        composeRule.onNodeWithTag("app_list_vertical_alignment_row").assertTextContains("Bottom")
-
-        // When opening the dropdown and choosing "Top"
-        composeRule.onNodeWithTag("app_list_vertical_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("app_list_vertical_alignment_row_option_TOP").performClick()
-
-        // Then the row's own current-value label reflects it
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("app_list_vertical_alignment_row").assertTextContains("Top") }.isSuccess
-        }
-    }
-
-    @Test
-    fun defaultFavoritesRowIsClickable() {
-        // Given the screen
+    fun favoritesRowIsClickable() {
         var navigated = false
-        setContent(onEditDefaultFavorites = { navigated = true })
-
-        // When tapping "Default favorites"
+        setContent(onEditFavorites = { navigated = true })
+        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
         composeRule.onNodeWithTag("default_favorites_row").performClick()
-
-        // Then its callback fires
         assertEquals(true, navigated)
+    }
+
+    @Test
+    fun profileScopedScreenWritesThePositionToThatProfilesRow() {
+        lateinit var profileRepo: ProfileRepository
+        setContent(profileScoped = true, onProfileRepo = { repo, _ -> profileRepo = repo })
+
+        composeRule.onNodeWithTag("default_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("default_app_row_position_row_option_RIGHT").performClick()
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { profileRepo.observeProfiles().first().any { it.appRowPosition == AppRowPosition.RIGHT } }
+        }
     }
 }

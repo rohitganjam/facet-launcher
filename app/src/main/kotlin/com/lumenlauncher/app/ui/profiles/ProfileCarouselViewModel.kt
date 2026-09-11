@@ -2,7 +2,6 @@ package com.lumenlauncher.app.ui.profiles
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.WallpaperRepository
@@ -37,10 +36,6 @@ data class ProfileCarouselUiState(
     val activeProfileId: Long = 0L,
     val previewsByProfileId: Map<Long, ProfilePreviewData> = emptyMap(),
     val globalSettings: LauncherSettings = LauncherSettings(),
-    // Dock is shared across all profiles (not per-profile — see DockAppRepository), so every
-    // preview card renders the same dockApps/dockDisplayMode rather than one entry per profile.
-    val dockApps: List<AppInfo> = emptyList(),
-    val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     // The live system wallpaper, rendered behind each preview card (Home's own window-level
     // wallpaper compositing can't reach a card). Loaded once when the carousel opens.
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
@@ -105,13 +100,16 @@ data class ProfileCarouselUiState(
 
     fun listContentMode(profileId: Long): ListContentMode =
         profile(profileId)?.let { if (it.overrideApps) it.listContentMode else globalSettings.listContentMode } ?: globalSettings.listContentMode
+
+    /** Mirrors [com.lumenlauncher.app.ui.home.HomeUiState.activeDockDisplayMode]'s own gating — same `overrideDock` flag. The dock's app list itself comes from each profile's [ProfilePreviewData.dockApps]. */
+    fun dockDisplayMode(profileId: Long): DockDisplayMode =
+        profile(profileId)?.let { if (it.overrideDock) it.dockDisplayMode else globalSettings.dockDisplayMode } ?: globalSettings.dockDisplayMode
 }
 
 @HiltViewModel
 class ProfileCarouselViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
-    private val dockAppRepository: DockAppRepository,
     private val wallpaperRepository: WallpaperRepository,
     observeProfilePreviews: ObserveProfilePreviewsUseCase,
 ) : ViewModel() {
@@ -122,16 +120,13 @@ class ProfileCarouselViewModel @Inject constructor(
         profileRepository.observeProfiles(),
         settingsRepository.settings,
         observeProfilePreviews(),
-        dockAppRepository.observeDockApps(),
         homeWallpaper,
-    ) { profiles, settings, previewsByProfileId, dockApps, wallpaper ->
+    ) { profiles, settings, previewsByProfileId, wallpaper ->
         ProfileCarouselUiState(
             profiles = profiles,
             activeProfileId = settings.activeProfileId,
             previewsByProfileId = previewsByProfileId,
             globalSettings = settings,
-            dockApps = dockApps,
-            dockDisplayMode = settings.dockDisplayMode,
             homeWallpaper = wallpaper,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileCarouselUiState())
@@ -160,5 +155,4 @@ class ProfileCarouselViewModel @Inject constructor(
             }
         }
     }
-
 }

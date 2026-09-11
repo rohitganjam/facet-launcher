@@ -46,9 +46,10 @@ class SettingsViewModelTest {
         dockApps: List<AppInfo> = emptyList(),
         defaultFavorites: List<AppInfo> = emptyList(),
         isDefaultLauncher: Boolean = false,
+        settings: LauncherSettings = LauncherSettings(),
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         val dockAppRepository = mock(DockAppRepository::class.java)
         `when`(dockAppRepository.observeDockApps()).thenReturn(flowOf(dockApps))
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
@@ -79,5 +80,33 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isDefaultLauncher)
+    }
+
+    @Test
+    fun `selectedCalendarCount is zero when nothing has been explicitly selected yet`() = runTest {
+        // `selectedCalendarIds == null` means "never touched" — that's "none decided", not "every calendar"
+        val viewModel = createViewModel(settings = LauncherSettings(selectedCalendarIds = null))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.selectedCalendarCount)
+    }
+
+    @Test
+    fun `selectedCalendarCount reflects an explicit selection`() = runTest {
+        val viewModel = createViewModel(settings = LauncherSettings(selectedCalendarIds = setOf("1", "2")))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.selectedCalendarCount)
+    }
+
+    @Test
+    fun `selectedCalendarCount is zero when every calendar has been explicitly deselected`() = runTest {
+        val viewModel = createViewModel(settings = LauncherSettings(selectedCalendarIds = emptySet()))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.selectedCalendarCount)
     }
 }

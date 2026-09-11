@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
 import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.NotificationBadgeRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
@@ -34,6 +35,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val settingsFlow = MutableStateFlow(LauncherSettings(activeProfileId = 1L))
         val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settingsFlow) }
         val dockAppRepository = mock(DockAppRepository::class.java).also { `when`(it.observeDockApps()).thenReturn(flowOf(emptyList())) }
+        val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
         val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
             .also { `when`(it.observeDefaultFavorites()).thenReturn(flowOf(emptyList())) }
@@ -51,6 +53,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val useCase = ObserveHomeScreenStateUseCase(
             settingsRepository,
             dockAppRepository,
+            profileDockAppRepository,
             favoriteAppRepository,
             defaultFavoriteAppRepository,
             profileRepository,
@@ -158,6 +161,34 @@ class ObserveHomeScreenStateUseCaseTest {
         // Then the list is empty (never a broken partial list) and the ungranted state is surfaced
         assertEquals(emptyList<AppInfo>(), result.appListItems)
         assertEquals(false, result.usageAccessGranted)
+    }
+
+    @Test
+    fun `emits the active profile's own dock when it overrides the dock`() = runTest {
+        // Given profile 1 active and overriding its dock, resolving to one app
+        val fixture = Fixture()
+        `when`(fixture.profileDockAppRepository.observeDockAppsForProfile(1L)).thenReturn(flowOf(listOf(appInfo('p'))))
+        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then the dock is the profile's own list, not the launcher-wide default
+        assertEquals(listOf(appInfo('p')), result.dockApps)
+    }
+
+    @Test
+    fun `emits the launcher-wide dock when the active profile isn't overriding the dock`() = runTest {
+        // Given profile 1 active, NOT overriding its dock, and a non-empty default dock
+        val fixture = Fixture()
+        `when`(fixture.dockAppRepository.observeDockApps()).thenReturn(flowOf(listOf(appInfo('g'))))
+        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then the dock is the launcher-wide default, and the per-profile dock is never consulted
+        assertEquals(listOf(appInfo('g')), result.dockApps)
     }
 
     @Test

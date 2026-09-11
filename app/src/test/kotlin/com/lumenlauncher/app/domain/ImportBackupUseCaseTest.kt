@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.BackupRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.FavoriteAppEntity
@@ -36,6 +37,7 @@ class ImportBackupUseCaseTest {
     private val profileRepository = mock(ProfileRepository::class.java)
     private val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
     private val dockAppRepository = mock(DockAppRepository::class.java)
+    private val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
     private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
 
     private val useCase = ImportBackupUseCase(
@@ -44,6 +46,7 @@ class ImportBackupUseCaseTest {
         profileRepository,
         favoriteAppRepository,
         dockAppRepository,
+        profileDockAppRepository,
         defaultFavoriteAppRepository,
     )
 
@@ -129,6 +132,9 @@ class ImportBackupUseCaseTest {
                     calendarFontOption = "LAUNCHER_DEFAULT", calendarColorOption = "THEME",
                     selectedCalendarIds = listOf("3", "4"),
                     favorites = listOf(BackupAppEntry(packageName = "com.example.a", activityName = ".Main", position = 0)),
+                    overrideDock = true,
+                    dockDisplayMode = "TEXT",
+                    dockApps = listOf(BackupAppEntry(packageName = "com.example.dock", activityName = ".Main", position = 0)),
                 ),
             ),
             dockApps = listOf(BackupAppEntry(packageName = "com.example.b", activityName = ".Main", position = 0)),
@@ -147,6 +153,7 @@ class ImportBackupUseCaseTest {
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
             overrideCalendar = false, showAllDayEvents = true, calendarFontOption = ClockFontOption.LAUNCHER_DEFAULT,
             calendarColorOption = ClockColorOption.THEME, selectedCalendarIdsCsv = "3,4",
+            overrideDock = true, dockDisplayMode = com.lumenlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(profileRepository.restoreProfile(expectedProfileEntity)).thenReturn(99L)
 
@@ -159,6 +166,9 @@ class ImportBackupUseCaseTest {
         verify(defaultFavoriteAppRepository).deleteAllDefaultFavorites()
         // ...the backup's own data is restored, favorites attached to the newly-created profile's real id...
         verify(favoriteAppRepository).restoreFavorite(FavoriteAppEntity(profileId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
+        verify(profileDockAppRepository).restoreDockApp(
+            com.lumenlauncher.app.data.local.ProfileDockAppEntity(profileId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0),
+        )
         // ...the active profile resolves from an index to that new id...
         verify(settingsRepository).setActiveProfileId(99L)
         // ...every other setting field is applied...

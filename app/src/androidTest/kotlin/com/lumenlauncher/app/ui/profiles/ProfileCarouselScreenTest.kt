@@ -20,6 +20,7 @@ import androidx.room.Room
 import com.lumenlauncher.app.data.AppRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
@@ -49,6 +50,8 @@ class ProfileCarouselScreenTest {
         onEditProfile: (Long) -> Unit = {},
         onReorderProfiles: () -> Unit = {},
         onNavigateToSettings: () -> Unit = {},
+        onDismissDrag: (Float) -> Unit = {},
+        onDismissDragEnd: () -> Unit = {},
         seed: suspend (ProfileRepository, SettingsRepository) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, FavoriteAppRepository, DockAppRepository) -> Unit = { _, _, _ -> },
     ) {
@@ -77,21 +80,25 @@ class ProfileCarouselScreenTest {
                 val calendarPermissionRepository = com.lumenlauncher.app.data.CalendarPermissionRepository(context)
                 val calendarRepository = com.lumenlauncher.app.data.CalendarRepository(context.contentResolver)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
+                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
                 val wallpaperRepository = com.lumenlauncher.app.data.WallpaperRepository(
                     android.app.WallpaperManager.getInstance(context),
                 )
-                runBlocking { seed(profileRepository, settingsRepository) }
+                runBlocking {
+                    seed(profileRepository, settingsRepository)
+                }
                 runBlocking { seedApps(appRepository, favoriteAppRepository, dockAppRepository) }
                 ProfileCarouselViewModel(
                     profileRepository,
                     settingsRepository,
-                    dockAppRepository,
                     wallpaperRepository,
                     ObserveProfilePreviewsUseCase(
                         profileRepository,
                         settingsRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
+                        profileDockAppRepository,
+                        dockAppRepository,
                         usageStatsRepository,
                         usageAccessRepository,
                         calendarPermissionRepository,
@@ -105,6 +112,8 @@ class ProfileCarouselScreenTest {
                     onEditProfile = onEditProfile,
                     onReorderProfiles = onReorderProfiles,
                     onNavigateToSettings = onNavigateToSettings,
+                    onDismissDrag = onDismissDrag,
+                    onDismissDragEnd = onDismissDragEnd,
                     viewModel = viewModel,
                 )
             }
@@ -195,6 +204,79 @@ class ProfileCarouselScreenTest {
 
         // Then the active profile is unchanged
         assertEquals(firstProfileId, runBlocking { settingsRepository.settings.first().activeProfileId })
+    }
+
+    @Test
+    fun swipingRightOnTheFirstProfileCardForwardsTheDismissDrag() {
+        // Given two profiles, the first one (page 0) active — this screen doesn't own opening or
+        // closing itself any more (its host, HomeDrawerRoute, does via a follow-finger axis —
+        // see chat history); it only forwards the raw drag deltas it's uniquely positioned to
+        // catch, since the pager would otherwise eat a rightward drag on page 0 as a dead
+        // overscroll before anything else saw it.
+        var draggedTotal = 0f
+        var dragEnded = false
+        var applied = false
+        setContent(
+            onProfileApplied = { applied = true },
+            onDismissDrag = { draggedTotal += it },
+            onDismissDragEnd = { dragEnded = true },
+            seed = { profileRepository, settings ->
+                val first = profileRepository.addProfile()
+                profileRepository.addProfile()
+                settings.setActiveProfileId(first.id)
+            },
+        )
+
+        // When swiping right on the card itself — there's no previous profile from page 0
+        val pager = composeRule.onNodeWithTag("profile_carousel_pager")
+        val pagerWidth = pager.fetchSemanticsNode().size.width.toFloat()
+        pager.performTouchInput {
+            down(centerLeft)
+            repeat(15) { step -> moveTo(centerLeft + Offset(pagerWidth * 0.6f * (step + 1) / 15f, 0f)) }
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then the drag was forwarded and the gesture's end was reported, without applying anything
+        assertEquals(true, draggedTotal > 0f)
+        assertEquals(true, dragEnded)
+        assertEquals(false, applied)
+    }
+
+    @Test
+    fun swipingRightOnANonFirstProfileCardBrowsesInsteadOfForwardingADismissDrag() {
+        // Given two profiles, browsed to the second page
+        var draggedTotal = 0f
+        var dragEnded = false
+        var firstProfileId = 0L
+        setContent(
+            onDismissDrag = { draggedTotal += it },
+            onDismissDragEnd = { dragEnded = true },
+            seed = { profileRepository, settings ->
+                val first = profileRepository.addProfile()
+                profileRepository.addProfile()
+                firstProfileId = first.id
+                settings.setActiveProfileId(first.id)
+            },
+        )
+        swipeToNextPage()
+        composeRule.waitForIdle()
+
+        // When swiping right on the card from page 1 — this browses back to page 0, it does not
+        // forward a dismiss drag (only the first page has nowhere to browse to)
+        val pager = composeRule.onNodeWithTag("profile_carousel_pager")
+        val widthPx = pager.fetchSemanticsNode().size.width.toFloat()
+        pager.performTouchInput {
+            down(centerLeft)
+            repeat(15) { step -> moveTo(centerLeft + Offset(widthPx * 0.55f * (step + 1) / 15f, 0f)) }
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then it's back on the first profile's card and nothing was forwarded
+        composeRule.onNodeWithTag("profile_page_name_$firstProfileId", useUnmergedTree = true).assertTextEquals("Profile 1")
+        assertEquals(0f, draggedTotal)
+        assertEquals(false, dragEnded)
     }
 
     @Test

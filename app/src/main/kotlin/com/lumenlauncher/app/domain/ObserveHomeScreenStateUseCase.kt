@@ -7,6 +7,7 @@ import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
 import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.NotificationBadgeRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.UsageAccessRepository
@@ -48,6 +49,7 @@ data class HomeScreenState(
 class ObserveHomeScreenStateUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val dockAppRepository: DockAppRepository,
+    private val profileDockAppRepository: ProfileDockAppRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val profileRepository: ProfileRepository,
@@ -77,6 +79,14 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             profile to settings
         }.flatMapLatest { (profile, settings) -> observeAppListItems(profile, settings) }
 
+        val dockApps = activeProfile.flatMapLatest { profile ->
+            if (profile?.overrideDock == true) {
+                profileDockAppRepository.observeDockAppsForProfile(profile.id)
+            } else {
+                dockAppRepository.observeDockApps()
+            }
+        }
+
         val calendarEvents = combine(activeProfile, settingsRepository.settings, refreshTrigger) { profile, settings, _ ->
             profile to settings
         }.flatMapLatest { (profile, settings) -> observeCalendarEvents(profile, settings) }
@@ -89,7 +99,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
         return combine(
             settingsRepository.settings,
-            dockAppRepository.observeDockApps(),
+            dockApps,
             appListItems,
             profileRepository.observeProfiles(),
             calendarEvents,

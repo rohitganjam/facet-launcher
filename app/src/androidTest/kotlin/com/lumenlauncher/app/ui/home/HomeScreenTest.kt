@@ -518,6 +518,83 @@ class HomeScreenTest {
     }
 
     @Test
+    fun longPressingEmptyHomeSpaceOpensTheSameAdjustMenuSheet() {
+        // Given the default (left-aligned) layout, which leaves real empty space to the clock's right
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+
+        // When that empty space, not the clock itself, is long-pressed
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
+        composeRule.waitForIdle()
+
+        // Then the same clock adjust sheet opens
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+    }
+
+    @Test
+    fun tappingLauncherSettingsInTheSheetNavigatesAndClosesIt() {
+        // Given the sheet opened via a long-press on the clock, with a hoisted settings callback
+        var navigated = false
+        composeRule.setContent {
+            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            LumenLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(3),
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    clockAdjustMode = adjustMode,
+                    onAdjustModeChange = { adjustMode = it },
+                    onNavigateToSettings = { navigated = true },
+                )
+            }
+        }
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+
+        // When "Launcher settings" is tapped
+        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
+        composeRule.waitForIdle()
+
+        // Then the callback fires and the sheet closes
+        assertTrue(navigated)
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingProfileSettingsInTheSheetNavigatesAndClosesIt() {
+        // Given the sheet opened via a long-press on the clock, with a hoisted profile-settings callback
+        var navigated = false
+        composeRule.setContent {
+            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            LumenLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(3),
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    clockAdjustMode = adjustMode,
+                    onAdjustModeChange = { adjustMode = it },
+                    onNavigateToProfileSettings = { navigated = true },
+                )
+            }
+        }
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+
+        // When "Profile settings" is tapped
+        composeRule.onNodeWithTag("clock_adjust_profile_settings").performClick()
+        composeRule.waitForIdle()
+
+        // Then the callback fires and the sheet closes
+        assertTrue(navigated)
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+    }
+
+    @Test
     fun draggingTheZoneHandleMovesTheClockBlockDownTogetherWithIt() {
         // Given the default (untouched) layout — clockZoneHeightDp is fed back in from the commit
         // callback, same as the real app's HomeUiState/HomeViewModel round-trip, so the position

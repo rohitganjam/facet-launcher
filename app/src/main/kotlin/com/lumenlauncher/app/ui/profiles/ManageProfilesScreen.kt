@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.ui.components.BackButton
 import com.lumenlauncher.app.ui.components.ConfirmDialog
+import com.lumenlauncher.app.ui.components.ReorderRowDefaults
 import com.lumenlauncher.app.ui.components.StickyHeaderLayout
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenu
 import com.lumenlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -62,10 +63,6 @@ import com.lumenlauncher.app.ui.theme.SurfaceContainer
 
 private val REORDER_ROW_HEIGHT = 64.dp
 private val REORDER_ROW_SPACING = 10.dp
-
-/** Shared "picked up" drag-lift treatment, matching every other reorderable list in Settings. */
-private val REORDER_DRAG_ELEVATION = 6.dp
-private const val REORDER_DRAG_SCALE = 1.04f
 
 /**
  * Settings → Profiles (`3b`): a normal settings screen — [StickyHeaderLayout] header + a
@@ -213,9 +210,9 @@ private fun ProfileReorderList(
                     .then(if (isDragged) Modifier else Modifier.animateItem())
                     .graphicsLayer {
                         translationY = if (isDragged) reorderState.dragOffset else 0f
-                        scaleX = if (isDragged) REORDER_DRAG_SCALE else 1f
-                        scaleY = if (isDragged) REORDER_DRAG_SCALE else 1f
-                        shadowElevation = if (isDragged) REORDER_DRAG_ELEVATION.toPx() else 0f
+                        scaleX = if (isDragged) ReorderRowDefaults.DRAG_SCALE else 1f
+                        scaleY = if (isDragged) ReorderRowDefaults.DRAG_SCALE else 1f
+                        shadowElevation = if (isDragged) ReorderRowDefaults.DRAG_ELEVATION.toPx() else 0f
                         shape = RoundedCornerShape(12.dp)
                         clip = false
                     }

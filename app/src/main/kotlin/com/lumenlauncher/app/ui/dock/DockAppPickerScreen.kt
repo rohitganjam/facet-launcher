@@ -76,7 +76,12 @@ private fun DockAppPickerContent(
             .fillMaxSize()
             .background(Surface)
             .testTag("dock_app_picker_screen"),
-        header = { DockAppPickerHeader(onDone = onDone) },
+        header = {
+            DockAppPickerHeader(
+                title = if (uiState.isProfileScoped) "Dock" else "Default dock",
+                onDone = onDone,
+            )
+        },
         content = { headerHeight ->
         LazyColumn(
             modifier = Modifier
@@ -125,7 +130,7 @@ private fun DockAppPickerContent(
 }
 
 @Composable
-private fun DockAppPickerHeader(onDone: () -> Unit, modifier: Modifier = Modifier) {
+private fun DockAppPickerHeader(title: String, onDone: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -138,7 +143,7 @@ private fun DockAppPickerHeader(onDone: () -> Unit, modifier: Modifier = Modifie
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BackButton(onClick = onDone)
-            Text(text = "Dock", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
         Text(
             text = "Done",

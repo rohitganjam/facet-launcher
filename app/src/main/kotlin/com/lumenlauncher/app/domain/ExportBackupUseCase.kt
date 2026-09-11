@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.BackupRepository
 import com.lumenlauncher.app.data.DefaultFavoriteAppRepository
 import com.lumenlauncher.app.data.DockAppRepository
 import com.lumenlauncher.app.data.FavoriteAppRepository
+import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.WidgetPlacementRepository
@@ -24,6 +25,7 @@ class ExportBackupUseCase @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val dockAppRepository: DockAppRepository,
+    private val profileDockAppRepository: ProfileDockAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val backupRepository: BackupRepository,
@@ -36,7 +38,8 @@ class ExportBackupUseCase @Inject constructor(
 
         val backupProfiles = profiles.map { profile ->
             val favorites = favoriteAppRepository.getRawFavoritesForProfile(profile.id).map { it.toBackupEntry() }
-            profile.toBackupProfile(favorites)
+            val dockApps = profileDockAppRepository.getRawDockAppsForProfile(profile.id).map { it.toBackupEntry() }
+            profile.toBackupProfile(favorites, dockApps)
         }
 
         val bundle = BackupBundle(
