@@ -2034,9 +2034,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/components/GestureHintOverlay.kt": {
-    "mtime": 1789119371.381192,
-    "seen": 1789121201.873782,
-    "ast_hash": "846f4edf9a549830c6e318198a0c18d2",
+    "mtime": 1789121356.9029884,
+    "seen": 1789121559.5630238,
+    "ast_hash": "f127a42ea45224fdf96fc1d9fb78ea8f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/onboarding/OnboardingDots.kt": {
@@ -2100,9 +2100,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/lumenlauncher/app/ui/components/SurfaceButton.kt": {
-    "mtime": 1789119367.606712,
-    "seen": 1789121201.873787,
-    "ast_hash": "a2d0d049cc17b29473b48ee45461b184",
+    "mtime": 1789121520.5921571,
+    "seen": 1789121559.563029,
+    "ast_hash": "23641640cff793877ca2e4e841f51b1c",
     "semantic_hash": ""
   }
 }
