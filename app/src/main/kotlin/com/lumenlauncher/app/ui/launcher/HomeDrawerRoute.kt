@@ -243,6 +243,7 @@ fun HomeDrawerRoute(
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
     val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
+    val quickAddState by drawerViewModel.quickAddState.collectAsStateWithLifecycle()
 
     if (homeUiState.isLoading) {
         // Real Home state (dock/app list, theme-driven colors and fonts) hasn't loaded yet —
@@ -463,6 +464,10 @@ fun HomeDrawerRoute(
             homeAppsFontWeight = homeUiState.settings.homeAppsFontWeight,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
+            addToFavoritesOverride = quickAddState.favoritesOverride,
+            onAddToFavorites = drawerViewModel::addToFavorites,
+            addToDockOverride = quickAddState.dockOverride,
+            onAddToDock = drawerViewModel::addToDock,
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
@@ -609,6 +614,10 @@ fun HomeDrawerRoute(
             contacts = contactResults,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
+            addToFavoritesOverride = quickAddState.favoritesOverride,
+            onAddToFavorites = drawerViewModel::addToFavorites,
+            addToDockOverride = quickAddState.dockOverride,
+            onAddToDock = drawerViewModel::addToDock,
             onRequestConnections = drawerViewModel::getConnections,
             showContactsPermissionPrompt = showContactsPermissionPrompt,
             onContactsPermissionPromptClick = {

@@ -176,6 +176,11 @@ fun HomeScreen(
     onEventClick: (CalendarEvent) -> Unit = {},
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.lumenlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
+    addToFavoritesOverride: Boolean? = null,
+    onAddToFavorites: (AppInfo) -> Unit = {},
+    addToDockOverride: Boolean? = null,
+    onAddToDock: (AppInfo) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -518,6 +523,10 @@ fun HomeScreen(
                                         badgeStyle = notificationBadgeStyle,
                                         onRequestShortcuts = onRequestShortcuts,
                                         onLaunchShortcut = onLaunchShortcut,
+                                        addToFavoritesOverride = addToFavoritesOverride,
+                                        onAddToFavorites = onAddToFavorites,
+                                        addToDockOverride = addToDockOverride,
+                                        onAddToDock = onAddToDock,
                                         position = appRowPosition,
                                         presentation = appRowPresentation,
                                         labelColor = appLabelColor,
@@ -556,6 +565,10 @@ fun HomeScreen(
                             badgeStyle = notificationBadgeStyle,
                             onRequestShortcuts = onRequestShortcuts,
                             onLaunchShortcut = onLaunchShortcut,
+                            addToFavoritesOverride = addToFavoritesOverride,
+                            onAddToFavorites = onAddToFavorites,
+                            addToDockOverride = addToDockOverride,
+                            onAddToDock = onAddToDock,
                             labelColor = appLabelColor,
                             labelFontWeight = appLabelFontWeight,
                         )
@@ -808,6 +821,10 @@ internal fun AppRow(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
     modifier: Modifier = Modifier,
+    addToFavoritesOverride: Boolean? = null,
+    onAddToFavorites: (AppInfo) -> Unit = {},
+    addToDockOverride: Boolean? = null,
+    onAddToDock: (AppInfo) -> Unit = {},
     position: AppRowPosition = AppRowPosition.LEFT,
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     labelColor: Color = HomeAppTextColor,
@@ -902,6 +919,10 @@ internal fun AppRow(
                 onDismissRequest = { menuExpanded = false },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
+                addToFavoritesOverride = addToFavoritesOverride,
+                onAddToFavorites = onAddToFavorites,
+                addToDockOverride = addToDockOverride,
+                onAddToDock = onAddToDock,
             )
         }
     }
@@ -919,6 +940,10 @@ internal fun DockIcon(
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    addToFavoritesOverride: Boolean? = null,
+    onAddToFavorites: (AppInfo) -> Unit = {},
+    addToDockOverride: Boolean? = null,
+    onAddToDock: (AppInfo) -> Unit = {},
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
     // False for the profile carousel's read-only preview cards (see
@@ -970,6 +995,10 @@ internal fun DockIcon(
                 onDismissRequest = { menuExpanded = false },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
+                addToFavoritesOverride = addToFavoritesOverride,
+                onAddToFavorites = onAddToFavorites,
+                addToDockOverride = addToDockOverride,
+                onAddToDock = onAddToDock,
             )
         }
     }

@@ -13,6 +13,10 @@ import com.lumenlauncher.app.data.model.AppShortcut
 import com.lumenlauncher.app.data.model.ContactConnection
 import com.lumenlauncher.app.data.model.ContactInfo
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.domain.AddAppToDockUseCase
+import com.lumenlauncher.app.domain.AddAppToFavoritesUseCase
+import com.lumenlauncher.app.domain.ObserveQuickAddStateUseCase
+import com.lumenlauncher.app.domain.QuickAddState
 import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,6 +29,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /** F6's per-query contact matches, capped at 5 (see README `1j`/the approved search-results spec). */
 private const val MAX_CONTACT_RESULTS = 5
@@ -39,6 +44,9 @@ class DrawerViewModel @Inject constructor(
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
+    observeQuickAddState: ObserveQuickAddStateUseCase,
+    private val addAppToFavorites: AddAppToFavoritesUseCase,
+    private val addAppToDock: AddAppToDockUseCase,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
@@ -105,6 +113,18 @@ class DrawerViewModel @Inject constructor(
     suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName)
 
     fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
+
+    /** Governs F12's own "Add to Favorites"/"Add to Dock" rows — see [ObserveQuickAddStateUseCase]'s own doc. */
+    val quickAddState: StateFlow<QuickAddState> = observeQuickAddState()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuickAddState())
+
+    fun addToFavorites(app: AppInfo) {
+        viewModelScope.launch { addAppToFavorites(app) }
+    }
+
+    fun addToDock(app: AppInfo) {
+        viewModelScope.launch { addAppToDock(app) }
+    }
 
     /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (same fetch-on-open precedent as [getShortcuts]). */
     suspend fun getConnections(contact: ContactInfo): List<ContactConnection> = contactRepository.getConnections(contact.id)

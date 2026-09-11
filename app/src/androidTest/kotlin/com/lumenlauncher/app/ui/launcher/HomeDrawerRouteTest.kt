@@ -58,6 +58,9 @@ import com.lumenlauncher.app.data.local.WidgetPlacementEntity
 import com.lumenlauncher.app.data.model.AppInfo
 import com.lumenlauncher.app.data.widget.AppWidgetRepository
 import com.lumenlauncher.app.data.widget.LauncherAppWidgetHost
+import com.lumenlauncher.app.domain.AddAppToDockUseCase
+import com.lumenlauncher.app.domain.AddAppToFavoritesUseCase
+import com.lumenlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
@@ -216,6 +219,16 @@ class HomeDrawerRouteTest {
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
+                    ObserveQuickAddStateUseCase(
+                        settingsRepository,
+                        profileRepository,
+                        favoriteAppRepository,
+                        defaultFavoriteAppRepository,
+                        dockAppRepository,
+                        profileDockAppRepository,
+                    ),
+                    AddAppToFavoritesUseCase(settingsRepository, profileRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    AddAppToDockUseCase(settingsRepository, profileRepository, dockAppRepository, profileDockAppRepository),
                 )
             }
             val hubViewModel = remember {

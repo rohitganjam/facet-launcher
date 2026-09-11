@@ -7,6 +7,10 @@ import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.NotificationBadgeRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.domain.AddAppToDockUseCase
+import com.lumenlauncher.app.domain.AddAppToFavoritesUseCase
+import com.lumenlauncher.app.domain.ObserveQuickAddStateUseCase
+import com.lumenlauncher.app.domain.QuickAddState
 import com.lumenlauncher.app.domain.RankBySearchRelevanceUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,6 +59,9 @@ class DrawerViewModelTest {
         val notificationBadgeRepository = mock(NotificationBadgeRepository::class.java)
         `when`(notificationBadgeRepository.badgeCounts).thenReturn(MutableStateFlow(emptyMap()))
 
+        val observeQuickAddState = mock(ObserveQuickAddStateUseCase::class.java)
+        `when`(observeQuickAddState.invoke()).thenReturn(flowOf(QuickAddState()))
+
         return DrawerViewModel(
             settingsRepository = settingsRepository,
             contactPermissionRepository = contactPermissionRepository,
@@ -63,6 +70,9 @@ class DrawerViewModelTest {
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
+            observeQuickAddState = observeQuickAddState,
+            addAppToFavorites = mock(AddAppToFavoritesUseCase::class.java),
+            addAppToDock = mock(AddAppToDockUseCase::class.java),
         )
     }
 
