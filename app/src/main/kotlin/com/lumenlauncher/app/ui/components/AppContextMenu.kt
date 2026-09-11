@@ -122,7 +122,7 @@ fun AppContextMenu(
             AppIcon(icon = app.icon, size = AppIconSize.ROW_SPACIOUS, contentDescription = null)
             Text(
                 text = app.label,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = Ink,
                 modifier = Modifier.padding(start = 16.dp),
             )
