@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.BackButton
@@ -211,7 +212,7 @@ private fun SettingsContent(
                         CardDivider()
                         ClickableRow(
                             title = "App Drawer",
-                            subtitle = null,
+                            subtitle = appDrawerSummary(uiState.settings.drawerPresentation, uiState.settings.searchContactsEnabled, uiState.settings.searchSettingsEnabled),
                             onClick = onNavigateToAppDrawerSettings,
                             testTag = "app_drawer_settings_row",
                             trailing = { NavigationChevron() },
@@ -236,7 +237,7 @@ private fun SettingsContent(
                     SettingsCard {
                         ClickableRow(
                             title = "Permissions",
-                            subtitle = "See what Facet can access and why",
+                            subtitle = "See what Facet Launcher can access and why",
                             onClick = onNavigateToPermissions,
                             testTag = "view_permissions_row",
                             trailing = { NavigationChevron() },
@@ -291,6 +292,16 @@ private fun appsListSummary(mode: ListContentMode, favoritesCount: Int, appsToSh
     ListContentMode.FAVORITES -> "$favoritesCount Favorites"
     ListContentMode.RECENTS -> "$appsToShowCount Recents"
     ListContentMode.MOST_USED -> "$appsToShowCount Most used"
+}
+
+private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEnabled: Boolean, searchSettingsEnabled: Boolean): String {
+    val layout = when (presentation) {
+        DrawerPresentation.LIST -> "List"
+        DrawerPresentation.GRID -> "Grid"
+    }
+    val contactSearch = if (searchContactsEnabled) "On" else "Off"
+    val settingsSearch = if (searchSettingsEnabled) "On" else "Off"
+    return "Show as $layout · Contact search $contactSearch · Settings search $settingsSearch"
 }
 
 /** "Dots"/"Counts" — the actual configured badge style, not a generic "dots/badges" placeholder. */

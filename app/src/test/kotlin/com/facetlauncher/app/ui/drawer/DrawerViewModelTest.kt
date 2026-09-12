@@ -28,6 +28,7 @@ import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 /**
@@ -56,12 +57,14 @@ class DrawerViewModelTest {
         contactsPermissionGranted: Boolean = false,
         searchSettingsEnabled: Boolean = false,
         systemSettingsRepository: SystemSettingsRepository = mock(SystemSettingsRepository::class.java),
+        // Exposed so a test can hand in its own mock and verify a write against it afterward
+        // (see `enableContactSearch turns the search-contacts setting on`).
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java).also {
+            `when`(it.settings).thenReturn(
+                flowOf(LauncherSettings(searchContactsEnabled = searchContactsEnabled, searchSettingsEnabled = searchSettingsEnabled)),
+            )
+        },
     ): DrawerViewModel {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(
-            flowOf(LauncherSettings(searchContactsEnabled = searchContactsEnabled, searchSettingsEnabled = searchSettingsEnabled)),
-        )
-
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(contactsPermissionGranted)
 
@@ -144,6 +147,76 @@ class DrawerViewModelTest {
 
         // Then it stays hidden regardless of whether the permission actually ends up granted
         assertEquals(false, viewModel.showContactsPermissionPrompt.value)
+    }
+
+    @Test
+    fun `contacts setting prompt is hidden with a blank query even when access is granted and the setting is off`() = runTest {
+        val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = true)
+        backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.showContactsSettingPrompt.value)
+    }
+
+    @Test
+    fun `contacts setting prompt is hidden once a query is typed if the setting is already on`() = runTest {
+        val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = true)
+        backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
+
+        viewModel.onQueryChanged("Ann")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.showContactsSettingPrompt.value)
+    }
+
+    @Test
+    fun `contacts setting prompt is hidden once a query is typed if access isn't granted either`() = runTest {
+        val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = false)
+        backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
+
+        viewModel.onQueryChanged("Ann")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.showContactsSettingPrompt.value)
+    }
+
+    @Test
+    fun `contacts setting prompt shows once a query is typed while access is granted and the setting is off`() = runTest {
+        val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = true)
+        backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
+
+        viewModel.onQueryChanged("Ann")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(true, viewModel.showContactsSettingPrompt.value)
+    }
+
+    @Test
+    fun `contacts setting prompt stays hidden once enableContactSearch is called`() = runTest {
+        val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = true)
+        backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
+        viewModel.onQueryChanged("Ann")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(true, viewModel.showContactsSettingPrompt.value)
+
+        // When the user taps the prompt's own button
+        viewModel.enableContactSearch()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it stays hidden immediately, not just once the setting write is reflected back
+        assertEquals(false, viewModel.showContactsSettingPrompt.value)
+    }
+
+    @Test
+    fun `enableContactSearch turns the search-contacts setting on`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(searchContactsEnabled = false)))
+        val viewModel = drawerViewModel(contactsPermissionGranted = true, settingsRepository = settingsRepository)
+
+        viewModel.enableContactSearch()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setSearchContactsEnabled(true)
     }
 
     @Test

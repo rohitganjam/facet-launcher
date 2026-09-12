@@ -72,7 +72,7 @@ fun OnboardingIntroPage(onNext: () -> Unit, modifier: Modifier = Modifier) {
                     modifier = Modifier.size(72.dp).testTag("onboarding_logo"),
                 )
                 Text(
-                    text = "Facet",
+                    text = "Facet Launcher",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = Ink,
                 )

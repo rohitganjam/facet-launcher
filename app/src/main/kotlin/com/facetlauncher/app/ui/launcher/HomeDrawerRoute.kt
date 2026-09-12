@@ -248,6 +248,7 @@ fun HomeDrawerRoute(
     val settingsResults by drawerViewModel.settingsResults.collectAsStateWithLifecycle()
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
     val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
+    val showContactsSettingPrompt by drawerViewModel.showContactsSettingPrompt.collectAsStateWithLifecycle()
     val quickAddState by drawerViewModel.quickAddState.collectAsStateWithLifecycle()
 
     if (homeUiState.isLoading) {
@@ -652,6 +653,8 @@ fun HomeDrawerRoute(
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
                 )
             },
+            showContactsSettingPrompt = showContactsSettingPrompt,
+            onContactsSettingPromptClick = drawerViewModel::enableContactSearch,
             settingsEntries = settingsResults,
             onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
             isDrawerOpen = isDrawerOpen,

@@ -496,6 +496,48 @@ class AppDrawerScreenTest {
     }
 
     @Test
+    fun contactsSettingOffBannerShowsWhileSearchingAndDismissesOnItsOwnClick() {
+        // Given the caller reports READ_CONTACTS is granted but the "Search contacts" setting is
+        // off (mirrors DrawerViewModel.showContactsSettingPrompt)
+        var query by mutableStateOf("")
+        var showPrompt by mutableStateOf(false)
+        var clicked = false
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    query = query,
+                    onQueryChanged = { query = it },
+                    contacts = emptyList(),
+                    showContactsSettingPrompt = showPrompt,
+                    onContactsSettingPromptClick = { clicked = true; showPrompt = false },
+                )
+            }
+        }
+
+        // Then it stays hidden while there's no query yet
+        composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").assertDoesNotExist()
+
+        // When searching while the prompt condition holds
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
+        showPrompt = true
+        composeRule.waitForIdle()
+
+        // Then the banner renders under a CONTACTS header alongside the app results
+        composeRule.onNodeWithText("CONTACTS").assertExists()
+        composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").assertExists()
+        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+
+        // When tapping the banner
+        composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").performClick()
+
+        // Then its own click callback fires and (per the caller's own state, mirroring the dismiss-on-click contract) it disappears immediately
+        assertEquals(true, clicked)
+        composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").assertDoesNotExist()
+    }
+
+    @Test
     fun tappingAContactRowOpensTheConnectionsSheetForThem() {
         // Given a search that also has a contact match, with a fake connections provider
         // standing in for ContactRepository.getConnections (Phase 9 — see chat history)

@@ -42,7 +42,7 @@ private const val MAX_SETTINGS_RESULTS = 5
 /** Read-only settings needed to render the Drawer (icon visibility, opacity, left-edge rail toggle), plus F6's contacts search. */
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val contactPermissionRepository: ContactPermissionRepository,
     private val contactRepository: ContactRepository,
     private val systemSettingsRepository: SystemSettingsRepository,
@@ -136,6 +136,36 @@ class DrawerViewModel @Inject constructor(
     /** Called the moment the contacts-permission prompt's own button is tapped. */
     fun dismissContactsPermissionPrompt() {
         contactsPermissionPromptDismissed.value = true
+    }
+
+    private val contactsSettingPromptDismissed = MutableStateFlow(false)
+
+    /**
+     * True while the drawer search has a real query and `READ_CONTACTS` is already granted, but
+     * the "Search contacts" setting itself is off — most commonly because it was granted from
+     * Settings → Permissions (which only requests the OS permission, see `PermissionsScreen`'s own
+     * `PermissionKind.CONTACTS` branch) without also flipping the App Drawer's own toggle. The
+     * mirror image of [showContactsPermissionPrompt]: that one needs the setting on and the
+     * permission missing, this one needs the permission granted and the setting off — the two can
+     * never both be true. Same dismiss-on-click contract as [showContactsPermissionPrompt].
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val showContactsSettingPrompt: StateFlow<Boolean> = combine(
+        searchQuery,
+        settingsRepository.settings,
+        contactsSettingPromptDismissed,
+    ) { query, settings, dismissed ->
+        query.isNotBlank() && !settings.searchContactsEnabled && !dismissed && contactPermissionRepository.isGranted()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    /**
+     * Called the moment the contacts-setting prompt's own button is tapped — turns the setting on
+     * directly rather than sending the user anywhere, since the OS permission is already granted
+     * and there's nothing left to ask for.
+     */
+    fun enableContactSearch() {
+        contactsSettingPromptDismissed.value = true
+        viewModelScope.launch { settingsRepository.setSearchContactsEnabled(true) }
     }
 
     /** F12's long-press context menu — fetched fresh per app, only when its menu actually opens. */

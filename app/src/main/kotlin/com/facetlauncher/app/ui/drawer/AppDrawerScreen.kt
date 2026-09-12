@@ -185,6 +185,9 @@ fun AppDrawerScreen(
     /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
     showContactsPermissionPrompt: Boolean = false,
     onContactsPermissionPromptClick: () -> Unit = {},
+    /** True while `READ_CONTACTS` is granted but the "Search contacts" setting is off — see `DrawerViewModel.showContactsSettingPrompt`'s own doc for the exact condition. */
+    showContactsSettingPrompt: Boolean = false,
+    onContactsSettingPromptClick: () -> Unit = {},
     /** Search's system Settings section (Settings → App Drawer → "Search settings") — see `DrawerViewModel.settingsResults`. */
     settingsEntries: List<SettingsSearchEntry> = emptyList(),
     onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
@@ -283,6 +286,8 @@ fun AppDrawerScreen(
                 onContactClick = { focusManager.clearFocus(); connectionsSheetContact = it },
                 showContactsPermissionPrompt = showContactsPermissionPrompt,
                 onContactsPermissionPromptClick = onContactsPermissionPromptClick,
+                showContactsSettingPrompt = showContactsSettingPrompt,
+                onContactsSettingPromptClick = onContactsSettingPromptClick,
                 settingsEntries = settingsEntries,
                 onSettingsEntryClick = { focusManager.clearFocus(); onSettingsEntryClick(it) },
                 modifier = Modifier.fillMaxSize().testTag("drawer_search_results"),
@@ -516,11 +521,15 @@ private fun DrawerSearchResults(
     onContactClick: (ContactInfo) -> Unit,
     showContactsPermissionPrompt: Boolean,
     onContactsPermissionPromptClick: () -> Unit,
+    showContactsSettingPrompt: Boolean,
+    onContactsSettingPromptClick: () -> Unit,
     settingsEntries: List<SettingsSearchEntry>,
     onSettingsEntryClick: (SettingsSearchEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (apps.isEmpty() && contacts.isEmpty() && settingsEntries.isEmpty() && !showContactsPermissionPrompt) {
+    if (apps.isEmpty() && contacts.isEmpty() && settingsEntries.isEmpty() &&
+        !showContactsPermissionPrompt && !showContactsSettingPrompt
+    ) {
         DrawerSearchEmptyState(query = query, onClearSearch = onClearSearch, modifier = modifier)
         return
     }
@@ -583,7 +592,7 @@ private fun DrawerSearchResults(
                 }
             }
         }
-        if (contacts.isNotEmpty() || showContactsPermissionPrompt) {
+        if (contacts.isNotEmpty() || showContactsPermissionPrompt || showContactsSettingPrompt) {
             item {
                 Text(
                     text = "CONTACTS",
@@ -596,6 +605,13 @@ private fun DrawerSearchResults(
                 item {
                     ContactsAccessStrip(
                         onClick = onContactsPermissionPromptClick,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
+            } else if (showContactsSettingPrompt) {
+                item {
+                    ContactsSettingOffStrip(
+                        onClick = onContactsSettingPromptClick,
                         modifier = Modifier.padding(bottom = 4.dp),
                     )
                 }
@@ -647,6 +663,34 @@ private fun ContactsAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifi
             modifier = Modifier.weight(1f),
         )
         Text(text = "Open settings", style = MaterialTheme.typography.bodyMedium, color = Accent)
+    }
+}
+
+/**
+ * Same dashed-strip styling as [ContactsAccessStrip], for the opposite gap: `READ_CONTACTS` is
+ * already granted (e.g. via Settings → Permissions) but the "Search contacts" toggle itself is
+ * off. Tapping turns the setting on directly (see `DrawerViewModel.enableContactSearch`) — no
+ * system Settings round-trip needed since the permission is already in hand.
+ */
+@Composable
+private fun ContactsSettingOffStrip(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("drawer_contacts_setting_off_strip")
+            .drawerDashedBorder(color = Ink.copy(alpha = 0.16f), cornerRadius = 10.dp)
+            .padding(horizontal = 13.dp, vertical = 11.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Contact search is off in App Drawer settings.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted,
+            modifier = Modifier.weight(1f),
+        )
+        Text(text = "Turn on", style = MaterialTheme.typography.bodyMedium, color = Accent)
     }
 }
 
