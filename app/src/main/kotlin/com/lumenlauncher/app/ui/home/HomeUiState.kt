@@ -16,6 +16,7 @@ import com.lumenlauncher.app.data.model.DockDisplayMode
 import com.lumenlauncher.app.data.model.FontWeightOption
 import com.lumenlauncher.app.data.model.LauncherSettings
 import com.lumenlauncher.app.data.model.ListContentMode
+import com.lumenlauncher.app.domain.ClockAccessoryState
 import com.lumenlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 
 data class HomeUiState(
@@ -29,6 +30,8 @@ data class HomeUiState(
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
     val badgeCounts: Map<String, Int> = emptyMap(),
+    /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
+    val clockAccessories: ClockAccessoryState = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),
     /** Set once the user taps the usage-access prompt's own button — the prompt then stays hidden
      *  for the rest of this ViewModel's lifetime regardless of whether they actually grant the
      *  permission afterward, rather than reappearing every recomposition until [usageAccessGranted]

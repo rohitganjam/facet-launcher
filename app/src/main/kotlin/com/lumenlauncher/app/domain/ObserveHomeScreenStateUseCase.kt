@@ -38,6 +38,8 @@ data class HomeScreenState(
     val calendarEvents: List<CalendarEvent>,
     /** F13 — notification count per package, empty unless both the "Notification badges" setting is on and access is granted. */
     val badgeCounts: Map<String, Int>,
+    /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
+    val clockAccessories: ClockAccessoryState,
 )
 
 /**
@@ -59,6 +61,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
+    private val observeClockAccessories: ObserveClockAccessoriesUseCase,
 ) {
     // PACKAGE_USAGE_STATS/READ_CALENDAR have no grant-change callback — the only way to grant
     // either is a system redirect/dialog, so callers (Home, on resume) call refresh() to force
@@ -97,14 +100,18 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             if (settings.notificationDotsEnabled && notificationAccessRepository.isGranted()) counts else emptyMap()
         }
 
+        // Paired with badgeCounts (rather than added as a 7th argument below) purely to stay
+        // within the combine() overload's supported arity — unrelated to badgeCounts otherwise.
+        val badgeCountsAndAccessories = combine(badgeCounts, observeClockAccessories()) { badges, accessories -> badges to accessories }
+
         return combine(
             settingsRepository.settings,
             dockApps,
             appListItems,
             profileRepository.observeProfiles(),
             calendarEvents,
-            badgeCounts,
-        ) { settings, dockApps, items, profiles, events, badges ->
+            badgeCountsAndAccessories,
+        ) { settings, dockApps, items, profiles, events, (badges, accessories) ->
             HomeScreenState(
                 settings = settings,
                 dockApps = dockApps,
@@ -113,6 +120,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
                 usageAccessGranted = usageAccessRepository.isGranted(),
                 calendarEvents = events,
                 badgeCounts = badges,
+                clockAccessories = accessories,
             )
         }
     }

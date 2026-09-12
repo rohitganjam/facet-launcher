@@ -431,6 +431,9 @@ fun HomeDrawerRoute(
                 homeUiState.activeProfile?.let { onNavigateToProfileSettings(it.id) }
             },
             appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
+            nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
+            batteryPercent = homeUiState.clockAccessories.batteryPercent,
+            isCharging = homeUiState.clockAccessories.isCharging,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
             calendarFontOption = homeUiState.activeCalendarFontOption,

@@ -72,7 +72,7 @@ fun ClockAdjustSheet(
 
         AdjustRow(
             icon = { Icon(painter = painterResource(R.drawable.open_in_full), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = "Adjust size & position",
+            label = "Adjust clock size & position",
             subtitle = "Resize or reposition the clock",
             onClick = onAdjustClick,
             testTag = "clock_adjust_open",

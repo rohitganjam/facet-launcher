@@ -168,6 +168,10 @@ fun HomeScreen(
     /** Fired when the user selects "Profile settings" from the long-press menu — the caller resolves this to the active profile. */
     onNavigateToProfileSettings: () -> Unit = {},
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+    /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.lumenlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
+    nextAlarmMillis: Long? = null,
+    batteryPercent: Int? = null,
+    isCharging: Boolean = false,
     calendarEvents: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
     calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
@@ -465,6 +469,9 @@ fun HomeScreen(
                     calendarFontWeight = calendarFontWeight,
                     onEventClick = onEventClick,
                     launcherFontOption = launcherFontOption,
+                    nextAlarmMillis = nextAlarmMillis,
+                    batteryPercent = batteryPercent,
+                    isCharging = isCharging,
                 )
 
                 Column(
