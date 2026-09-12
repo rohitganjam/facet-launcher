@@ -45,7 +45,7 @@ class FavoritesPickerScreenTest {
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 runBlocking {
-                    profileId = database.profileDao().upsert(ProfileEntity(name = "Profile 1", position = 0))
+                    profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
                     seed(appRepository, favoriteAppRepository)
                 }
                 FavoritesPickerViewModel(

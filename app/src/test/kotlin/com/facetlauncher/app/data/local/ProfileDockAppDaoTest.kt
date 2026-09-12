@@ -22,7 +22,7 @@ class ProfileDockAppDaoTest {
     fun `insert then observe returns the inserted dock app scoped to its profile, ordered by position`() = runTest {
         // Given a profile and an empty per-profile dock table
         val database = createDatabase()
-        val profileId = database.profileDao().upsert(ProfileEntity(name = "Profile 1", position = 0))
+        val profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
 
         // When two dock apps are inserted out of position order
         database.profileDockAppDao().upsert(
@@ -41,8 +41,8 @@ class ProfileDockAppDaoTest {
     fun `dock apps are scoped per profile, not shared`() = runTest {
         // Given two profiles, each with a dock app
         val database = createDatabase()
-        val profileOneId = database.profileDao().upsert(ProfileEntity(name = "One", position = 0))
-        val profileTwoId = database.profileDao().upsert(ProfileEntity(name = "Two", position = 1))
+        val profileOneId = database.profileDao().insert(ProfileEntity(name = "One", position = 0))
+        val profileTwoId = database.profileDao().insert(ProfileEntity(name = "Two", position = 1))
         database.profileDockAppDao().upsert(
             ProfileDockAppEntity(profileId = profileOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
@@ -59,7 +59,7 @@ class ProfileDockAppDaoTest {
     fun `deleting a profile cascades to its dock apps`() = runTest {
         // Given a profile with a dock app
         val database = createDatabase()
-        val profileId = database.profileDao().upsert(ProfileEntity(name = "Profile 1", position = 0))
+        val profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
         database.profileDockAppDao().upsert(
             ProfileDockAppEntity(profileId = profileId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
@@ -75,8 +75,8 @@ class ProfileDockAppDaoTest {
     fun `deleteByPackage removes every profile's entry for that package`() = runTest {
         // Given the same app in two profiles' docks
         val database = createDatabase()
-        val profileOneId = database.profileDao().upsert(ProfileEntity(name = "One", position = 0))
-        val profileTwoId = database.profileDao().upsert(ProfileEntity(name = "Two", position = 1))
+        val profileOneId = database.profileDao().insert(ProfileEntity(name = "One", position = 0))
+        val profileTwoId = database.profileDao().insert(ProfileEntity(name = "Two", position = 1))
         database.profileDockAppDao().upsert(
             ProfileDockAppEntity(profileId = profileOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )

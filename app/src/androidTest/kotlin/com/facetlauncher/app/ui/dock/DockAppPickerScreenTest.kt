@@ -50,7 +50,7 @@ class DockAppPickerScreenTest {
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
                 val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
                 if (profileId != null) {
-                    runBlocking { database.profileDao().upsert(com.facetlauncher.app.data.local.ProfileEntity(id = profileId, name = "P", position = 0)) }
+                    runBlocking { database.profileDao().insert(com.facetlauncher.app.data.local.ProfileEntity(id = profileId, name = "P", position = 0)) }
                 }
                 seed(appRepository, dockAppRepository, profileDockAppRepository)
                 DockAppPickerViewModel(

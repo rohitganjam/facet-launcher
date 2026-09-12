@@ -22,7 +22,7 @@ class FavoriteAppDaoTest {
     fun `insert then observe returns the inserted favorite scoped to its profile`() = runTest {
         // Given a profile and an empty favorites table
         val database = createDatabase()
-        val profileId = database.profileDao().upsert(ProfileEntity(name = "Profile 1", position = 0))
+        val profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
 
         // When a favorite is inserted for that profile
         database.favoriteAppDao().upsert(
@@ -39,8 +39,8 @@ class FavoriteAppDaoTest {
     fun `favorites are scoped per profile, not shared`() = runTest {
         // Given two profiles, each with a favorite
         val database = createDatabase()
-        val profileOneId = database.profileDao().upsert(ProfileEntity(name = "One", position = 0))
-        val profileTwoId = database.profileDao().upsert(ProfileEntity(name = "Two", position = 1))
+        val profileOneId = database.profileDao().insert(ProfileEntity(name = "One", position = 0))
+        val profileTwoId = database.profileDao().insert(ProfileEntity(name = "Two", position = 1))
         database.favoriteAppDao().upsert(
             FavoriteAppEntity(profileId = profileOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
@@ -57,7 +57,7 @@ class FavoriteAppDaoTest {
     fun `deleting a profile cascades to its favorites`() = runTest {
         // Given a profile with a favorite
         val database = createDatabase()
-        val profileId = database.profileDao().upsert(ProfileEntity(name = "Profile 1", position = 0))
+        val profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
         database.favoriteAppDao().upsert(
             FavoriteAppEntity(profileId = profileId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
@@ -73,8 +73,8 @@ class FavoriteAppDaoTest {
     fun `deleteByComponent removes only the matching profile's entry`() = runTest {
         // Given the same app favorited under two different profiles
         val database = createDatabase()
-        val profileOneId = database.profileDao().upsert(ProfileEntity(name = "One", position = 0))
-        val profileTwoId = database.profileDao().upsert(ProfileEntity(name = "Two", position = 1))
+        val profileOneId = database.profileDao().insert(ProfileEntity(name = "One", position = 0))
+        val profileTwoId = database.profileDao().insert(ProfileEntity(name = "Two", position = 1))
         database.favoriteAppDao().upsert(
             FavoriteAppEntity(profileId = profileOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )

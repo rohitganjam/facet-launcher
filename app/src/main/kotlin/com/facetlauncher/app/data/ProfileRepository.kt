@@ -46,81 +46,81 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         val existing = profileDao.observeAll().first()
         val nextPosition = (existing.maxOfOrNull { it.position } ?: -1) + 1
         val profile = ProfileEntity(name = "$DEFAULT_PROFILE_NAME_PREFIX${existing.size + 1}", position = nextPosition)
-        val id = profileDao.upsert(profile)
+        val id = profileDao.insert(profile)
         return profile.copy(id = id)
     }
 
     suspend fun renameProfile(profile: ProfileEntity, newName: String) {
-        profileDao.upsert(profile.copy(name = newName))
+        profileDao.update(profile.copy(name = newName))
     }
 
     /** Reverts this profile to inheriting the global default or switches to overriding. */
     suspend fun setOverrideClock(profile: ProfileEntity, overriding: Boolean) {
-        profileDao.upsert(profile.copy(overrideClock = overriding))
+        profileDao.update(profile.copy(overrideClock = overriding))
     }
 
     suspend fun setClockTemplateId(profile: ProfileEntity, id: ClockTemplateId) {
-        profileDao.upsert(profile.copy(clockTemplateId = id))
+        profileDao.update(profile.copy(clockTemplateId = id))
     }
 
     suspend fun setClockFontOption(profile: ProfileEntity, option: ClockFontOption) {
-        profileDao.upsert(profile.copy(clockFontOption = option))
+        profileDao.update(profile.copy(clockFontOption = option))
     }
 
     suspend fun setClockColorOption(profile: ProfileEntity, option: ClockColorOption) {
-        profileDao.upsert(profile.copy(clockColorOption = option))
+        profileDao.update(profile.copy(clockColorOption = option))
     }
 
     /** See [ProfileEntity.clockAccentColorOption]. */
     suspend fun setClockAccentColorOption(profile: ProfileEntity, option: ClockColorOption) {
-        profileDao.upsert(profile.copy(clockAccentColorOption = option))
+        profileDao.update(profile.copy(clockAccentColorOption = option))
     }
 
     suspend fun setUse24HourTime(profile: ProfileEntity, enabled: Boolean) {
-        profileDao.upsert(profile.copy(use24HourTime = enabled))
+        profileDao.update(profile.copy(use24HourTime = enabled))
     }
 
     /** See [ProfileEntity.clockDateStyle]. */
     suspend fun setClockDateStyle(profile: ProfileEntity, dateStyle: ClockDateStyle) {
-        profileDao.upsert(profile.copy(clockDateStyle = dateStyle))
+        profileDao.update(profile.copy(clockDateStyle = dateStyle))
     }
 
     suspend fun setClockShowMeridiem(profile: ProfileEntity, enabled: Boolean) {
-        profileDao.upsert(profile.copy(clockShowMeridiem = enabled))
+        profileDao.update(profile.copy(clockShowMeridiem = enabled))
     }
 
     suspend fun setCalendarFontOption(profile: ProfileEntity, option: ClockFontOption) {
-        profileDao.upsert(profile.copy(calendarFontOption = option))
+        profileDao.update(profile.copy(calendarFontOption = option))
     }
 
     suspend fun setCalendarColorOption(profile: ProfileEntity, option: ClockColorOption) {
-        profileDao.upsert(profile.copy(calendarColorOption = option))
+        profileDao.update(profile.copy(calendarColorOption = option))
     }
 
     suspend fun setCalendarFontWeight(profile: ProfileEntity, weight: FontWeightOption) {
-        profileDao.upsert(profile.copy(calendarFontWeight = weight))
+        profileDao.update(profile.copy(calendarFontWeight = weight))
     }
 
     suspend fun setClockAlignment(profile: ProfileEntity, alignment: ClockAlignment) {
-        profileDao.upsert(profile.copy(clockAlignment = alignment))
+        profileDao.update(profile.copy(clockAlignment = alignment))
     }
 
     /** Independent of [setClockAlignment] — see [ProfileEntity.calendarAlignment]. */
     suspend fun setCalendarAlignment(profile: ProfileEntity, alignment: ClockAlignment) {
-        profileDao.upsert(profile.copy(calendarAlignment = alignment))
+        profileDao.update(profile.copy(calendarAlignment = alignment))
     }
 
     suspend fun setClockZoneHeight(profile: ProfileEntity, heightDp: Float) {
-        profileDao.upsert(profile.copy(clockZoneHeightDp = heightDp))
+        profileDao.update(profile.copy(clockZoneHeightDp = heightDp))
     }
 
     /** Restores this profile's clock+calendar block to its natural, undragged position. */
     suspend fun resetClockZoneHeight(profile: ProfileEntity) {
-        profileDao.upsert(profile.copy(clockZoneHeightDp = null))
+        profileDao.update(profile.copy(clockZoneHeightDp = null))
     }
 
     suspend fun setClockScale(profile: ProfileEntity, scale: Float) {
-        profileDao.upsert(profile.copy(clockScale = scale))
+        profileDao.update(profile.copy(clockScale = scale))
     }
 
     /**
@@ -129,7 +129,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
      * clobbering risk of sequential single-field upserts against the same stale snapshot).
      */
     suspend fun resetClockPosition(profile: ProfileEntity) {
-        profileDao.upsert(
+        profileDao.update(
             profile.copy(
                 clockZoneHeightDp = null,
                 clockAlignment = ClockAlignment.LEFT,
@@ -166,7 +166,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         accentColorOption: ClockColorOption = profile.clockAccentColorOption,
         dateStyle: ClockDateStyle = profile.clockDateStyle,
     ) {
-        profileDao.upsert(
+        profileDao.update(
             profile.copy(
                 overrideClock = overriding,
                 clockTemplateId = templateId,
@@ -189,32 +189,32 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
 
     /** Reverts this profile to inheriting the global default or switches to overriding. */
     suspend fun setOverrideApps(profile: ProfileEntity, overriding: Boolean) {
-        profileDao.upsert(profile.copy(overrideApps = overriding))
+        profileDao.update(profile.copy(overrideApps = overriding))
     }
 
     suspend fun setAppRowPosition(profile: ProfileEntity, position: AppRowPosition) {
-        profileDao.upsert(profile.copy(appRowPosition = position))
+        profileDao.update(profile.copy(appRowPosition = position))
     }
 
     suspend fun setAppRowPresentation(profile: ProfileEntity, presentation: AppRowPresentation) {
-        profileDao.upsert(profile.copy(appRowPresentation = presentation))
+        profileDao.update(profile.copy(appRowPresentation = presentation))
     }
 
     suspend fun setListContentMode(profile: ProfileEntity, mode: ListContentMode) {
-        profileDao.upsert(profile.copy(listContentMode = mode))
+        profileDao.update(profile.copy(listContentMode = mode))
     }
 
     /** Coerced into [AppListLimits]' range (reduced from README's original `3d` 4…8 — see chat history). */
     suspend fun setAppsToShowCount(profile: ProfileEntity, count: Int) {
-        profileDao.upsert(profile.copy(appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW)))
+        profileDao.update(profile.copy(appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW)))
     }
 
     suspend fun setAppListVerticalAlignment(profile: ProfileEntity, alignment: AppListVerticalAlignment) {
-        profileDao.upsert(profile.copy(appListVerticalAlignment = alignment))
+        profileDao.update(profile.copy(appListVerticalAlignment = alignment))
     }
 
     suspend fun setOverridingFavorites(profile: ProfileEntity, overriding: Boolean) {
-        profileDao.upsert(profile.copy(overridingFavorites = overriding))
+        profileDao.update(profile.copy(overridingFavorites = overriding))
     }
 
     /**
@@ -231,7 +231,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         overridingFavorites: Boolean,
         verticalAlignment: AppListVerticalAlignment = profile.appListVerticalAlignment,
     ) {
-        profileDao.upsert(
+        profileDao.update(
             profile.copy(
                 overrideApps = overriding,
                 appRowPosition = position,
@@ -245,7 +245,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
     }
 
     suspend fun setDockDisplayMode(profile: ProfileEntity, mode: DockDisplayMode) {
-        profileDao.upsert(profile.copy(dockDisplayMode = mode))
+        profileDao.update(profile.copy(dockDisplayMode = mode))
     }
 
     /**
@@ -257,20 +257,20 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
      * [updateOverridingApps]/favorites.
      */
     suspend fun updateOverridingDock(profile: ProfileEntity, overriding: Boolean, displayMode: DockDisplayMode) {
-        profileDao.upsert(profile.copy(overrideDock = overriding, dockDisplayMode = displayMode))
+        profileDao.update(profile.copy(overrideDock = overriding, dockDisplayMode = displayMode))
     }
 
     /** Reverts this profile to inheriting the global default or switches to overriding. */
     suspend fun setOverrideCalendar(profile: ProfileEntity, overriding: Boolean) {
-        profileDao.upsert(profile.copy(overrideCalendar = overriding))
+        profileDao.update(profile.copy(overrideCalendar = overriding))
     }
 
     suspend fun setShowAllDayEvents(profile: ProfileEntity, enabled: Boolean) {
-        profileDao.upsert(profile.copy(showAllDayEvents = enabled))
+        profileDao.update(profile.copy(showAllDayEvents = enabled))
     }
 
     suspend fun setSelectedCalendarIds(profile: ProfileEntity, ids: Set<String>?) {
-        profileDao.upsert(profile.copy(selectedCalendarIdsCsv = ids.toCsv()))
+        profileDao.update(profile.copy(selectedCalendarIdsCsv = ids.toCsv()))
     }
 
     /**
@@ -285,7 +285,7 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
         showAllDayEvents: Boolean,
         selectedCalendarIds: Set<String>?,
     ) {
-        profileDao.upsert(
+        profileDao.update(
             profile.copy(
                 overrideCalendar = overriding,
                 showAllDayEvents = showAllDayEvents,
@@ -304,11 +304,11 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
     }
 
     /** F14 Backup & Restore — inserts [profile] as a brand-new row (its own `id` is ignored, a fresh one is autogenerated) and returns that new id. */
-    suspend fun restoreProfile(profile: ProfileEntity): Long = profileDao.upsert(profile.copy(id = 0))
+    suspend fun restoreProfile(profile: ProfileEntity): Long = profileDao.insert(profile.copy(id = 0))
 
     suspend fun reorderProfiles(orderedProfiles: List<ProfileEntity>) {
         orderedProfiles.forEachIndexed { index, profile ->
-            profileDao.upsert(profile.copy(position = index))
+            profileDao.update(profile.copy(position = index))
         }
     }
 }

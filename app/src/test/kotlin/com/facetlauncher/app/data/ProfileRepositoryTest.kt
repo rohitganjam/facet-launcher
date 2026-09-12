@@ -28,11 +28,15 @@ private class FakeProfileDao : ProfileDao {
 
     override fun observeAll(): Flow<List<ProfileEntity>> = state
 
-    override suspend fun upsert(profile: ProfileEntity): Long {
+    override suspend fun insert(profile: ProfileEntity): Long {
         val id = if (profile.id != 0L) profile.id else nextId++
         val stored = profile.copy(id = id)
         state.value = state.value.filterNot { it.id == id } + stored
         return id
+    }
+
+    override suspend fun update(profile: ProfileEntity) {
+        state.value = state.value.map { if (it.id == profile.id) profile else it }
     }
 
     override suspend fun delete(profile: ProfileEntity) {
