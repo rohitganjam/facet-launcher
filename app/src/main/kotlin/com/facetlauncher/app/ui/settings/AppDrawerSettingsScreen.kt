@@ -77,6 +77,7 @@ fun AppDrawerSettingsScreen(
             // no permission dance — just write the value directly.
             if (enabled) requestContactsPermission.launch(Manifest.permission.READ_CONTACTS) else viewModel.setSearchContactsEnabled(false)
         },
+        onSearchSettingsToggled = viewModel::setSearchSettingsEnabled,
         onSearchBarPositionChanged = viewModel::setSearchBarPosition,
         onDrawerOpacityChanged = viewModel::setDrawerOpacity,
         modifier = modifier,
@@ -93,6 +94,7 @@ private fun AppDrawerSettingsContent(
     onShowDrawerIconsChanged: (Boolean) -> Unit,
     onShowDrawerLabelsChanged: (Boolean) -> Unit,
     onSearchContactsToggled: (Boolean) -> Unit,
+    onSearchSettingsToggled: (Boolean) -> Unit,
     onSearchBarPositionChanged: (SearchBarPosition) -> Unit,
     onDrawerOpacityChanged: (Float) -> Unit,
     modifier: Modifier = Modifier,
@@ -171,6 +173,14 @@ private fun AppDrawerSettingsContent(
                             testTag = "search_contacts_toggle",
                         )
                         CardDivider()
+                        AppDrawerToggleRow(
+                            title = "Search settings",
+                            subtitle = "Jump to system settings like Wi-Fi or Bluetooth",
+                            checked = settings.searchSettingsEnabled,
+                            onCheckedChange = onSearchSettingsToggled,
+                            testTag = "search_settings_toggle",
+                        )
+                        CardDivider()
                         LabeledDropdownRow(
                             title = "Search bar position",
                             options = SearchBarPosition.entries,
@@ -234,10 +244,12 @@ private fun AppDrawerToggleRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(vertical = 13.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
+        // Constrains the label/subtitle to the space left of the Switch so a long subtitle wraps
+        // onto a second line instead of pushing the Switch out past the card's own edge.
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
             if (subtitle != null) {
                 Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
@@ -282,6 +294,7 @@ private fun AppDrawerSettingsScreenPreview() {
             onShowDrawerIconsChanged = {},
             onShowDrawerLabelsChanged = {},
             onSearchContactsToggled = {},
+            onSearchSettingsToggled = {},
             onSearchBarPositionChanged = {},
             onDrawerOpacityChanged = {},
         )

@@ -125,6 +125,8 @@ data class LauncherSettings(
     val calendarColors: Map<String, String> = emptyMap(),
     /** F6 — whether the App Drawer search includes a contacts section. The toggle itself triggers the `READ_CONTACTS` request; denial reverts this back to `false`. */
     val searchContactsEnabled: Boolean = false,
+    /** Whether the App Drawer search includes a system Settings section (e.g. typing "wifi" surfaces a "Wi-Fi" result that deep-links into that Settings screen). No runtime permission needed, unlike [searchContactsEnabled]. */
+    val searchSettingsEnabled: Boolean = false,
     /** F11 — Settings → Theme → "Select launcher theme". */
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** F11 — "Wallpaper colors" (Material You) by default; `false` selects "Basic colors" — [customAccentSwatch]'s fixed pick. */

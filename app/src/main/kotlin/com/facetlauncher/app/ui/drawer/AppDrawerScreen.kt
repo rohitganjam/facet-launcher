@@ -54,6 +54,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -95,6 +96,7 @@ import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.domain.GroupedApps
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
@@ -181,6 +183,9 @@ fun AppDrawerScreen(
     /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
     showContactsPermissionPrompt: Boolean = false,
     onContactsPermissionPromptClick: () -> Unit = {},
+    /** Search's system Settings section (Settings → App Drawer → "Search settings") — see `DrawerViewModel.settingsResults`. */
+    settingsEntries: List<SettingsSearchEntry> = emptyList(),
+    onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
     /** True while the drawer itself is open/opening (caller's own `isDrawerOpen`). Used only to reset the connections sheet once the drawer is fully closed — see the `LaunchedEffect` below. */
     isDrawerOpen: Boolean = true,
 ) {
@@ -275,6 +280,8 @@ fun AppDrawerScreen(
                 onContactClick = { focusManager.clearFocus(); connectionsSheetContact = it },
                 showContactsPermissionPrompt = showContactsPermissionPrompt,
                 onContactsPermissionPromptClick = onContactsPermissionPromptClick,
+                settingsEntries = settingsEntries,
+                onSettingsEntryClick = { focusManager.clearFocus(); onSettingsEntryClick(it) },
                 modifier = Modifier.fillMaxSize().testTag("drawer_search_results"),
             )
         } else {
@@ -505,9 +512,11 @@ private fun DrawerSearchResults(
     onContactClick: (ContactInfo) -> Unit,
     showContactsPermissionPrompt: Boolean,
     onContactsPermissionPromptClick: () -> Unit,
+    settingsEntries: List<SettingsSearchEntry>,
+    onSettingsEntryClick: (SettingsSearchEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (apps.isEmpty() && contacts.isEmpty() && !showContactsPermissionPrompt) {
+    if (apps.isEmpty() && contacts.isEmpty() && settingsEntries.isEmpty() && !showContactsPermissionPrompt) {
         DrawerSearchEmptyState(query = query, onClearSearch = onClearSearch, modifier = modifier)
         return
     }
@@ -591,6 +600,19 @@ private fun DrawerSearchResults(
                 ContactRow(contact = contact, itemSize = itemSize, onClick = { onContactClick(contact) })
             }
         }
+        if (settingsEntries.isNotEmpty()) {
+            item {
+                Text(
+                    text = "SETTINGS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = DrawerHeaderTextColor,
+                    modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
+                )
+            }
+            items(settingsEntries, key = { "settings_" + it.id }) { entry ->
+                SettingsResultRow(entry = entry, itemSize = itemSize, onClick = { onSettingsEntryClick(entry) })
+            }
+        }
         item { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
@@ -662,6 +684,33 @@ private fun ContactRow(contact: ContactInfo, onClick: () -> Unit, modifier: Modi
             )
         }
         Text(text = contact.displayName, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
+    }
+}
+
+/**
+ * One system Settings deep-link match — a plain glyph (not an [AppIcon]/avatar tile, so no
+ * Material shape decision applies here, see CLAUDE.md's shape section) plus the screen's label;
+ * tapping fires the caller's [android.provider.Settings.ACTION_*] intent. [itemSize] scales the
+ * glyph/row padding the same way [ContactRow] does, so this section reads as part of the same list.
+ */
+@Composable
+private fun SettingsResultRow(entry: SettingsSearchEntry, onClick: () -> Unit, modifier: Modifier = Modifier, itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("settings_result_row_${entry.id}")
+            .padding(vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Settings,
+            contentDescription = null,
+            tint = Muted,
+            modifier = Modifier.size(itemSize.iconSizeDp.dp),
+        )
+        Text(text = entry.label, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
     }
 }
 

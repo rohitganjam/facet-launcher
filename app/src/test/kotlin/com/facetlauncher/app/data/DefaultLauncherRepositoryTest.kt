@@ -61,12 +61,39 @@ class DefaultLauncherRepositoryTest {
     }
 
     @Test
-    fun `isDefaultLauncher is unchanged by the new request-intent method`() = runTest {
-        // Given no role state changes at all
+    fun `isDefaultLauncher is true when the ROLE_HOME role is held`() = runTest {
+        // Given the role is available and held by Facet
+        shadowRoleManager.addAvailableRole(RoleManager.ROLE_HOME)
+        shadowRoleManager.addHeldRole(RoleManager.ROLE_HOME)
+
         // When checking default-launcher status
         val result = repository().isDefaultLauncher()
 
-        // Then it still resolves via the plain HOME-intent check, independent of RoleManager
+        // Then it reports true
+        assertEquals(true, result)
+    }
+
+    @Test
+    fun `isDefaultLauncher is false when the role is available but not held`() = runTest {
+        // Given the role is available but Facet doesn't hold it
+        shadowRoleManager.addAvailableRole(RoleManager.ROLE_HOME)
+
+        // When checking default-launcher status
+        val result = repository().isDefaultLauncher()
+
+        // Then it reports false — not the stale/unreliable plain HOME-intent resolution
+        assertEquals(false, result)
+    }
+
+    @Test
+    fun `isDefaultLauncher falls back to the HOME-intent check when the role isn't available`() = runTest {
+        // Given the role API reports it unavailable (older API level / OEM without it), and
+        // nothing registered to resolve the HOME intent in Robolectric's fake PackageManager
+
+        // When checking default-launcher status
+        val result = repository().isDefaultLauncher()
+
+        // Then it falls back to the plain resolveActivity check, which finds no match
         assertEquals(false, result)
     }
 }

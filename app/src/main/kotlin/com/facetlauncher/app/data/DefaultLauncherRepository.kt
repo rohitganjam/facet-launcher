@@ -15,10 +15,23 @@ import kotlinx.coroutines.withContext
 @Singleton
 class DefaultLauncherRepository @Inject constructor(@ApplicationContext private val context: Context) {
 
+    /**
+     * `PackageManager.resolveActivity` (the old preferred-activity mechanism) doesn't reliably
+     * reflect the current default on Android 10+, where `ROLE_HOME` replaced it — with no
+     * persisted preferred-activity entry for HOME and multiple equally-matching launcher
+     * activities in the manifest, it can report a stale/wrong winner. Ask [RoleManager] directly,
+     * same as [requestDefaultLauncherIntent] already does; only fall back to the legacy check on
+     * an OEM build where the role isn't exposed at all.
+     */
     suspend fun isDefaultLauncher(): Boolean = withContext(Dispatchers.Default) {
-        val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        val resolved = context.packageManager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)
-        resolved?.activityInfo?.packageName == context.packageName
+        val roleManager = context.getSystemService(RoleManager::class.java)
+        if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
+            roleManager.isRoleHeld(RoleManager.ROLE_HOME)
+        } else {
+            val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            val resolved = context.packageManager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            resolved?.activityInfo?.packageName == context.packageName
+        }
     }
 
     /**

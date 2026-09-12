@@ -38,6 +38,7 @@ import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.ProfileRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
@@ -169,6 +170,7 @@ class KeyboardDismissalTest {
                     settingsRepository,
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
+                    SystemSettingsRepository(context),
                     AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),

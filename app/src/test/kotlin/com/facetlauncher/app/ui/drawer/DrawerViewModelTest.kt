@@ -6,7 +6,9 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
@@ -30,9 +32,9 @@ import org.mockito.Mockito.`when`
 
 /**
  * Covers [DrawerViewModel.showContactsPermissionPrompt] — the search-drawer analogue of Home's
- * usage-access prompt (see chat history). [DrawerViewModel.contactResults] and the other
- * fetch-on-open methods are exercised indirectly through this ViewModel elsewhere/on-device; this
- * file is scoped to the new dismiss-on-click banner logic only.
+ * usage-access prompt (see chat history) — and [DrawerViewModel.settingsResults]'s own
+ * enabled/query gating. [DrawerViewModel.contactResults] and the other fetch-on-open methods are
+ * exercised indirectly through this ViewModel elsewhere/on-device.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DrawerViewModelTest {
@@ -49,9 +51,16 @@ class DrawerViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun drawerViewModel(searchContactsEnabled: Boolean, contactsPermissionGranted: Boolean): DrawerViewModel {
+    private fun drawerViewModel(
+        searchContactsEnabled: Boolean = false,
+        contactsPermissionGranted: Boolean = false,
+        searchSettingsEnabled: Boolean = false,
+        systemSettingsRepository: SystemSettingsRepository = mock(SystemSettingsRepository::class.java),
+    ): DrawerViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(searchContactsEnabled = searchContactsEnabled)))
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(LauncherSettings(searchContactsEnabled = searchContactsEnabled, searchSettingsEnabled = searchSettingsEnabled)),
+        )
 
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(contactsPermissionGranted)
@@ -66,6 +75,7 @@ class DrawerViewModelTest {
             settingsRepository = settingsRepository,
             contactPermissionRepository = contactPermissionRepository,
             contactRepository = mock(ContactRepository::class.java),
+            systemSettingsRepository = systemSettingsRepository,
             appShortcutRepository = mock(AppShortcutRepository::class.java),
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
@@ -134,5 +144,41 @@ class DrawerViewModelTest {
 
         // Then it stays hidden regardless of whether the permission actually ends up granted
         assertEquals(false, viewModel.showContactsPermissionPrompt.value)
+    }
+
+    @Test
+    fun `settings results stay empty with a blank query even when the setting is on`() = runTest {
+        val viewModel = drawerViewModel(searchSettingsEnabled = true)
+        backgroundScope.launch { viewModel.settingsResults.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(emptyList<Any>(), viewModel.settingsResults.value)
+    }
+
+    @Test
+    fun `settings results stay empty once a query is typed if the setting is off`() = runTest {
+        val systemSettingsRepository = mock(SystemSettingsRepository::class.java)
+        `when`(systemSettingsRepository.search("wifi")).thenReturn(listOf(SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")))
+        val viewModel = drawerViewModel(searchSettingsEnabled = false, systemSettingsRepository = systemSettingsRepository)
+        backgroundScope.launch { viewModel.settingsResults.collect {} }
+
+        viewModel.onQueryChanged("wifi")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(emptyList<Any>(), viewModel.settingsResults.value)
+    }
+
+    @Test
+    fun `settings results surface matches once a query is typed while enabled`() = runTest {
+        val entry = SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")
+        val systemSettingsRepository = mock(SystemSettingsRepository::class.java)
+        `when`(systemSettingsRepository.search("wifi")).thenReturn(listOf(entry))
+        val viewModel = drawerViewModel(searchSettingsEnabled = true, systemSettingsRepository = systemSettingsRepository)
+        backgroundScope.launch { viewModel.settingsResults.collect {} }
+
+        viewModel.onQueryChanged("wifi")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(entry), viewModel.settingsResults.value)
     }
 }

@@ -53,6 +53,7 @@ private object Keys {
     val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
     val CALENDAR_COLORS = stringSetPreferencesKey("calendar_colors")
     val SEARCH_CONTACTS_ENABLED = booleanPreferencesKey("search_contacts_enabled")
+    val SEARCH_SETTINGS_ENABLED = booleanPreferencesKey("search_settings_enabled")
     val ACCENT_FROM_SYSTEM = booleanPreferencesKey("accent_from_system")
     val CUSTOM_ACCENT_SWATCH = stringPreferencesKey("custom_accent_swatch")
     val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
@@ -121,6 +122,7 @@ class SettingsRepository @Inject constructor(
                 if (parts.size == 2) parts[0] to parts[1] else null
             }.toMap(),
             searchContactsEnabled = preferences[Keys.SEARCH_CONTACTS_ENABLED] ?: defaults.searchContactsEnabled,
+            searchSettingsEnabled = preferences[Keys.SEARCH_SETTINGS_ENABLED] ?: defaults.searchSettingsEnabled,
             accentFromSystem = preferences[Keys.ACCENT_FROM_SYSTEM] ?: defaults.accentFromSystem,
             customAccentSwatch = preferences[Keys.CUSTOM_ACCENT_SWATCH],
             wallpaperAccentRole = preferences[Keys.WALLPAPER_ACCENT_ROLE]?.let { runCatching { WallpaperAccentRole.valueOf(it) }.getOrNull() }
@@ -238,6 +240,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setSearchContactsEnabled(enabled: Boolean) {
         dataStore.edit { it[Keys.SEARCH_CONTACTS_ENABLED] = enabled }
+    }
+
+    suspend fun setSearchSettingsEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.SEARCH_SETTINGS_ENABLED] = enabled }
     }
 
     suspend fun setAccentFromSystem(enabled: Boolean) {

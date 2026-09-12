@@ -103,6 +103,17 @@ class AppDrawerSettingsViewModelTest {
     }
 
     @Test
+    fun `toggling search settings calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setSearchSettingsEnabled(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setSearchSettingsEnabled(true)
+    }
+
+    @Test
     fun `changing search bar position calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)

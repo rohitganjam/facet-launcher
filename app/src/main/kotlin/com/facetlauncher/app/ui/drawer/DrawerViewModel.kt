@@ -8,11 +8,13 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
@@ -34,12 +36,16 @@ import kotlinx.coroutines.launch
 /** F6's per-query contact matches, capped at 5 (see README `1j`/the approved search-results spec). */
 private const val MAX_CONTACT_RESULTS = 5
 
+/** Per-query system Settings matches, capped the same as [MAX_CONTACT_RESULTS] — same "small, scannable section" rationale. */
+private const val MAX_SETTINGS_RESULTS = 5
+
 /** Read-only settings needed to render the Drawer (icon visibility, opacity, left-edge rail toggle), plus F6's contacts search. */
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
     settingsRepository: SettingsRepository,
     private val contactPermissionRepository: ContactPermissionRepository,
     private val contactRepository: ContactRepository,
+    private val systemSettingsRepository: SystemSettingsRepository,
     private val appShortcutRepository: AppShortcutRepository,
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
@@ -81,6 +87,29 @@ class DrawerViewModel @Inject constructor(
                 // rule the Drawer's own app search uses (see chat history).
                 val matches = contactRepository.searchContacts(query, MAX_CONTACT_RESULTS)
                 emit(rankBySearchRelevance(matches, query) { it.displayName })
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Search's system Settings section — no permission gating (unlike [contactResults]), just the "Search settings" toggle and a real query. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val settingsResults: StateFlow<List<SettingsSearchEntry>> = combine(searchQuery, settingsRepository.settings) { query, settings ->
+        query to settings.searchSettingsEnabled
+    }.flatMapLatest { (query, enabled) ->
+        if (!enabled || query.isBlank()) {
+            flowOf(emptyList())
+        } else {
+            flow {
+                // Not [rankBySearchRelevance]: a match here can come from a keyword alias (e.g.
+                // "internet" for the "Wi-Fi" entry) rather than the label itself, and that use
+                // case's own contains-filter would incorrectly drop an alias-only match since the
+                // label doesn't literally contain the query. The repository already did the real
+                // filtering; this only orders what it returned.
+                val matches = systemSettingsRepository.search(query)
+                val ranked = matches.sortedWith(
+                    compareByDescending<SettingsSearchEntry> { it.label.startsWith(query, ignoreCase = true) }.thenBy { it.label.lowercase() },
+                )
+                emit(ranked.take(MAX_SETTINGS_RESULTS))
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

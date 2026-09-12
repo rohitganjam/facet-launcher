@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -80,7 +82,7 @@ fun OnboardingHomeSetupPage(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_home_setup_page")) {
-        Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 32.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 48.dp)) {
             Text(text = "Set up your home screen", style = MaterialTheme.typography.headlineSmall, color = Ink)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -126,19 +128,28 @@ fun OnboardingHomeSetupPage(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OnboardingDots(step = 1, totalSteps = 4)
+            OnboardingDots(step = 1, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(
                     text = "Back",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Muted,
-                    modifier = Modifier.clickable(onClick = onBack).testTag("onboarding_back"),
+                    // 48dp minimum touch target (M3 guideline), centered on the text.
+                    modifier = Modifier
+                        .clickable(onClick = onBack)
+                        .testTag("onboarding_back")
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center),
                 )
                 Text(
                     text = "Next",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Accent,
-                    modifier = Modifier.clickable(onClick = onNext).testTag("onboarding_next"),
+                    modifier = Modifier
+                        .clickable(onClick = onNext)
+                        .testTag("onboarding_next")
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center),
                 )
             }
         }

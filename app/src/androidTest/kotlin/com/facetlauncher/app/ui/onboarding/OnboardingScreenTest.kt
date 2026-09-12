@@ -181,7 +181,8 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Back on the set-default step returns to profiles`() {
+    fun `the set-default step has no Back button or swipe-back`() {
+        // Given onboarding has advanced to the final set-default sheet
         setContent()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
@@ -191,10 +192,36 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
 
-        composeRule.onNodeWithTag("onboarding_back").performClick()
+        // Then there's no "Back" affordance on the sheet itself
+        composeRule.onNodeWithTag("onboarding_back").assertDoesNotExist()
+
+        // When swiping right (the usual "go back" gesture elsewhere in onboarding)
+        composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeRight() }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("onboarding_profiles_page").assertExists()
+        // Then it does nothing — still on the set-default sheet, not back on Profiles
+        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+    }
+
+    @Test
+    fun `system back on the set-default step dismisses it like Later`() {
+        // Given onboarding has advanced to the final set-default sheet
+        var finished = false
+        setContent(onFinish = { finished = true })
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+
+        // When pressing the system back gesture, instead of navigating anywhere
+        pressBack()
+
+        // Then it dismisses the sheet and finishes onboarding, the same as "Later"
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
+        assertTrue(finished)
     }
 
     @Test
@@ -367,6 +394,28 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         finishFromSetDefaultStep()
+
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
+        assertTrue(finished)
+    }
+
+    @Test
+    fun `tapping outside the set-default sheet finishes onboarding the same as Later`() {
+        var finished = false
+        setContent(onFinish = { finished = true })
+
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("onboarding_set_default_scrim").assertExists() }.isSuccess
+        }
+
+        // Tapping the dimmed area outside the sheet, not either of its own buttons
+        composeRule.onNodeWithTag("onboarding_set_default_scrim").performClick()
 
         composeRule.waitUntil(timeoutMillis = 3_000) { finished }
         assertTrue(finished)

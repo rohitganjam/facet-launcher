@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -91,6 +92,9 @@ private val DRAWER_SETTLE_SPEC = tween<Float>(durationMillis = FACET_TRANSITION_
 private const val COMMIT_TRAVEL_FRACTION = 0.20f
 private const val VELOCITY_THRESHOLD_PX = 1000f
 private const val HOME_FADE_SCALE_RANGE = 0.03f
+
+/** Home blurs behind the Hub/Switch Profiles panels (not the Drawer — see README's "Not blurred"), scaling with whichever axis's progress is furthest open. */
+private val HOME_PANEL_BLUR_RADIUS = 24.dp
 
 /** README's swipe-up-opens-drawer distance (`>55px`), reused as the swipe-down-opens-shade distance — a downward swipe starting from a fully closed drawer that clears either this or [VELOCITY_THRESHOLD_PX] expands the notification shade instead of just springing back. */
 private val SWIPE_DOWN_SHADE_DISTANCE = 55.dp
@@ -241,6 +245,7 @@ fun HomeDrawerRoute(
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val drawerSettings by drawerViewModel.settings.collectAsStateWithLifecycle()
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
+    val settingsResults by drawerViewModel.settingsResults.collectAsStateWithLifecycle()
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
     val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
     val quickAddState by drawerViewModel.quickAddState.collectAsStateWithLifecycle()
@@ -478,6 +483,13 @@ fun HomeDrawerRoute(
                     val scale = 1f - drawerAxis.progress.value * HOME_FADE_SCALE_RANGE
                     scaleX = scale
                     scaleY = scale
+                    val panelProgress = maxOf(hubAxis.progress.value, profileAxis.progress.value)
+                    renderEffect = if (panelProgress > 0f) {
+                        val radiusPx = HOME_PANEL_BLUR_RADIUS.toPx() * panelProgress
+                        BlurEffect(radiusPx, radiusPx)
+                    } else {
+                        null
+                    }
                 }
                 .pointerInput(draggingHandle, clockAdjustMode) {
                     // Suppress screen-wide gestures if we're in any adjustment mode
@@ -629,6 +641,8 @@ fun HomeDrawerRoute(
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
                 )
             },
+            settingsEntries = settingsResults,
+            onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
             isDrawerOpen = isDrawerOpen,
             modifier = Modifier
                 .fillMaxSize()

@@ -40,18 +40,32 @@ enum class OnboardingStep {
     SET_DEFAULT,
 }
 
+/**
+ * Steps shown in each page's [OnboardingDots] — [OnboardingStep.SET_DEFAULT] isn't counted as a
+ * step of its own; it's the final action reached from Profiles' last dot, not a new one (see
+ * [SetDefaultLauncherSheet]).
+ */
+internal const val ONBOARDING_STEP_COUNT = 3
+
 /** Full-screen pickers opened from the home-setup step — reused as-is from Settings/Profiles, not part of [OnboardingStep]'s own linear flow. */
 private enum class OnboardingSubScreen {
     DOCK_PICKER,
     FAVORITES_PICKER,
 }
 
-/** The step a "Back" action (on-screen, system, or a right swipe) lands on — every step but [OnboardingStep.INTRO] can go back. */
+/**
+ * The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.PROFILES])
+ * lands on — every step but [OnboardingStep.INTRO] and [OnboardingStep.SET_DEFAULT] can go back
+ * this way. [OnboardingStep.SET_DEFAULT] is the final action sheet, reachable only forward from
+ * Profiles, so a swipe there maps to itself the same way [nextStep] already has it map to itself
+ * going forward — system back on that sheet is handled separately, dismissing it instead (see
+ * [OnboardingScreen]'s own `BackHandler`).
+ */
 private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
     OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
     OnboardingStep.PROFILES -> OnboardingStep.HOME_SETUP
-    OnboardingStep.SET_DEFAULT -> OnboardingStep.PROFILES
+    OnboardingStep.SET_DEFAULT -> OnboardingStep.SET_DEFAULT
 }
 
 /**
@@ -94,7 +108,12 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler(enabled = subScreen != null) { subScreen = null }
-    BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO) { step = previousStep(step) }
+    // The set-default sheet isn't a step to navigate away from — system back dismisses it instead,
+    // same as tapping "Later"/the scrim outside it.
+    BackHandler(enabled = subScreen == null && step == OnboardingStep.SET_DEFAULT) { onFinish() }
+    BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO && step != OnboardingStep.SET_DEFAULT) {
+        step = previousStep(step)
+    }
 
     val density = LocalDensity.current
     val swipeCommitPx = with(density) { SWIPE_COMMIT_DISTANCE.toPx() }
@@ -170,7 +189,6 @@ fun OnboardingScreen(
                 OnboardingStep.SET_DEFAULT -> SetDefaultLauncherSheet(
                     uiState = uiState,
                     requestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
-                    onBack = { step = previousStep(step) },
                     onFinish = onFinish,
                 )
             }

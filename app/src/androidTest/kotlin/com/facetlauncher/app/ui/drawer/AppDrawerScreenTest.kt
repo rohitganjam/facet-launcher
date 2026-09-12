@@ -32,6 +32,7 @@ import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -541,6 +542,56 @@ class AppDrawerScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist() }.isSuccess
         }
+    }
+
+    @Test
+    fun settingsSectionIsOmittedEntirelyWhenThereAreNoMatches() {
+        // Given a search with app matches but no settings entries (F "Search settings" off, or
+        // genuinely no matches — both look identical from here)
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it }, settingsEntries = emptyList())
+            }
+        }
+
+        // When searching
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
+
+        // Then no settings section renders at all, only the apps section
+        composeRule.onNodeWithText("SETTINGS").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+    }
+
+    @Test
+    fun tappingASettingsResultRowFiresItsOwnClickCallback() {
+        // Given a search that also has a settings match
+        var query by mutableStateOf("")
+        val entry = SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")
+        var clickedEntry: SettingsSearchEntry? = null
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    query = query,
+                    onQueryChanged = { query = it },
+                    settingsEntries = listOf(entry),
+                    onSettingsEntryClick = { clickedEntry = it },
+                )
+            }
+        }
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("wifi")
+
+        // Then it renders under a SETTINGS header alongside the app results
+        composeRule.onNodeWithText("SETTINGS").assertExists()
+        composeRule.onNodeWithText("Wi-Fi").assertExists()
+
+        // When tapping the settings row
+        composeRule.onNodeWithTag("settings_result_row_wifi").performClick()
+
+        // Then its own click callback fires with that entry
+        assertEquals(entry, clickedEntry)
     }
 
     @Test

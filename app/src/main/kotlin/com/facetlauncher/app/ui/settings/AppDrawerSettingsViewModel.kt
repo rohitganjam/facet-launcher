@@ -49,6 +49,10 @@ class AppDrawerSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setSearchContactsEnabled(enabled) }
     }
 
+    fun setSearchSettingsEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSearchSettingsEnabled(enabled) }
+    }
+
     fun setSearchBarPosition(position: SearchBarPosition) {
         viewModelScope.launch { settingsRepository.setSearchBarPosition(position) }
     }

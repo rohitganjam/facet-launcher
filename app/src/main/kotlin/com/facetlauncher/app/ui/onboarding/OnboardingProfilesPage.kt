@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +68,7 @@ import kotlinx.coroutines.isActive
 @Composable
 fun OnboardingProfilesPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_profiles_page").padding(horizontal = 24.dp)) {
-        Column(modifier = Modifier.weight(1f).padding(top = 64.dp)) {
+        Column(modifier = Modifier.weight(1f).padding(top = 48.dp)) {
             Text(text = "More than one home screen", style = MaterialTheme.typography.headlineSmall, color = Ink)
             Spacer(modifier = Modifier.height(28.dp))
 
@@ -87,19 +89,31 @@ fun OnboardingProfilesPage(uiState: OnboardingUiState, onBack: () -> Unit, onNex
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OnboardingDots(step = 2, totalSteps = 4)
+            OnboardingDots(step = 2, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(
                     text = "Back",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Muted,
-                    modifier = Modifier.clickable(onClick = onBack).testTag("onboarding_back"),
+                    // 48dp minimum touch target (M3 guideline), centered on the text.
+                    modifier = Modifier
+                        .clickable(onClick = onBack)
+                        .testTag("onboarding_back")
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center),
                 )
                 Text(
-                    text = "Next",
+                    // Not "Next" (this is the last swipeable step) or "Finish" (it doesn't finish
+                    // onboarding by itself — it leads into the set-default sheet, the real final
+                    // action) — "Continue" describes moving on into that sheet without overclaiming.
+                    text = "Continue",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Accent,
-                    modifier = Modifier.clickable(onClick = onNext).testTag("onboarding_next"),
+                    modifier = Modifier
+                        .clickable(onClick = onNext)
+                        .testTag("onboarding_next")
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center),
                 )
             }
         }
@@ -140,8 +154,10 @@ private fun ProfileSwitchDemo(modifier: Modifier = Modifier) {
         swipeProgress.snapTo(0f)
         focus.snapTo(1f)
         tapPulse.snapTo(0f)
+        // Shorter than the loop's own between-profile hold (delay(1300) below) — the page just
+        // appeared, so the demo should start moving quickly rather than sit still first.
+        delay(400)
         while (coroutineContext.isActive) {
-            delay(1300)
             // Zoom out to reveal the neighbors.
             focus.animateTo(0f, tween(480, easing = FastOutSlowInEasing))
             delay(650)
@@ -162,6 +178,7 @@ private fun ProfileSwitchDemo(modifier: Modifier = Modifier) {
             tapPulse.animateTo(0f, tween(260))
             delay(250)
             focus.animateTo(1f, tween(480, easing = FastOutSlowInEasing))
+            delay(1300)
         }
     }
 

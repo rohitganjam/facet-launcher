@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -43,8 +45,10 @@ import com.facetlauncher.app.ui.theme.SuccessColor
 import com.facetlauncher.app.ui.theme.resolve
 
 /**
- * Onboarding step 4 (`4h`) — the one that matters. A bottom sheet over the user's real Home so
- * far (their step-2 picks, dimmed under [Scrim]). "Set as default" launches
+ * Onboarding's final action (`4h`) — the one that matters. A bottom sheet over the user's real
+ * Home so far (their step-2 picks, dimmed under [Scrim]). Not one of the numbered swipeable steps
+ * (its dots below stay on Profiles' own last-dot state) and not reversible — reachable only
+ * forward from Profiles, with no "Back" of its own. "Set as default" launches
  * [requestDefaultLauncherIntent] via [rememberLauncherForActivityResult]; **any** result (granted,
  * denied, or dismissed) — same as "Later" — calls [onFinish]. If Facet already holds the role
  * (reinstall), swaps in a Success-colored "already default" variant with a single Done button.
@@ -53,7 +57,6 @@ import com.facetlauncher.app.ui.theme.resolve
 fun SetDefaultLauncherSheet(
     uiState: OnboardingUiState,
     requestDefaultLauncherIntent: () -> Intent,
-    onBack: () -> Unit,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -71,12 +74,24 @@ fun SetDefaultLauncherSheet(
             maxAppRows = 5,
             modifier = Modifier.fillMaxSize(),
         )
-        Box(modifier = Modifier.fillMaxSize().background(Scrim))
+        // Tapping anywhere outside the sheet itself is treated the same as "Later"/"Done" — not
+        // just those explicit buttons (see chat history).
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Scrim)
+                .clickable(onClick = onFinish)
+                .testTag("onboarding_set_default_scrim"),
+        )
 
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                // Swallows taps on the sheet's own non-interactive area (e.g. its body text) so
+                // they don't fall through to the scrim's onFinish above — same pattern as
+                // ContactConnectionsSheet's own `.clickable(enabled = false, onClick = {})`.
+                .clickable(enabled = false, onClick = {})
                 .background(Surface, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 .padding(horizontal = 24.dp)
                 .padding(top = 20.dp, bottom = 34.dp),
@@ -92,10 +107,7 @@ fun SetDefaultLauncherSheet(
             if (uiState.isDefaultLauncher) {
                 AlreadyDefaultContent(onDone = onFinish)
             } else {
-                SetDefaultContent(
-                    onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) },
-                    onLater = onFinish,
-                )
+                SetDefaultContent(onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) })
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -104,20 +116,29 @@ fun SetDefaultLauncherSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                OnboardingDots(step = 3, totalSteps = 4)
-                Text(
-                    text = "Back",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Muted,
-                    modifier = Modifier.clickable(onClick = onBack).testTag("onboarding_back"),
-                )
+                // Same last-dot state as Profiles — this sheet doesn't advance the stepper, it's
+                // the final action reached from that last step, not a step of its own.
+                OnboardingDots(step = ONBOARDING_STEP_COUNT - 1, totalSteps = ONBOARDING_STEP_COUNT)
+                if (!uiState.isDefaultLauncher) {
+                    Text(
+                        text = "Later",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Muted,
+                        // 48dp minimum touch target (M3 guideline), centered on the text.
+                        modifier = Modifier
+                            .clickable(onClick = onFinish)
+                            .testTag("onboarding_later")
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                            .wrapContentSize(Alignment.Center),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SetDefaultContent(onSetDefault: () -> Unit, onLater: () -> Unit, modifier: Modifier = Modifier) {
+private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(text = "Make Facet your home screen", style = MaterialTheme.typography.titleMedium, color = Ink)
         Spacer(modifier = Modifier.height(8.dp))
@@ -152,15 +173,7 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, onLater: () -> Unit, mod
                 .testTag("onboarding_set_default")
                 .padding(vertical = 14.dp),
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Later",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Muted,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onLater).testTag("onboarding_later").padding(vertical = 8.dp),
-        )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Permissions come later, one at a time, only when a feature needs them.",
             style = MaterialTheme.typography.bodySmall,
@@ -200,7 +213,6 @@ private fun SetDefaultLauncherSheetPreview() {
         SetDefaultLauncherSheet(
             uiState = OnboardingUiState(),
             requestDefaultLauncherIntent = { Intent() },
-            onBack = {},
             onFinish = {},
         )
     }
@@ -213,7 +225,6 @@ private fun SetDefaultLauncherSheetAlreadyDefaultPreview() {
         SetDefaultLauncherSheet(
             uiState = OnboardingUiState(isDefaultLauncher = true),
             requestDefaultLauncherIntent = { Intent() },
-            onBack = {},
             onFinish = {},
         )
     }
