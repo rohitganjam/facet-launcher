@@ -5,6 +5,7 @@ import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
 import com.lumenlauncher.app.data.local.ProfileEntity
 import com.lumenlauncher.app.data.model.LauncherSettings
+import com.lumenlauncher.app.domain.ClockAccessoryState
 import com.lumenlauncher.app.domain.HomeScreenState
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,7 @@ class HomeViewModelTest {
                     usageAccessGranted = true,
                     calendarEvents = emptyList(),
                     badgeCounts = emptyMap(),
+                    clockAccessories = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),
                 ),
             ),
         )

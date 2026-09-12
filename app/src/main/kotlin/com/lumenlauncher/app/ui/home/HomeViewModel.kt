@@ -55,6 +55,7 @@ class HomeViewModel @Inject constructor(
                 usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,
                 badgeCounts = screenState.badgeCounts,
+                clockAccessories = screenState.clockAccessories,
                 usageAccessPromptDismissed = dismissed,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)

@@ -79,6 +79,11 @@ fun ClockBlock(
     calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** Home clock's scale factor — see [com.lumenlauncher.app.data.model.LauncherSettings.clockScale]. */
     clockScale: Float = 0.8f,
+    /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.lumenlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
+    nextAlarmMillis: Long? = null,
+    /** `null` until the first real battery reading arrives. */
+    batteryPercent: Int? = null,
+    isCharging: Boolean = false,
 ) {
     val now by rememberTickingNow(clock)
     val clockTextColor = colorOption.resolve()
@@ -104,6 +109,9 @@ fun ClockBlock(
                     locale = locale,
                     launcherFontOption = launcherFontOption,
                     clockAlignment = clockAlignment,
+                    nextAlarmMillis = nextAlarmMillis,
+                    batteryPercent = batteryPercent,
+                    isCharging = isCharging,
                 )
             }
         }

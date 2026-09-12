@@ -49,6 +49,8 @@ class ObserveHomeScreenStateUseCaseTest {
             .also { `when`(it.badgeCounts).thenReturn(MutableStateFlow(emptyMap())) }
         val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
             .also { `when`(it.isGranted()).thenReturn(false) }
+        val observeClockAccessories = mock(ObserveClockAccessoriesUseCase::class.java)
+            .also { `when`(it.invoke()).thenReturn(flowOf(ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false))) }
 
         val useCase = ObserveHomeScreenStateUseCase(
             settingsRepository,
@@ -63,6 +65,7 @@ class ObserveHomeScreenStateUseCaseTest {
             calendarRepository,
             notificationBadgeRepository,
             notificationAccessRepository,
+            observeClockAccessories,
         )
     }
 

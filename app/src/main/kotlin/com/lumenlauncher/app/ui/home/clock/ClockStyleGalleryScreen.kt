@@ -63,6 +63,7 @@ import com.lumenlauncher.app.ui.theme.resolve
 import com.lumenlauncher.app.ui.theme.resolveFontFamily
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -168,6 +169,14 @@ private fun ClockStyleGalleryScreen(
             CalendarEvent(id = 2, calendarId = "1", title = "Design review", startTimeMillis = calendarPreviewClock.millis() + 7_200_000, endTimeMillis = calendarPreviewClock.millis() + 9_000_000, isAllDay = false),
         )
     }
+    // Fixed sample accessory values (not the real device battery/alarm) so every card in the
+    // gallery shows its "next alarm · battery" row the same way, letting the user compare
+    // templates side by side — same reasoning as calendarPreviewEvents above. Computed against
+    // the real system zone (not calendarPreviewClock's fixed UTC) since ClockDisplay itself
+    // always formats nextAlarmMillis via ZoneId.systemDefault(), matching Home's own behavior.
+    val samplePreviewNextAlarmMillis = remember { LocalDate.now().plusDays(1).atTime(7, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() }
+    val samplePreviewBatteryPercent = 64
+    val samplePreviewIsCharging = false
 
     StickyHeaderLayout(
         modifier = modifier,
@@ -399,6 +408,9 @@ private fun ClockStyleGalleryScreen(
                     modifier = Modifier.align(clockAlignment.resolve()),
                     launcherFontOption = launcherFontOption,
                     clockAlignment = clockAlignment,
+                    nextAlarmMillis = samplePreviewNextAlarmMillis,
+                    batteryPercent = samplePreviewBatteryPercent,
+                    isCharging = samplePreviewIsCharging,
                 )
             }
         }

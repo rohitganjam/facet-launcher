@@ -23,6 +23,7 @@ import androidx.test.espresso.Espresso
 import com.lumenlauncher.app.data.AppRepository
 import com.lumenlauncher.app.data.DefaultAppRepository
 import com.lumenlauncher.app.data.AppShortcutRepository
+import com.lumenlauncher.app.data.BatteryRepository
 import com.lumenlauncher.app.data.CalendarPermissionRepository
 import com.lumenlauncher.app.data.CalendarRepository
 import com.lumenlauncher.app.data.ContactPermissionRepository
@@ -33,6 +34,7 @@ import com.lumenlauncher.app.data.FavoriteAppRepository
 import com.lumenlauncher.app.data.ProfileDockAppRepository
 import com.lumenlauncher.app.data.NotificationAccessRepository
 import com.lumenlauncher.app.data.NotificationBadgeRepository
+import com.lumenlauncher.app.data.NextAlarmRepository
 import com.lumenlauncher.app.data.NotificationShadeRepository
 import com.lumenlauncher.app.data.ProfileRepository
 import com.lumenlauncher.app.data.SettingsRepository
@@ -51,6 +53,7 @@ import com.lumenlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.lumenlauncher.app.domain.DeleteWidgetUseCase
 import com.lumenlauncher.app.domain.EnsureActiveProfileUseCase
 import com.lumenlauncher.app.domain.GetInstalledAppsUseCase
+import com.lumenlauncher.app.domain.ObserveClockAccessoriesUseCase
 import com.lumenlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.lumenlauncher.app.domain.ObserveHubStateUseCase
 import com.lumenlauncher.app.domain.ResolveWidgetResizeUseCase
@@ -69,6 +72,7 @@ import com.lumenlauncher.app.ui.theme.LumenLauncherTheme
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.time.Clock
 
 class KeyboardDismissalTest {
 
@@ -119,6 +123,7 @@ class KeyboardDismissalTest {
                         CalendarRepository(context.contentResolver),
                         notificationBadgeRepository,
                         notificationAccessRepository,
+                        ObserveClockAccessoriesUseCase(BatteryRepository(context), NextAlarmRepository(context, Clock.systemDefaultZone())),
                     ),
                     NotificationShadeRepository(context),
                     settingsRepository,
