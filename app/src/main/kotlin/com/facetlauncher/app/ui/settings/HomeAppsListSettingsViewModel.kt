@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.AppInfo
@@ -18,7 +18,7 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
+import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,19 +34,19 @@ import kotlinx.coroutines.launch
 private const val PREVIEW_APP_COUNT = 3
 
 data class HomeAppsListUiState(
-    /** `false` when editing the launcher-wide default list (reached from Settings) rather than one profile's own. */
-    val isProfileScoped: Boolean = false,
+    /** `false` when editing the launcher-wide default list (reached from Settings) rather than one facet's own. */
+    val isFacetScoped: Boolean = false,
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
-    /** This scope's favorites — the profile's own when scoped, the launcher-wide default list otherwise. */
+    /** This scope's favorites — the facet's own when scoped, the launcher-wide default list otherwise. */
     val favorites: List<AppInfo> = emptyList(),
     /** The real apps the preview renders — [favorites] in Favorites mode, a recognizable sample otherwise. */
     val previewApps: List<AppInfo> = emptyList(),
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
-    /** Home's app label color/weight — global only, no per-profile override; drives the preview's label rendering. */
+    /** Home's app label color/weight — global only, no per-facet override; drives the preview's label rendering. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
 ) {
@@ -54,18 +54,18 @@ data class HomeAppsListUiState(
 }
 
 /**
- * Settings → Home & Apps → Home Apps List, and (with a `profileId`) a profile's own Apps-list
+ * Settings → Home & Apps → Home Apps List, and (with a `facetId`) a facet's own Apps-list
  * screen — reused the same way [com.facetlauncher.app.ui.home.clock.ClockStyleGalleryViewModel]
- * is reused for the global and per-profile clock gallery. No `profileId` (or
- * [NO_ACTIVE_PROFILE_ID]) edits the launcher-wide default; a real id edits that profile's own
+ * is reused for the global and per-facet clock gallery. No `facetId` (or
+ * [NO_ACTIVE_FACET_ID]) edits the launcher-wide default; a real id edits that facet's own
  * row and favorites, always — the Inherit/Override switch that decides whether those actually
- * apply lives on [com.facetlauncher.app.ui.profiles.ProfileSettingsScreen].
+ * apply lives on [com.facetlauncher.app.ui.facets.FacetSettingsScreen].
  */
 @HiltViewModel
 class HomeAppsListSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
-    private val profileRepository: ProfileRepository,
+    private val facetRepository: FacetRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val wallpaperRepository: WallpaperRepository,
@@ -74,29 +74,29 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val selectPreviewApps: SelectPreviewAppsUseCase,
 ) : ViewModel() {
 
-    private val profileId: Long? = savedStateHandle.get<Long>("profileId")?.takeIf { it != NO_ACTIVE_PROFILE_ID }
+    private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
 
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
     private val favoritesFlow =
-        profileId?.let { favoriteAppRepository.observeFavoritesForProfile(it) } ?: defaultFavoriteAppRepository.observeDefaultFavorites()
+        facetId?.let { favoriteAppRepository.observeFavoritesForFacet(it) } ?: defaultFavoriteAppRepository.observeDefaultFavorites()
 
     val uiState: StateFlow<HomeAppsListUiState> = combine(
         settingsRepository.settings,
-        profileRepository.observeProfiles(),
+        facetRepository.observeFacets(),
         favoritesFlow,
         combine(homeWallpaper, getInstalledApps.observe(), preferredPreviewPackages, ::Triple),
-    ) { settings, profiles, favorites, previewInputs ->
+    ) { settings, facets, favorites, previewInputs ->
         val (wallpaper, installed, preferred) = previewInputs
-        val profile = profiles.find { it.id == profileId }
-        val position = profile?.appRowPosition ?: settings.appRowPosition
-        val presentation = profile?.appRowPresentation ?: settings.appRowPresentation
-        val mode = profile?.listContentMode ?: settings.listContentMode
-        val count = profile?.appsToShowCount ?: settings.appsToShowCount
-        val alignment = profile?.appListVerticalAlignment ?: settings.appListVerticalAlignment
+        val facet = facets.find { it.id == facetId }
+        val position = facet?.appRowPosition ?: settings.appRowPosition
+        val presentation = facet?.appRowPresentation ?: settings.appRowPresentation
+        val mode = facet?.listContentMode ?: settings.listContentMode
+        val count = facet?.appsToShowCount ?: settings.appsToShowCount
+        val alignment = facet?.appListVerticalAlignment ?: settings.appListVerticalAlignment
         HomeAppsListUiState(
-            isProfileScoped = profileId != null,
+            isFacetScoped = facetId != null,
             appRowPosition = position,
             appRowPresentation = presentation,
             listContentMode = mode,
@@ -121,42 +121,42 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun setAppRowPosition(position: AppRowPosition) {
         viewModelScope.launch {
-            profileId?.let { pid -> profileRepository.getById(pid)?.let { profileRepository.setAppRowPosition(it, position) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPosition(it, position) } }
                 ?: settingsRepository.setAppRowPosition(position)
         }
     }
 
     fun setAppRowPresentation(presentation: AppRowPresentation) {
         viewModelScope.launch {
-            profileId?.let { pid -> profileRepository.getById(pid)?.let { profileRepository.setAppRowPresentation(it, presentation) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPresentation(it, presentation) } }
                 ?: settingsRepository.setAppRowPresentation(presentation)
         }
     }
 
     fun setListContentMode(mode: ListContentMode) {
         viewModelScope.launch {
-            profileId?.let { pid -> profileRepository.getById(pid)?.let { profileRepository.setListContentMode(it, mode) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setListContentMode(it, mode) } }
                 ?: settingsRepository.setListContentMode(mode)
         }
     }
 
     fun setAppsToShowCount(count: Int) {
         viewModelScope.launch {
-            profileId?.let { pid -> profileRepository.getById(pid)?.let { profileRepository.setAppsToShowCount(it, count) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppsToShowCount(it, count) } }
                 ?: settingsRepository.setAppsToShowCount(count)
         }
     }
 
     fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
         viewModelScope.launch {
-            profileId?.let { pid -> profileRepository.getById(pid)?.let { profileRepository.setAppListVerticalAlignment(it, alignment) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListVerticalAlignment(it, alignment) } }
                 ?: settingsRepository.setAppListVerticalAlignment(alignment)
         }
     }
 
     fun reorderFavorites(orderedApps: List<AppInfo>) {
         viewModelScope.launch {
-            profileId?.let { favoriteAppRepository.reorderFavorites(it, orderedApps) }
+            facetId?.let { favoriteAppRepository.reorderFavorites(it, orderedApps) }
                 ?: defaultFavoriteAppRepository.reorderFavorites(orderedApps)
         }
     }

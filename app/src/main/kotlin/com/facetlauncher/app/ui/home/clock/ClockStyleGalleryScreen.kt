@@ -106,11 +106,11 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
 }
 
 /**
- * Profile-scoped entry point (a profile's Clock card) — now uses a ViewModel to persist changes
+ * Facet-scoped entry point (a facet's Clock card) — now uses a ViewModel to persist changes
  * if the user chooses to override.
  */
 @Composable
-fun ProfileClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
+fun FacetClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
     ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
 }
 
@@ -123,7 +123,7 @@ fun ProfileClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGall
  * alignment lives inside its own block's card (not a separate shared section) since it only ever
  * affects that one block; both alignments and the "Reset clock widget position" action are part of
  * the same Clock+Calendar design bundle as the font/color/template controls around them, so — like
- * those — they're profile-overridable too, not global-only. On [Surface] (the same theme-aware,
+ * those — they're facet-overridable too, not global-only. On [Surface] (the same theme-aware,
  * light/dark-following background every other screen uses).
  */
 @Composable

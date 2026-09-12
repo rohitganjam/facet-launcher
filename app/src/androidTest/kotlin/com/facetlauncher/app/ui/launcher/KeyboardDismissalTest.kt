@@ -31,12 +31,12 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
@@ -52,7 +52,7 @@ import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
-import com.facetlauncher.app.domain.EnsureActiveProfileUseCase
+import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
@@ -61,14 +61,14 @@ import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
-import com.facetlauncher.app.domain.ObserveProfilePreviewsUseCase
+import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
-import com.facetlauncher.app.ui.profiles.ProfileCarouselViewModel
+import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Rule
 import org.junit.Test
@@ -99,10 +99,10 @@ class KeyboardDismissalTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val profileRepository = ProfileRepository(database.profileDao())
+                val facetRepository = FacetRepository(database.facetDao())
                 val usageStatsRepository = UsageStatsRepository(
                     context.getSystemService(UsageStatsManager::class.java),
                     appRepository,
@@ -114,10 +114,10 @@ class KeyboardDismissalTest {
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
                         dockAppRepository,
-                        profileDockAppRepository,
+                        facetDockAppRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
-                        profileRepository,
+                        facetRepository,
                         usageStatsRepository,
                         usageAccessRepository,
                         CalendarPermissionRepository(context),
@@ -128,7 +128,7 @@ class KeyboardDismissalTest {
                     ),
                     NotificationShadeRepository(context),
                     settingsRepository,
-                    profileRepository,
+                    facetRepository,
                 )
             }
             launcherViewModel = remember {
@@ -141,14 +141,14 @@ class KeyboardDismissalTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val profileRepository = ProfileRepository(database.profileDao())
+                val facetRepository = FacetRepository(database.facetDao())
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
-                    EnsureActiveProfileUseCase(profileRepository, settingsRepository),
-                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, profileDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    EnsureActiveFacetUseCase(facetRepository, settingsRepository),
+                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                 )
@@ -162,10 +162,10 @@ class KeyboardDismissalTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val profileRepository = ProfileRepository(database.profileDao())
+                val facetRepository = FacetRepository(database.facetDao())
                 DrawerViewModel(
                     settingsRepository,
                     ContactPermissionRepository(context),
@@ -177,14 +177,14 @@ class KeyboardDismissalTest {
                     RankBySearchRelevanceUseCase(),
                     ObserveQuickAddStateUseCase(
                         settingsRepository,
-                        profileRepository,
+                        facetRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
                         dockAppRepository,
-                        profileDockAppRepository,
+                        facetDockAppRepository,
                     ),
-                    AddAppToFavoritesUseCase(settingsRepository, profileRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    AddAppToDockUseCase(settingsRepository, profileRepository, dockAppRepository, profileDockAppRepository),
+                    AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
                 )
             }
             val hubViewModel = remember {
@@ -218,31 +218,31 @@ class KeyboardDismissalTest {
             // A throwaway set of repos, same as this file's other view models — none of this
             // test's cases touch the carousel itself, so correctness here doesn't matter, only
             // that it constructs.
-            val profileViewModel = remember {
+            val facetViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
-                        produceFile = { File(context.cacheDir, "test-profile-settings-${System.nanoTime()}.preferences_pb") },
+                        produceFile = { File(context.cacheDir, "test-facet-settings-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
-                val profileRepository = ProfileRepository(database.profileDao())
+                val facetRepository = FacetRepository(database.facetDao())
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
                 val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
-                ProfileCarouselViewModel(
-                    profileRepository,
+                FacetCarouselViewModel(
+                    facetRepository,
                     settingsRepository,
                     wallpaperRepository,
-                    ObserveProfilePreviewsUseCase(
-                        profileRepository,
+                    ObserveFacetPreviewsUseCase(
+                        facetRepository,
                         settingsRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
-                        profileDockAppRepository,
+                        facetDockAppRepository,
                         dockAppRepository,
                         UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
                         UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
@@ -257,14 +257,14 @@ class KeyboardDismissalTest {
                     apps = apps,
                     onAppClick = {},
                     onNavigateToSettings = {},
-                    onNavigateToProfileSettings = {},
-                    onNavigateToManageProfiles = {},
+                    onNavigateToFacetSettings = {},
+                    onNavigateToManageFacets = {},
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
-                    profileViewModel = profileViewModel,
+                    facetViewModel = facetViewModel,
                     launcherViewModel = launcherViewModel,
                 )
             }

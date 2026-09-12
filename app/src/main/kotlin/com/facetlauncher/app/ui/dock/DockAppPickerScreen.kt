@@ -79,7 +79,7 @@ private fun DockAppPickerContent(
             .testTag("dock_app_picker_screen"),
         header = {
             DockAppPickerHeader(
-                title = if (uiState.isProfileScoped) "Dock" else "Default dock",
+                title = if (uiState.isFacetScoped) "Dock" else "Default dock",
                 onDone = onDone,
             )
         },

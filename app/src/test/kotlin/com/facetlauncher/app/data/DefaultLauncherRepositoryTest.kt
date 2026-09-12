@@ -2,6 +2,9 @@ package com.facetlauncher.app.data
 
 import android.app.role.RoleManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.pm.ResolveInfo
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
@@ -21,6 +24,17 @@ class DefaultLauncherRepositoryTest {
 
     private fun repository() = DefaultLauncherRepository(context)
 
+    private fun registerResolvableSettingsScreen() {
+        val resolveInfo = ResolveInfo().apply {
+            activityInfo = ActivityInfo().apply {
+                packageName = "com.android.settings"
+                name = ".Settings"
+            }
+        }
+        shadowOf(context.packageManager)
+            .addResolveInfoForIntent(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), resolveInfo)
+    }
+
     @Test
     fun `requests the ROLE_HOME role when available and not already held`() {
         // Given the role API is available and not yet held
@@ -37,9 +51,11 @@ class DefaultLauncherRepositoryTest {
 
     @Test
     fun `falls back to the Settings screen when the role is already held`() {
-        // Given the role is available but Facet already holds it (reinstall case)
+        // Given the role is available but Facet already holds it (reinstall case), and the
+        // fallback Settings screen resolves to a real activity
         shadowRoleManager.addAvailableRole(RoleManager.ROLE_HOME)
         shadowRoleManager.addHeldRole(RoleManager.ROLE_HOME)
+        registerResolvableSettingsScreen()
 
         // When requesting the intent
         val intent = repository().requestDefaultLauncherIntent()
@@ -50,14 +66,28 @@ class DefaultLauncherRepositoryTest {
 
     @Test
     fun `falls back to the Settings screen when the role isn't available at all`() {
-        // Given the role API reports it unavailable (older API level / OEM without it)
+        // Given the role API reports it unavailable (older API level / OEM without it), and the
+        // fallback Settings screen resolves to a real activity
         // (nothing added to shadowRoleManager — no role is available by default)
+        registerResolvableSettingsScreen()
 
         // When requesting the intent
         val intent = repository().requestDefaultLauncherIntent()
 
         // Then it falls back to the Settings screen
         assertEquals(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS, intent.action)
+    }
+
+    @Test
+    fun `falls back to top-level Settings when even the fallback screen can't resolve`() {
+        // Given the role isn't available, and the OEM build doesn't expose the default-apps
+        // screen either (nothing registered to resolve ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+
+        // When requesting the intent
+        val intent = repository().requestDefaultLauncherIntent()
+
+        // Then it falls back further, so the row's click always launches something
+        assertEquals(Settings.ACTION_SETTINGS, intent.action)
     }
 
     @Test

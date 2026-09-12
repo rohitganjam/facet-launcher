@@ -28,8 +28,8 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 
 /**
- * The two-radio-row "Inherit default" / "Override for this profile" switch README specs at `3f`
- * for per-profile overrides — reused wherever a profile can diverge from a global default
+ * The two-radio-row "Inherit default" / "Override for this facet" switch README specs at `3f`
+ * for per-facet overrides — reused wherever a facet can diverge from a global default
  * (Clock card's 24-hour time, Calendar settings' show-all-day-events).
  */
 @Composable
@@ -50,8 +50,8 @@ fun InheritOverrideCard(
         )
         CardDivider()
         RadioOptionRow(
-            title = "Override for this profile",
-            subtitle = "Changes here don't affect other profiles",
+            title = "Override for this facet",
+            subtitle = "Changes here don't affect other facets",
             selected = overriding,
             onClick = { onOverridingChanged(true) },
             testTag = "${testTagPrefix}_override_row",

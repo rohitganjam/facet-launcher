@@ -19,7 +19,7 @@ import org.robolectric.shadows.ShadowUsageStatsManager
  * [UsageStats][android.app.usage.UsageStats] has no public constructor, and mocking it directly
  * doesn't reliably intercept under Robolectric's own class instrumentation — so these tests drive
  * the real [UsageStatsManager] service via [ShadowUsageStatsManager], the same shadow-based
- * approach [ProfileDaoTest][com.facetlauncher.app.data.local.ProfileDaoTest] uses for Room.
+ * approach [FacetDaoTest][com.facetlauncher.app.data.local.FacetDaoTest] uses for Room.
  */
 @RunWith(RobolectricTestRunner::class)
 class UsageStatsRepositoryTest {

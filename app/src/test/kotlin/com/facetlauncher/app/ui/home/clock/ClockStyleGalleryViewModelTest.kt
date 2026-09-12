@@ -1,9 +1,9 @@
 package com.facetlauncher.app.ui.home.clock
 
 import androidx.lifecycle.SavedStateHandle
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -44,13 +44,13 @@ class ClockStyleGalleryViewModelTest {
 
     private fun createViewModel(
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
-        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
-        profileId: Long? = null,
+        facetRepository: FacetRepository = mock(FacetRepository::class.java),
+        facetId: Long? = null,
     ): ClockStyleGalleryViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(emptyList()))
-        val savedStateHandle = if (profileId != null) SavedStateHandle(mapOf("profileId" to profileId)) else SavedStateHandle()
-        return ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(emptyList()))
+        val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
+        return ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
     }
 
     @Test
@@ -164,7 +164,7 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `changing clock alignment calls the global repository setter when not profile-scoped`() = runTest {
+    fun `changing clock alignment calls the global repository setter when not facet-scoped`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
@@ -175,23 +175,23 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `changing clock alignment writes the profile's own override when profile-scoped`() = runTest {
-        // Now part of the same Clock+Calendar design bundle as font/color/template — profile-
+    fun `changing clock alignment writes the facet's own override when facet-scoped`() = runTest {
+        // Now part of the same Clock+Calendar design bundle as font/color/template — facet-
         // overridable like those, unlike its earlier global-only design (see chat history).
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        `when`(profileRepository.getById(5L)).thenReturn(profile)
-        val viewModel = createViewModel(profileRepository = profileRepository, profileId = 5L)
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(facetRepository.getById(5L)).thenReturn(facet)
+        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
 
         viewModel.setClockAlignment(ClockAlignment.CENTER)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setClockAlignment(profile, ClockAlignment.CENTER)
+        verify(facetRepository).setClockAlignment(facet, ClockAlignment.CENTER)
     }
 
     @Test
-    fun `changing calendar alignment calls the global repository setter when not profile-scoped, independent of clock alignment`() = runTest {
+    fun `changing calendar alignment calls the global repository setter when not facet-scoped, independent of clock alignment`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
@@ -202,21 +202,21 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `changing calendar alignment writes the profile's own override when profile-scoped`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        `when`(profileRepository.getById(5L)).thenReturn(profile)
-        val viewModel = createViewModel(profileRepository = profileRepository, profileId = 5L)
+    fun `changing calendar alignment writes the facet's own override when facet-scoped`() = runTest {
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(facetRepository.getById(5L)).thenReturn(facet)
+        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
 
         viewModel.setCalendarAlignment(ClockAlignment.RIGHT)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setCalendarAlignment(profile, ClockAlignment.RIGHT)
+        verify(facetRepository).setCalendarAlignment(facet, ClockAlignment.RIGHT)
     }
 
     @Test
-    fun `resetClockPosition resets the global height and both alignments when not profile-scoped`() = runTest {
+    fun `resetClockPosition resets the global height and both alignments when not facet-scoped`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
@@ -229,26 +229,26 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `resetClockPosition resets the profile's own height and both alignments when profile-scoped`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideClock = true, clockZoneHeightDp = 200f)
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        `when`(profileRepository.getById(5L)).thenReturn(profile)
-        val viewModel = createViewModel(profileRepository = profileRepository, profileId = 5L)
+    fun `resetClockPosition resets the facet's own height and both alignments when facet-scoped`() = runTest {
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true, clockZoneHeightDp = 200f)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(facetRepository.getById(5L)).thenReturn(facet)
+        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
 
         viewModel.resetClockPosition()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).resetClockPosition(profile)
+        verify(facetRepository).resetClockPosition(facet)
     }
 
     @Test
-    fun `profile-scoped calendar font, color, and weight changes write the profile's own override`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        `when`(profileRepository.getById(5L)).thenReturn(profile)
-        val viewModel = createViewModel(profileRepository = profileRepository, profileId = 5L)
+    fun `facet-scoped calendar font, color, and weight changes write the facet's own override`() = runTest {
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(facetRepository.getById(5L)).thenReturn(facet)
+        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -257,14 +257,14 @@ class ClockStyleGalleryViewModelTest {
         viewModel.setCalendarFontWeight(FontWeightOption.LIGHT)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setCalendarFontOption(profile, ClockFontOption.MANROPE)
-        verify(profileRepository).setCalendarColorOption(profile, ClockColorOption.ACCENT_SECONDARY)
-        verify(profileRepository).setCalendarFontWeight(profile, FontWeightOption.LIGHT)
+        verify(facetRepository).setCalendarFontOption(facet, ClockFontOption.MANROPE)
+        verify(facetRepository).setCalendarColorOption(facet, ClockColorOption.ACCENT_SECONDARY)
+        verify(facetRepository).setCalendarFontWeight(facet, FontWeightOption.LIGHT)
     }
 
     @Test
-    fun `uiState resolves calendar font, color, and weight from the profile when scoped`() = runTest {
-        val profile = ProfileEntity(
+    fun `uiState resolves calendar font, color, and weight from the facet when scoped`() = runTest {
+        val facet = FacetEntity(
             id = 5L,
             name = "Work",
             position = 0,
@@ -275,10 +275,10 @@ class ClockStyleGalleryViewModelTest {
         )
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        val savedStateHandle = SavedStateHandle(mapOf("profileId" to 5L))
-        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
+        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -288,8 +288,8 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `uiState resolves clock and calendar alignment from the profile when scoped`() = runTest {
-        val profile = ProfileEntity(
+    fun `uiState resolves clock and calendar alignment from the facet when scoped`() = runTest {
+        val facet = FacetEntity(
             id = 5L,
             name = "Work",
             position = 0,
@@ -299,10 +299,10 @@ class ClockStyleGalleryViewModelTest {
         )
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        val savedStateHandle = SavedStateHandle(mapOf("profileId" to 5L))
-        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
+        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -311,8 +311,8 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `uiState resolves accent color and date style from the profile when scoped`() = runTest {
-        val profile = ProfileEntity(
+    fun `uiState resolves accent color and date style from the facet when scoped`() = runTest {
+        val facet = FacetEntity(
             id = 5L,
             name = "Work",
             position = 0,
@@ -322,10 +322,10 @@ class ClockStyleGalleryViewModelTest {
         )
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        val savedStateHandle = SavedStateHandle(mapOf("profileId" to 5L))
-        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
+        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -345,9 +345,9 @@ class ClockStyleGalleryViewModelTest {
                 ),
             ),
         )
-        val profileRepository = mock(ProfileRepository::class.java)
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(emptyList()))
-        val viewModel = ClockStyleGalleryViewModel(SavedStateHandle(), settingsRepository, profileRepository)
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(emptyList()))
+        val viewModel = ClockStyleGalleryViewModel(SavedStateHandle(), settingsRepository, facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 

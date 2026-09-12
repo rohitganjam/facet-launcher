@@ -76,8 +76,8 @@ import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
-import com.facetlauncher.app.ui.profiles.ProfileCarouselScreen
-import com.facetlauncher.app.ui.profiles.ProfileCarouselViewModel
+import com.facetlauncher.app.ui.facets.FacetCarouselScreen
+import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.resolve
@@ -93,7 +93,7 @@ private const val COMMIT_TRAVEL_FRACTION = 0.20f
 private const val VELOCITY_THRESHOLD_PX = 1000f
 private const val HOME_FADE_SCALE_RANGE = 0.03f
 
-/** Home blurs behind the Hub/Switch Profiles panels (not the Drawer — see README's "Not blurred"), scaling with whichever axis's progress is furthest open. */
+/** Home blurs behind the Hub/Switch Facets panels (not the Drawer — see README's "Not blurred"), scaling with whichever axis's progress is furthest open. */
 private val HOME_PANEL_BLUR_RADIUS = 24.dp
 
 /** README's swipe-up-opens-drawer distance (`>55px`), reused as the swipe-down-opens-shade distance — a downward swipe starting from a fully closed drawer that clears either this or [VELOCITY_THRESHOLD_PX] expands the notification shade instead of just springing back. */
@@ -206,16 +206,16 @@ private suspend fun PointerInputScope.detectHomeSwipeGestures(
 }
 
 /**
- * Home + Drawer + Hub + Switch Profiles, merged into one composable/route rather than separate
+ * Home + Drawer + Hub + Switch Facets, merged into one composable/route rather than separate
  * `NavHost` destinations. A follow-finger drag needs continuous, cancellable animation (an
  * [Animatable] driving each layer's position every frame) — `NavHost`'s declarative enter/exit
  * transitions only animate already-committed navigation events, and F10 already frames the
  * Drawer as "an overlay on top of the home background," not a distinct screen; the Hub (F5, to
- * Home's left) and the Switch Profiles carousel (to Home's right) follow the same model, each on
+ * Home's left) and the Switch Facets carousel (to Home's right) follow the same model, each on
  * its own share of the horizontal axis. Dragging up on Home (or down on the Drawer's own list,
  * only once scrolled to the top) opens/closes the Drawer; dragging right on Home (or left on the
  * Hub) opens/closes the Hub; dragging left on Home (or right on the carousel, in empty space or
- * on its first page's card — see [ProfileCarouselScreen]'s own doc) opens/closes the carousel —
+ * on its first page's card — see [FacetCarouselScreen]'s own doc) opens/closes the carousel —
  * whichever direction a drag on Home's own surface resolves to first wins for that gesture (see
  * [Axis]), and whichever of Hub/carousel a horizontal drag engages first (by its very first
  * frame's direction) keeps owning it for the rest of the gesture even through a reversal, so a
@@ -229,17 +229,17 @@ fun HomeDrawerRoute(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToProfileSettings: (profileId: Long) -> Unit,
-    onNavigateToManageProfiles: () -> Unit,
+    onNavigateToFacetSettings: (facetId: Long) -> Unit,
+    onNavigateToManageFacets: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
-    /** Navigates to the clock style gallery, either global (null) or profile-scoped. */
+    /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
     onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
     widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
-    profileViewModel: ProfileCarouselViewModel = hiltViewModel(),
+    facetViewModel: FacetCarouselViewModel = hiltViewModel(),
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -259,7 +259,7 @@ fun HomeDrawerRoute(
     }
 
     // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
-    // Home (e.g. from the usage-access Settings redirect) rather than only on profile changes.
+    // Home (e.g. from the usage-access Settings redirect) rather than only on facet changes.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -270,6 +270,7 @@ fun HomeDrawerRoute(
     }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
+    val searchListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
@@ -277,14 +278,14 @@ fun HomeDrawerRoute(
     var containerWidthPx by remember { mutableFloatStateOf(1000f) }
     val drawerAxis = remember { SwipeAxisState({ containerHeightPx }, coroutineScope) }
     val hubAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
-    val profileAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
+    val facetAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
 
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
             focusManager.clearFocus()
             drawerAxis.close()
             hubAxis.close()
-            profileAxis.close()
+            facetAxis.close()
         }
     }
     // Rendered in-place as an overlay below (not a NavHost destination — see chat history):
@@ -302,7 +303,8 @@ fun HomeDrawerRoute(
     val density = LocalDensity.current
     val swipeDownShadeDistancePx = with(density) { SWIPE_DOWN_SHADE_DISTANCE.toPx() }
 
-    val nestedScrollConnection = remember(listState, gridState, drawerSettings.drawerPresentation) {
+    val isDrawerSearching = drawerQuery.isNotBlank()
+    val nestedScrollConnection = remember(listState, gridState, searchListState, drawerSettings.drawerPresentation, isDrawerSearching) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 // Fling-sourced deltas are the list's own post-release deceleration, not the
@@ -312,7 +314,14 @@ fun HomeDrawerRoute(
                 // wherever the residual fling happened to decay to (the "low-velocity fling
                 // stalls partway" bug). Only real finger movement should drive the drag.
                 if (source != NestedScrollSource.Drag) return Offset.Zero
-                val atTop = if (drawerSettings.drawerPresentation == DrawerPresentation.GRID) {
+                // Search results are always a LazyColumn of their own (see DrawerSearchResults),
+                // regardless of list/grid presentation — check its own state, not the browse-mode
+                // list/grid's (which stays untouched, and therefore always "at top", while
+                // searching — that mismatch used to let a swipe down on a scrolled search list
+                // close the drawer instead of scrolling it back up; see chat history).
+                val atTop = if (isDrawerSearching) {
+                    searchListState.firstVisibleItemIndex == 0 && searchListState.firstVisibleItemScrollOffset == 0
+                } else if (drawerSettings.drawerPresentation == DrawerPresentation.GRID) {
                     gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0
                 } else {
                     listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
@@ -335,7 +344,7 @@ fun HomeDrawerRoute(
 
     val isDrawerOpen by remember { derivedStateOf { drawerAxis.progress.value > 0f } }
     val isHubOpen by remember { derivedStateOf { hubAxis.progress.value > 0f } }
-    val isProfileOpen by remember { derivedStateOf { profileAxis.progress.value > 0f } }
+    val isFacetOpen by remember { derivedStateOf { facetAxis.progress.value > 0f } }
 
     // AppWidgetHost.startListening() is what actually makes hosted AppWidgetHostViews render/
     // update — without it, widget tiles stay blank. Only listen while the Hub is actually
@@ -345,9 +354,9 @@ fun HomeDrawerRoute(
         onDispose { if (isHubOpen) hubViewModel.onHubHidden() }
     }
 
-    // Clear focus whenever the drawer, hub, or profile carousel starts moving via a drag.
-    LaunchedEffect(drawerAxis.dragActive, hubAxis.dragActive, profileAxis.dragActive) {
-        if (drawerAxis.dragActive || hubAxis.dragActive || profileAxis.dragActive) {
+    // Clear focus whenever the drawer, hub, or facet carousel starts moving via a drag.
+    LaunchedEffect(drawerAxis.dragActive, hubAxis.dragActive, facetAxis.dragActive) {
+        if (drawerAxis.dragActive || hubAxis.dragActive || facetAxis.dragActive) {
             focusManager.clearFocus()
         }
     }
@@ -359,6 +368,7 @@ fun HomeDrawerRoute(
             drawerViewModel.onQueryChanged("")
             listState.scrollToItem(0)
             gridState.scrollToItem(0)
+            searchListState.scrollToItem(0)
         }
     }
 
@@ -371,19 +381,19 @@ fun HomeDrawerRoute(
     }
 
     // Cancel clock adjustment when navigating away from Home.
-    LaunchedEffect(isDrawerOpen, isHubOpen, isProfileOpen) {
-        if (isDrawerOpen || isHubOpen || isProfileOpen) {
+    LaunchedEffect(isDrawerOpen, isHubOpen, isFacetOpen) {
+        if (isDrawerOpen || isHubOpen || isFacetOpen) {
             clockAdjustMode = ClockAdjustMode.NONE
         }
     }
 
-    BackHandler(enabled = isDrawerOpen || isHubOpen || isProfileOpen || showWidgetPicker) {
+    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || showWidgetPicker) {
         focusManager.clearFocus()
         when {
             showWidgetPicker -> showWidgetPicker = false
             isDrawerOpen -> coroutineScope.launch { drawerAxis.close() }
             isHubOpen -> coroutineScope.launch { hubAxis.close() }
-            isProfileOpen -> coroutineScope.launch { profileAxis.close() }
+            isFacetOpen -> coroutineScope.launch { facetAxis.close() }
         }
     }
 
@@ -421,7 +431,7 @@ fun HomeDrawerRoute(
             clockZoneHeightDp = homeUiState.clockZoneHeightDp,
             onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
             clockScale = homeUiState.clockScale,
-            clockPositionOwnerProfileId = homeUiState.clockPositionOwningProfile?.id,
+            clockPositionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
             clockAdjustMode = clockAdjustMode,
             onAdjustModeChange = { clockAdjustMode = it },
             draggingHandle = draggingHandle,
@@ -429,11 +439,11 @@ fun HomeDrawerRoute(
             onClockScaleCommit = homeViewModel::onClockScaleCommit,
             onEditClockStyles = {
                 clockAdjustMode = ClockAdjustMode.NONE
-                onNavigateToClockStyleGallery(homeUiState.clockPositionOwningProfile?.id)
+                onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)
             },
             onNavigateToSettings = onNavigateToSettings,
-            onNavigateToProfileSettings = {
-                homeUiState.activeProfile?.let { onNavigateToProfileSettings(it.id) }
+            onNavigateToFacetSettings = {
+                homeUiState.activeFacet?.let { onNavigateToFacetSettings(it.id) }
             },
             appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
             nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
@@ -483,7 +493,7 @@ fun HomeDrawerRoute(
                     val scale = 1f - drawerAxis.progress.value * HOME_FADE_SCALE_RANGE
                     scaleX = scale
                     scaleY = scale
-                    val panelProgress = maxOf(hubAxis.progress.value, profileAxis.progress.value)
+                    val panelProgress = maxOf(hubAxis.progress.value, facetAxis.progress.value)
                     renderEffect = if (panelProgress > 0f) {
                         val radiusPx = HOME_PANEL_BLUR_RADIUS.toPx() * panelProgress
                         BlurEffect(radiusPx, radiusPx)
@@ -519,7 +529,7 @@ fun HomeDrawerRoute(
                                 // one it is.
                                 Axis.HORIZONTAL -> {
                                     if (hubAxis.dragActive) hubAxis.settle()
-                                    if (profileAxis.dragActive) profileAxis.settle()
+                                    if (facetAxis.dragActive) facetAxis.settle()
                                 }
                                 null -> Unit
                             }
@@ -529,7 +539,7 @@ fun HomeDrawerRoute(
                                 Axis.VERTICAL -> drawerAxis.settle()
                                 Axis.HORIZONTAL -> {
                                     if (hubAxis.dragActive) hubAxis.settle()
-                                    if (profileAxis.dragActive) profileAxis.settle()
+                                    if (facetAxis.dragActive) facetAxis.settle()
                                 }
                                 null -> Unit
                             }
@@ -561,10 +571,10 @@ fun HomeDrawerRoute(
                                 // goes dragActive it keeps tracking the finger instead of control
                                 // flipping to the other panel mid-drag.
                                 when {
-                                    hubAxis.dragActive || (!profileAxis.dragActive && dragAmount.x > 0f) ->
+                                    hubAxis.dragActive || (!facetAxis.dragActive && dragAmount.x > 0f) ->
                                         hubAxis.dragBy(dragAmount.x)
-                                    profileAxis.dragActive || (!hubAxis.dragActive && dragAmount.x < 0f) ->
-                                        profileAxis.dragBy(-dragAmount.x)
+                                    facetAxis.dragActive || (!hubAxis.dragActive && dragAmount.x < 0f) ->
+                                        facetAxis.dragBy(-dragAmount.x)
                                 }
                             }
                             null -> Unit
@@ -613,6 +623,7 @@ fun HomeDrawerRoute(
             },
             listState = listState,
             gridState = gridState,
+            searchListState = searchListState,
             presentation = drawerSettings.drawerPresentation,
             gridSize = drawerSettings.drawerGridSize,
             listItemSize = drawerSettings.drawerListItemSize,
@@ -665,12 +676,12 @@ fun HomeDrawerRoute(
             )
         }
 
-        // Switch Profiles — sits to Home's right: off-screen at progress 0, flush with the screen
+        // Switch Facets — sits to Home's right: off-screen at progress 0, flush with the screen
         // at progress 1. Drawn last so it's frontmost when open, over Hub/Drawer/the widget picker
         // alike (it used to be a modal NavHost destination above everything; this keeps that same
         // read). Its own surface handles empty-space swipes back to Home the same way Hub's own
-        // Box does; the first-page-card case (no previous profile to browse to) is handled inside
-        // ProfileCarouselScreen itself via a NestedScrollConnection that forwards raw drag deltas
+        // Box does; the first-page-card case (no previous facet to browse to) is handled inside
+        // FacetCarouselScreen itself via a NestedScrollConnection that forwards raw drag deltas
         // here through onDismissDrag/onDismissDragEnd, since the pager underneath would otherwise
         // swallow that drag as a dead overscroll before it ever reached this Box.
         //
@@ -684,34 +695,34 @@ fun HomeDrawerRoute(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .offset { IntOffset(((1f - profileAxis.progress.value) * containerWidthPx).toInt(), 0) }
-                .then(if (isProfileOpen) Modifier else Modifier.clearAndSetSemantics {})
+                .offset { IntOffset(((1f - facetAxis.progress.value) * containerWidthPx).toInt(), 0) }
+                .then(if (isFacetOpen) Modifier else Modifier.clearAndSetSemantics {})
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
-                        onDragEnd = { profileAxis.settle() },
-                        onDragCancel = { profileAxis.settle() },
+                        onDragEnd = { facetAxis.settle() },
+                        onDragCancel = { facetAxis.settle() },
                     ) { change, dragAmount ->
-                        profileAxis.dragBy(-dragAmount)
+                        facetAxis.dragBy(-dragAmount)
                         change.consume()
                     }
                 },
         ) {
-            ProfileCarouselScreen(
-                onProfileApplied = { coroutineScope.launch { profileAxis.close() } },
-                onEditProfile = onNavigateToProfileSettings,
-                onReorderProfiles = onNavigateToManageProfiles,
+            FacetCarouselScreen(
+                onFacetApplied = { coroutineScope.launch { facetAxis.close() } },
+                onEditFacet = onNavigateToFacetSettings,
+                onReorderFacets = onNavigateToManageFacets,
                 onNavigateToSettings = onNavigateToSettings,
-                onDismissDrag = { deltaPx -> profileAxis.dragBy(-deltaPx) },
-                onDismissDragEnd = { profileAxis.settle() },
+                onDismissDrag = { deltaPx -> facetAxis.dragBy(-deltaPx) },
+                onDismissDragEnd = { facetAxis.settle() },
                 modifier = Modifier.fillMaxSize(),
-                viewModel = profileViewModel,
+                viewModel = facetViewModel,
             )
         }
 
         // One-time post-onboarding gesture hint — only while Home is genuinely at rest, same
         // overlay-on-top-of-already-composed-content precedent as the widget picker above.
         AnimatedVisibility(
-            visible = homeUiState.showGestureHint && !isDrawerOpen && !isHubOpen && !isProfileOpen,
+            visible = homeUiState.showGestureHint && !isDrawerOpen && !isHubOpen && !isFacetOpen,
             enter = fadeIn(animationSpec = tween(240)),
             exit = fadeOut(animationSpec = tween(240)),
         ) {

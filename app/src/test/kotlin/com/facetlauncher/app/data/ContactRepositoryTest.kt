@@ -283,7 +283,7 @@ class ContactRepositoryTest {
     @Test
     fun `a Data row only becomes a connection when its owning app actually handles viewing it`() = runTest {
         // Given a contact with two non-standard Data rows under the same Google-synced raw
-        // contact: one from a real chat app that registers to view its own profile row, and one
+        // contact: one from a real chat app that registers to view its own facet row, and one
         // from Play services — real-world sync metadata that owns *a* row but never registers a
         // handler for it (this is exactly what "Google Play services"/"Meet" rows looked like on
         // a real device before this fix — present, but doing nothing when tapped; see chat history)
@@ -291,7 +291,7 @@ class ContactRepositoryTest {
         stubPrimaryEmail(null)
         stubDataRows(
             listOf(
-                Triple(1L, "vnd.android.cursor.item/vnd.com.example.chatapp.profile", 100L),
+                Triple(1L, "vnd.android.cursor.item/vnd.com.example.chatapp.facet", 100L),
                 Triple(2L, "vnd.android.cursor.item/vnd.google.contact_misc", 200L),
             ),
         )
@@ -325,7 +325,7 @@ class ContactRepositoryTest {
         // logcat — see chat history) — reading as "does nothing" to the user.
         stubPrimaryPhone(null)
         stubPrimaryEmail(null)
-        stubDataRows(listOf(Triple(1L, "vnd.android.cursor.item/vnd.com.example.meetlike.profile", 100L)))
+        stubDataRows(listOf(Triple(1L, "vnd.android.cursor.item/vnd.com.example.meetlike.facet", 100L)))
         stubRawContactAccountTypes(100L to "com.example.meetaccount")
         shadowOf(AccountManager.get(context)).addAuthenticator(
             AuthenticatorDescription("com.example.meetaccount", "com.example.meetlike", 0, 0, 0, 0),
@@ -359,7 +359,7 @@ class ContactRepositoryTest {
         stubDataRows(
             listOf(
                 Triple(1L, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE, 100L),
-                Triple(2L, "vnd.android.cursor.item/vnd.com.example.chat.profile", 100L),
+                Triple(2L, "vnd.android.cursor.item/vnd.com.example.chat.facet", 100L),
             ),
         )
         // RawContacts/AccountManager left unstubbed — resolving row 2's owning app fails closed

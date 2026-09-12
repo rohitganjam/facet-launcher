@@ -49,7 +49,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 /**
  * PRD F2's required "onboarding explanation screen" shown before the `ACTION_USAGE_ACCESS_SETTINGS`
  * redirect — `PACKAGE_USAGE_STATS` is a special-access permission that can't be requested via a
- * normal runtime dialog. Reached whenever the user taps Home's usage-access strip, or Profile
+ * normal runtime dialog. Reached whenever the user taps Home's usage-access strip, or Facet
  * Settings' "Apps to show" area while Recents/Most used is selected and access isn't granted yet.
  * Auto-dismisses ([onBack]) the moment [UsageAccessExplanationViewModel.isGranted] flips true —
  * checked on every resume, since there's no direct grant-change callback for this permission.

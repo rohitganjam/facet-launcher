@@ -9,17 +9,17 @@ import androidx.room.PrimaryKey
     tableName = "favorite_apps",
     foreignKeys = [
         ForeignKey(
-            entity = ProfileEntity::class,
+            entity = FacetEntity::class,
             parentColumns = ["id"],
-            childColumns = ["profileId"],
+            childColumns = ["facetId"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["profileId", "packageName", "activityName"], unique = true)],
+    indices = [Index(value = ["facetId", "packageName", "activityName"], unique = true)],
 )
 data class FavoriteAppEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val profileId: Long,
+    val facetId: Long,
     val packageName: String,
     val activityName: String,
     val position: Int,

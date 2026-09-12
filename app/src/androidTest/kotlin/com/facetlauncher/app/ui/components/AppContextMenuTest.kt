@@ -167,10 +167,10 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun addToFavoritesRowReadsAddToProfileFavoritesWhenTheActiveProfileOverridesItsOwn() {
+    fun addToFavoritesRowReadsAddToFacetFavoritesWhenTheActiveFacetOverridesItsOwn() {
         setContent(addToFavoritesOverride = true)
 
-        composeRule.onNodeWithText("Add to profile favorites").assertExists()
+        composeRule.onNodeWithText("Add to facet favorites").assertExists()
     }
 
     @Test
@@ -194,10 +194,10 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun addToDockRowReadsAddToProfileDockWhenTheActiveProfileOverridesItsOwn() {
+    fun addToDockRowReadsAddToFacetDockWhenTheActiveFacetOverridesItsOwn() {
         setContent(addToDockOverride = true)
 
-        composeRule.onNodeWithText("Add to profile dock").assertExists()
+        composeRule.onNodeWithText("Add to facet dock").assertExists()
     }
 
     @Test

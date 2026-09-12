@@ -158,6 +158,8 @@ fun AppDrawerScreen(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     gridState: LazyGridState = rememberLazyGridState(),
+    /** Search results' own scroll position — distinct from [listState]/[gridState] (the browse-mode lists), so the caller's swipe-down-to-close nested scroll connection can tell whether the *visible* list is actually at its top while searching. */
+    searchListState: LazyListState = rememberLazyListState(),
     presentation: DrawerPresentation = DrawerPresentation.LIST,
     gridSize: DrawerGridSize = DrawerGridSize.FIVE_BY_SIX,
     listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
@@ -257,6 +259,7 @@ fun AppDrawerScreen(
                 query = query,
                 apps = filteredApps.take(MAX_APP_SEARCH_RESULTS),
                 contacts = contacts,
+                listState = searchListState,
                 presentation = presentation,
                 gridColumns = gridSize.columns,
                 showIcons = showIcons,
@@ -493,6 +496,7 @@ private fun DrawerSearchResults(
     query: String,
     apps: List<AppInfo>,
     contacts: List<ContactInfo>,
+    listState: LazyListState,
     presentation: DrawerPresentation,
     gridColumns: Int,
     showIcons: Boolean,
@@ -520,7 +524,7 @@ private fun DrawerSearchResults(
         DrawerSearchEmptyState(query = query, onClearSearch = onClearSearch, modifier = modifier)
         return
     }
-    LazyColumn(modifier = modifier.padding(horizontal = 24.dp)) {
+    LazyColumn(state = listState, modifier = modifier.padding(horizontal = 24.dp)) {
         if (apps.isNotEmpty()) {
             item {
                 Text(

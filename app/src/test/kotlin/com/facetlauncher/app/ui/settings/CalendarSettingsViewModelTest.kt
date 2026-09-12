@@ -3,9 +3,9 @@ package com.facetlauncher.app.ui.settings
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.Dispatchers
@@ -36,18 +36,18 @@ class CalendarSettingsViewModelTest {
     fun tearDown() { Dispatchers.resetMain() }
 
     private fun createViewModel(
-        profileId: Long? = null,
+        facetId: Long? = null,
         globalShowAllDayEvents: Boolean = true,
-        profile: ProfileEntity? = null,
+        facet: FacetEntity? = null,
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
-        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
+        facetRepository: FacetRepository = mock(FacetRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
     ): CalendarSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(showAllDayEvents = globalShowAllDayEvents)))
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOfNotNull(profile)))
-        val savedStateHandle = if (profileId != null) SavedStateHandle(mapOf("profileId" to profileId)) else SavedStateHandle()
-        return CalendarSettingsViewModel(savedStateHandle, settingsRepository, profileRepository, calendarPermissionRepository, calendarRepository)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOfNotNull(facet)))
+        val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
+        return CalendarSettingsViewModel(savedStateHandle, settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository)
     }
 
     @Test
@@ -63,28 +63,28 @@ class CalendarSettingsViewModelTest {
     }
 
     @Test
-    fun `profile-scoped mode toggling writes the profile's own override`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true)
-        val profileRepository = mock(ProfileRepository::class.java)
-        val viewModel = createViewModel(profileId = 5L, profile = profile, profileRepository = profileRepository)
+    fun `facet-scoped mode toggling writes the facet's own override`() = runTest {
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true)
+        val facetRepository = mock(FacetRepository::class.java)
+        val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setShowAllDayEvents(false)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setShowAllDayEvents(profile, false)
+        verify(facetRepository).setShowAllDayEvents(facet, false)
     }
 
     @Test
-    fun `switching to override seeds the profile's stored value with the current effective one`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
-        val profileRepository = mock(ProfileRepository::class.java)
+    fun `switching to override seeds the facet's stored value with the current effective one`() = runTest {
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
+        val facetRepository = mock(FacetRepository::class.java)
         val viewModel = createViewModel(
-            profileId = 5L,
+            facetId = 5L,
             globalShowAllDayEvents = true,
-            profile = profile,
-            profileRepository = profileRepository,
+            facet = facet,
+            facetRepository = facetRepository,
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -92,8 +92,8 @@ class CalendarSettingsViewModelTest {
         viewModel.setOverriding(true)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).updateOverridingCalendar(
-            profile,
+        verify(facetRepository).updateOverridingCalendar(
+            facet,
             overriding = true,
             showAllDayEvents = true,
             selectedCalendarIds = null,
@@ -102,17 +102,17 @@ class CalendarSettingsViewModelTest {
 
     @Test
     fun `switching back to inherit toggles the override flag`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false)
-        val profileRepository = mock(ProfileRepository::class.java)
-        val viewModel = createViewModel(profileId = 5L, profile = profile, profileRepository = profileRepository)
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false)
+        val facetRepository = mock(FacetRepository::class.java)
+        val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setOverriding(false)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).updateOverridingCalendar(
-            profile,
+        verify(facetRepository).updateOverridingCalendar(
+            facet,
             overriding = false,
             showAllDayEvents = false,
             selectedCalendarIds = null,
@@ -120,17 +120,17 @@ class CalendarSettingsViewModelTest {
     }
 
     @Test
-    fun `switching to override seeds the profile's selectedCalendarIds with the current effective set`() = runTest {
-        val profile = ProfileEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
-        val profileRepository = mock(ProfileRepository::class.java)
+    fun `switching to override seeds the facet's selectedCalendarIds with the current effective set`() = runTest {
+        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
+        val facetRepository = mock(FacetRepository::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(selectedCalendarIds = setOf("7", "8"))))
-        `when`(profileRepository.observeProfiles()).thenReturn(flowOf(listOf(profile)))
-        val savedStateHandle = SavedStateHandle(mapOf("profileId" to 5L))
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
         val viewModel = CalendarSettingsViewModel(
             savedStateHandle,
             settingsRepository,
-            profileRepository,
+            facetRepository,
             mock(CalendarPermissionRepository::class.java),
             mock(CalendarRepository::class.java),
         )
@@ -140,8 +140,8 @@ class CalendarSettingsViewModelTest {
         viewModel.setOverriding(true)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).updateOverridingCalendar(
-            profile,
+        verify(facetRepository).updateOverridingCalendar(
+            facet,
             overriding = true,
             showAllDayEvents = true,
             selectedCalendarIds = setOf("7", "8"),

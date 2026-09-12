@@ -21,7 +21,7 @@ class BackupRepositoryTest {
     private fun minimalSettings() = BackupSettings(
         use24HourTime = false, dockDisplayMode = "ICONS", drawerPresentation = "LIST", drawerGridSize = "FIVE_BY_SIX",
         drawerListItemSize = "REGULAR", drawerOpacity = 0.6f, notificationDotsEnabled = true, notificationBadgeStyle = "DOT",
-        showDrawerIcons = true, showDrawerLabels = true, searchBarPosition = "TOP", activeProfileIndex = null,
+        showDrawerIcons = true, showDrawerLabels = true, searchBarPosition = "TOP", activeFacetIndex = null,
         showAllDayEvents = true, searchContactsEnabled = false, themeMode = "SYSTEM", accentFromSystem = true,
         customAccentSwatch = null, wallpaperAccentRole = "PRIMARY", iconRenderMode = "SYSTEM_DEFAULT", launcherFontOption = "SYSTEM",
         appLabelColorOption = "THEME", appRowPosition = "LEFT", appRowPresentation = "ICON_AND_TEXT",
@@ -38,7 +38,7 @@ class BackupRepositoryTest {
         val bundle = BackupBundle(
             exportedAtEpochMillis = 123456789L,
             settings = minimalSettings(),
-            profiles = emptyList(),
+            facets = emptyList(),
             dockApps = emptyList(),
             defaultFavoriteApps = emptyList(),
             widgetPlacements = emptyList(),
@@ -50,6 +50,46 @@ class BackupRepositoryTest {
 
         // Then it round-trips exactly
         assertEquals(bundle, readBack)
+    }
+
+    @Test
+    fun `a legacy backup file using the pre-Facet-rename JSON keys still imports`() = runTest {
+        // Given a real file on disk using the wire format from before the Profile -> Facet rename
+        // (top-level "profiles" key, "activeProfileIndex" in settings) — see BackupBundle.kt's
+        // @SerialName annotations, which exist specifically to keep this working.
+        val file = File(context.cacheDir, "legacy-backup-${System.nanoTime()}.json")
+        file.writeText(
+            """
+            {
+                "exportedAtEpochMillis": 123456789,
+                "settings": {
+                    "use24HourTime": false, "dockDisplayMode": "ICONS", "drawerPresentation": "LIST",
+                    "drawerGridSize": "FIVE_BY_SIX", "drawerListItemSize": "REGULAR", "drawerOpacity": 0.6,
+                    "notificationDotsEnabled": true, "notificationBadgeStyle": "DOT", "showDrawerIcons": true,
+                    "showDrawerLabels": true, "searchBarPosition": "TOP", "activeProfileIndex": 0,
+                    "showAllDayEvents": true, "searchContactsEnabled": false, "themeMode": "SYSTEM",
+                    "accentFromSystem": true, "customAccentSwatch": null, "wallpaperAccentRole": "PRIMARY",
+                    "iconRenderMode": "SYSTEM_DEFAULT", "launcherFontOption": "SYSTEM", "appLabelColorOption": "THEME",
+                    "appRowPosition": "LEFT", "appRowPresentation": "ICON_AND_TEXT", "listContentMode": "FAVORITES",
+                    "appsToShowCount": 5, "clockTemplateId": "LIGHT_STACK", "clockFontOption": "LAUNCHER_DEFAULT",
+                    "clockColorOption": "THEME", "clockShowMeridiem": false, "calendarFontOption": "LAUNCHER_DEFAULT",
+                    "calendarColorOption": "THEME"
+                },
+                "profiles": [],
+                "dockApps": [],
+                "defaultFavoriteApps": [],
+                "widgetPlacements": []
+            }
+            """.trimIndent(),
+        )
+        val uri: Uri = Uri.fromFile(file)
+
+        // When importing it under the current, renamed model
+        val readBack = repository.readBackup(uri)
+
+        // Then it deserializes into the Facet-named fields instead of being treated as absent
+        assertEquals(0, readBack?.settings?.activeFacetIndex)
+        assertEquals(emptyList<Any>(), readBack?.facets)
     }
 
     @Test

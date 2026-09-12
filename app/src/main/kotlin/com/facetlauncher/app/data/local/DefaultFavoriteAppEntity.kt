@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 
 /**
  * The launcher-wide default Favorites list — mirrors [DockAppEntity] exactly (global, no
- * per-profile scoping): the baseline Favorites shown by any profile that isn't overriding its
- * own, edited from Settings' own "Default favorites" card rather than from a profile.
+ * per-facet scoping): the baseline Favorites shown by any facet that isn't overriding its
+ * own, edited from Settings' own "Default favorites" card rather than from a facet.
  */
 @Entity(
     tableName = "default_favorite_apps",

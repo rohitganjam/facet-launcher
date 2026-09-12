@@ -19,7 +19,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.ClockTemplateId
@@ -37,31 +37,31 @@ class ClockStyleGalleryScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}, profileId: Long? = null): Pair<SettingsRepository, ProfileRepository> {
+    private fun setContent(onBack: () -> Unit = {}, facetId: Long? = null): Pair<SettingsRepository, FacetRepository> {
         lateinit var settingsRepository: SettingsRepository
-        lateinit var profileRepository: ProfileRepository
+        lateinit var facetRepository: FacetRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                profileRepository = ProfileRepository(database.profileDao())
+                facetRepository = FacetRepository(database.facetDao())
                 settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "clock-style-gallery-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                if (profileId != null) {
-                    runBlocking { profileRepository.addProfile() } // seeds id 1L, matching profileId below
+                if (facetId != null) {
+                    runBlocking { facetRepository.addFacet() } // seeds id 1L, matching facetId below
                 }
-                val savedStateHandle = if (profileId != null) SavedStateHandle(mapOf("profileId" to profileId)) else SavedStateHandle()
-                ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, profileRepository)
+                val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
+                ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
             }
             FacetLauncherTheme {
                 ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
-        return settingsRepository to profileRepository
+        return settingsRepository to facetRepository
     }
 
     @Test
@@ -155,7 +155,7 @@ class ClockStyleGalleryScreenTest {
 
     @Test
     fun globalClockAlignmentSelectionPersistsThroughSettingsRepository() {
-        // Given the global (non-profile-scoped) entry point, Left by default
+        // Given the global (non-facet-scoped) entry point, Left by default
         val (settingsRepository, _) = setContent()
 
         // When picking Center alignment
@@ -173,7 +173,7 @@ class ClockStyleGalleryScreenTest {
 
     @Test
     fun globalCalendarAlignmentSelectionPersistsThroughSettingsRepositoryIndependentlyOfClockAlignment() {
-        // Given the global (non-profile-scoped) entry point, Left by default for both
+        // Given the global (non-facet-scoped) entry point, Left by default for both
         val (settingsRepository, _) = setContent()
 
         // When picking Right alignment for the calendar only
@@ -296,11 +296,11 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun profileScopedClockAlignmentPersistsToTheProfileDirectly() {
-        // Given a profile-scoped entry point — alignment is now part of the same Clock+Calendar
-        // design bundle as font/color/template, so it's profile-overridable the same way (see
+    fun facetScopedClockAlignmentPersistsToTheFacetDirectly() {
+        // Given a facet-scoped entry point — alignment is now part of the same Clock+Calendar
+        // design bundle as font/color/template, so it's facet-overridable the same way (see
         // chat history: this used to be global-only and hidden entirely on this variant).
-        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
 
         // When picking Center alignment for the clock
         composeRule.onNodeWithTag("clock_style_gallery_list")
@@ -309,19 +309,19 @@ class ClockStyleGalleryScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_alignment_row_option_CENTER").performClick()
 
-        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        // Then it's persisted to this facet's own row, not the launcher-wide global setting
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking {
-                profileRepository.observeProfiles().first().single().clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.CENTER
+                facetRepository.observeFacets().first().single().clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.CENTER
             }
         }
         assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().clockAlignment })
     }
 
     @Test
-    fun profileScopedCalendarAlignmentPersistsToTheProfileDirectly() {
-        // Given a profile-scoped entry point
-        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+    fun facetScopedCalendarAlignmentPersistsToTheFacetDirectly() {
+        // Given a facet-scoped entry point
+        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
 
         // When picking Right alignment for the calendar
         composeRule.onNodeWithTag("clock_style_gallery_list")
@@ -330,29 +330,29 @@ class ClockStyleGalleryScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
 
-        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        // Then it's persisted to this facet's own row, not the launcher-wide global setting
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking {
-                profileRepository.observeProfiles().first().single().calendarAlignment == com.facetlauncher.app.data.model.ClockAlignment.RIGHT
+                facetRepository.observeFacets().first().single().calendarAlignment == com.facetlauncher.app.data.model.ClockAlignment.RIGHT
             }
         }
         assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().calendarAlignment })
     }
 
     @Test
-    fun profileScopedResetClockWidgetPositionClearsTheProfilesOwnHeightAndBothAlignments() {
-        // Given a profile-scoped entry point with a previously-dragged height and non-default alignments
-        val (_, profileRepository) = setContent(profileId = 1L)
+    fun facetScopedResetClockWidgetPositionClearsTheFacetsOwnHeightAndBothAlignments() {
+        // Given a facet-scoped entry point with a previously-dragged height and non-default alignments
+        val (_, facetRepository) = setContent(facetId = 1L)
         runBlocking {
             // Each setter re-fetches the current row rather than reusing one stale snapshot —
             // otherwise the next call's copy() would silently clobber the previous field back to
             // its original value (see chat history: this exact bug bit this test's first draft).
-            profileRepository.setClockZoneHeight(profileRepository.observeProfiles().first().single(), 180f)
-            profileRepository.setClockAlignment(profileRepository.observeProfiles().first().single(), com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
-            profileRepository.setCalendarAlignment(profileRepository.observeProfiles().first().single(), com.facetlauncher.app.data.model.ClockAlignment.CENTER)
+            facetRepository.setClockZoneHeight(facetRepository.observeFacets().first().single(), 180f)
+            facetRepository.setClockAlignment(facetRepository.observeFacets().first().single(), com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
+            facetRepository.setCalendarAlignment(facetRepository.observeFacets().first().single(), com.facetlauncher.app.data.model.ClockAlignment.CENTER)
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().single().clockZoneHeightDp != null }
+            runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp != null }
         }
 
         // When "Reset clock widget position" is tapped
@@ -361,13 +361,13 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("reset_clock_position_row").performClick()
         composeRule.waitForIdle()
 
-        // Then this profile's own height and both alignments reset — the global default is untouched
+        // Then this facet's own height and both alignments reset — the global default is untouched
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().single().clockZoneHeightDp == null }
+            runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp == null }
         }
-        val profile = runBlocking { profileRepository.observeProfiles().first().single() }
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, profile.clockAlignment)
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, profile.calendarAlignment)
+        val facet = runBlocking { facetRepository.observeFacets().first().single() }
+        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, facet.clockAlignment)
+        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, facet.calendarAlignment)
     }
 
     @Test
@@ -381,7 +381,7 @@ class ClockStyleGalleryScreenTest {
 
     @Test
     fun globalCalendarStyleFontSelectionPersistsThroughSettingsRepository() {
-        // Given the global (non-profile-scoped) entry point
+        // Given the global (non-facet-scoped) entry point
         val (settingsRepository, _) = setContent()
 
         // When picking a calendar-style font other than the default
@@ -396,21 +396,21 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun profileScopedCalendarStyleFontPersistsToTheProfileDirectly() {
-        // Given a profile-scoped entry point — this gallery has no per-row Inherit/Override
-        // gating of its own; reaching it scoped to a profile always edits that profile directly
-        // (the Inherit/Override choice lives on ProfileSettingsScreen's own card instead).
-        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+    fun facetScopedCalendarStyleFontPersistsToTheFacetDirectly() {
+        // Given a facet-scoped entry point — this gallery has no per-row Inherit/Override
+        // gating of its own; reaching it scoped to a facet always edits that facet directly
+        // (the Inherit/Override choice lives on FacetSettingsScreen's own card instead).
+        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
 
         // When picking a calendar-style font other than the default
         composeRule.onNodeWithTag("calendar_style_font_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
 
-        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        // Then it's persisted to this facet's own row, not the launcher-wide global setting
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking {
-                profileRepository.observeProfiles().first().single().calendarFontOption == com.facetlauncher.app.data.model.ClockFontOption.POPPINS
+                facetRepository.observeFacets().first().single().calendarFontOption == com.facetlauncher.app.data.model.ClockFontOption.POPPINS
             }
         }
         val settings = runBlocking { settingsRepository.settings.first() }
@@ -419,7 +419,7 @@ class ClockStyleGalleryScreenTest {
 
     @Test
     fun globalCalendarWeightSelectionPersistsThroughSettingsRepository() {
-        // Given the global (non-profile-scoped) entry point, Regular weight by default
+        // Given the global (non-facet-scoped) entry point, Regular weight by default
         val (settingsRepository, _) = setContent()
 
         // When dragging the calendar weight slider to its last stop (Semi Bold)
@@ -433,17 +433,17 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun profileScopedCalendarWeightPersistsToTheProfileDirectly() {
-        // Given a profile-scoped entry point (same reasoning as the font/color tests above)
-        val (settingsRepository, profileRepository) = setContent(profileId = 1L)
+    fun facetScopedCalendarWeightPersistsToTheFacetDirectly() {
+        // Given a facet-scoped entry point (same reasoning as the font/color tests above)
+        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
 
         // When dragging the calendar weight slider to its last stop (Semi Bold)
         composeRule.onNodeWithTag("calendar_style_weight_slider_control")
             .performSemanticsAction(SemanticsActions.SetProgress) { it((FontWeightOption.entries.size - 1).toFloat()) }
 
-        // Then it's persisted to this profile's own row, not the launcher-wide global setting
+        // Then it's persisted to this facet's own row, not the launcher-wide global setting
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepository.observeProfiles().first().single().calendarFontWeight == FontWeightOption.SEMI_BOLD }
+            runBlocking { facetRepository.observeFacets().first().single().calendarFontWeight == FontWeightOption.SEMI_BOLD }
         }
         val settings = runBlocking { settingsRepository.settings.first() }
         assert(settings.calendarFontWeight != FontWeightOption.SEMI_BOLD)

@@ -29,7 +29,7 @@ data class BackupRestoreUiState(
 sealed interface BackupRestoreMessage {
     data object ExportSucceeded : BackupRestoreMessage
     data object ExportFailed : BackupRestoreMessage
-    data class ImportSucceeded(val profileCount: Int, val pendingWidgetCount: Int) : BackupRestoreMessage
+    data class ImportSucceeded(val facetCount: Int, val pendingWidgetCount: Int) : BackupRestoreMessage
     data object ImportFailedInvalidFile : BackupRestoreMessage
     data class ImportFailedUnsupportedVersion(val backupVersion: Int) : BackupRestoreMessage
 }

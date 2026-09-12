@@ -3,7 +3,7 @@ package com.facetlauncher.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.NotificationShadeRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
@@ -36,7 +36,7 @@ class HomeViewModel @Inject constructor(
     private val observeHomeScreenState: ObserveHomeScreenStateUseCase,
     private val notificationShadeRepository: NotificationShadeRepository,
     private val settingsRepository: SettingsRepository,
-    private val profileRepository: ProfileRepository,
+    private val facetRepository: FacetRepository,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
@@ -51,7 +51,7 @@ class HomeViewModel @Inject constructor(
                 isLoading = false,
                 dockApps = screenState.dockApps,
                 appListItems = screenState.appListItems,
-                profiles = screenState.profiles,
+                facets = screenState.facets,
                 usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,
                 badgeCounts = screenState.badgeCounts,
@@ -66,7 +66,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** `PACKAGE_USAGE_STATS` has no grant-change callback — call this from `onResume` so a grant made via Settings takes effect without waiting for an unrelated profile change. */
+    /** `PACKAGE_USAGE_STATS` has no grant-change callback — call this from `onResume` so a grant made via Settings takes effect without waiting for an unrelated facet change. */
     fun refresh() {
         observeHomeScreenState.refresh()
     }
@@ -89,23 +89,23 @@ class HomeViewModel @Inject constructor(
     /**
      * Fired once, on release, by the clock's grab handle ([com.facetlauncher.app.ui.home.ClockZoneHandle])
      * — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. Writes to the
-     * active profile's own override when one is actually governing the widget's position right
-     * now ([HomeUiState.clockPositionOwningProfile]); otherwise falls back to the global setting,
-     * same as every other profile-overridable value here.
+     * active facet's own override when one is actually governing the widget's position right
+     * now ([HomeUiState.clockPositionOwningFacet]); otherwise falls back to the global setting,
+     * same as every other facet-overridable value here.
      */
     fun onClockZoneHeightCommit(heightDp: Float) {
-        val owningProfile = _uiState.value.clockPositionOwningProfile
+        val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
-            owningProfile?.let { profileRepository.setClockZoneHeight(it, heightDp) }
+            owningFacet?.let { facetRepository.setClockZoneHeight(it, heightDp) }
                 ?: settingsRepository.setClockZoneHeight(heightDp)
         }
     }
 
     /** Fired once, on release, by the clock's resize handles — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
     fun onClockScaleCommit(scale: Float) {
-        val owningProfile = _uiState.value.clockPositionOwningProfile
+        val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
-            owningProfile?.let { profileRepository.setClockScale(it, scale) }
+            owningFacet?.let { facetRepository.setClockScale(it, scale) }
                 ?: settingsRepository.setClockScale(scale)
         }
     }

@@ -5,8 +5,8 @@ import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -32,7 +32,7 @@ import javax.inject.Inject
 
 sealed interface ImportBackupResult {
     data class Success(
-        val profileCount: Int,
+        val facetCount: Int,
         val dockAppCount: Int,
         val defaultFavoriteCount: Int,
         /** Never auto-restored — see [com.facetlauncher.app.data.model.BackupWidgetPlacement]'s own doc comment. Empty when the backup had none. */
@@ -47,7 +47,7 @@ sealed interface ImportBackupResult {
 }
 
 /**
- * F14 Backup & Restore import — replaces every current profile/dock/default-favorite with the
+ * F14 Backup & Restore import — replaces every current facet/dock/default-favorite with the
  * backup's own (a destructive, full-replace restore, not a merge — the caller must confirm this
  * with the user before invoking; see `BackupRestoreScreen.kt`), then applies every setting field.
  * Widget placements are surfaced back to the caller rather than written automatically — see
@@ -60,10 +60,10 @@ sealed interface ImportBackupResult {
 class ImportBackupUseCase @Inject constructor(
     private val backupRepository: BackupRepository,
     private val settingsRepository: SettingsRepository,
-    private val profileRepository: ProfileRepository,
+    private val facetRepository: FacetRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val dockAppRepository: DockAppRepository,
-    private val profileDockAppRepository: ProfileDockAppRepository,
+    private val facetDockAppRepository: FacetDockAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
@@ -72,19 +72,19 @@ class ImportBackupUseCase @Inject constructor(
 
         applySettings(bundle.settings)
 
-        profileRepository.deleteAllProfiles()
-        var activeProfileId: Long? = null
-        bundle.profiles.forEachIndexed { index, backupProfile ->
-            val newId = profileRepository.restoreProfile(backupProfile.toProfileEntity())
-            backupProfile.favorites.forEach { entry ->
+        facetRepository.deleteAllFacets()
+        var activeFacetId: Long? = null
+        bundle.facets.forEachIndexed { index, backupFacet ->
+            val newId = facetRepository.restoreFacet(backupFacet.toFacetEntity())
+            backupFacet.favorites.forEach { entry ->
                 favoriteAppRepository.restoreFavorite(entry.toFavoriteAppEntity(newId))
             }
-            backupProfile.dockApps.forEach { entry ->
-                profileDockAppRepository.restoreDockApp(entry.toProfileDockAppEntity(newId))
+            backupFacet.dockApps.forEach { entry ->
+                facetDockAppRepository.restoreDockApp(entry.toFacetDockAppEntity(newId))
             }
-            if (index == bundle.settings.activeProfileIndex) activeProfileId = newId
+            if (index == bundle.settings.activeFacetIndex) activeFacetId = newId
         }
-        activeProfileId?.let { settingsRepository.setActiveProfileId(it) }
+        activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
 
         dockAppRepository.deleteAllDockApps()
         bundle.dockApps.forEach { dockAppRepository.restoreDockApp(it.toDockAppEntity()) }
@@ -93,7 +93,7 @@ class ImportBackupUseCase @Inject constructor(
         bundle.defaultFavoriteApps.forEach { defaultFavoriteAppRepository.restoreDefaultFavorite(it.toDefaultFavoriteAppEntity()) }
 
         return ImportBackupResult.Success(
-            profileCount = bundle.profiles.size,
+            facetCount = bundle.facets.size,
             dockAppCount = bundle.dockApps.size,
             defaultFavoriteCount = bundle.defaultFavoriteApps.size,
             pendingWidgetPlacements = bundle.widgetPlacements,

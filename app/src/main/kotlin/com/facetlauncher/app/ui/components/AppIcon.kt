@@ -74,7 +74,7 @@ private fun appIconCornerRadiusFor(size: Dp): Dp = when {
 
 /**
  * The single app-icon renderer used everywhere an [icon] bitmap is shown — Home's favorites/dock,
- * the App Drawer's List/Grid rows, the long-press context menu, and the profile carousel's
+ * the App Drawer's List/Grid rows, the long-press context menu, and the facet carousel's
  * preview cards. Kept as one composable specifically so F11's icon-rendering mode only needs to
  * change this one place rather than every surface that draws an icon independently — see
  * [LocalIconRenderMode]/[AppIconGlyph]'s own doc for how that mode is applied.

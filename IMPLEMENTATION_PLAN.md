@@ -36,18 +36,18 @@ Two `AppDrawerScreenTest` cases asserted `onNodeWithText("A")` / `onNodeWithText
 
 ## 📌 Standing design convention (added mid-Phase 2 — carry forward)
 
-**Every non-root screen gets an on-screen back button**, wired to the same nav-back action as the system back button/gesture (`ui/components/BackButton.kt`, a simple `‹` glyph — not a new icon-library dependency). This applies to `Settings` and the `Dock` picker today, and **must be added to every new screen Phases 3–7 introduce** (profile carousel, per-profile settings, clock style page, Hub, onboarding, pickers, rename dialog) — don't let it slip just because the system back gesture already technically works. **Exception:** Home and the App Drawer don't get one — they're gesture-driven (swipe open/close) by design, and a redundant back button doesn't fit that pattern.
+**Every non-root screen gets an on-screen back button**, wired to the same nav-back action as the system back button/gesture (`ui/components/BackButton.kt`, a simple `‹` glyph — not a new icon-library dependency). This applies to `Settings` and the `Dock` picker today, and **must be added to every new screen Phases 3–7 introduce** (facet carousel, per-facet settings, clock style page, Hub, onboarding, pickers, rename dialog) — don't let it slip just because the system back gesture already technically works. **Exception:** Home and the App Drawer don't get one — they're gesture-driven (swipe open/close) by design, and a redundant back button doesn't fit that pattern.
 
 ## ✅ Phase 2 complete — verified on-device
 
 `assembleDebug`, `test` (30 JVM unit tests), and `connectedAndroidTest` (31 instrumented tests) are all green on `Medium_Phone_API_36.1`. Full manual walkthrough on-device: long-press → sheet → Settings → 24h toggle (persisted across app restart) → Dock picker → add/remove apps → back button on both screens — all confirmed working against the real, persisted Room/DataStore state, not just test doubles.
 
 ### What got built (beyond the original 4 bullets — scope grew during the phase, see chat history for the full reasoning)
-- Room (`ProfileEntity`/`FavoriteAppEntity` schema-only; `DockAppEntity` actively used), DataStore-backed `SettingsRepository`, `DockAppRepository`.
+- Room (`FacetEntity`/`FavoriteAppEntity` schema-only; `DockAppEntity` actively used), DataStore-backed `SettingsRepository`, `DockAppRepository`.
 - **Navigation-Compose adopted** (`ui/navigation/FacetNavHost.kt`) as the final-state navigation approach for the whole app, replacing Phase 1's hand-rolled `LauncherRoot` boolean state. Routes: `home`, `drawer`, `settings`, `dockPicker`.
-- Full `3c` Settings screen — functional rows (24h time, notification dots, dock apps + Icons/Text mode, drawer opacity, show-drawer-icons, set-default-launcher status+deep-link) alongside visibly-disabled rows for not-yet-built sections (Profiles, Clock styles, App Drawer Grid/labels/search, Appearance icons/accent, Backup & restore).
+- Full `3c` Settings screen — functional rows (24h time, notification dots, dock apps + Icons/Text mode, drawer opacity, show-drawer-icons, set-default-launcher status+deep-link) alongside visibly-disabled rows for not-yet-built sections (Facets, Clock styles, App Drawer Grid/labels/search, Appearance icons/accent, Backup & restore).
 - Dock app picker (`4k`) with search, checkbox add/remove, 3–5 app floor/ceiling enforced on **both** the Settings drag-reorder row and the picker itself.
-- Long-press sheet (`2a`) — 4 rows per the corrected screenshot (README's prose was missing "Launcher settings"; fixed in README.md too): Launcher settings + Change wallpaper functional, Switch/Edit profile disabled until Phase 3.
+- Long-press sheet (`2a`) — 4 rows per the corrected screenshot (README's prose was missing "Launcher settings"; fixed in README.md too): Launcher settings + Change wallpaper functional, Switch/Edit facet disabled until Phase 3.
 - **Alphabet rail reworked per direct design feedback mid-phase**: filtered letters only (not a fixed A–Z+#), rail visually compact (wraps its own content, tight spacing) and centered within a 90%-height touch zone per edge; a touch above/below the visible rail band clamps to the first/last letter rather than requiring pixel-precise placement (`letterAt(y, bandTopPx, bandBottomPx, letters)` in `AlphabetRail.kt`). F8's left-edge access reuses the exact same zone/mapping with no second visible rail; it's unconditional default behavior in list presentation, not a Settings toggle (there's nothing yet for it to be conditional on until Grid presentation exists).
 - Back buttons on Settings and Dock picker (see standing convention above).
 
@@ -139,15 +139,15 @@ Screens covered: `1a` (home + drawer prototype), `1b` (clock, light stack).
 
 ## Phase 2 — Settings + persistence
 
-- [x] Room schema: `ProfileEntity`, `FavoriteAppEntity`, `DockAppEntity` (F3, F4).
-  - Test: DAO round-trip tests (`ProfileDaoTest`, `FavoriteAppDaoTest`, `DockAppDaoTest`) — insert/query/delete, position ordering, FK cascade delete, upsert-by-component dedup, all with an in-memory Room database.
+- [x] Room schema: `FacetEntity`, `FavoriteAppEntity`, `DockAppEntity` (F3, F4).
+  - Test: DAO round-trip tests (`FacetDaoTest`, `FavoriteAppDaoTest`, `DockAppDaoTest`) — insert/query/delete, position ordering, FK cascade delete, upsert-by-component dedup, all with an in-memory Room database.
 - [x] DataStore: launcher-wide toggles (24h time, dock display mode Icons/Text, drawer presentation + grid size, drawer opacity, notification dots on/off).
   - Test (`SettingsRepositoryTest`): each setter round-trips through the settings flow; defaults match the PRD/README (0.88f opacity, `FIVE_BY_SIX`, etc.); opacity is coerced into `0..1`.
 - [x] Launcher Settings screen (`3c`) wired to the above — full layout, not-yet-built sections shown disabled rather than omitted (see chat history for the fidelity discussion).
   - Test (`SettingsScreenTest`, `SettingsViewModelTest`): toggling a row updates the underlying value; disabled rows have no click action at all; dock floor/ceiling enforced; back button navigates.
 - [x] Dock Icons/Text display mode (new in README, added to PRD F3).
   - Test (`HomeScreenTest.dockTextModeRendersLabelsInsteadOfIcons`): dock renders labels instead of icons when Text mode is set.
-- [x] *(pulled forward from Phase 3, since Settings needed a real entry point)* Long-press sheet (`2a`): Launcher settings + Change wallpaper functional; Switch profile / Edit profile visible but disabled until Phase 3.
+- [x] *(pulled forward from Phase 3, since Settings needed a real entry point)* Long-press sheet (`2a`): Launcher settings + Change wallpaper functional; Switch facet / Edit facet visible but disabled until Phase 3.
   - Test (`HomeRouteTest`, `LongPressSheetTest`): holding still past the platform long-press timeout opens the sheet; releasing early cancels it; tapping each functional row invokes its callback; disabled rows don't.
 - [x] *(not originally scoped for this phase, but a direct requirement of building Settings/Dock-picker)* Back button on every non-root screen — see the standing convention above.
   - Test: `SettingsScreenTest.backButtonInvokesOnBack`, `DockAppPickerScreenTest.backButtonInvokesOnDone`.
@@ -156,15 +156,15 @@ Screens covered: `1a` (home + drawer prototype), `1b` (clock, light stack).
 
 ## ✅ Phase 3 complete — verified on-device
 
-`assembleDebug`, `test` (43 JVM unit tests), and `connectedAndroidTest` (48 instrumented tests) are all green. Full manual walkthrough on-device: long-press Home → sheet now shows Switch/Edit profile as functional (not disabled) → Edit profile → per-profile settings → Favorite apps → checked Chrome + Calendar in the real installed-app list → back → both appear on Home's FAVORITES list, confirming the full round-trip through `FavoriteAppRepository`. Settings → View profiles now navigates (was disabled). App Drawer's new search bar renders with real Material Icons (search glyph, letter headers, alphabet rail), its 3-dot overflow menu opens and "Launcher settings" navigates correctly. Settings → App Drawer → "Search bar position" toggled Top→Bottom moved the live search bar to the bottom of the drawer. The Home↔Drawer transition now follows the finger continuously (verified via a slow manual swipe) rather than the old instant threshold-cross.
+`assembleDebug`, `test` (43 JVM unit tests), and `connectedAndroidTest` (48 instrumented tests) are all green. Full manual walkthrough on-device: long-press Home → sheet now shows Switch/Edit facet as functional (not disabled) → Edit facet → per-facet settings → Favorite apps → checked Chrome + Calendar in the real installed-app list → back → both appear on Home's FAVORITES list, confirming the full round-trip through `FavoriteAppRepository`. Settings → View facets now navigates (was disabled). App Drawer's new search bar renders with real Material Icons (search glyph, letter headers, alphabet rail), its 3-dot overflow menu opens and "Launcher settings" navigates correctly. Settings → App Drawer → "Search bar position" toggled Top→Bottom moved the live search bar to the bottom of the drawer. The Home↔Drawer transition now follows the finger continuously (verified via a slow manual swipe) rather than the old instant threshold-cross.
 
 ### What got built
-- [x] Profile carousel (`3a`, `3b`): `HorizontalPager`-based center/neighbor scaling with peeking neighbors (`contentPadding`), drag-to-page (native Pager clamping, no infinite scroll), tap-a-neighbor-to-center, Select-to-apply, long-press-to-reorder (index-swap-on-drag, mirroring `SettingsScreen.kt`'s Dock reorder pattern, with an added rotate+shadow lift effect — the first such visual in the codebase). Browsing vs. applying stays purely local (`pagerState.currentPage` never persists until Select fires), satisfying README's `profile`/`pickIdx` state split with no extra state needed.
-  - Test: `ProfileCarouselScreenTest` — Select applies the centered profile; back returns without applying; Add-profile page hidden at 3 profiles; delete blocked/disabled at 1 remaining profile; deleting a profile removes its page.
-  - Enabled the long-press sheet's "Switch profile" row (now shows the real active profile name/position/count) and "Edit profile" row.
-- [x] Per-profile settings (`3d`) + max-3-profiles / min-1-profile rules (F4), reached from the sheet's Edit profile or the carousel's gear. App list content: Favorites selectable, Recents/Most used shown disabled (Phase 4 dependency). Favorite apps row → Favorites picker (`4j`, modeled directly on `DockAppPickerScreen`'s search/checkbox pattern, capped at 8 instead of Dock's 3–5). Rename profile → shared `RenameDialog`. Delete → shared `ConfirmDialog`, required before deletion completes.
-  - Test: `ProfileSettingsScreenTest`, `FavoritesPickerScreenTest` — favorites count/navigation, cap enforcement at 8, rename round-trips through the repository.
-- [x] **Uninstall-collapse rule for Favorites** (F2/F3) — `FavoriteAppRepository.observeFavoritesForProfile` mirrors `DockAppRepository`'s exact hydrate-and-filter pattern; an uninstalled app's entry is filtered out at read time, never a dead tile.
+- [x] Facet carousel (`3a`, `3b`): `HorizontalPager`-based center/neighbor scaling with peeking neighbors (`contentPadding`), drag-to-page (native Pager clamping, no infinite scroll), tap-a-neighbor-to-center, Select-to-apply, long-press-to-reorder (index-swap-on-drag, mirroring `SettingsScreen.kt`'s Dock reorder pattern, with an added rotate+shadow lift effect — the first such visual in the codebase). Browsing vs. applying stays purely local (`pagerState.currentPage` never persists until Select fires), satisfying README's `facet`/`pickIdx` state split with no extra state needed.
+  - Test: `FacetCarouselScreenTest` — Select applies the centered facet; back returns without applying; Add-facet page hidden at 3 facets; delete blocked/disabled at 1 remaining facet; deleting a facet removes its page.
+  - Enabled the long-press sheet's "Switch facet" row (now shows the real active facet name/position/count) and "Edit facet" row.
+- [x] Per-facet settings (`3d`) + max-3-facets / min-1-facet rules (F4), reached from the sheet's Edit facet or the carousel's gear. App list content: Favorites selectable, Recents/Most used shown disabled (Phase 4 dependency). Favorite apps row → Favorites picker (`4j`, modeled directly on `DockAppPickerScreen`'s search/checkbox pattern, capped at 8 instead of Dock's 3–5). Rename facet → shared `RenameDialog`. Delete → shared `ConfirmDialog`, required before deletion completes.
+  - Test: `FacetSettingsScreenTest`, `FavoritesPickerScreenTest` — favorites count/navigation, cap enforcement at 8, rename round-trips through the repository.
+- [x] **Uninstall-collapse rule for Favorites** (F2/F3) — `FavoriteAppRepository.observeFavoritesForFacet` mirrors `DockAppRepository`'s exact hydrate-and-filter pattern; an uninstalled app's entry is filtered out at read time, never a dead tile.
   - Test: `FavoriteAppRepositoryTest`.
 - [x] **App Drawer search bar (F6 base search)** — rounded-rectangle bar, text-filters the list, renders at top or bottom per the new Settings row.
   - Test: `AppDrawerScreenTest` — typing filters by name (checked via letter headers, since the search field's own input text otherwise ambiguously matches the same query text); clearing restores the full list (`performScrollToNode` first — `LazyColumn` preserves its scroll anchor by item key across a size change, so clearing doesn't itself scroll back to the top).
@@ -177,32 +177,32 @@ Screens covered: `1a` (home + drawer prototype), `1b` (clock, light stack).
 - [x] **Icon convention: adopted Material Icons, retrofitted `BackButton.kt`** — added `androidx.compose.material:material-icons-core`; `BackButton.kt`'s `Text("‹")` glyph replaced with `Icon(Icons.AutoMirrored.Filled.ArrowBack)`; new search/overflow icons use `Icons.Default.Search`/`Icons.Default.MoreVert` from the start. Done as part of this phase rather than deferred, since the new search bar needed real icons anyway and retrofitting the one existing glyph alongside it was a small, contained change.
 
 ### Real bugs found and fixed during verification (not just test artifacts)
-- **A single fast synthetic swipe could skip two `HorizontalPager` pages at once** (landing on the trailing Add-profile page instead of the intended neighbor) — high fling velocity from a full-distance gesture is enough for Pager's snapping to advance more than one page. Not purely a test artifact: the same physics apply to a fast real-world swipe. Test-side, worked around with a slower multi-step controlled drag; worth a closer look if real usage ever reports a similar overshoot.
+- **A single fast synthetic swipe could skip two `HorizontalPager` pages at once** (landing on the trailing Add-facet page instead of the intended neighbor) — high fling velocity from a full-distance gesture is enough for Pager's snapping to advance more than one page. Not purely a test artifact: the same physics apply to a fast real-world swipe. Test-side, worked around with a slower multi-step controlled drag; worth a closer look if real usage ever reports a similar overshoot.
 - **`LazyColumn` preserves its scroll anchor by item key across a drastic size change** — filtering the drawer down to one match and back to the full list does *not* itself scroll back to the top; the list stays anchored near whatever item was first-visible while filtered. Reasonable default behavior (avoids a jarring jump), but worth knowing — nothing auto-scrolls the drawer to the top on search-clear.
 - Compose UI test's `assertExists()`/`assertDoesNotExist()` check the semantics tree, not visibility — since the Drawer is now always composed (merely `Modifier.offset` off-screen when closed, for the follow-finger transition), tests asserting open/closed state switched to `assertIsDisplayed()`/`assertIsNotDisplayed()`.
 - Mutating external Compose `mutableStateOf` test state directly (outside a real UI-triggered callback) proved unreliable for a `TextField`-backed clear operation; switched to driving the same `performTextInput`/`performTextReplacement` path a real user interaction would take, which is also the more faithful test.
 
 ### Deliberately deferred / not pursued
-- ~~Live per-profile preview content (real mini favorites/dock rows) on each carousel page~~ — **resolved post-Phase-3, see below.**
+- ~~Live per-facet preview content (real mini favorites/dock rows) on each carousel page~~ — **resolved post-Phase-3, see below.**
 
 ## Post-Phase-3 polish — carousel redesign, live preview, theming convention
 
 Direct follow-up work after Phase 3 shipped, driven by hands-on review of the built carousel/reorder flow. `assembleDebug`, `test`, and `connectedAndroidTest` all re-verified green after each change; manual on-device walkthrough confirmed every item below. `design_handoff_minimal_launcher/PRD.md` (F4) and `README.md` (`3a`/`3b`/Interactions/State Management/Assets sections) updated to match — see those files for the user-facing spec, not repeated in full here.
 
 ### Carousel redesigned to a recent-apps switcher
-- **Tap-to-apply, no Select button.** Tapping any visible card — centred or a peeking neighbour — applies that profile immediately and closes; the header's **Select** text is gone. Browsing is swipe-only and never applies anything.
-- **Reordering and rename moved out of the carousel.** Long-press-to-reorder-in-place no longer makes sense once any tap applies a card, so it's replaced by a header **Reorder** link that swaps the whole carousel (pager, dots, gear/trash row) for a plain vertical list: drag handle + name + overflow menu (**Profile settings** / **Delete**) per row, a pinned non-reorderable **Add profile** row at the bottom. Dragging a row by its handle live-reorders (`Modifier.animateItem()` on the other rows), committing on release. Rename now lives inside Per-profile settings, reached from the carousel's gear or the reorder list's overflow menu.
+- **Tap-to-apply, no Select button.** Tapping any visible card — centred or a peeking neighbour — applies that facet immediately and closes; the header's **Select** text is gone. Browsing is swipe-only and never applies anything.
+- **Reordering and rename moved out of the carousel.** Long-press-to-reorder-in-place no longer makes sense once any tap applies a card, so it's replaced by a header **Reorder** link that swaps the whole carousel (pager, dots, gear/trash row) for a plain vertical list: drag handle + name + overflow menu (**Facet settings** / **Delete**) per row, a pinned non-reorderable **Add facet** row at the bottom. Dragging a row by its handle live-reorders (`Modifier.animateItem()` on the other rows), committing on release. Rename now lives inside Per-facet settings, reached from the carousel's gear or the reorder list's overflow menu.
   - The reorder list's drag handle only has a gesture detector on the small handle icon itself, not the whole row — sidesteps any axis-of-scroll conflict entirely, unlike the carousel's own earlier drag-to-page-vs-drag-to-reorder arbitration problem.
 - **Card sizing tightened**: uniform `CARD_SCALE = 0.855f` (previously two-tier 70%/60% centred/neighbour scaling) and reduced inter-card spacing, so more of each neighbour peeks in on both sides while browsing.
-- **Add-profile card height bug fixed**: the gear/trash row below the pager was conditionally omitted when the Add page was centred (no profile to edit/delete), which let the pager claim that vertical space and made the Add card visibly taller than a real profile card. Fixed by always reserving that row's layout space (`Modifier.alpha(0f)` + `enabled = false` when there's no centred profile) instead of conditionally removing it.
-- Test: `ProfileCarouselScreenTest` rewritten for tap-to-apply (`tappingACardAppliesItImmediately`, `backWithoutTappingACardLeavesTheActiveProfileUnchanged`) plus new coverage for the reorder list (`reorderLinkOpensAReorderableListAndDoneReturnsToTheCarousel`, `addRowInTheReorderListIsHiddenOnceTheMaximumIsReached`, `deletingFromTheReorderListRemovesTheRow`, `profileSettingsFromTheReorderListNavigatesToEditProfile`).
+- **Add-facet card height bug fixed**: the gear/trash row below the pager was conditionally omitted when the Add page was centred (no facet to edit/delete), which let the pager claim that vertical space and made the Add card visibly taller than a real facet card. Fixed by always reserving that row's layout space (`Modifier.alpha(0f)` + `enabled = false` when there's no centred facet) instead of conditionally removing it.
+- Test: `FacetCarouselScreenTest` rewritten for tap-to-apply (`tappingACardAppliesItImmediately`, `backWithoutTappingACardLeavesTheActiveFacetUnchanged`) plus new coverage for the reorder list (`reorderLinkOpensAReorderableListAndDoneReturnsToTheCarousel`, `addRowInTheReorderListIsHiddenOnceTheMaximumIsReached`, `deletingFromTheReorderListRemovesTheRow`, `facetSettingsFromTheReorderListNavigatesToEditFacet`).
 
-### Live per-profile preview (resolves the Phase 3 deferral above)
-Each carousel card now renders a genuine snapshot of that profile — the real `ClockBlock` composable (not a redrawn lookalike) plus that profile's actual favorite apps with icons, or `No favorites yet` if it has none — instead of a static "profile name + FAVORITES label" shell.
-- New `domain/ObserveProfilePreviewsUseCase.kt`, spanning `ProfileRepository` (which profiles exist) and `FavoriteAppRepository` (each one's favorites) — fans out to *every* profile at once, unlike `ObserveHomeScreenStateUseCase` which only resolves the single active profile's favorites.
-- New `FavoriteAppRepository.observeFavoritesForProfiles(profileIds)`: fetches the installed-app list **once** and reuses it across all requested profiles, rather than each profile independently re-querying `LauncherApps` (which is what naively calling the existing per-profile `observeFavoritesForProfile()` once per profile, fanned out via `combine()`, would do). This wasn't just an efficiency nicety — the redundant concurrent `LauncherApps` queries were real enough to make `ProfileCarouselViewModel`'s combined `uiState` land outside Compose test's `waitForIdle()` window, failing 8 of 9 `ProfileCarouselScreenTest` cases (see "Real bugs found" below).
-- `ProfileCarouselViewModel`/`ProfileCarouselUiState` extended with `favoritesByProfileId` and `use24HourTime`; `ProfilePreviewPage` rewritten accordingly.
-- Test: `FavoriteAppRepositoryTest` — `observeFavoritesForProfiles` returns each profile's own list keyed by id (not shared across profiles), and emits immediately for an empty id list without touching `AppRepository` at all.
+### Live per-facet preview (resolves the Phase 3 deferral above)
+Each carousel card now renders a genuine snapshot of that facet — the real `ClockBlock` composable (not a redrawn lookalike) plus that facet's actual favorite apps with icons, or `No favorites yet` if it has none — instead of a static "facet name + FAVORITES label" shell.
+- New `domain/ObserveFacetPreviewsUseCase.kt`, spanning `FacetRepository` (which facets exist) and `FavoriteAppRepository` (each one's favorites) — fans out to *every* facet at once, unlike `ObserveHomeScreenStateUseCase` which only resolves the single active facet's favorites.
+- New `FavoriteAppRepository.observeFavoritesForFacets(facetIds)`: fetches the installed-app list **once** and reuses it across all requested facets, rather than each facet independently re-querying `LauncherApps` (which is what naively calling the existing per-facet `observeFavoritesForFacet()` once per facet, fanned out via `combine()`, would do). This wasn't just an efficiency nicety — the redundant concurrent `LauncherApps` queries were real enough to make `FacetCarouselViewModel`'s combined `uiState` land outside Compose test's `waitForIdle()` window, failing 8 of 9 `FacetCarouselScreenTest` cases (see "Real bugs found" below).
+- `FacetCarouselViewModel`/`FacetCarouselUiState` extended with `favoritesByFacetId` and `use24HourTime`; `FacetPreviewPage` rewritten accordingly.
+- Test: `FavoriteAppRepositoryTest` — `observeFavoritesForFacets` returns each facet's own list keyed by id (not shared across facets), and emits immediately for an empty id list without touching `AppRepository` at all.
 
 ### Material3 components now explicitly themed — new standing convention
 Found while reviewing the reorder list's overflow menu and the rename/delete dialogs: `AlertDialog`'s default `containerColor` resolves to Material3's own `surfaceContainerHigh` tone, and `OutlinedTextField`'s default border/label colors resolve to other unmapped `ColorScheme` slots — `FacetLightColorScheme` (`ui/theme/Theme.kt`) only maps a handful of slots (`primary`, `surface`, `onSurface`, `onSurfaceVariant`, `error`, `outline`), so anything reading an unmapped one silently renders with Material's stock tones instead of this app's palette. Fixed `ConfirmDialog`/`RenameDialog` (explicit `containerColor = Surface`, themed `OutlinedTextFieldDefaults.colors(...)`) and added a reusable `ui/components/ThemedDropdownMenu.kt` (14dp rounded corners + `Surface` background, matching the dialogs) now used by both the reorder list's overflow menu and the App Drawer's existing one.
@@ -212,47 +212,47 @@ Found while reviewing the reorder list's overflow menu and the rename/delete dia
 ### Dock floor removed, dock now shown in the carousel preview, spacing tuned
 Further direct follow-up after the carousel/preview work above. `assembleDebug`, `test` (49 JVM unit tests), and `connectedAndroidTest` (54 instrumented tests) all re-verified green; manual on-device walkthrough (including a full `-wipe-data` emulator reset) confirmed each item. `PRD.md` (F3, F4) and `README.md` (Home layout items 5–6, `3a` carousel behavior, `3c` Settings table, `4k` Dock picker) updated to match.
 - **Dock floor removed**: `DockAppRepository.MIN_APPS` `3 → 0` — the dock can now be emptied out completely via the Dock picker or Settings' drag-reorder row, with no blocked-removal state. `HomeScreen.kt`'s dock `Row` is now omitted entirely (not rendered empty) when `dockApps.isEmpty()`, rather than the previous always-3-to-5 assumption.
-- **Dock now renders inside every profile carousel preview card**, not just Home — `ProfileCarouselViewModel`/`ProfileCarouselUiState` extended with `dockApps`/`dockDisplayMode` (sourced from `DockAppRepository`, shared across all profiles since the dock isn't per-profile); `ProfilePreviewPage` reuses the same `DockIcon` composable Home uses (promoted from `private` to `internal` in `HomeScreen.kt` for cross-package reuse within the module), same 16dp gap / omit-when-empty behavior as Home.
+- **Dock now renders inside every facet carousel preview card**, not just Home — `FacetCarouselViewModel`/`FacetCarouselUiState` extended with `dockApps`/`dockDisplayMode` (sourced from `DockAppRepository`, shared across all facets since the dock isn't per-facet); `FacetPreviewPage` reuses the same `DockIcon` composable Home uses (promoted from `private` to `internal` in `HomeScreen.kt` for cross-package reuse within the module), same 16dp gap / omit-when-empty behavior as Home.
 - **Spacing**: fixed 16dp gap added between the favorites list and whatever follows (the dock row, or the screen's own bottom padding when the dock is empty) on both Home and the carousel preview. Favorites-row vertical padding increased `8dp → 10dp` (was `padding(vertical = 8dp)`, giving a 16dp visual gap between adjacent rows; now `10dp` → 20dp).
 - **Home-surface text shadow retuned** (`ui/theme/Color.kt`'s `HomeTextShadow`, shared by the clock, favorites rows, and dock text-mode labels): blur `6px → 2px → 1px` and offset `(0,1) → (0,2)` across two rounds of direct feedback, landing on a crisper, less-diffuse shadow than Phase 1's original value.
-- Test: `ProfileCarouselScreenTest.previewCardShowsBothFavoritesAndDockAppsTogether` (seeds a real favorite + a real dock app together, asserts both render on the same preview card); `HomeScreenTest.emptyDockIsOmittedEntirelyRatherThanShownAsAnEmptyRow`; `DockAppPickerScreenTest.uncheckingIsAllowedDownToAnEmptyDock` (replaces the old `uncheckingIsBlockedAtTheThreeAppFloor`); `SettingsViewModelTest.removing a dock app is allowed down to an empty dock` (replaces the old blocked-at-floor case, found failing during this pass's full-suite run — a leftover assertion from the pre-floor-removal behavior that the earlier instrumented-test update had missed).
+- Test: `FacetCarouselScreenTest.previewCardShowsBothFavoritesAndDockAppsTogether` (seeds a real favorite + a real dock app together, asserts both render on the same preview card); `HomeScreenTest.emptyDockIsOmittedEntirelyRatherThanShownAsAnEmptyRow`; `DockAppPickerScreenTest.uncheckingIsAllowedDownToAnEmptyDock` (replaces the old `uncheckingIsBlockedAtTheThreeAppFloor`); `SettingsViewModelTest.removing a dock app is allowed down to an empty dock` (replaces the old blocked-at-floor case, found failing during this pass's full-suite run — a leftover assertion from the pre-floor-removal behavior that the earlier instrumented-test update had missed).
 
 ### Real bugs found and fixed during verification (not just test artifacts)
-- **`composeRule.waitForIdle()` doesn't wait for a `StateFlow` update that hasn't arrived yet** — it settles already-pending recomposition, not arbitrary async work. Adding a genuine `LauncherApps` query into `ProfileCarouselViewModel`'s combined `uiState` (via the new preview use case) meant the screen sometimes hadn't rendered its first real frame by the time a test's very next assertion ran, even though the exact same `combine()`-then-`stateIn()` pattern was already used elsewhere without issue — the difference was real system-service latency, not a flaw in the pattern itself. Fixed at the test level: `ProfileCarouselScreenTest.setContent()` now explicitly `waitUntil`s the screen actually renders before returning control to each test, rather than trusting a single `waitForIdle()` call caught it.
+- **`composeRule.waitForIdle()` doesn't wait for a `StateFlow` update that hasn't arrived yet** — it settles already-pending recomposition, not arbitrary async work. Adding a genuine `LauncherApps` query into `FacetCarouselViewModel`'s combined `uiState` (via the new preview use case) meant the screen sometimes hadn't rendered its first real frame by the time a test's very next assertion ran, even though the exact same `combine()`-then-`stateIn()` pattern was already used elsewhere without issue — the difference was real system-service latency, not a flaw in the pattern itself. Fixed at the test level: `FacetCarouselScreenTest.setContent()` now explicitly `waitUntil`s the screen actually renders before returning control to each test, rather than trusting a single `waitForIdle()` call caught it.
 - A stray `adb uninstall` returning `DELETE_FAILED_INTERNAL_ERROR` during this work surfaced a corrupted emulator instance (likely from many raw `adb shell input touchscreen motionevent` sequences and force-stops during earlier gesture prototyping) — resolved with a full `-wipe-data -no-snapshot-load` relaunch. Worth remembering as a first troubleshooting step if `connectedAndroidTest` or `adb install`/`uninstall` start behaving strangely without a code-level explanation.
 
-## Post-Phase-3 polish — Settings redesign (card layout, dropdowns, Calendar settings shell, per-profile overrides)
+## Post-Phase-3 polish — Settings redesign (card layout, dropdowns, Calendar settings shell, per-facet overrides)
 
-Direct follow-up requested ahead of Phase 4: "categorise the settings page better" via a card layout, several rows converted from pill toggles to real dropdowns, conditional row visibility in App Drawer, a shortened Drawer-opacity handle, a new Calendar settings screen, and a per-profile Clock card that can inherit from or override the global defaults. `assembleDebug`, `test` (60 JVM unit tests), and `connectedAndroidTest` (64 instrumented tests) all green; manual on-device walkthrough (screenshots) confirmed every item below, including the Presentation→Grid conditional-row swap and the profile Clock card's inherit/override switch actually gating the toggle.
+Direct follow-up requested ahead of Phase 4: "categorise the settings page better" via a card layout, several rows converted from pill toggles to real dropdowns, conditional row visibility in App Drawer, a shortened Drawer-opacity handle, a new Calendar settings screen, and a per-facet Clock card that can inherit from or override the global defaults. `assembleDebug`, `test` (60 JVM unit tests), and `connectedAndroidTest` (64 instrumented tests) all green; manual on-device walkthrough (screenshots) confirmed every item below, including the Presentation→Grid conditional-row swap and the facet Clock card's inherit/override switch actually gating the toggle.
 
 ### New reusable components
 - **`ui/components/SettingsCard.kt`**: the app's first true "card" container — 14dp corners (matching the existing dialog/popup radius family) + a 1px `Hairline` border, since the page background is also `Surface` and a border (not a new background tone) is what makes a card read as a group. Also `CardDivider()`, a 1px `Hairline` row separator — the first real use of `Hairline`, which was imported-but-unused in `SettingsScreen.kt` even though README's own row-separator spec (`README.md:148`) called for it.
-- **`ui/components/LabeledDropdownRow.kt`**: a generic title + current-value + chevron row that opens a `ThemedDropdownMenu` — the first "labeled dropdown selector" in the codebase (`ExposedDropdownMenuBox` had zero prior usages). Generic over `T` so one composable serves `DockDisplayMode`, `DrawerPresentation`, `DrawerGridSize`, and a profile's list-content-mode enum, with per-option `enabled` support for still-inert choices (Recents/Most used).
-- **`ui/components/InheritOverrideCard.kt`**: the two-radio-row "Inherit default" / "Override for this profile" switch README specs at `3f` — reused for both the profile Clock card's 24-hour-time override and Calendar settings' show-all-day-events override, rather than duplicating the radio-row visual twice.
+- **`ui/components/LabeledDropdownRow.kt`**: a generic title + current-value + chevron row that opens a `ThemedDropdownMenu` — the first "labeled dropdown selector" in the codebase (`ExposedDropdownMenuBox` had zero prior usages). Generic over `T` so one composable serves `DockDisplayMode`, `DrawerPresentation`, `DrawerGridSize`, and a facet's list-content-mode enum, with per-option `enabled` support for still-inert choices (Recents/Most used).
+- **`ui/components/InheritOverrideCard.kt`**: the two-radio-row "Inherit default" / "Override for this facet" switch README specs at `3f` — reused for both the facet Clock card's 24-hour-time override and Calendar settings' show-all-day-events override, rather than duplicating the radio-row visual twice.
 
 ### Settings screen (`3c`) restructured into cards
-Every section (`PROFILES`, `CLOCK`, `NOTIFICATIONS` — split out of the old `SHARED ACROSS PROFILES` grouping, `DOCK`, `APP DRAWER`, `APPEARANCE`, and an unheaded bottom card) is now a `SettingsCard` with `CardDivider()`s between rows, instead of a flat list. Dock's "Show apps as" pill row is now **"Display style"**, a real `LabeledDropdownRow<DockDisplayMode>`. App Drawer's **Presentation** and **Grid size** rows are now real (`LabeledDropdownRow`, wired to `SettingsRepository.setDrawerPresentation`/`setDrawerGridSize` — both already existed end-to-end in the data layer from Phase 2, just never called from the UI) — **Grid size only renders when Presentation is Grid**, and **Show icons**/**Show labels** (new, real, parallel to `showDrawerIcons`) are now mutually conditional on List vs. Grid instead of Show labels being a dead placeholder. Drawer opacity moved from Appearance into the App Drawer card. The old disabled "Calendar events" row is now a real **Calendar** row navigating to the new Calendar settings screen.
+Every section (`FACETS`, `CLOCK`, `NOTIFICATIONS` — split out of the old `SHARED ACROSS FACETS` grouping, `DOCK`, `APP DRAWER`, `APPEARANCE`, and an unheaded bottom card) is now a `SettingsCard` with `CardDivider()`s between rows, instead of a flat list. Dock's "Show apps as" pill row is now **"Display style"**, a real `LabeledDropdownRow<DockDisplayMode>`. App Drawer's **Presentation** and **Grid size** rows are now real (`LabeledDropdownRow`, wired to `SettingsRepository.setDrawerPresentation`/`setDrawerGridSize` — both already existed end-to-end in the data layer from Phase 2, just never called from the UI) — **Grid size only renders when Presentation is Grid**, and **Show icons**/**Show labels** (new, real, parallel to `showDrawerIcons`) are now mutually conditional on List vs. Grid instead of Show labels being a dead placeholder. Drawer opacity moved from Appearance into the App Drawer card. The old disabled "Calendar events" row is now a real **Calendar** row navigating to the new Calendar settings screen.
 
 ### Drawer-opacity slider: themed
 Was a stock Material3 `Slider` with no `colors` at all (a real `CLAUDE.md` theming gap). Now explicit `SliderDefaults.colors(thumbColor = Accent, activeTrackColor = Accent, inactiveTrackColor = Hairline)`. **Revised during the Material 3 shape pass (see `CLAUDE.md`'s shape section):** an earlier version of this also replaced the default thumb with a custom narrow `4dp`-wide/`8dp`-tall bar; reverted back to Material3's own default `Slider` thumb shape, per direct request, once "adhere to real M3 defaults" became the app's governing shape principle.
 
 ### New screen: Calendar settings (`4l`), UI shell only
-New `ui/settings/CalendarSettingsScreen.kt` + `CalendarSettingsViewModel.kt`, route `calendarSettings?profileId={profileId}` (optional arg, `NO_ACTIVE_PROFILE_ID` sentinel for the global entry point — same pattern the codebase already uses for "no active profile"). Two real cards: **Show all-day events** (a genuine, persisted toggle — new `LauncherSettings.showAllDayEvents` field) and **Calendars to display** (renders the same permission-denied strip README specs at `4p`, since `READ_CALENDAR` isn't requested and no `CalendarContract` query exists yet — deliberately scoped out this pass, left for Phase 4 to wire into this same screen). Reached from the global Settings Clock card or a profile's Clock card; when profile-scoped, an `InheritOverrideCard` governs whether the toggle writes the global setting or that profile's own override.
-- Test: `CalendarSettingsViewModelTest` (global vs. profile-scoped write target; switching to Override seeds the current effective value, switching back to Inherit clears it), `CalendarSettingsScreenTest` (toggle persists in both modes, inherit-mode toggle is read-only, permission strip renders).
+New `ui/settings/CalendarSettingsScreen.kt` + `CalendarSettingsViewModel.kt`, route `calendarSettings?facetId={facetId}` (optional arg, `NO_ACTIVE_FACET_ID` sentinel for the global entry point — same pattern the codebase already uses for "no active facet"). Two real cards: **Show all-day events** (a genuine, persisted toggle — new `LauncherSettings.showAllDayEvents` field) and **Calendars to display** (renders the same permission-denied strip README specs at `4p`, since `READ_CALENDAR` isn't requested and no `CalendarContract` query exists yet — deliberately scoped out this pass, left for Phase 4 to wire into this same screen). Reached from the global Settings Clock card or a facet's Clock card; when facet-scoped, an `InheritOverrideCard` governs whether the toggle writes the global setting or that facet's own override.
+- Test: `CalendarSettingsViewModelTest` (global vs. facet-scoped write target; switching to Override seeds the current effective value, switching back to Inherit clears it), `CalendarSettingsScreenTest` (toggle persists in both modes, inherit-mode toggle is read-only, permission strip renders).
 
-### Per-profile settings (`3d`) restructured into cards, Clock card can override the global defaults
-"App list content" is now a real `LabeledDropdownRow` (Favorites selectable; Recents/Most used render but stay disabled inside the dropdown — no new persisted field, since nothing else is actually selectable until Phase 4 builds them). "Apps to show" is now conditionally omitted (only relevant for non-Favorites modes) rather than always-shown-disabled. Favorite apps unchanged. A new **Clock** card mirrors the global Settings Clock card's three rows (Clock style, 24-hour time, Calendar) behind a single `InheritOverrideCard` switch — Clock style stays inert (no `ClockStyle` enum exists yet, Known Gap), but **24-hour time is now a real per-profile override** and **Calendar navigates to the same Calendar settings screen scoped to this profile** (its own independent inherit/override switch, not tied to the Clock card's).
-- New `ProfileEntity` columns `use24HourTimeOverride: Boolean?` / `showAllDayEventsOverride: Boolean?` (`null` = inherit). `FacetDatabase` bumped `version = 1 → 2`; `DatabaseModule.kt` now adds `.fallbackToDestructiveMigration(dropAllTables = true)` — no formal `Migration` class, since there's no released install base and no migration precedent anywhere in the codebase yet (a local install just loses its data on this one upgrade).
-- The override is actually consumed, not just stored: `HomeUiState.effectiveUse24HourTime` (`activeProfile.use24HourTimeOverride ?: settings.use24HourTime`) now feeds `HomeDrawerRoute`'s `ClockBlock`, and `ProfileCarouselUiState.effectiveUse24HourTime(profileId)` resolves each carousel preview card's own value independently (previously every preview card read the same global `use24HourTime`, which was itself a latent gap in the live-preview feature).
-- Test: `ProfileRepositoryTest` (override round-trip, null vs. set), `HomeUiStateTest`/`ProfileCarouselUiStateTest` (effective-value resolution), `ProfileSettingsScreenTest` (dropdown behavior, Apps-to-show visibility, Clock card's inherit/override gating the toggle and persisting through the real repository, Calendar row navigates with the profile's id).
+### Per-facet settings (`3d`) restructured into cards, Clock card can override the global defaults
+"App list content" is now a real `LabeledDropdownRow` (Favorites selectable; Recents/Most used render but stay disabled inside the dropdown — no new persisted field, since nothing else is actually selectable until Phase 4 builds them). "Apps to show" is now conditionally omitted (only relevant for non-Favorites modes) rather than always-shown-disabled. Favorite apps unchanged. A new **Clock** card mirrors the global Settings Clock card's three rows (Clock style, 24-hour time, Calendar) behind a single `InheritOverrideCard` switch — Clock style stays inert (no `ClockStyle` enum exists yet, Known Gap), but **24-hour time is now a real per-facet override** and **Calendar navigates to the same Calendar settings screen scoped to this facet** (its own independent inherit/override switch, not tied to the Clock card's).
+- New `FacetEntity` columns `use24HourTimeOverride: Boolean?` / `showAllDayEventsOverride: Boolean?` (`null` = inherit). `FacetDatabase` bumped `version = 1 → 2`; `DatabaseModule.kt` now adds `.fallbackToDestructiveMigration(dropAllTables = true)` — no formal `Migration` class, since there's no released install base and no migration precedent anywhere in the codebase yet (a local install just loses its data on this one upgrade).
+- The override is actually consumed, not just stored: `HomeUiState.effectiveUse24HourTime` (`activeFacet.use24HourTimeOverride ?: settings.use24HourTime`) now feeds `HomeDrawerRoute`'s `ClockBlock`, and `FacetCarouselUiState.effectiveUse24HourTime(facetId)` resolves each carousel preview card's own value independently (previously every preview card read the same global `use24HourTime`, which was itself a latent gap in the live-preview feature).
+- Test: `FacetRepositoryTest` (override round-trip, null vs. set), `HomeUiStateTest`/`FacetCarouselUiStateTest` (effective-value resolution), `FacetSettingsScreenTest` (dropdown behavior, Apps-to-show visibility, Clock card's inherit/override gating the toggle and persisting through the real repository, Calendar row navigates with the facet's id).
 
 ### Real bugs found and fixed during this pass (not just test artifacts)
 - **Material3's `DropdownMenuItem(enabled = false)` still exposes an `OnClick` semantics action**, just marked `Disabled` — it does *not* remove the click action the way a plain `Modifier.clickable(enabled = false)` row does. A test asserting `assertHasNoClickAction()` on a disabled dropdown option failed for exactly this reason; fixed by asserting `assertIsNotEnabled()` instead, which is what actually reflects Material's disabled-item semantics.
-- Repeat of the now-familiar `StateFlow`-not-yet-populated trap (see the two entries above): an instrumented test clicked the profile Clock card's Override row before the Room-backed profile had loaded into `ProfileSettingsViewModel.uiState` — `setOverridingClock` reads `uiState.value.profile`, which was still the initial `null`, so the click silently no-op'd. Fixed by waiting for the profile's name to render first, matching the existing `renamingUpdatesTheDisplayedName` test's pattern, rather than assuming the screen's first frame is already backed by real data.
+- Repeat of the now-familiar `StateFlow`-not-yet-populated trap (see the two entries above): an instrumented test clicked the facet Clock card's Override row before the Room-backed facet had loaded into `FacetSettingsViewModel.uiState` — `setOverridingClock` reads `uiState.value.facet`, which was still the initial `null`, so the click silently no-op'd. Fixed by waiting for the facet's name to render first, matching the existing `renamingUpdatesTheDisplayedName` test's pattern, rather than assuming the screen's first frame is already backed by real data.
 
 ## ✅ Phase 4 complete — Permission-gated features
 
-- [x] F1 Calendar integration: `READ_CALENDAR` request flow, calendar picker (`4l`), clock event rows, denied-state strip. **Partially pulled forward** (see above) — the Settings-side shell (persisted show-all-day-events toggle, global + per-profile inherit/override, static permission-denied strip) already exists in `CalendarSettingsScreen.kt`; still owned by this phase: the actual `READ_CALENDAR` runtime request, a real `CalendarContract` query for the user's calendars (replacing the static strip), and rendering event rows on `ClockBlock`.
+- [x] F1 Calendar integration: `READ_CALENDAR` request flow, calendar picker (`4l`), clock event rows, denied-state strip. **Partially pulled forward** (see above) — the Settings-side shell (persisted show-all-day-events toggle, global + per-facet inherit/override, static permission-denied strip) already exists in `CalendarSettingsScreen.kt`; still owned by this phase: the actual `READ_CALENDAR` runtime request, a real `CalendarContract` query for the user's calendars (replacing the static strip), and rendering event rows on `ClockBlock`.
   - Test: denied permission renders the "Calendar access off" strip with a working "Turn on" action; granted + calendars selected renders event rows.
 - [x] F2 Recents / Most Used: `PACKAGE_USAGE_STATS` explanation screen + Settings redirect, `UsageStatsManager`-backed list.
   - Test: ungranted state shows the explanation + redirect action, not a broken/empty list silently.
@@ -285,26 +285,26 @@ New `ui/settings/CalendarSettingsScreen.kt` + `CalendarSettingsViewModel.kt`, ro
 ### Milestone 3 complete — F2 Recents / Most Used
 `assembleDebug`, `test` (89 JVM unit tests), and `connectedAndroidTest` (68 instrumented tests) all green; manual on-device walkthrough confirmed selection, persistence, the ungranted-access strip, the explanation screen, the real system Settings redirect, and (once granted) real ranked "Most used" data (`Facet Launcher`, `Settings`, `Gmail`, `Files`, `Phone` on the dev device).
 
-- **`ProfileEntity` gained real `listContentMode: ListContentMode` (default `FAVORITES`) and `appsToShowCount: Int` (default 5, coerced to README `3d`'s 4…8 range) fields** — a Room `Converters` class (new) stores the enum as its `name` string via `@TypeConverters(Converters::class)` on `FacetDatabase`, bumped to schema v3 (`.fallbackToDestructiveMigration`, same pre-release precedent as the v1→v2 bump). Unlike 24h-time/Calendar's inherit/override pair, this is a plain non-nullable field — each profile's list mode is independently configured, there's no "global default" to inherit from.
+- **`FacetEntity` gained real `listContentMode: ListContentMode` (default `FAVORITES`) and `appsToShowCount: Int` (default 5, coerced to README `3d`'s 4…8 range) fields** — a Room `Converters` class (new) stores the enum as its `name` string via `@TypeConverters(Converters::class)` on `FacetDatabase`, bumped to schema v3 (`.fallbackToDestructiveMigration`, same pre-release precedent as the v1→v2 bump). Unlike 24h-time/Calendar's inherit/override pair, this is a plain non-nullable field — each facet's list mode is independently configured, there's no "global default" to inherit from.
 - **`UsageStatsRepository`** wraps `UsageStatsManager.queryUsageStats(INTERVAL_BEST, ...)` over a rolling 30-day window, aggregating a package's possibly-multiple sub-interval `UsageStats` entries into one (max `lastTimeUsed`, summed `totalTimeInForeground`) before ranking and hydrating against `AppRepository`'s installed-app list (uninstalled/never-used packages excluded). `getRecentApps(limit)` ranks by last-used time; `getMostUsedApps(limit)` by total foreground time.
 - **`UsageAccessRepository.isGranted()`** — `PACKAGE_USAGE_STATS` is a special-access permission that never surfaces via `checkSelfPermission`; checked via `AppOpsManager.checkOpNoThrow(OPSTR_GET_USAGE_STATS, ...)`, granted only through the system Settings redirect, so callers re-check on resume rather than relying on a grant-change callback (there isn't one).
-- **`ObserveHomeScreenStateUseCase` restructured**: resolves the active `ProfileEntity` first, then branches by `listContentMode` — `FAVORITES` → the existing `FavoriteAppRepository` flow unchanged; `RECENTS`/`MOST_USED` → `UsageStatsRepository`, gated on `UsageAccessRepository.isGranted()` (ungranted → empty list + `usageAccessGranted = false` on `HomeScreenState`, never a broken partial list). Also gained a `refresh()` method (backed by a replay-1 `MutableSharedFlow` trigger combined into the pipeline) since granting usage access happens out-of-band via system Settings with no callback — `HomeViewModel.refresh()` is wired to a `DisposableEffect`/`LifecycleEventObserver` in `HomeDrawerRoute.kt` that fires on `ON_RESUME`.
+- **`ObserveHomeScreenStateUseCase` restructured**: resolves the active `FacetEntity` first, then branches by `listContentMode` — `FAVORITES` → the existing `FavoriteAppRepository` flow unchanged; `RECENTS`/`MOST_USED` → `UsageStatsRepository`, gated on `UsageAccessRepository.isGranted()` (ungranted → empty list + `usageAccessGranted = false` on `HomeScreenState`, never a broken partial list). Also gained a `refresh()` method (backed by a replay-1 `MutableSharedFlow` trigger combined into the pipeline) since granting usage access happens out-of-band via system Settings with no callback — `HomeViewModel.refresh()` is wired to a `DisposableEffect`/`LifecycleEventObserver` in `HomeDrawerRoute.kt` that fires on `ON_RESUME`.
 - **`HomeUiState.appListItems`** (renamed from `favorites`, which no longer fit once the same field could hold Favorites/Recents/Most-Used) plus new `activeListContentMode`/`showUsageAccessPrompt` derived properties. `HomeScreen.kt`'s section label is now dynamic ("FAVORITES"/"RECENTS"/"MOST USED"); a new `UsageAccessStrip` (README `4p`'s dashed-strip styling, with a real `onClick` this time — "Most used needs usage access from system settings." / "Open settings", exact copy from README's strip table) replaces the app-row list when `showUsageAccessPrompt` is true.
 - **New `UsageAccessExplanationScreen.kt`** — the PRD-required "onboarding explanation screen" shown before the `ACTION_USAGE_ACCESS_SETTINGS` redirect (a special-access permission can't be requested via a normal runtime dialog). Auto-dismisses back to its caller the moment `UsageAccessExplanationViewModel.isGranted` flips true, re-checked on every resume. Reached from Home's strip; new `FacetDestinations.USAGE_ACCESS_EXPLANATION` route.
-- **`ProfileSettingsScreen.kt`'s "App list content" dropdown is now fully real** — all three options enabled (previously Recents/Most used were visible-but-disabled placeholders), backed by `ProfileRepository.setListContentMode`/`setAppsToShowCount`. A new "Apps to show" row (4…8) appears only when mode ≠ Favorites.
+- **`FacetSettingsScreen.kt`'s "App list content" dropdown is now fully real** — all three options enabled (previously Recents/Most used were visible-but-disabled placeholders), backed by `FacetRepository.setListContentMode`/`setAppsToShowCount`. A new "Apps to show" row (4…8) appears only when mode ≠ Favorites.
 - **`LabeledDropdownRow` reworked twice more during manual verification, per direct feedback:**
   - *Positioning*: the dropdown previously opened flush with the row's far-left title regardless of where the tappable value sat, because the `Popup`'s anchor was the whole row. Anchoring it to just the trailing value+chevron area fixed this for most cases, but Material3's own start/end-of-anchor fallback (it only right-aligns when left-aligning would overflow the window) turned out to depend on how wide the *currently selected label* happened to be — "Favorites" (short) and "Recents"/"Most used" (longer) resolved to different, inconsistent positions, and the fallback didn't respect the surrounding card's own padding either. Fixed deterministically instead: the menu's own rendered width is tracked (`Modifier.onSizeChanged`) and fed back in as an explicit `offset`, right-aligning it with the trailing anchor's edge regardless of either width.
   - *Click scope*: originally the whole row opened the dropdown; changed to only the label+chevron "options area," per direct feedback (title text is no longer part of the tap target).
   - *Per-option `testTag`s* (`"${rowTestTag}_option_${option}"`) were added to every `ThemedDropdownMenuItem` so tests can target a specific option deterministically instead of by text (which the row's own current-value label can also match once selected).
 - **Grid size label reads "N cols × M rows"** (was "N × M") — `DrawerGridSize.displayLabel()` in `SettingsScreen.kt`, per direct feedback; the enum's own `columns`/`rows` field order (`FIVE_BY_SIX(5, 6)`) was already columns-first, so the label just names that order explicitly.
-- Test: `UsageStatsRepositoryTest` (Robolectric, driving the real `UsageStatsManager` via `ShadowUsageStatsManager` rather than mocking `UsageStats` directly — mocking it didn't reliably intercept under Robolectric's own class instrumentation; ranking, sub-interval aggregation, limit capping, uninstalled/zero-foreground-time exclusion); `ProfileRepositoryTest` (listContentMode/appsToShowCount round-trip, including the 4…8 coercion); `ObserveHomeScreenStateUseCaseTest` (Favorites/Recents/Most-used branching, ungranted state); `HomeUiStateTest` (`showUsageAccessPrompt` derivation); `HomeScreenTest` additions (dynamic section label, the strip replacing the list and firing its callback); `ProfileSettingsScreenTest` additions (dropdown persists a Recents/Most-used selection, "Apps to show" appears only when relevant and persists its own selection) — both had to be rewritten to wait for the real Room-backed profile to load first (`waitUntil { onNodeWithText("Profile 1")... }`), same async-I/O-vs-idling gap as this file's other Room-backed tests: selecting an option while `uiState.profile` is still null silently no-ops.
+- Test: `UsageStatsRepositoryTest` (Robolectric, driving the real `UsageStatsManager` via `ShadowUsageStatsManager` rather than mocking `UsageStats` directly — mocking it didn't reliably intercept under Robolectric's own class instrumentation; ranking, sub-interval aggregation, limit capping, uninstalled/zero-foreground-time exclusion); `FacetRepositoryTest` (listContentMode/appsToShowCount round-trip, including the 4…8 coercion); `ObserveHomeScreenStateUseCaseTest` (Favorites/Recents/Most-used branching, ungranted state); `HomeUiStateTest` (`showUsageAccessPrompt` derivation); `HomeScreenTest` additions (dynamic section label, the strip replacing the list and firing its callback); `FacetSettingsScreenTest` additions (dropdown persists a Recents/Most-used selection, "Apps to show" appears only when relevant and persists its own selection) — both had to be rewritten to wait for the real Room-backed facet to load first (`waitUntil { onNodeWithText("Facet 1")... }`), same async-I/O-vs-idling gap as this file's other Room-backed tests: selecting an option while `uiState.facet` is still null silently no-ops.
 
 ### Real bugs found and fixed during this pass (not just test artifacts)
-- **Two pre-existing `SettingsScreenTest`/`ProfileSettingsScreenTest` cases were flaky around `ThemedDropdownMenu`'s `Popup`** — clicking a `LabeledDropdownRow` to open its dropdown, then immediately querying for a menu item, intermittently found nothing, even though the same flow works correctly when driven manually on-device (confirmed directly). Root cause: a `DropdownMenu`'s `Popup` is a separate window that doesn't always finish registering with Compose UI test's root registry by the time `performClick()` returns — and a single `waitForIdle()` immediately after the click didn't reliably catch it either, in one case needing an explicit `waitUntil` poll (the same class of gap as the `StateFlow`-vs-`waitForIdle()` lesson elsewhere in this doc, just triggered by cross-root Popup state instead of async I/O). Fixed at the test level in both files; not an app bug. Also disabled emulator animation scales (`window_animation_scale`/`transition_animation_scale`/`animator_duration_scale` → `0`) as a general instrumented-test reliability measure, though it alone didn't resolve this specific issue.
+- **Two pre-existing `SettingsScreenTest`/`FacetSettingsScreenTest` cases were flaky around `ThemedDropdownMenu`'s `Popup`** — clicking a `LabeledDropdownRow` to open its dropdown, then immediately querying for a menu item, intermittently found nothing, even though the same flow works correctly when driven manually on-device (confirmed directly). Root cause: a `DropdownMenu`'s `Popup` is a separate window that doesn't always finish registering with Compose UI test's root registry by the time `performClick()` returns — and a single `waitForIdle()` immediately after the click didn't reliably catch it either, in one case needing an explicit `waitUntil` poll (the same class of gap as the `StateFlow`-vs-`waitForIdle()` lesson elsewhere in this doc, just triggered by cross-root Popup state instead of async I/O). Fixed at the test level in both files; not an app bug. Also disabled emulator animation scales (`window_animation_scale`/`transition_animation_scale`/`animator_duration_scale` → `0`) as a general instrumented-test reliability measure, though it alone didn't resolve this specific issue.
 - **`runTest`'s `advanceUntilIdle()` only pumps the virtual test-dispatcher queue, not real dispatcher hops** — `AppRepository.getInstalledApps()`'s `withContext(Dispatchers.Default)` is a genuinely real dispatcher, so a `backgroundScope.launch { flow.collect { ... } } + advanceUntilIdle()` test pattern raced and never saw the first emission. Fixed by collecting into a `Channel` and using suspending `receive()` calls, which correctly await real dispatcher work regardless of virtual time. Not an app bug — a JVM-unit-test analogue of the Compose-test `waitForIdle()`-vs-real-async-work lesson already recorded above.
-- **Two more full-suite-only instrumented failures** (`FavoritesPickerScreenTest.checkingAnAppAddsItToFavorites`, then on a later run `DockAppPickerScreenTest.uncheckingIsAllowedDownToAnEmptyDock`, both searching for the real device's alphabetically-first app, `com.google.android.calendar`) — initially assumed to be transient environment/emulator-load flakiness since both passed in isolation and on a later clean full-suite run. Turned out to be a real, reliably-reproducible bug once it started failing every run: **both `FavoritesPickerViewModel` and `DockAppPickerViewModel` populate `installedApps` from a real suspend fetch in `init { viewModelScope.launch { installedApps.value = getInstalledApps() } }`** — a genuine `Dispatchers.Default` hop through `AppRepository.getInstalledApps()`. Both test files' `setContent()` helpers only called `composeRule.waitForIdle()` before interacting, which doesn't reliably wait for that real dispatcher hop (same async-I/O-vs-idling gap as `AppRepositoryTest`'s `advanceUntilIdle()`-vs-real-dispatcher fix and the `ThemedDropdownMenu` `Popup`-timing fixes above), so the test could type into the search field and query for a row before the installed list ever populated, and the target row never rendered. Fixed in both `FavoritesPickerScreenTest` and `DockAppPickerScreenTest` (`checkingAnAppAddsItToFavorites`, `checkingIsBlockedAtTheEightAppCap`, `checkingAnAppAddsItToTheDock`, `uncheckingIsAllowedDownToAnEmptyDock`) by computing the target row's tag up front and polling for it to exist (`waitUntil(timeoutMillis = 3_000) { runCatching { onNodeWithTag(rowTag).assertExists() }.isSuccess }`) before searching/interacting, mirroring `ProfileSettingsScreenTest`'s existing `waitUntil { onNodeWithText("Profile 1")... }` pattern. Verified each file individually (multiple repeat runs, all green) after the fix. Not an app bug — a test-only fix.
-- **A third such flake surfaced during Milestone 3's own full-suite run** — `ProfileCarouselScreenTest.deletingFromTheReorderListRemovesTheRow` (unrelated file, not touched this milestone) failed only in the 68-test full run, passed cleanly in isolation immediately after. Same transient-environment-load pattern as the two above, not a regression.
-- **New instrumented tests exercising a `LabeledDropdownRow` selection followed by a Room-persistence assertion initially failed deterministically (not flakily) at the same spot every run** — traced to the tests missing the `waitUntil { onNodeWithText("Profile 1")... }` guard this file's *other* Room-backed `ProfileSettingsScreenTest` cases already use: without it, `uiState.profile` can still be `null` when the click fires, and `ProfileSettingsViewModel.setListContentMode`/`setAppsToShowCount` both silently no-op via a `?: return` guard against a null profile — the row's default-Favorites label looks correct on screen the whole time, masking the no-op. Fixed by adding the same wait; not an app bug.
+- **Two more full-suite-only instrumented failures** (`FavoritesPickerScreenTest.checkingAnAppAddsItToFavorites`, then on a later run `DockAppPickerScreenTest.uncheckingIsAllowedDownToAnEmptyDock`, both searching for the real device's alphabetically-first app, `com.google.android.calendar`) — initially assumed to be transient environment/emulator-load flakiness since both passed in isolation and on a later clean full-suite run. Turned out to be a real, reliably-reproducible bug once it started failing every run: **both `FavoritesPickerViewModel` and `DockAppPickerViewModel` populate `installedApps` from a real suspend fetch in `init { viewModelScope.launch { installedApps.value = getInstalledApps() } }`** — a genuine `Dispatchers.Default` hop through `AppRepository.getInstalledApps()`. Both test files' `setContent()` helpers only called `composeRule.waitForIdle()` before interacting, which doesn't reliably wait for that real dispatcher hop (same async-I/O-vs-idling gap as `AppRepositoryTest`'s `advanceUntilIdle()`-vs-real-dispatcher fix and the `ThemedDropdownMenu` `Popup`-timing fixes above), so the test could type into the search field and query for a row before the installed list ever populated, and the target row never rendered. Fixed in both `FavoritesPickerScreenTest` and `DockAppPickerScreenTest` (`checkingAnAppAddsItToFavorites`, `checkingIsBlockedAtTheEightAppCap`, `checkingAnAppAddsItToTheDock`, `uncheckingIsAllowedDownToAnEmptyDock`) by computing the target row's tag up front and polling for it to exist (`waitUntil(timeoutMillis = 3_000) { runCatching { onNodeWithTag(rowTag).assertExists() }.isSuccess }`) before searching/interacting, mirroring `FacetSettingsScreenTest`'s existing `waitUntil { onNodeWithText("Facet 1")... }` pattern. Verified each file individually (multiple repeat runs, all green) after the fix. Not an app bug — a test-only fix.
+- **A third such flake surfaced during Milestone 3's own full-suite run** — `FacetCarouselScreenTest.deletingFromTheReorderListRemovesTheRow` (unrelated file, not touched this milestone) failed only in the 68-test full run, passed cleanly in isolation immediately after. Same transient-environment-load pattern as the two above, not a regression.
+- **New instrumented tests exercising a `LabeledDropdownRow` selection followed by a Room-persistence assertion initially failed deterministically (not flakily) at the same spot every run** — traced to the tests missing the `waitUntil { onNodeWithText("Facet 1")... }` guard this file's *other* Room-backed `FacetSettingsScreenTest` cases already use: without it, `uiState.facet` can still be `null` when the click fires, and `FacetSettingsViewModel.setListContentMode`/`setAppsToShowCount` both silently no-op via a `?: return` guard against a null facet — the row's default-Favorites label looks correct on screen the whole time, masking the no-op. Fixed by adding the same wait; not an app bug.
 
 ## Post-Milestone-3 polish — Material 3 shape conformance (new governing principle, see `CLAUDE.md`)
 
@@ -319,8 +319,8 @@ New `ui/settings/CalendarSettingsScreen.kt` + `CalendarSettingsViewModel.kt`, ro
 - **Drawer search bar** (`DrawerSearchBar`, M3 SearchBar) — 14dp → `CircleShape` (M3's SearchBar container is fully rounded by default).
 - **`UsageAccessExplanationScreen`'s "Open settings"** (Button) — 12dp → `CircleShape` (M3 buttons default to `CornerFull`).
 - **`SettingsScreen`'s `PillOption`** (Search-bar-position Top/Bottom, a SegmentedButton) — 10dp → `CircleShape` (M3's `OutlinedSegmentedButtonTokens.Shape` is `CornerFull`).
-- **`ProfileCarouselScreen`'s `ProfileReorderRow`/`AddProfileRow`** (Card-like rows) — 16dp → `MaterialTheme.shapes.medium`.
-- **`ProfileCarouselScreen`'s carousel page / `AddProfilePage`** (large hero surface, no single canonical M3 token — treated like Dialog/ModalBottomSheet's size class) — 20dp → `MaterialTheme.shapes.extraLarge`.
+- **`FacetCarouselScreen`'s `FacetReorderRow`/`AddFacetRow`** (Card-like rows) — 16dp → `MaterialTheme.shapes.medium`.
+- **`FacetCarouselScreen`'s carousel page / `AddFacetPage`** (large hero surface, no single canonical M3 token — treated like Dialog/ModalBottomSheet's size class) — 20dp → `MaterialTheme.shapes.extraLarge`.
 - **Drawer-opacity `Slider`'s custom thumb reverted to M3's own default thumb shape** (see the dedicated write-up above) as part of the same "trust real M3 defaults" pass.
 - **Deliberately left alone** (icon/avatar tiles and other pure image/glyph masks, not M3 components): app-icon and dock-icon tiles (9/10/13/14/15dp), the alphabet-rail drag letter-indicator bubble, progress/selection dots, grab handles, checkbox radii.
 - Verified on-device: dialog/card/menu/sheet/search-bar/segmented-pill radii all visibly changed as expected; full `test` (89 JVM unit tests) and `connectedAndroidTest` (68 instrumented tests) green — no test asserted on the old shape values, so this was a pure visual change with no functional regressions.
@@ -331,22 +331,22 @@ Landed concurrently with the shape-conformance pass above, in a separate discuss
 
 - **Home↔Drawer drag now commits open/closed on flick velocity, not just distance travelled.** `HomeDrawerRoute.kt` adds a `VelocityTracker` (Compose's own utility) alongside the existing drag handling — `addPosition()` on every move, `calculateVelocity()` on release. `settle(velocity)` now checks velocity *first*: a fling past `VELOCITY_THRESHOLD_PX = 1000f` (either direction) commits open/closed immediately regardless of how far the drag actually travelled; short of that threshold it falls back to the original distance-based rule (`COMMIT_TRAVEL_FRACTION`, tightened `0.25f → 0.20f` in the same pass — a bit less distance is now needed to commit). Wired into both drag paths: the direct drag-on-Home gesture (`detectVerticalDragGestures`' `onDragEnd`) and the drawer-list-scroll-driven close gesture (`NestedScrollConnection.onPreFling`, via `available.y`). Also refactored `dragBy`/`settle` to track a separate `dragTargetProgress` (the drag's intended target) apart from `progress.value` (the actually-animating value), so a fast drag's distance/velocity math isn't thrown off by animation lag; `containerHeightPx`'s pre-measurement default changed `1f → 2000f` to avoid a near-zero-divisor glitch on the very first frame.
 - **Long-press sheet now animates in/out** instead of appearing/disappearing instantly: `HomeDrawerRoute.kt` wraps it in `AnimatedVisibility` with `slideInVertically`/`slideOutVertically` using README's own drawer-transform easing (`tween(340ms, CubicBezierEasing(.32,.72,0,1))`). The scrim (dimmed background + tap-outside-to-dismiss) moved out of `LongPressSheet.kt` into `HomeDrawerRoute.kt` itself as its own `AnimatedVisibility` (`fadeIn`/`fadeOut`, 240ms), so `LongPressSheet` no longer takes an `onDismiss` param — it's now a pure sheet-content composable, with the caller owning the scrim/dismiss-click layer around it. `LongPressSheet.kt`'s doc comment updated to match. **Gap**: no instrumented test yet covers tapping the scrim to dismiss (`HomeDrawerRouteTest.kt` has no scrim-tap case).
-- **Whole-app navigation transitions**: `FacetNavHost.kt`'s `NavHost` now declares `enterTransition`/`exitTransition`/`popEnterTransition`/`popExitTransition` (slide + fade, same 340ms easing curve) instead of the default instant-cut between destinations — applies to every route (Settings, pickers, Profile settings, Calendar settings, the new Usage Access explanation screen, etc.), not just Home/Drawer.
+- **Whole-app navigation transitions**: `FacetNavHost.kt`'s `NavHost` now declares `enterTransition`/`exitTransition`/`popEnterTransition`/`popExitTransition` (slide + fade, same 340ms easing curve) instead of the default instant-cut between destinations — applies to every route (Settings, pickers, Facet settings, Calendar settings, the new Usage Access explanation screen, etc.), not just Home/Drawer.
 - **Dropdowns weren't touched in this pass** — `ThemedDropdownMenu.kt`/`LabeledDropdownRow.kt` have no new animation code (checked directly, no diff there). Material3's `DropdownMenu` already ships its own default open/close transition (fade + expand) with no app-side wiring needed — this is what reads as "animated" for dropdowns; distinct from the sheet/nav-transition work above, which genuinely replaced an instant cut.
 - **Real "set as default launcher" status**: new `data/DefaultLauncherRepository.kt` (`isDefaultLauncher()`, resolving `ACTION_MAIN`/`CATEGORY_HOME` via `PackageManager` and comparing against this app's own package) replaces whatever previously backed `SettingsUiState.isDefaultLauncher`. `SettingsViewModel` re-checks it once at `init` via the repository rather than a hardcoded/static value. New `domain/ObserveSettingsScreenStateUseCase.kt` also appeared alongside this, consistent with the existing `ObserveHomeScreenStateUseCase` pattern. **Gap**: no dedicated `DefaultLauncherRepositoryTest` or `SettingsViewModelTest` case exists yet for this — `SettingsScreenTest.functionalRowsHaveClickActions` only asserts the row *has* a click action, not that its status reflects a real check. Per `CLAUDE.md`'s testing bar, this isn't fully "done" until that lands.
-- **`UsageStatsRepositoryTest` rewritten to drive the real `UsageStatsManager` via Robolectric's `ShadowUsageStatsManager`** instead of directly mocking `UsageStats`/`UsageStatsManager` with Mockito — the mock-based version this session originally wrote had compiled and passed at the time, but apparently didn't reliably intercept calls under Robolectric's own class instrumentation in practice; the shadow-based approach (same pattern `ProfileDaoTest` already uses for Room) is more robust. Test count and coverage (ranking, sub-interval aggregation, limit capping, uninstalled/zero-foreground-time exclusion) unchanged.
+- **`UsageStatsRepositoryTest` rewritten to drive the real `UsageStatsManager` via Robolectric's `ShadowUsageStatsManager`** instead of directly mocking `UsageStats`/`UsageStatsManager` with Mockito — the mock-based version this session originally wrote had compiled and passed at the time, but apparently didn't reliably intercept calls under Robolectric's own class instrumentation in practice; the shadow-based approach (same pattern `FacetDaoTest` already uses for Room) is more robust. Test count and coverage (ranking, sub-interval aggregation, limit capping, uninstalled/zero-foreground-time exclusion) unchanged.
 - **Gap**: none of the velocity-based commit logic has test coverage yet — `HomeDrawerRouteTest.kt` still only covers the original distance-based drag-past-halfway/before-halfway cases (per Phase 3's write-up), nothing exercises a fast short flick committing via `VELOCITY_THRESHOLD_PX` instead of distance. Worth adding given `CLAUDE.md`'s testing bar, using `composeRule.mainClock` control the same way this codebase's other pointerInput-timing tests do (see Phase 2's "Real bugs found" notes on `mainClock.advanceTimeBy`).
 
 ### Real bug found: the new animations looked broken on-device — traced to this session's own earlier emulator settings
 User reported the long-press sheet "just appears instead of animating in." Not a code bug — earlier this session, `animator_duration_scale`/`window_animation_scale`/`transition_animation_scale` were all set to `0` on this AVD as a test-reliability measure (see Milestone 3's "Real bugs found" section). Jetpack Compose reads `Settings.Global.ANIMATOR_DURATION_SCALE` via its `MotionDurationScale` mechanism and scales **all** Compose animation durations by it — not just instrumented tests, the real running app too — so with the scale at `0`, every `tween()`/`AnimatedVisibility` transition (the sheet, its scrim, all `NavHost` route transitions) completed instantly regardless of the animation code being correct. Confirmed no code-level animation-disabling exists anywhere (grepped for `snap()`, disable-animation flags, checked the app theme/manifest — nothing). Fixed by restoring all three settings to `1`; user confirmed on-device afterward that the sheet, scrim, and route transitions all animate correctly. **Lesson for future sessions on this emulator**: don't leave animator-duration-scale at `0` between work sessions — it silently fixes flaky Popup-timing tests but also silently breaks the real app's own animations for anyone testing on the same device afterward. Prefer disabling it only for the duration of an instrumented test run, or accept the flakiness workarounds already documented instead.
 
-### Profile selection from the carousel now always returns to Home, regardless of entry path
-Reported gap: tapping a profile card in the carousel applied the profile but returned to wherever the carousel was *entered from* — Home directly (correct), but Settings → Profiles → tap a card landed back on Settings instead of Home. Root cause: `ProfileCarouselScreen`'s card-tap handler (`onSelect`) reused the same `onBack` callback as the screen's actual back button, which only pops one level off whatever back stack got it there.
-- **Fixed** by splitting the two concerns: `ProfileCarouselScreen` now takes a distinct `onProfileApplied: () -> Unit` alongside `onBack` — `onBack` still just pops one level (back-without-applying, unchanged); `onProfileApplied` fires only when a card is actually tapped/applied. `FacetNavHost.kt` wires `onProfileApplied` to `navController.navigate(HOME) { popUpTo(HOME) { inclusive = false }; launchSingleTop = true }`, which clears everything above the existing Home entry off the back stack and reuses it (rather than recreating Home fresh) — works identically whether the carousel was reached directly from Home's long-press sheet or via Settings → Profiles.
-- Test: `ProfileCarouselScreenTest.tappingACardAppliesItImmediately` extended to assert `onProfileApplied` fires and `onBack` does *not* on a card tap (previously asserted only the repository-level active-profile change, not which callback fired) — all 10 `ProfileCarouselScreenTest` cases green. Manually verified on-device: Settings → Profiles → tap a card now lands on Home, not back on Settings.
+### Facet selection from the carousel now always returns to Home, regardless of entry path
+Reported gap: tapping a facet card in the carousel applied the facet but returned to wherever the carousel was *entered from* — Home directly (correct), but Settings → Facets → tap a card landed back on Settings instead of Home. Root cause: `FacetCarouselScreen`'s card-tap handler (`onSelect`) reused the same `onBack` callback as the screen's actual back button, which only pops one level off whatever back stack got it there.
+- **Fixed** by splitting the two concerns: `FacetCarouselScreen` now takes a distinct `onFacetApplied: () -> Unit` alongside `onBack` — `onBack` still just pops one level (back-without-applying, unchanged); `onFacetApplied` fires only when a card is actually tapped/applied. `FacetNavHost.kt` wires `onFacetApplied` to `navController.navigate(HOME) { popUpTo(HOME) { inclusive = false }; launchSingleTop = true }`, which clears everything above the existing Home entry off the back stack and reuses it (rather than recreating Home fresh) — works identically whether the carousel was reached directly from Home's long-press sheet or via Settings → Facets.
+- Test: `FacetCarouselScreenTest.tappingACardAppliesItImmediately` extended to assert `onFacetApplied` fires and `onBack` does *not* on a card tap (previously asserted only the repository-level active-facet change, not which callback fired) — all 10 `FacetCarouselScreenTest` cases green. Manually verified on-device: Settings → Facets → tap a card now lands on Home, not back on Settings.
 
 ### Small fixes landed alongside Milestone 4/5 work
-- **Removed the redundant "Done" button from the profile reorder screen** — reordering already autosaves on drag-release (`onCommit()` from `onDragEnd`), so the button did nothing the back button/system back didn't already do. `ProfileCarouselScreenTest.reorderLinkOpensAReorderableListAndDoneReturnsToTheCarousel` renamed to `...AndBackReturnsToTheCarousel`, now exercises the back button instead.
+- **Removed the redundant "Done" button from the facet reorder screen** — reordering already autosaves on drag-release (`onCommit()` from `onDragEnd`), so the button did nothing the back button/system back didn't already do. `FacetCarouselScreenTest.reorderLinkOpensAReorderableListAndDoneReturnsToTheCarousel` renamed to `...AndBackReturnsToTheCarousel`, now exercises the back button instead.
 - **New `domain/FlowCombine.kt`** — custom `combine6`/`combine7` overloads for when a 6th/7th flow is eventually needed. Kotlin's positional `combine()` only has overloads up to 5 flows; beyond that the only built-in option is the untyped vararg form (`Array<T>`, one shared type, unchecked casts). Per direct instruction, implemented instead as typed nested `combine(combine(f1,f2,f3,::Triple), combine(f4,f5,f6,::Triple)) { a,b -> ... }` — full type safety, no arity ceiling, one overload written per arity actually needed. Added proactively; the 5-flow `ObserveHomeScreenStateUseCase` combine below still fits Kotlin's native overload and doesn't use these yet.
 
 ### Milestone 4 complete — F1 Calendar integration
@@ -361,7 +361,7 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 ### Real bugs found — Milestone 4
 - **`CalendarContract.Instances.query()` builds its own internal selection/URI before delegating to `ContentResolver.query()`** — an initial mocked-cursor test stub using `isNull()` matchers for selection/selectionArgs/sortOrder didn't match the framework's real (non-null) internal args. Fixed with `nullable()` matchers instead. Test-only, not an app bug.
 - **`ClockBlockTest` asserted "10:00 AM"** — the app's actual time format (`"h:mm"`) has no AM/PM marker; the test's own expectation was wrong, not the code. Fixed to "10:00"/"11:00".
-- **`ObserveHomeScreenStateUseCaseTest`'s new calendar tests NPE'd** on an unstubbed `favoriteAppRepository.observeFavoritesForProfile(1L)` (the default test profile uses `FAVORITES` mode) — an unstubbed Mockito `Flow`-returning mock returns Kotlin `null`, which NPEs when `combine()` tries to collect it. Fixed by adding the stub, matching every other test in the file.
+- **`ObserveHomeScreenStateUseCaseTest`'s new calendar tests NPE'd** on an unstubbed `favoriteAppRepository.observeFavoritesForFacet(1L)` (the default test facet uses `FAVORITES` mode) — an unstubbed Mockito `Flow`-returning mock returns Kotlin `null`, which NPEs when `combine()` tries to collect it. Fixed by adding the stub, matching every other test in the file.
 - **`WRITE_CALENDAR` permission placement took two attempts to get right.** `CalendarSettingsScreenGrantedTest` seeds a real calendar into the device's Calendar Provider to test the granted-state UI end-to-end (inserting a calendar is a write operation, even though the app itself only ever reads). First attempt declared `WRITE_CALENDAR` in a new `app/src/androidTest/AndroidManifest.xml` — this compiled and merged correctly, but the `GrantPermissionRule` grant still failed with a `SecurityException` at insert time, because **self-instrumenting androidTest code runs inside the app-under-test's own process/UID**, so `GrantPermissionRule` checks the permission against the *app's* declared permissions, not the separate androidTest APK's manifest. Fixed by moving the declaration to `app/src/debug/AndroidManifest.xml` instead — scoped to the debug build variant (which `connectedAndroidTest` always runs against, and the only variant this project ever ships per `CLAUDE.md`'s Build & run section), so it's present in every real test/dev install but would never ship in a release build.
 
 ---
@@ -383,9 +383,9 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 
 ### Milestone 6 complete — F12 Long-Press Context Menu
 
-**Scope revised mid-build, see chat history**: the originally-planned Rename row was pulled out entirely — it'll land alongside F11's icon-pack work instead of here — and replaced with a genuinely different feature: **quick actions**, i.e. the app's own published App Shortcuts (`LauncherApps`' shortcuts API — the same "Compose"/"New event"-style actions the stock Android launcher surfaces on long-press), not something enumerated by Facet. `assembleDebug` and `test` (99 JVM unit tests) green. `connectedAndroidTest` (83 instrumented tests): a full-suite run hit 2 failures — `DockAppPickerScreenTest.checkingAnAppAddsItToTheDock` and `CalendarSettingsScreenTest.permissionDeniedStripRendersAndIsClickableWhenUngranted` — neither in a file this milestone touched; both passed cleanly on an immediate isolated re-run. A third, different `CalendarSettingsScreenTest` case (`profileScopedModeShowsInheritOverrideSwitch`) then failed on that re-run too, also passing clean on its own right after — three different tests, two different classes, none repeating twice, matching this project's already-documented full-suite-only Popup/async-load-timing flake pattern (see Milestone 3's "Real bugs found"), not a regression from this milestone.
+**Scope revised mid-build, see chat history**: the originally-planned Rename row was pulled out entirely — it'll land alongside F11's icon-pack work instead of here — and replaced with a genuinely different feature: **quick actions**, i.e. the app's own published App Shortcuts (`LauncherApps`' shortcuts API — the same "Compose"/"New event"-style actions the stock Android launcher surfaces on long-press), not something enumerated by Facet. `assembleDebug` and `test` (99 JVM unit tests) green. `connectedAndroidTest` (83 instrumented tests): a full-suite run hit 2 failures — `DockAppPickerScreenTest.checkingAnAppAddsItToTheDock` and `CalendarSettingsScreenTest.permissionDeniedStripRendersAndIsClickableWhenUngranted` — neither in a file this milestone touched; both passed cleanly on an immediate isolated re-run. A third, different `CalendarSettingsScreenTest` case (`facetScopedModeShowsInheritOverrideSwitch`) then failed on that re-run too, also passing clean on its own right after — three different tests, two different classes, none repeating twice, matching this project's already-documented full-suite-only Popup/async-load-timing flake pattern (see Milestone 3's "Real bugs found"), not a regression from this milestone.
 
-- **Shared `AppIcon` composable** (`ui/components/AppIcon.kt`, new) — every place an app icon renders (Home's favorites/dock, Drawer's List/Grid rows and search results, the new context menu's header, Settings' dock editor, the Favorites/Dock pickers, the profile carousel's preview cards) now goes through this one function instead of five-plus independently-duplicated `if (icon != null) Image(...) else Box(...)` blocks. Called out mid-build, ahead of F11's icon-rendering-mode work (system default vs. monochrome overlay, icon packs) landing in Phase 5 — that work now only needs to change one place instead of hunting down every duplicate.
+- **Shared `AppIcon` composable** (`ui/components/AppIcon.kt`, new) — every place an app icon renders (Home's favorites/dock, Drawer's List/Grid rows and search results, the new context menu's header, Settings' dock editor, the Favorites/Dock pickers, the facet carousel's preview cards) now goes through this one function instead of five-plus independently-duplicated `if (icon != null) Image(...) else Box(...)` blocks. Called out mid-build, ahead of F11's icon-rendering-mode work (system default vs. monochrome overlay, icon packs) landing in Phase 5 — that work now only needs to change one place instead of hunting down every duplicate.
 - **`AppContextMenu`** (`ui/components/AppContextMenu.kt`, new) — reuses `ThemedDropdownMenu`/`ThemedDropdownMenuItem` (the same Surface-colored, M3-shaped popup Settings' dropdowns and the Drawer's overflow menu already use) rather than a bespoke `Popup`, with a header row (icon + label) as the first child. Rows: **App info** (`ACTION_APPLICATION_DETAILS_SETTINGS`), **Uninstall** (`ACTION_DELETE`, destructive-styled — the system handles its own confirmation), then a **Quick actions** section that only renders when the app publishes any shortcuts. Both system-settings intents fire directly via `LocalContext.current`, matching `ContactRow`'s existing chip-intent precedent from Milestone 5 rather than bubbling through a ViewModel — there's no business logic in "launch this already-fully-known intent."
 - **New `data/AppShortcutRepository.kt`** wraps `LauncherApps.getShortcuts()`/`.hasShortcutHostPermission()`/`.startShortcut()`. Reading shortcuts requires Facet to be the active default launcher; when it isn't (e.g. during development, before the user sets it), `getShortcuts()` returns an empty list rather than throwing, so the menu just omits the section — never a broken/empty-but-visible one. Capped at 5, disabled shortcuts filtered out.
 - **Long-press wiring**: `AppRow`/`DockIcon` (Home), `DrawerAppRow`/`DrawerGridTile` (Drawer, both List/Grid and their reuse inside search results) switched from `.clickable(onClick)` to `.combinedClickable(onClick, onLongClick)` — Compose's own long-press primitive (matches the platform default timeout, same lesson as `HomeDrawerRoute.kt`'s long-press sheet from earlier in this phase: no hand-rolled timers). Each row owns its own local `expanded` boolean and renders an `AppContextMenu` anchored to itself — kept local rather than hoisted, since a `Popup`'s anchor point has to be the specific row's own position, and per-row expand/collapse state is exactly the kind of pure UI state `CLAUDE.md` says composables can own directly (mirrors `ContactRow`'s existing local-`expanded` pattern).
@@ -397,7 +397,7 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 - **`LauncherApps.ShortcutQuery`'s fluent `setPackage(...).setQueryFlags(...)` chain briefly needed splitting into separate statements** while diagnosing the above — the AGP unit-test stub jar's stubbed setters don't return `this` the way the real device implementation does, so chaining NPE'd under the (temporary) non-Robolectric path. Reverted back to the natural chained form once Robolectric was fixed at the source, since real Android's fluent setters behave correctly and there was no longer a reason to avoid the idiomatic form.
 - **Both gaps below fixed in a same-day follow-up** (see chat history):
   - **Favorites/Dock now collapse live on uninstall too, not just the Drawer's raw list.** `FavoriteAppRepository`/`DockAppRepository` switched from hydrating against `AppRepository`'s one-shot `getInstalledApps()` per subscription to the live `observeInstalledApps()` flow (the same one Milestone 2 built) — an uninstall via F12's menu now collapses Favorites/Dock immediately, no restart needed.
-  - **Uninstalling now permanently deletes the Favorites/Dock row too, not just hides it at read time.** Direct follow-up question — the live collapse above only *filtered* an orphaned row out of what's displayed; the underlying `FavoriteAppEntity`/`DockAppEntity` row stayed in Room forever, silently reappearing at its old slot/position if the same app was ever reinstalled. Per explicit direction ("otherwise the user cannot modify the list properly"), fixed with real deletion instead: new `AppRepository.observeUninstalledPackages(): Flow<String>` — a *second*, independent `LauncherApps.Callback` registration emitting only on a genuine `onPackageRemoved`, deliberately not reused from `observeInstalledApps()`'s own callback, since that one also re-fires for reasons an app might only be *momentarily* missing (`onPackagesUnavailable` mid-update) that must never trigger a permanent delete. New `domain/CleanUpUninstalledAppsUseCase.kt` (this repo's first "runs forever reacting to events" use case, distinct from every other use case's one-shot/`Flow`-returning shape) collects it and calls new `DockAppRepository.removeByPackage()`/`FavoriteAppRepository.removeByPackage()` (the latter deletes across *every* profile in one query, not just the active one) — launched once, for the app process's whole lifetime, from `LauncherViewModel.init`. New `FavoriteAppDao.deleteByPackage`/`DockAppDao.deleteByPackage` queries match on package alone (not full component), since once a package is gone every one of its activities is too.
+  - **Uninstalling now permanently deletes the Favorites/Dock row too, not just hides it at read time.** Direct follow-up question — the live collapse above only *filtered* an orphaned row out of what's displayed; the underlying `FavoriteAppEntity`/`DockAppEntity` row stayed in Room forever, silently reappearing at its old slot/position if the same app was ever reinstalled. Per explicit direction ("otherwise the user cannot modify the list properly"), fixed with real deletion instead: new `AppRepository.observeUninstalledPackages(): Flow<String>` — a *second*, independent `LauncherApps.Callback` registration emitting only on a genuine `onPackageRemoved`, deliberately not reused from `observeInstalledApps()`'s own callback, since that one also re-fires for reasons an app might only be *momentarily* missing (`onPackagesUnavailable` mid-update) that must never trigger a permanent delete. New `domain/CleanUpUninstalledAppsUseCase.kt` (this repo's first "runs forever reacting to events" use case, distinct from every other use case's one-shot/`Flow`-returning shape) collects it and calls new `DockAppRepository.removeByPackage()`/`FavoriteAppRepository.removeByPackage()` (the latter deletes across *every* facet in one query, not just the active one) — launched once, for the app process's whole lifetime, from `LauncherViewModel.init`. New `FavoriteAppDao.deleteByPackage`/`DockAppDao.deleteByPackage` queries match on package alone (not full component), since once a package is gone every one of its activities is too.
   - **Quick-action rows now show their own icon.** `ThemedDropdownMenuItem` gained an optional `leadingIcon` slot (threads straight to M3 `DropdownMenuItem`'s own); `AppShortcutRepository.getShortcuts()` resolves each shortcut's icon via `LauncherApps.getShortcutIconDrawable()` (same eager-bitmap-conversion pattern as `AppRepository.getInstalledApps()`), rendered through the shared `AppIcon`. App info/Uninstall also gained default `Icons.Default.Info`/`Icons.Default.Delete` leading icons per direct feedback, even though that wasn't part of the original gap.
   - Test: `FavoriteAppRepositoryTest`/`DockAppRepositoryTest` — one case each proving the live *filter* propagates without resubscribing (`MutableStateFlow` stub + `Channel`-collected emissions, mirroring `AppRepositoryTest`'s own live-flow test); new `CleanUpUninstalledAppsUseCaseTest` proving the use case actually calls both repositories' `removeByPackage` for the exact uninstalled package (`MutableSharedFlow(replay = 1)` stub, to sidestep a subscribe-before-emit race against the launched collector).
 
@@ -437,7 +437,7 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 ### Full-suite verification pass (post-Phase-6)
 `./gradlew test` (126 JVM unit tests, including a new `NotificationBadgeRepositoryTest` covering silent-filtering/per-package counting/wholesale-replace/empty-clears) is fully green. `connectedAndroidTest` (116 instrumented tests) is fully green.
 
-**One real, previously-unexercised bug found and fixed**: `FavoritesPickerScreenTest.withNoProfileIdTheScreenEditsTheLauncherWideDefaultList` (added alongside the Default-favorites feature but — per that section's own write-up — never actually run end-to-end on-device before this pass) called `defaultFavoriteAppRepository.observeDefaultFavorites().first()` via a bare `runBlocking` directly on the instrumentation test's own thread. That flow chains into `AppRepository.observeInstalledApps()`'s live `LauncherApps.registerCallback`, which needs a Looper-bound thread — fine when collected via a ViewModel's own `viewModelScope` (Main), but the test's raw thread never calls `Looper.prepare()`, crashing with `RuntimeException: Can't create handler inside thread ... that has not called Looper.prepare()`. Fixed by asserting the persisted state through the UI (`assertIsOn()` on the checked row) instead, matching this file's own established pattern elsewhere — not by touching the repository from the test thread at all.
+**One real, previously-unexercised bug found and fixed**: `FavoritesPickerScreenTest.withNoFacetIdTheScreenEditsTheLauncherWideDefaultList` (added alongside the Default-favorites feature but — per that section's own write-up — never actually run end-to-end on-device before this pass) called `defaultFavoriteAppRepository.observeDefaultFavorites().first()` via a bare `runBlocking` directly on the instrumentation test's own thread. That flow chains into `AppRepository.observeInstalledApps()`'s live `LauncherApps.registerCallback`, which needs a Looper-bound thread — fine when collected via a ViewModel's own `viewModelScope` (Main), but the test's raw thread never calls `Looper.prepare()`, crashing with `RuntimeException: Can't create handler inside thread ... that has not called Looper.prepare()`. Fixed by asserting the persisted state through the UI (`assertIsOn()` on the checked row) instead, matching this file's own established pattern elsewhere — not by touching the repository from the test thread at all.
 
 **One test-only flake fixed** (same async-I/O-vs-idling gap already documented elsewhere in this file): `NotificationSettingsScreenTest.turningBadgesOffDisablesTheStyleRowAndPersists` asserted the toggle's UI state immediately after `performClick()`, but the underlying write is a real DataStore round-trip the uiState `combine()` has to re-observe — fixed by polling (`waitUntil`) instead of asserting once, matching the fix already used for the identical `LabeledDropdownRow`/`Popup`-timing and `StateFlow`-population traps recorded earlier in this document.
 
@@ -462,19 +462,19 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
 ## ✅ Phase 8, F14 Backup & Restore + First-run onboarding complete — accessibility pass still open (see below)
 
 - [x] F14 Backup & Restore: full-settings JSON export/import, guided widget re-add on import.
-  - **Export** (`domain/ExportBackupUseCase.kt`) composes every settings/data `Repository` (`SettingsRepository`, `ProfileRepository`, `FavoriteAppRepository`, `DockAppRepository`, `DefaultFavoriteAppRepository`, `WidgetPlacementRepository`) into one `BackupBundle` (`data/model/BackupBundle.kt`), written as JSON (kotlinx.serialization) to a user-picked destination via `BackupRepository.kt` (`ContentResolver`/SAF `CreateDocument`, never a guessed path).
-  - **Import** (`domain/ImportBackupUseCase.kt`) is a destructive full-replace (confirmed with the user first, `ui/settings/backup/BackupRestoreScreen.kt`'s `ConfirmDialog`) — wipes and re-inserts every profile (with its own favorites), the dock, and default favorites; every setting field is re-applied through `SettingsRepository`'s existing per-field setters (no new bulk setter added). Rejects a backup from a newer app version (`backupVersion > CURRENT_BACKUP_VERSION`) instead of silently dropping fields it doesn't understand.
-  - **Deliberately excluded from the snapshot** (see `BackupBundle.kt`'s own doc comment): `activeProfileId` (replaced with an index into the exported profile list, resolved to the new profile's real id on import), `selectedCalendarIds`/`calendarColors` (device/account-specific `ContentProvider` row ids, not portable), `calendarPermissionRequested`/`contactsPermissionRequested` (this install's own runtime-permission-history flags, not a user preference).
+  - **Export** (`domain/ExportBackupUseCase.kt`) composes every settings/data `Repository` (`SettingsRepository`, `FacetRepository`, `FavoriteAppRepository`, `DockAppRepository`, `DefaultFavoriteAppRepository`, `WidgetPlacementRepository`) into one `BackupBundle` (`data/model/BackupBundle.kt`), written as JSON (kotlinx.serialization) to a user-picked destination via `BackupRepository.kt` (`ContentResolver`/SAF `CreateDocument`, never a guessed path).
+  - **Import** (`domain/ImportBackupUseCase.kt`) is a destructive full-replace (confirmed with the user first, `ui/settings/backup/BackupRestoreScreen.kt`'s `ConfirmDialog`) — wipes and re-inserts every facet (with its own favorites), the dock, and default favorites; every setting field is re-applied through `SettingsRepository`'s existing per-field setters (no new bulk setter added). Rejects a backup from a newer app version (`backupVersion > CURRENT_BACKUP_VERSION`) instead of silently dropping fields it doesn't understand.
+  - **Deliberately excluded from the snapshot** (see `BackupBundle.kt`'s own doc comment): `activeFacetId` (replaced with an index into the exported facet list, resolved to the new facet's real id on import), `selectedCalendarIds`/`calendarColors` (device/account-specific `ContentProvider` row ids, not portable), `calendarPermissionRequested`/`contactsPermissionRequested` (this install's own runtime-permission-history flags, not a user preference).
   - **Widget re-binding, per the PRD's own flagged constraint** ("`AppWidgetHost` ids aren't portable across installs or devices"): a backup records each widget's provider component + grid position/span (`BackupWidgetPlacement`), never its old `appWidgetId`. Import never writes these to `widget_placements` directly — they surface as a guided re-add list on the same screen (not a separate `NavHost` destination — carrying them across a nav-argument boundary had no clean answer, mirroring `HomeDrawerRoute`'s own reasoning for keeping its widget picker an in-place overlay). Each row goes through the real allocate/bind/configure flow (mirroring `HubWidgetPickerViewModel`), landing back at its originally-recorded position when that cell is still free (`PlaceWidgetUseCase` gained an optional `preferredRow`/`preferredCol`, tried before falling back to first-fit) — a provider no longer installed shows as unavailable rather than a dead retry button.
   - Test: `ExportBackupUseCaseTest`, `ImportBackupUseCaseTest`, `BackupRepositoryTest` (real file:// round-trip), `PlaceWidgetUseCaseTest` (new preferred-position cases), `BackupRestoreViewModelTest` (the re-add queue's allocate/bind/configure/place orchestration), `BackupRestoreScreenTest` (chrome + the destructive-import confirmation).
   - **Real bugs found and fixed while building this:**
     - `androidx.navigation:navigation-common:2.9.6`'s module metadata triggers AGP's automatic main/androidTest consistent-resolution to lock `kotlinx-serialization` at 1.7.3, but `androidx.room:room-testing:2.8.4` (added for `FacetDatabaseMigrationTest`'s `MigrationTestHelper`) needs 1.8.1 — its precompiled schema-bundle serializer classes call a `GeneratedSerializer` method 1.7.3 doesn't implement, crashing with `AbstractMethodError`. First worked around with a project-wide `resolutionStrategy.force(...)`; once this feature added `kotlinx-serialization-json:1.8.1` as a real `implementation` dependency, the main classpath itself requests 1.8.1, so the force was confirmed redundant (re-verified via `FacetDatabaseMigrationTest` passing without it) and removed — the version pin now lives in one place, the dependency declaration itself.
-    - Mockito's static `eq()`/`any()` matchers return a raw `null` placeholder that Kotlin's compiler-inserted non-null parameter checks reject outright when stubbing/verifying a `suspend fun` with non-null reference parameters (`BackupRepository.writeBackup`, `ProfileRepository.restoreProfile`) — worked around by having `ExportBackupUseCase` return the bundle it wrote (so the test asserts on a real returned value instead of an `ArgumentCaptor`) and by stubbing with concrete expected values instead of `any(...)`.
+    - Mockito's static `eq()`/`any()` matchers return a raw `null` placeholder that Kotlin's compiler-inserted non-null parameter checks reject outright when stubbing/verifying a `suspend fun` with non-null reference parameters (`BackupRepository.writeBackup`, `FacetRepository.restoreFacet`) — worked around by having `ExportBackupUseCase` return the bundle it wrote (so the test asserts on a real returned value instead of an `ArgumentCaptor`) and by stubbing with concrete expected values instead of `any(...)`.
     - `HomeDrawerRouteTest.kt` had the identical `widgetPickerViewModel` default-Hilt-param gap already found and fixed in `KeyboardDismissalTest.kt` earlier this session (`HomeDrawerRoute`'s `widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel()` never overridden) — the whole test class was silently crashing on every run; fixed the same way (a manually-constructed `HubWidgetPickerViewModel` passed in explicitly). **Fixing it surfaced 5 real, previously-masked failures** (`swipingUpPastHalfwayCommitsTheDrawerOpen`, `releasingBeforeHalfwaySpringsBackClosed`, `systemBackClosesAnOpenDrawer`, `swipingDownAtDrawerTopReturnsToHome`, `lowVelocitySwipePastTwentyPercentStillClosesTheDrawer` — all assert Home's "FAVORITES" heading exists at some point, but this test's `homeViewModel` never seeds any favorite apps, and that heading only renders when non-empty) — flagged as a separate follow-up task, not fixed here (out of scope for this feature).
     - `HubHeader.kt` accepted a `columns: Int` parameter but never actually rendered it — `HubScreenTest.headerAlwaysShowsTheTitleAndCurrentCount` expected a "· N columns" suffix that had never been implemented. Decided (direct correction, see chat history) to drop the expectation rather than add the text: fixed the test to match the header's real, intended copy (`"$widgetCount of $HUB_MAX_WIDGETS widgets"`, no column count) instead of adding column text to the UI.
     - `HubScreenTest.removingAnOrphanedWidgetDeletesItsPlacement` times out waiting for the orphaned tile to disappear after tapping Remove — confirmed real (not flaky) across two isolated runs on a healthy emulator. Not investigated further; flagged as a separate follow-up task (out of scope for this feature).
 - [x] First-run flow (`4f`–`4h`, extended to a 4-screen flow — see `ONBOARDING_FLOW.md` and the design
-  canvas `Launcher.dc.html` turn 5): intro → home setup (dock + favorites) → profiles teaser →
+  canvas `Launcher.dc.html` turn 5): intro → home setup (dock + favorites) → facets teaser →
   set-as-default, permissions deferred to just-in-time.
   - **Data**: `LauncherSettings` gained `onboardingCompleted`/`defaultsSeeded`/`coachMarksSeen`
     (install-local, backup-excluded — see `BackupBundle.kt`'s own doc comment) via
@@ -490,7 +490,7 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
   - **UI** (`ui/onboarding/`): `OnboardingScreen.kt` (stateless host, `rememberSaveable` step,
     `AnimatedContent` slide/fade with `HomeDrawerRoute`'s own 340ms `CubicBezierEasing(.32,.72,0,1)`,
     system-back per step) + `OnboardingViewModel`/`OnboardingUiState` (always the global/default
-    repositories — no `profileId` concept at all) + four step composables. The intro step's Home
+    repositories — no `facetId` concept at all) + four step composables. The intro step's Home
     diagram is a real mini "9:41" clock card with leader lines to Clock/Your apps/Dock labels,
     matching the design canvas artboard `5b` pixel-for-pixel (not a placeholder text list — an
     earlier pass under-built this and was corrected against the actual mock).
@@ -512,10 +512,10 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
     `dockPickerViewModel`/`favoritesPickerViewModel` as nullable testing-seam params (always `null`
     in production) so `OnboardingScreenTest`'s non-Hilt compose host can supply hand-built instances
     the same way it already does for `OnboardingViewModel`.
-  - **Profiles teaser redesigned twice**: shipped first with three `HomeSurfacePreview` cards (center
+  - **Facets teaser redesigned twice**: shipped first with three `HomeSurfacePreview` cards (center
     = the user's real step-2 picks, two empty neighbors) since a fresh install only has one real
-    profile — honest but static. Replaced per direct feedback with a fabricated, animated mockup:
-    `OnboardingProfilesPage.kt`'s `ProfileSwitchDemo` cycles three invented `MockProfile` cards
+    facet — honest but static. Replaced per direct feedback with a fabricated, animated mockup:
+    `OnboardingFacetsPage.kt`'s `FacetSwitchDemo` cycles three invented `MockFacet` cards
     (own clock/date/favorites/dock, no real products — same call the original design brief made)
     through a fully automatic, looping demo of the actual gesture — focus → zoom out → swipe → tap-
     pulse "select" → zoom in → hold → **the same sequence in reverse** (zoom out → swipe back →
@@ -525,28 +525,28 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
     onboarding — dismisses on tap, "Got it", or the first frame of any drag, so a swipe attempt just
     clears the hint rather than also completing the real navigation underneath) and
     `ui/components/FirstRunCallout.kt` (dismissible inline card, first carousel open). Both read/write
-    `coachMarksSeen` directly as computed properties on `HomeUiState`/`ProfileCarouselUiState` — no
+    `coachMarksSeen` directly as computed properties on `HomeUiState`/`FacetCarouselUiState` — no
     extra ViewModel state needed since the persisted set already does the job.
   - **Gesture map correction folded in**: mid-build, the user flagged that the onboarding docs/mocks
-    taught profile-switching via swipe-left, while `PRD.md` §5 still described the older empty-space
-    long-press sheet. Traced to a real, already-shipped decision (`HomeDrawerRoute`'s `profileAxis`)
+    taught facet-switching via swipe-left, while `PRD.md` §5 still described the older empty-space
+    long-press sheet. Traced to a real, already-shipped decision (`HomeDrawerRoute`'s `facetAxis`)
     that had never been backported into the PRD — fixed `PRD.md` §5 (and F4/F9) to match reality
     before writing any onboarding code, so the intro screen's gesture list and the coach mark teach
     the gestures that actually work.
-  - **Dock-is-no-longer-purely-shared correction** (post-review): the dock gained per-profile
-    overrides in a change that landed concurrently with this build (see "Dock gains per-profile
+  - **Dock-is-no-longer-purely-shared correction** (post-review): the dock gained per-facet
+    overrides in a change that landed concurrently with this build (see "Dock gains per-facet
     overrides" above) — onboarding still correctly seeds/edits the launcher-wide *default*
-    `DockAppRepository` (unchanged, still what a fresh profile inherits), but its UI copy claiming
-    the dock is "shared by every profile" was no longer accurate once a profile can override its own.
-    Fixed the home-setup step's hint and the profiles-teaser body copy to describe it as the default
-    every profile starts from rather than an immutable shared resource.
+    `DockAppRepository` (unchanged, still what a fresh facet inherits), but its UI copy claiming
+    the dock is "shared by every facet" was no longer accurate once a facet can override its own.
+    Fixed the home-setup step's hint and the facets-teaser body copy to describe it as the default
+    every facet starts from rather than an immutable shared resource.
   - Test: `SettingsRepositoryTest`, `SeedDefaultDockUseCaseTest`, `OnboardingViewModelTest` (starts
     from live favorites/dock, reflects `listContentMode`, `setListContentMode`/`reorderDockApps`/
     `reorderFavorites` delegate correctly — add/remove/search coverage now lives entirely in
     `DockAppPickerViewModel`'s/`FavoritesPickerViewModel`'s own existing tests, since onboarding
     reuses those screens wholesale rather than re-implementing picking), `DefaultLauncherRepositoryTest`
     (Robolectric `ShadowRoleManager`), `HomeUiStateTest`/`HomeViewModelTest`
-    (`showGestureHint`/`dismissGestureHint`), `ProfileCarouselUiStateTest`/`ProfileCarouselViewModelTest`
+    (`showGestureHint`/`dismissGestureHint`), `FacetCarouselUiStateTest`/`FacetCarouselViewModelTest`
     (`showIntroCallout`/`onIntroDismissed`) — all unit-level, all green. `OnboardingScreenTest`
     (instrumented): full step navigation, Skip, tapping Favorites/Manage dock apps opens the real
     full-screen pickers and Done/back returns, Later, system back, and **`completing onboarding
@@ -555,7 +555,7 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
     requirement; builds `DockAppPickerViewModel`/`FavoritesPickerViewModel` by hand against the same
     in-memory repositories as `OnboardingViewModel` (mirrors `DockAppPickerScreenTest`'s/
     `FavoritesPickerScreenTest`'s own non-Hilt pattern), passed via the new testing-seam params.
-    `HomeDrawerRouteTest`/`ProfileCarouselScreenTest` gained coach-mark show/dismiss cases; every
+    `HomeDrawerRouteTest`/`FacetCarouselScreenTest` gained coach-mark show/dismiss cases; every
     *pre-existing* test in the latter now defaults to "already seen" so the new callout doesn't
     change their established assumptions.
   - **Real bugs found and fixed while building this:**
@@ -572,9 +572,9 @@ Reported gap: tapping a profile card in the carousel applied the profile but ret
       the *outer* one, not the inner one closest to the actual element, so the node was findable only
       by the (wrong, unused-by-any-test) outer tag. Removing the redundant call site tag fixed it.
     - A second Claude Code session was concurrently editing unrelated files (`SettingsViewModel`'s
-      calendar-count feature, Room schema migrations, a `ProfileCarouselScreen` subtitle string) in
+      calendar-count feature, Room schema migrations, a `FacetCarouselScreen` subtitle string) in
       this same working tree throughout the build, twice leaving the module transiently
-      non-compiling and once leaving one pre-existing, unrelated `ProfileCarouselScreenTest` case
+      non-compiling and once leaving one pre-existing, unrelated `FacetCarouselScreenTest` case
       failing on a text assertion its own author hadn't updated yet — not fixed here (not this
       feature's code), each resolved on its own once that session's edits settled.
     - `swipingUpStartingOnAnAppIconStillOpensTheDrawer` (`HomeDrawerRouteTest`, pre-existing, not
@@ -623,35 +623,35 @@ Direct follow-up work spanning several separate requests. `assembleDebug`, `test
 
 ### Type scale, insets, live clock
 - **Full M3 typography migration**: `FacetTypography` (`ui/theme/Type.kt`) now built from Material3's own real `Typography()` defaults via `.copy(fontFamily = FontFamily.SansSerif)` per role, not hand-picked sizes — every `FacetType.X` reference across ~19 files replaced with `MaterialTheme.typography.<role>`. `FacetType` now holds only `clock` (the one deliberately custom style).
-- **Edge-to-edge inset fixes**: every full-screen composable (App Drawer, Home, Settings, Permissions, Calendar settings, Profile settings/carousel, Dock/Favorites pickers) gained explicit `.windowInsetsPadding(WindowInsets.systemBars)` — fixes the app drawer's search bar rendering under the status bar.
+- **Edge-to-edge inset fixes**: every full-screen composable (App Drawer, Home, Settings, Permissions, Calendar settings, Facet settings/carousel, Dock/Favorites pickers) gained explicit `.windowInsetsPadding(WindowInsets.systemBars)` — fixes the app drawer's search bar rendering under the status bar.
 - **Clock now ticks off `ACTION_TIME_TICK`** (+ `ACTION_TIME_CHANGED`/`ACTION_TIMEZONE_CHANGED`) via a context-registered `BroadcastReceiver`, replacing a 30s polling loop — real-time rollover, no polling.
 - **Calendar events filtered by end time**: `CalendarEvent` gained `endTimeMillis`; `ClockBlock` shows all-day events plus any event whose end time hasn't passed yet, reusing the same tick-driven `now`.
 - **Per-calendar accent bar colors**: new `domain/AssignCalendarColorsUseCase.kt` (pure, stable/cycling palette assignment) + `LauncherSettings.calendarColors: Map<calendarId, AccentSwatch>`, resolved per-theme via a new `AccentSwatch.resolvedColor()` extension.
 
 ### Dock/Favorites reorder + drag-jump bug fix
-- **Drag-to-reorder** for both Dock (Settings) and Favorites (Settings' new Default favorites card, and each profile's own Apps card) — picker screens (`DockAppPickerScreen`/`FavoritesPickerScreen`) show selected apps first (frozen at page load, not live-reshuffling on check/uncheck) with removal only via unchecking; reordering lives exclusively in the Settings-side card, never the picker.
-- **Real drag-jump bug found and fixed**: `remember`/`pointerInput` keyed on the raw app list reset mid-drag on every incidental `LauncherApps` re-emission, because `AppInfo.icon: ImageBitmap` has no structural equality — each such emission looked like a "new" list even when membership/order hadn't changed, resetting drag state and restarting the gesture-detection coroutine. Fixed by keying only on stable `(packageName, activityName)` identity and reading live values through `rememberUpdatedState` inside the gesture callback, applied everywhere this pattern appears (`FavoritesReorderList`, `DockSection`, `DefaultFavoritesReorderList`, defensively also `ProfileReorderList`).
+- **Drag-to-reorder** for both Dock (Settings) and Favorites (Settings' new Default favorites card, and each facet's own Apps card) — picker screens (`DockAppPickerScreen`/`FavoritesPickerScreen`) show selected apps first (frozen at page load, not live-reshuffling on check/uncheck) with removal only via unchecking; reordering lives exclusively in the Settings-side card, never the picker.
+- **Real drag-jump bug found and fixed**: `remember`/`pointerInput` keyed on the raw app list reset mid-drag on every incidental `LauncherApps` re-emission, because `AppInfo.icon: ImageBitmap` has no structural equality — each such emission looked like a "new" list even when membership/order hadn't changed, resetting drag state and restarting the gesture-detection coroutine. Fixed by keying only on stable `(packageName, activityName)` identity and reading live values through `rememberUpdatedState` inside the gesture callback, applied everywhere this pattern appears (`FavoritesReorderList`, `DockSection`, `DefaultFavoritesReorderList`, defensively also `FacetReorderList`).
 
 ### AppContextMenu / long-press sheet visual redesign
 - **`AppContextMenu`** (F12's long-press menu): corner radius changed from the shared `ThemedDropdownMenu` default (`extraSmall`, 4dp) to match `SettingsCard`'s own shape (`MaterialTheme.shapes.medium`, 12dp) via new optional `shape`/`contentPadding` params on `ThemedDropdownMenu`/`ThemedDropdownMenuItem` (defaults unchanged, so every other dropdown in the app is unaffected); row separators added between every row (were missing between App info/Uninstall and each quick action).
-- **Long-press sheet** (`LongPressSheet.kt`) got the identical row-separator fix, plus a right-side chevron on every row (all four navigate away — to the carousel, Profile settings, Settings, or the system wallpaper picker).
-- **Right-side chevron adopted as a standing convention** for any row that navigates to another screen: added to Settings' Profiles/Calendar/Permissions/Select Dock Apps/Default favorites/Set-as-default-launcher rows and Profile Settings' Edit favorites/Calendar rows. Rows that open a dialog (Rename) intentionally excluded — a dialog isn't a navigation.
+- **Long-press sheet** (`LongPressSheet.kt`) got the identical row-separator fix, plus a right-side chevron on every row (all four navigate away — to the carousel, Facet settings, Settings, or the system wallpaper picker).
+- **Right-side chevron adopted as a standing convention** for any row that navigates to another screen: added to Settings' Facets/Calendar/Permissions/Select Dock Apps/Default favorites/Set-as-default-launcher rows and Facet Settings' Edit favorites/Calendar rows. Rows that open a dialog (Rename) intentionally excluded — a dialog isn't a navigation.
 
 ### New feature: Default favorites (global list, mirrors Dock)
-Favorites were previously always per-profile with no baseline — a fresh profile started from an empty "Nothing here yet" state. New global **Default favorites** list, edited from its own Settings card exactly like Dock:
-- New `DefaultFavoriteAppEntity`/`DefaultFavoriteAppDao`/`DefaultFavoriteAppRepository` (global, no profile scoping — structurally identical to `DockAppRepository`). `FacetDatabase` bumped to v6 (`fallbackToDestructiveMigration`, same pre-release precedent as every prior bump).
-- `ProfileEntity` gained `overridingFavorites: Boolean` (default `false` = inherit the default list). `FavoritesPickerScreen`/`ViewModel` generalized to take an optional `profileId` (mirroring `CalendarSettingsScreen`'s existing global/per-profile pattern) so the same picker edits either the default list or one profile's own.
-- Profile Settings' **Apps** section redesigned around one combined Inherit/Override card — not two — governing list content mode, apps-to-show, and favorites together as a single unit, with one card below it (list-content dropdown, conditional apps-to-show, Edit favorites row + reorder list) matching Settings' own "APPS LIST" card shape exactly.
-- `ObserveHomeScreenStateUseCase`/`ObserveProfilePreviewsUseCase`/`CleanUpUninstalledAppsUseCase` all updated to resolve/clean up the default list alongside per-profile ones.
-- Test: `DefaultFavoriteAppRepositoryTest`, `ProfileDaoTest` (new — see below), `ProfileRepositoryTest` additions, `FavoritesPickerScreenTest`/`ProfileSettingsScreenTest`/`SettingsScreenTest` additions.
+Favorites were previously always per-facet with no baseline — a fresh facet started from an empty "Nothing here yet" state. New global **Default favorites** list, edited from its own Settings card exactly like Dock:
+- New `DefaultFavoriteAppEntity`/`DefaultFavoriteAppDao`/`DefaultFavoriteAppRepository` (global, no facet scoping — structurally identical to `DockAppRepository`). `FacetDatabase` bumped to v6 (`fallbackToDestructiveMigration`, same pre-release precedent as every prior bump).
+- `FacetEntity` gained `overridingFavorites: Boolean` (default `false` = inherit the default list). `FavoritesPickerScreen`/`ViewModel` generalized to take an optional `facetId` (mirroring `CalendarSettingsScreen`'s existing global/per-facet pattern) so the same picker edits either the default list or one facet's own.
+- Facet Settings' **Apps** section redesigned around one combined Inherit/Override card — not two — governing list content mode, apps-to-show, and favorites together as a single unit, with one card below it (list-content dropdown, conditional apps-to-show, Edit favorites row + reorder list) matching Settings' own "APPS LIST" card shape exactly.
+- `ObserveHomeScreenStateUseCase`/`ObserveFacetPreviewsUseCase`/`CleanUpUninstalledAppsUseCase` all updated to resolve/clean up the default list alongside per-facet ones.
+- Test: `DefaultFavoriteAppRepositoryTest`, `FacetDaoTest` (new — see below), `FacetRepositoryTest` additions, `FavoritesPickerScreenTest`/`FacetSettingsScreenTest`/`SettingsScreenTest` additions.
 
 ### Two real bugs found and fixed — both were the actual cause of "can't switch app-list mode / can't select override"
-- **Room `Converters` for `ListContentMode` were declared non-null in/out for a column that's `ListContentMode?` (nullable).** Room can't resolve a non-null-typed converter as a match for a nullable field, so every write to `listContentModeOverride` silently landed as SQL `NULL` regardless of what was passed in — switching to Override (or picking Recents/Most used) looked like it did nothing because the value never actually persisted. Fixed by declaring both converter methods nullable in/out. **This class of bug is invisible to a fake-in-memory-DAO test** (it just stores the Kotlin object directly, never touching a real converter) — added `data/local/ProfileDaoTest.kt`, a genuine Room-backed (`Robolectric` + `Room.inMemoryDatabaseBuilder`) test suite that exercises the real converter and would have caught this.
-- **A second, separate bug in this session's own `setOverridingApps` rewrite**: it made three sequential `ProfileRepository` setter calls (mode, apps-to-show, favorites-flag), each built from the *same* profile snapshot captured at click time. Each setter does a full-row `INSERT OR REPLACE` from whatever entity it's handed, so each call after the first silently clobbered the previous call's field change — only the last call's own field actually stuck. Fixed with a single atomic `ProfileRepository.setOverridingApps(...)` that sets all three fields in one `.copy()` + one `upsert()`, making the clobbering impossible by construction. Added `ProfileRepositoryTest` coverage asserting all three fields land together, in both directions (Override and back to Inherit).
+- **Room `Converters` for `ListContentMode` were declared non-null in/out for a column that's `ListContentMode?` (nullable).** Room can't resolve a non-null-typed converter as a match for a nullable field, so every write to `listContentModeOverride` silently landed as SQL `NULL` regardless of what was passed in — switching to Override (or picking Recents/Most used) looked like it did nothing because the value never actually persisted. Fixed by declaring both converter methods nullable in/out. **This class of bug is invisible to a fake-in-memory-DAO test** (it just stores the Kotlin object directly, never touching a real converter) — added `data/local/FacetDaoTest.kt`, a genuine Room-backed (`Robolectric` + `Room.inMemoryDatabaseBuilder`) test suite that exercises the real converter and would have caught this.
+- **A second, separate bug in this session's own `setOverridingApps` rewrite**: it made three sequential `FacetRepository` setter calls (mode, apps-to-show, favorites-flag), each built from the *same* facet snapshot captured at click time. Each setter does a full-row `INSERT OR REPLACE` from whatever entity it's handed, so each call after the first silently clobbered the previous call's field change — only the last call's own field actually stuck. Fixed with a single atomic `FacetRepository.setOverridingApps(...)` that sets all three fields in one `.copy()` + one `upsert()`, making the clobbering impossible by construction. Added `FacetRepositoryTest` coverage asserting all three fields land together, in both directions (Override and back to Inherit).
 
 ---
 
-## Post-Phase-9 polish — permission banners, App list Position/Presentation, Launcher Font & App label color, calendar per-profile override fix
+## Post-Phase-9 polish — permission banners, App list Position/Presentation, Launcher Font & App label color, calendar per-facet override fix
 
 Direct follow-up work spanning several separate requests, landed in one long session. `assembleDebug`, `test`, and `connectedAndroidTest` all re-verified green after each change (the emulator needed several cold restarts across this session — see the environment note added to the testing-device memory; none of the instability turned out to be code-related except where called out below). Installed and manually confirmed on the physical test phone throughout.
 
@@ -661,8 +661,8 @@ Direct follow-up work spanning several separate requests, landed in one long ses
   - Test: `PermissionsScreenTest`, `PermissionsViewModelTest`, `NotificationSettingsScreenTest` (new `FakeNotificationAccessRepository`, mirroring the existing `FakeCalendarPermissionRepository` pattern).
 
 ### App list Position (Left/Right) and Presentation (Icon Only/Icon & Text/Text Only)
-New per-profile-overridable Apps-list settings, added to `LauncherSettings`/`ProfileEntity` alongside the existing content-mode override — `AppRowPosition`/`AppRowPresentation` enums, `HomeScreen.kt`'s `AppRow` reordering (badge/label/icon packed to the row's trailing edge for Right), and the FAVORITES/RECENTS/MOST USED section heading now follows the same alignment as the rows themselves.
-  - Test: `HomeUiStateTest`, `HomeScreenTest`, `SettingsScreenTest`, `ProfileSettingsScreenTest`.
+New per-facet-overridable Apps-list settings, added to `LauncherSettings`/`FacetEntity` alongside the existing content-mode override — `AppRowPosition`/`AppRowPresentation` enums, `HomeScreen.kt`'s `AppRow` reordering (badge/label/icon packed to the row's trailing edge for Right), and the FAVORITES/RECENTS/MOST USED section heading now follows the same alignment as the rows themselves.
+  - Test: `HomeUiStateTest`, `HomeScreenTest`, `SettingsScreenTest`, `FacetSettingsScreenTest`.
 
 ### Launcher Font and App label color (Settings → Appearance)
 - **Launcher Font**: the base font for every text role app-wide (`ui/theme/Type.kt`'s `facetTypography(fontFamily)`, now a function of the chosen `LauncherFontOption` instead of a fixed constant) — except the clock/calendar, which keep their own independent font picker. That picker gained a new `ClockFontOption.LAUNCHER_DEFAULT` ("Default launcher font") entry, now also the *default* for both `clockFontOption` and `calendarFontOption`, that resolves to whatever Launcher Font is currently set to.
@@ -670,12 +670,12 @@ New per-profile-overridable Apps-list settings, added to `LauncherSettings`/`Pro
 - **`ClockColorOption` itself was redesigned mid-session, twice, on direct request**: `WALLPAPER_PRIMARY`/`WALLPAPER_SECONDARY` were replaced with `ACCENT_PRIMARY`/`ACCENT_SECONDARY` (tracks Settings → Theme → Accent color's own source — the "Basic colors" swatch, or the wallpaper's own Material You tones when "Wallpaper colors" is selected — rather than always being the raw wallpaper tones regardless of the user's accent choice); then `INK`/`WHITE`/`BLACK` were replaced with `THEME` (default — exactly today's `Ink`) and `THEME_INVERTED` (its deliberate opposite, added as `Color.kt`'s new `InkInverted` token) — a fixed White/Black pick only ever reads correctly in one of the app's two theme modes, so this always flips to whichever one currently contrasts instead of needing to be re-picked.
   - Test: `SettingsRepositoryTest`, `SettingsViewModelTest`, `ClockFontsTest` (new), `ConvertersTest` (new, see the real bug below).
 
-### Calendar font/color made genuinely profile-overridable
-`CalendarSettingsScreen`'s Font/Color card used to fake a per-profile override — profile-scoped edits stayed local and were silently discarded, even though the screen's own `overrideCalendar` flag already genuinely persists `showAllDayEvents` per-profile. Fixed: `ProfileEntity` gained real `calendarFontOption`/`calendarColorOption` columns (Room bumped to **v10**), `ProfileRepository.updateOverridingCalendar(...)` now seeds/persists both alongside the existing field, and the Font/Color card is now read-only under Inherit / live under Override, matching every other override card in the app.
-  - Test: `CalendarSettingsViewModelTest`, `ProfileRepositoryTest`, `CalendarSettingsScreenTest`.
+### Calendar font/color made genuinely facet-overridable
+`CalendarSettingsScreen`'s Font/Color card used to fake a per-facet override — facet-scoped edits stayed local and were silently discarded, even though the screen's own `overrideCalendar` flag already genuinely persists `showAllDayEvents` per-facet. Fixed: `FacetEntity` gained real `calendarFontOption`/`calendarColorOption` columns (Room bumped to **v10**), `FacetRepository.updateOverridingCalendar(...)` now seeds/persists both alongside the existing field, and the Font/Color card is now read-only under Inherit / live under Override, matching every other override card in the app.
+  - Test: `CalendarSettingsViewModelTest`, `FacetRepositoryTest`, `CalendarSettingsScreenTest`.
 
 ### Real bugs found and fixed during this pass
-- **A live crash on the user's own phone, caused by this session's own `ClockColorOption` rename.** Every existing install's Room database still held the old `INK`/`WHITE`/`BLACK` strings; `Converters.kt`'s `toClockColorOption` (and every other enum converter in that file) returned `null` for a string that no longer matched any constant, and Room's generated code for a NOT NULL column has no fallback of its own — it crashed outright on every launch (`IllegalStateException: Expected NON-NULL '...', but it was NULL`, confirmed via `adb logcat -b crash`). Root cause: every converter in `Converters.kt` was nullable-in/out, a pattern that only ever suited one now-removed nullable column (`listContentModeOverride`, from before profile settings switched to explicit override fields). Fixed by making every converter fall back to that type's own default instead of returning null — safe by construction for any *future* enum rename too, no migration needed. Added `data/local/ConvertersTest.kt` specifically asserting an unrecognized stored string (including the exact old `INK`/`WHITE`/`BLACK` values) falls back cleanly instead of crashing.
+- **A live crash on the user's own phone, caused by this session's own `ClockColorOption` rename.** Every existing install's Room database still held the old `INK`/`WHITE`/`BLACK` strings; `Converters.kt`'s `toClockColorOption` (and every other enum converter in that file) returned `null` for a string that no longer matched any constant, and Room's generated code for a NOT NULL column has no fallback of its own — it crashed outright on every launch (`IllegalStateException: Expected NON-NULL '...', but it was NULL`, confirmed via `adb logcat -b crash`). Root cause: every converter in `Converters.kt` was nullable-in/out, a pattern that only ever suited one now-removed nullable column (`listContentModeOverride`, from before facet settings switched to explicit override fields). Fixed by making every converter fall back to that type's own default instead of returning null — safe by construction for any *future* enum rename too, no migration needed. Added `data/local/ConvertersTest.kt` specifically asserting an unrecognized stored string (including the exact old `INK`/`WHITE`/`BLACK` values) falls back cleanly instead of crashing.
 - **`AppRow`'s icon/label testTags were unreachable via the default merged-semantics query**, deterministically — not a flake, reproduced identically on a freshly-booted emulator every time. `combinedClickable` merges descendant semantics into itself (so TalkBack announces the row as one unit), and `testTag` is deliberately excluded from that merge (unlike text/content-description, which *do* get merged and matched fine) — so `onNodeWithTag(...)` needs `useUnmergedTree = true` for any tag living on a clickable row's descendant. Fixed in `HomeScreenTest.kt`'s five affected assertions; this is a general pattern worth remembering for any future test on a similarly-structured row.
 - **`sectionLabelReflectsTheActiveListContentMode` asserted against `appListItems = emptyList()`**, even though `HomeScreen.kt`'s own heading only renders `if (appListItems.isNotEmpty())` — a pre-existing, unrelated test bug (predates this session) only now surfaced by getting a clean run at all. Fixed by giving the test a real one-item list.
 - **`KeyboardDismissalTest` was silently crashing on every single run**, unconditionally, for as long as `HomeDrawerRoute`'s `widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel()` default parameter has existed — this test builds every other ViewModel by hand and passes it in explicitly, but never that one, so the default's real `hiltViewModel()` call always executed against this test's plain (non-Hilt) `ComponentActivity` and always crashed before any assertion ran. Fixed by building a `HubWidgetPickerViewModel` by hand too, matching the other four. Once fixed, this surfaced a **separate, still-open, real issue**: back-press and swipe-down don't reliably clear the drawer search field's focus/keyboard in this test (2 of 3 tests in the class) — not chased further this pass, flagged here so it isn't lost.
@@ -688,8 +688,8 @@ New per-profile-overridable Apps-list settings, added to `LauncherSettings`/`Pro
 Direct follow-up requested after user feedback that Settings "still feels not well grouped," even after the earlier Appearance/Apps-screen splits. `test`/`connectedAndroidTest` re-verified green after every change (instrumented runs explicitly scoped to the emulator only via `ANDROID_SERIAL` — see the new CLAUDE.md rule this pass added, after a real incident where an unscoped run reached the user's phone and uninstalled the app mid-run).
 
 ### Settings list regrouped by user mental model, not build history
-The flat top-level list (Profiles, Clock, Notifications, Apps, App Drawer, Appearance, Permissions, an unheaded Backup/Default-launcher card) is now 5 named groups, chosen by what a user is actually looking for rather than the order sections happened to be built in:
-- **PROFILES** — unchanged, still the entry point to per-profile overrides.
+The flat top-level list (Facets, Clock, Notifications, Apps, App Drawer, Appearance, Permissions, an unheaded Backup/Default-launcher card) is now 5 named groups, chosen by what a user is actually looking for rather than the order sections happened to be built in:
+- **FACETS** — unchanged, still the entry point to per-facet overrides.
 - **APPEARANCE** — unchanged (Theme, Accent, Icons, Launcher Font, App label color). Deliberately does *not* absorb Clock & Calendar Style, even though that's also a "look" decision — grouping Clock & Calendar by *subject* (style + content together) read as more intuitive on direct request than grouping everything by *decision type* (style vs. content) would have.
 - **CLOCK & CALENDAR** — unchanged (Clock & Calendar Style, Calendars to display).
 - **HOME & APPS** (new) — Dock, Home Apps List, App Drawer, Notifications. Notifications moved here on the reasoning that its whole subject (dots/badges) is literally rendered on Dock/Home/Drawer icons; the row's own subtitle now also states this cross-cutting scope and the actual configured badge style explicitly (`"Enabled · Dots on Dock, Home & Drawer"`/`"Enabled · Counts on Dock, Home & Drawer"`/`"Disabled"` — not a generic "dots/badges" placeholder).
@@ -698,16 +698,16 @@ The flat top-level list (Profiles, Clock, Notifications, Apps, App Drawer, Appea
 ### Dock & Apps List split into three screens
 The combined `AppsSettingsScreen`/`AppsSettingsViewModel` (DOCK + APPS LIST sections) is retired, replaced by three independent screens/ViewModels, each with only the repositories it actually needs (no more pulling in `DefaultFavoriteAppRepository` just to read `dockApps.size`, or vice versa):
 - **`DockSettingsScreen`/`DockSettingsViewModel`** — Display style, Select Dock Apps, drag-to-reorder.
-- **`HomeAppsListSettingsScreen`/`HomeAppsListSettingsViewModel`** — Position, Presentation, Default App list content, Apps to show, Default favorites + reorder. This is the screen Profile Settings' own "APPS LIST" override card maps to 1:1 now (previously ambiguous, since the combined screen bundled Dock in too, and Dock has never been profile-overridable).
+- **`HomeAppsListSettingsScreen`/`HomeAppsListSettingsViewModel`** — Position, Presentation, Default App list content, Apps to show, Default favorites + reorder. This is the screen Facet Settings' own "APPS LIST" override card maps to 1:1 now (previously ambiguous, since the combined screen bundled Dock in too, and Dock has never been facet-overridable).
 - **`AppDrawerSettingsScreen`/`AppDrawerSettingsViewModel`** (new) — the 7 controls (Presentation, Grid/List size, Show icons/labels, Search contacts, Search bar position, Drawer opacity) that used to be the last big inline block left on the main Settings list, including moving the real `READ_CONTACTS` permission-request wiring (`rememberLauncherForActivityResult`) into this screen.
   - Test: `DockSettingsViewModelTest`/`DockSettingsScreenTest`, `HomeAppsListSettingsViewModelTest`/`HomeAppsListSettingsScreenTest`, `AppDrawerSettingsViewModelTest`/`AppDrawerSettingsScreenTest` (all new), `SettingsScreenTest`/`SettingsViewModelTest` updated (the latter now purely observational — no setters left once every mutable section moved out).
 
-### Profile Settings section headers realigned
-`ProfileSettingsScreen`'s "APPS" → **"APPS LIST"** (matches the Home Apps List screen it overrides, explicitly *not* "HOME & APPS" — Dock and App Drawer are never profile-scoped, so the broader name would overpromise), "CLOCK" → **"CLOCK & CALENDAR"** (matches the renamed global group, content was already 1:1 so this is a label-only change).
+### Facet Settings section headers realigned
+`FacetSettingsScreen`'s "APPS" → **"APPS LIST"** (matches the Home Apps List screen it overrides, explicitly *not* "HOME & APPS" — Dock and App Drawer are never facet-scoped, so the broader name would overpromise), "CLOCK" → **"CLOCK & CALENDAR"** (matches the renamed global group, content was already 1:1 so this is a label-only change).
 
 ### Settings page background now visually distinct from its cards
 `ui/theme/Color.kt` gained `SurfaceContainer` (`#F8F9FA` light / `#14171D` dark) — every settings-family screen's own page background (both the sticky header and the scrolling content behind it), while `Surface` itself is untouched and still backs every `SettingsCard`. Previously both were the same tone, distinguished only by a card's drop shadow/hairline border. Direction is consistent in both themes: the card is always the *lighter* of the two. Values were tuned down from an initial, more contrasty draft after live comparison (an HTML artifact mocking up both themes side-by-side) — the user found the first pass too strong. `ThemedDropdownMenu`'s popup background also switched from `Surface` to `SurfaceContainer`, so a dropdown floating above a `SettingsCard` row reads as its own plane rather than blending into the card it's anchored to.
-  - Screens updated: `SettingsScreen`, `AppearanceSettingsScreen`, `CalendarSettingsScreen`, `ClockStyleGalleryScreen`, `DockSettingsScreen`, `HomeAppsListSettingsScreen`, `AppDrawerSettingsScreen`, `NotificationSettingsScreen`, `PermissionsScreen`, `BackupRestoreScreen`, `ProfileSettingsScreen`.
+  - Screens updated: `SettingsScreen`, `AppearanceSettingsScreen`, `CalendarSettingsScreen`, `ClockStyleGalleryScreen`, `DockSettingsScreen`, `HomeAppsListSettingsScreen`, `AppDrawerSettingsScreen`, `NotificationSettingsScreen`, `PermissionsScreen`, `BackupRestoreScreen`, `FacetSettingsScreen`.
 
 ### New pre-existing test failures observed (not caused by this pass, not yet fixed)
 Running the full instrumented suite surfaced 6 failures beyond the already-documented `HubGestureTest` one above, confirmed to already fail on the very first full run *before* any of this pass's changes existed (so not a regression from this work, but newly noticed by it):
@@ -718,28 +718,28 @@ Not investigated further this pass; flagged here so they aren't lost or mistaken
 
 ## Post-Phase-9 polish, continued — Font weight customization (Calendar + Home Apps) + Appearance live preview
 
-Picking back up a feature explicitly deferred earlier this session: **"Along with launcher font, add font weight. We need this in calendar separately, and in appearance separately (for home - apps list+dock, and app drawer)"**, plus the earlier-deferred Appearance live preview. Two independent weight settings, not one — **Calendar weight** (profile-overridable, part of the `overrideClock` Clock+Calendar design bundle) and **Home Apps weight** (global-only, scopes to Home's app list + Dock + App Drawer text, not the whole app's typography). Plan approved in full before building — see chat history for the milestone breakdown (M1 data layer → M2 Calendar wiring → M3 Home Apps wiring → M4 live preview).
+Picking back up a feature explicitly deferred earlier this session: **"Along with launcher font, add font weight. We need this in calendar separately, and in appearance separately (for home - apps list+dock, and app drawer)"**, plus the earlier-deferred Appearance live preview. Two independent weight settings, not one — **Calendar weight** (facet-overridable, part of the `overrideClock` Clock+Calendar design bundle) and **Home Apps weight** (global-only, scopes to Home's app list + Dock + App Drawer text, not the whole app's typography). Plan approved in full before building — see chat history for the milestone breakdown (M1 data layer → M2 Calendar wiring → M3 Home Apps wiring → M4 live preview).
 
 ### ✅ M1 complete — data layer
 - New `data/model/FontWeightOption.kt` — 6-stop enum (`THIN`…`SEMI_BOLD`, no heavier — governs body/label text, not headlines), plus `ui/theme/Type.kt`'s `FontWeightOption.resolve(): FontWeight`.
 - `LauncherSettings`/`SettingsRepository` gained `calendarFontWeight`/`homeAppsFontWeight` (two independent DataStore keys + setters, same enum-name-string round-trip as every other style enum here).
-- `ProfileEntity` gained `calendarFontWeight` (Clock+Calendar design bundle, alongside `calendarFontOption`/`calendarColorOption`). Room **v11 → v12**, `MIGRATION_11_12` (`ALTER TABLE profiles ADD COLUMN calendarFontWeight TEXT NOT NULL DEFAULT 'REGULAR'`) — verified with a real `FacetDatabaseMigrationTest` case (insert v11 row, migrate, assert survival + default), not just a compiling migration.
-- `ProfileRepository.updateOverridingClock(...)` extended with the new param; standalone `setCalendarFontWeight` added. `ProfileSettingsViewModel`/`UiState` extended with the same inherit/override resolution pattern as `calendarFontOption`.
-- Backup & Restore: `BackupSettings`/`BackupProfile` gained the new fields (defaulted — tolerant-reader discipline, an old backup missing them still deserializes), mapped through `BackupMapping.kt`/`ExportBackupUseCase`/`ImportBackupUseCase`.
+- `FacetEntity` gained `calendarFontWeight` (Clock+Calendar design bundle, alongside `calendarFontOption`/`calendarColorOption`). Room **v11 → v12**, `MIGRATION_11_12` (`ALTER TABLE facets ADD COLUMN calendarFontWeight TEXT NOT NULL DEFAULT 'REGULAR'`) — verified with a real `FacetDatabaseMigrationTest` case (insert v11 row, migrate, assert survival + default), not just a compiling migration.
+- `FacetRepository.updateOverridingClock(...)` extended with the new param; standalone `setCalendarFontWeight` added. `FacetSettingsViewModel`/`UiState` extended with the same inherit/override resolution pattern as `calendarFontOption`.
+- Backup & Restore: `BackupSettings`/`BackupFacet` gained the new fields (defaulted — tolerant-reader discipline, an old backup missing them still deserializes), mapped through `BackupMapping.kt`/`ExportBackupUseCase`/`ImportBackupUseCase`.
 - `ui/components/FontWeightSlider.kt` converted from its mockup `selectedIndex: Int` API to the real `selected: FontWeightOption, onSelectedChange: (FontWeightOption) -> Unit` API — same slider mechanics/live preview/all `@Preview`s, just re-typed.
-- Tests: `TypeTest` (resolver, one assertion per stop), `SettingsRepositoryTest` round-trip test for both new setters (plus defaults assertion), `ProfileRepositoryTest` (`updateOverridingClock` extended + new `setCalendarFontWeight` test), `FacetDatabaseMigrationTest.migration11To12AddsCalendarFontWeightColumnWithoutLosingExistingRows`. `./gradlew test` green.
+- Tests: `TypeTest` (resolver, one assertion per stop), `SettingsRepositoryTest` round-trip test for both new setters (plus defaults assertion), `FacetRepositoryTest` (`updateOverridingClock` extended + new `setCalendarFontWeight` test), `FacetDatabaseMigrationTest.migration11To12AddsCalendarFontWeightColumnWithoutLosingExistingRows`. `./gradlew test` green.
 
 ### ✅ M2 complete — Calendar weight wiring
-- `ClockStyleGalleryUiState`/`ViewModel` gained `calendarFontWeight` (profile-or-global resolution mirroring `calendarFontOption` exactly) + `setCalendarFontWeight`.
+- `ClockStyleGalleryUiState`/`ViewModel` gained `calendarFontWeight` (facet-or-global resolution mirroring `calendarFontOption` exactly) + `setCalendarFontWeight`.
 - `ClockStyleGalleryScreen.kt`'s CALENDAR card gained a `FontWeightSlider` row (Font → Color → Weight → live preview); the preview's `CalendarEventsBlock` call now threads the resolved weight in.
 - Threaded into Home's real rendering too: `ClockBlock`/`HomeScreen`/`HomeUiState` all gained `calendarFontWeight`/`activeCalendarFontWeight` (mirrors `activeCalendarFontOption`'s own `overrideCalendar` gating exactly), wired through `HomeDrawerRoute`.
-- Tests: `ClockStyleGalleryViewModelTest` (global + profile-scoped setter/resolution), `HomeUiStateTest` (`activeCalendarFontWeight` inherit/override cases).
+- Tests: `ClockStyleGalleryViewModelTest` (global + facet-scoped setter/resolution), `HomeUiStateTest` (`activeCalendarFontWeight` inherit/override cases).
 
 ### ✅ M3 complete — Home Apps weight wiring
 - `AppearanceSettingsViewModel` gained `setHomeAppsFontWeight`; `AppearanceSettingsScreen.kt` gained a `FontWeightSlider` row right after Launcher Font.
 - `HomeScreen.kt`'s `AppRow`/`DockIcon` gained `labelFontWeight` params; `HomeScreen`'s own signature gained `homeAppsFontWeight`, resolved once and passed to both.
 - `AppDrawerScreen.kt`'s two real app-label `Text`s (`DrawerAppRow`, `DrawerGridTile`) gained the same resolved weight, threaded down from `AppDrawerScreen`'s own top-level signature — the first time Drawer's app-label text became settings-driven at all. `DrawerSearchResults` picks it up for free since it already reuses `DrawerAppRow`/`DrawerGridTile` directly.
-- `HomeDrawerRoute.kt` threads `homeAppsFontWeight` into both `HomeScreen` and `AppDrawerScreen`; `ProfileCarouselScreen.kt`'s own `DockIcon` reuse verified to pick up the real global value too.
+- `HomeDrawerRoute.kt` threads `homeAppsFontWeight` into both `HomeScreen` and `AppDrawerScreen`; `FacetCarouselScreen.kt`'s own `DockIcon` reuse verified to pick up the real global value too.
 - Tests: `AppearanceSettingsViewModelTest`/`AppearanceSettingsScreenTest` (setter + slider interaction).
 
 ### ✅ M4 complete — Appearance live preview
@@ -758,19 +758,19 @@ Direct follow-up after noticing (and fixing) a flash of default-styled content o
 - **Real root cause of a *second*, unrelated slowness this surfaced**: `AppRepository.getInstalledApps()` was decoding/flattening every installed app's icon sequentially in one coroutine — on a real phone with 100+ apps, multiple real seconds before the very first emission, previously invisible only because default content rendered over it in the meantime. Fixed by running each icon's decode as its own `async` on `Dispatchers.Default`'s thread pool instead of one after another.
 - Tests: `LauncherViewModelTest`/`HomeViewModelTest` (`isLoading` true→false transition, and the timeout-fallback case with a never-emitting flow).
 
-## Post-Phase-9 polish, continued — Profile switcher redesign & long-press rewiring
+## Post-Phase-9 polish, continued — Facet switcher redesign & long-press rewiring
 
-Reworks `ProfileCarouselScreen` as prep for (and then completing) making it the Home long-press destination directly, replacing the old options sheet.
+Reworks `FacetCarouselScreen` as prep for (and then completing) making it the Home long-press destination directly, replacing the old options sheet.
 
-- **Per-card name + 3-dot menu**: profile name and a "Profile settings"/"Delete profile" dropdown now sit right above each page's own card (on the carousel's backdrop, not inside the card's `Surface`), tied to that specific page — swiping swaps in that page's own header along with its card. Replaces the old standalone gear/trash icon row.
+- **Per-card name + 3-dot menu**: facet name and a "Facet settings"/"Delete facet" dropdown now sit right above each page's own card (on the carousel's backdrop, not inside the card's `Surface`), tied to that specific page — swiping swaps in that page's own header along with its card. Replaces the old standalone gear/trash icon row.
 - **"Launcher settings" row pinned to the bottom** of the carousel screen — this is where that option now lives, since the sheet it used to live in is gone.
-- **Long-press on Home now opens the profile carousel directly** — `LongPressSheet.kt` and its test deleted outright. Its other rows already had new homes: Launcher settings → the carousel screen itself (above); Change wallpaper → a new row in Settings, right below Profiles; Edit profile → reachable via the carousel's own per-card menu.
+- **Long-press on Home now opens the facet carousel directly** — `LongPressSheet.kt` and its test deleted outright. Its other rows already had new homes: Launcher settings → the carousel screen itself (above); Change wallpaper → a new row in Settings, right below Facets; Edit facet → reachable via the carousel's own per-card menu.
 - **Wallpaper option added to Settings**: a "Change wallpaper" row (opens the system picker via `ACTION_SET_WALLPAPER`) next to the renamed "Launcher Appearance" row, whose subtitle is now a static description instead of the live theme/font values.
 - **Card-scale/spacing fixes**: the carousel's `CARD_SCALE` `graphicsLayer` transform now anchors to top-center (not the default center), so the per-page name row isn't pushed down by half the scale's own lost height; a small fixed top gap and 16dp-below-the-card dot-indicator spacing were tuned to match.
-- **Full preview threading**: the preview card only reflected Clock style before. `ObserveProfilePreviewsUseCase` now also fans out each profile's calendar events (gated by calendar permission + `overrideCalendar`'s `showAllDayEvents`, mirroring `ObserveHomeScreenStateUseCase` exactly); `ProfileCarouselUiState` gained per-profile `calendarFontOption`/`calendarColorOption`/`calendarFontWeight`/`appRowPosition`/`appRowPresentation`/`listContentMode` helpers matching `HomeUiState`'s own gating; the preview card reuses the real `AppRow` (promoted `internal`) instead of a hand-drawn row, and its list header now shows FAVORITES/RECENTS/MOST USED matching the profile's actual mode.
-- **Real bug found and fixed while threading calendar data through**: `observeCalendarEvents` in both `ObserveHomeScreenStateUseCase` and `ObserveProfilePreviewsUseCase` always queried with the *global* `selectedCalendarIds`, even when a profile overrides calendar settings with its own selection — only `showAllDayEvents` actually respected the override. Both now resolve `selectedCalendarIds` the same way.
-- **Real bug found and fixed via direct user report**: reusing `AppRow`/`DockIcon` in the preview card meant their own click/long-press consumed the touch instead of letting it reach the card's own "apply this profile" tap — tapping directly on a favorite row or dock icon silently did nothing, and long-pressing one opened Home's real Uninstall/App Info menu inside what's meant to be a read-only preview. Fixed: their `onClick` now fires the same profile-apply action as the rest of the card; both gained an `enableLongPressMenu` flag (default `true`, matching Home's real behavior) that the preview sets `false`.
-- Tests: `ProfileCarouselScreenTest` (per-card menu tap/delete/settings-navigation, tap-on-favorite/dock-still-applies, long-press-on-favorite/dock-does-not-open-context-menu, Launcher-settings-row-navigates), `SettingsScreenTest`/`AppearanceSettingsScreenTest` updates, `ObserveProfilePreviewsUseCaseTest` (new — calendar-events fan-out, per-profile `selectedCalendarIds` override), `ObserveHomeScreenStateUseCaseTest` (`selectedCalendarIds` override case).
+- **Full preview threading**: the preview card only reflected Clock style before. `ObserveFacetPreviewsUseCase` now also fans out each facet's calendar events (gated by calendar permission + `overrideCalendar`'s `showAllDayEvents`, mirroring `ObserveHomeScreenStateUseCase` exactly); `FacetCarouselUiState` gained per-facet `calendarFontOption`/`calendarColorOption`/`calendarFontWeight`/`appRowPosition`/`appRowPresentation`/`listContentMode` helpers matching `HomeUiState`'s own gating; the preview card reuses the real `AppRow` (promoted `internal`) instead of a hand-drawn row, and its list header now shows FAVORITES/RECENTS/MOST USED matching the facet's actual mode.
+- **Real bug found and fixed while threading calendar data through**: `observeCalendarEvents` in both `ObserveHomeScreenStateUseCase` and `ObserveFacetPreviewsUseCase` always queried with the *global* `selectedCalendarIds`, even when a facet overrides calendar settings with its own selection — only `showAllDayEvents` actually respected the override. Both now resolve `selectedCalendarIds` the same way.
+- **Real bug found and fixed via direct user report**: reusing `AppRow`/`DockIcon` in the preview card meant their own click/long-press consumed the touch instead of letting it reach the card's own "apply this facet" tap — tapping directly on a favorite row or dock icon silently did nothing, and long-pressing one opened Home's real Uninstall/App Info menu inside what's meant to be a read-only preview. Fixed: their `onClick` now fires the same facet-apply action as the rest of the card; both gained an `enableLongPressMenu` flag (default `true`, matching Home's real behavior) that the preview sets `false`.
+- Tests: `FacetCarouselScreenTest` (per-card menu tap/delete/settings-navigation, tap-on-favorite/dock-still-applies, long-press-on-favorite/dock-does-not-open-context-menu, Launcher-settings-row-navigates), `SettingsScreenTest`/`AppearanceSettingsScreenTest` updates, `ObserveFacetPreviewsUseCaseTest` (new — calendar-events fan-out, per-facet `selectedCalendarIds` override), `ObserveHomeScreenStateUseCaseTest` (`selectedCalendarIds` override case).
 
 ## Post-Phase-9 polish, continued — App-wide ripple strengthened
 
@@ -783,7 +783,7 @@ Material3's default ripple was too faint to notice, especially over Home's wallp
 Found while planning Phase 2 — each of these has a real PRD requirement but isn't scheduled anywhere in Phases 2–8 above. Not resolved now (would be its own re-planning pass); flagging so it isn't assumed "already covered" later:
 
 - ~~**App Drawer Grid presentation**~~ (F6) — **resolved and built:** now owned and shipped by Phase 4 (Milestone 1, see above) — `LazyVerticalGrid` rendering, alphabet rail shared unchanged with List. F8's left-edge rail was already done (Phase 2).
-- ~~**Multiple clock styles**~~ (F1: "Rule", "Date-forward", the style picker page `3e`/`3f`) — **resolved and built:** `ClockTemplateId` now has 10+ templates (Light stack, Rule & meridiem, Date forward, Weight contrast, Italic accent, Spelled out, two Vertical stack variants, plus Phase 10's advanced Roboto Flex Wide/Narrow), all reachable from the real `ClockStyleGalleryScreen.kt` picker, globally and per-profile.
+- ~~**Multiple clock styles**~~ (F1: "Rule", "Date-forward", the style picker page `3e`/`3f`) — **resolved and built:** `ClockTemplateId` now has 10+ templates (Light stack, Rule & meridiem, Date forward, Weight contrast, Italic accent, Spelled out, two Vertical stack variants, plus Phase 10's advanced Roboto Flex Wide/Narrow), all reachable from the real `ClockStyleGalleryScreen.kt` picker, globally and per-facet.
 - ~~**F11 icon customization**~~ (System default vs. Monochrome overlay, accent color) — **resolved:** now owned by Phase 5 (see above), alongside dark mode, plus Icon rendering mode from Phase 7. **Update (see chat history):** Settings' Appearance card is no longer empty — it now has Launcher theme, Accent color, Icons, **Launcher Font** (new — the base font for every text role app-wide except clock/calendar, which keep their own independent font/color pickers; a `LAUNCHER_DEFAULT`/"Default launcher font" choice on those follows whatever this is set to), and **App label color** (new — Home app-list row + dock label text color, reusing the same `THEME`/`THEME Inverted`/`Accent primary`/`Accent secondary` palette the clock/calendar already offer).
 - ~~**F7 Alphabet rail bucketing**~~ — **resolved:** now owned by Phase 4 (see above). Not yet built — Phase 4 hasn't started.
 - ~~**F12 Long-Press Context Menu**~~ — **resolved and built:** shipped by Phase 4 (Milestone 6, see above) — App info/Uninstall/Quick actions; rename deferred to Phase 5's icon-pack work instead of shipping here.
@@ -791,7 +791,7 @@ Found while planning Phase 2 — each of these has a real PRD requirement but is
 A second, later audit against the full PRD (see chat history) found two more gaps not yet assigned to any phase — recorded here so they aren't lost, decision on where they land still pending:
 
 - ~~**F9 real wallpaper rendering**~~ — **resolved and already built, just not via `WallpaperManager`:** an earlier audit here wrongly flagged this as unbuilt after grepping only for `WallpaperManager` references. `Theme.FacetLauncher` (`app/src/main/res/values/themes.xml`) sets `android:windowShowWallpaper = true` with a transparent `android:windowBackground` — the standard mechanism real Android launchers use, letting the OS composite the live system wallpaper behind the window at the system level, no manual bitmap-drawing code needed. Home/Drawer's own Compose surfaces paint no opaque background over it, so the real wallpaper already shows through today. The "launch system wallpaper picker" intent (Phase 2's Change Wallpaper row) covers the other half of F9. Nothing left to build here.
-  - **Follow-up (preview cards):** `windowShowWallpaper` compositing can't reach a preview surface, so the profile-carousel cards and the Appearance preview card were still flat `Surface`/`Wallpaper`-token slabs. Now backed by the real system wallpaper via `data/WallpaperRepository.kt` (`WallpaperManager.peekDrawable()` → `builtInDrawable` → `getWallpaperColors` gradient → `Wallpaper` token, all `runCatching`-guarded; injected `WallpaperManager` from `AppModule`), a `data/model/HomeWallpaper.kt` sealed type, and a shared `ui/components/WallpaperBackground.kt`. Loaded once per screen-open by `ProfileCarouselViewModel`/`AppearanceSettingsViewModel`. No scrim (matches Home's text-shadow approach). Carousel cards center-crop (locked to screen aspect); the Appearance card bottom-anchors its crop (short band → show the dock area). Tests: `WallpaperRepositoryTest` (JVM/Robolectric, 6 cases) + a rendering assertion in each screen's instrumented test. `test` + full `connectedAndroidTest` (287) green.
+  - **Follow-up (preview cards):** `windowShowWallpaper` compositing can't reach a preview surface, so the facet-carousel cards and the Appearance preview card were still flat `Surface`/`Wallpaper`-token slabs. Now backed by the real system wallpaper via `data/WallpaperRepository.kt` (`WallpaperManager.peekDrawable()` → `builtInDrawable` → `getWallpaperColors` gradient → `Wallpaper` token, all `runCatching`-guarded; injected `WallpaperManager` from `AppModule`), a `data/model/HomeWallpaper.kt` sealed type, and a shared `ui/components/WallpaperBackground.kt`. Loaded once per screen-open by `FacetCarouselViewModel`/`AppearanceSettingsViewModel`. No scrim (matches Home's text-shadow approach). Carousel cards center-crop (locked to screen aspect); the Appearance card bottom-anchors its crop (short band → show the dock area). Tests: `WallpaperRepositoryTest` (JVM/Robolectric, 6 cases) + a rendering assertion in each screen's instrumented test. `test` + full `connectedAndroidTest` (287) green.
 - ~~**Home swipe-down → notification shade**~~ — **resolved and built** (by a separate concurrent session, not tracked under any phase above): `data/NotificationShadeRepository.kt` + `SWIPE_DOWN_SHADE_DISTANCE` wiring in `HomeDrawerRoute.kt`/`HomeViewModel.kt`. Not verified end-to-end by this session; worth a manual on-device check and a dedicated write-up next time this area is touched.
 
 Whichever phase picks one of these up should also un-disable the corresponding Settings row(s) built in Phase 2, where applicable.
@@ -804,73 +804,73 @@ Direct follow-up to Phase 10: the 16 templates originally speced in the design m
 
 - **16 new `ClockTemplateId` entries** (`ClockTemplateId.kt`) — `ACCENT_FIELD`, `HOUR_TILE`, `CHIP`, `DUOTONE_OVERLAP`, `CORNER_FRAME`, `STUB`, `HALO`, `DIGIT_CELLS`, `NEGATIVE_PANEL`, `HOLLOW_HOUR`, `HIGHLIGHTER`, `COLUMN_RULE`, `COLON_MARK`, `PILL_PAIR`, `SHELF`, `HALF_IMMERSED` — the first templates in `ClockTemplates.kt` to use a shape (`clip`/`background`/`border`) rather than pure typography; every fill is either the resolved `Accent` or the caller's own `textColor`, with `Surface` as the knockout tone for digits sitting on a filled field (matching `Theme.kt`'s own `onPrimary = Surface` convention). `HollowHourTemplate` uses `TextStyle`'s `drawStyle = Stroke(...)` for an outline-only glyph; `HalfImmersedTemplate` uses a real `BlendMode.Multiply` inside an offscreen `graphicsLayer` so the blend composites against the glyph's own rasterized pixels rather than the wallpaper.
 - **Shared "clock part" composables** (`ClockGlyphText`/`HourText`/`MinuteText`/`SeparatorText`/`TemplateDateText`, next to the existing `MeridiemText`) — hour/minute/separator/date each theme and position independently now; `WeightContrastTemplate`/`AccentContrastTemplate` migrated onto them as the zero-visual-diff pattern-setters.
-- **Real bug found and fixed**: the clock's tap-to-open/long-press-to-drag hit box (`home_clock_block`) was full-width regardless of `clockAlignment`, because `ClockBlock`'s own Column and every template's own root called `.fillMaxWidth()`. Any long-press landing in the empty space beside a Left/Right-aligned clock was silently swallowed by this box before `HomeDrawerRoute`'s own outer long-press (open the profile carousel) ever saw it. Fixed by dropping `fillMaxWidth()` from every template root (20 existing + 16 new) and giving `ClockBlock` a new `clockContentModifier` param, applied to a wrap-content box around just `ClockDisplay` (positioned via `Modifier.align(clockAlignment.resolve())` inside `ClockBlock`'s still-`fillMaxWidth()` outer Column, so `CalendarEventsBlock`'s own independent `calendarAlignment` is untouched) — only the clock's actual rendered content is tappable now, everything else falls through. `ClockStyleGalleryScreen.kt`'s per-card preview needed the same explicit per-child `Modifier.align(...)`, since the shared `horizontalAlignment` it used to lean on no longer has any effect once every template lost its own `fillMaxWidth()`.
-- Tests: one smoke test per new template (`ClockBlockTest`), a `HomeScreenTest` case proving a long-press beside the clock no longer reveals the drag handle, a `HomeDrawerRouteTest` case proving that same long-press still reaches the profile carousel, and a `ClockStyleGalleryScreenTest` case locking in the gallery's own per-card alignment fix.
+- **Real bug found and fixed**: the clock's tap-to-open/long-press-to-drag hit box (`home_clock_block`) was full-width regardless of `clockAlignment`, because `ClockBlock`'s own Column and every template's own root called `.fillMaxWidth()`. Any long-press landing in the empty space beside a Left/Right-aligned clock was silently swallowed by this box before `HomeDrawerRoute`'s own outer long-press (open the facet carousel) ever saw it. Fixed by dropping `fillMaxWidth()` from every template root (20 existing + 16 new) and giving `ClockBlock` a new `clockContentModifier` param, applied to a wrap-content box around just `ClockDisplay` (positioned via `Modifier.align(clockAlignment.resolve())` inside `ClockBlock`'s still-`fillMaxWidth()` outer Column, so `CalendarEventsBlock`'s own independent `calendarAlignment` is untouched) — only the clock's actual rendered content is tappable now, everything else falls through. `ClockStyleGalleryScreen.kt`'s per-card preview needed the same explicit per-child `Modifier.align(...)`, since the shared `horizontalAlignment` it used to lean on no longer has any effect once every template lost its own `fillMaxWidth()`.
+- Tests: one smoke test per new template (`ClockBlockTest`), a `HomeScreenTest` case proving a long-press beside the clock no longer reveals the drag handle, a `HomeDrawerRouteTest` case proving that same long-press still reaches the facet carousel, and a `ClockStyleGalleryScreenTest` case locking in the gallery's own per-card alignment fix.
 
 ---
 
 ## ✅ Clock widget resize — complete, verified on-device
 
-Adds a scale factor alongside the existing zone-height *position* feature — corner-drag resize of the clock+date only (not `CalendarEventsBlock`), global + per-profile override via the existing `overrideClock` bundle. Long-press on the clock opens a bottom sheet ("Change widget position" / "Resize clock widget" / "Edit styles") instead of directly revealing the move handle.
+Adds a scale factor alongside the existing zone-height *position* feature — corner-drag resize of the clock+date only (not `CalendarEventsBlock`), global + per-facet override via the existing `overrideClock` bundle. Long-press on the clock opens a bottom sheet ("Change widget position" / "Resize clock widget" / "Edit styles") instead of directly revealing the move handle.
 
-- [x] Single uniform `clockScale` field (default `0.8f`) on `LauncherSettings`/`ProfileEntity` + `SettingsRepository`/`ProfileRepository` persistence, folded into `resetClockPosition`.
+- [x] Single uniform `clockScale` field (default `0.8f`) on `LauncherSettings`/`FacetEntity` + `SettingsRepository`/`FacetRepository` persistence, folded into `resetClockPosition`.
 - [x] DB: `MIGRATION_14_15` adds `clockAccentColorOption` + `clockDateStyle` + `clockScale` in one step (nothing shipped between 14 and 15; `VERSION = 15`, `15.json` is the export). `DatabaseModule` back on `fallbackToDestructiveMigrationOnDowngrade` (destructive on *upgrade* was silently wiping real data).
-- [x] `HomeUiState`/`ProfileCarouselViewModel` override resolution + `ProfileCarouselScreen` preview card wiring.
+- [x] `HomeUiState`/`FacetCarouselViewModel` override resolution + `FacetCarouselScreen` preview card wiring.
 - [x] **`uniformScale` is draw-only** — reports the *natural* footprint to layout and scales the glyph via a graphics layer anchored to the alignment-facing bottom corner (`TransformOrigin` 0/0.5/1 · 1). Nothing positioned relative to the clock reflows when the scale changes; the clock grows up/out into empty space, its bottom stays pinned.
 - [x] `ClockCornerHandle.kt` (top-left + top-right). Handle geometry is a pure function of the clock's natural box (from primitive `IntSize`/`Offset` state, not the reused `LayoutCoordinates` object) × the live scale — no frame lag, no jump on release. First-move grab-offset capture so it doesn't pop.
 - [x] `liveScale: Float?` (absolute, held until the committed value round-trips) — no scale collapse/flicker on release.
 - [x] Long-press → `ClockAdjustSheet.kt` ("Adjust size & position" / "Edit … styles"); `dragModeEnabled` → `ClockAdjustMode` enum (`NONE`/`MENU`/`ADJUST`). **One combined `ADJUST` mode** shows the move handle *and* the two resize handles together — either can be used, and dragging the clock upward with the move handle **shrinks it to fit in real time** (`effectiveClockScale` clamps to `maxScaleThatFits` live *only while in `ADJUST`*), persisting the shrunk scale on release. Exits only on tap-away from all handles.
 - [x] Fit math (`maxScaleThatFits`) runs **only** while dragging a handle and once per style/position change (`LaunchedEffect`-keyed one-shot that re-clamps + persists only if the saved scale actually clips). `HOME_CLOCK_MIN_SCALE`/`MAX_SCALE` = `0.5`..`2.0`; the max also reserves room for the top handle to clear the status-bar / notification-shade strip.
 - [x] Appearance: fade in once (M3 emphasized-decelerate, 250ms, draw-phase alpha) after the measured box holds steady for 120ms — waits out the variable-font remeasure so the clock doesn't visibly "grow from the bottom".
-- [x] Unit tests green (`SettingsRepositoryTest`/`ProfileRepositoryTest`); instrumented `FacetDatabaseMigrationTest.migration14To15...` covers all three columns.
-- [x] `clockAccentColorOption` + `clockDateStyle` (Full/Condensed) global + per-profile.
+- [x] Unit tests green (`SettingsRepositoryTest`/`FacetRepositoryTest`); instrumented `FacetDatabaseMigrationTest.migration14To15...` covers all three columns.
+- [x] `clockAccentColorOption` + `clockDateStyle` (Full/Condensed) global + per-facet.
 - [x] 16 shape-based clock templates in `ClockTemplates.kt` + shared `HourText`/`MinuteText`/`SeparatorText`/`TemplateDateText` parts; clock hit-box narrowed to the rendered content only.
 
-- [x] `HomeScreen` no longer takes a Room entity — `clockPositionOwningProfile: ProfileEntity?` → `clockPositionOwnerProfileId: Long?` (all the composable needed). `HomeUiState`/`HomeViewModel` keep the entity internally.
+- [x] `HomeScreen` no longer takes a Room entity — `clockPositionOwningFacet: FacetEntity?` → `clockPositionOwnerFacetId: Long?` (all the composable needed). `HomeUiState`/`HomeViewModel` keep the entity internally.
 
 ---
 
-## "Switch Profiles" vs "Manage Profiles" — split the two carousel entry points
+## "Switch Facets" vs "Manage Facets" — split the two carousel entry points
 
-The one `ProfileCarouselScreen` is now entered in one of two modes (`ProfileCarouselMode`, param on the screen; default `SWITCH`):
+The one `FacetCarouselScreen` is now entered in one of two modes (`FacetCarouselMode`, param on the screen; default `SWITCH`):
 
-- **`SWITCH`** — Home long-press (`FacetDestinations.PROFILE_CAROUSEL`, unchanged route). Header renamed `"Profiles"` → `"Switch Profiles"`. The swipeable carousel and its in-place `"Reorder"` link are unchanged.
-- **`MANAGE`** — Settings → Profiles (new `FacetDestinations.PROFILE_MANAGE` route; `SettingsScreen`'s `onViewProfiles` now points here instead of `PROFILE_CAROUSEL`). Opens straight into the existing reorderable list (`isReordering` starts `true`), header `"Manage Profiles"`, no carousel and no separate `"Reorder"` link. The back button always exits the screen (to Settings) rather than toggling out of reorder mode, and the `isReordering` `BackHandler` is disabled in this mode for the same reason. `onProfileApplied`/`onNavigateToSettings` are unused here (no card-apply, no in-carousel Launcher-settings row) — wired to no-ops in `FacetNavHost`.
+- **`SWITCH`** — Home long-press (`FacetDestinations.FACET_CAROUSEL`, unchanged route). Header renamed `"Facets"` → `"Switch Facets"`. The swipeable carousel and its in-place `"Reorder"` link are unchanged.
+- **`MANAGE`** — Settings → Facets (new `FacetDestinations.FACET_MANAGE` route; `SettingsScreen`'s `onViewFacets` now points here instead of `FACET_CAROUSEL`). Opens straight into the existing reorderable list (`isReordering` starts `true`), header `"Manage Facets"`, no carousel and no separate `"Reorder"` link. The back button always exits the screen (to Settings) rather than toggling out of reorder mode, and the `isReordering` `BackHandler` is disabled in this mode for the same reason. `onFacetApplied`/`onNavigateToSettings` are unused here (no card-apply, no in-carousel Launcher-settings row) — wired to no-ops in `FacetNavHost`.
 
-- A `"Drag to re-order profiles"` hint (`bodySmall`/`Muted`, testTag `profile_reorder_hint`) is pinned as the first `LazyColumn` item above the profile rows in `ProfileReorderList` — shows in both the `MANAGE` list and the `SWITCH` carousel's in-place reorder view.
+- A `"Drag to re-order facets"` hint (`bodySmall`/`Muted`, testTag `facet_reorder_hint`) is pinned as the first `LazyColumn` item above the facet rows in `FacetReorderList` — shows in both the `MANAGE` list and the `SWITCH` carousel's in-place reorder view.
 
-- Tests: `ProfileCarouselScreenTest` — `switchModeShowsTheSwitchProfilesHeaderOverTheCarousel`, `manageModeOpensDirectlyToTheReorderListTitledManageProfiles` (also asserts the hint text), `manageModeBackButtonLeavesTheScreenRatherThanExitingReorder`; `setContent` gained a `mode` param. Full `ProfileCarouselScreenTest` (19 cases) green on `Medium_Phone_API_36.1`. New light+dark `@Preview` for the manage mode.
+- Tests: `FacetCarouselScreenTest` — `switchModeShowsTheSwitchFacetsHeaderOverTheCarousel`, `manageModeOpensDirectlyToTheReorderListTitledManageFacets` (also asserts the hint text), `manageModeBackButtonLeavesTheScreenRatherThanExitingReorder`; `setContent` gained a `mode` param. Full `FacetCarouselScreenTest` (19 cases) green on `Medium_Phone_API_36.1`. New light+dark `@Preview` for the manage mode.
 
-### Switch Profiles — Launcher-settings row visibility + bottom-cluster layout
+### Switch Facets — Launcher-settings row visibility + bottom-cluster layout
 
 Follow-up from an on-device dark-mode screenshot review of the `SWITCH` carousel:
 
-- **`LauncherSettingsRow` was invisible in dark mode** — a bare `Surface` fill on `CarouselBackdrop` is a ~7-luminance-unit delta on OLED. Now carries the `SettingsCard` lift (`shadow(4.dp)` + `Surface` + a `border(1.dp, Ink.copy(alpha = 0.14f))` — a real value, not the 7%-alpha `Hairline`), a leading `Icons.Default.Tune` glyph (`Muted`; `Tune` not a gear, so it doesn't read as a second per-profile "settings" control), and an `Ink` (was `Muted`) chevron.
-- **Dead vertical band between the per-profile gear/trash row and the dots** — root cause was the pager taking `weight(1f)` (all spare height) while each page drew at a top-anchored `graphicsLayer` scale, so the bottom ~14.5% of the over-tall pager rendered empty. Removed the `graphicsLayer` page scale entirely and made the preview card a **true scale model of the device screen**:
-  - `CAROUSEL_CARD_SCALE = 0.55f` — the card is that fraction of the screen's width *and* height, so it keeps the current phone's own aspect ratio (`BoxWithConstraints` in `ProfilePreviewPage` now carries `Modifier.aspectRatio(screenWidthDp / screenHeightDp)`, passed in as `screenAspectRatio`).
+- **`LauncherSettingsRow` was invisible in dark mode** — a bare `Surface` fill on `CarouselBackdrop` is a ~7-luminance-unit delta on OLED. Now carries the `SettingsCard` lift (`shadow(4.dp)` + `Surface` + a `border(1.dp, Ink.copy(alpha = 0.14f))` — a real value, not the 7%-alpha `Hairline`), a leading `Icons.Default.Tune` glyph (`Muted`; `Tune` not a gear, so it doesn't read as a second per-facet "settings" control), and an `Ink` (was `Muted`) chevron.
+- **Dead vertical band between the per-facet gear/trash row and the dots** — root cause was the pager taking `weight(1f)` (all spare height) while each page drew at a top-anchored `graphicsLayer` scale, so the bottom ~14.5% of the over-tall pager rendered empty. Removed the `graphicsLayer` page scale entirely and made the preview card a **true scale model of the device screen**:
+  - `CAROUSEL_CARD_SCALE = 0.55f` — the card is that fraction of the screen's width *and* height, so it keeps the current phone's own aspect ratio (`BoxWithConstraints` in `FacetPreviewPage` now carries `Modifier.aspectRatio(screenWidthDp / screenHeightDp)`, passed in as `screenAspectRatio`).
   - The horizontal inset (neighbour-card peek) is derived: `screenWidthDp * (1 − scale) / 2`. `CAROUSEL_PAGE_INSET` constant deleted.
-  - The pager is content-sized — `height = screenHeightDp * scale + CAROUSEL_PAGE_CHROME_HEIGHT` (name row + gear/trash row) — not `weight(1f)`, so dots + Launcher-settings pack directly beneath it, with a trailing `Spacer(Modifier.weight(1f))` collecting surplus at the bottom. `CAROUSEL_HEIGHT_FRACTION` never shipped; `CARD_SCALE` deleted; `ProfilePreviewPage`'s `contentScale` divides by `maxHeight` directly.
-- Verified on `emulator-5554` in dark mode: row stands out, gap gone, the card is now visibly screen-shaped, content hugs the top. `ProfileCarouselScreenTest` 19/19 green (`launcherSettingsRowInvokesTheCallback` extended to assert the row's title/subtitle render).
+  - The pager is content-sized — `height = screenHeightDp * scale + CAROUSEL_PAGE_CHROME_HEIGHT` (name row + gear/trash row) — not `weight(1f)`, so dots + Launcher-settings pack directly beneath it, with a trailing `Spacer(Modifier.weight(1f))` collecting surplus at the bottom. `CAROUSEL_HEIGHT_FRACTION` never shipped; `CARD_SCALE` deleted; `FacetPreviewPage`'s `contentScale` divides by `maxHeight` directly.
+- Verified on `emulator-5554` in dark mode: row stands out, gap gone, the card is now visibly screen-shaped, content hugs the top. `FacetCarouselScreenTest` 19/19 green (`launcherSettingsRowInvokesTheCallback` extended to assert the row's title/subtitle render).
 
-### Follow-ups — header gutter + Settings → Profiles transition
+### Follow-ups — header gutter + Settings → Facets transition
 
 - **Header now uses the app-standard 24dp horizontal gutter** (was a bespoke 20dp). The
   back-chevron + title row is extracted to `CarouselHeaderTitleRow` (shared by the loaded
   screen and the brief empty state); the Launcher-settings row and the reorder list moved
   20dp → 24dp to stay aligned with it.
-- **Settings → Profiles no longer flashes the wallpaper/Home** on the way in. Two causes:
+- **Settings → Facets no longer flashes the wallpaper/Home** on the way in. Two causes:
   (1) `FacetNavHost`'s route transitions were slide **+ crossfade** — a fading layer over the
   wallpaper-showing (transparent) window briefly reveals the wallpaper; removed `fadeIn`/
   `fadeOut`, leaving a pure slide (two opaque screens sliding past each other always cover the
-  full width). (2) `ProfileCarouselContent`'s empty state (`profiles` still loading) painted
+  full width). (2) `FacetCarouselContent`'s empty state (`facets` still loading) painted
   nothing; it now paints the backdrop + `CarouselHeaderTitleRow` so the screen is opaque and
-  reads as "arrived" during the slide. `ProfileCarouselScreenTest` 19/19 still green (the empty
-  state deliberately omits the `profile_carousel_screen` tag the test helper waits on).
+  reads as "arrived" during the slide. `FacetCarouselScreenTest` 19/19 still green (the empty
+  state deliberately omits the `facet_carousel_screen` tag the test helper waits on).
 - **Page background now `SurfaceContainer`** (was the dimmer, carousel-only `CarouselBackdrop`
-  token) — matches every settings-style screen (`SettingsScreen`, `ProfileSettingsScreen`, …),
-  so navigating Settings ↔ Switch/Manage Profiles no longer steps to a darker surface. The
+  token) — matches every settings-style screen (`SettingsScreen`, `FacetSettingsScreen`, …),
+  so navigating Settings ↔ Switch/Manage Facets no longer steps to a darker surface. The
   `CarouselBackdrop` / `CarouselBackdropDragging` tokens are now unused.
-- **Preview cards (and the Add-profile card) now carry the `SettingsCard` lift** —
+- **Preview cards (and the Add-facet card) now carry the `SettingsCard` lift** —
   `shadow(4.dp)` + `border(1.dp, Hairline)` on the `extraLarge` shape — since the
   `Surface`-on-`SurfaceContainer` tone step alone is too small to read as raised.
 
@@ -904,36 +904,36 @@ and logcat (Samsung's Glance clock widget throwing `NoSuchElementException` mid-
 
 ---
 
-## Profiles: Manage Profiles is its own screen; Switch Profiles is a translucent overlay
+## Facets: Manage Facets is its own screen; Switch Facets is a translucent overlay
 
-Follow-up to the `ProfileCarouselMode` split — the user wanted `MANAGE` to be a *real* settings
+Follow-up to the `FacetCarouselMode` split — the user wanted `MANAGE` to be a *real* settings
 screen (not a mode of the carousel sharing its ViewModel), and the `SWITCH` carousel restyled.
 
-- **`ManageProfilesScreen` + `ManageProfilesViewModel` are new, standalone.** The VM depends only
-  on `ProfileRepository` + `SettingsRepository` (no `ObserveProfilePreviewsUseCase` — the reorder
-  list never needed the expensive per-profile preview flow the carousel runs). The screen uses
+- **`ManageFacetsScreen` + `ManageFacetsViewModel` are new, standalone.** The VM depends only
+  on `FacetRepository` + `SettingsRepository` (no `ObserveFacetPreviewsUseCase` — the reorder
+  list never needed the expensive per-facet preview flow the carousel runs). The screen uses
   `StickyHeaderLayout` + a `DockSettingsHeader`-shaped header on opaque `SurfaceContainer`, like
-  every other settings screen. `ProfileReorderList`/`ProfileReorderRow`/`AddProfileRow` moved
-  here from `ProfileCarouselScreen.kt`; all `profile_reorder_*` test tags preserved.
-- **`ProfileCarouselScreen` is SWITCH-only now** — `ProfileCarouselMode` enum, `mode`/`onBack`
+  every other settings screen. `FacetReorderList`/`FacetReorderRow`/`AddFacetRow` moved
+  here from `FacetCarouselScreen.kt`; all `facet_reorder_*` test tags preserved.
+- **`FacetCarouselScreen` is SWITCH-only now** — `FacetCarouselMode` enum, `mode`/`onBack`
   params, `isReordering` state and the in-place reorder branch are all gone;
-  `ProfileCarouselViewModel.reorderProfiles`/`renameProfile` deleted (no callers left).
+  `FacetCarouselViewModel.reorderFacets`/`renameFacet` deleted (no callers left).
 - **Carousel restyle:** background is `SurfaceContainer.copy(alpha = 0.6f)` — a translucent
   overlay; Home shows through. The header is replaced by a single right-aligned `SecondaryButton`
   ("Reorder" — themed `OutlinedButton`, `CircleShape`, `Ink @14%` border, `Surface` fill,
-  disabled with one profile) that navigates to `PROFILE_MANAGE`. No back button — system back /
+  disabled with one facet) that navigates to `FACET_MANAGE`. No back button — system back /
   tapping a card is the way out. The "Launcher settings" row is unchanged.
-- **`FacetNavHost`:** `PROFILE_MANAGE` → `ManageProfilesScreen`. `PROFILE_CAROUSEL` gets its own
+- **`FacetNavHost`:** `FACET_MANAGE` → `ManageFacetsScreen`. `FACET_CAROUSEL` gets its own
   `fadeIn + scaleIn(0.92)` / `fadeOut + scaleOut(0.92)` transitions (200ms), and the NavHost-level
   slide transitions return `EnterTransition.None`/`ExitTransition.None` when the counterpart route
-  is `PROFILE_CAROUSEL` — so Home holds still and the carousel reads as an overlay on top of it.
-- Tests: new `ManageProfilesViewModelTest` (4) + `ManageProfilesScreenTest` (6, the moved reorder
-  tests); `ProfileCarouselScreenTest` dropped the 7 MANAGE/in-place-reorder tests, gained
-  `reorderButtonNavigatesToManageProfiles` / `reorderButtonIsDisabledWithOnlyOneProfile`. Full
-  unit suite + all 40 `ui.profiles` instrumented tests green on `emulator-5554`; verified the
-  carousel/overlay + Manage Profiles screen on-device.
+  is `FACET_CAROUSEL` — so Home holds still and the carousel reads as an overlay on top of it.
+- Tests: new `ManageFacetsViewModelTest` (4) + `ManageFacetsScreenTest` (6, the moved reorder
+  tests); `FacetCarouselScreenTest` dropped the 7 MANAGE/in-place-reorder tests, gained
+  `reorderButtonNavigatesToManageFacets` / `reorderButtonIsDisabledWithOnlyOneFacet`. Full
+  unit suite + all 40 `ui.facets` instrumented tests green on `emulator-5554`; verified the
+  carousel/overlay + Manage Facets screen on-device.
 - **Follow-up:** the Hub's translucent-overlay base colour switched `DrawerOverlay` → `SurfaceContainer`,
-  and then the App Drawer's did too — so the Hub, App Drawer, the Switch Profiles carousel, and
+  and then the App Drawer's did too — so the Hub, App Drawer, the Switch Facets carousel, and
   every settings page all share one base tone (`SurfaceContainer`); each keeps its own alpha.
   `DrawerOverlay` is now unused.
 
@@ -948,22 +948,22 @@ three different one-off treatments (a bordered `OutlinedButton`; plain clickable
 - **M3 filled-tonal role** — accent-tinted container + `Accent` text/icon. This app maps no
   `secondaryContainer` slot, so the fill is `Accent.copy(alpha = 0.28f).compositeOver(Surface)`
   — composited to an **opaque** colour so the button looks the same on the translucent Switch
-  Profiles scrim, straight on the wallpaper (Hub), or on an opaque card. A `1dp` `Accent @ 32%`
+  Facets scrim, straight on the wallpaper (Hub), or on an opaque card. A `1dp` `Accent @ 32%`
   hairline keeps the edge defined on any background. (First cut used a bare `alpha` fill and was
   invisible on the translucent carousel — a translucent layer over a translucent scrim.)
 - **M3 Expressive square shape** — `MaterialTheme.shapes.medium` (12dp), a **deliberate
   departure** from `CLAUDE.md`'s "buttons = Full/`CircleShape`" rule, per direct request. M3
   Expressive supports both round and square button shapes; noted in the component KDoc.
-- `ProfileCarouselScreen`'s inline `SecondaryButton` deleted; `HubHeader` / `HubEmptyState`
+- `FacetCarouselScreen`'s inline `SecondaryButton` deleted; `HubHeader` / `HubEmptyState`
   dropped their `clickable`/`background`/`Accent`/`Surface` imports.
-- Tests: existing `hub_add_button` / `hub_empty_add_widget` / `profile_carousel_reorder` test
-  tags preserved, so `ui.hub` + `ui.profiles` instrumented suites cover it unchanged.
+- Tests: existing `hub_add_button` / `hub_empty_add_widget` / `facet_carousel_reorder` test
+  tags preserved, so `ui.hub` + `ui.facets` instrumented suites cover it unchanged.
 
 ---
 
-## Switch Profiles moves from a Home long-press to a left swipe
+## Switch Facets moves from a Home long-press to a left swipe
 
-Per direct UX report: long-pressing "empty" Home space to reach the Switch Profiles carousel was
+Per direct UX report: long-pressing "empty" Home space to reach the Switch Facets carousel was
 too hard to land — the clock/calendar own the top, the favorites `AppRow`s take a full-width hit
 slab through the middle, and the dock owns the bottom, leaving only thin gutters that the user
 can't see. The gesture was invisible *and* its target was fragmented.
@@ -972,22 +972,22 @@ can't see. The gesture was invisible *and* its target was fragmented.
   gone (its import too). The existing horizontal-axis branch of the Home `detectDragGestures`
   now splits by direction: a net-**rightward** drag drives the Home↔Hub follow-finger axis as
   before; a net-**leftward** drag from a closed Hub accrues in a new `homeHorizontalDragDistance`
-  and, on release, calls `onNavigateToProfileCarousel()` once it has cleared
+  and, on release, calls `onNavigateToFacetCarousel()` once it has cleared
   `COMMIT_TRAVEL_FRACTION` (20%) of the container width — the same fraction the Hub itself
   commits on. The Hub axis is never fed a leftward delta from a closed state, so its `progress`
   stays exactly `0f` and the release check is unambiguous. The carousel is still a NavHost
   destination reached by a fling-to-navigate trigger (not a follow-finger panel), but its
   transition now **slides in from the right** like the Hub (see the transition note below).
-- **Symmetry:** Home horizontal swipe is now fully assigned — left = Switch Profiles (`3a`),
-  right = Hub (`F5`). README's "profile switching does not use swipe on the home screen" line and
+- **Symmetry:** Home horizontal swipe is now fully assigned — left = Switch Facets (`3a`),
+  right = Hub (`F5`). README's "facet switching does not use swipe on the home screen" line and
   the gestures table were revised.
 - Tests (`HomeDrawerRouteTest`): the 3 long-press cases
-  (`holdingStillForTheFullDurationNavigatesToTheProfileCarousel`,
-  `releasingBeforeTheDurationDoesNotNavigate`, `longPressBesideTheClockStillReachesTheProfileCarousel`)
-  removed; replaced with `swipingLeftPastThresholdOpensTheProfileCarousel`,
-  `releasingALeftDragBeforeThresholdDoesNotOpenTheProfileCarousel`,
-  `swipingLeftOpensTheProfileCarouselNotTheHub`, and
-  `aDiagonalSwipeMostlyLeftOpensTheProfileCarouselNotTheDrawer` (axis-lock guard, mirroring the
+  (`holdingStillForTheFullDurationNavigatesToTheFacetCarousel`,
+  `releasingBeforeTheDurationDoesNotNavigate`, `longPressBesideTheClockStillReachesTheFacetCarousel`)
+  removed; replaced with `swipingLeftPastThresholdOpensTheFacetCarousel`,
+  `releasingALeftDragBeforeThresholdDoesNotOpenTheFacetCarousel`,
+  `swipingLeftOpensTheFacetCarouselNotTheHub`, and
+  `aDiagonalSwipeMostlyLeftOpensTheFacetCarouselNotTheDrawer` (axis-lock guard, mirroring the
   existing mostly-right case). `HomeScreenTest`'s long-press-beside-clock / context-menu cases
   are unaffected — those exercise `HomeScreen`'s own clock/`AppRow` detectors, not this route.
 
@@ -997,7 +997,7 @@ The mirror gesture: left swipe on Home opens the carousel, right swipe on the ca
 (applies nothing — same as system back). Handles the two "the pager isn't in the way" cases the
 user called out:
 
-- **`ProfileCarouselScreen`** gains an `onDismiss` param (wired to `navController.popBackStackSafely()`
+- **`FacetCarouselScreen`** gains an `onDismiss` param (wired to `navController.popBackStackSafely()`
   in `FacetNavHost`). Two mechanisms feed it, kept from overlapping because the pager consumes its
   own drags:
   - **Empty space** (the scrim around/below the pager — Reorder row, dots, settings row, trailing
@@ -1005,19 +1005,19 @@ user called out:
     and calls `onDismiss()` on release once it passes `DISMISS_SWIPE_FRACTION` (15%) of screen
     width. A drag that starts on the pager gets consumed there, so the parent detector cancels
     and never double-fires.
-  - **On the first profile's card**: a `NestedScrollConnection` on the same `Column` intercepts
+  - **On the first facet's card**: a `NestedScrollConnection` on the same `Column` intercepts
     rightward pre-scroll while `pagerState.currentPage == 0` (nowhere to browse to), takes the
     delta before the pager makes it a dead overscroll, and dismisses in `onPreFling` on a
     decisive drag distance or a rightward fling past `DISMISS_FLING_VELOCITY`. Swiping right from
-    any *other* page still browses to the previous profile, untouched.
-- Tests (`ProfileCarouselScreenTest`): `swipingRightOnTheFirstProfileCardReturnsHome`,
+    any *other* page still browses to the previous facet, untouched.
+- Tests (`FacetCarouselScreenTest`): `swipingRightOnTheFirstFacetCardReturnsHome`,
   `swipingRightInEmptySpaceReturnsHome`,
-  `swipingRightOnANonFirstProfileCardBrowsesInsteadOfDismissing`. `onDismiss` added to the test
+  `swipingRightOnANonFirstFacetCardBrowsesInsteadOfDismissing`. `onDismiss` added to the test
   helper's defaults.
 
 ### …then a same-session animation tweak (slide instead of fade), superseded below
 
-Briefly: `PROFILE_CAROUSEL`'s `NavHost` transition changed from `fadeIn + scaleIn(0.92)` to
+Briefly: `FACET_CAROUSEL`'s `NavHost` transition changed from `fadeIn + scaleIn(0.92)` to
 `slideInHorizontally { it }` / `slideOutHorizontally { it }`, so the carousel slid in from the
 right and back out, matching the left-swipe-in / right-swipe-out gesture direction, on the same
 340ms `cubic-bezier(.32,.72,0,1)` `animationSpec` the drawer/Hub use. Still a fling-to-navigate
@@ -1029,18 +1029,18 @@ session, by the section below — kept here only so the "Real bug found" trail s
 Per direct follow-up request: "make it a follow-finger panel like the hub." The carousel is no
 longer a `NavHost` destination at all — it's merged into `HomeDrawerRoute` exactly like the Hub,
 permanently composed and just offset off-screen when closed, driven by a third `SwipeAxisState`
-(`profileAxis`, sized by `containerWidthPx` like `hubAxis`) instead of a threshold-then-navigate
+(`facetAxis`, sized by `containerWidthPx` like `hubAxis`) instead of a threshold-then-navigate
 callback.
 
-- **`HomeDrawerRoute`** — new params `onNavigateToProfileSettings: (Long) -> Unit` and
-  `onNavigateToManageProfiles: () -> Unit` replace `onNavigateToProfileCarousel`; new
-  `profileViewModel: ProfileCarouselViewModel = hiltViewModel()` param, mirroring `hubViewModel`.
-  `profileAxis` gets folded into every place `hubAxis`/`drawerAxis` already were: the
+- **`HomeDrawerRoute`** — new params `onNavigateToFacetSettings: (Long) -> Unit` and
+  `onNavigateToManageFacets: () -> Unit` replace `onNavigateToFacetCarousel`; new
+  `facetViewModel: FacetCarouselViewModel = hiltViewModel()` param, mirroring `hubViewModel`.
+  `facetAxis` gets folded into every place `hubAxis`/`drawerAxis` already were: the
   home-pressed-event close-all effect, the focus-clear effect, the clock-adjust-cancel effect,
   and `BackHandler`.
   - **Two-axis ownership on Home's own horizontal drag**: previously the branch only ever fed
     `hubAxis` (rightward) and separately accumulated a distance for a release-time carousel
-    navigation. Now it feeds `hubAxis` *or* `profileAxis` live, frame by frame. Whichever axis a
+    navigation. Now it feeds `hubAxis` *or* `facetAxis` live, frame by frame. Whichever axis a
     gesture's first horizontal delta engages (`dragActive` flips true) keeps owning every
     subsequent frame regardless of a direction reversal — `dragBy()` already tolerates negative
     deltas fine (walks progress back down), so there's no risk of a wavering swipe handing control
@@ -1048,24 +1048,24 @@ callback.
     `dragActive` (exactly one, never both, per gesture).
   - **New panel `Box`**, drawn last (frontmost — it used to sit above everything as a modal
     `NavHost` destination, and staying frontmost here preserves that read), offset
-    `(1f - profileAxis.progress.value) * containerWidthPx` — 0 at rest-open, full width at
+    `(1f - facetAxis.progress.value) * containerWidthPx` — 0 at rest-open, full width at
     rest-closed, the mirror of the Hub's own `(hubAxis.progress.value - 1f) * containerWidthPx`.
     Its own `detectHorizontalDragGestures` handles empty-space swipes back to Home exactly like
     the Hub's own Box does.
-  - `ProfileCarouselScreen`'s three "leaves the panel" callbacks (`onProfileApplied`,
-    `onEditProfile`, `onReorderProfiles`) now resolve locally instead of navigating away from a
-    destination: applying closes `profileAxis` (`coroutineScope.launch { profileAxis.close() }`);
-    edit-profile/reorder call the new nav params directly and *don't* close the panel first — like
+  - `FacetCarouselScreen`'s three "leaves the panel" callbacks (`onFacetApplied`,
+    `onEditFacet`, `onReorderFacets`) now resolve locally instead of navigating away from a
+    destination: applying closes `facetAxis` (`coroutineScope.launch { facetAxis.close() }`);
+    edit-facet/reorder call the new nav params directly and *don't* close the panel first — like
     the Hub's own add-widget-picker overlay, navigating to a child screen and coming back (via its
     own `onBack`) lands you right back in the still-open carousel, not back at Home.
-- **`ProfileCarouselScreen`** no longer owns opening/closing at all (no more `onDismiss`,
+- **`FacetCarouselScreen`** no longer owns opening/closing at all (no more `onDismiss`,
   `DISMISS_SWIPE_FRACTION`/`DISMISS_FLING_VELOCITY` constants, or its own outer
   `detectHorizontalDragGestures` for empty space — that's the host `Box`'s job now). It keeps only
   the one thing it's uniquely positioned to detect: a rightward drag landing *on the pager* while
   settled on the first page, which the pager would otherwise eat as a dead overscroll. Two new
   params, `onDismissDrag: (deltaPx: Float) -> Unit` and `onDismissDragEnd: () -> Unit`, forward
   that `NestedScrollConnection`'s raw deltas up to the host, which feeds them into the very same
-  `profileAxis.dragBy(-deltaPx)` / `.settle()` the empty-space Box uses — so that specific gesture
+  `facetAxis.dragBy(-deltaPx)` / `.settle()` the empty-space Box uses — so that specific gesture
   is genuinely follow-finger too, not a separate threshold check. The `gestureMovedPager` latch
   (don't treat flinging *through* page 0 from another page as a dismiss) is unchanged.
 - **Real bug found**: the preview cards are a *genuine live copy* of Home's own content (clock,
@@ -1075,117 +1075,117 @@ callback.
   off-screen, so `onNodeWithText("FAVORITES")` in `HomeDrawerRouteTest` started matching two nodes
   (Home's real list and the carousel card's copy) and multiple pre-existing tests broke. Fixed
   with `Modifier.clearAndSetSemantics {}` on the panel `Box`, applied only while
-  `!isProfileOpen` — Compose's own `assertIsNotDisplayed()` already treats "node doesn't exist" as
+  `!isFacetOpen` — Compose's own `assertIsNotDisplayed()` already treats "node doesn't exist" as
   passing, so this needed no test-side workaround, just the production fix.
-- **`FacetNavHost`**: `PROFILE_CAROUSEL` destination, its `FacetDestinations` constant, and the
+- **`FacetNavHost`**: `FACET_CAROUSEL` destination, its `FacetDestinations` constant, and the
   `fadeIn`/`fadeOut`/`fadeSpec` machinery that existed only for it are all deleted. The NavHost-
-  level transitions lose their `PROFILE_CAROUSEL`-conditional `EnterTransition.None`/
+  level transitions lose their `FACET_CAROUSEL`-conditional `EnterTransition.None`/
   `ExitTransition.None` branches (nothing needs them any more) and go back to the plain slide
   every other destination uses.
 - Tests: `HomeDrawerRouteTest` swaps its lambda-based assertions
-  (`onNavigateToProfileCarousel`/`onDismiss` firing) for panel-visibility ones
-  (`onNodeWithTag("profile_carousel_screen").assertIsDisplayed()/.assertIsNotDisplayed()`),
-  matching how the Hub's own tests already worked; gains `profileViewModel` construction in its
-  `setContent` (sharing the same `profileRepository`/`settingsRepository`/app-backed repos as
+  (`onNavigateToFacetCarousel`/`onDismiss` firing) for panel-visibility ones
+  (`onNodeWithTag("facet_carousel_screen").assertIsDisplayed()/.assertIsNotDisplayed()`),
+  matching how the Hub's own tests already worked; gains `facetViewModel` construction in its
+  `setContent` (sharing the same `facetRepository`/`settingsRepository`/app-backed repos as
   `homeViewModel`/`launcherViewModel`, same reasoning as that block's own doc), plus new cases
   `swipingRightInEmptySpaceOnTheOpenCarouselReturnsToHome`,
-  `swipingRightOnTheFirstProfileCardWhileOpenReturnsToHome`,
-  `systemBackClosesAnOpenProfileCarousel`. `KeyboardDismissalTest` (unrelated to carousel
-  behavior) just gains a throwaway `profileViewModel` so it still constructs.
-  `ProfileCarouselScreenTest`'s three dismiss-drag tests are renamed and reworked to assert the
+  `swipingRightOnTheFirstFacetCardWhileOpenReturnsToHome`,
+  `systemBackClosesAnOpenFacetCarousel`. `KeyboardDismissalTest` (unrelated to carousel
+  behavior) just gains a throwaway `facetViewModel` so it still constructs.
+  `FacetCarouselScreenTest`'s three dismiss-drag tests are renamed and reworked to assert the
   `onDismissDrag`/`onDismissDragEnd` forwarding contract directly instead of a boolean
   "dismissed" flag; its empty-space case is deleted outright (that gesture no longer lives in this
   screen — `HomeDrawerRouteTest`'s new empty-space case covers it at the host level instead).
   Full suite: 354 JVM unit tests green; 43/43 targeted instrumented tests
-  (`ProfileCarouselScreenTest` + `HomeDrawerRouteTest` + `KeyboardDismissalTest`) green on
+  (`FacetCarouselScreenTest` + `HomeDrawerRouteTest` + `KeyboardDismissalTest`) green on
   `emulator-5554` (one run crashed mid-suite from a concurrent `adb install` racing the same
   device from unrelated work elsewhere — not a regression, confirmed clean on immediate retry).
 
 ---
 
-## Dock gains per-profile overrides (mirrors per-profile favorites) + a live preview on the profile settings screen
+## Dock gains per-facet overrides (mirrors per-facet favorites) + a live preview on the facet settings screen
 
-The dock was the last Home surface with no per-profile override — favorites, app-list
+The dock was the last Home surface with no per-facet override — favorites, app-list
 position/presentation/content-mode, clock/calendar design, and calendar selection all already
-resolve per active profile, but every profile shared one dock (`DockAppRepository`/`dock_apps`)
-and one `dockDisplayMode`. Now a profile can override both, behind a single **DOCK** Inherit/
+resolve per active facet, but every facet shared one dock (`DockAppRepository`/`dock_apps`)
+and one `dockDisplayMode`. Now a facet can override both, behind a single **DOCK** Inherit/
 Override card on its settings screen, exactly the shape of the existing **APPS LIST** card.
 
 - **Schema v15 → v16** (`Migrations.MIGRATION_15_16`, migration test added):
-  `profiles.overrideDock` (`INTEGER NOT NULL DEFAULT 0`) + `profiles.dockDisplayMode`
-  (`TEXT NOT NULL DEFAULT 'ICONS'`), plus a new `profile_dock_apps` table — the per-profile
-  counterpart to the global `dock_apps`, structurally identical to `favorite_apps` (profileId
-  FK, cascade delete, unique `(profileId, packageName, activityName)` index).
-- **`ProfileDockAppRepository`** (new) is to `DockAppRepository` exactly what `FavoriteAppRepository`
-  is to `DefaultFavoriteAppRepository`: `observeDockAppsForProfile` / `observeDockAppsForProfiles`
+  `facets.overrideDock` (`INTEGER NOT NULL DEFAULT 0`) + `facets.dockDisplayMode`
+  (`TEXT NOT NULL DEFAULT 'ICONS'`), plus a new `facet_dock_apps` table — the per-facet
+  counterpart to the global `dock_apps`, structurally identical to `favorite_apps` (facetId
+  FK, cascade delete, unique `(facetId, packageName, activityName)` index).
+- **`FacetDockAppRepository`** (new) is to `DockAppRepository` exactly what `FavoriteAppRepository`
+  is to `DefaultFavoriteAppRepository`: `observeDockAppsForFacet` / `observeDockAppsForFacets`
   (live-hydrated, uninstall-collapsing), `add`/`remove`/`replace`/`reorder`, plus raw/restore for
   backup. `DockAppRepository` is unchanged and stays the launcher-wide default dock. Tests:
-  `ProfileDockAppRepositoryTest` + `ProfileDockAppDaoTest` mirror the favorites ones.
-- **`ObserveHomeScreenStateUseCase`** resolves the dock per active profile via `flatMapLatest`
+  `FacetDockAppRepositoryTest` + `FacetDockAppDaoTest` mirror the favorites ones.
+- **`ObserveHomeScreenStateUseCase`** resolves the dock per active facet via `flatMapLatest`
   (mirroring `observeAppListItems`); `HomeUiState.activeDockDisplayMode` resolves the style,
-  consumed by `HomeDrawerRoute`. **`ObserveProfilePreviewsUseCase`** gained `ProfilePreviewData.dockApps`
-  so every carousel preview card renders its own profile's effective dock (previously all cards
-  shared one) — `ProfileCarouselViewModel` dropped its `DockAppRepository` dependency and its
-  shared `dockApps`/`dockDisplayMode`, replaced by a per-profile `dockDisplayMode(profileId)`
+  consumed by `HomeDrawerRoute`. **`ObserveFacetPreviewsUseCase`** gained `FacetPreviewData.dockApps`
+  so every carousel preview card renders its own facet's effective dock (previously all cards
+  shared one) — `FacetCarouselViewModel` dropped its `DockAppRepository` dependency and its
+  shared `dockApps`/`dockDisplayMode`, replaced by a per-facet `dockDisplayMode(facetId)`
   resolver. Tests added to both use-case test classes.
-- **`ProfileSettingsScreen`** — new **DOCK** section (`DockSection`): Inherit/Override card, a
+- **`FacetSettingsScreen`** — new **DOCK** section (`DockSection`): Inherit/Override card, a
   `LabeledDropdownRow<DockDisplayMode>` "Display style", a "Select dock apps" row →
-  `DockAppPickerScreen` scoped to this profile, and a drag-reorder list. The old
+  `DockAppPickerScreen` scoped to this facet, and a drag-reorder list. The old
   `FavoritesReorderList` was generalized to `AppReorderList(apps, onReorder, testTagPrefix)` and
-  is now shared by favorites + dock. `ProfileRepository.updateOverridingDock`/`setDockDisplayMode`
+  is now shared by favorites + dock. `FacetRepository.updateOverridingDock`/`setDockDisplayMode`
   added; `setOverridingDock` seeds the display mode + copies the default dock in when the
-  profile's own is empty (mirrors `setOverridingApps`).
-- **`DockAppPickerViewModel`** is now profile-aware exactly like `FavoritesPickerViewModel` —
-  `SavedStateHandle`'s `profileId` (`NO_ACTIVE_PROFILE_ID` sentinel = global) routes reads/writes
-  to `ProfileDockAppRepository` or `DockAppRepository`. Route `dockPicker?profileId={profileId}`
-  + `FacetDestinations.dockPicker(profileId)`. The global picker's header is now "Default dock"
-  (matching "Default favorites"); the profile one stays "Dock".
-- **Backup**: `BackupProfile` gained `overrideDock` / `dockDisplayMode` / `dockApps` (all
+  facet's own is empty (mirrors `setOverridingApps`).
+- **`DockAppPickerViewModel`** is now facet-aware exactly like `FavoritesPickerViewModel` —
+  `SavedStateHandle`'s `facetId` (`NO_ACTIVE_FACET_ID` sentinel = global) routes reads/writes
+  to `FacetDockAppRepository` or `DockAppRepository`. Route `dockPicker?facetId={facetId}`
+  + `FacetDestinations.dockPicker(facetId)`. The global picker's header is now "Default dock"
+  (matching "Default favorites"); the facet one stays "Dock".
+- **Backup**: `BackupFacet` gained `overrideDock` / `dockDisplayMode` / `dockApps` (all
   defaulted — a v1 backup still deserializes, inheriting the launcher-wide dock);
-  `CURRENT_BACKUP_VERSION` 1 → 2. Export/import round-trip each profile's dock. Tests updated.
-- **Live preview card** (requested mid-build): `ProfilePreviewCard` at the top of the profile
-  settings screen — same idea as Settings → Appearance's own preview, scoped to one profile. Real
+  `CURRENT_BACKUP_VERSION` 1 → 2. Export/import round-trip each facet's dock. Tests updated.
+- **Live preview card** (requested mid-build): `FacetPreviewCard` at the top of the facet
+  settings screen — same idea as Settings → Appearance's own preview, scoped to one facet. Real
   production `AppRow` + `DockIcon` over the device's actual `WallpaperBackground`, driven by the
-  profile's *effective* values so toggling any override updates it live. Shows the real apps that
+  facet's *effective* values so toggling any override updates it live. Shows the real apps that
   will appear on Home: `previewAppListItems` (favorites/recents/most-used, resolved via
-  `ObserveProfilePreviewsUseCase` — now injected into `ProfileSettingsViewModel` alongside
+  `ObserveFacetPreviewsUseCase` — now injected into `FacetSettingsViewModel` alongside
   `WallpaperRepository`) and `effectiveDockApps`.
-- Instrumented tests: `ProfileSettingsScreenTest` (dock card defaults to inherit, override
+- Instrumented tests: `FacetSettingsScreenTest` (dock card defaults to inherit, override
   enables its rows + persists, "Select dock apps" navigates, preview card renders near the top);
-  `DockAppPickerScreenTest` (`profileScopedPickerTitlesItselfDockAndWritesToThatProfilesOwnDock`,
+  `DockAppPickerScreenTest` (`facetScopedPickerTitlesItselfDockAndWritesToThatFacetsOwnDock`,
   plus the global picker's title assertion updated to "Default dock").
-- `CleanUpUninstalledAppsUseCase` also purges `profile_dock_apps` on a genuine uninstall.
+- `CleanUpUninstalledAppsUseCase` also purges `facet_dock_apps` on a genuine uninstall.
 
 ---
 
-## Profile settings restructured — Apps-list & Dock reuse the launcher's own settings screens
+## Facet settings restructured — Apps-list & Dock reuse the launcher's own settings screens
 
-Follow-up to the above: the per-profile settings screen had grown into one long inline scroll
+Follow-up to the above: the per-facet settings screen had grown into one long inline scroll
 (preview + APPS LIST card + DOCK card + CLOCK card). Restructured to match how `ClockStyleGallery`
-is already reused for both the global and per-profile cases:
+is already reused for both the global and per-facet cases:
 
-- **`ProfileSettingsScreen`** is now a short nav list — Rename, then per area an
+- **`FacetSettingsScreen`** is now a short nav list — Rename, then per area an
   `InheritOverrideCard` (the override switch *stays here*) + a single row into that area's own
   screen. No preview, no inline controls.
 - **`HomeAppsListSettingsScreen` / `HomeAppsListSettingsViewModel` and `DockSettingsScreen` /
-  `DockSettingsViewModel` are now profile-aware** via the `SavedStateHandle` `profileId` sentinel
-  (`NO_ACTIVE_PROFILE_ID` = the launcher-wide default), exactly like `ClockStyleGalleryViewModel`.
-  A real id reads/writes that profile's own row + `FavoriteAppRepository` /
-  `ProfileDockAppRepository`; no id writes `SettingsRepository` + the default lists. Routes gained
-  `?profileId={profileId}` + `FacetDestinations.homeAppsListSettings(id)` / `dockSettings(id)`
-  builders; `ProfileSettingsScreen`'s rows navigate with the profile id, the global Settings
+  `DockSettingsViewModel` are now facet-aware** via the `SavedStateHandle` `facetId` sentinel
+  (`NO_ACTIVE_FACET_ID` = the launcher-wide default), exactly like `ClockStyleGalleryViewModel`.
+  A real id reads/writes that facet's own row + `FavoriteAppRepository` /
+  `FacetDockAppRepository`; no id writes `SettingsRepository` + the default lists. Routes gained
+  `?facetId={facetId}` + `FacetDestinations.homeAppsListSettings(id)` / `dockSettings(id)`
+  builders; `FacetSettingsScreen`'s rows navigate with the facet id, the global Settings
   screen without. `HomeAppsListSettingsScreen(onEditDefaultFavorites)` → `onEditFavorites`.
 - **`HomeSurfacePreview`** (`ui/components/`) — the "this is how Home looks" card extracted from
-  the two copies that existed (`AppearancePreviewCard`, the profile `ProfilePreviewCard`) into
+  the two copies that existed (`AppearancePreviewCard`, the facet `FacetPreviewCard`) into
   one shared component (real `AppRow`/`DockIcon` over `WallpaperBackground`; empty `appList` or
   `dockApps` omits that surface). Now on **four** screens: Appearance, Home Apps List (app rows;
   `previewApps` = the favorites in Favorites mode, `SelectPreviewAppsUseCase` sample otherwise),
-  Dock (dock icons; the real `dockApps`), and each of those in its profile-scoped form.
-- **`ProfileSettingsViewModel` slimmed** — dropped the preview flow, `WallpaperRepository`,
-  `ObserveProfilePreviewsUseCase`, and the per-control setters (those live on the reused VMs
-  now); keeps `uiState` (for the override subtitles + seed values), `renameProfile`, and the
-  three `setOverriding*` seed-and-toggle actions. `ProfileSettingsComponents.kt` holds the shared
+  Dock (dock icons; the real `dockApps`), and each of those in its facet-scoped form.
+- **`FacetSettingsViewModel` slimmed** — dropped the preview flow, `WallpaperRepository`,
+  `ObserveFacetPreviewsUseCase`, and the per-control setters (those live on the reused VMs
+  now); keeps `uiState` (for the override subtitles + seed values), `renameFacet`, and the
+  three `setOverriding*` seed-and-toggle actions. `FacetSettingsComponents.kt` holds the shared
   header/row/section-header helpers.
-- Tests: `ProfileSettingsScreenTest` rewritten for the nav list; `HomeAppsListSettingsScreenTest` /
-  `DockSettingsScreenTest` / their VM tests cover both the global and a profile-scoped instance
+- Tests: `FacetSettingsScreenTest` rewritten for the nav list; `HomeAppsListSettingsScreenTest` /
+  `DockSettingsScreenTest` / their VM tests cover both the global and a facet-scoped instance
   (setter routing, preview renders); `AppearanceSettingsScreenTest` unchanged.

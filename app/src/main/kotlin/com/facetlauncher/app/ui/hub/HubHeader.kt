@@ -28,7 +28,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 @Composable
 fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick: () -> Unit, modifier: Modifier = Modifier) {
     ScreenHeader(
-        title = "Facet Hub",
+        title = "Widgets",
         subtitle = "$widgetCount of $HUB_MAX_WIDGETS widgets",
         modifier = modifier,
         onWallpaper = true,

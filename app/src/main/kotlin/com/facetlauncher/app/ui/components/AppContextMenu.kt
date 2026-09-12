@@ -70,8 +70,8 @@ private val ITEM_PADDING = PaddingValues(horizontal = 24.dp, vertical = 16.dp)
  * "Add to Favorites"/"Add to Dock" (from [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase])
  * sit between "App info" and the shortcuts — [addToFavoritesOverride]/[addToDockOverride] being
  * `null` hides the corresponding row entirely (that list is already at its cap); non-null selects
- * between "Add to Favorites"/"Add to Dock" (the launcher-wide default) and "Add to profile
- * favorites"/"Add to profile dock" (the active profile is overriding its own).
+ * between "Add to Favorites"/"Add to Dock" (the launcher-wide default) and "Add to facet
+ * favorites"/"Add to facet dock" (the active facet is overriding its own).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,7 +139,7 @@ fun AppContextMenu(
         )
         if (addToFavoritesOverride != null) {
             AppContextMenuItem(
-                label = if (addToFavoritesOverride) "Add to profile favorites" else "Add to Favorites",
+                label = if (addToFavoritesOverride) "Add to facet favorites" else "Add to Favorites",
                 modifier = Modifier.testTag("app_context_menu_add_to_favorites"),
                 leadingIcon = { Icon(imageVector = Icons.Outlined.StarBorder, contentDescription = null, tint = Muted) },
                 onClick = {
@@ -150,7 +150,7 @@ fun AppContextMenu(
         }
         if (addToDockOverride != null) {
             AppContextMenuItem(
-                label = if (addToDockOverride) "Add to profile dock" else "Add to Dock",
+                label = if (addToDockOverride) "Add to facet dock" else "Add to Dock",
                 modifier = Modifier.testTag("app_context_menu_add_to_dock"),
                 leadingIcon = { Icon(imageVector = Icons.Outlined.Dock, contentDescription = null, tint = Muted) },
                 onClick = {

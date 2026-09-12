@@ -36,19 +36,28 @@ class DefaultLauncherRepository @Inject constructor(@ApplicationContext private 
 
     /**
      * An in-place system confirmation dialog via [RoleManager.createRequestRoleIntent] when the
-     * `ROLE_HOME` role API is available and not already held, falling back to the same
-     * `ACTION_MANAGE_DEFAULT_APPS_SETTINGS` screen this app's own Settings row has always used
-     * otherwise (older API levels, or an OEM that doesn't expose the role).
+     * `ROLE_HOME` role API is available and not already held — guaranteed to resolve since the
+     * role API being available at all means the platform backs it with a real handler. Falls back
+     * to the same `ACTION_MANAGE_DEFAULT_APPS_SETTINGS` screen this app's own Settings row has
+     * always used otherwise (older API levels, or an OEM that doesn't expose the role); that
+     * fallback screen isn't guaranteed on every OEM build, so it's checked against
+     * [PackageManager] and swapped for the top-level `ACTION_SETTINGS` screen (present on every
+     * Android device) when it can't resolve — otherwise the Settings row's click silently does
+     * nothing.
      */
     fun requestDefaultLauncherIntent(): Intent {
         val roleManager = context.getSystemService(RoleManager::class.java)
-        return if (roleManager != null &&
+        if (roleManager != null &&
             roleManager.isRoleAvailable(RoleManager.ROLE_HOME) &&
             !roleManager.isRoleHeld(RoleManager.ROLE_HOME)
         ) {
-            roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+            return roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+        }
+        val settingsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+        return if (settingsIntent.resolveActivity(context.packageManager) != null) {
+            settingsIntent
         } else {
-            Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            Intent(Settings.ACTION_SETTINGS)
         }
     }
 }

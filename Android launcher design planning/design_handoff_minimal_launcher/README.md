@@ -2,9 +2,9 @@
 
 ## Overview
 
-A minimal Android home-screen replacement. Instead of an icon grid, the home surface shows a large clock, the next calendar events, a short list of app names, and a fixed dock. All apps live in one alphabetical drawer reached by swiping up. Users can keep up to three **profiles** — separate home configurations (clock style, list content, favorites) that share one dock.
+A minimal Android home-screen replacement. Instead of an icon grid, the home surface shows a large clock, the next calendar events, a short list of app names, and a fixed dock. All apps live in one alphabetical drawer reached by swiping up. Users can keep up to three **facets** — separate home configurations (clock style, list content, favorites) that share one dock.
 
-This bundle covers two surfaces in full (Home, App Drawer) plus the Launcher Hub, first-run, settings, profile management, pickers, and permission-denied states. Source requirements are in `PRD.md`.
+This bundle covers two surfaces in full (Home, App Drawer) plus the Launcher Hub, first-run, settings, facet management, pickers, and permission-denied states. Source requirements are in `PRD.md`.
 
 ## About the Design Files
 
@@ -41,19 +41,19 @@ App names are invented. No real products are depicted.
 | `2a` | Long-press sheet | |
 | `2b`, `2c` | Superseded by `3a` / `3c` | Kept for reference only — do not implement |
 | `2d` | Clock style as its own page | Adopted; see `3e` |
-| `3a` | Profile carousel | **Revised:** recent-apps style — swipe browses, tap any card (centered or peeking) applies it immediately. Uniform card scale (~85%), no separate centered/neighbour tiers. |
-| `3b` | Profile reorder list | **Revised:** no longer an in-carousel long-press-drag state. A "Reorder" header link swaps the carousel for a plain list — drag handle, name, overflow menu (Profile settings / Delete) per row, plus a pinned Add-profile row. |
+| `3a` | Facet carousel | **Revised:** recent-apps style — swipe browses, tap any card (centered or peeking) applies it immediately. Uniform card scale (~85%), no separate centered/neighbour tiers. |
+| `3b` | Facet reorder list | **Revised:** no longer an in-carousel long-press-drag state. A "Reorder" header link swaps the carousel for a plain list — drag handle, name, overflow menu (Facet settings / Delete) per row, plus a pinned Add-facet row. |
 | `3c` | **Launcher settings** | Canonical settings screen. **Revised:** each section is now a card (14px corners, `Hairline` border/dividers), not a flat row list. |
-| `3d` | **Per-profile settings** | **Revised:** grouped into an App-list card and a Clock card (see `3d`/Clock card below). |
+| `3d` | **Per-facet settings** | **Revised:** grouped into an App-list card and a Clock card (see `3d`/Clock card below). |
 | `3e` | Clock style page (default) | Still unbuilt — only "Light stack" exists (Known Gap). |
-| `3f` | Clock style page (profile override) | **Revised/expanded:** the inherit/override pattern this page introduced now also covers a profile's 24-hour time and Calendar settings, via the Clock card's single switch — not clock style alone. |
-| — | **Calendar settings** [new screen] | Reached from the global or a profile's Clock card. "Show all-day events" toggle (real) + "Calendars to display" (permission-denied placeholder — see `4l`). |
+| `3f` | Clock style page (facet override) | **Revised/expanded:** the inherit/override pattern this page introduced now also covers a facet's 24-hour time and Calendar settings, via the Clock card's single switch — not clock style alone. |
+| — | **Calendar settings** [new screen] | Reached from the global or a facet's Clock card. "Show all-day events" toggle (real) + "Calendars to display" (permission-denied placeholder — see `4l`). |
 | `4a`–`4e` | Launcher Hub: populated, empty, add picker, at capacity, orphaned widget | |
 | `4f`–`4h` | First run: what it is → pick favorites → set as default | |
 | `4i` | App long-press menu | |
 | `4j`–`4l` | Pickers: favorites, dock, calendars | |
-| `4m` | Rename dialog | App labels and profile names |
-| `4n`–`4o` | Add profile: placeholder page, then created | |
+| `4m` | Rename dialog | App labels and facet names |
+| `4n`–`4o` | Add facet: placeholder page, then created | |
 | `4p` | Permission-denied and empty states | |
 | `4q` | Search with no results | |
 
@@ -73,7 +73,7 @@ App names are invented. No real products are depicted.
    - Date: `400 13px`, `rgba(2,8,23,.5)`, `margin-top: 10px`. Format `Wednesday, 26 August`.
    - Event rows: `gap: 9px`, `margin-top: 20px`. Each row is `[2×13px rule] [time, min-width 48px] [title]`, `400 12.5px`. Next event's rule is the accent; later ones `rgba(2,8,23,.25)`. Time column `rgba(2,8,23,.42)`, title `rgba(2,8,23,.62)`.
 3. Flex spacer — pushes the rest to the bottom.
-4. Section label — `500 10px`, `letter-spacing: .1em`, `rgba(2,8,23,.34)`, followed by a 1px hairline and the profile dots. Text is the list mode: `FAVORITES` / `RECENTS` / `MOST USED`.
+4. Section label — `500 10px`, `letter-spacing: .1em`, `rgba(2,8,23,.34)`, followed by a 1px hairline and the facet dots. Text is the list mode: `FAVORITES` / `RECENTS` / `MOST USED`.
 5. App list — rows of `padding: 10px 0` (revised from `8px 0` for more breathing room between rows), `gap: 14px`. Icon `34×34`, `border-radius: 10px`. Name `400 18px/1`, `letter-spacing: -.2px`. Notification badge trailing the name — **[revised]** a per-user choice between a `6px` dot circle and a numeric count pill (capped at `9+`), both in the accent color; see F13/Notification Settings. A fixed `16px` spacer follows the list, before the dock (or the screen's own bottom padding if the dock is empty).
 6. Dock — **0–5 apps, user-configured [revised]:** no floor — removing every app is allowed, and the dock row is omitted entirely (not shown empty) when it has zero apps. `justify-content: space-between`, `padding: 0 4px`. Icons `50×50`, `border-radius: 15px`. Badge is the same dot/count choice as the favorites list, at `top:-1px; right:-1px`. **Known gap:** the `2px` wallpaper-coloured separator ring around the dock badge is spec'd but not yet implemented (Material3's `BadgedBox` renders the badge with no ring today).
 7. Gesture bar — `104×4`, `border-radius: 2px`, `rgba(2,8,23,.18)`, `margin-top: 16px`.
@@ -110,7 +110,7 @@ App names are invented. No real products are depicted.
 
 ### Long-press sheet (`2a`) — removed
 
-> **Superseded.** This bottom sheet was deleted during implementation: three of its rows found other homes (Launcher settings → the carousel screen; Change wallpaper → a Settings row; Edit profile → the carousel's per-card menu) and the last, **Switch profile**, became the whole gesture's target — first as a direct long-press to the carousel, now as a **left swipe on Home** (the long-press was too hard to land in the gaps between the clock, app list and dock). The original spec is kept below for reference only.
+> **Superseded.** This bottom sheet was deleted during implementation: three of its rows found other homes (Launcher settings → the carousel screen; Change wallpaper → a Settings row; Edit facet → the carousel's per-card menu) and the last, **Switch facet**, became the whole gesture's target — first as a direct long-press to the carousel, now as a **left swipe on Home** (the long-press was too hard to land in the gaps between the clock, app list and dock). The original spec is kept below for reference only.
 
 Long-press empty space on the home surface for **420ms**; movement over 8px cancels. The home layer dims under `rgba(2,8,23,.28)`; the sheet rises from the bottom, `border-radius: 20px 20px 0 0`, `transform .3s cubic-bezier(.32,.72,0,1)`, `box-shadow: 0 -8px 24px rgba(2,8,23,.1)`. A `34×4` grab handle sits centred above the rows.
 
@@ -118,36 +118,36 @@ Four rows, each `13px 24px` with `1px` separators, title `400 16px` and subtitle
 
 | Row | Subtitle | Destination |
 |---|---|---|
-| Switch profile | `Currently Focus — 2 of 3` | `3a` |
-| Edit profile | `Clock style, list content, favorites` | `3d` |
+| Switch facet | `Currently Focus — 2 of 3` | `3a` |
+| Edit facet | `Clock style, list content, favorites` | `3d` |
 | Launcher settings | `Clock, favorites, drawer, badges` | `3c` |
 | Change wallpaper | `Opens the system picker` | System picker |
 
-### Profile carousel (`3a`, `3b`, `4n`, `4o`)
+### Facet carousel (`3a`, `3b`, `4n`, `4o`)
 
-**Purpose.** Switch the active profile, reorder profiles, reach per-profile settings.
+**Purpose.** Switch the active facet, reorder facets, reach per-facet settings.
 
-> **Revised from the original mock, decided during implementation:** the carousel now behaves like a recent-apps switcher rather than a browse-then-confirm picker. There's no **Select** button — tapping any visible card applies it immediately and closes. Since tapping a card now always applies it, long-press-to-reorder-in-place is gone; reordering moved to a dedicated list screen (`3b`, redefined below), reached via a **Reorder** header link instead of a sub-line hint. Tap-the-name-to-rename is also gone — rename now lives in Per-profile settings (`3d`), reached from the carousel's gear icon or the reorder list's overflow menu.
+> **Revised from the original mock, decided during implementation:** the carousel now behaves like a recent-apps switcher rather than a browse-then-confirm picker. There's no **Select** button — tapping any visible card applies it immediately and closes. Since tapping a card now always applies it, long-press-to-reorder-in-place is gone; reordering moved to a dedicated list screen (`3b`, redefined below), reached via a **Reorder** header link instead of a sub-line hint. Tap-the-name-to-rename is also gone — rename now lives in Per-facet settings (`3d`), reached from the carousel's gear icon or the reorder list's overflow menu.
 
-> **Revised again during implementation:** `3a` (Switch Profiles) and `3b` (Manage Profiles) are now two separate screens.
-> - **`3a` Switch Profiles** — opened by a **left swipe on Home** *(revised — was the empty-space long-press)*. **Revised once more:** no longer a `NavHost` destination at all — like the Hub, it's a permanent **follow-finger panel** to Home's right (translucent, 60% `SurfaceContainer`), tracking the finger continuously rather than committing on release-then-animating. The left swipe that opens it and the rightward swipe that closes it (in empty space, or on the first profile's card, where the pager has nowhere to browse) drive the exact same axis live — no separate "slide in" transition step any more, since there's no navigation event to transition between. Home stays put behind it. **No header** — just a right-aligned secondary **Reorder** button (border + light fill, disabled with one profile) that opens `3b`. No back button: system back, that rightward swipe, or tapping a card (which applies it and closes the panel), is the way out.
-> - **`3b` Manage Profiles** — a normal settings screen (sticky header "Manage Profiles" + back chevron, opaque `SurfaceContainer`), reached from Settings → Profiles *and* the carousel's Reorder button. The drag-to-reorder / add / per-profile-settings / delete list.
+> **Revised again during implementation:** `3a` (Switch Facets) and `3b` (Manage Facets) are now two separate screens.
+> - **`3a` Switch Facets** — opened by a **left swipe on Home** *(revised — was the empty-space long-press)*. **Revised once more:** no longer a `NavHost` destination at all — like the Hub, it's a permanent **follow-finger panel** to Home's right (translucent, 60% `SurfaceContainer`), tracking the finger continuously rather than committing on release-then-animating. The left swipe that opens it and the rightward swipe that closes it (in empty space, or on the first facet's card, where the pager has nowhere to browse) drive the exact same axis live — no separate "slide in" transition step any more, since there's no navigation event to transition between. Home stays put behind it. **No header** — just a right-aligned secondary **Reorder** button (border + light fill, disabled with one facet) that opens `3b`. No back button: system back, that rightward swipe, or tapping a card (which applies it and closes the panel), is the way out.
+> - **`3b` Manage Facets** — a normal settings screen (sticky header "Manage Facets" + back chevron, opaque `SurfaceContainer`), reached from Settings → Facets *and* the carousel's Reorder button. The drag-to-reorder / add / per-facet-settings / delete list.
 
-**Carousel.** Every page (profile or the trailing Add page) is a scale model of the device screen (`CAROUSEL_CARD_SCALE` of its width *and* height, so it keeps the phone's own aspect ratio), with `shadow` + hairline border. Each page is a **live snapshot of that profile**: the real `ClockBlock` plus that profile's actual favorites — or `No favorites yet`. The profile name sits above the card as a plain label; gear/trash sit below it.
+**Carousel.** Every page (facet or the trailing Add page) is a scale model of the device screen (`CAROUSEL_CARD_SCALE` of its width *and* height, so it keeps the phone's own aspect ratio), with `shadow` + hairline border. Each page is a **live snapshot of that facet**: the real `ClockBlock` plus that facet's actual favorites — or `No favorites yet`. The facet name sits above the card as a plain label; gear/trash sit below it.
 
-**Add page.** Sits after the last profile, up to 3 total. Dashed `rgba(2,8,23,.26)` border, centred `+` at `300 34px`, then `Add profile` and `Copies this profile's settings. Favorites start empty.` (`4n`). Reserves the same footer space (gear/trash row, invisible not omitted) as a real profile page, so it renders at the identical height.
+**Add page.** Sits after the last facet, up to 3 total. Dashed `rgba(2,8,23,.26)` border, centred `+` at `300 34px`, then `Add facet` and `Copies this facet's settings. Favorites start empty.` (`4n`). Reserves the same footer space (gear/trash row, invisible not omitted) as a real facet page, so it renders at the identical height.
 
-**Actions.** Gear and trash glyphs centred *below* the page, above the indicator — `gap: 26px`, 19px, 55%/50% opacity. No full-width buttons. Gear opens Per-profile settings (`3d`) for the centred profile; trash opens the delete confirmation.
+**Actions.** Gear and trash glyphs centred *below* the page, above the indicator — `gap: 26px`, 19px, 55%/50% opacity. No full-width buttons. Gear opens Per-facet settings (`3d`) for the centred facet; trash opens the delete confirmation.
 
 **Indicator.** Page dots below the actions; active dot is a `16×5` rounded bar, inactive are `5px` circles.
 
 **Behavior.**
 - Horizontal swipe browses, clamped at both ends — **no infinite scroll**. Browsing alone never applies anything.
 - **Tapping any card — centred or a peeking neighbour — applies it immediately and closes.** Back (nav bar or gesture) returns to wherever the carousel was opened from without applying anything.
-- **Add profile** (`4n` → `4o`): silently duplicates the previous profile as `Profile N`, **copying its settings but not its favorites**. The new page becomes the centred one; its favorites area shows `No favorites yet`. Gear and trash are dimmed to 22% on the placeholder page and become active once created.
-- **Preview cards also render the dock [revised]:** since the dock is shared across every profile (not per-profile), each preview card shows the same live dock row beneath its favorites — same `16px` gap / omit-when-empty behavior as the real Home screen.
+- **Add facet** (`4n` → `4o`): silently duplicates the previous facet as `Facet N`, **copying its settings but not its favorites**. The new page becomes the centred one; its favorites area shows `No favorites yet`. Gear and trash are dimmed to 22% on the placeholder page and become active once created.
+- **Preview cards also render the dock [revised]:** since the dock is shared across every facet (not per-facet), each preview card shows the same live dock row beneath its favorites — same `16px` gap / omit-when-empty behavior as the real Home screen.
 
-**Reorder list (`3b`, revised).** Tapping **Reorder** swaps the whole carousel — pager, indicator dots, gear/trash row — for a plain vertical list, one row per profile: a drag-handle glyph on the left, the profile name, and an overflow (`⋮`) menu on the right with **Profile settings** and **Delete**. A non-reorderable **Add profile** row is pinned at the bottom. Dragging a row by its handle live-reorders the list (other rows animate out of the way); releasing commits the new order immediately. The header's **Reorder** link becomes **Done**, returning to the carousel; system back does the same rather than exiting the Profiles screen entirely.
+**Reorder list (`3b`, revised).** Tapping **Reorder** swaps the whole carousel — pager, indicator dots, gear/trash row — for a plain vertical list, one row per facet: a drag-handle glyph on the left, the facet name, and an overflow (`⋮`) menu on the right with **Facet settings** and **Delete**. A non-reorderable **Add facet** row is pinned at the bottom. Dragging a row by its handle live-reorders the list (other rows animate out of the way); releasing commits the new order immediately. The header's **Reorder** link becomes **Done**, returning to the carousel; system back does the same rather than exiting the Facets screen entirely.
 
 ### Launcher settings (`3c`)
 
@@ -157,17 +157,17 @@ Canonical settings screen. Scrolls well past one viewport. Title `500 26px`, `le
 
 | Section | Contents |
 |---|---|
-| **PROFILES** | Profiles → the **Manage Profiles** list (`3b`) — reorder, add/remove, reach per-profile settings. (The swipeable **Switch Profiles** carousel opens on a left swipe on Home instead.) |
+| **FACETS** | Facets → the **Manage Facets** list (`3b`) — reorder, add/remove, reach per-facet settings. (The swipeable **Switch Facets** carousel opens on a left swipe on Home instead.) |
 | **CLOCK** | Default clock style → `3e` (disabled — see Known Gap, `IMPLEMENTATION_PLAN.md`). **24-hour time** (real toggle). **Calendar** [revised — was "Calendar events" disabled, now a real row navigating to Calendar settings] → subtitle reflects whether all-day events are shown. |
-| **NOTIFICATIONS** [new, split out of "Shared across profiles"] | **Notifications** [revised — now a `ClickableRow` navigating to its own dedicated Notification Settings page, not an inline toggle] subtitle shows `On · Dot`/`On · Count`/`Off`. That page holds the real on/off switch (turning it on without access granted routes to the notification-access explanation screen first) plus a **Badge style** dropdown (Dot / Count). |
-| **DOCK** | `4 apps · shared across profiles`; icon row + `+` slot → `4k`; `Drag to reorder · long-press to remove · up to 5 apps`; **Display style** [revised — was "Show apps as", now a dropdown, not a two-pill toggle] Icons (default) / Text |
+| **NOTIFICATIONS** [new, split out of "Shared across facets"] | **Notifications** [revised — now a `ClickableRow` navigating to its own dedicated Notification Settings page, not an inline toggle] subtitle shows `On · Dot`/`On · Count`/`Off`. That page holds the real on/off switch (turning it on without access granted routes to the notification-access explanation screen first) plus a **Badge style** dropdown (Dot / Count). |
+| **DOCK** | `4 apps · shared across facets`; icon row + `+` slot → `4k`; `Drag to reorder · long-press to remove · up to 5 apps`; **Display style** [revised — was "Show apps as", now a dropdown, not a two-pill toggle] Icons (default) / Text |
 | **APP DRAWER** | **Presentation** [revised — now a real dropdown, not disabled] List (default) / Grid. **Grid size** [revised — real dropdown, **only shown when Presentation is Grid**] 4×4 / 4×5 / 5×5 / 5×6 (default). **Show icons** (real, **only shown under List**). **Show labels** [revised — now real, **only shown under Grid**, was always-shown-disabled]. Search contacts (still disabled). Search bar position (unchanged pill toggle). **Drawer opacity** [moved here from Appearance] — slider handle shortened to an `8px`-tall, `4px`-wide accent bar (a `4px` track height plus `2px` overhang each side), replacing the default circular thumb. |
 | **APPEARANCE** | Icons: System default / Monochrome (default), still disabled. Accent from system, still disabled. *(Drawer opacity moved to App Drawer, above.)* |
 | **(bottom)** | Backup & restore (still disabled), Set as default launcher (`Active`, green) |
 
-### Per-profile settings (`3d`)
+### Per-facet settings (`3d`)
 
-Reached from the sheet's **Edit profile**, the carousel's gear, or the reorder list's overflow menu (**Profile settings**). Header shows the profile name. **Revised: grouped into cards** — an unheaded "App list" card, a headed **CLOCK** card, then Rename profile as a standalone row below both.
+Reached from the sheet's **Edit facet**, the carousel's gear, or the reorder list's overflow menu (**Facet settings**). Header shows the facet name. **Revised: grouped into cards** — an unheaded "App list" card, a headed **CLOCK** card, then Rename facet as a standalone row below both.
 
 | Row | Control |
 |---|---|
@@ -175,20 +175,20 @@ Reached from the sheet's **Edit profile**, the carousel's gear, or the reorder l
 | Apps to show | Only rendered when a non-Favorites mode is selected — effectively always hidden today, since nothing else is selectable yet [revised from "always shown disabled"] |
 | Favorite apps | `5 of 8` + chevron → `4j`, subtitle only (no preview icon row built) |
 | *(Clock card, see below)* | |
-| Rename profile | → `4m`, standalone row below the cards |
+| Rename facet | → `4m`, standalone row below the cards |
 
-Footnote: dock, icons, accent, drawer layout and notification dots are launcher-wide. A new profile copies the previous profile's settings; favorites start empty.
+Footnote: dock, icons, accent, drawer layout and notification dots are launcher-wide. A new facet copies the previous facet's settings; favorites start empty.
 
 ### Clock card (`3d`) and Calendar settings (new screen, wraps `4l`)
 
-**Revised and expanded from the original `3e`/`3f` clock-style-only design:** the profile's **CLOCK** card now covers three rows — Clock style, 24-hour time, Calendar — behind **one shared Inherit/Override switch** (not a separate switch per row), reusing the exact `3e`/`3f` radio-row copy and tinting:
+**Revised and expanded from the original `3e`/`3f` clock-style-only design:** the facet's **CLOCK** card now covers three rows — Clock style, 24-hour time, Calendar — behind **one shared Inherit/Override switch** (not a separate switch per row), reusing the exact `3e`/`3f` radio-row copy and tinting:
 
 - **Inherit default** — shows the global default's current values (e.g. `Light stack · 12-hour time`), read-only
-- **Override for this profile** — tints the switch's own selected row `rgba(37,99,235,.04)`; the three rows below become independently editable for this profile only
+- **Override for this facet** — tints the switch's own selected row `rgba(37,99,235,.04)`; the three rows below become independently editable for this facet only
 
-Only **24-hour time** is a real, independently-persisted override today (Clock style stays inherit-only — no second style exists yet, Known Gap). **Calendar** navigates to a **new Calendar settings screen**, reached from either the global Settings Clock card or a profile's Clock card:
+Only **24-hour time** is a real, independently-persisted override today (Clock style stays inherit-only — no second style exists yet, Known Gap). **Calendar** navigates to a **new Calendar settings screen**, reached from either the global Settings Clock card or a facet's Clock card:
 
-- **Show all-day events** — a real toggle. From the global entry point it writes the launcher-wide default directly; from a profile's entry point, its own separate Inherit/Override switch (same two-radio-row pattern) governs whether it reads/writes the global value or this profile's own.
+- **Show all-day events** — a real toggle. From the global entry point it writes the launcher-wide default directly; from a facet's entry point, its own separate Inherit/Override switch (same two-radio-row pattern) governs whether it reads/writes the global value or this facet's own.
 - **Calendars to display** — the `4p` permission-denied strip (`Calendar access off — events hidden.` / `Turn on`), since `READ_CALENDAR` isn't requested yet and there's no live calendar list to check off. Phase 4 replaces this card's contents with the real picker.
 
 The original full clock-style live-preview page (`3e`/`3f`, mini clock renders per style) remains unbuilt — only "Light stack" exists, so the "Clock style" row inside the card stays a disabled placeholder regardless of Inherit/Override state.
@@ -228,10 +228,10 @@ Same menu from the dock, favorites list, and drawer. Renaming changes the launch
 
 ### Pickers (`4j`–`4l`) and rename (`4m`)
 
-- **`4j` Favorites** — full-screen, searchable, checkboxes, `5 of 8 chosen`. At 8, unchecked rows grey out until one is removed. Reordering happens on the profile page, not here.
-- **`4k` Dock** — same shape; current dock shown as a 44px icon row with a dashed `+`. **Up to 5 apps, no minimum [revised — was `3 to 5 apps`]**, shared across every profile. Removing collapses the row — no empty slot; removing the last app empties the dock entirely, and Home/the carousel preview then omit the dock row rather than showing it empty.
+- **`4j` Favorites** — full-screen, searchable, checkboxes, `5 of 8 chosen`. At 8, unchecked rows grey out until one is removed. Reordering happens on the facet page, not here.
+- **`4k` Dock** — same shape; current dock shown as a 44px icon row with a dashed `+`. **Up to 5 apps, no minimum [revised — was `3 to 5 apps`]**, shared across every facet. Removing collapses the row — no empty slot; removing the last app empties the dock entirely, and Home/the carousel preview then omit the dock row rather than showing it empty.
 - **`4l` Calendars** — account rows with email beneath, checkboxes; still unbuilt (no `READ_CALENDAR` request/query yet — see the new Calendar settings screen above, whose "Calendars to display" card is where this list lands once built). Footnote: tapping an event opens the calendar app *at that event*. The **Hide all-day events** switch moved to the new Calendar settings screen as a real, independent "Show all-day events" toggle rather than living inside this picker.
-- **`4m` Rename** — centred dialog, `border-radius: 14px`. Title, explanation, then the value on a `1.5px` accent underline with a **Reset** affordance, then Cancel / Save. Used for both app labels and profile names.
+- **`4m` Rename** — centred dialog, `border-radius: 14px`. Title, explanation, then the value on a `1.5px` accent underline with a **Reset** affordance, then Cancel / Save. Used for both app labels and facet names.
 
 ### Permission-denied and empty states (`4p`)
 
@@ -243,7 +243,7 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 |---|---|---|
 | Clock, calendar denied | Calendar access off — events hidden. | Turn on |
 | Home list, usage access missing | Most used needs usage access from system settings. | Open settings |
-| Fresh profile, no favorites | Nothing here yet — pick up to 8 apps. | Add apps |
+| Fresh facet, no favorites | Nothing here yet — pick up to 8 apps. | Add apps |
 | Search, contacts denied | Contact results need contacts access. | Turn on |
 
 ---
@@ -254,14 +254,14 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 |---|---|
 | Swipe up on home (>55px) | Open drawer |
 | Swipe down in drawer, `scrollTop <= 2` | Close drawer, clear query |
-| Swipe left on home (past ~20% width), follow-finger | Open Switch Profiles carousel (`3a`) *(revised — replaced the empty-space long-press, which was too hard to land between the clock, app list and dock; then revised again from a fling-to-navigate `NavHost` push to this follow-finger panel, mirroring the Hub; see `IMPLEMENTATION_PLAN.md`)* |
-| Swipe right on the carousel (empty space, or on the first profile's card), follow-finger | Close the carousel back to Home, applying nothing — the mirror of the left swipe that opened it |
+| Swipe left on home (past ~20% width), follow-finger | Open Switch Facets carousel (`3a`) *(revised — replaced the empty-space long-press, which was too hard to land between the clock, app list and dock; then revised again from a fling-to-navigate `NavHost` push to this follow-finger panel, mirroring the Hub; see `IMPLEMENTATION_PLAN.md`)* |
+| Swipe right on the carousel (empty space, or on the first facet's card), follow-finger | Close the carousel back to Home, applying nothing — the mirror of the left swipe that opened it |
 | ~~Long-press empty home space (420ms, <8px movement)~~ | ~~Long-press sheet~~ *(removed — the sheet was already gone; the long-press that replaced it is now a left swipe, above)* |
 | Long-press app icon | App context menu (`4i`) |
 | Drag alphabet rail | Scrub to letter, scroll its header into view, show the large letter indicator |
 | Type in drawer search | Filter apps, then contacts; contact actions inline |
 | Swipe carousel horizontally | Browse (clamped at both ends); does not apply anything |
-| Tap a card (centred or peeking) in carousel | Apply that profile, close |
+| Tap a card (centred or peeking) in carousel | Apply that facet, close |
 | Back / back gesture in carousel | Return to origin without applying |
 | Tap **Reorder** in carousel header | Swap carousel for the reorder list (`3b`) |
 | Drag a reorder-list row by its handle | Live-reorder; commits on release |
@@ -269,7 +269,7 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 
 **Timings.** Drawer `.34s cubic-bezier(.32,.72,0,1)` transform, `.24s ease` opacity. Sheet `.3s` same curve. Overlays `.22–.26s ease`. Rail indicator `.15s`. Long-press threshold 420ms.
 
-**Home horizontal swipe [revised — this now IS assigned].** Left swipe opens the Switch Profiles carousel (`3a`), follow-finger, exactly like the right swipe that opens the Hub (`F5`) — whichever one a drag's first frame engages keeps owning it for the rest of the gesture, even through a direction reversal. Releasing commits open/closed once the drag has cleared ~20% of the screen width from wherever it started (the same rule the Hub uses); short of that it springs back. Home stays composed behind either panel throughout. *(Was: "profile switching does not use swipe on the home screen" — reversed after the empty-space long-press proved too hard to target, then the carousel itself moved from a `NavHost` destination to this follow-finger panel. Within the carousel itself, swipe still only browses between profiles; only a tap applies one.)*
+**Home horizontal swipe [revised — this now IS assigned].** Left swipe opens the Switch Facets carousel (`3a`), follow-finger, exactly like the right swipe that opens the Hub (`F5`) — whichever one a drag's first frame engages keeps owning it for the rest of the gesture, even through a direction reversal. Releasing commits open/closed once the drag has cleared ~20% of the screen width from wherever it started (the same rule the Hub uses); short of that it springs back. Home stays composed behind either panel throughout. *(Was: "facet switching does not use swipe on the home screen" — reversed after the empty-space long-press proved too hard to target, then the carousel itself moved from a `NavHost` destination to this follow-finger panel. Within the carousel itself, swipe still only browses between facets; only a tap applies one.)*
 
 ## State Management
 
@@ -280,14 +280,14 @@ Prototype state, as a guide to what the implementation needs:
 | `drawer` | bool | Drawer open |
 | `view` | `"list" \| "grid"` | Drawer layout |
 | `q` | string | Search query |
-| `profile` | int | **Applied** profile index |
-| `pickIdx` | int | Profile currently centred/browsed in the carousel — purely the pager's scroll position |
+| `facet` | int | **Applied** facet index |
+| `pickIdx` | int | Facet currently centred/browsed in the carousel — purely the pager's scroll position |
 | `reordering` | bool | Carousel showing the reorder list instead of the pager |
 | `letter` | string \| null | Active rail letter |
 | `sheet` | bool | Long-press sheet open |
 | `pick` | bool | Carousel open |
 
-*(Revised.)* `pickIdx` still exists as the pager's own browse position, but it no longer gates a separate confirm step — tapping **any** visible card (not just the centred one) applies it directly, so `profile` updates the moment a card is tapped rather than waiting on a **Select** action. The one thing that's still true from the original note: swiping alone never touches `profile`.
+*(Revised.)* `pickIdx` still exists as the pager's own browse position, but it no longer gates a separate confirm step — tapping **any** visible card (not just the centred one) applies it directly, so `facet` updates the moment a card is tapped rather than waiting on a **Select** action. The one thing that's still true from the original note: swiping alone never touches `facet`.
 
 Data the launcher must fetch: installed app list (`LauncherApps`, live callbacks for install/uninstall/update), calendar events, usage stats for Recents/Most used, notification posts for badge dots, widget providers and their declared sizes.
 
@@ -364,7 +364,7 @@ Shadow: `0 1px 2px rgba(2,8,23,.08)` raised pill · `0 10px 30px rgba(2,8,23,.14
 
 ## Assets
 
-No image assets. Icons are either CSS-drawn (chevrons, checkmarks, rings, toggles) or three Lucide SVGs loaded from unpkg in the profile carousel: `settings`, `trash-2`, `pencil`. **Implemented with `androidx.compose.material:material-icons-core`/`-extended` instead**, per the codebase's own icon convention: `Icons.Default.Settings`, `.Delete`, `.DragHandle`, `.MoreVert`, `.Add`.
+No image assets. Icons are either CSS-drawn (chevrons, checkmarks, rings, toggles) or three Lucide SVGs loaded from unpkg in the facet carousel: `settings`, `trash-2`, `pencil`. **Implemented with `androidx.compose.material:material-icons-core`/`-extended` instead**, per the codebase's own icon convention: `Icons.Default.Settings`, `.Delete`, `.DragHandle`, `.MoreVert`, `.Add`.
 
 Fonts load from Google Fonts. Substitute the codebase's own type stack; on Android, Roboto or the device default is the honest choice, in which case re-check the light weights — the 200-weight clock is central to the design and Roboto's Thin is a close match.
 
@@ -386,7 +386,7 @@ Each image is a contact sheet of one turn, with the id badges visible so capture
 |---|---|
 | `light-turn1-home-and-drawer.png` | `1a`–`1j` — home prototype, clock variants, favorites densities, drawer list/grid, search |
 | `light-turn2-sheet-and-settings.png` | `2a`–`2d` — long-press sheet, superseded settings, clock page |
-| `light-turn3-profiles-and-settings.png` | `3a`–`3f` — carousel, reorder, launcher settings, profile settings, clock pages |
+| `light-turn3-facets-and-settings.png` | `3a`–`3f` — carousel, reorder, launcher settings, facet settings, clock pages |
 | `light-turn4-hub-onboarding-pickers.png` | `4a`–`4q` — hub, first run, context menu, pickers, denied states, no results |
 | `dark-*.png` | The same four sheets in the dark theme |
 

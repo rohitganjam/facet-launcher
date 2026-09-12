@@ -88,7 +88,7 @@ class BackupRestoreViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isBusy = false,
-                            message = BackupRestoreMessage.ImportSucceeded(result.profileCount, pending.count { p -> !p.done }),
+                            message = BackupRestoreMessage.ImportSucceeded(result.facetCount, pending.count { p -> !p.done }),
                             pendingWidgets = pending,
                         )
                     }

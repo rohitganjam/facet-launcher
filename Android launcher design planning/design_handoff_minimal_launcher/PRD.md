@@ -15,7 +15,7 @@ A minimal, fast Android home screen launcher. Prioritizes speed and low visual c
 
 - Feel instant — see performance targets in §8.
 - Minimize visual noise on the home screen: no default icon grid, no forced widgets.
-- Let power users configure multiple home "profiles" without duplicating shared elements (dock).
+- Let power users configure multiple home "facets" without duplicating shared elements (dock).
 - Ship without owning a wallpaper/theming engine — delegate to system intents where possible.
 
 ## 3. Non-Goals (v1)
@@ -47,42 +47,42 @@ Not in scope for this version, but researched and worth preserving rather than l
   - Option to hide all-day events.
   - Requires `READ_CALENDAR` runtime permission — **must define fallback UI when denied or no calendars exist** (e.g., clock-only state, with a re-prompt affordance, not a blank/broken widget).
   - Tapping an event **[decided]:** opens the default calendar app directly at that specific event (not just a generic app-open) — implementable via the standard Android Calendar Provider (`ACTION_VIEW` on a `CalendarContract.Events` content URI for the event id), which works across calendar apps that read from the shared system Calendar Provider rather than requiring per-app deep-link support.
-  - **Settings shell built ahead of the permission flow [revised]:** a Calendar settings screen exists with a real, persisted "Show all-day events" toggle and an inherit/override mechanism per profile — the same pattern F4 uses for 24-hour time. The `READ_CALENDAR` request, the real "calendars to display" list, and event rows on the clock are still pending; the screen shows the standard permission-denied strip in the meantime.
+  - **Settings shell built ahead of the permission flow [revised]:** a Calendar settings screen exists with a real, persisted "Show all-day events" toggle and an inherit/override mechanism per facet — the same pattern F4 uses for 24-hour time. The `READ_CALENDAR` request, the real "calendars to display" list, and event rows on the clock are still pending; the screen shows the standard permission-denied strip in the meantime.
 
 ### F2. Home screen — Favorites / Recents / Most Used
 - User chooses which "mode" populates the home list: Favorites (manually curated), Recents (top 3–5), or Most Used.
 - **Favorites:** user explicitly adds/removes/orders apps.
 - **Recents [decided]:** backed by system-wide usage stats via `UsageStatsManager` (not self-tracked launch events) — same data source and permission requirement as Most Used below.
 - **Most Used:** requires `PACKAGE_USAGE_STATS` special-access permission, which cannot be requested via a normal runtime dialog — user must be sent to system Settings (`ACTION_USAGE_ACCESS_SETTINGS`). Needs an onboarding explanation screen and a graceful "not yet granted" empty state. **This permission is now required for both Recents and Most Used**, since both are usage-stats-backed.
-- Behavior when a favorited/pinned app is uninstalled: auto-remove and collapse the list (no dead entries or placeholder tiles), across favorites, dock, and all profiles.
+- Behavior when a favorited/pinned app is uninstalled: auto-remove and collapse the list (no dead entries or placeholder tiles), across favorites, dock, and all facets.
 
 ### F3. Dock
-- **0–5 apps, user-configured count and content [decided, revised]:** no minimum — every app can be removed. When the dock is empty, the dock row is omitted entirely (not shown as an empty row), on both Home and the profile carousel's preview cards.
-- **Shared across all profiles** (single dock, not per-profile).
+- **0–5 apps, user-configured count and content [decided, revised]:** no minimum — every app can be removed. When the dock is empty, the dock row is omitted entirely (not shown as an empty row), on both Home and the facet carousel's preview cards.
+- **Shared across all facets** (single dock, not per-facet).
 - Same uninstall-handling rule as F2 applies here.
 - **Display mode [new, decided]:** dock apps can be shown as **Icons** (default) or **Text** (app name labels instead of icons) — a single launcher-wide setting, not per-app.
 
-### F4. Profiles
-- Multiple home "profiles," each with its own Favorites/Recents/Most-Used configuration and list content.
-- **Per-profile overrides extend beyond favorites [revised]:** a profile's settings screen has a Clock card (clock style, 24-hour time, Calendar) governed by a single Inherit/Override switch — under Inherit it reflects and follows the launcher-wide default; under Override, this profile's own value is used and edits here never affect other profiles. 24-hour time and the Calendar's "show all-day events" setting are real, independently-stored overrides; clock style stays inherit-only until multiple clock styles exist (see the Known Gap in `IMPLEMENTATION_PLAN.md`).
-- Dock is shared (per F3) — not duplicated per profile.
-- **Profile switching is a swipe gesture on the home screen itself [decided, revised again per user feedback].** The empty-space long-press sheet was removed — it was too hard to land in the gaps between the clock, app list and dock. **A left swipe on Home** now opens the Switch Profiles carousel directly, as a permanent **follow-finger panel** to Home's right (mirroring the Hub panel to Home's left, opened by a right swipe) — not a `NavHost` destination, no separate slide-in transition: the same drag that opens it live-tracks the finger, and a rightward swipe (in empty space, or on the first profile's card, where the pager has nowhere left to browse) closes it back to Home. The carousel itself still behaves like a recent-apps switcher: horizontal swipe browses (clamped at both ends, no infinite scroll), and **tapping any visible card — centered or peeking — applies it immediately and closes**. There is no separate confirm step. Backing out (system back, or that rightward swipe) without tapping a card leaves the active profile unchanged.
-- **Carousel preview cards are a live snapshot, not a placeholder [decided, revised]:** each card actually renders that profile's clock and its own real favorite apps (with icons), plus the shared dock (per F3 — same content on every card, since the dock isn't per-profile) — not a static name/label shell — since the carousel is meant to preview what selecting a profile will look like.
-- **First profile is not special [decided, revised]:** there's a "first" profile positionally (created by default on first launch), but it carries no protected status — it can be deleted like any other profile. The only hard rule is that **at least one profile must always exist**; deleting the last remaining profile isn't allowed.
-- **Profile count [decided, revised]:** the launcher starts with exactly 1 profile by default. A maximum of **3 profiles** applies for now — implemented as a single hardcoded constant, not a user-facing setting, so it's a trivial one-line change to raise later rather than something requiring UI/settings work. No sane-ceiling question remains since it isn't user-adjustable in this version.
-- **Empty-state / creation model [decided]:** each new profile starts empty and is presented as a setup prompt. **Three entry points to add a profile, all decided:**
-  1. The trailing "add profile" placeholder page after the last real profile in normal swipe-through navigation, up to the constant max.
-  2. Launcher Settings → Profiles → an explicit "add profile" action.
-  3. Within the profile carousel (see below), scrolling right past the last page surfaces the same add-profile button in place.
+### F4. Facets
+- Multiple home "facets," each with its own Favorites/Recents/Most-Used configuration and list content.
+- **Per-facet overrides extend beyond favorites [revised]:** a facet's settings screen has a Clock card (clock style, 24-hour time, Calendar) governed by a single Inherit/Override switch — under Inherit it reflects and follows the launcher-wide default; under Override, this facet's own value is used and edits here never affect other facets. 24-hour time and the Calendar's "show all-day events" setting are real, independently-stored overrides; clock style stays inherit-only until multiple clock styles exist (see the Known Gap in `IMPLEMENTATION_PLAN.md`).
+- Dock is shared (per F3) — not duplicated per facet.
+- **Facet switching is a swipe gesture on the home screen itself [decided, revised again per user feedback].** The empty-space long-press sheet was removed — it was too hard to land in the gaps between the clock, app list and dock. **A left swipe on Home** now opens the Switch Facets carousel directly, as a permanent **follow-finger panel** to Home's right (mirroring the Hub panel to Home's left, opened by a right swipe) — not a `NavHost` destination, no separate slide-in transition: the same drag that opens it live-tracks the finger, and a rightward swipe (in empty space, or on the first facet's card, where the pager has nowhere left to browse) closes it back to Home. The carousel itself still behaves like a recent-apps switcher: horizontal swipe browses (clamped at both ends, no infinite scroll), and **tapping any visible card — centered or peeking — applies it immediately and closes**. There is no separate confirm step. Backing out (system back, or that rightward swipe) without tapping a card leaves the active facet unchanged.
+- **Carousel preview cards are a live snapshot, not a placeholder [decided, revised]:** each card actually renders that facet's clock and its own real favorite apps (with icons), plus the shared dock (per F3 — same content on every card, since the dock isn't per-facet) — not a static name/label shell — since the carousel is meant to preview what selecting a facet will look like.
+- **First facet is not special [decided, revised]:** there's a "first" facet positionally (created by default on first launch), but it carries no protected status — it can be deleted like any other facet. The only hard rule is that **at least one facet must always exist**; deleting the last remaining facet isn't allowed.
+- **Facet count [decided, revised]:** the launcher starts with exactly 1 facet by default. A maximum of **3 facets** applies for now — implemented as a single hardcoded constant, not a user-facing setting, so it's a trivial one-line change to raise later rather than something requiring UI/settings work. No sane-ceiling question remains since it isn't user-adjustable in this version.
+- **Empty-state / creation model [decided]:** each new facet starts empty and is presented as a setup prompt. **Three entry points to add a facet, all decided:**
+  1. The trailing "add facet" placeholder page after the last real facet in normal swipe-through navigation, up to the constant max.
+  2. Launcher Settings → Facets → an explicit "add facet" action.
+  3. Within the facet carousel (see below), scrolling right past the last page surfaces the same add-facet button in place.
   Once the max (3) is reached, none of these three affordances is shown.
-- **Deletion [decided]:** deleting a profile removes that page outright; remaining profile pages re-order to fill the gap. The delete action must be disabled/blocked when it's the last remaining profile, since at least one must always exist. **A confirmation dialog is required before deletion completes** [decided] — resolves the earlier open question.
-- **Renaming & reordering [decided]:** profiles can be renamed and manually reordered — resolves the earlier open question.
-- **Access paths for profile management [decided, revised again per user feedback], two entry points:**
-  1. **Settings list view:** Launcher Settings → Profiles opens the profile carousel directly — tapping a card applies it, same as the swipe path below.
-  2. **Left swipe on Home → carousel:** a left swipe on an empty area of Home opens the Switch Profiles panel directly (see the gesture description above) — no intermediate sheet. Swipe horizontally within it to browse (clamped at both ends), tap any card to apply it and close, or swipe right / system back to return without applying.
-  - **Superseded [decided]:** an earlier design routed this through an empty-space long-press sheet with three rows — Switch profile, Edit profile, Change wallpaper. That sheet is removed; **Edit profile** now lives on the carousel's per-card gear icon (Profile settings, `3d`), **Change wallpaper** moved to a row in Launcher Settings → Appearance, and **Switch profile** became the left-swipe gesture itself.
-  - **Reordering and rename moved out of the carousel [decided, revised]:** since tapping any carousel card now applies it immediately, long-press-to-reorder-in-place no longer has a safe home there. A **Reorder** link in the carousel's header swaps the carousel for a plain reorderable list — one row per profile (drag handle, name, an overflow menu with **Profile settings** and **Delete**), plus a pinned **Add profile** row. Rename lives inside **Profile settings** (`3d`), reached from either the carousel's gear icon or this list's overflow menu — there's no longer a direct tap-the-name-to-rename affordance on the carousel card itself.
-  - **Disambiguation no longer needed [resolved]:** the earlier concern was distinguishing an empty-space long-press from F12's long-press-on-app-icon context menu. Since empty-space long-press on Home no longer triggers anything (it's a plain no-op — profile switching moved to the left-swipe gesture instead), that ambiguity is gone; F12's long-press-on-app-icon menu is unaffected.
+- **Deletion [decided]:** deleting a facet removes that page outright; remaining facet pages re-order to fill the gap. The delete action must be disabled/blocked when it's the last remaining facet, since at least one must always exist. **A confirmation dialog is required before deletion completes** [decided] — resolves the earlier open question.
+- **Renaming & reordering [decided]:** facets can be renamed and manually reordered — resolves the earlier open question.
+- **Access paths for facet management [decided, revised again per user feedback], two entry points:**
+  1. **Settings list view:** Launcher Settings → Facets opens the facet carousel directly — tapping a card applies it, same as the swipe path below.
+  2. **Left swipe on Home → carousel:** a left swipe on an empty area of Home opens the Switch Facets panel directly (see the gesture description above) — no intermediate sheet. Swipe horizontally within it to browse (clamped at both ends), tap any card to apply it and close, or swipe right / system back to return without applying.
+  - **Superseded [decided]:** an earlier design routed this through an empty-space long-press sheet with three rows — Switch facet, Edit facet, Change wallpaper. That sheet is removed; **Edit facet** now lives on the carousel's per-card gear icon (Facet settings, `3d`), **Change wallpaper** moved to a row in Launcher Settings → Appearance, and **Switch facet** became the left-swipe gesture itself.
+  - **Reordering and rename moved out of the carousel [decided, revised]:** since tapping any carousel card now applies it immediately, long-press-to-reorder-in-place no longer has a safe home there. A **Reorder** link in the carousel's header swaps the carousel for a plain reorderable list — one row per facet (drag handle, name, an overflow menu with **Facet settings** and **Delete**), plus a pinned **Add facet** row. Rename lives inside **Facet settings** (`3d`), reached from either the carousel's gear icon or this list's overflow menu — there's no longer a direct tap-the-name-to-rename affordance on the carousel card itself.
+  - **Disambiguation no longer needed [resolved]:** the earlier concern was distinguishing an empty-space long-press from F12's long-press-on-app-icon context menu. Since empty-space long-press on Home no longer triggers anything (it's a plain no-op — facet switching moved to the left-swipe gesture instead), that ambiguity is gone; F12's long-press-on-app-icon menu is unaffected.
 
 ### F5. Launcher Hub (widgets)
 - **Swipe right from home** to reach a dedicated screen for user-added third-party widgets, positioned to the left of the main screen; swipe left from the hub returns to home.
@@ -155,7 +155,7 @@ Long-pressing an app icon (dock, favorites, or drawer) surfaces: app info, unins
 
 ### F14. Backup & Restore [decided, in scope]
 - **Format:** local JSON export, with import to reconstruct settings from that file.
-- **Scope [decided]:** not limited to favorites/profiles/dock — also includes widget hub state (widget ids, provider component names, grid positions/sizes), icon/label customization (F11), and other user settings (drawer grid size, hub grid size, gesture-related toggles if any become configurable, etc.). Effectively a full settings snapshot, not a partial one.
+- **Scope [decided]:** not limited to favorites/facets/dock — also includes widget hub state (widget ids, provider component names, grid positions/sizes), icon/label customization (F11), and other user settings (drawer grid size, hub grid size, gesture-related toggles if any become configurable, etc.). Effectively a full settings snapshot, not a partial one.
 - **Not yet addressed:** widget ids and bindings are inherently tied to the specific device/OS state (`AppWidgetHost` ids aren't portable across installs or devices) — a restored JSON can reasonably reconstruct *which* widgets were placed and where, but re-binding them (going through the bind/configure flow again per widget) likely can't be fully automatic and may need a guided re-add step during import. Worth flagging as a real implementation constraint, not a simple file copy.
 - No cloud sync in this version (per §3 Non-Goals) — export/import is a manual, user-initiated local file operation (e.g. share sheet / file picker), not automatic background backup.
 
@@ -167,22 +167,22 @@ Consolidated so overlapping swipe directions across screens don't get implemente
 |---|---|---|
 | Home | Swipe right | **[decided, revised]** Open the Launcher Hub (F5) — the hub sits to the left of the main screen. |
 | Hub | Swipe left | **[decided, revised]** Return to the home screen. |
-| Home | Swipe left | **[decided, revised per user feedback]** Open the Switch Profiles carousel (F4) — the panel sits to Home's right, opened/closed by live finger-tracking rather than a committed transition. |
-| Profiles (carousel) | Swipe right / system back | **[decided, revised per user feedback]** Return to Home without applying a profile change (also triggered by a rightward swipe on the first profile's card, where the pager has nowhere left to browse). |
+| Home | Swipe left | **[decided, revised per user feedback]** Open the Switch Facets carousel (F4) — the panel sits to Home's right, opened/closed by live finger-tracking rather than a committed transition. |
+| Facets (carousel) | Swipe right / system back | **[decided, revised per user feedback]** Return to Home without applying a facet change (also triggered by a rightward swipe on the first facet's card, where the pager has nowhere left to browse). |
 | Home | Swipe up | Open the App Drawer (F6) |
 | Home | Swipe down | **[decided, confirmed]** Swipe down always opens the notification shade — but if the favorites list is not already scrolled to the top, the swipe first scrolls the list back to the top; only once the list is at the top does a further swipe-down open the shade. Swiping up always scrolls the list down without ever leaving the home screen. The rest of the home screen (clock/calendar area, dock) does not scroll independently. |
-| Home | Long-press on empty area | **[superseded, decided]** No-op. Previously opened a long-press sheet (Switch profile / Edit profile / Change wallpaper) — removed because it was too hard to land in the gaps between the clock, app list and dock. Switch profile is now the swipe-left gesture above; Edit profile and Change wallpaper moved to the carousel's gear icon and Launcher Settings → Appearance, respectively (see F4, F9). Distinct from long-pressing an app icon, which still opens F12's context menu. |
+| Home | Long-press on empty area | **[superseded, decided]** No-op. Previously opened a long-press sheet (Switch facet / Edit facet / Change wallpaper) — removed because it was too hard to land in the gaps between the clock, app list and dock. Switch facet is now the swipe-left gesture above; Edit facet and Change wallpaper moved to the carousel's gear icon and Launcher Settings → Appearance, respectively (see F4, F9). Distinct from long-pressing an app icon, which still opens F12's context menu. |
 | App Drawer | Swipe down | Closes the drawer only if the list is already scrolled to the top; otherwise behaves as a normal scroll. |
 | App Drawer | Back button / back gesture | Closes the drawer. |
 | App Drawer | Alphabet rail drag | Right edge (F7) or left edge (F8) — jumps to the letter under the finger. |
 
 **Resolved:** the home swipe-down mechanic follows standard scroll physics — swipe down scrolls the favorites list toward the top; once at the top, a further swipe-down opens the shade. Swipe up always scrolls the list further down and never triggers the shade.
 
-**Resolved [per user feedback]:** the original spec routed profile switching through an empty-space long-press sheet (see F4's superseded note) rather than a Home swipe, to avoid a third swipe direction competing with swipe-up (drawer) and swipe-right (hub). In practice the long-press target was too hard to land precisely, so it was replaced with a left swipe on Home, symmetric with the existing right-swipe-for-hub gesture — Home now has all three cardinal swipe directions in active use (up/left/right), each owned by exactly one destination.
+**Resolved [per user feedback]:** the original spec routed facet switching through an empty-space long-press sheet (see F4's superseded note) rather than a Home swipe, to avoid a third swipe direction competing with swipe-up (drawer) and swipe-right (hub). In practice the long-press target was too hard to land precisely, so it was replaced with a left swipe on Home, symmetric with the existing right-swipe-for-hub gesture — Home now has all three cardinal swipe directions in active use (up/left/right), each owned by exactly one destination.
 
 ## 6. Additional Considerations Still Open
 
-- **Empty states** — zero favorites on a fresh profile (beyond the profile-creation flow itself), empty widget hub (F5), at-capacity widget hub (F5), calendar with all events hidden, usage-access not yet granted for Recents/Most Used, notification-listener access not yet granted for badges (F13). Needs explicit design per case.
+- **Empty states** — zero favorites on a fresh facet (beyond the facet-creation flow itself), empty widget hub (F5), at-capacity widget hub (F5), calendar with all events hidden, usage-access not yet granted for Recents/Most Used, notification-listener access not yet granted for badges (F13). Needs explicit design per case.
 - **Onboarding flow** — set-as-default-launcher prompt, plus the *timing* of each permission request per the just-in-time principle in §7, and what happens if the user backs out of a given request. Per §7's revocation-handling principle, the same "hide the feature, explain why" pattern likely extends to denial-at-request-time too, but that's worth confirming explicitly rather than assuming.
 - **Accessibility** — TalkBack labels for icon-only UI elements (dock, favorites, alphabet rail), support for system font-scale settings without breaking the list/rail layout.
 
@@ -226,10 +226,10 @@ Primary validation device: **Samsung Galaxy M15 5G** (MediaTek Dimensity 6100+, 
 
 ## 9. Technical Notes
 
-- UI: Kotlin + Jetpack Compose for list/grid/rail/profile UI.
+- UI: Kotlin + Jetpack Compose for list/grid/rail/facet UI.
 - **Min SDK: Android 13 (API 33) [decided].**
 - Widget hosting (F5): `AppWidgetHostView` has no native Compose equivalent — wrap via `AndroidView`.
-- App list source: `LauncherApps` (preferred over raw `PackageManager` queries for correct multi-user/work-profile behavior, if ever in scope).
+- App list source: `LauncherApps` (preferred over raw `PackageManager` queries for correct multi-user/work-facet behavior, if ever in scope).
 - Alphabet Rail (F7): `android.icu.text.AlphabeticIndex` for locale-aware letter bucketing — same component used by the system Contacts app.
 - Drag/reorder (favorites, dock, widget hub): native View drag-and-drop APIs are more mature than Compose's for complex reordering-with-feedback; may warrant a Compose+View hybrid for these specific interactions.
 

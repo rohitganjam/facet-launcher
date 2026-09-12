@@ -10,7 +10,7 @@ import org.junit.Test
 
 /**
  * Regression test for the fix in `DatabaseModule.kt`: [FacetDatabase] used to fall back to a
- * destructive migration on *every* version bump, silently wiping a real user's profiles/dock/
+ * destructive migration on *every* version bump, silently wiping a real user's facets/dock/
  * favorites/widget placements the moment the schema changed and nobody had added a real
  * [androidx.room.migration.Migration] — see [Migrations] and chat history. This asserts the
  * opposite now holds: opening an old, already-exported schema version with no migration
@@ -265,6 +265,64 @@ class FacetDatabaseMigrationTest {
         assertTrue(dockCursor.moveToFirst())
         assertEquals("com.example.a", dockCursor.getString(dockCursor.getColumnIndexOrThrow("packageName")))
         dockCursor.close()
+    }
+
+    @Test
+    fun migration16To17RenamesProfilesToFacetsAndProfileIdToFacetIdWithoutLosingExistingRows() {
+        // Given a v16 database with a real profile row, a profile_dock_apps row, and a favorite_apps
+        // row scoped to it (every column NOT NULL at that version, per FacetEntity's defaults)
+        val dbV16 = helper.createDatabase(TEST_DB, 16)
+        dbV16.execSQL(
+            """
+            INSERT INTO profiles (
+                id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption,
+                clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle,
+                calendarFontOption, calendarColorOption, calendarFontWeight, clockAlignment,
+                calendarAlignment, clockZoneHeightDp, clockScale, overrideApps, appRowPosition,
+                appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment,
+                overridingFavorites, overrideDock, dockDisplayMode, overrideCalendar,
+                showAllDayEvents, selectedCalendarIdsCsv
+            ) VALUES (
+                1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME',
+                'ACCENT_PRIMARY', 0, 0, 'FULL',
+                'LAUNCHER_DEFAULT', 'THEME', 'REGULAR', 'LEFT',
+                'LEFT', NULL, 0.8, 0, 'LEFT',
+                'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM',
+                0, 0, 'ICONS', 0,
+                1, NULL
+            )
+            """.trimIndent(),
+        )
+        dbV16.execSQL(
+            "INSERT INTO profile_dock_apps (profileId, packageName, activityName, position) " +
+                "VALUES (1, 'com.example.a', '.Main', 0)",
+        )
+        dbV16.execSQL(
+            "INSERT INTO favorite_apps (profileId, packageName, activityName, position) " +
+                "VALUES (1, 'com.example.b', '.Main', 0)",
+        )
+        dbV16.close()
+
+        // When migrating to v17
+        val dbV17 = helper.runMigrationsAndValidate(TEST_DB, 17, true, Migrations.MIGRATION_16_17)
+
+        // Then the profile row survived under the renamed `facets` table
+        val facetCursor = dbV17.query("SELECT name FROM facets WHERE id = 1")
+        assertTrue(facetCursor.moveToFirst())
+        assertEquals("Work", facetCursor.getString(facetCursor.getColumnIndexOrThrow("name")))
+        facetCursor.close()
+
+        // ...the dock row survived under `facet_dock_apps.facetId`, with its unique index intact
+        val dockCursor = dbV17.query("SELECT packageName FROM facet_dock_apps WHERE facetId = 1")
+        assertTrue(dockCursor.moveToFirst())
+        assertEquals("com.example.a", dockCursor.getString(dockCursor.getColumnIndexOrThrow("packageName")))
+        dockCursor.close()
+
+        // ...and the favorite row survived under `favorite_apps.facetId`
+        val favoriteCursor = dbV17.query("SELECT packageName FROM favorite_apps WHERE facetId = 1")
+        assertTrue(favoriteCursor.moveToFirst())
+        assertEquals("com.example.b", favoriteCursor.getString(favoriteCursor.getColumnIndexOrThrow("packageName")))
+        favoriteCursor.close()
     }
 
     private companion object {

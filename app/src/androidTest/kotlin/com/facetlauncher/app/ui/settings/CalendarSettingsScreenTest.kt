@@ -15,7 +15,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.CalendarInfo
@@ -31,9 +31,9 @@ class CalendarSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(profileId: Long? = null): Pair<SettingsRepository, ProfileRepository> {
+    private fun setContent(facetId: Long? = null): Pair<SettingsRepository, FacetRepository> {
         lateinit var settingsRepository: SettingsRepository
-        lateinit var profileRepository: ProfileRepository
+        lateinit var facetRepository: FacetRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -43,15 +43,15 @@ class CalendarSettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                profileRepository = ProfileRepository(database.profileDao())
-                if (profileId != null) {
-                    runBlocking { profileRepository.addProfile() } // seeds id 1L, matching profileId below
+                facetRepository = FacetRepository(database.facetDao())
+                if (facetId != null) {
+                    runBlocking { facetRepository.addFacet() } // seeds id 1L, matching facetId below
                 }
-                val savedStateHandle = if (profileId != null) SavedStateHandle(mapOf("profileId" to profileId)) else SavedStateHandle()
+                val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
                 CalendarSettingsViewModel(
                     savedStateHandle,
                     settingsRepository,
-                    profileRepository,
+                    facetRepository,
                     FakeCalendarPermissionRepository(context, granted = false),
                     CalendarRepository(context.contentResolver),
                 )
@@ -61,12 +61,12 @@ class CalendarSettingsScreenTest {
             }
         }
         composeRule.waitForIdle()
-        return settingsRepository to profileRepository
+        return settingsRepository to facetRepository
     }
 
     @Test
     fun globalModeTogglePersistsThroughSettingsRepository() {
-        // Given the global (non-profile-scoped) entry point, all-day events shown by default
+        // Given the global (non-facet-scoped) entry point, all-day events shown by default
         val (settingsRepository, _) = setContent()
         composeRule.onNodeWithTag("show_all_day_events_toggle").assertIsOn()
 
@@ -80,9 +80,9 @@ class CalendarSettingsScreenTest {
     }
 
     @Test
-    fun profileScopedModeShowsInheritOverrideSwitch() {
-        // Given a profile-scoped entry point
-        setContent(profileId = 1L)
+    fun facetScopedModeShowsInheritOverrideSwitch() {
+        // Given a facet-scoped entry point
+        setContent(facetId = 1L)
 
         // Then the inherit/override switch is present, defaulting to Inherit (toggle read-only)
         composeRule.onNodeWithTag("calendar_inherit_row").assertExists()
@@ -137,7 +137,7 @@ class CalendarSettingsScreenGrantedTest {
                 CalendarSettingsViewModel(
                     SavedStateHandle(),
                     settingsRepository,
-                    ProfileRepository(database.profileDao()),
+                    FacetRepository(database.facetDao()),
                     FakeCalendarPermissionRepository(context, granted = true),
                     FakeCalendarRepository(context.contentResolver, calendars),
                 )

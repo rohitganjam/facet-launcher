@@ -16,8 +16,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.roundToInt
 
 /**
- * Drag-to-reorder mechanics shared by every reorderable list/row in the app (the profile list,
- * per-profile favorites, Settings' default favorites, and the dock). Deliberately headless: it
+ * Drag-to-reorder mechanics shared by every reorderable list/row in the app (the facet list,
+ * per-facet favorites, Settings' default favorites, and the dock). Deliberately headless: it
  * tracks which item is being dragged and by how much, and splices [items] into a new order live
  * as the drag crosses each slot boundary — but it renders nothing and owns no colors/shape/sizing.
  * Each call site keeps its own row/tile composable, its own "lifted" graphicsLayer treatment, and
@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
  * [onOrderChanged] fires on every slot boundary the drag crosses, so it must be cheap — update
  * local Compose state only, never a repository/Room write. [onDragCommit] fires once, when the
  * finger lifts (or the gesture is cancelled), with the final order — that's where a caller should
- * persist, matching the two-tier callback the profile list's reorder screen already used.
+ * persist, matching the two-tier callback the facet list's reorder screen already used.
  */
 @Stable
 class DragReorderState<T> internal constructor(

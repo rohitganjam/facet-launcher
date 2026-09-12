@@ -23,7 +23,7 @@ import com.facetlauncher.app.ui.theme.Surface
  * A **tonal accent** button — M3's filled-tonal role (an accent-tinted container with accent
  * text), in M3 Expressive's **square** button shape (`MaterialTheme.shapes.medium`, 12dp) rather
  * than the default fully-rounded stadium. Used for secondary actions that should still read as a
- * real button: the Switch Profiles carousel's *Reorder*, the Hub header's *Add*, the Hub
+ * real button: the Switch Facets carousel's *Reorder*, the Hub header's *Add*, the Hub
  * empty-state's *Add widget*.
  *
  * The square shape is a **deliberate departure** from `CLAUDE.md`'s "buttons = Full/`CircleShape`"

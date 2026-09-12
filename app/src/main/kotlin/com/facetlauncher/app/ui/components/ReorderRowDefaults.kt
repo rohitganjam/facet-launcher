@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
  * Shared sizing/motion constants for the app-tile and row drag-to-reorder lists that appear in
  * both Settings ([com.facetlauncher.app.ui.settings.DockSettingsScreen],
  * [com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreen],
- * [com.facetlauncher.app.ui.profiles.ManageProfilesScreen]) and onboarding's own mirrored copies
+ * [com.facetlauncher.app.ui.facets.ManageFacetsScreen]) and onboarding's own mirrored copies
  * ([com.facetlauncher.app.ui.onboarding.OnboardingHomeSetupPage]) — each screen still keeps its
  * own row/tile composable per [DragReorderState]'s own "headless, no shared styling" design (so
  * one screen's look can still diverge later), but these particular values were already being

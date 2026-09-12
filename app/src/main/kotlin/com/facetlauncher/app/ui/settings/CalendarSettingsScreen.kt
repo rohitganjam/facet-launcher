@@ -66,7 +66,7 @@ import com.facetlauncher.app.ui.theme.resolvedColor
 /**
  * "Calendars to display" (`4l`) — calendar *selection* only (which calendars, all-day events);
  * font/color/weight moved to `ClockStyleGalleryScreen` (see `CalendarSettingsViewModel`'s own doc
- * comment). Reached from Settings' "Calendars to display" row (no profile scope) or a profile's
+ * comment). Reached from Settings' "Calendars to display" row (no facet scope) or a facet's
  * "Calendars to display" row (scoped, with its own inherit/override header per `3f`'s pattern).
  * Real `READ_CALENDAR` runtime request + a live `CalendarContract` query back the "Calendars to
  * display" card once granted.
@@ -118,7 +118,7 @@ private fun CalendarSettingsContent(
     modifier: Modifier = Modifier,
 ) {
     // Every control below (all-day events, calendar selection) is read-only under Inherit and live under Override.
-    val controlsEnabled = !uiState.isProfileScoped || uiState.isOverriding
+    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
 
     StickyHeaderLayout(
         modifier = modifier,
@@ -133,7 +133,7 @@ private fun CalendarSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
-                if (uiState.isProfileScoped) {
+                if (uiState.isFacetScoped) {
                     item {
                         InheritOverrideCard(
                             overriding = uiState.isOverriding,

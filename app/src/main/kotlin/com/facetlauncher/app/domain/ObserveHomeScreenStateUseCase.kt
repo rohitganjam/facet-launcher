@@ -7,12 +7,12 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -31,10 +31,10 @@ data class HomeScreenState(
     val settings: LauncherSettings,
     val dockApps: List<AppInfo>,
     val appListItems: List<AppInfo>,
-    val profiles: List<ProfileEntity>,
-    /** Only meaningful when the active profile's `listContentMode` isn't `FAVORITES`. */
+    val facets: List<FacetEntity>,
+    /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
     val usageAccessGranted: Boolean,
-    /** Today's events for the active profile's effective calendar settings — empty when ungranted or none selected. */
+    /** Today's events for the active facet's effective calendar settings — empty when ungranted or none selected. */
     val calendarEvents: List<CalendarEvent>,
     /** F13 — notification count per package, empty unless both the "Notification badges" setting is on and access is granted. */
     val badgeCounts: Map<String, Int>,
@@ -44,17 +44,17 @@ data class HomeScreenState(
 
 /**
  * Combines [SettingsRepository], [DockAppRepository], [FavoriteAppRepository]/[UsageStatsRepository]
- * (scoped to the active profile's [ListContentMode]), [CalendarRepository], and [ProfileRepository]
+ * (scoped to the active facet's [ListContentMode]), [CalendarRepository], and [FacetRepository]
  * into the Home screen's state — spans more than one repository, so it's a UseCase rather than
  * being called directly from [com.facetlauncher.app.ui.home.HomeViewModel].
  */
 class ObserveHomeScreenStateUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val dockAppRepository: DockAppRepository,
-    private val profileDockAppRepository: ProfileDockAppRepository,
+    private val facetDockAppRepository: FacetDockAppRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
-    private val profileRepository: ProfileRepository,
+    private val facetRepository: FacetRepository,
     private val usageStatsRepository: UsageStatsRepository,
     private val usageAccessRepository: UsageAccessRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
@@ -65,7 +65,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 ) {
     // PACKAGE_USAGE_STATS/READ_CALENDAR have no grant-change callback — the only way to grant
     // either is a system redirect/dialog, so callers (Home, on resume) call refresh() to force
-    // re-evaluation; neither profile nor settings changing wouldn't otherwise re-trigger below.
+    // re-evaluation; neither facet nor settings changing wouldn't otherwise re-trigger below.
     private val refreshTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
     fun refresh() {
@@ -74,25 +74,25 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(): Flow<HomeScreenState> {
-        val activeProfile = combine(settingsRepository.settings, profileRepository.observeProfiles()) { settings, profiles ->
-            profiles.find { it.id == settings.activeProfileId }
+        val activeFacet = combine(settingsRepository.settings, facetRepository.observeFacets()) { settings, facets ->
+            facets.find { it.id == settings.activeFacetId }
         }
 
-        val appListItems = combine(activeProfile, settingsRepository.settings, refreshTrigger) { profile, settings, _ ->
-            profile to settings
-        }.flatMapLatest { (profile, settings) -> observeAppListItems(profile, settings) }
+        val appListItems = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
+            facet to settings
+        }.flatMapLatest { (facet, settings) -> observeAppListItems(facet, settings) }
 
-        val dockApps = activeProfile.flatMapLatest { profile ->
-            if (profile?.overrideDock == true) {
-                profileDockAppRepository.observeDockAppsForProfile(profile.id)
+        val dockApps = activeFacet.flatMapLatest { facet ->
+            if (facet?.overrideDock == true) {
+                facetDockAppRepository.observeDockAppsForFacet(facet.id)
             } else {
                 dockAppRepository.observeDockApps()
             }
         }
 
-        val calendarEvents = combine(activeProfile, settingsRepository.settings, refreshTrigger) { profile, settings, _ ->
-            profile to settings
-        }.flatMapLatest { (profile, settings) -> observeCalendarEvents(profile, settings) }
+        val calendarEvents = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
+            facet to settings
+        }.flatMapLatest { (facet, settings) -> observeCalendarEvents(facet, settings) }
 
         // Gated on both the "Notification badges" setting and the real grant — the listener
         // repository keeps running regardless, so this is where "off" actually takes effect.
@@ -108,15 +108,15 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             settingsRepository.settings,
             dockApps,
             appListItems,
-            profileRepository.observeProfiles(),
+            facetRepository.observeFacets(),
             calendarEvents,
             badgeCountsAndAccessories,
-        ) { settings, dockApps, items, profiles, events, (badges, accessories) ->
+        ) { settings, dockApps, items, facets, events, (badges, accessories) ->
             HomeScreenState(
                 settings = settings,
                 dockApps = dockApps,
                 appListItems = items,
-                profiles = profiles,
+                facets = facets,
                 usageAccessGranted = usageAccessRepository.isGranted(),
                 calendarEvents = events,
                 badgeCounts = badges,
@@ -125,12 +125,12 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
     }
 
-    private fun observeAppListItems(profile: ProfileEntity?, settings: LauncherSettings): Flow<List<AppInfo>> {
-        if (profile == null) return flowOf(emptyList())
-        val mode = if (profile.overrideApps) profile.listContentMode else settings.listContentMode
-        val appsToShowCount = if (profile.overrideApps) profile.appsToShowCount else settings.appsToShowCount
+    private fun observeAppListItems(facet: FacetEntity?, settings: LauncherSettings): Flow<List<AppInfo>> {
+        if (facet == null) return flowOf(emptyList())
+        val mode = if (facet.overrideApps) facet.listContentMode else settings.listContentMode
+        val appsToShowCount = if (facet.overrideApps) facet.appsToShowCount else settings.appsToShowCount
         return when {
-            mode == ListContentMode.FAVORITES && profile.overridingFavorites -> favoriteAppRepository.observeFavoritesForProfile(profile.id)
+            mode == ListContentMode.FAVORITES && facet.overridingFavorites -> favoriteAppRepository.observeFavoritesForFacet(facet.id)
             mode == ListContentMode.FAVORITES -> defaultFavoriteAppRepository.observeDefaultFavorites()
             !usageAccessRepository.isGranted() -> flowOf(emptyList())
             mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount)) }
@@ -138,10 +138,10 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
     }
 
-    private fun observeCalendarEvents(profile: ProfileEntity?, settings: LauncherSettings): Flow<List<CalendarEvent>> {
+    private fun observeCalendarEvents(facet: FacetEntity?, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
-        val includeAllDay = if (profile?.overrideCalendar == true) profile.showAllDayEvents else settings.showAllDayEvents
-        val selectedCalendarIds = if (profile?.overrideCalendar == true) profile.selectedCalendarIds else settings.selectedCalendarIds
+        val includeAllDay = if (facet?.overrideCalendar == true) facet.showAllDayEvents else settings.showAllDayEvents
+        val selectedCalendarIds = if (facet?.overrideCalendar == true) facet.selectedCalendarIds else settings.selectedCalendarIds
         return flow { emit(calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)) }
     }
 }

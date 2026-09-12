@@ -14,8 +14,8 @@ import com.facetlauncher.app.data.model.ListContentMode
 /**
  * Home-setup step (`ONBOARDING_FLOW.md` step 2) state — the launcher-wide default Dock and
  * Favorites/Recents/Most-used content mode. Always the global/default repositories — onboarding
- * has no concept of a `profileId`. Adding/removing apps happens on the full-screen pickers
- * ([com.facetlauncher.app.ui.dock.DockAppPickerScreen], [com.facetlauncher.app.ui.profiles.FavoritesPickerScreen])
+ * has no concept of a `facetId`. Adding/removing apps happens on the full-screen pickers
+ * ([com.facetlauncher.app.ui.dock.DockAppPickerScreen], [com.facetlauncher.app.ui.facets.FavoritesPickerScreen])
  * reused as-is from Settings; this state only carries what's needed to render the live dock/
  * favorites rows and drive their in-place drag-reorder.
  */

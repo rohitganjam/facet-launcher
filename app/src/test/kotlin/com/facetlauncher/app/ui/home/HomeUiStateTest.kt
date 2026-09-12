@@ -1,6 +1,6 @@
 package com.facetlauncher.app.ui.home
 
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -14,20 +14,20 @@ import org.junit.Test
 class HomeUiStateTest {
 
     @Test
-    fun `effective 24 hour time falls back to the global default when the active profile has no override`() {
+    fun `effective 24 hour time falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(use24HourTime = true, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideClock = false)),
+            settings = LauncherSettings(use24HourTime = true, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideClock = false)),
         )
 
         assertEquals(true, state.effectiveUse24HourTime)
     }
 
     @Test
-    fun `effective 24 hour time uses the active profile's override when set`() {
+    fun `effective 24 hour time uses the active facet's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(use24HourTime = true, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideClock = true, use24HourTime = false)),
+            settings = LauncherSettings(use24HourTime = true, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideClock = true, use24HourTime = false)),
         )
 
         assertEquals(false, state.effectiveUse24HourTime)
@@ -36,8 +36,8 @@ class HomeUiStateTest {
     @Test
     fun `usage access prompt is hidden for favorites mode regardless of grant state`() {
         val state = HomeUiState(
-            settings = LauncherSettings(activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.FAVORITES)),
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.FAVORITES)),
             usageAccessGranted = false,
         )
 
@@ -47,8 +47,8 @@ class HomeUiStateTest {
     @Test
     fun `usage access prompt shows for recents mode when access isn't granted`() {
         val state = HomeUiState(
-            settings = LauncherSettings(activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
             usageAccessGranted = false,
         )
 
@@ -58,8 +58,8 @@ class HomeUiStateTest {
     @Test
     fun `usage access prompt is hidden for most used mode once access is granted`() {
         val state = HomeUiState(
-            settings = LauncherSettings(activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED)),
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED)),
             usageAccessGranted = true,
         )
 
@@ -69,8 +69,8 @@ class HomeUiStateTest {
     @Test
     fun `usage access prompt stays hidden once dismissed even though access still isn't granted`() {
         val state = HomeUiState(
-            settings = LauncherSettings(activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
             usageAccessGranted = false,
             usageAccessPromptDismissed = true,
         )
@@ -79,21 +79,21 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `active app row position falls back to the global default when the active profile has no override`() {
+    fun `active app row position falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideApps = false)),
+            settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
         )
 
         assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
     }
 
     @Test
-    fun `active app row position uses the active profile's override when set`() {
+    fun `active app row position uses the active facet's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT, activeProfileId = 1L),
-            profiles = listOf(
-                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideApps = true, appRowPosition = AppRowPosition.RIGHT),
+            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT, activeFacetId = 1L),
+            facets = listOf(
+                FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideApps = true, appRowPosition = AppRowPosition.RIGHT),
             ),
         )
 
@@ -101,23 +101,23 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `active app row presentation falls back to the global default when the active profile has no override`() {
+    fun `active app row presentation falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(appRowPresentation = AppRowPresentation.TEXT_ONLY, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideApps = false)),
+            settings = LauncherSettings(appRowPresentation = AppRowPresentation.TEXT_ONLY, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
         )
 
         assertEquals(AppRowPresentation.TEXT_ONLY, state.activeAppRowPresentation)
     }
 
     @Test
-    fun `active app row presentation uses the active profile's override when set`() {
+    fun `active app row presentation uses the active facet's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(appRowPresentation = AppRowPresentation.ICON_AND_TEXT, activeProfileId = 1L),
-            profiles = listOf(
-                ProfileEntity(
+            settings = LauncherSettings(appRowPresentation = AppRowPresentation.ICON_AND_TEXT, activeFacetId = 1L),
+            facets = listOf(
+                FacetEntity(
                     id = 1L,
-                    name = "Profile 1",
+                    name = "Facet 1",
                     position = 0,
                     overrideApps = true,
                     appRowPresentation = AppRowPresentation.ICON_ONLY,
@@ -129,21 +129,21 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `active calendar font falls back to the global default when the active profile has no override`() {
+    fun `active calendar font falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarFontOption = ClockFontOption.POPPINS, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = false)),
+            settings = LauncherSettings(calendarFontOption = ClockFontOption.POPPINS, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideCalendar = false)),
         )
 
         assertEquals(ClockFontOption.POPPINS, state.activeCalendarFontOption)
     }
 
     @Test
-    fun `active calendar font uses the active profile's override when set`() {
+    fun `active calendar font uses the active facet's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarFontOption = ClockFontOption.POPPINS, activeProfileId = 1L),
-            profiles = listOf(
-                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = true, calendarFontOption = ClockFontOption.MANROPE),
+            settings = LauncherSettings(calendarFontOption = ClockFontOption.POPPINS, activeFacetId = 1L),
+            facets = listOf(
+                FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideCalendar = true, calendarFontOption = ClockFontOption.MANROPE),
             ),
         )
 
@@ -151,21 +151,21 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `active calendar color falls back to the global default when the active profile has no override`() {
+    fun `active calendar color falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarColorOption = ClockColorOption.THEME_INVERTED, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = false)),
+            settings = LauncherSettings(calendarColorOption = ClockColorOption.THEME_INVERTED, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideCalendar = false)),
         )
 
         assertEquals(ClockColorOption.THEME_INVERTED, state.activeCalendarColorOption)
     }
 
     @Test
-    fun `active calendar color uses the active profile's override when set`() {
+    fun `active calendar color uses the active facet's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarColorOption = ClockColorOption.THEME_INVERTED, activeProfileId = 1L),
-            profiles = listOf(
-                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = true, calendarColorOption = ClockColorOption.ACCENT_PRIMARY),
+            settings = LauncherSettings(calendarColorOption = ClockColorOption.THEME_INVERTED, activeFacetId = 1L),
+            facets = listOf(
+                FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideCalendar = true, calendarColorOption = ClockColorOption.ACCENT_PRIMARY),
             ),
         )
 
@@ -173,21 +173,21 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `active calendar font weight falls back to the global default when the active profile has no override`() {
+    fun `active calendar font weight falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarFontWeight = FontWeightOption.LIGHT, activeProfileId = 1L),
-            profiles = listOf(ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = false)),
+            settings = LauncherSettings(calendarFontWeight = FontWeightOption.LIGHT, activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideCalendar = false)),
         )
 
         assertEquals(FontWeightOption.LIGHT, state.activeCalendarFontWeight)
     }
 
     @Test
-    fun `active calendar font weight uses the active profile's override when set`() {
+    fun `active calendar font weight uses the active facet's override when set`() {
         val state = HomeUiState(
-            settings = LauncherSettings(calendarFontWeight = FontWeightOption.LIGHT, activeProfileId = 1L),
-            profiles = listOf(
-                ProfileEntity(id = 1L, name = "Profile 1", position = 0, overrideCalendar = true, calendarFontWeight = FontWeightOption.SEMI_BOLD),
+            settings = LauncherSettings(calendarFontWeight = FontWeightOption.LIGHT, activeFacetId = 1L),
+            facets = listOf(
+                FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideCalendar = true, calendarFontWeight = FontWeightOption.SEMI_BOLD),
             ),
         )
 

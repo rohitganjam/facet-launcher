@@ -15,8 +15,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -37,8 +37,8 @@ class DockSettingsScreenTest {
     private fun setContent(
         onBack: () -> Unit = {},
         onAddDockApp: () -> Unit = {},
-        profileId: Long? = null,
-        seed: suspend (AppRepository, DockAppRepository, ProfileDockAppRepository) -> Unit = { _, _, _ -> },
+        facetId: Long? = null,
+        seed: suspend (AppRepository, DockAppRepository, FacetDockAppRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -49,20 +49,20 @@ class DockSettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val profileRepository = ProfileRepository(database.profileDao())
+                val facetRepository = FacetRepository(database.facetDao())
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
-                if (profileId != null) {
-                    runBlocking { database.profileDao().insert(com.facetlauncher.app.data.local.ProfileEntity(id = profileId, name = "P", position = 0)) }
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
+                if (facetId != null) {
+                    runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                runBlocking { seed(appRepository, dockAppRepository, profileDockAppRepository) }
+                runBlocking { seed(appRepository, dockAppRepository, facetDockAppRepository) }
                 DockSettingsViewModel(
-                    SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+                    SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
-                    profileRepository,
+                    facetRepository,
                     dockAppRepository,
-                    profileDockAppRepository,
+                    facetDockAppRepository,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }
@@ -112,26 +112,26 @@ class DockSettingsScreenTest {
     }
 
     @Test
-    fun profileScopedScreenWritesTheDisplayStyleToThatProfilesRow() {
-        lateinit var profileRepo: ProfileRepository
+    fun facetScopedScreenWritesTheDisplayStyleToThatFacetsRow() {
+        lateinit var facetRepo: FacetRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
-                        produceFile = { File(context.cacheDir, "dock-profile-test-${System.nanoTime()}.preferences_pb") },
+                        produceFile = { File(context.cacheDir, "dock-facet-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                profileRepo = ProfileRepository(database.profileDao())
+                facetRepo = FacetRepository(database.facetDao())
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val pid = runBlocking { profileRepo.addProfile().id }
+                val pid = runBlocking { facetRepo.addFacet().id }
                 DockSettingsViewModel(
-                    SavedStateHandle(mapOf("profileId" to pid)),
+                    SavedStateHandle(mapOf("facetId" to pid)),
                     settingsRepository,
-                    profileRepo,
+                    facetRepo,
                     DockAppRepository(database.dockAppDao(), appRepository),
-                    ProfileDockAppRepository(database.profileDockAppDao(), appRepository),
+                    FacetDockAppRepository(database.facetDockAppDao(), appRepository),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }
@@ -144,7 +144,7 @@ class DockSettingsScreenTest {
         composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
 
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepo.observeProfiles().first().first().dockDisplayMode == DockDisplayMode.TEXT }
+            runBlocking { facetRepo.observeFacets().first().first().dockDisplayMode == DockDisplayMode.TEXT }
         }
     }
 }

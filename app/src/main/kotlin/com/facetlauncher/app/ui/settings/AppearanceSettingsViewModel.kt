@@ -32,7 +32,7 @@ private const val PREVIEW_APP_COUNT = 5
 /**
  * Settings → Appearance (`3c`'s theme/accent/icons/font block, split into its own screen — see
  * chat history: the main Settings list was getting too long to scan). Every field here is global
- * only — no per-profile override exists for these, unlike Clock/Calendar/Apps.
+ * only — no per-facet override exists for these, unlike Clock/Calendar/Apps.
  */
 @HiltViewModel
 class AppearanceSettingsViewModel @Inject constructor(

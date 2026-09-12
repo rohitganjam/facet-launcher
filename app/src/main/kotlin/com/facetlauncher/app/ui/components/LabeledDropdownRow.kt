@@ -33,7 +33,7 @@ import com.facetlauncher.app.ui.theme.Muted
  * A settings row whose value is chosen from a fixed list via a themed dropdown — title, then a
  * label + chevron "options area" that alone is tappable to open a [ThemedDropdownMenu]. Generic
  * over [T] so one composable serves every enum-backed selector (dock display mode, drawer
- * presentation/grid size, a profile's app-list-content mode) instead of a bespoke pill row.
+ * presentation/grid size, a facet's app-list-content mode) instead of a bespoke pill row.
  *
  * The menu is anchored to the options-area [Box] itself — not the whole row, and not nested
  * inside the clickable modifier's own subtree, which breaks click dispatch on the menu's items.

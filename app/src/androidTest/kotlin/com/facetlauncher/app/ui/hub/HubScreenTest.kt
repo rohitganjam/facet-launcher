@@ -90,7 +90,7 @@ class HubScreenTest {
             repository.upsert(placement(id = 2, row = 1))
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText("Facet Hub").assertExists() }.isSuccess
+            runCatching { composeRule.onNodeWithText("Widgets").assertExists() }.isSuccess
         }
 
         // Then the header reflects the real count regardless of orphan status
@@ -144,7 +144,7 @@ class HubScreenTest {
         }
 
         // Then the strip explains why, and the header's Add is no longer clickable
-        composeRule.onNodeWithText("Hub is full at 20 widgets — remove one to add another.").assertExists()
+        composeRule.onNodeWithText("Full at 20 widgets — remove one to add another.").assertExists()
         composeRule.onNodeWithTag("hub_add_button").assertIsNotEnabled()
     }
 }

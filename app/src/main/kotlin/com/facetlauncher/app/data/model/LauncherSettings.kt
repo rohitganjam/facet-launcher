@@ -95,8 +95,8 @@ enum class WallpaperAccentRole {
     TERTIARY,
 }
 
-/** No profile has been created/selected yet — [ProfileRepository][com.facetlauncher.app.data.ProfileRepository]'s ids start at 1. */
-const val NO_ACTIVE_PROFILE_ID = 0L
+/** No facet has been created/selected yet — [FacetRepository][com.facetlauncher.app.data.FacetRepository]'s ids start at 1. */
+const val NO_ACTIVE_FACET_ID = 0L
 
 data class LauncherSettings(
     val use24HourTime: Boolean = false,
@@ -111,7 +111,7 @@ data class LauncherSettings(
     val showDrawerIcons: Boolean = true,
     val showDrawerLabels: Boolean = true,
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
-    val activeProfileId: Long = NO_ACTIVE_PROFILE_ID,
+    val activeFacetId: Long = NO_ACTIVE_FACET_ID,
     /** Global Calendar setting (`4l`) — whether all-day events render on the clock. */
     val showAllDayEvents: Boolean = true,
     /** [CalendarContract.Calendars][android.provider.CalendarContract.Calendars] ids to show events from. `null` means "not yet initialized" — distinct from an empty set (user explicitly deselected everything) so a first-time grant can default to all calendars. */
@@ -141,14 +141,14 @@ data class LauncherSettings(
      * Settings → Appearance → "Font" — the base font for every text role app-wide except the
      * clock/calendar, which pick their own font independently (see [ClockFontOption]'s
      * `LAUNCHER_DEFAULT`, which follows this value when selected there). Global only — not
-     * profile-overridable, same as [themeMode]/[accentFromSystem]/[iconRenderMode].
+     * facet-overridable, same as [themeMode]/[accentFromSystem]/[iconRenderMode].
      */
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /**
      * Settings → Appearance → "App label color" — the app-list row and dock text color, reusing
      * [ClockFontOption]'s sibling color enum ([ClockColorOption]) since it's the same "text over
      * the home/wallpaper surface" choice the clock/calendar already offer. Global only, same as
-     * [launcherFontOption] — the dock itself isn't per-profile, so this can't be either.
+     * [launcherFontOption] — the dock itself isn't per-facet, so this can't be either.
      */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     /**
@@ -161,7 +161,7 @@ data class LauncherSettings(
      */
     val calendarPermissionRequested: Boolean = false,
     val contactsPermissionRequested: Boolean = false,
-    /** Settings → "Apps list" section — every profile's own [ProfileEntity][com.facetlauncher.app.data.local.ProfileEntity]
+    /** Settings → "Apps list" section — every facet's own [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]
      * inherits [appRowPosition], [appRowPresentation], and [listContentMode] unless it sets its own override. */
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
@@ -185,7 +185,7 @@ data class LauncherSettings(
     /** Calendar events block (`ui/home/clock/CalendarEventsBlock`) — configured independently of the clock's own font/color. */
     val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
     val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
-    /** Calendar events block's own font weight — part of the same Clock+Calendar design bundle as [calendarFontOption]/[calendarColorOption] above, profile-overridable alongside them. */
+    /** Calendar events block's own font weight — part of the same Clock+Calendar design bundle as [calendarFontOption]/[calendarColorOption] above, facet-overridable alongside them. */
     val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**
      * Settings → Appearance → "Font weight" — pairs with [launcherFontOption] but scopes narrower:
@@ -195,11 +195,11 @@ data class LauncherSettings(
      */
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**
-     * Home clock's horizontal placement — the default every profile inherits unless it overrides
-     * it (bundled into [ProfileEntity][com.facetlauncher.app.data.local.ProfileEntity]'s
+     * Home clock's horizontal placement — the default every facet inherits unless it overrides
+     * it (bundled into [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]'s
      * `overrideClock`, alongside [clockTemplateId]/etc — see chat history: this and its siblings
      * below used to be global-only, like [launcherFontOption]/[themeMode], before moving into that
-     * per-profile bundle).
+     * per-facet bundle).
      */
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /**
@@ -208,7 +208,7 @@ data class LauncherSettings(
      * positioned on their own (see `ui/home/ClockBlock.kt`). `RIGHT` also reverses each event
      * row's own internal item order (event name, then time, then the calendar-color indicator —
      * the mirror image of the normal indicator/time/name order), the same way [AppRowPosition.RIGHT]
-     * reverses an app row's icon/label order. Profile-overridable, same as [clockAlignment].
+     * reverses an app row's icon/label order. Facet-overridable, same as [clockAlignment].
      */
     val calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /**
@@ -218,19 +218,19 @@ data class LauncherSettings(
      * original fixed `top = 52.dp` position and the list bottom-anchors exactly as it always has
      * (see `HomeScreen.kt` for how the default and persisted cases resolve to one formula). Once
      * set, clamped to [the block's own measured height + 24dp, 50% of the available content
-     * height]. Profile-overridable, same as [clockAlignment].
+     * height]. Facet-overridable, same as [clockAlignment].
      */
     val clockZoneHeightDp: Float? = null,
     /**
-     * The default every profile inherits unless it overrides it (bundled with [AppRowPosition]/
+     * The default every facet inherits unless it overrides it (bundled with [AppRowPosition]/
      * [AppRowPresentation]/[ListContentMode] under `overrideApps` on
-     * [ProfileEntity][com.facetlauncher.app.data.local.ProfileEntity], same as those three) —
+     * [FacetEntity][com.facetlauncher.app.data.local.FacetEntity], same as those three) —
      * whether the app list anchors to the bottom (today's behavior, right above the dock) or the
      * top (right below the clock's grab handle).
      */
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     /**
-     * Home clock's scale factor — the default every profile inherits.
+     * Home clock's scale factor — the default every facet inherits.
      * Uniform scaling ensures proportions are preserved.
      */
     val clockScale: Float = 0.8f,

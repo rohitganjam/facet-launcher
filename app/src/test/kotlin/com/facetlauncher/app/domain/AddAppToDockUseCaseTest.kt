@@ -1,10 +1,10 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,20 +20,20 @@ class AddAppToDockUseCaseTest {
     private val app = AppInfo(packageName = "com.example.mail", activityName = ".Main", label = "Mail", icon = null)
 
     private class Fixture {
-        val settingsFlow = MutableStateFlow(LauncherSettings(activeProfileId = 1L))
+        val settingsFlow = MutableStateFlow(LauncherSettings(activeFacetId = 1L))
         val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settingsFlow) }
-        val profileRepository = mock(ProfileRepository::class.java)
+        val facetRepository = mock(FacetRepository::class.java)
         val dockAppRepository = mock(DockAppRepository::class.java)
-        val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
+        val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
 
-        val useCase = AddAppToDockUseCase(settingsRepository, profileRepository, dockAppRepository, profileDockAppRepository)
+        val useCase = AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository)
     }
 
     @Test
-    fun `writes to the launcher-wide default when the active profile isn't overriding the dock`() = runTest {
-        // Given profile 1 active, not overriding its own dock, with 3 already in the default dock
+    fun `writes to the launcher-wide default when the active facet isn't overriding the dock`() = runTest {
+        // Given facet 1 active, not overriding its own dock, with 3 already in the default dock
         val fixture = Fixture()
-        `when`(fixture.profileRepository.getById(1L)).thenReturn(ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
+        `when`(fixture.facetRepository.getById(1L)).thenReturn(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
         `when`(fixture.dockAppRepository.observeDockApps()).thenReturn(flowOf(listOf(app, app, app)))
 
         // When adding an app
@@ -44,16 +44,16 @@ class AddAppToDockUseCaseTest {
     }
 
     @Test
-    fun `writes to the active profile's own dock when it's overriding`() = runTest {
-        // Given profile 1 active, overriding its own dock, empty so far
+    fun `writes to the active facet's own dock when it's overriding`() = runTest {
+        // Given facet 1 active, overriding its own dock, empty so far
         val fixture = Fixture()
-        `when`(fixture.profileRepository.getById(1L)).thenReturn(ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
-        `when`(fixture.profileDockAppRepository.observeDockAppsForProfile(1L)).thenReturn(flowOf(emptyList()))
+        `when`(fixture.facetRepository.getById(1L)).thenReturn(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
+        `when`(fixture.facetDockAppRepository.observeDockAppsForFacet(1L)).thenReturn(flowOf(emptyList()))
 
         // When adding an app
         fixture.useCase(app)
 
-        // Then it's added to profile 1's own dock, not the default
-        verify(fixture.profileDockAppRepository).addDockApp(1L, app, 0)
+        // Then it's added to facet 1's own dock, not the default
+        verify(fixture.facetDockAppRepository).addDockApp(1L, app, 0)
     }
 }

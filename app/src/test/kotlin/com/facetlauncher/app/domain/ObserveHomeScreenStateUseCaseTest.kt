@@ -7,12 +7,12 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -32,15 +32,15 @@ class ObserveHomeScreenStateUseCaseTest {
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
     private class Fixture {
-        val settingsFlow = MutableStateFlow(LauncherSettings(activeProfileId = 1L))
+        val settingsFlow = MutableStateFlow(LauncherSettings(activeFacetId = 1L))
         val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settingsFlow) }
         val dockAppRepository = mock(DockAppRepository::class.java).also { `when`(it.observeDockApps()).thenReturn(flowOf(emptyList())) }
-        val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
+        val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
         val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
             .also { `when`(it.observeDefaultFavorites()).thenReturn(flowOf(emptyList())) }
-        val profilesFlow = MutableStateFlow<List<ProfileEntity>>(emptyList())
-        val profileRepository = mock(ProfileRepository::class.java).also { `when`(it.observeProfiles()).thenReturn(profilesFlow) }
+        val facetsFlow = MutableStateFlow<List<FacetEntity>>(emptyList())
+        val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facetsFlow) }
         val usageStatsRepository = mock(UsageStatsRepository::class.java)
         val usageAccessRepository = mock(UsageAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(true) }
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java).also { `when`(it.isGranted()).thenReturn(false) }
@@ -55,10 +55,10 @@ class ObserveHomeScreenStateUseCaseTest {
         val useCase = ObserveHomeScreenStateUseCase(
             settingsRepository,
             dockAppRepository,
-            profileDockAppRepository,
+            facetDockAppRepository,
             favoriteAppRepository,
             defaultFavoriteAppRepository,
-            profileRepository,
+            facetRepository,
             usageStatsRepository,
             usageAccessRepository,
             calendarPermissionRepository,
@@ -70,58 +70,58 @@ class ObserveHomeScreenStateUseCaseTest {
     }
 
     @Test
-    fun `emits the active profile's own favorites when it overrides them`() = runTest {
-        // Given settings pointing at profile 1, overriding its own favorites, resolving to one app
+    fun `emits the active facet's own favorites when it overrides them`() = runTest {
+        // Given settings pointing at facet 1, overriding its own favorites, resolving to one app
         val fixture = Fixture()
-        `when`(fixture.favoriteAppRepository.observeFavoritesForProfile(1L)).thenReturn(flowOf(listOf(appInfo('a'))))
-        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true))
+        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(1L)).thenReturn(flowOf(listOf(appInfo('a'))))
+        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
-        // Then it exposes profile 1's own favorites
+        // Then it exposes facet 1's own favorites
         assertEquals(listOf(appInfo('a')), result.appListItems)
     }
 
     @Test
-    fun `emits the launcher-wide default favorites when the active profile isn't overriding`() = runTest {
-        // Given settings pointing at profile 1, which hasn't overridden its own favorites
+    fun `emits the launcher-wide default favorites when the active facet isn't overriding`() = runTest {
+        // Given settings pointing at facet 1, which hasn't overridden its own favorites
         val fixture = Fixture()
         `when`(fixture.defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(listOf(appInfo('d'))))
-        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overridingFavorites = false))
+        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = false))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
-        // Then it exposes the default list, not a per-profile one
+        // Then it exposes the default list, not a per-facet one
         assertEquals(listOf(appInfo('d')), result.appListItems)
     }
 
     @Test
-    fun `re-subscribes to the new profile's favorites when the active profile changes`() = runTest {
-        // Given profile 1 active initially, each profile overriding with its own distinct favorite
+    fun `re-subscribes to the new facet's favorites when the active facet changes`() = runTest {
+        // Given facet 1 active initially, each facet overriding with its own distinct favorite
         val fixture = Fixture()
-        `when`(fixture.favoriteAppRepository.observeFavoritesForProfile(1L)).thenReturn(flowOf(listOf(appInfo('a'))))
-        `when`(fixture.favoriteAppRepository.observeFavoritesForProfile(2L)).thenReturn(flowOf(listOf(appInfo('b'))))
-        fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true),
-            ProfileEntity(id = 2L, name = "P2", position = 1, overridingFavorites = true),
+        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(1L)).thenReturn(flowOf(listOf(appInfo('a'))))
+        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(2L)).thenReturn(flowOf(listOf(appInfo('b'))))
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true),
+            FacetEntity(id = 2L, name = "P2", position = 1, overridingFavorites = true),
         )
 
-        // When switching the active profile to 2
-        fixture.settingsFlow.value = LauncherSettings(activeProfileId = 2L)
+        // When switching the active facet to 2
+        fixture.settingsFlow.value = LauncherSettings(activeFacetId = 2L)
         val result = fixture.useCase().first()
 
-        // Then favorites reflect profile 2, not the stale profile-1 value
+        // Then favorites reflect facet 2, not the stale facet-1 value
         assertEquals(listOf(appInfo('b')), result.appListItems)
     }
 
     @Test
     fun `recents mode reads from UsageStatsRepository when usage access is granted`() = runTest {
-        // Given a profile set to Recents, usage access granted
+        // Given a facet set to Recents, usage access granted
         val fixture = Fixture()
-        fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
         `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(listOf(appInfo('r')))
 
@@ -135,10 +135,10 @@ class ObserveHomeScreenStateUseCaseTest {
 
     @Test
     fun `most used mode reads from UsageStatsRepository when usage access is granted`() = runTest {
-        // Given a profile set to Most Used, usage access granted
+        // Given a facet set to Most Used, usage access granted
         val fixture = Fixture()
-        fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED, appsToShowCount = 4),
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED, appsToShowCount = 4),
         )
         `when`(fixture.usageStatsRepository.getMostUsedApps(4)).thenReturn(listOf(appInfo('m')))
 
@@ -151,11 +151,11 @@ class ObserveHomeScreenStateUseCaseTest {
 
     @Test
     fun `recents mode without usage access yields an empty list and reports ungranted`() = runTest {
-        // Given a profile set to Recents, usage access NOT granted
+        // Given a facet set to Recents, usage access NOT granted
         val fixture = Fixture()
         `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
-        fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
         )
 
         // When observing home screen state
@@ -167,30 +167,30 @@ class ObserveHomeScreenStateUseCaseTest {
     }
 
     @Test
-    fun `emits the active profile's own dock when it overrides the dock`() = runTest {
-        // Given profile 1 active and overriding its dock, resolving to one app
+    fun `emits the active facet's own dock when it overrides the dock`() = runTest {
+        // Given facet 1 active and overriding its dock, resolving to one app
         val fixture = Fixture()
-        `when`(fixture.profileDockAppRepository.observeDockAppsForProfile(1L)).thenReturn(flowOf(listOf(appInfo('p'))))
-        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
+        `when`(fixture.facetDockAppRepository.observeDockAppsForFacet(1L)).thenReturn(flowOf(listOf(appInfo('p'))))
+        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
-        // Then the dock is the profile's own list, not the launcher-wide default
+        // Then the dock is the facet's own list, not the launcher-wide default
         assertEquals(listOf(appInfo('p')), result.dockApps)
     }
 
     @Test
-    fun `emits the launcher-wide dock when the active profile isn't overriding the dock`() = runTest {
-        // Given profile 1 active, NOT overriding its dock, and a non-empty default dock
+    fun `emits the launcher-wide dock when the active facet isn't overriding the dock`() = runTest {
+        // Given facet 1 active, NOT overriding its dock, and a non-empty default dock
         val fixture = Fixture()
         `when`(fixture.dockAppRepository.observeDockApps()).thenReturn(flowOf(listOf(appInfo('g'))))
-        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
+        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
-        // Then the dock is the launcher-wide default, and the per-profile dock is never consulted
+        // Then the dock is the launcher-wide default, and the per-facet dock is never consulted
         assertEquals(listOf(appInfo('g')), result.dockApps)
     }
 
@@ -198,7 +198,7 @@ class ObserveHomeScreenStateUseCaseTest {
     fun `calendar events are empty when calendar access isn't granted`() = runTest {
         // Given calendar access ungranted (the fixture default)
         val fixture = Fixture()
-        fixture.profilesFlow.value = listOf(ProfileEntity(id = 1L, name = "P1", position = 0))
+        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -208,39 +208,39 @@ class ObserveHomeScreenStateUseCaseTest {
     }
 
     @Test
-    fun `calendar events reflect the active profile's effective show-all-day setting when granted`() = runTest {
-        // Given calendar access granted, and a profile that overrides all-day events off
+    fun `calendar events reflect the active facet's effective show-all-day setting when granted`() = runTest {
+        // Given calendar access granted, and a facet that overrides all-day events off
         val fixture = Fixture()
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val event = CalendarEvent(id = 1L, calendarId = "1", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
         `when`(fixture.calendarRepository.getTodayEvents(null, false)).thenReturn(listOf(event))
-        fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
         )
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
-        // Then it queries with the profile's effective (overridden) setting and exposes the result
+        // Then it queries with the facet's effective (overridden) setting and exposes the result
         assertEquals(listOf(event), result.calendarEvents)
     }
 
     @Test
-    fun `calendar events reflect the active profile's own selected calendar ids when overriding`() = runTest {
-        // Given calendar access granted, and a profile overriding with its own calendar selection
+    fun `calendar events reflect the active facet's own selected calendar ids when overriding`() = runTest {
+        // Given calendar access granted, and a facet overriding with its own calendar selection
         val fixture = Fixture()
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val event = CalendarEvent(id = 1L, calendarId = "9", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
         `when`(fixture.calendarRepository.getTodayEvents(setOf("9"), true)).thenReturn(listOf(event))
-        fixture.settingsFlow.value = LauncherSettings(activeProfileId = 1L, selectedCalendarIds = setOf("1", "2"))
-        fixture.profilesFlow.value = listOf(
-            ProfileEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),
+        fixture.settingsFlow.value = LauncherSettings(activeFacetId = 1L, selectedCalendarIds = setOf("1", "2"))
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),
         )
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
-        // Then it queries with the profile's own selected calendar ids, not the global setting
+        // Then it queries with the facet's own selected calendar ids, not the global setting
         assertEquals(listOf(event), result.calendarEvents)
     }
 }

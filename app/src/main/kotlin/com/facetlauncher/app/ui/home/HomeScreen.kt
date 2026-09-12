@@ -157,16 +157,16 @@ fun HomeScreen(
     draggingHandle: Boolean = false,
     /** Fired when the user starts or stops actively dragging one of the adjustment handles. */
     onDraggingHandleChange: (Boolean) -> Unit = {},
-    /** Id of the profile whose `overrideClock` bundle governs the clock widget's position/scale right now, or `null` if the global default applies. */
-    clockPositionOwnerProfileId: Long? = null,
+    /** Id of the facet whose `overrideClock` bundle governs the clock widget's position/scale right now, or `null` if the global default applies. */
+    clockPositionOwnerFacetId: Long? = null,
     /** Fired by a plain tap on the clock (time/date), not a calendar event row — opens the device's default clock app. */
     onClockClick: () -> Unit = {},
     /** Fired when the user selects "Edit Styles" from the clock's adjustment menu. */
     onEditClockStyles: () -> Unit = {},
     /** Fired when the user selects "Launcher settings" from the long-press menu. */
     onNavigateToSettings: () -> Unit = {},
-    /** Fired when the user selects "Profile settings" from the long-press menu — the caller resolves this to the active profile. */
-    onNavigateToProfileSettings: () -> Unit = {},
+    /** Fired when the user selects "Facet settings" from the long-press menu — the caller resolves this to the active facet. */
+    onNavigateToFacetSettings: () -> Unit = {},
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
@@ -213,7 +213,7 @@ fun HomeScreen(
     // The clock's live scale while resizing, as an absolute value (not a delta — a delta briefly
     // double-counts against the committed clockScale in the frame the commit lands). Held past the
     // drag's end until clockScale round-trips back through the repo/StateFlow, then released so any
-    // external change to clockScale (reset, profile switch) takes effect.
+    // external change to clockScale (reset, facet switch) takes effect.
     var liveScale by remember { mutableStateOf<Float?>(null) }
     LaunchedEffect(clockScale) { liveScale = null }
 
@@ -274,7 +274,7 @@ fun HomeScreen(
     // only persist a smaller value if it genuinely clips. Never runs otherwise. Shares its
     // settle-wait timing (GEOMETRY_SETTLE_*) with the compact-spacing check below — same pattern,
     // same tuning.
-    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwnerProfileId) {
+    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwnerFacetId) {
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
             snapshotFlow { Triple(clockBoxSize, clockBoxOriginInRoot, rootSize) }
                 .filter { it.first != null && it.second != null && it.third != null }
@@ -307,8 +307,8 @@ fun HomeScreen(
         label = "appListAppearance",
     )
 
-    // One-shot compact-spacing check, same pattern as the re-clamp above: this profile's own app
-    // list (a different list each time this key set changes — a profile switch, a favorites edit,
+    // One-shot compact-spacing check, same pattern as the re-clamp above: this facet's own app
+    // list (a different list each time this key set changes — a facet switch, a favorites edit,
     // a content-mode/presentation change) is first measured at Home's regular row density, off-
     // screen (see appListRevealed above). Once that measurement settles, compare its natural
     // (unconstrained) height against the space actually available, switch every row to App
@@ -436,7 +436,7 @@ fun HomeScreen(
                     // only) rather than the old full-width ClockBlock modifier — the old full-width
                     // box swallowed every long-press landing in the empty space beside/around the
                     // actual clock text, which silently prevented HomeDrawerRoute's own outer
-                    // long-press (open the profile carousel) from ever firing there (see chat
+                    // long-press (open the facet carousel) from ever firing there (see chat
                     // history). Only the clock's own visible bounds are tappable now; everything
                     // outside — including beside a Left/Right-aligned clock, and beside/below the
                     // independently-aligned CalendarEventsBlock — falls through untouched.
@@ -721,15 +721,15 @@ fun HomeScreen(
             ClockAdjustSheet(
                 onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },
                 onEditStylesClick = onEditClockStyles,
-                onProfileSettingsClick = {
+                onFacetSettingsClick = {
                     onAdjustModeChange(ClockAdjustMode.NONE)
-                    onNavigateToProfileSettings()
+                    onNavigateToFacetSettings()
                 },
                 onLauncherSettingsClick = {
                     onAdjustModeChange(ClockAdjustMode.NONE)
                     onNavigateToSettings()
                 },
-                isOverridden = clockPositionOwnerProfileId != null,
+                isOverridden = clockPositionOwnerFacetId != null,
             )
         }
     }
@@ -761,7 +761,7 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
 /**
  * The clock's original, unchanged top inset — reused as the anchor the default
  * (`clockZoneHeightDp == null`) case resolves to. Not private: reused by
- * [com.facetlauncher.app.ui.profiles.ProfileCarouselScreen]'s own preview card so it reproduces
+ * [com.facetlauncher.app.ui.facets.FacetCarouselScreen]'s own preview card so it reproduces
  * the same zone-height positioning at its own (scaled-down) size, rather than ignoring
  * `clockZoneHeightDp` entirely.
  */
@@ -813,8 +813,8 @@ private fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: D
  * right edge. [presentation] independently governs which of icon/label actually render; the
  * unused one's slot composable simply emits nothing rather than branching the whole layout.
  *
- * Not private: reused by the profile carousel's preview cards
- * ([com.facetlauncher.app.ui.profiles.ProfileCarouselScreen]) so the favorites list renders with
+ * Not private: reused by the facet carousel's preview cards
+ * ([com.facetlauncher.app.ui.facets.FacetCarouselScreen]) so the favorites list renders with
  * the same position/presentation/color/weight styling there as it does on the real Home screen —
  * same reasoning as [DockIcon]'s own visibility.
  */
@@ -836,8 +836,8 @@ internal fun AppRow(
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
-    // False for the profile carousel's read-only preview cards (see
-    // com.facetlauncher.app.ui.profiles.ProfileCarouselScreen) — long-press there must not open
+    // False for the facet carousel's read-only preview cards (see
+    // com.facetlauncher.app.ui.facets.FacetCarouselScreen) — long-press there must not open
     // Home's real Uninstall/App Info/shortcuts menu, since the preview isn't a place you manage apps.
     enableLongPressMenu: Boolean = true,
     // 16dp matches App Drawer's own Regular list-item spacing exactly (base 8dp +
@@ -845,7 +845,7 @@ internal fun AppRow(
     // read as the same density as Drawer's default (see chat history) — that's Home's own real
     // density and stays the default here. Home itself overrides this to
     // HOME_APP_ROW_COMPACT_VERTICAL_PADDING once its own one-shot check finds the list would
-    // otherwise need to scroll; a caller rendering this inside a small preview card (the profile
+    // otherwise need to scroll; a caller rendering this inside a small preview card (the facet
     // carousel, the Appearance screen's own live preview) overrides it tighter for its own reasons
     // (see chat history).
     verticalPadding: Dp = HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
@@ -854,7 +854,7 @@ internal fun AppRow(
     // check finds the list would otherwise need to scroll (see chat history).
     iconSize: Dp = AppIconSize.ROW_REGULAR,
     // Distinguishes this row's testTags from another AppRow rendering the same app elsewhere in
-    // the same semantics tree — e.g. a profile carousel preview card can be present alongside
+    // the same semantics tree — e.g. a facet carousel preview card can be present alongside
     // Home's own real AppRow for the same favorite app. Callers other than Home's own real list
     // must override this to something unique to their surface.
     testTagPrefix: String = "home_",
@@ -940,7 +940,7 @@ internal fun AppRow(
     }
 }
 
-/** Not private: reused by the profile carousel's preview cards ([com.facetlauncher.app.ui.profiles.ProfileCarouselScreen]) so the dock renders identically there. */
+/** Not private: reused by the facet carousel's preview cards ([com.facetlauncher.app.ui.facets.FacetCarouselScreen]) so the dock renders identically there. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun DockIcon(
@@ -958,8 +958,8 @@ internal fun DockIcon(
     onAddToDock: (AppInfo) -> Unit = {},
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
-    // False for the profile carousel's read-only preview cards (see
-    // com.facetlauncher.app.ui.profiles.ProfileCarouselScreen) — long-press there must not open
+    // False for the facet carousel's read-only preview cards (see
+    // com.facetlauncher.app.ui.facets.FacetCarouselScreen) — long-press there must not open
     // Home's real Uninstall/App Info/shortcuts menu, since the preview isn't a place you manage apps.
     enableLongPressMenu: Boolean = true,
 ) {

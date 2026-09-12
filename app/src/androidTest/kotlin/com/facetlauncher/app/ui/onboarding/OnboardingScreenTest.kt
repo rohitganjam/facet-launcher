@@ -27,14 +27,14 @@ import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
-import com.facetlauncher.app.ui.profiles.FavoritesPickerViewModel
+import com.facetlauncher.app.ui.facets.FavoritesPickerViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -73,7 +73,7 @@ class OnboardingScreenTest {
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "onboarding-test-${System.nanoTime()}.preferences_pb") },
@@ -95,7 +95,7 @@ class OnboardingScreenTest {
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
                     // FavoritesPickerScreenTest — an empty SavedStateHandle means the launcher-wide
                     // default dock/favorites, matching onboarding's own scope.
-                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, profileDockAppRepository),
+                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, facetDockAppRepository),
                     FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, favoriteAppRepository, defaultFavoriteAppRepository),
                 )
             }
@@ -138,7 +138,7 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Next advances intro through home setup and profiles to set-default`() {
+    fun `Next advances intro through home setup and facets to set-default`() {
         setContent()
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
@@ -147,7 +147,7 @@ class OnboardingScreenTest {
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_profiles_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
@@ -167,7 +167,7 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Back on the profiles step returns to home setup`() {
+    fun `Back on the facets step returns to home setup`() {
         setContent()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
@@ -199,7 +199,7 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeRight() }
         composeRule.waitForIdle()
 
-        // Then it does nothing — still on the set-default sheet, not back on Profiles
+        // Then it does nothing — still on the set-default sheet, not back on Facets
         composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
     }
 
@@ -453,5 +453,72 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
+    }
+
+    /**
+     * Tapping "Skip" jumps to the set-default step directly — except when
+     * [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher] resolves `true` (a
+     * real, async `PackageManager` query, same caveat as [finishFromSetDefaultStep]), in which case
+     * Skip finishes onboarding immediately instead, since that step would have nothing left to ask.
+     */
+    private fun assertSkipReachesEnd(finished: () -> Boolean) {
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            finished() || runCatching { composeRule.onNodeWithTag("onboarding_set_default_page").assertExists() }.isSuccess
+        }
+        if (!finished()) {
+            composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+        }
+    }
+
+    @Test
+    fun `Skip on the intro step jumps to the set-default step`() {
+        var finished = false
+        setContent(onFinish = { finished = true })
+
+        composeRule.onNodeWithTag("onboarding_skip").performClick()
+
+        assertSkipReachesEnd { finished }
+    }
+
+    @Test
+    fun `Skip on the home-setup step jumps to the set-default step`() {
+        var finished = false
+        setContent(onFinish = { finished = true })
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_skip").performClick()
+
+        assertSkipReachesEnd { finished }
+    }
+
+    @Test
+    fun `Skip on the facets step jumps to the set-default step`() {
+        var finished = false
+        setContent(onFinish = { finished = true })
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_skip").performClick()
+
+        assertSkipReachesEnd { finished }
+    }
+
+    @Test
+    fun `Skip is not shown on the set-default step`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_skip").assertDoesNotExist()
     }
 }

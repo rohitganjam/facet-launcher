@@ -15,7 +15,7 @@ import javax.inject.Singleton
  * Wraps [FavoriteAppDao], hydrating stored (packageName, activityName) rows against the live
  * installed-app list — mirrors [DockAppRepository]'s uninstall-collapse pattern: an entry
  * whose app is no longer installed is filtered out of the emitted list rather than shown as
- * a dead tile (F2's uninstall-collapse rule, applied here per-profile), and now genuinely live
+ * a dead tile (F2's uninstall-collapse rule, applied here per-facet), and now genuinely live
  * (via [AppRepository.observeInstalledApps]) rather than only re-evaluated the next time this
  * flow happens to be freshly subscribed — an uninstall via F12's long-press menu collapses
  * Favorites immediately instead of needing a restart.
@@ -30,26 +30,26 @@ class FavoriteAppRepository @Inject constructor(
         const val MAX_FAVORITES = AppListLimits.MAX_FAVORITES
     }
 
-    fun observeFavoritesForProfile(profileId: Long): Flow<List<AppInfo>> {
-        return combine(favoriteAppDao.observeForProfile(profileId), appRepository.observeInstalledApps()) { entities, installed ->
+    fun observeFavoritesForFacet(facetId: Long): Flow<List<AppInfo>> {
+        return combine(favoriteAppDao.observeForFacet(facetId), appRepository.observeInstalledApps()) { entities, installed ->
             hydrate(entities, installed)
         }
     }
 
     /**
-     * Every profile's favorites at once, keyed by profile id — for the profile carousel's
-     * preview cards, which need to show *every* profile's favorites while browsing, not just
+     * Every facet's favorites at once, keyed by facet id — for the facet carousel's
+     * preview cards, which need to show *every* facet's favorites while browsing, not just
      * the active one's. Subscribes to the live installed-app list exactly once and reuses it
-     * across all [profileIds], rather than each profile independently re-querying it (as calling
-     * [observeFavoritesForProfile] once per profile would do) — with several profiles browsed
+     * across all [facetIds], rather than each facet independently re-querying it (as calling
+     * [observeFavoritesForFacet] once per facet would do) — with several facets browsed
      * simultaneously that redundant fan-out of real `LauncherApps` queries is wasteful and, in
      * practice, was slow enough to make callers relying on a single-frame result flaky.
      */
-    fun observeFavoritesForProfiles(profileIds: List<Long>): Flow<Map<Long, List<AppInfo>>> {
-        if (profileIds.isEmpty()) return flowOf(emptyMap())
-        val entitiesPerProfile = combine(profileIds.map { favoriteAppDao.observeForProfile(it) }) { it }
-        return combine(entitiesPerProfile, appRepository.observeInstalledApps()) { perProfile, installed ->
-            profileIds.indices.associate { index -> profileIds[index] to hydrate(perProfile[index], installed) }
+    fun observeFavoritesForFacets(facetIds: List<Long>): Flow<Map<Long, List<AppInfo>>> {
+        if (facetIds.isEmpty()) return flowOf(emptyMap())
+        val entitiesPerFacet = combine(facetIds.map { favoriteAppDao.observeForFacet(it) }) { it }
+        return combine(entitiesPerFacet, appRepository.observeInstalledApps()) { perFacet, installed ->
+            facetIds.indices.associate { index -> facetIds[index] to hydrate(perFacet[index], installed) }
         }
     }
 
@@ -59,10 +59,10 @@ class FavoriteAppRepository @Inject constructor(
             .mapNotNull { entity -> installedByComponent[entity.packageName to entity.activityName] }
     }
 
-    suspend fun addFavorite(profileId: Long, app: AppInfo, position: Int) {
+    suspend fun addFavorite(facetId: Long, app: AppInfo, position: Int) {
         favoriteAppDao.upsert(
             FavoriteAppEntity(
-                profileId = profileId,
+                facetId = facetId,
                 packageName = app.packageName,
                 activityName = app.activityName,
                 position = position,
@@ -70,14 +70,14 @@ class FavoriteAppRepository @Inject constructor(
         )
     }
 
-    suspend fun removeFavorite(profileId: Long, app: AppInfo) {
-        favoriteAppDao.deleteByComponent(profileId, app.packageName, app.activityName)
+    suspend fun removeFavorite(facetId: Long, app: AppInfo) {
+        favoriteAppDao.deleteByComponent(facetId, app.packageName, app.activityName)
     }
 
     /**
      * Uninstall cleanup — permanently removes [packageName]'s favorite entry from *every*
-     * profile, driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. Distinct
-     * from [observeFavoritesForProfile]'s own runtime filtering, which reacts to any reason an
+     * facet, driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. Distinct
+     * from [observeFavoritesForFacet]'s own runtime filtering, which reacts to any reason an
      * app might be momentarily missing without deleting anything — this only runs for a
      * genuine, permanent uninstall.
      */
@@ -85,30 +85,30 @@ class FavoriteAppRepository @Inject constructor(
         favoriteAppDao.deleteByPackage(packageName)
     }
 
-    /** Replaces this profile's entire favorites list with [apps] — used to seed a clean copy (e.g. of the current default list) when a profile switches to Override. */
-    suspend fun replaceFavorites(profileId: Long, apps: List<AppInfo>) {
-        favoriteAppDao.deleteAllForProfile(profileId)
+    /** Replaces this facet's entire favorites list with [apps] — used to seed a clean copy (e.g. of the current default list) when a facet switches to Override. */
+    suspend fun replaceFavorites(facetId: Long, apps: List<AppInfo>) {
+        favoriteAppDao.deleteAllForFacet(facetId)
         apps.forEachIndexed { index, app ->
             favoriteAppDao.upsert(
-                FavoriteAppEntity(profileId = profileId, packageName = app.packageName, activityName = app.activityName, position = index),
+                FavoriteAppEntity(facetId = facetId, packageName = app.packageName, activityName = app.activityName, position = index),
             )
         }
     }
 
     /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up, unlike every other read here). */
-    suspend fun getRawFavoritesForProfile(profileId: Long): List<FavoriteAppEntity> =
-        favoriteAppDao.observeForProfile(profileId).first()
+    suspend fun getRawFavoritesForFacet(facetId: Long): List<FavoriteAppEntity> =
+        favoriteAppDao.observeForFacet(facetId).first()
 
     /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
     suspend fun restoreFavorite(entity: FavoriteAppEntity) {
         favoriteAppDao.upsert(entity.copy(id = 0))
     }
 
-    suspend fun reorderFavorites(profileId: Long, orderedApps: List<AppInfo>) {
+    suspend fun reorderFavorites(facetId: Long, orderedApps: List<AppInfo>) {
         orderedApps.forEachIndexed { index, app ->
             favoriteAppDao.upsert(
                 FavoriteAppEntity(
-                    profileId = profileId,
+                    facetId = facetId,
                     packageName = app.packageName,
                     activityName = app.activityName,
                     position = index,

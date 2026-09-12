@@ -73,7 +73,7 @@ fun ClockBlock(
     calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     onEventClick: (CalendarEvent) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
-    /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.facetlauncher.app.ui.profiles.ProfileCarouselScreen]). */
+    /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.facetlauncher.app.ui.facets.FacetCarouselScreen]). */
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** Settings → Clock & Calendar Style → "Calendar alignment" — entirely independent of [clockAlignment]; positions [CalendarEventsBlock] (and reverses its row order at [ClockAlignment.RIGHT]) without moving the clock. */
     calendarAlignment: ClockAlignment = ClockAlignment.LEFT,

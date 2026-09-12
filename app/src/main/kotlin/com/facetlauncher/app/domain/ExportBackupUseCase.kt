@@ -5,8 +5,8 @@ import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.model.BackupBundle
@@ -22,10 +22,10 @@ import kotlinx.coroutines.flow.first
  */
 class ExportBackupUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val profileRepository: ProfileRepository,
+    private val facetRepository: FacetRepository,
     private val favoriteAppRepository: FavoriteAppRepository,
     private val dockAppRepository: DockAppRepository,
-    private val profileDockAppRepository: ProfileDockAppRepository,
+    private val facetDockAppRepository: FacetDockAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val backupRepository: BackupRepository,
@@ -33,19 +33,19 @@ class ExportBackupUseCase @Inject constructor(
     /** Returns the bundle it wrote — mainly so callers (and tests) can inspect exactly what got exported without re-deriving it. */
     suspend operator fun invoke(uri: Uri): BackupBundle {
         val settings = settingsRepository.settings.first()
-        val profiles = profileRepository.observeProfiles().first()
-        val activeProfileIndex = profiles.indexOfFirst { it.id == settings.activeProfileId }.takeIf { it >= 0 }
+        val facets = facetRepository.observeFacets().first()
+        val activeFacetIndex = facets.indexOfFirst { it.id == settings.activeFacetId }.takeIf { it >= 0 }
 
-        val backupProfiles = profiles.map { profile ->
-            val favorites = favoriteAppRepository.getRawFavoritesForProfile(profile.id).map { it.toBackupEntry() }
-            val dockApps = profileDockAppRepository.getRawDockAppsForProfile(profile.id).map { it.toBackupEntry() }
-            profile.toBackupProfile(favorites, dockApps)
+        val backupFacets = facets.map { facet ->
+            val favorites = favoriteAppRepository.getRawFavoritesForFacet(facet.id).map { it.toBackupEntry() }
+            val dockApps = facetDockAppRepository.getRawDockAppsForFacet(facet.id).map { it.toBackupEntry() }
+            facet.toBackupFacet(favorites, dockApps)
         }
 
         val bundle = BackupBundle(
             exportedAtEpochMillis = System.currentTimeMillis(),
-            settings = settings.toBackupSettings(activeProfileIndex),
-            profiles = backupProfiles,
+            settings = settings.toBackupSettings(activeFacetIndex),
+            facets = backupFacets,
             dockApps = dockAppRepository.getRawDockApps().map { it.toBackupEntry() },
             defaultFavoriteApps = defaultFavoriteAppRepository.getRawDefaultFavorites().map { it.toBackupEntry() },
             widgetPlacements = widgetPlacementRepository.observeAll().first().map { it.toBackupPlacement() },
@@ -55,7 +55,7 @@ class ExportBackupUseCase @Inject constructor(
     }
 }
 
-private fun LauncherSettings.toBackupSettings(activeProfileIndex: Int?): BackupSettings = BackupSettings(
+private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSettings = BackupSettings(
     use24HourTime = use24HourTime,
     dockDisplayMode = dockDisplayMode.name,
     drawerPresentation = drawerPresentation.name,
@@ -67,7 +67,7 @@ private fun LauncherSettings.toBackupSettings(activeProfileIndex: Int?): BackupS
     showDrawerIcons = showDrawerIcons,
     showDrawerLabels = showDrawerLabels,
     searchBarPosition = searchBarPosition.name,
-    activeProfileIndex = activeProfileIndex,
+    activeFacetIndex = activeFacetIndex,
     showAllDayEvents = showAllDayEvents,
     searchContactsEnabled = searchContactsEnabled,
     themeMode = themeMode.name,

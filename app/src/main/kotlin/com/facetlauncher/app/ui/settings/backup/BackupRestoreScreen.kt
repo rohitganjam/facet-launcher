@@ -104,7 +104,7 @@ fun BackupRestoreScreen(
     if (showImportConfirm) {
         ConfirmDialog(
             title = "Replace everything on this device?",
-            message = "Importing replaces every profile, the dock, and default favorites with what's in the backup file. This can't be undone.",
+            message = "Importing replaces every facet, the dock, and default favorites with what's in the backup file. This can't be undone.",
             confirmLabel = "Replace",
             onConfirm = {
                 showImportConfirm = false
@@ -161,7 +161,7 @@ private fun BackupRestoreContent(
                     SettingsCard {
                         RowScaffold(
                             title = "Export backup",
-                            subtitle = "Save every profile, dock, favorite, and setting as a file",
+                            subtitle = "Save every facet, dock, favorite, and setting as a file",
                             onClick = onExportClick,
                             enabled = !uiState.isBusy,
                             testTag = "export_backup_row",
@@ -230,7 +230,7 @@ private fun MessageBanner(message: BackupRestoreMessage, modifier: Modifier = Mo
         BackupRestoreMessage.ExportFailed -> "Couldn't save the backup" to true
         is BackupRestoreMessage.ImportSucceeded -> {
             val widgetNote = if (message.pendingWidgetCount > 0) " · ${message.pendingWidgetCount} widget(s) need re-adding below" else ""
-            "Restored ${message.profileCount} profile(s)$widgetNote" to false
+            "Restored ${message.facetCount} facet(s)$widgetNote" to false
         }
         BackupRestoreMessage.ImportFailedInvalidFile -> "That file isn't a valid Facet backup" to true
         is BackupRestoreMessage.ImportFailedUnsupportedVersion -> "That backup was made by a newer version of Facet" to true

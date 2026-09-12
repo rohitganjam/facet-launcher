@@ -121,7 +121,65 @@ object Migrations {
         }
     }
 
+    /**
+     * The Profile -> Facet rename: `profiles` -> `facets`, `profile_dock_apps` -> `facet_dock_apps`,
+     * and the `profileId` FK column -> `facetId` on `facet_dock_apps`/`favorite_apps` (`dock_apps`
+     * has no such column — it's the launcher-wide default dock, not per-facet).
+     *
+     * `profiles` itself has no FK of its own, so a plain `RENAME TABLE` is enough for it. But
+     * `facet_dock_apps`/`favorite_apps` each embed their parent table's name inside their own
+     * FOREIGN KEY clause, and on this device's SQLite build that embedded reference does NOT get
+     * rewritten by `RENAME TABLE`/`RENAME COLUMN` the way SQLite's docs describe — confirmed by two
+     * separate instrumented `FacetDatabaseMigrationTest` runs on a real emulator, each catching
+     * Room's schema validator still seeing `referenceTable = 'profiles'` on whichever of the two
+     * tables happened to be checked first (the JVM/Robolectric unit-test run of the same migration
+     * didn't surface this at all — different SQLite build, different behavior). So both are
+     * recreated outright (create-copy-drop-rename) rather than renamed/altered in place, and their
+     * unique indices recreated fresh under the name Room's convention expects (SQLite has no
+     * `ALTER INDEX RENAME`, and recreating the table drops them anyway).
+     */
+    val MIGRATION_16_17: Migration = object : Migration(16, 17) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles RENAME TO facets")
+
+            db.execSQL(
+                "CREATE TABLE facet_dock_apps_new (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`facetId` INTEGER NOT NULL, `packageName` TEXT NOT NULL, `activityName` TEXT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL(
+                "INSERT INTO facet_dock_apps_new (id, facetId, packageName, activityName, position) " +
+                    "SELECT id, profileId, packageName, activityName, position FROM profile_dock_apps",
+            )
+            db.execSQL("DROP TABLE profile_dock_apps")
+            db.execSQL("ALTER TABLE facet_dock_apps_new RENAME TO facet_dock_apps")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_facet_dock_apps_facetId_packageName_activityName " +
+                    "ON facet_dock_apps (facetId, packageName, activityName)",
+            )
+
+            db.execSQL(
+                "CREATE TABLE favorite_apps_new (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`facetId` INTEGER NOT NULL, `packageName` TEXT NOT NULL, `activityName` TEXT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL(
+                "INSERT INTO favorite_apps_new (id, facetId, packageName, activityName, position) " +
+                    "SELECT id, profileId, packageName, activityName, position FROM favorite_apps",
+            )
+            db.execSQL("DROP TABLE favorite_apps")
+            db.execSQL("ALTER TABLE favorite_apps_new RENAME TO favorite_apps")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_favorite_apps_facetId_packageName_activityName " +
+                    "ON favorite_apps (facetId, packageName, activityName)",
+            )
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
+        MIGRATION_16_17,
     )
 }

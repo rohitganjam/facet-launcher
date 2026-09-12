@@ -4,7 +4,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -24,11 +24,11 @@ class CleanUpUninstalledAppsUseCaseTest {
         val uninstalls = MutableSharedFlow<String>(replay = 1)
         `when`(appRepository.observeUninstalledPackages()).thenReturn(uninstalls)
         val dockAppRepository = mock(DockAppRepository::class.java)
-        val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
+        val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
         val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
         val useCase = CleanUpUninstalledAppsUseCase(
-            appRepository, dockAppRepository, profileDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+            appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
         )
 
         // When the use case is running and a package is reported genuinely uninstalled
@@ -38,7 +38,7 @@ class CleanUpUninstalledAppsUseCaseTest {
 
         // Then every repository permanently deletes that package's row, not just filters it from view
         verify(dockAppRepository).removeByPackage("com.example.removed")
-        verify(profileDockAppRepository).removeByPackage("com.example.removed")
+        verify(facetDockAppRepository).removeByPackage("com.example.removed")
         verify(favoriteAppRepository).removeByPackage("com.example.removed")
         verify(defaultFavoriteAppRepository).removeByPackage("com.example.removed")
         job.cancel()

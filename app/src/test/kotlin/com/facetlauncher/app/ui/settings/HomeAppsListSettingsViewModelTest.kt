@@ -4,10 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -57,26 +57,26 @@ class HomeAppsListSettingsViewModelTest {
     private fun appInfo(n: Int) = AppInfo(packageName = "com.example.$n", activityName = ".Main", label = "App $n", icon = null)
 
     private suspend fun createViewModel(
-        profileId: Long? = null,
+        facetId: Long? = null,
         favorites: List<AppInfo> = emptyList(),
-        profiles: List<ProfileEntity> = emptyList(),
+        facets: List<FacetEntity> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
-        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
+        facetRepository: FacetRepository = mock(FacetRepository::class.java),
         favoriteAppRepository: FavoriteAppRepository = mock(FavoriteAppRepository::class.java),
         defaultFavoriteAppRepository: DefaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java),
     ): HomeAppsListSettingsViewModel {
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        `when`(profileRepository.observeProfiles()).thenReturn(MutableStateFlow(profiles))
-        `when`(favoriteAppRepository.observeFavoritesForProfile(anyLong())).thenReturn(flowOf(favorites))
+        `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
+        `when`(favoriteAppRepository.observeFavoritesForFacet(anyLong())).thenReturn(flowOf(favorites))
         `when`(defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(favorites))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
         return HomeAppsListSettingsViewModel(
-            SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+            SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
-            profileRepository,
+            facetRepository,
             favoriteAppRepository,
             defaultFavoriteAppRepository,
             fakeWallpaperRepository(),
@@ -116,22 +116,22 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `profile-scoped setter writes to that profile's row, not SettingsRepository`() = runTest {
+    fun `facet-scoped setter writes to that facet's row, not SettingsRepository`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val profileRepository = mock(ProfileRepository::class.java)
-        val profile = ProfileEntity(id = 7L, name = "Work", position = 0)
-        `when`(profileRepository.getById(7L)).thenReturn(profile)
+        val facetRepository = mock(FacetRepository::class.java)
+        val facet = FacetEntity(id = 7L, name = "Work", position = 0)
+        `when`(facetRepository.getById(7L)).thenReturn(facet)
         val viewModel = createViewModel(
-            profileId = 7L,
-            profiles = listOf(profile),
+            facetId = 7L,
+            facets = listOf(facet),
             settingsRepository = settingsRepository,
-            profileRepository = profileRepository,
+            facetRepository = facetRepository,
         )
 
         viewModel.setAppRowPosition(AppRowPosition.RIGHT)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setAppRowPosition(profile, AppRowPosition.RIGHT)
+        verify(facetRepository).setAppRowPosition(facet, AppRowPosition.RIGHT)
         verify(settingsRepository, never()).setAppRowPosition(AppRowPosition.RIGHT)
     }
 
@@ -148,9 +148,9 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `profile-scoped reorderFavorites hits that profile's list`() = runTest {
+    fun `facet-scoped reorderFavorites hits that facet's list`() = runTest {
         val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
-        val viewModel = createViewModel(profileId = 7L, favoriteAppRepository = favoriteAppRepository)
+        val viewModel = createViewModel(facetId = 7L, favoriteAppRepository = favoriteAppRepository)
         val reordered = listOf(appInfo(2), appInfo(1))
 
         viewModel.reorderFavorites(reordered)

@@ -9,14 +9,26 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -26,45 +38,46 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.ui.dock.DockAppPickerScreen
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
-import com.facetlauncher.app.ui.profiles.FavoritesPickerScreen
-import com.facetlauncher.app.ui.profiles.FavoritesPickerViewModel
+import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
+import com.facetlauncher.app.ui.facets.FavoritesPickerViewModel
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
+import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Wallpaper
 
 /** The four onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. */
 enum class OnboardingStep {
     INTRO,
     HOME_SETUP,
-    PROFILES,
+    FACETS,
     SET_DEFAULT,
 }
 
 /**
  * Steps shown in each page's [OnboardingDots] — [OnboardingStep.SET_DEFAULT] isn't counted as a
- * step of its own; it's the final action reached from Profiles' last dot, not a new one (see
+ * step of its own; it's the final action reached from Facets' last dot, not a new one (see
  * [SetDefaultLauncherSheet]).
  */
 internal const val ONBOARDING_STEP_COUNT = 3
 
-/** Full-screen pickers opened from the home-setup step — reused as-is from Settings/Profiles, not part of [OnboardingStep]'s own linear flow. */
+/** Full-screen pickers opened from the home-setup step — reused as-is from Settings/Facets, not part of [OnboardingStep]'s own linear flow. */
 private enum class OnboardingSubScreen {
     DOCK_PICKER,
     FAVORITES_PICKER,
 }
 
 /**
- * The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.PROFILES])
+ * The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.FACETS])
  * lands on — every step but [OnboardingStep.INTRO] and [OnboardingStep.SET_DEFAULT] can go back
  * this way. [OnboardingStep.SET_DEFAULT] is the final action sheet, reachable only forward from
- * Profiles, so a swipe there maps to itself the same way [nextStep] already has it map to itself
+ * Facets, so a swipe there maps to itself the same way [nextStep] already has it map to itself
  * going forward — system back on that sheet is handled separately, dismissing it instead (see
  * [OnboardingScreen]'s own `BackHandler`).
  */
 private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
     OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
-    OnboardingStep.PROFILES -> OnboardingStep.HOME_SETUP
+    OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
     OnboardingStep.SET_DEFAULT -> OnboardingStep.SET_DEFAULT
 }
 
@@ -76,8 +89,8 @@ private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
  */
 private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.HOME_SETUP
-    OnboardingStep.HOME_SETUP -> OnboardingStep.PROFILES
-    OnboardingStep.PROFILES -> OnboardingStep.SET_DEFAULT
+    OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
+    OnboardingStep.FACETS -> OnboardingStep.SET_DEFAULT
     OnboardingStep.SET_DEFAULT -> OnboardingStep.SET_DEFAULT
 }
 
@@ -91,7 +104,7 @@ private val SWIPE_COMMIT_DISTANCE = 80.dp
  * Owns only step navigation; all data lives in the shared [OnboardingViewModel], obtained once
  * here and passed down as stateless parameters to each step. [dockPickerViewModel]/
  * [favoritesPickerViewModel] are a testing seam only — production always leaves them `null`, which
- * lets [com.facetlauncher.app.ui.dock.DockAppPickerScreen]/[com.facetlauncher.app.ui.profiles.FavoritesPickerScreen]
+ * lets [com.facetlauncher.app.ui.dock.DockAppPickerScreen]/[com.facetlauncher.app.ui.facets.FavoritesPickerScreen]
  * fall back to their own `hiltViewModel()`; a non-Hilt test host (like `OnboardingScreenTest`, which
  * already builds [OnboardingViewModel] by hand) supplies its own instance instead.
  */
@@ -181,7 +194,7 @@ fun OnboardingScreen(
                     onBack = { step = previousStep(step) },
                     onNext = { step = nextStep(step) },
                 )
-                OnboardingStep.PROFILES -> OnboardingProfilesPage(
+                OnboardingStep.FACETS -> OnboardingFacetsPage(
                     uiState = uiState,
                     onBack = { step = previousStep(step) },
                     onNext = { step = nextStep(step) },
@@ -206,6 +219,28 @@ fun OnboardingScreen(
                 FavoritesPickerScreen(onDone = { subScreen = null })
             }
             null -> {}
+        }
+
+        // Jumps straight to the final step from anywhere earlier in the flow — not shown on
+        // SET_DEFAULT itself (that step has its own "Later") or over a full-screen picker. If
+        // Facet already holds the default-launcher role (reinstall), that step has nothing left
+        // to ask, so Skip finishes onboarding directly instead of landing on its "already
+        // default" variant.
+        if (subScreen == null && step != OnboardingStep.SET_DEFAULT) {
+            Text(
+                text = "Skip",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Muted,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+                    .padding(horizontal = 20.dp)
+                    // 48dp minimum touch target (M3 guideline), centered on the text.
+                    .clickable(onClick = { if (uiState.isDefaultLauncher) onFinish() else step = OnboardingStep.SET_DEFAULT })
+                    .testTag("onboarding_skip")
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .wrapContentSize(Alignment.Center),
+            )
         }
     }
 }

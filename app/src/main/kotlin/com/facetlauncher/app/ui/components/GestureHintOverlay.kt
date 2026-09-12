@@ -29,7 +29,7 @@ import com.facetlauncher.app.ui.theme.Scrim
  * [com.facetlauncher.app.ui.home.HomeUiState.showGestureHint]. Minimal chevron glyphs (not
  * motion-trail arrows) to stay consistent with the app's restrained visual language. Kept in sync
  * with the real gesture map (`PRD.md` §5): swipe up → App Drawer, swipe right → Hub, swipe left →
- * Switch Profiles. Dismissed by [onDismiss], fired on a tap, a "Got it" tap, or the first frame of
+ * Switch Facets. Dismissed by [onDismiss], fired on a tap, a "Got it" tap, or the first frame of
  * any drag — that first swipe attempt just clears the hint rather than also completing the real
  * navigation underneath; a second swipe then behaves normally.
  */
@@ -53,7 +53,7 @@ fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Switch profiles", style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(text = "Switch facets", style = MaterialTheme.typography.headlineSmall, color = Ink)
                 Text(text = "←", style = MaterialTheme.typography.headlineMedium, color = Muted)
             }
             Row(

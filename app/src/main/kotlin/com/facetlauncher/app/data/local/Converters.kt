@@ -10,7 +10,7 @@ import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.ListContentMode
 
 /**
- * Room type converters for every enum column on [ProfileEntity] — all currently non-null Kotlin
+ * Room type converters for every enum column on [FacetEntity] — all currently non-null Kotlin
  * properties with their own default. Every `to*` converter falls back to that same default rather
  * than returning null when a stored string doesn't match any current enum constant (`valueOf`
  * throwing on a renamed/removed constant, e.g. `ClockColorOption`'s old `INK`/`WHITE`/`BLACK`

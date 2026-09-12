@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.model.ClockAlignment
 /**
  * Resolves the persisted [ClockAlignment] setting to a real Compose horizontal alignment — reused
  * both for positioning the clock block itself within its container (see
- * [com.facetlauncher.app.ui.home.HomeScreen], [com.facetlauncher.app.ui.profiles.ProfileCarouselScreen])
+ * [com.facetlauncher.app.ui.home.HomeScreen], [com.facetlauncher.app.ui.facets.FacetCarouselScreen])
  * and for aligning the clock's own time/date content consistently with that position (see
  * [com.facetlauncher.app.ui.home.clock.ClockDisplay]).
  */

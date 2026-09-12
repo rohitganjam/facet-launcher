@@ -81,7 +81,7 @@ import com.facetlauncher.app.ui.theme.toneOf
 /**
  * Settings → Appearance (`3c`) — theme, accent color, icons, and launcher font/app-label-color,
  * split out of the main Settings list into its own screen (see chat history: the main list was
- * getting too long to scan). Every field here is global only, no per-profile override.
+ * getting too long to scan). Every field here is global only, no per-facet override.
  */
 @Composable
 fun AppearanceSettingsScreen(

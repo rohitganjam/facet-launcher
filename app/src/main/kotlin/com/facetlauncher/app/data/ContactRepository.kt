@@ -235,7 +235,7 @@ class ContactRepository @Inject constructor(
                 // handler for its own row's ACTION_VIEW — tapping them did nothing (confirmed
                 // on-device, see chat history). Requiring the owning app itself to resolve this
                 // exact intent is what tells a genuine contact-method integration (WhatsApp,
-                // Telegram, Signal — anything that registers to open its own profile row) apart
+                // Telegram, Signal — anything that registers to open its own facet row) apart
                 // from incidental sync metadata, with no hardcoded app allow/deny list either way.
                 val resolved = packageManager.resolveActivity(intent, 0) ?: return@mapNotNull null
                 // resolveActivity finding a match only means an intent-filter exists — it says

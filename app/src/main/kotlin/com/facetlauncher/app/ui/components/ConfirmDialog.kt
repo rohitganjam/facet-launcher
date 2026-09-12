@@ -13,7 +13,7 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 
-/** Shared confirm/cancel dialog — used for profile deletion (F4 requires confirmation before it completes). */
+/** Shared confirm/cancel dialog — used for facet deletion (F4 requires confirmation before it completes). */
 @Composable
 fun ConfirmDialog(
     title: String,

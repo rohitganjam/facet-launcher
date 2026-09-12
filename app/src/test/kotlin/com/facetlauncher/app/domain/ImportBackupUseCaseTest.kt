@@ -5,16 +5,16 @@ import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FavoriteAppEntity
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupAppEntry
 import com.facetlauncher.app.data.model.BackupBundle
-import com.facetlauncher.app.data.model.BackupProfile
+import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 import com.facetlauncher.app.data.model.CURRENT_BACKUP_VERSION
@@ -34,23 +34,23 @@ class ImportBackupUseCaseTest {
 
     private val backupRepository = mock(BackupRepository::class.java)
     private val settingsRepository = mock(SettingsRepository::class.java)
-    private val profileRepository = mock(ProfileRepository::class.java)
+    private val facetRepository = mock(FacetRepository::class.java)
     private val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
     private val dockAppRepository = mock(DockAppRepository::class.java)
-    private val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
+    private val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
     private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
 
     private val useCase = ImportBackupUseCase(
         backupRepository,
         settingsRepository,
-        profileRepository,
+        facetRepository,
         favoriteAppRepository,
         dockAppRepository,
-        profileDockAppRepository,
+        facetDockAppRepository,
         defaultFavoriteAppRepository,
     )
 
-    private fun minimalSettings(activeProfileIndex: Int? = null) = BackupSettings(
+    private fun minimalSettings(activeFacetIndex: Int? = null) = BackupSettings(
         use24HourTime = true,
         dockDisplayMode = "TEXT",
         drawerPresentation = "GRID",
@@ -62,7 +62,7 @@ class ImportBackupUseCaseTest {
         showDrawerIcons = false,
         showDrawerLabels = false,
         searchBarPosition = "BOTTOM",
-        activeProfileIndex = activeProfileIndex,
+        activeFacetIndex = activeFacetIndex,
         showAllDayEvents = false,
         searchContactsEnabled = true,
         themeMode = "DARK",
@@ -92,7 +92,7 @@ class ImportBackupUseCaseTest {
         val result = useCase(uri)
 
         assertEquals(ImportBackupResult.InvalidFile, result)
-        verify(profileRepository, org.mockito.Mockito.never()).deleteAllProfiles()
+        verify(facetRepository, org.mockito.Mockito.never()).deleteAllFacets()
     }
 
     @Test
@@ -102,7 +102,7 @@ class ImportBackupUseCaseTest {
             backupVersion = CURRENT_BACKUP_VERSION + 1,
             exportedAtEpochMillis = 0L,
             settings = minimalSettings(),
-            profiles = emptyList(),
+            facets = emptyList(),
             dockApps = emptyList(),
             defaultFavoriteApps = emptyList(),
             widgetPlacements = emptyList(),
@@ -112,18 +112,18 @@ class ImportBackupUseCaseTest {
         val result = useCase(uri)
 
         assertEquals(ImportBackupResult.UnsupportedVersion(CURRENT_BACKUP_VERSION + 1), result)
-        verify(profileRepository, org.mockito.Mockito.never()).deleteAllProfiles()
+        verify(facetRepository, org.mockito.Mockito.never()).deleteAllFacets()
     }
 
     @Test
-    fun `a valid backup replaces every profile, dock, and default favorite, then reports what was restored`() = runTest {
-        // Given a backup with one profile (with a favorite), one dock app, one default favorite, and one pending widget
+    fun `a valid backup replaces every facet, dock, and default favorite, then reports what was restored`() = runTest {
+        // Given a backup with one facet (with a favorite), one dock app, one default favorite, and one pending widget
         val uri = mock(Uri::class.java)
         val bundle = BackupBundle(
             exportedAtEpochMillis = 0L,
-            settings = minimalSettings(activeProfileIndex = 0),
-            profiles = listOf(
-                BackupProfile(
+            settings = minimalSettings(activeFacetIndex = 0),
+            facets = listOf(
+                BackupFacet(
                     name = "Work", position = 0, overrideClock = false, clockTemplateId = "LIGHT_STACK",
                     clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", use24HourTime = false,
                     clockShowMeridiem = false, overrideApps = false, appRowPosition = "LEFT",
@@ -144,8 +144,8 @@ class ImportBackupUseCaseTest {
         `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
         // A concrete expected entity, not any(...): Mockito's static any()/eq() return a raw
         // `null` placeholder, which Kotlin's compiler-inserted non-null check on
-        // restoreProfile's `profile: ProfileEntity` parameter rejects outright.
-        val expectedProfileEntity = ProfileEntity(
+        // restoreFacet's `facet: FacetEntity` parameter rejects outright.
+        val expectedFacetEntity = FacetEntity(
             id = 0, name = "Work", position = 0, overrideClock = false,
             clockTemplateId = ClockTemplateId.LIGHT_STACK, clockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
             clockColorOption = ClockColorOption.THEME, use24HourTime = false, clockShowMeridiem = false,
@@ -155,27 +155,27 @@ class ImportBackupUseCaseTest {
             calendarColorOption = ClockColorOption.THEME, selectedCalendarIdsCsv = "3,4",
             overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
-        `when`(profileRepository.restoreProfile(expectedProfileEntity)).thenReturn(99L)
+        `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)
 
         // When importing
         val result = useCase(uri) as ImportBackupResult.Success
 
         // Then existing data is wiped first...
-        verify(profileRepository).deleteAllProfiles()
+        verify(facetRepository).deleteAllFacets()
         verify(dockAppRepository).deleteAllDockApps()
         verify(defaultFavoriteAppRepository).deleteAllDefaultFavorites()
-        // ...the backup's own data is restored, favorites attached to the newly-created profile's real id...
-        verify(favoriteAppRepository).restoreFavorite(FavoriteAppEntity(profileId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
-        verify(profileDockAppRepository).restoreDockApp(
-            com.facetlauncher.app.data.local.ProfileDockAppEntity(profileId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0),
+        // ...the backup's own data is restored, favorites attached to the newly-created facet's real id...
+        verify(favoriteAppRepository).restoreFavorite(FavoriteAppEntity(facetId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
+        verify(facetDockAppRepository).restoreDockApp(
+            com.facetlauncher.app.data.local.FacetDockAppEntity(facetId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0),
         )
-        // ...the active profile resolves from an index to that new id...
-        verify(settingsRepository).setActiveProfileId(99L)
+        // ...the active facet resolves from an index to that new id...
+        verify(settingsRepository).setActiveFacetId(99L)
         // ...every other setting field is applied...
         verify(settingsRepository).setUse24HourTime(true)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.DARK)
         // ...and widgets are reported back, not silently written to widget_placements.
-        assertEquals(1, result.profileCount)
+        assertEquals(1, result.facetCount)
         assertEquals(1, result.dockAppCount)
         assertEquals(1, result.defaultFavoriteCount)
         assertEquals(1, result.pendingWidgetPlacements.size)
@@ -188,7 +188,7 @@ class ImportBackupUseCaseTest {
         val bundle = BackupBundle(
             exportedAtEpochMillis = 0L,
             settings = minimalSettings().copy(themeMode = "NOT_A_REAL_VALUE"),
-            profiles = emptyList(),
+            facets = emptyList(),
             dockApps = emptyList(),
             defaultFavoriteApps = emptyList(),
             widgetPlacements = emptyList(),

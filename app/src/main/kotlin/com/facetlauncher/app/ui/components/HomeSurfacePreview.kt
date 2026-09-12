@@ -33,7 +33,7 @@ import com.facetlauncher.app.ui.theme.Muted
 
 /**
  * "This is how Home looks" preview card, shared by Settings → Appearance / Home Apps List / Dock
- * and by a profile's own Apps-list / Dock sub-screens. Uses the real production [AppRow] and
+ * and by a facet's own Apps-list / Dock sub-screens. Uses the real production [AppRow] and
  * [DockIcon] over the device's actual wallpaper ([WallpaperBackground]) rather than a mockup, so
  * the position/presentation/display-style/label choices render exactly as they would on Home.
  *

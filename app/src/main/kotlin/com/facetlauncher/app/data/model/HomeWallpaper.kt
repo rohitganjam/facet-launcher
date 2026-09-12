@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.Immutable
 
 /**
- * The current system wallpaper, resolved for rendering behind a preview surface (the profile
+ * The current system wallpaper, resolved for rendering behind a preview surface (the facet
  * carousel cards, the Appearance preview card) that can't rely on the Activity's own
  * `windowShowWallpaper` compositing the way Home does. Produced by
  * [com.facetlauncher.app.data.WallpaperRepository]; the fallbacks degrade in order —

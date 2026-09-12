@@ -24,7 +24,7 @@ import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 /**
  * Shared title + live-count-subtitle header, used by every canvas surface (Home/Hub/carousel —
  * reached by a gesture, not a submenu navigation) that needs its own bold identifying title: the
- * Hub ("Facet Hub") and the Switch Profiles carousel ("Switch Profiles") both use this exact
+ * Hub ("Facet Hub") and the Switch Facets carousel ("Switch Facets") both use this exact
  * shape — title, a `labelSmall` count subtitle beneath it, and an optional trailing action —
  * rather than each hand-building its own copy (see chat history).
  *

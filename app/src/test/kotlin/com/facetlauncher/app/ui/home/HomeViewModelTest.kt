@@ -1,9 +1,9 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.NotificationShadeRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.domain.HomeScreenState
@@ -49,9 +49,9 @@ class HomeViewModelTest {
     private fun homeViewModel(
         notificationShadeRepository: NotificationShadeRepository,
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
-        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
+        facetRepository: FacetRepository = mock(FacetRepository::class.java),
         settings: LauncherSettings = LauncherSettings(),
-        profiles: List<ProfileEntity> = emptyList(),
+        facets: List<FacetEntity> = emptyList(),
     ): HomeViewModel {
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(
@@ -60,7 +60,7 @@ class HomeViewModelTest {
                     settings = settings,
                     dockApps = emptyList(),
                     appListItems = emptyList(),
-                    profiles = profiles,
+                    facets = facets,
                     usageAccessGranted = true,
                     calendarEvents = emptyList(),
                     badgeCounts = emptyMap(),
@@ -68,7 +68,7 @@ class HomeViewModelTest {
                 ),
             ),
         )
-        return HomeViewModel(observeHomeScreenState, notificationShadeRepository, settingsRepository, profileRepository)
+        return HomeViewModel(observeHomeScreenState, notificationShadeRepository, settingsRepository, facetRepository)
     }
 
     @Test
@@ -110,7 +110,7 @@ class HomeViewModelTest {
             observeHomeScreenState,
             mock(NotificationShadeRepository::class.java),
             mock(SettingsRepository::class.java),
-            mock(ProfileRepository::class.java),
+            mock(FacetRepository::class.java),
         )
 
         // Then it's still loading well before the timeout
@@ -125,8 +125,8 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `onClockZoneHeightCommit delegates to the settings repository when no profile is overriding`() = runTest {
-        // Given a HomeViewModel with no active profile overriding the clock bundle
+    fun `onClockZoneHeightCommit delegates to the settings repository when no facet is overriding`() = runTest {
+        // Given a HomeViewModel with no active facet overriding the clock bundle
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
 
@@ -139,17 +139,17 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `onClockZoneHeightCommit delegates to the profile repository when the active profile overrides the clock bundle`() = runTest {
-        // Given a HomeViewModel whose active profile has overrideClock = true
+    fun `onClockZoneHeightCommit delegates to the facet repository when the active facet overrides the clock bundle`() = runTest {
+        // Given a HomeViewModel whose active facet has overrideClock = true
         val settingsRepository = mock(SettingsRepository::class.java)
-        val profileRepository = mock(ProfileRepository::class.java)
-        val overridingProfile = ProfileEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val facetRepository = mock(FacetRepository::class.java)
+        val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
         val viewModel = homeViewModel(
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = settingsRepository,
-            profileRepository = profileRepository,
-            settings = LauncherSettings(activeProfileId = 1L),
-            profiles = listOf(overridingProfile),
+            facetRepository = facetRepository,
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(overridingFacet),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -157,8 +157,8 @@ class HomeViewModelTest {
         viewModel.onClockZoneHeightCommit(123.4f)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then it writes to this profile's own override instead of the global setting
-        verify(profileRepository).setClockZoneHeight(overridingProfile, 123.4f)
+        // Then it writes to this facet's own override instead of the global setting
+        verify(facetRepository).setClockZoneHeight(overridingFacet, 123.4f)
     }
 
     @Test

@@ -14,9 +14,9 @@ import javax.inject.Singleton
  * The launcher-wide default Favorites list — wraps [DefaultFavoriteAppDao], hydrating stored
  * (packageName, activityName) rows against the live installed-app list, mirroring
  * [DockAppRepository]'s uninstall-collapse pattern exactly. This is the baseline Favorites shown
- * by any profile that isn't overriding its own (see [ProfileEntity.overridingFavorites]) —
+ * by any facet that isn't overriding its own (see [FacetEntity.overridingFavorites]) —
  * edited from Settings' own "Default favorites" card, distinct from [FavoriteAppRepository]'s
- * per-profile lists.
+ * per-facet lists.
  */
 @Singleton
 class DefaultFavoriteAppRepository @Inject constructor(

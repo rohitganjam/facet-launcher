@@ -47,8 +47,8 @@ import com.facetlauncher.app.ui.theme.resolve
 /**
  * Onboarding's final action (`4h`) — the one that matters. A bottom sheet over the user's real
  * Home so far (their step-2 picks, dimmed under [Scrim]). Not one of the numbered swipeable steps
- * (its dots below stay on Profiles' own last-dot state) and not reversible — reachable only
- * forward from Profiles, with no "Back" of its own. "Set as default" launches
+ * (its dots below stay on Facets' own last-dot state) and not reversible — reachable only
+ * forward from Facets, with no "Back" of its own. "Set as default" launches
  * [requestDefaultLauncherIntent] via [rememberLauncherForActivityResult]; **any** result (granted,
  * denied, or dismissed) — same as "Later" — calls [onFinish]. If Facet already holds the role
  * (reinstall), swaps in a Success-colored "already default" variant with a single Done button.
@@ -116,7 +116,7 @@ fun SetDefaultLauncherSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Same last-dot state as Profiles — this sheet doesn't advance the stepper, it's
+                // Same last-dot state as Facets — this sheet doesn't advance the stepper, it's
                 // the final action reached from that last step, not a step of its own.
                 OnboardingDots(step = ONBOARDING_STEP_COUNT - 1, totalSteps = ONBOARDING_STEP_COUNT)
                 if (!uiState.isDefaultLauncher) {

@@ -565,8 +565,8 @@ class HomeScreenTest {
     }
 
     @Test
-    fun tappingProfileSettingsInTheSheetNavigatesAndClosesIt() {
-        // Given the sheet opened via a long-press on the clock, with a hoisted profile-settings callback
+    fun tappingFacetSettingsInTheSheetNavigatesAndClosesIt() {
+        // Given the sheet opened via a long-press on the clock, with a hoisted facet-settings callback
         var navigated = false
         composeRule.setContent {
             var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
@@ -577,7 +577,7 @@ class HomeScreenTest {
                     onAppClick = {},
                     clockAdjustMode = adjustMode,
                     onAdjustModeChange = { adjustMode = it },
-                    onNavigateToProfileSettings = { navigated = true },
+                    onNavigateToFacetSettings = { navigated = true },
                 )
             }
         }
@@ -585,8 +585,8 @@ class HomeScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 
-        // When "Profile settings" is tapped
-        composeRule.onNodeWithTag("clock_adjust_profile_settings").performClick()
+        // When "Facet settings" is tapped
+        composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
         composeRule.waitForIdle()
 
         // Then the callback fires and the sheet closes

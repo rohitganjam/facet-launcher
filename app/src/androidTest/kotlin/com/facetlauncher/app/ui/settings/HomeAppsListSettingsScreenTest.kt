@@ -20,7 +20,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -40,13 +40,13 @@ class HomeAppsListSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    /** [onProfileRepo] receives the screen's real [ProfileRepository]; when [profileScoped] the VM
-     *  is scoped to a freshly-added profile in that same DB, whose id is passed back too. */
+    /** [onFacetRepo] receives the screen's real [FacetRepository]; when [facetScoped] the VM
+     *  is scoped to a freshly-added facet in that same DB, whose id is passed back too. */
     private fun setContent(
         onBack: () -> Unit = {},
         onEditFavorites: () -> Unit = {},
-        profileScoped: Boolean = false,
-        onProfileRepo: (ProfileRepository, Long?) -> Unit = { _, _ -> },
+        facetScoped: Boolean = false,
+        onFacetRepo: (FacetRepository, Long?) -> Unit = { _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -58,13 +58,13 @@ class HomeAppsListSettingsScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val profileRepository = ProfileRepository(database.profileDao())
-                val profileId = if (profileScoped) runBlocking { profileRepository.addProfile().id } else null
-                onProfileRepo(profileRepository, profileId)
+                val facetRepository = FacetRepository(database.facetDao())
+                val facetId = if (facetScoped) runBlocking { facetRepository.addFacet().id } else null
+                onFacetRepo(facetRepository, facetId)
                 HomeAppsListSettingsViewModel(
-                    SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+                    SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
-                    profileRepository,
+                    facetRepository,
                     FavoriteAppRepository(database.favoriteAppDao(), appRepository),
                     DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
@@ -120,16 +120,16 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun profileScopedScreenWritesThePositionToThatProfilesRow() {
-        lateinit var profileRepo: ProfileRepository
-        setContent(profileScoped = true, onProfileRepo = { repo, _ -> profileRepo = repo })
+    fun facetScopedScreenWritesThePositionToThatFacetsRow() {
+        lateinit var facetRepo: FacetRepository
+        setContent(facetScoped = true, onFacetRepo = { repo, _ -> facetRepo = repo })
 
         composeRule.onNodeWithTag("default_app_row_position_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("default_app_row_position_row_option_RIGHT").performClick()
 
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { profileRepo.observeProfiles().first().any { it.appRowPosition == AppRowPosition.RIGHT } }
+            runBlocking { facetRepo.observeFacets().first().any { it.appRowPosition == AppRowPosition.RIGHT } }
         }
     }
 }

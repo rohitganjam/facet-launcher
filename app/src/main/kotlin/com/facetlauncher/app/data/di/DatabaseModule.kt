@@ -7,8 +7,8 @@ import com.facetlauncher.app.data.local.DockAppDao
 import com.facetlauncher.app.data.local.FavoriteAppDao
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.Migrations
-import com.facetlauncher.app.data.local.ProfileDao
-import com.facetlauncher.app.data.local.ProfileDockAppDao
+import com.facetlauncher.app.data.local.FacetDao
+import com.facetlauncher.app.data.local.FacetDockAppDao
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import dagger.Module
 import dagger.Provides
@@ -26,7 +26,7 @@ object DatabaseModule {
     fun provideFacetDatabase(@ApplicationContext context: Context): FacetDatabase =
         Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
             .addMigrations(*Migrations.ALL)
-            // Real installs now hold real user data (profiles, dock/favorite layout, widget
+            // Real installs now hold real user data (facets, dock/favorite layout, widget
             // placements) — a destructive fallback on *upgrade* would silently wipe all of it the
             // next time the schema version bumps and nobody remembered to add a Migration. Letting
             // Room throw IllegalStateException instead (its default when a required migration is
@@ -39,7 +39,7 @@ object DatabaseModule {
             .build()
 
     @Provides
-    fun provideProfileDao(database: FacetDatabase): ProfileDao = database.profileDao()
+    fun provideFacetDao(database: FacetDatabase): FacetDao = database.facetDao()
 
     @Provides
     fun provideFavoriteAppDao(database: FacetDatabase): FavoriteAppDao = database.favoriteAppDao()
@@ -48,7 +48,7 @@ object DatabaseModule {
     fun provideDockAppDao(database: FacetDatabase): DockAppDao = database.dockAppDao()
 
     @Provides
-    fun provideProfileDockAppDao(database: FacetDatabase): ProfileDockAppDao = database.profileDockAppDao()
+    fun provideFacetDockAppDao(database: FacetDatabase): FacetDockAppDao = database.facetDockAppDao()
 
     @Provides
     fun provideDefaultFavoriteAppDao(database: FacetDatabase): DefaultFavoriteAppDao = database.defaultFavoriteAppDao()

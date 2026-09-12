@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.testTag
 import com.facetlauncher.app.ui.theme.Ink
 
 /**
- * Back button shown on every non-root screen (Settings, Dock picker, Profiles), wired to the
+ * Back button shown on every non-root screen (Settings, Dock picker, Facets), wired to the
  * same nav-back action as the system back button/gesture — added per a design update
  * requesting an explicit on-screen back affordance everywhere, not just gesture/system-back.
  * Home/Drawer are excluded (swipe down already closes the drawer).

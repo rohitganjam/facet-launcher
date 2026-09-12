@@ -19,7 +19,7 @@ import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
+import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.ThemeMode
@@ -63,7 +63,7 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.showDrawerIcons)
         assertEquals(true, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.TOP, settings.searchBarPosition)
-        assertEquals(NO_ACTIVE_PROFILE_ID, settings.activeProfileId)
+        assertEquals(NO_ACTIVE_FACET_ID, settings.activeFacetId)
         assertEquals(true, settings.showAllDayEvents)
         assertEquals(null, settings.selectedCalendarIds)
         assertEquals(emptyMap<String, String>(), settings.calendarColors)
@@ -276,7 +276,7 @@ class SettingsRepositoryTest {
         repository.setShowDrawerIcons(false)
         repository.setShowDrawerLabels(false)
         repository.setSearchBarPosition(SearchBarPosition.BOTTOM)
-        repository.setActiveProfileId(7L)
+        repository.setActiveFacetId(7L)
         repository.setShowAllDayEvents(false)
         repository.setSelectedCalendarIds(setOf("cal-1", "cal-2"))
         repository.setCalendarColors(mapOf("cal-1" to "BLUE", "cal-2" to "TEAL"))
@@ -303,7 +303,7 @@ class SettingsRepositoryTest {
         assertEquals(false, settings.showDrawerIcons)
         assertEquals(false, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.BOTTOM, settings.searchBarPosition)
-        assertEquals(7L, settings.activeProfileId)
+        assertEquals(7L, settings.activeFacetId)
         assertEquals(false, settings.showAllDayEvents)
         assertEquals(setOf("cal-1", "cal-2"), settings.selectedCalendarIds)
         assertEquals(mapOf("cal-1" to "BLUE", "cal-2" to "TEAL"), settings.calendarColors)

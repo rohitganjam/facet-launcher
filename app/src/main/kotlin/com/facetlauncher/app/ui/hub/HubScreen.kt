@@ -22,7 +22,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * The Launcher Hub (F5) — reached by swiping right from Home. A translucent overlay on Home:
- * [SurfaceContainer] (every settings screen's own page background, and the Switch Profiles
+ * [SurfaceContainer] (every settings screen's own page background, and the Switch Facets
  * carousel's) at its own fixed [opacity] — deliberately *not* tied to `drawerSettings.drawerOpacity`.
  */
 @Composable

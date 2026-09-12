@@ -17,7 +17,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
@@ -33,13 +33,13 @@ class DockAppPickerScreenTest {
 
     /**
      * [seed] runs against real (throwaway, in-memory) repositories before the screen renders.
-     * A non-null [profileId] scopes the picker to that profile's own dock (as reached from a
-     * profile's settings) rather than the launcher-wide default dock (as reached from Settings).
+     * A non-null [facetId] scopes the picker to that facet's own dock (as reached from a
+     * facet's settings) rather than the launcher-wide default dock (as reached from Settings).
      */
     private fun setContent(
         onDone: () -> Unit = {},
-        profileId: Long? = null,
-        seed: (AppRepository, DockAppRepository, ProfileDockAppRepository) -> Unit = { _, _, _ -> },
+        facetId: Long? = null,
+        seed: (AppRepository, DockAppRepository, FacetDockAppRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -48,16 +48,16 @@ class DockAppPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
-                if (profileId != null) {
-                    runBlocking { database.profileDao().insert(com.facetlauncher.app.data.local.ProfileEntity(id = profileId, name = "P", position = 0)) }
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
+                if (facetId != null) {
+                    runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                seed(appRepository, dockAppRepository, profileDockAppRepository)
+                seed(appRepository, dockAppRepository, facetDockAppRepository)
                 DockAppPickerViewModel(
-                    SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+                    SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     GetInstalledAppsUseCase(appRepository),
                     dockAppRepository,
-                    profileDockAppRepository,
+                    facetDockAppRepository,
                 )
             }
             FacetLauncherTheme {
@@ -179,26 +179,26 @@ class DockAppPickerScreenTest {
     }
 
     @Test
-    fun profileScopedPickerTitlesItselfDockAndWritesToThatProfilesOwnDock() {
-        // Given the picker opened for profile 7 (not the launcher-wide default) with one app
-        // already in profile 7's own dock and NOT in the shared default dock
+    fun facetScopedPickerTitlesItselfDockAndWritesToThatFacetsOwnDock() {
+        // Given the picker opened for facet 7 (not the launcher-wide default) with one app
+        // already in facet 7's own dock and NOT in the shared default dock
         var seededApp: AppInfo? = null
-        setContent(profileId = 7L) { appRepository, dockAppRepository, profileDockAppRepository ->
+        setContent(facetId = 7L) { appRepository, dockAppRepository, facetDockAppRepository ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
-            runBlocking { profileDockAppRepository.addDockApp(7L, app, 0) }
+            runBlocking { facetDockAppRepository.addDockApp(7L, app, 0) }
             // deliberately leave the shared default dock empty
         }
         val app = requireNotNull(seededApp)
         val rowTag = "dock_picker_row_${app.packageName}"
 
-        // Then the header reads "Dock" (this profile's own), not the global "Default dock"
+        // Then the header reads "Dock" (this facet's own), not the global "Default dock"
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithText("Dock").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Default dock").assertDoesNotExist()
 
-        // And the seeded app shows as already checked — proof the picker is reading profile 7's
+        // And the seeded app shows as already checked — proof the picker is reading facet 7's
         // own dock, not the (empty) shared one
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertIsOn() }.isSuccess

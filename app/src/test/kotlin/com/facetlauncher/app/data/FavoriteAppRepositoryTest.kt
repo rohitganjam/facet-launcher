@@ -20,12 +20,12 @@ import org.mockito.Mockito.`when`
 private class FakeFavoriteAppDao : FavoriteAppDao {
     private val state = MutableStateFlow<List<FavoriteAppEntity>>(emptyList())
 
-    override fun observeForProfile(profileId: Long): Flow<List<FavoriteAppEntity>> =
-        state.map { entries -> entries.filter { it.profileId == profileId } }
+    override fun observeForFacet(facetId: Long): Flow<List<FavoriteAppEntity>> =
+        state.map { entries -> entries.filter { it.facetId == facetId } }
 
     override suspend fun upsert(favoriteApp: FavoriteAppEntity): Long {
         state.value = state.value.filterNot {
-            it.profileId == favoriteApp.profileId && it.packageName == favoriteApp.packageName && it.activityName == favoriteApp.activityName
+            it.facetId == favoriteApp.facetId && it.packageName == favoriteApp.packageName && it.activityName == favoriteApp.activityName
         } + favoriteApp
         return 0
     }
@@ -34,9 +34,9 @@ private class FakeFavoriteAppDao : FavoriteAppDao {
         state.value = state.value.filterNot { it.id == favoriteApp.id }
     }
 
-    override suspend fun deleteByComponent(profileId: Long, packageName: String, activityName: String) {
+    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String) {
         state.value = state.value.filterNot {
-            it.profileId == profileId && it.packageName == packageName && it.activityName == activityName
+            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName
         }
     }
 
@@ -44,8 +44,8 @@ private class FakeFavoriteAppDao : FavoriteAppDao {
         state.value = state.value.filterNot { it.packageName == packageName }
     }
 
-    override suspend fun deleteAllForProfile(profileId: Long) {
-        state.value = state.value.filterNot { it.profileId == profileId }
+    override suspend fun deleteAllForFacet(facetId: Long) {
+        state.value = state.value.filterNot { it.facetId == facetId }
     }
 }
 
@@ -56,18 +56,18 @@ class FavoriteAppRepositoryTest {
 
     @Test
     fun `favorites list reflects stored entries hydrated against installed apps, ordered by position`() = runTest {
-        // Given two installed apps and favorite entries for one profile, out of position order
+        // Given two installed apps and favorite entries for one facet, out of position order
         val a = appInfo('a')
         val b = appInfo('b')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = b, position = 1)
-        repository.addFavorite(profileId = 1, app = a, position = 0)
+        repository.addFavorite(facetId = 1, app = b, position = 1)
+        repository.addFavorite(facetId = 1, app = a, position = 0)
 
-        // When observing that profile's favorites
-        val result = repository.observeFavoritesForProfile(1).first()
+        // When observing that facet's favorites
+        val result = repository.observeFavoritesForFacet(1).first()
 
         // Then it returns the hydrated AppInfo list, ordered by position
         assertEquals(listOf(a, b), result)
@@ -80,63 +80,63 @@ class FavoriteAppRepositoryTest {
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = appInfo('a'), position = 0)
+        repository.addFavorite(facetId = 1, app = appInfo('a'), position = 0)
 
-        // When observing that profile's favorites
-        val result = repository.observeFavoritesForProfile(1).first()
+        // When observing that facet's favorites
+        val result = repository.observeFavoritesForFacet(1).first()
 
         // Then the unresolvable entry is collapsed out, not shown as a dead tile
         assertEquals(emptyList<AppInfo>(), result)
     }
 
     @Test
-    fun `favorites are scoped per profile, not shared`() = runTest {
-        // Given the same app favorited under two different profiles
+    fun `favorites are scoped per facet, not shared`() = runTest {
+        // Given the same app favorited under two different facets
         val a = appInfo('a')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = a, position = 0)
+        repository.addFavorite(facetId = 1, app = a, position = 0)
 
-        // Then only profile 1 sees it — profile 2 sees none
-        assertEquals(listOf(a), repository.observeFavoritesForProfile(1).first())
-        assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForProfile(2).first())
+        // Then only facet 1 sees it — facet 2 sees none
+        assertEquals(listOf(a), repository.observeFavoritesForFacet(1).first())
+        assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForFacet(2).first())
     }
 
     @Test
-    fun `removeFavorite drops it from the profile's list`() = runTest {
+    fun `removeFavorite drops it from the facet's list`() = runTest {
         // Given a favorited app
         val a = appInfo('a')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = a, position = 0)
+        repository.addFavorite(facetId = 1, app = a, position = 0)
 
         // When it is removed
-        repository.removeFavorite(profileId = 1, app = a)
+        repository.removeFavorite(facetId = 1, app = a)
 
         // Then it's gone
-        assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForProfile(1).first())
+        assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForFacet(1).first())
     }
 
     @Test
-    fun `observeFavoritesForProfiles returns each profile's own hydrated list, keyed by id`() = runTest {
-        // Given two profiles with different favorites
+    fun `observeFavoritesForFacets returns each facet's own hydrated list, keyed by id`() = runTest {
+        // Given two facets with different favorites
         val a = appInfo('a')
         val b = appInfo('b')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = a, position = 0)
-        repository.addFavorite(profileId = 2, app = b, position = 0)
+        repository.addFavorite(facetId = 1, app = a, position = 0)
+        repository.addFavorite(facetId = 2, app = b, position = 0)
 
         // When observing both at once
-        val result = repository.observeFavoritesForProfiles(listOf(1, 2)).first()
+        val result = repository.observeFavoritesForFacets(listOf(1, 2)).first()
 
-        // Then each profile id maps to its own list, not the other's
+        // Then each facet id maps to its own list, not the other's
         assertEquals(listOf(a), result[1])
         assertEquals(listOf(b), result[2])
     }
@@ -151,11 +151,11 @@ class FavoriteAppRepositoryTest {
         `when`(appRepository.observeInstalledApps()).thenReturn(installedApps)
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = a, position = 0)
-        repository.addFavorite(profileId = 1, app = b, position = 1)
+        repository.addFavorite(facetId = 1, app = a, position = 0)
+        repository.addFavorite(facetId = 1, app = b, position = 1)
 
         val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
-        val collectJob = launch { repository.observeFavoritesForProfile(1).collect { emissions.send(it) } }
+        val collectJob = launch { repository.observeFavoritesForFacet(1).collect { emissions.send(it) } }
         assertEquals(listOf(a, b), emissions.receive())
 
         // When AppRepository's live flow reports b uninstalled (F12's long-press menu, or any
@@ -168,8 +168,8 @@ class FavoriteAppRepositoryTest {
     }
 
     @Test
-    fun `replaceFavorites wipes the profile's existing list and inserts the new one in order`() = runTest {
-        // Given a profile with an existing favorite that isn't in the replacement list
+    fun `replaceFavorites wipes the facet's existing list and inserts the new one in order`() = runTest {
+        // Given a facet with an existing favorite that isn't in the replacement list
         val a = appInfo('a')
         val b = appInfo('b')
         val c = appInfo('c')
@@ -177,23 +177,23 @@ class FavoriteAppRepositoryTest {
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b, c)))
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
-        repository.addFavorite(profileId = 1, app = c, position = 0)
+        repository.addFavorite(facetId = 1, app = c, position = 0)
 
-        // When replacing this profile's favorites with a different list
-        repository.replaceFavorites(profileId = 1, apps = listOf(b, a))
+        // When replacing this facet's favorites with a different list
+        repository.replaceFavorites(facetId = 1, apps = listOf(b, a))
 
         // Then only the new list remains, in the given order — the stale entry is gone
-        assertEquals(listOf(b, a), repository.observeFavoritesForProfile(1).first())
+        assertEquals(listOf(b, a), repository.observeFavoritesForFacet(1).first())
     }
 
     @Test
-    fun `observeFavoritesForProfiles with an empty id list emits an empty map`() = runTest {
-        // Given no profiles to observe
+    fun `observeFavoritesForFacets with an empty id list emits an empty map`() = runTest {
+        // Given no facets to observe
         val appRepository = mock(AppRepository::class.java)
         val dao = FakeFavoriteAppDao()
         val repository = FavoriteAppRepository(dao, appRepository)
 
         // Then it emits immediately without needing AppRepository at all
-        assertEquals(emptyMap<Long, List<AppInfo>>(), repository.observeFavoritesForProfiles(emptyList()).first())
+        assertEquals(emptyMap<Long, List<AppInfo>>(), repository.observeFavoritesForFacets(emptyList()).first())
     }
 }

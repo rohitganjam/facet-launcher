@@ -9,7 +9,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
-import com.facetlauncher.app.domain.EnsureActiveProfileUseCase
+import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,7 +55,7 @@ data class LauncherUiState(
 @HiltViewModel
 class LauncherViewModel @Inject constructor(
     getInstalledApps: GetInstalledAppsUseCase,
-    private val ensureActiveProfile: EnsureActiveProfileUseCase,
+    private val ensureActiveFacet: EnsureActiveFacetUseCase,
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
     private val seedDefaultDock: SeedDefaultDockUseCase,
     private val settingsRepository: SettingsRepository,
@@ -93,7 +93,7 @@ class LauncherViewModel @Inject constructor(
                 onboardingCompleted = settings.onboardingCompleted,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
-        viewModelScope.launch { ensureActiveProfile() }
+        viewModelScope.launch { ensureActiveFacet() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }

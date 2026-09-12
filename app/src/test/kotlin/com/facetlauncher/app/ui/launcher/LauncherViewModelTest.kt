@@ -5,7 +5,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
-import com.facetlauncher.app.domain.EnsureActiveProfileUseCase
+import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import kotlinx.coroutines.Dispatchers
@@ -48,14 +48,14 @@ class LauncherViewModelTest {
             AppInfo("com.example.b", ".Main", "B", null),
         )
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(apps))
-        val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
-            ensureActiveProfile,
+            ensureActiveFacet,
             cleanUpUninstalledApps,
             seedDefaultDock,
             settingsRepository,
@@ -79,14 +79,14 @@ class LauncherViewModelTest {
         // this is the actual home screen, so it must never stay blank forever (see chat history).
         val repository = mock(AppRepository::class.java)
         `when`(repository.observeInstalledApps()).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
-        val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
-            ensureActiveProfile,
+            ensureActiveFacet,
             cleanUpUninstalledApps,
             seedDefaultDock,
             settingsRepository,
@@ -109,14 +109,14 @@ class LauncherViewModelTest {
         // Given settings with onboarding not yet completed
         val repository = mock(AppRepository::class.java)
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
-        val ensureActiveProfile = mock(EnsureActiveProfileUseCase::class.java)
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(onboardingCompleted = false)))
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
-            ensureActiveProfile,
+            ensureActiveFacet,
             cleanUpUninstalledApps,
             seedDefaultDock,
             settingsRepository,

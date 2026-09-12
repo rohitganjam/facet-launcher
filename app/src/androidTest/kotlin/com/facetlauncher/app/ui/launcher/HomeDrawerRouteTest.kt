@@ -45,12 +45,12 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
@@ -67,7 +67,7 @@ import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
-import com.facetlauncher.app.domain.EnsureActiveProfileUseCase
+import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
@@ -76,14 +76,14 @@ import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
-import com.facetlauncher.app.domain.ObserveProfilePreviewsUseCase
+import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
-import com.facetlauncher.app.ui.profiles.ProfileCarouselViewModel
+import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
@@ -115,8 +115,8 @@ class HomeDrawerRouteTest {
 
     private fun setContent(
         seedHubWithOneWidget: Boolean = false,
-        onNavigateToProfileSettings: (Long) -> Unit = {},
-        onNavigateToManageProfiles: () -> Unit = {},
+        onNavigateToFacetSettings: (Long) -> Unit = {},
+        onNavigateToManageFacets: () -> Unit = {},
         onboardingCompleted: Boolean = false,
     ) {
         composeRule.setContent {
@@ -124,9 +124,9 @@ class HomeDrawerRouteTest {
             // Every repository below is a real @Singleton in production (Hilt hands every
             // ViewModel the same instance) — HomeViewModel and LauncherViewModel must share
             // these same instances here too, not each get their own throwaway copy, or
-            // LauncherViewModel's EnsureActiveProfileUseCase (which creates the profile and
-            // sets activeProfileId) writes to a database/DataStore HomeViewModel never sees,
-            // leaving its own activeProfile permanently null and its app list permanently
+            // LauncherViewModel's EnsureActiveFacetUseCase (which creates the facet and
+            // sets activeFacetId) writes to a database/DataStore HomeViewModel never sees,
+            // leaving its own activeFacet permanently null and its app list permanently
             // empty (see chat history: this is why "FAVORITES" never rendered no matter how
             // long a test waited for it).
             val database = remember {
@@ -139,7 +139,7 @@ class HomeDrawerRouteTest {
                     ),
                 ).also { repo -> if (onboardingCompleted) runBlocking { repo.setOnboardingCompleted(true) } }
             }
-            val profileRepository = remember { ProfileRepository(database.profileDao()) }
+            val facetRepository = remember { FacetRepository(database.facetDao()) }
             // A real AppRepository here would hit the actual on-device LauncherApps service —
             // AppRepositoryTest already covers that integration (mapping/sorting/icon-flatten/
             // live re-emission) against a mocked LauncherApps at the unit level, so there's no
@@ -163,7 +163,7 @@ class HomeDrawerRouteTest {
                 }
             }
             val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), appRepository) }
-            val profileDockAppRepository = remember { ProfileDockAppRepository(database.profileDockAppDao(), appRepository) }
+            val facetDockAppRepository = remember { FacetDockAppRepository(database.facetDockAppDao(), appRepository) }
             val favoriteAppRepository = remember { FavoriteAppRepository(database.favoriteAppDao(), appRepository) }
             val defaultFavoriteAppRepository = remember {
                 DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository).also { repo ->
@@ -185,10 +185,10 @@ class HomeDrawerRouteTest {
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
                         dockAppRepository,
-                        profileDockAppRepository,
+                        facetDockAppRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
-                        profileRepository,
+                        facetRepository,
                         usageStatsRepository,
                         usageAccessRepository,
                         CalendarPermissionRepository(context),
@@ -199,14 +199,14 @@ class HomeDrawerRouteTest {
                     ),
                     NotificationShadeRepository(context),
                     settingsRepository,
-                    profileRepository,
+                    facetRepository,
                 )
             }
             val launcherViewModel = remember {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
-                    EnsureActiveProfileUseCase(profileRepository, settingsRepository),
-                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, profileDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    EnsureActiveFacetUseCase(facetRepository, settingsRepository),
+                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                 )
@@ -228,14 +228,14 @@ class HomeDrawerRouteTest {
                     RankBySearchRelevanceUseCase(),
                     ObserveQuickAddStateUseCase(
                         settingsRepository,
-                        profileRepository,
+                        facetRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
                         dockAppRepository,
-                        profileDockAppRepository,
+                        facetDockAppRepository,
                     ),
-                    AddAppToFavoritesUseCase(settingsRepository, profileRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    AddAppToDockUseCase(settingsRepository, profileRepository, dockAppRepository, profileDockAppRepository),
+                    AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
                 )
             }
             val hubViewModel = remember {
@@ -281,22 +281,22 @@ class HomeDrawerRouteTest {
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
-            // Shares the same profileRepository/settingsRepository/app-backed repos as
+            // Shares the same facetRepository/settingsRepository/app-backed repos as
             // homeViewModel/launcherViewModel above — same reasoning as that block's own doc: a
-            // separate throwaway copy here would observe a different activeProfileId than what
-            // EnsureActiveProfileUseCase actually wrote.
-            val profileViewModel = remember {
+            // separate throwaway copy here would observe a different activeFacetId than what
+            // EnsureActiveFacetUseCase actually wrote.
+            val facetViewModel = remember {
                 val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
-                ProfileCarouselViewModel(
-                    profileRepository,
+                FacetCarouselViewModel(
+                    facetRepository,
                     settingsRepository,
                     wallpaperRepository,
-                    ObserveProfilePreviewsUseCase(
-                        profileRepository,
+                    ObserveFacetPreviewsUseCase(
+                        facetRepository,
                         settingsRepository,
                         favoriteAppRepository,
                         defaultFavoriteAppRepository,
-                        profileDockAppRepository,
+                        facetDockAppRepository,
                         dockAppRepository,
                         UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
                         UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
@@ -311,14 +311,14 @@ class HomeDrawerRouteTest {
                     apps = apps,
                     onAppClick = {},
                     onNavigateToSettings = {},
-                    onNavigateToProfileSettings = onNavigateToProfileSettings,
-                    onNavigateToManageProfiles = onNavigateToManageProfiles,
+                    onNavigateToFacetSettings = onNavigateToFacetSettings,
+                    onNavigateToManageFacets = onNavigateToManageFacets,
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
-                    profileViewModel = profileViewModel,
+                    facetViewModel = facetViewModel,
                     launcherViewModel = launcherViewModel,
                 )
             }
@@ -331,10 +331,10 @@ class HomeDrawerRouteTest {
             composeRule.onAllNodesWithTag("drawer_search_field").fetchSemanticsNodes().isNotEmpty()
         }
         // drawer_search_field only tells you DrawerViewModel is up — Home's own favorites list
-        // depends on a separate chain through the now-shared profileRepository/settingsRepository:
-        // LauncherViewModel's EnsureActiveProfileUseCase creates the profile (Room insert) and
-        // writes activeProfileId (DataStore), which HomeViewModel's ObserveHomeScreenStateUseCase
-        // must observe before it resolves a non-null active profile. With AppRepository mocked
+        // depends on a separate chain through the now-shared facetRepository/settingsRepository:
+        // LauncherViewModel's EnsureActiveFacetUseCase creates the facet (Room insert) and
+        // writes activeFacetId (DataStore), which HomeViewModel's ObserveHomeScreenStateUseCase
+        // must observe before it resolves a non-null active facet. With AppRepository mocked
         // (see above), the installed-apps side is instant, so this is just Room/DataStore's own
         // ordinary emission latency, not a real system call — a short timeout is enough.
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -600,13 +600,13 @@ class HomeDrawerRouteTest {
     }
 
     @Test
-    fun swipingLeftPastThresholdOpensTheProfileCarousel() {
-        // Given Home rendered — a left swipe on Home is the way into Switch Profiles, a
+    fun swipingLeftPastThresholdOpensTheFacetCarousel() {
+        // Given Home rendered — a left swipe on Home is the way into Switch Facets, a
         // follow-finger panel to Home's right (mirroring the Hub, to Home's left; see chat
         // history — this replaced the old empty-space long-press, which was too hard to land
         // between the clock, app list and dock, and before that a NavHost destination).
         setContent()
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
 
         // When swiping left across most of the screen (Compose's default swipeLeft() travels
         // well past the commit fraction)
@@ -614,11 +614,11 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then the carousel commits fully open
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
     }
 
     @Test
-    fun releasingALeftDragBeforeThresholdDoesNotOpenTheProfileCarousel() {
+    fun releasingALeftDragBeforeThresholdDoesNotOpenTheFacetCarousel() {
         // Given Home rendered
         setContent()
 
@@ -631,13 +631,13 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then it springs back closed
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
     @Test
-    fun swipingLeftOpensTheProfileCarouselNotTheHub() {
+    fun swipingLeftOpensTheFacetCarouselNotTheHub() {
         // Given Home rendered — regression guard for the horizontal axis split: rightward is the
-        // Hub, leftward is Switch Profiles, and one gesture must never do both.
+        // Hub, leftward is Switch Facets, and one gesture must never do both.
         setContent()
 
         // When swiping left
@@ -645,17 +645,17 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then the carousel opened and the Hub stayed closed
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
         composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
     }
 
     @Test
-    fun aDiagonalSwipeMostlyLeftOpensTheProfileCarouselNotTheDrawer() {
+    fun aDiagonalSwipeMostlyLeftOpensTheFacetCarouselNotTheDrawer() {
         // Given Home rendered
         setContent()
 
         // When dragging mostly left with a small vertical component — the axis-lock must commit
-        // to the horizontal (Switch Profiles) gesture alone, never also the Drawer
+        // to the horizontal (Switch Facets) gesture alone, never also the Drawer
         composeRule.onRoot().performTouchInput {
             swipeWithVelocity(
                 start = centerRight,
@@ -667,7 +667,7 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then the carousel opened and the Drawer did not
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
@@ -677,11 +677,11 @@ class HomeDrawerRouteTest {
         setContent()
         composeRule.onRoot().performTouchInput { swipeLeft() }
         settleAnimation()
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
 
         // When swiping right low on the screen, below the card cluster (the trailing spacer) —
         // the carousel's own host-level Box (mirroring the Hub's) catches this, not the pager
-        composeRule.onNodeWithTag("profile_carousel_screen").performTouchInput {
+        composeRule.onNodeWithTag("facet_carousel_screen").performTouchInput {
             val startX = width * 0.15f
             val y = height * 0.94f
             down(Offset(startX, y))
@@ -691,19 +691,19 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then it closes back to Home
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
     @Test
-    fun swipingRightOnTheFirstProfileCardWhileOpenReturnsToHome() {
-        // Given the carousel is open, on the only (first) profile's page — nowhere to browse to
+    fun swipingRightOnTheFirstFacetCardWhileOpenReturnsToHome() {
+        // Given the carousel is open, on the only (first) facet's page — nowhere to browse to
         setContent()
         composeRule.onRoot().performTouchInput { swipeLeft() }
         settleAnimation()
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
 
         // When swiping right on the pager itself
-        val pager = composeRule.onNodeWithTag("profile_carousel_pager")
+        val pager = composeRule.onNodeWithTag("facet_carousel_pager")
         val pagerWidth = pager.fetchSemanticsNode().size.width.toFloat()
         pager.performTouchInput {
             down(centerLeft)
@@ -712,25 +712,25 @@ class HomeDrawerRouteTest {
         }
         settleAnimation()
 
-        // Then it closes back to Home — ProfileCarouselScreen forwarded the drag through
+        // Then it closes back to Home — FacetCarouselScreen forwarded the drag through
         // onDismissDrag/onDismissDragEnd into the very same axis the empty-space swipe above uses
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
     @Test
-    fun systemBackClosesAnOpenProfileCarousel() {
+    fun systemBackClosesAnOpenFacetCarousel() {
         // Given the carousel is open
         setContent()
         composeRule.onRoot().performTouchInput { swipeLeft() }
         settleAnimation()
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
 
         // When the system back gesture fires
         Espresso.pressBack()
         settleAnimation()
 
         // Then it closes back to Home
-        composeRule.onNodeWithTag("profile_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
     @Test

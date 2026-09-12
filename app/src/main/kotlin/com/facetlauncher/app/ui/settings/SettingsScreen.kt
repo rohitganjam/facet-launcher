@@ -3,6 +3,8 @@ package com.facetlauncher.app.ui.settings
 import android.content.Intent
 import android.content.res.Configuration
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,7 +52,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * Canonical Launcher Settings screen (`3c`) — purely a directory of navigation rows now (see chat
- * history for the reasoning behind this grouping): PROFILES, APPEARANCE, CLOCK & CALENDAR,
+ * history for the reasoning behind this grouping): FACETS, APPEARANCE, CLOCK & CALENDAR,
  * HOME & APPS (Dock / Home Apps List / App Drawer / Notifications — grouped by "what shows on an
  * app icon or in the drawer", not by how narrowly each one's own settings happen to be scoped),
  * and SYSTEM (Permissions / Backup & restore / Set as default launcher — device-level, not a
@@ -59,7 +61,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onViewProfiles: () -> Unit,
+    onViewFacets: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToClockStyleGallery: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
@@ -77,7 +79,7 @@ fun SettingsScreen(
     SettingsContent(
         uiState = uiState,
         onBack = onBack,
-        onViewProfiles = onViewProfiles,
+        onViewFacets = onViewFacets,
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
         onNavigateToCalendarSettings = onNavigateToCalendarSettings,
@@ -96,7 +98,7 @@ fun SettingsScreen(
 private fun SettingsContent(
     uiState: SettingsUiState,
     onBack: () -> Unit,
-    onViewProfiles: () -> Unit,
+    onViewFacets: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToClockStyleGallery: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
@@ -110,6 +112,13 @@ private fun SettingsContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    // RoleManager's request-role intent must be launched for a result — some OEM
+    // PermissionController builds (see DefaultLauncherRepository) silently self-finish the
+    // RequestRoleActivity if it's started with a plain startActivity() instead, so this can't
+    // reuse a bare context.startActivity() call the way the other rows on this screen do.
+    val defaultLauncherLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {}
 
     StickyHeaderLayout(
         modifier = modifier,
@@ -124,14 +133,14 @@ private fun SettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
-                item { SectionHeader("PROFILES") }
+                item { SectionHeader("FACETS") }
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Profiles",
-                            subtitle = "Create and manage profile specific settings",
-                            onClick = onViewProfiles,
-                            testTag = "view_profiles_row",
+                            title = "Facets",
+                            subtitle = "Create and manage facet-specific settings",
+                            onClick = onViewFacets,
+                            testTag = "view_facets_row",
                             trailing = { NavigationChevron() },
                         )
                     }
@@ -244,7 +253,7 @@ private fun SettingsContent(
                         ClickableRow(
                             title = "Set as default launcher",
                             subtitle = if (uiState.isDefaultLauncher) "Active" else "Not set",
-                            onClick = { runCatching { context.startActivity(onRequestDefaultLauncherIntent()) } },
+                            onClick = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
                             testTag = "set_default_launcher_row",
                             trailing = { NavigationChevron() },
                         )
@@ -316,7 +325,7 @@ private fun ClickableRow(
             .testTag(testTag)
             .fillMaxWidth()
             // Rounds the row's own ripple/press-highlight — matches this app's other standalone
-            // clickable rows (see ProfileCarouselScreen.kt's LauncherSettingsRow/AddProfileRow),
+            // clickable rows (see FacetCarouselScreen.kt's LauncherSettingsRow/AddFacetRow),
             // M3's Card default shape (CLAUDE.md's Material 3 shape section).
             .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
@@ -357,7 +366,7 @@ private fun SettingsScreenPreview() {
                 },
             ),
             onBack = {},
-            onViewProfiles = {},
+            onViewFacets = {},
             onNavigateToAppearance = {},
             onNavigateToClockStyleGallery = {},
             onNavigateToCalendarSettings = {},

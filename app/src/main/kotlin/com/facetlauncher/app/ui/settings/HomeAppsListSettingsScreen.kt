@@ -65,7 +65,7 @@ import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
 
-/** Settings → Home & Apps → Home Apps List — also a profile's own Apps-list screen when `viewModel` is profile-scoped. */
+/** Settings → Home & Apps → Home Apps List — also a facet's own Apps-list screen when `viewModel` is facet-scoped. */
 @Composable
 fun HomeAppsListSettingsScreen(
     onBack: () -> Unit,
@@ -156,7 +156,7 @@ private fun HomeAppsListSettingsContent(
                         )
                         CardDivider()
                         LabeledDropdownRow(
-                            title = if (uiState.isProfileScoped) "App list content" else "Default App list content",
+                            title = if (uiState.isFacetScoped) "App list content" else "Default App list content",
                             options = ListContentMode.entries,
                             selected = uiState.listContentMode,
                             label = { it.homeAppsListDisplayLabel() },
@@ -176,7 +176,7 @@ private fun HomeAppsListSettingsContent(
                         }
                         CardDivider()
                         HomeAppsListClickableRow(
-                            title = if (uiState.isProfileScoped) "Favorites" else "Default favorites",
+                            title = if (uiState.isFacetScoped) "Favorites" else "Default favorites",
                             subtitle = uiState.favoritesLabel,
                             onClick = onEditFavorites,
                             testTag = "default_favorites_row",

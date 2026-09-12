@@ -19,74 +19,74 @@ class FavoriteAppDaoTest {
             .build()
 
     @Test
-    fun `insert then observe returns the inserted favorite scoped to its profile`() = runTest {
-        // Given a profile and an empty favorites table
+    fun `insert then observe returns the inserted favorite scoped to its facet`() = runTest {
+        // Given a facet and an empty favorites table
         val database = createDatabase()
-        val profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
+        val facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
 
-        // When a favorite is inserted for that profile
+        // When a favorite is inserted for that facet
         database.favoriteAppDao().upsert(
-            FavoriteAppEntity(profileId = profileId, packageName = "com.example.a", activityName = ".Main", position = 0),
+            FavoriteAppEntity(facetId = facetId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
 
-        // Then observing that profile returns exactly that favorite
-        val result = database.favoriteAppDao().observeForProfile(profileId).first()
+        // Then observing that facet returns exactly that favorite
+        val result = database.favoriteAppDao().observeForFacet(facetId).first()
         assertEquals(1, result.size)
         assertEquals("com.example.a", result.first().packageName)
     }
 
     @Test
-    fun `favorites are scoped per profile, not shared`() = runTest {
-        // Given two profiles, each with a favorite
+    fun `favorites are scoped per facet, not shared`() = runTest {
+        // Given two facets, each with a favorite
         val database = createDatabase()
-        val profileOneId = database.profileDao().insert(ProfileEntity(name = "One", position = 0))
-        val profileTwoId = database.profileDao().insert(ProfileEntity(name = "Two", position = 1))
+        val facetOneId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
+        val facetTwoId = database.facetDao().insert(FacetEntity(name = "Two", position = 1))
         database.favoriteAppDao().upsert(
-            FavoriteAppEntity(profileId = profileOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
+            FavoriteAppEntity(facetId = facetOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
         database.favoriteAppDao().upsert(
-            FavoriteAppEntity(profileId = profileTwoId, packageName = "com.example.b", activityName = ".Main", position = 0),
+            FavoriteAppEntity(facetId = facetTwoId, packageName = "com.example.b", activityName = ".Main", position = 0),
         )
 
-        // Then observing one profile never returns the other's favorites
-        val resultForProfileOne = database.favoriteAppDao().observeForProfile(profileOneId).first()
-        assertEquals(listOf("com.example.a"), resultForProfileOne.map { it.packageName })
+        // Then observing one facet never returns the other's favorites
+        val resultForFacetOne = database.favoriteAppDao().observeForFacet(facetOneId).first()
+        assertEquals(listOf("com.example.a"), resultForFacetOne.map { it.packageName })
     }
 
     @Test
-    fun `deleting a profile cascades to its favorites`() = runTest {
-        // Given a profile with a favorite
+    fun `deleting a facet cascades to its favorites`() = runTest {
+        // Given a facet with a favorite
         val database = createDatabase()
-        val profileId = database.profileDao().insert(ProfileEntity(name = "Profile 1", position = 0))
+        val facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
         database.favoriteAppDao().upsert(
-            FavoriteAppEntity(profileId = profileId, packageName = "com.example.a", activityName = ".Main", position = 0),
+            FavoriteAppEntity(facetId = facetId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
 
-        // When the profile is deleted
-        database.profileDao().delete(ProfileEntity(id = profileId, name = "Profile 1", position = 0))
+        // When the facet is deleted
+        database.facetDao().delete(FacetEntity(id = facetId, name = "Facet 1", position = 0))
 
         // Then its favorites are gone too (foreign key cascade)
-        assertTrue(database.favoriteAppDao().observeForProfile(profileId).first().isEmpty())
+        assertTrue(database.favoriteAppDao().observeForFacet(facetId).first().isEmpty())
     }
 
     @Test
-    fun `deleteByComponent removes only the matching profile's entry`() = runTest {
-        // Given the same app favorited under two different profiles
+    fun `deleteByComponent removes only the matching facet's entry`() = runTest {
+        // Given the same app favorited under two different facets
         val database = createDatabase()
-        val profileOneId = database.profileDao().insert(ProfileEntity(name = "One", position = 0))
-        val profileTwoId = database.profileDao().insert(ProfileEntity(name = "Two", position = 1))
+        val facetOneId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
+        val facetTwoId = database.facetDao().insert(FacetEntity(name = "Two", position = 1))
         database.favoriteAppDao().upsert(
-            FavoriteAppEntity(profileId = profileOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
+            FavoriteAppEntity(facetId = facetOneId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
         database.favoriteAppDao().upsert(
-            FavoriteAppEntity(profileId = profileTwoId, packageName = "com.example.a", activityName = ".Main", position = 0),
+            FavoriteAppEntity(facetId = facetTwoId, packageName = "com.example.a", activityName = ".Main", position = 0),
         )
 
-        // When deleting it by component for just profile one
-        database.favoriteAppDao().deleteByComponent(profileOneId, "com.example.a", ".Main")
+        // When deleting it by component for just facet one
+        database.favoriteAppDao().deleteByComponent(facetOneId, "com.example.a", ".Main")
 
-        // Then only profile one's entry is gone
-        assertTrue(database.favoriteAppDao().observeForProfile(profileOneId).first().isEmpty())
-        assertEquals(1, database.favoriteAppDao().observeForProfile(profileTwoId).first().size)
+        // Then only facet one's entry is gone
+        assertTrue(database.favoriteAppDao().observeForFacet(facetOneId).first().isEmpty())
+        assertEquals(1, database.favoriteAppDao().observeForFacet(facetTwoId).first().size)
     }
 }

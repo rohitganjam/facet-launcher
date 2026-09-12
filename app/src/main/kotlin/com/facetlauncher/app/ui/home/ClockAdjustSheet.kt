@@ -40,16 +40,16 @@ import com.facetlauncher.app.ui.theme.Surface
  * Long-press bottom sheet — opened both by long-pressing the clock and by long-pressing any other
  * empty space on Home (see [com.facetlauncher.app.ui.home.HomeScreen]'s own root long-press
  * detector). Lets the user enter the combined clock adjust mode (move handle + resize handles
- * together), jump to the clock/calendar style gallery, or jump to the active profile's own settings
+ * together), jump to the clock/calendar style gallery, or jump to the active facet's own settings
  * or launcher-wide settings — each row carries a subheading, same pattern as
- * [com.facetlauncher.app.ui.profiles.ProfileCarouselScreen]'s own "Launcher settings" row and its
- * per-card "Profile settings" gear.
+ * [com.facetlauncher.app.ui.facets.FacetCarouselScreen]'s own "Launcher settings" row and its
+ * per-card "Facet settings" gear.
  */
 @Composable
 fun ClockAdjustSheet(
     onAdjustClick: () -> Unit,
     onEditStylesClick: () -> Unit,
-    onProfileSettingsClick: () -> Unit,
+    onFacetSettingsClick: () -> Unit,
     onLauncherSettingsClick: () -> Unit,
     isOverridden: Boolean,
     modifier: Modifier = Modifier,
@@ -80,7 +80,7 @@ fun ClockAdjustSheet(
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(painter = painterResource(R.drawable.ic_palette_24), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = if (isOverridden) "Edit Profile clock & calendar styles" else "Edit Default clock & calendar styles",
+            label = if (isOverridden) "Edit Facet clock & calendar styles" else "Edit Default clock & calendar styles",
             subtitle = "Templates, fonts, colors, and alignment",
             onClick = onEditStylesClick,
             testTag = "clock_adjust_edit_styles",
@@ -88,10 +88,10 @@ fun ClockAdjustSheet(
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = "Profile settings",
-            subtitle = "Profile specific apps list, dock, clock & calendar settings",
-            onClick = onProfileSettingsClick,
-            testTag = "clock_adjust_profile_settings",
+            label = "Facet settings",
+            subtitle = "Facet-specific apps list, dock, clock & calendar settings",
+            onClick = onFacetSettingsClick,
+            testTag = "clock_adjust_facet_settings",
         )
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
@@ -143,7 +143,7 @@ private fun ClockAdjustSheetPreview() {
         ClockAdjustSheet(
             onAdjustClick = {},
             onEditStylesClick = {},
-            onProfileSettingsClick = {},
+            onFacetSettingsClick = {},
             onLauncherSettingsClick = {},
             isOverridden = false,
         )

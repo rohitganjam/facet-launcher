@@ -61,7 +61,7 @@ import com.facetlauncher.app.ui.theme.Surface
  * Both sections mirror their Settings counterparts (`DockSettingsScreen`, `HomeAppsListSettingsScreen`):
  * a live row that supports drag-to-reorder in place, plus a clickable row that opens the same
  * full-screen picker Settings uses ([com.facetlauncher.app.ui.dock.DockAppPickerScreen],
- * [com.facetlauncher.app.ui.profiles.FavoritesPickerScreen]) for adding/removing apps — reused as
+ * [com.facetlauncher.app.ui.facets.FavoritesPickerScreen]) for adding/removing apps — reused as
  * is rather than duplicating a second inline search list here.
  */
 @Composable
@@ -180,7 +180,7 @@ private fun DockSection(
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "The default dock — each profile can customize its own later. Drag to reorder.",
+            text = "The default dock — each facet can customize its own later. Drag to reorder.",
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
         )

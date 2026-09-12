@@ -89,7 +89,7 @@ fun HubWidgetPickerScreen(
                 HubAddWidgetEvent.WidgetAdded -> onDone()
                 is HubAddWidgetEvent.AddFailed -> {
                     failureMessage = when (event.reason) {
-                        AddFailureReason.HUB_FULL -> "Hub is full — remove a widget first"
+                        AddFailureReason.HUB_FULL -> "Full — remove a widget first"
                         AddFailureReason.SETUP_CANCELLED -> "Setup wasn't finished, so that widget wasn't added"
                     }
                 }

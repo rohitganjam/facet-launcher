@@ -1,0 +1,111 @@
+package com.facetlauncher.app.ui.facets
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.DefaultFavoriteAppRepository
+import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+data class FavoritesPickerUiState(
+    /** `false` when this picker is editing the launcher-wide default Favorites list (reached from Settings) rather than one facet's own. */
+    val isFacetScoped: Boolean = true,
+    val query: String = "",
+    /** Favorited apps at the moment this screen was opened, in their favorites order — stays
+     * exactly this set/order for the rest of this visit no matter what gets checked/unchecked
+     * below; only re-latches the next time the screen is freshly opened. Not reorderable here —
+     * that lives in this facet's own Settings page. */
+    val selectedResults: List<AppInfo> = emptyList(),
+    /** Every other matching app, in the installed-app list's own (alphabetical) order. */
+    val otherResults: List<AppInfo> = emptyList(),
+    val favoriteComponents: Set<Pair<String, String>> = emptySet(),
+    val canAddMore: Boolean = true,
+)
+
+/**
+ * Favorites picker (`4j`) — also doubles as the "Default favorites" picker reached from Settings.
+ * No `facetId` (or [NO_ACTIVE_FACET_ID]) means the launcher-wide default list
+ * ([DefaultFavoriteAppRepository]) rather than one facet's own ([FavoriteAppRepository]).
+ */
+@HiltViewModel
+class FavoritesPickerViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val getInstalledApps: GetInstalledAppsUseCase,
+    private val favoriteAppRepository: FavoriteAppRepository,
+    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+) : ViewModel() {
+
+    private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val query = MutableStateFlow("")
+    private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
+
+    private val maxFavorites: Int
+        get() = if (facetId != null) FavoriteAppRepository.MAX_FAVORITES else DefaultFavoriteAppRepository.MAX_FAVORITES
+
+    private fun observeFavorites(): Flow<List<AppInfo>> =
+        facetId?.let { favoriteAppRepository.observeFavoritesForFacet(it) } ?: defaultFavoriteAppRepository.observeDefaultFavorites()
+
+    /** Latched from the favorites' live order the first time it's observed; never updated after — see [FavoritesPickerUiState.selectedResults]. */
+    private val loadOrder = MutableStateFlow<List<Pair<String, String>>?>(null)
+
+    val uiState: StateFlow<FavoritesPickerUiState> = combine(
+        query,
+        installedApps,
+        observeFavorites(),
+        loadOrder,
+    ) { query, installed, favorites, frozenOrder ->
+        val liveOrder = favorites.map { it.packageName to it.activityName }
+        if (frozenOrder == null) loadOrder.value = liveOrder
+        val order = frozenOrder ?: liveOrder
+
+        val filtered = installed.filter { it.label.contains(query, ignoreCase = true) }
+        val (selected, other) = filtered.partition { (it.packageName to it.activityName) in order }
+        FavoritesPickerUiState(
+            isFacetScoped = facetId != null,
+            query = query,
+            selectedResults = selected.sortedBy { order.indexOf(it.packageName to it.activityName) },
+            otherResults = other,
+            favoriteComponents = liveOrder.toSet(),
+            canAddMore = favorites.size < maxFavorites,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FavoritesPickerUiState())
+
+    init {
+        viewModelScope.launch { installedApps.value = getInstalledApps() }
+    }
+
+    fun onQueryChanged(newQuery: String) {
+        query.value = newQuery
+    }
+
+    fun toggleFavorite(app: AppInfo) {
+        val state = uiState.value
+        val isFavorite = (app.packageName to app.activityName) in state.favoriteComponents
+        viewModelScope.launch {
+            if (facetId != null) {
+                if (isFavorite) {
+                    favoriteAppRepository.removeFavorite(facetId, app)
+                } else if (state.canAddMore) {
+                    favoriteAppRepository.addFavorite(facetId, app, position = state.favoriteComponents.size)
+                }
+            } else {
+                if (isFavorite) {
+                    defaultFavoriteAppRepository.removeFavorite(app)
+                } else if (state.canAddMore) {
+                    defaultFavoriteAppRepository.addFavorite(app, position = state.favoriteComponents.size)
+                }
+            }
+        }
+    }
+}

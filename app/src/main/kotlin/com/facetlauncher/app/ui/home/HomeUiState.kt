@@ -1,6 +1,6 @@
 package com.facetlauncher.app.ui.home
 
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -24,9 +24,9 @@ data class HomeUiState(
     /** True until the first real state emission arrives — see [HomeViewModel]'s own doc for why this exists and how it resolves. */
     val isLoading: Boolean = true,
     val dockApps: List<AppInfo> = emptyList(),
-    /** Favorites, Recents, or Most Used, depending on the active profile's [ListContentMode]. */
+    /** Favorites, Recents, or Most Used, depending on the active facet's [ListContentMode]. */
     val appListItems: List<AppInfo> = emptyList(),
-    val profiles: List<ProfileEntity> = emptyList(),
+    val facets: List<FacetEntity> = emptyList(),
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
     val badgeCounts: Map<String, Int> = emptyMap(),
@@ -38,86 +38,86 @@ data class HomeUiState(
      *  catches up (see chat history). */
     val usageAccessPromptDismissed: Boolean = false,
 ) {
-    val activeProfile: ProfileEntity?
-        get() = profiles.find { it.id == settings.activeProfileId }
+    val activeFacet: FacetEntity?
+        get() = facets.find { it.id == settings.activeFacetId }
 
-    /** The active profile's clock settings, falling back to the global defaults when not overriding. */
+    /** The active facet's clock settings, falling back to the global defaults when not overriding. */
     val clockTemplateId: ClockTemplateId
-        get() = activeProfile?.let { if (it.overrideClock) it.clockTemplateId else settings.clockTemplateId } ?: settings.clockTemplateId
+        get() = activeFacet?.let { if (it.overrideClock) it.clockTemplateId else settings.clockTemplateId } ?: settings.clockTemplateId
 
     val clockFontOption: ClockFontOption
-        get() = activeProfile?.let { if (it.overrideClock) it.clockFontOption else settings.clockFontOption } ?: settings.clockFontOption
+        get() = activeFacet?.let { if (it.overrideClock) it.clockFontOption else settings.clockFontOption } ?: settings.clockFontOption
 
     val clockColorOption: ClockColorOption
-        get() = activeProfile?.let { if (it.overrideClock) it.clockColorOption else settings.clockColorOption } ?: settings.clockColorOption
+        get() = activeFacet?.let { if (it.overrideClock) it.clockColorOption else settings.clockColorOption } ?: settings.clockColorOption
 
-    /** The active profile's clock accent color, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
+    /** The active facet's clock accent color, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
     val clockAccentColorOption: ClockColorOption
-        get() = activeProfile?.let { if (it.overrideClock) it.clockAccentColorOption else settings.clockAccentColorOption } ?: settings.clockAccentColorOption
+        get() = activeFacet?.let { if (it.overrideClock) it.clockAccentColorOption else settings.clockAccentColorOption } ?: settings.clockAccentColorOption
 
-    /** The active profile's date style, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
+    /** The active facet's date style, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
     val clockDateStyle: ClockDateStyle
-        get() = activeProfile?.let { if (it.overrideClock) it.clockDateStyle else settings.clockDateStyle } ?: settings.clockDateStyle
+        get() = activeFacet?.let { if (it.overrideClock) it.clockDateStyle else settings.clockDateStyle } ?: settings.clockDateStyle
 
-    /** The active profile's calendar font, falling back to the global default when not overriding — mirrors [clockFontOption] but gated by [com.facetlauncher.app.data.local.ProfileEntity.overrideCalendar], not `overrideClock`. */
+    /** The active facet's calendar font, falling back to the global default when not overriding — mirrors [clockFontOption] but gated by [com.facetlauncher.app.data.local.FacetEntity.overrideCalendar], not `overrideClock`. */
     val activeCalendarFontOption: ClockFontOption
-        get() = activeProfile?.let { if (it.overrideCalendar) it.calendarFontOption else settings.calendarFontOption } ?: settings.calendarFontOption
+        get() = activeFacet?.let { if (it.overrideCalendar) it.calendarFontOption else settings.calendarFontOption } ?: settings.calendarFontOption
 
     val activeCalendarColorOption: ClockColorOption
-        get() = activeProfile?.let { if (it.overrideCalendar) it.calendarColorOption else settings.calendarColorOption } ?: settings.calendarColorOption
+        get() = activeFacet?.let { if (it.overrideCalendar) it.calendarColorOption else settings.calendarColorOption } ?: settings.calendarColorOption
 
     /** Mirrors [activeCalendarFontOption]'s own gating exactly — same `overrideCalendar` flag, same fallback shape. */
     val activeCalendarFontWeight: FontWeightOption
-        get() = activeProfile?.let { if (it.overrideCalendar) it.calendarFontWeight else settings.calendarFontWeight } ?: settings.calendarFontWeight
+        get() = activeFacet?.let { if (it.overrideCalendar) it.calendarFontWeight else settings.calendarFontWeight } ?: settings.calendarFontWeight
 
     val effectiveUse24HourTime: Boolean
-        get() = activeProfile?.let { if (it.overrideClock) it.use24HourTime else settings.use24HourTime } ?: settings.use24HourTime
+        get() = activeFacet?.let { if (it.overrideClock) it.use24HourTime else settings.use24HourTime } ?: settings.use24HourTime
 
     val clockShowMeridiem: Boolean
-        get() = activeProfile?.let { if (it.overrideClock) it.clockShowMeridiem else settings.clockShowMeridiem } ?: settings.clockShowMeridiem
+        get() = activeFacet?.let { if (it.overrideClock) it.clockShowMeridiem else settings.clockShowMeridiem } ?: settings.clockShowMeridiem
 
     val activeListContentMode: ListContentMode
-        get() = activeProfile?.let { if (it.overrideApps) it.listContentMode else settings.listContentMode } ?: settings.listContentMode
+        get() = activeFacet?.let { if (it.overrideApps) it.listContentMode else settings.listContentMode } ?: settings.listContentMode
 
-    /** The active profile's app-row position, falling back to the global default when not overriding. */
+    /** The active facet's app-row position, falling back to the global default when not overriding. */
     val activeAppRowPosition: AppRowPosition
-        get() = activeProfile?.let { if (it.overrideApps) it.appRowPosition else settings.appRowPosition } ?: settings.appRowPosition
+        get() = activeFacet?.let { if (it.overrideApps) it.appRowPosition else settings.appRowPosition } ?: settings.appRowPosition
 
-    /** The active profile's app-row presentation, falling back to the global default when not overriding. */
+    /** The active facet's app-row presentation, falling back to the global default when not overriding. */
     val activeAppRowPresentation: AppRowPresentation
-        get() = activeProfile?.let { if (it.overrideApps) it.appRowPresentation else settings.appRowPresentation } ?: settings.appRowPresentation
+        get() = activeFacet?.let { if (it.overrideApps) it.appRowPresentation else settings.appRowPresentation } ?: settings.appRowPresentation
 
-    /** True when the active profile's mode needs `PACKAGE_USAGE_STATS`, it isn't granted yet, and the user hasn't already dismissed this prompt by tapping its button. */
+    /** True when the active facet's mode needs `PACKAGE_USAGE_STATS`, it isn't granted yet, and the user hasn't already dismissed this prompt by tapping its button. */
     val showUsageAccessPrompt: Boolean
         get() = activeListContentMode != ListContentMode.FAVORITES && !usageAccessGranted && !usageAccessPromptDismissed
 
-    /** The active profile's clock alignment, falling back to the global default when not overriding — mirrors [clockTemplateId]'s own resolution shape. */
+    /** The active facet's clock alignment, falling back to the global default when not overriding — mirrors [clockTemplateId]'s own resolution shape. */
     val clockAlignment: ClockAlignment
-        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
+        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
 
-    /** The active profile's clock zone height, falling back to the global default when not overriding — see [clockAlignment]'s own doc. */
+    /** The active facet's clock zone height, falling back to the global default when not overriding — see [clockAlignment]'s own doc. */
     val clockZoneHeightDp: Float?
-        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp)
+        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp)
 
-    /** The active profile's clock scale factor, falling back to the global default when not overriding. */
+    /** The active facet's clock scale factor, falling back to the global default when not overriding. */
     val clockScale: Float
-        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
+        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
 
-    /** The active profile's calendar alignment, falling back to the global default when not overriding — independent of [clockAlignment], same as [com.facetlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
+    /** The active facet's calendar alignment, falling back to the global default when not overriding — independent of [clockAlignment], same as [com.facetlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
     val calendarAlignment: ClockAlignment
-        get() = activeProfile.resolveOverride({ it.overrideClock }, { it.calendarAlignment }, settings.calendarAlignment)
+        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.calendarAlignment }, settings.calendarAlignment)
 
-    /** The profile whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
-    val clockPositionOwningProfile: ProfileEntity?
-        get() = activeProfile?.takeIf { it.overrideClock }
+    /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
+    val clockPositionOwningFacet: FacetEntity?
+        get() = activeFacet?.takeIf { it.overrideClock }
 
-    /** The active profile's app-list vertical anchor, falling back to the global default when not overriding — mirrors [activeAppRowPosition]'s own resolution shape. */
+    /** The active facet's app-list vertical anchor, falling back to the global default when not overriding — mirrors [activeAppRowPosition]'s own resolution shape. */
     val activeAppListVerticalAlignment: AppListVerticalAlignment
-        get() = activeProfile?.let { if (it.overrideApps) it.appListVerticalAlignment else settings.appListVerticalAlignment } ?: settings.appListVerticalAlignment
+        get() = activeFacet?.let { if (it.overrideApps) it.appListVerticalAlignment else settings.appListVerticalAlignment } ?: settings.appListVerticalAlignment
 
-    /** The active profile's dock display style, falling back to the global default when not overriding — [dockApps] itself is already resolved per-profile upstream in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]. */
+    /** The active facet's dock display style, falling back to the global default when not overriding — [dockApps] itself is already resolved per-facet upstream in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]. */
     val activeDockDisplayMode: DockDisplayMode
-        get() = activeProfile?.let { if (it.overrideDock) it.dockDisplayMode else settings.dockDisplayMode } ?: settings.dockDisplayMode
+        get() = activeFacet?.let { if (it.overrideDock) it.dockDisplayMode else settings.dockDisplayMode } ?: settings.dockDisplayMode
 
     /** Shown once, immediately after onboarding finishes — scoped by `onboardingCompleted &&` rather than a launch counter, so it never reappears once dismissed (persisted in [LauncherSettings.coachMarksSeen]). */
     val showGestureHint: Boolean

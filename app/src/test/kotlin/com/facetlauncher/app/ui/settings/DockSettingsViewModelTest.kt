@@ -2,11 +2,11 @@ package com.facetlauncher.app.ui.settings
 
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.ProfileEntity
+import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -51,24 +51,24 @@ class DockSettingsViewModelTest {
         }
 
     private fun createViewModel(
-        profileId: Long? = null,
+        facetId: Long? = null,
         dockApps: List<AppInfo> = emptyList(),
-        profiles: List<ProfileEntity> = emptyList(),
+        facets: List<FacetEntity> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
-        profileRepository: ProfileRepository = mock(ProfileRepository::class.java),
+        facetRepository: FacetRepository = mock(FacetRepository::class.java),
         dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java),
-        profileDockAppRepository: ProfileDockAppRepository = mock(ProfileDockAppRepository::class.java),
+        facetDockAppRepository: FacetDockAppRepository = mock(FacetDockAppRepository::class.java),
     ): DockSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        `when`(profileRepository.observeProfiles()).thenReturn(MutableStateFlow(profiles))
+        `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
         `when`(dockAppRepository.observeDockApps()).thenReturn(flowOf(dockApps))
-        `when`(profileDockAppRepository.observeDockAppsForProfile(anyLong())).thenReturn(flowOf(dockApps))
+        `when`(facetDockAppRepository.observeDockAppsForFacet(anyLong())).thenReturn(flowOf(dockApps))
         return DockSettingsViewModel(
-            SavedStateHandle(profileId?.let { mapOf("profileId" to it) } ?: emptyMap()),
+            SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
-            profileRepository,
+            facetRepository,
             dockAppRepository,
-            profileDockAppRepository,
+            facetDockAppRepository,
             fakeWallpaperRepository(),
         )
     }
@@ -99,19 +99,19 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `profile-scoped setters write to that profile, not the launcher-wide dock`() = runTest {
+    fun `facet-scoped setters write to that facet, not the launcher-wide dock`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
-        val profileRepository = mock(ProfileRepository::class.java)
-        val profileDockAppRepository = mock(ProfileDockAppRepository::class.java)
-        `when`(profileDockAppRepository.observeDockAppsForProfile(anyLong())).thenReturn(flowOf(emptyList()))
-        val profile = ProfileEntity(id = 7L, name = "Work", position = 0)
-        `when`(profileRepository.getById(7L)).thenReturn(profile)
+        val facetRepository = mock(FacetRepository::class.java)
+        val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
+        `when`(facetDockAppRepository.observeDockAppsForFacet(anyLong())).thenReturn(flowOf(emptyList()))
+        val facet = FacetEntity(id = 7L, name = "Work", position = 0)
+        `when`(facetRepository.getById(7L)).thenReturn(facet)
         val viewModel = createViewModel(
-            profileId = 7L,
-            profiles = listOf(profile),
+            facetId = 7L,
+            facets = listOf(facet),
             settingsRepository = settingsRepository,
-            profileRepository = profileRepository,
-            profileDockAppRepository = profileDockAppRepository,
+            facetRepository = facetRepository,
+            facetDockAppRepository = facetDockAppRepository,
         )
         val reordered = listOf(appInfo(2), appInfo(1))
 
@@ -119,8 +119,8 @@ class DockSettingsViewModelTest {
         viewModel.reorderDockApps(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(profileRepository).setDockDisplayMode(profile, DockDisplayMode.TEXT)
-        verify(profileDockAppRepository).reorderDockApps(7L, reordered)
+        verify(facetRepository).setDockDisplayMode(facet, DockDisplayMode.TEXT)
+        verify(facetDockAppRepository).reorderDockApps(7L, reordered)
         verify(settingsRepository, never()).setDockDisplayMode(DockDisplayMode.TEXT)
     }
 }

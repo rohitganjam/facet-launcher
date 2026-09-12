@@ -4,9 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.NO_ACTIVE_PROFILE_ID
+import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class DockAppPickerUiState(
-    /** `false` when this picker is editing the launcher-wide default dock (reached from Settings) rather than one profile's own. */
-    val isProfileScoped: Boolean = false,
+    /** `false` when this picker is editing the launcher-wide default dock (reached from Settings) rather than one facet's own. */
+    val isFacetScoped: Boolean = false,
     val query: String = "",
     /** In-dock apps at the moment this screen was opened, in their dock order — stays exactly
      * this set/order for the rest of this visit no matter what gets checked/unchecked below;
@@ -35,25 +35,25 @@ data class DockAppPickerUiState(
 )
 
 /**
- * Dock app picker (`4k`) — also doubles as one profile's own dock picker (reached from that
- * profile's settings). No `profileId` (or [NO_ACTIVE_PROFILE_ID]) means the launcher-wide default
- * dock ([DockAppRepository]) rather than one profile's own ([ProfileDockAppRepository]) — the
- * same split [com.facetlauncher.app.ui.profiles.FavoritesPickerViewModel] uses for favorites.
+ * Dock app picker (`4k`) — also doubles as one facet's own dock picker (reached from that
+ * facet's settings). No `facetId` (or [NO_ACTIVE_FACET_ID]) means the launcher-wide default
+ * dock ([DockAppRepository]) rather than one facet's own ([FacetDockAppRepository]) — the
+ * same split [com.facetlauncher.app.ui.facets.FavoritesPickerViewModel] uses for favorites.
  */
 @HiltViewModel
 class DockAppPickerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getInstalledApps: GetInstalledAppsUseCase,
     private val dockAppRepository: DockAppRepository,
-    private val profileDockAppRepository: ProfileDockAppRepository,
+    private val facetDockAppRepository: FacetDockAppRepository,
 ) : ViewModel() {
 
-    private val profileId: Long? = savedStateHandle.get<Long>("profileId")?.takeIf { it != NO_ACTIVE_PROFILE_ID }
+    private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
     private val query = MutableStateFlow("")
     private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
 
     private fun observeDockApps(): Flow<List<AppInfo>> =
-        profileId?.let { profileDockAppRepository.observeDockAppsForProfile(it) } ?: dockAppRepository.observeDockApps()
+        facetId?.let { facetDockAppRepository.observeDockAppsForFacet(it) } ?: dockAppRepository.observeDockApps()
 
     /** Latched from the dock's live order the first time it's observed; never updated after — see [DockAppPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<Pair<String, String>>?>(null)
@@ -71,7 +71,7 @@ class DockAppPickerViewModel @Inject constructor(
         val filtered = installed.filter { it.label.contains(query, ignoreCase = true) }
         val (selected, other) = filtered.partition { (it.packageName to it.activityName) in order }
         DockAppPickerUiState(
-            isProfileScoped = profileId != null,
+            isFacetScoped = facetId != null,
             query = query,
             selectedResults = selected.sortedBy { order.indexOf(it.packageName to it.activityName) },
             otherResults = other,
@@ -93,11 +93,11 @@ class DockAppPickerViewModel @Inject constructor(
         val state = uiState.value
         val isInDock = (app.packageName to app.activityName) in state.dockPackageComponents
         viewModelScope.launch {
-            if (profileId != null) {
+            if (facetId != null) {
                 if (isInDock) {
-                    if (state.canRemove) profileDockAppRepository.removeDockApp(profileId, app)
+                    if (state.canRemove) facetDockAppRepository.removeDockApp(facetId, app)
                 } else if (state.canAddMore) {
-                    profileDockAppRepository.addDockApp(profileId, app, position = state.dockPackageComponents.size)
+                    facetDockAppRepository.addDockApp(facetId, app, position = state.dockPackageComponents.size)
                 }
             } else {
                 if (isInDock) {

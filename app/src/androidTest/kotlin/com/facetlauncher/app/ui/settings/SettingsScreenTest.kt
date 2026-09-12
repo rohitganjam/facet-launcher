@@ -35,7 +35,7 @@ class SettingsScreenTest {
 
     private fun setContent(
         onBack: () -> Unit = {},
-        onViewProfiles: () -> Unit = {},
+        onViewFacets: () -> Unit = {},
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToClockStyleGallery: () -> Unit = {},
         onNavigateToCalendarSettings: () -> Unit = {},
@@ -67,7 +67,7 @@ class SettingsScreenTest {
             FacetLauncherTheme {
                 SettingsScreen(
                     onBack = onBack,
-                    onViewProfiles = onViewProfiles,
+                    onViewFacets = onViewFacets,
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
@@ -246,16 +246,16 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun viewProfilesRowIsClickable() {
-        // Given the settings screen — Profiles is functional as of Phase 3
-        var viewProfilesClicked = false
-        setContent(onViewProfiles = { viewProfilesClicked = true })
+    fun viewFacetsRowIsClickable() {
+        // Given the settings screen — Facets is functional as of Phase 3
+        var viewFacetsClicked = false
+        setContent(onViewFacets = { viewFacetsClicked = true })
 
-        // When tapping "View profiles"
-        composeRule.onNodeWithTag("view_profiles_row").performClick()
+        // When tapping "View facets"
+        composeRule.onNodeWithTag("view_facets_row").performClick()
 
         // Then its callback fires
-        assertEquals(true, viewProfilesClicked)
+        assertEquals(true, viewFacetsClicked)
     }
 
     @Test

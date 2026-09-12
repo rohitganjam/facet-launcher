@@ -33,7 +33,7 @@ fun HubAtCapacityStrip(onManageClick: () -> Unit, modifier: Modifier = Modifier)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Hub is full at 20 widgets — remove one to add another.",
+            text = "Full at 20 widgets — remove one to add another.",
             style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
             color = HomeAppTextColorFaint,
             modifier = Modifier.weight(1f),

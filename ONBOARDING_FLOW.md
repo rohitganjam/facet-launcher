@@ -114,6 +114,16 @@ Shared chrome: pagination dots bottom-left (active `16×5` rounded bar Accent, i
 circle Faint), primary action bottom-right, `padding-bottom: 34dp`. Wallpaper behind every step;
 steps 1–3 on bare wallpaper, step 4 dims Home behind a sheet.
 
+**Top-right "Skip"** — a text button (`Muted`, matches the "Later"/"Back" style) shown on steps
+1–3 only (`OnboardingScreen`'s own overlay, not per-page — absent whenever a full-screen picker is
+open). Jumps straight to step 4, same as Next from Profiles — this is a later addition superseding
+§1's original "Screens 1 and 3 are read-only... No Skip" framing for the intro screen specifically;
+Home Setup's own per-page Next already let a user leave everything at its seeded default, so this
+just adds a faster, uniform way out from any of the three steps rather than changing what "Next"
+without picking anything already did. If `OnboardingUiState.isDefaultLauncher` is already `true`
+(reinstall), Skip finishes onboarding immediately instead of landing on step 4's "already default"
+variant, since that step has nothing left to offer. `testTag("onboarding_skip")`.
+
 ### Step 1 — Intro (`4f`)
 
 | | |

@@ -16,8 +16,8 @@ import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.ProfileDockAppRepository
-import com.facetlauncher.app.data.ProfileRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -48,22 +48,22 @@ class BackupRestoreScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val profileRepository = ProfileRepository(database.profileDao())
+                val facetRepository = FacetRepository(database.facetDao())
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val profileDockAppRepository = ProfileDockAppRepository(database.profileDockAppDao(), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
                 val backupRepository = BackupRepository(context)
                 val appWidgetRepository = AppWidgetRepository(context, AppWidgetManager.getInstance(context), LauncherAppWidgetHost(context))
                 BackupRestoreViewModel(
                     ExportBackupUseCase(
-                        settingsRepository, profileRepository, favoriteAppRepository, dockAppRepository,
-                        profileDockAppRepository, defaultFavoriteAppRepository, widgetPlacementRepository, backupRepository,
+                        settingsRepository, facetRepository, favoriteAppRepository, dockAppRepository,
+                        facetDockAppRepository, defaultFavoriteAppRepository, widgetPlacementRepository, backupRepository,
                     ),
                     ImportBackupUseCase(
-                        backupRepository, settingsRepository, profileRepository, favoriteAppRepository,
-                        dockAppRepository, profileDockAppRepository, defaultFavoriteAppRepository,
+                        backupRepository, settingsRepository, facetRepository, favoriteAppRepository,
+                        dockAppRepository, facetDockAppRepository, defaultFavoriteAppRepository,
                     ),
                     appWidgetRepository,
                     widgetPlacementRepository,

@@ -48,7 +48,7 @@ private object Keys {
     val SHOW_DRAWER_ICONS = booleanPreferencesKey("show_drawer_icons")
     val SHOW_DRAWER_LABELS = booleanPreferencesKey("show_drawer_labels")
     val SEARCH_BAR_POSITION = stringPreferencesKey("search_bar_position")
-    val ACTIVE_PROFILE_ID = longPreferencesKey("active_profile_id")
+    val ACTIVE_FACET_ID = longPreferencesKey("active_facet_id")
     val SHOW_ALL_DAY_EVENTS = booleanPreferencesKey("show_all_day_events")
     val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
     val CALENDAR_COLORS = stringSetPreferencesKey("calendar_colors")
@@ -114,7 +114,7 @@ class SettingsRepository @Inject constructor(
             searchBarPosition = preferences[Keys.SEARCH_BAR_POSITION]?.let {
                 runCatching { SearchBarPosition.valueOf(it) }.getOrNull()
             } ?: defaults.searchBarPosition,
-            activeProfileId = preferences[Keys.ACTIVE_PROFILE_ID] ?: defaults.activeProfileId,
+            activeFacetId = preferences[Keys.ACTIVE_FACET_ID] ?: defaults.activeFacetId,
             showAllDayEvents = preferences[Keys.SHOW_ALL_DAY_EVENTS] ?: defaults.showAllDayEvents,
             selectedCalendarIds = preferences[Keys.SELECTED_CALENDAR_IDS],
             calendarColors = preferences[Keys.CALENDAR_COLORS].orEmpty().mapNotNull { entry ->
@@ -225,8 +225,8 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.SEARCH_BAR_POSITION] = position.name }
     }
 
-    suspend fun setActiveProfileId(profileId: Long) {
-        dataStore.edit { it[Keys.ACTIVE_PROFILE_ID] = profileId }
+    suspend fun setActiveFacetId(facetId: Long) {
+        dataStore.edit { it[Keys.ACTIVE_FACET_ID] = facetId }
     }
 
     suspend fun setSelectedCalendarIds(ids: Set<String>) {
@@ -283,17 +283,17 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.CONTACTS_PERMISSION_REQUESTED] = requested }
     }
 
-    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appRowPosition]. */
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appRowPosition]. */
     suspend fun setAppRowPosition(position: AppRowPosition) {
         dataStore.edit { it[Keys.APP_ROW_POSITION] = position.name }
     }
 
-    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appRowPresentation]. */
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appRowPresentation]. */
     suspend fun setAppRowPresentation(presentation: AppRowPresentation) {
         dataStore.edit { it[Keys.APP_ROW_PRESENTATION] = presentation.name }
     }
 
-    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.listContentMode]. */
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.listContentMode]. */
     suspend fun setListContentMode(mode: ListContentMode) {
         dataStore.edit { it[Keys.LIST_CONTENT_MODE] = mode.name }
     }
@@ -374,7 +374,7 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    /** The default every profile inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */
     suspend fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
         dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
     }
