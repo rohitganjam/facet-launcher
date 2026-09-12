@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facet Launcher — Privacy Policy</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    color: #22384F;
+    line-height: 1.6;
+  }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  .updated { color: #6E7882; font-size: 14px; margin-bottom: 32px; }
+  h2 { font-size: 20px; margin-top: 36px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 8px; }
+  code { background: #F4F5F7; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  .summary {
+    background: #F4F5F7;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 24px 0;
+  }
+  a { color: #375381; }
+</style>
+</head>
+<body>
+
+<h1>Facet Launcher — Privacy Policy</h1>
+<p class="updated">Last updated: September 12, 2026</p>
+
+<div class="summary">
+  <strong>In short:</strong> Facet Launcher does not have internet access. Nothing you do in the app — your apps, contacts, calendar, usage patterns, notifications, or settings — ever leaves your device. There are no accounts, no ads, no analytics, and no third-party tracking of any kind.
+</div>
+
+<h2>What this app is</h2>
+<p>Facet Launcher is a home-screen launcher for Android. It replaces your phone's default home screen with app organization, a clock, and calendar widgets, all customizable through profiles.</p>
+
+<h2>Data collection and transmission</h2>
+<p>Facet Launcher does not request the <code>INTERNET</code> permission. The app cannot make network requests, and has no server, backend, or cloud component of any kind. Every feature described below runs entirely on your device.</p>
+
+<h2>Permissions the app uses, and why</h2>
+<ul>
+  <li><strong>Usage access</strong> (<code>PACKAGE_USAGE_STATS</code>) — powers the app drawer's optional "Most used" sort, which ranks your installed apps by how often you open them. This ranking is computed on-device each time it's shown and is never stored beyond what's needed to display it, or sent anywhere.</li>
+  <li><strong>Calendar</strong> (<code>READ_CALENDAR</code>) — lets the home screen show your upcoming events, if you turn this on in Settings. Calendar data is read directly from your device's calendar provider and displayed locally; it is never copied, stored separately, or transmitted.</li>
+  <li><strong>Contacts</strong> (<code>READ_CONTACTS</code>) — powers an optional contact search feature in the app drawer, if you turn it on in Settings. Contact data is queried on-device at search time and never stored or transmitted.</li>
+  <li><strong>Notification access</strong> — powers optional app-icon notification badges. The app reads only which app a notification came from and how many are unread, never notification content, and never stores or transmits this beyond what's needed to draw the badge.</li>
+  <li><strong>Uninstall shortcut</strong> (<code>REQUEST_DELETE_PACKAGES</code>) — lets you uninstall an app from its long-press menu. This opens Android's own uninstall confirmation dialog; the app never uninstalls anything without your explicit confirmation in that system dialog.</li>
+  <li><strong>Expand notification shade</strong> (<code>EXPAND_STATUS_BAR</code>) — lets a swipe-down gesture on the home screen open your notification shade, the same way it would on any home screen.</li>
+</ul>
+
+<h2>Data storage</h2>
+<p>Your settings, profiles, dock and favorites layout, and widget placements are stored in a local database on your device, using Android's standard app-private storage. This data is not accessible to other apps and is not transmitted anywhere. Uninstalling Facet Launcher removes it, following normal Android behavior.</p>
+
+<h2>Backup and restore</h2>
+<p>If you use the app's backup feature, it creates a JSON file containing your settings and layout, which you choose where to save using Android's own file picker (for example, to your device storage or a cloud storage app you've installed). Facet Launcher does not upload this file anywhere itself — where it ends up is entirely controlled by you, through the system file picker.</p>
+
+<h2>Third parties</h2>
+<p>Facet Launcher does not integrate any third-party analytics, advertising, or crash-reporting services. No data is shared with any third party, because no data leaves your device in the first place.</p>
+
+<h2>Children's privacy</h2>
+<p>Facet Launcher does not knowingly collect any data from anyone, including children, since the app does not collect or transmit data at all.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes, an updated version will be posted at this same URL with a revised "Last updated" date.</p>
+
+<h2>Contact</h2>
+<p>Questions about this policy can be sent to the developer via the contact details listed on the <a href="https://github.com/rohitganjam/facet-launcher">Facet Launcher GitHub repository</a>.</p>
+
+</body>
+</html>

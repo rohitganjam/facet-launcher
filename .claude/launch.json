@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "facet-launcher-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8743", "--directory", "/Volumes/NVME/repo/facet-launcher-site"],
+      "port": 8743
+    }
+  ]
+}
