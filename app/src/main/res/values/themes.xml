@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.LumenLauncher" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.FacetLauncher" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowShowWallpaper">true</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowBackground">@android:color/transparent</item>

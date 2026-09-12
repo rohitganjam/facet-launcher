@@ -1,4 +1,4 @@
-# Lumen Launcher — Engineering Conventions
+# Facet Launcher — Engineering Conventions
 
 Native Android launcher app. Kotlin-only (no Java files), Jetpack Compose (no XML layouts), single `:app` module. MVVM throughout: composables → `ViewModel`s → `Repository`s → `domain/` use cases, strictly layered. Hilt for DI, Retrofit for networking, Room for persistence, Coroutines + `Flow` for async state (no `LiveData`).
 Requirements: [`Android launcher design planning/design_handoff_minimal_launcher/PRD.md`](<Android launcher design planning/design_handoff_minimal_launcher/PRD.md>).
@@ -8,7 +8,7 @@ Build/task tracking: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — keep
 ## Project structure
 
 ```
-app/src/main/kotlin/com/lumenlauncher/app/
+app/src/main/kotlin/com/facetlauncher/app/
   data/            # Repositories, DAOs/services, models — wraps Android framework APIs (LauncherApps, WallpaperManager, etc.), Room, Retrofit
     model/
   domain/          # use cases — business rules that compose one or more Repositories; nothing here touches Android framework APIs directly
@@ -44,7 +44,7 @@ Naming: screen composables/wrappers end in `Screen` (`HomeScreen`), their `ViewM
 - **Stateless composables + state hoisting.** A screen composable (e.g. `HomeScreen`) takes an immutable `UiState` and event lambdas as parameters; its `ViewModel` (e.g. `HomeViewModel`) owns the actual state, exposes it as `StateFlow<HomeUiState>`, and is the only thing that talks to `data/`/`domain/`. One-off effects (navigation, snackbars) are modeled as a `UiEvent` emitted separately from state, not folded into it. This is what makes composables unit-testable without booting Android.
 - Every public composable that renders meaningful UI gets a `@Preview` (light + dark where the design spec defines both) — cheap to add, catches layout breakage immediately.
 - Use the design tokens from `ui/theme/` (`MaterialTheme.colorScheme`, `MaterialTheme.typography`) — never hardcode a color or text size that's already named in README.md's Design Tokens table.
-- **Theme every Material3 component explicitly — never let one fall back to stock Material defaults.** `LumenLightColorScheme` (`ui/theme/Theme.kt`) only maps a handful of `ColorScheme` slots (`primary`, `surface`, `onSurface`, `onSurfaceVariant`, `error`, `outline`, ...); any component that reads an *unmapped* slot (e.g. `AlertDialog`'s default `containerColor`, which resolves to `surfaceContainerHigh`; `OutlinedTextField`'s default border/label colors) silently renders with Material's own baseline tones instead of this app's palette, producing a popup or field that's subtly off from every other surface in the app. When adding or touching a component like `AlertDialog`, `DropdownMenu`, `TextField`/`OutlinedTextField`, `Dialog`, etc., always pass its color/shape parameters explicitly (`containerColor`, `shape`, `colors = ...Defaults.colors(...)`) using this app's own tokens (`Surface`, `Ink`, `Muted`, `Accent`, `ErrorColor`, `Hairline`, 14dp `RoundedCornerShape` for popups/dialogs) rather than trusting the default resolves correctly — see `ui/components/ConfirmDialog.kt`, `RenameDialog.kt`, and `ThemedDropdownMenu.kt` for the pattern.
+- **Theme every Material3 component explicitly — never let one fall back to stock Material defaults.** `FacetLightColorScheme` (`ui/theme/Theme.kt`) only maps a handful of `ColorScheme` slots (`primary`, `surface`, `onSurface`, `onSurfaceVariant`, `error`, `outline`, ...); any component that reads an *unmapped* slot (e.g. `AlertDialog`'s default `containerColor`, which resolves to `surfaceContainerHigh`; `OutlinedTextField`'s default border/label colors) silently renders with Material's own baseline tones instead of this app's palette, producing a popup or field that's subtly off from every other surface in the app. When adding or touching a component like `AlertDialog`, `DropdownMenu`, `TextField`/`OutlinedTextField`, `Dialog`, etc., always pass its color/shape parameters explicitly (`containerColor`, `shape`, `colors = ...Defaults.colors(...)`) using this app's own tokens (`Surface`, `Ink`, `Muted`, `Accent`, `ErrorColor`, `Hairline`, 14dp `RoundedCornerShape` for popups/dialogs) rather than trusting the default resolves correctly — see `ui/components/ConfirmDialog.kt`, `RenameDialog.kt`, and `ThemedDropdownMenu.kt` for the pattern.
 - Modifier parameter: always present, always first optional parameter, always applied to the composable's own outermost node (standard Compose convention — don't break it here).
 - Use `LazyColumn`/`LazyVerticalGrid` for any list that can grow past a screenful (app drawer, contact list) — never a plain `Column` with `.verticalScroll()`.
 - Keep composable parameters stable (immutable data classes/collections) and side-effect-free to avoid unnecessary recomposition.
@@ -52,7 +52,7 @@ Naming: screen composables/wrappers end in `Screen` (`HomeScreen`), their `ViewM
 
 ## Shape (Material 3) — governing principle for every component
 
-Every component's corner radius must come from Material 3's real shape scale and defaults ([m3.material.io/styles/shape](https://m3.material.io/styles/shape/shape-scale-tokens)), applied through `MaterialTheme.shapes` — never a bespoke dp value picked by eye. This app's `LumenLauncherTheme` doesn't override `shapes`, so `MaterialTheme.shapes` is already Compose Material3's own default `Shapes()` instance, matching M3's scale exactly:
+Every component's corner radius must come from Material 3's real shape scale and defaults ([m3.material.io/styles/shape](https://m3.material.io/styles/shape/shape-scale-tokens)), applied through `MaterialTheme.shapes` — never a bespoke dp value picked by eye. This app's `FacetLauncherTheme` doesn't override `shapes`, so `MaterialTheme.shapes` is already Compose Material3's own default `Shapes()` instance, matching M3's scale exactly:
 
 | Token | Value | `MaterialTheme.shapes.*` | Used by (M3 default)                                   |
 |---|---|---|--------------------------------------------------------|
@@ -101,10 +101,10 @@ Run tests:
 ```bash
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.lumenlauncher.app/.LauncherActivity
+adb shell am start -n com.facetlauncher.app/.LauncherActivity
 ```
 
-Setting Lumen as the actual system default launcher is a device-wide change — leave that to the user to do manually (Settings → Apps → Default apps) rather than doing it from an automated pass.
+Setting Facet as the actual system default launcher is a device-wide change — leave that to the user to do manually (Settings → Apps → Default apps) rather than doing it from an automated pass.
 
 ## graphify
 

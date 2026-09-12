@@ -1,96 +1,36 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Background rounded square (fills the full canvas; safe-zone scaling only applies to foreground content) -->
-    <path android:pathData="M24,0 H84 A24,24 0 0,1 108,24 V84 A24,24 0 0,1 84,108 H24 A24,24 0 0,1 0,84 V24 A24,24 0 0,1 24,0 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="0"
-                android:centerY="33.75"
-                android:gradientRadius="67.5">
-                <item android:offset="0" android:color="#141226" />
-                <item android:offset="1" android:color="#080812" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <!-- Faceted pentagon "gem" mark for Facet Launcher. Outer pentagon (radius 32) and inner
+         pentagon (radius 14, same orientation) define 5 quad panels; each panel is split by
+         BOTH of its diagonals (outer vertex to the far inner vertex, each way), crossing at an
+         interior point, into 4 triangular facets. Every facet gets its own color: hue sweeps
+         continuously by the facet's own centroid angle around the ring (navy -> steel -> gray ->
+         teal -> green, matching the design reference), and lightness varies by the facet's role
+         within its panel (outer-edge brightest, inner-edge darkest) - so no two facets, including
+         ones that share an edge across a panel boundary, ever land on the same color. -->
 
-    <!-- Outer L stroke (scaled 0.65x about the canvas center, by farthest-corner distance rather than
-         axis-aligned margin, since a circular icon mask clips by radius from center, not by a square) -->
-    <path
-        android:pathData="M36.45,31.25 V71.55 H76.75"
-        android:fillColor="#00000000"
-        android:strokeWidth="5.5"
-        android:strokeLineCap="round">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="36.45"
-                android:startY="51.4"
-                android:endX="76.75"
-                android:endY="51.4">
-                <item android:offset="0" android:color="#D9AD40" />
-                <item android:offset="0.35" android:color="#FFE073" />
-                <item android:offset="0.65" android:color="#FFEB8C" />
-                <item android:offset="1" android:color="#D19E33" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Inner L stroke -->
-    <path
-        android:pathData="M44.9,39.7 V63.1 H68.3"
-        android:fillColor="#00000000"
-        android:strokeWidth="5"
-        android:strokeLineCap="round">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="44.9"
-                android:startY="51.4"
-                android:endX="68.3"
-                android:endY="51.4">
-                <item android:offset="0" android:color="#D9AD40" />
-                <item android:offset="0.35" android:color="#FFE073" />
-                <item android:offset="0.65" android:color="#FFEB8C" />
-                <item android:offset="1" android:color="#D19E33" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Soft glow circle -->
-    <path android:pathData="M57.9,63.1 A13,13 0 1,1 31.9,63.1 A13,13 0 1,1 57.9,63.1 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="44.9"
-                android:centerY="63.1"
-                android:gradientRadius="13">
-                <item android:offset="0" android:color="#E6FFF7D9" />
-                <item android:offset="0.3" android:color="#66FFE68C" />
-                <item android:offset="0.7" android:color="#1AFFD966" />
-                <item android:offset="1" android:color="#00FFCC4D" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Bright core dot -->
-    <path android:pathData="M48.8,63.43 A4.23,4.23 0 1,1 40.35,63.43 A4.23,4.23 0 1,1 48.8,63.43 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="44.58"
-                android:centerY="63.43"
-                android:gradientRadius="4.23">
-                <item android:offset="0" android:color="#FFFFFF" />
-                <item android:offset="0.5" android:color="#99FFF2BF" />
-                <item android:offset="1" android:color="#00FFE680" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
+    <path android:pathData="M54.0,22.0L84.43,44.11L63.26,41.25Z" android:fillColor="#6994BF" /> <!-- panel 0, outer edge -->
+    <path android:pathData="M84.43,44.11L67.31,49.67L63.26,41.25Z" android:fillColor="#4482A7" /> <!-- panel 0, right diagonal -->
+    <path android:pathData="M54.0,40.0L54.0,22.0L63.26,41.25Z" android:fillColor="#375381" /> <!-- panel 0, left diagonal -->
+    <path android:pathData="M67.31,49.67L54.0,40.0L63.26,41.25Z" android:fillColor="#2C4259" /> <!-- panel 0, inner edge -->
+    <path android:pathData="M84.43,44.11L72.81,79.89L68.98,58.87Z" android:fillColor="#69ADBF" /> <!-- panel 1, outer edge -->
+    <path android:pathData="M72.81,79.89L62.23,65.33L68.98,58.87Z" android:fillColor="#449BA7" /> <!-- panel 1, right diagonal -->
+    <path android:pathData="M67.31,49.67L84.43,44.11L68.98,58.87Z" android:fillColor="#376A81" /> <!-- panel 1, left diagonal -->
+    <path android:pathData="M62.23,65.33L67.31,49.67L68.98,58.87Z" android:fillColor="#2C4F59" /> <!-- panel 1, inner edge -->
+    <path android:pathData="M72.81,79.89L35.19,79.89L54.0,69.76Z" android:fillColor="#69BFBB" /> <!-- panel 2, outer edge -->
+    <path android:pathData="M35.19,79.89L45.77,65.33L54.0,69.76Z" android:fillColor="#44A799" /> <!-- panel 2, right diagonal -->
+    <path android:pathData="M62.23,65.33L72.81,79.89L54.0,69.76Z" android:fillColor="#377D81" /> <!-- panel 2, left diagonal -->
+    <path android:pathData="M45.77,65.33L62.23,65.33L54.0,69.76Z" android:fillColor="#2C5957" /> <!-- panel 2, inner edge -->
+    <path android:pathData="M35.19,79.89L23.57,44.11L39.02,58.87Z" android:fillColor="#69BF9B" /> <!-- panel 3, outer edge -->
+    <path android:pathData="M23.57,44.11L40.69,49.67L39.02,58.87Z" android:fillColor="#44A76B" /> <!-- panel 3, right diagonal -->
+    <path android:pathData="M45.77,65.33L35.19,79.89L39.02,58.87Z" android:fillColor="#378170" /> <!-- panel 3, left diagonal -->
+    <path android:pathData="M40.69,49.67L45.77,65.33L39.02,58.87Z" android:fillColor="#2C5946" /> <!-- panel 3, inner edge -->
+    <path android:pathData="M23.57,44.11L54.0,22.0L44.74,41.25Z" android:fillColor="#69BFBF" /> <!-- panel 4, outer edge -->
+    <path android:pathData="M54.0,22.0L54.0,40.0L44.74,41.25Z" android:fillColor="#4475A7" /> <!-- panel 4, right diagonal -->
+    <path android:pathData="M40.69,49.67L23.57,44.11L44.74,41.25Z" android:fillColor="#37815C" /> <!-- panel 4, left diagonal -->
+    <path android:pathData="M54.0,40.0L40.69,49.67L44.74,41.25Z" android:fillColor="#2C5959" /> <!-- panel 4, inner edge -->
 </vector>

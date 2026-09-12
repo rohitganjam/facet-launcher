@@ -1,4 +1,4 @@
-# Lumen Launcher — Built Capabilities
+# Facet Launcher — Built Capabilities
 
 A snapshot of what the app actually does today, written to support designing a first-run /
 onboarding flow. Sourced from [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md), the
@@ -10,7 +10,7 @@ and the code as of this branch.
   Repositories → `domain/` use cases), Hilt, Room, DataStore, Coroutines/Flow.
 - **Min SDK 33 (Android 13), target SDK 36.** Primary test device: Samsung Galaxy M15 5G; dev
   emulator `Medium_Phone_API_36.1`.
-- **Nav:** one `NavHost` (`ui/navigation/LumenNavHost.kt`). Home + App Drawer are a single route
+- **Nav:** one `NavHost` (`ui/navigation/FacetNavHost.kt`). Home + App Drawer are a single route
   with a follow-finger transition; every other screen is a normal destination.
 - **Phases 0–10 are essentially complete.** The two remaining unchecked items in the plan are
   **the first-run flow** and **the accessibility pass** (Phase 8), plus a handful of small tracked
@@ -20,7 +20,7 @@ and the code as of this branch.
 
 ## 1. What exists at launch today (no onboarding)
 
-`LauncherActivity` (`HOME`/`DEFAULT`/`LAUNCHER` intent filter, `singleTask`) → `LumenNavHost`
+`LauncherActivity` (`HOME`/`DEFAULT`/`LAUNCHER` intent filter, `singleTask`) → `FacetNavHost`
 starting at `HOME`.
 
 - **`LauncherViewModel`** gates a real `isLoading` state: the screen renders nothing (wallpaper
@@ -54,9 +54,9 @@ starting at `HOME`.
 | — Recents / Most Used | `data/UsageStatsRepository.kt` | `UsageStatsManager`, 30-day window. **Gated on `PACKAGE_USAGE_STATS`** (special access). Shows a dashed strip + "Open settings" when ungranted; strip dismisses on tap. |
 | App list layout | `AppRowPosition` (LEFT/RIGHT), `AppRowPresentation` (ICON_ONLY / ICON_AND_TEXT / TEXT_ONLY), `AppListVerticalAlignment` (TOP/BOTTOM) | Per-profile overridable. |
 | Dock | `data/DockAppRepository.kt`, `HomeScreen.kt` | 0–5 apps, **shared across all profiles** (not per-profile). Icons or Text display mode. Omitted entirely when empty. Reorder in Settings. |
-| Notification badges | `data/LumenNotificationListenerService.kt`, `NotificationBadgeRepository.kt` | Dot or Count (capped `9+`) on favorites list, dock, and drawer. Respects system silent-channel suppression, filters group summaries. **Gated on notification listener access** (special access). |
+| Notification badges | `data/FacetNotificationListenerService.kt`, `NotificationBadgeRepository.kt` | Dot or Count (capped `9+`) on favorites list, dock, and drawer. Respects system silent-channel suppression, filters group summaries. **Gated on notification listener access** (special access). |
 | App launch | `LauncherActivity.launchApp` | `ACTION_MAIN`/`CATEGORY_LAUNCHER` component intent. |
-| App long-press context menu | `ui/components/AppContextMenu.kt`, `data/AppShortcutRepository.kt` | App info, Uninstall (`REQUEST_DELETE_PACKAGES`), and the app's own published shortcuts (App Shortcuts API — requires Lumen to be default launcher; silently omitted otherwise). Rename is **not** built (deferred to icon-pack work). |
+| App long-press context menu | `ui/components/AppContextMenu.kt`, `data/AppShortcutRepository.kt` | App info, Uninstall (`REQUEST_DELETE_PACKAGES`), and the app's own published shortcuts (App Shortcuts API — requires Facet to be default launcher; silently omitted otherwise). Rename is **not** built (deferred to icon-pack work). |
 | Home ↔ Drawer gesture | `ui/launcher/HomeDrawerRoute.kt` | Swipe up opens drawer (follow-finger, velocity + distance commit). |
 | Swipe down → notification shade | `data/NotificationShadeRepository.kt` | Wired in `HomeDrawerRoute`; `EXPAND_STATUS_BAR`. Not fully verified on-device per the plan. |
 | Long-press empty space → profile switcher | `ui/profiles/ProfileCarouselScreen.kt` | Opens the Switch Profiles overlay directly (the old 4-row long-press sheet was **deleted**). |
@@ -202,7 +202,7 @@ its own permission when the user enables it, and every gated surface degrades to
   color, permission-requested flags, app row position/presentation, list content mode, apps-to-show,
   clock template/font/color/accent/meridiem/date style/alignment/scale/zone height, calendar
   font/weight/color/alignment, home-apps font weight, app list vertical alignment.
-- **Room** (`LumenDatabase`, v15): `ProfileEntity` (+ many per-profile override columns),
+- **Room** (`FacetDatabase`, v15): `ProfileEntity` (+ many per-profile override columns),
   `FavoriteAppEntity`, `DefaultFavoriteAppEntity`, `DockAppEntity`, `WidgetPlacementEntity`.
   Real migrations for recent versions; older bumps used destructive fallback (pre-release).
 - **In-memory only:** notification badge counts (`NotificationBadgeRepository` — recomputed from
@@ -215,7 +215,7 @@ its own permission when the user enables it, and every gated surface degrades to
 ## 10. Gaps relevant to building onboarding
 
 1. **No first-run gate.** Need a persisted "onboarding complete" flag (DataStore) and a
-   conditional start destination or overlay in `LumenNavHost` / `LauncherActivity`.
+   conditional start destination or overlay in `FacetNavHost` / `LauncherActivity`.
 2. **No set-as-default prompt.** Only a passive Settings row. The design spec (`4h`) wants a
    bottom sheet with "Set as default" / "Later"; consider `RoleManager.createRequestRoleIntent(ROLE_HOME)`
    (API 29+) for an in-place dialog instead of the Settings deep-link.

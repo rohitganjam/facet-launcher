@@ -9,7 +9,7 @@ This spec assumes familiarity with the existing "move the clock block" feature (
 ## 1. Scope
 
 - Scales only the rendered clock (time) + date text — i.e. `ClockDisplay` in `ClockTemplates.kt`.
-- Does **not** affect `CalendarEventsBlock` (the actual calendar events list) — these are already separate sibling composables inside `ClockBlock`'s `Column` ([ClockBlock.kt:74-101](app/src/main/kotlin/com/lumenlauncher/app/ui/home/ClockBlock.kt#L74-L101)), so this boundary is free.
+- Does **not** affect `CalendarEventsBlock` (the actual calendar events list) — these are already separate sibling composables inside `ClockBlock`'s `Column` ([ClockBlock.kt:74-101](app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockBlock.kt#L74-L101)), so this boundary is free.
 - Global default + per-profile override, following the exact `overrideClock` bundle pattern that `clockZoneHeightDp`/`clockAlignment`/`calendarAlignment` already use.
 - Corner-drag ("canvas style") gesture, independent X/Y — glyphs will visibly stretch/squish under non-uniform scale; that's inherent to the request, not a bug.
 - Long-press on the clock opens a bottom sheet with two options instead of directly revealing the move handle:
@@ -111,7 +111,7 @@ fun clockScaleX(profileId: Long): Float =
 
 **This is the trickiest part — read carefully before implementing.**
 
-A plain `Modifier.graphicsLayer(scaleX=, scaleY=)` only transforms *paint*, not *layout*: the parent still thinks the content occupies its original, unscaled size. That leaves stale gaps/overlaps against `CalendarEventsBlock` below it, and breaks the existing zone-height math, which measures `clockNaturalHeightPx` via `onGloballyPositioned` ([HomeScreen.kt:199](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L199)) to compute the move-handle's drag floor/ceiling.
+A plain `Modifier.graphicsLayer(scaleX=, scaleY=)` only transforms *paint*, not *layout*: the parent still thinks the content occupies its original, unscaled size. That leaves stale gaps/overlaps against `CalendarEventsBlock` below it, and breaks the existing zone-height math, which measures `clockNaturalHeightPx` via `onGloballyPositioned` ([HomeScreen.kt:199](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L199)) to compute the move-handle's drag floor/ceiling.
 
 You need scale that **participates in layout**: measure content at its natural size, then report the *scaled* size upward via `Modifier.layout {}`, painting via `Placeable.placeWithLayer {}`:
 
@@ -128,7 +128,7 @@ fun Modifier.freeformScale(scaleX: Float, scaleY: Float, anchor: TransformOrigin
 }
 ```
 
-Apply this in **`ClockBlock.kt`**, wrapping just the `modifier` passed to `ClockDisplay` (line 85: `Modifier.align(clockAlignment.resolve()).then(clockContentModifier)`) — **not** anywhere near `CalendarEventsBlock`. Single insertion point: none of the 35 templates in `ClockTemplates.kt` need to change, since they all render through the one `ClockDisplay` entry point ([ClockTemplates.kt:73-132](app/src/main/kotlin/com/lumenlauncher/app/ui/home/clock/ClockTemplates.kt#L73-L132)) and none hardcode their own scale — only per-template `fontSize`/`letterSpacing` values in `sp`, which the layer transform scales uniformly without touching any of the ~35 `when` branches.
+Apply this in **`ClockBlock.kt`**, wrapping just the `modifier` passed to `ClockDisplay` (line 85: `Modifier.align(clockAlignment.resolve()).then(clockContentModifier)`) — **not** anywhere near `CalendarEventsBlock`. Single insertion point: none of the 35 templates in `ClockTemplates.kt` need to change, since they all render through the one `ClockDisplay` entry point ([ClockTemplates.kt:73-132](app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockTemplates.kt#L73-L132)) and none hardcode their own scale — only per-template `fontSize`/`letterSpacing` values in `sp`, which the layer transform scales uniformly without touching any of the ~35 `when` branches.
 
 Payoff of doing it this way: since `clockNaturalHeightPx` in `HomeScreen.kt` is measured from the already-composed block, the existing zone-height floor/ceiling math automatically sees the post-scale height with no further changes — position and size compose correctly for free.
 
@@ -148,7 +148,7 @@ The correct design leans on machinery that already exists instead of reinventing
   }
   ```
 - **Horizontal anchoring is Compose's `align()`, already in `ClockBlock.kt` line 85** (`Modifier.align(clockAlignment.resolve())`). `align()` re-pins the correct edge to the parent on every recomposition based on whatever size the child currently reports — Start keeps the left edge fixed as width grows, End keeps the right edge fixed, CenterHorizontally grows symmetrically from the midpoint. Since `freeformScale` reports the *scaled* width upward through `layout()`, this behaves correctly automatically, for every alignment, with zero alignment-aware code inside the scale modifier itself.
-- **Vertical anchoring is the *existing* zone-height offset formula** ([HomeScreen.kt:198](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L198): `handlePx - minGapPx - clockNaturalHeightPx`) — already pins the block's bottom edge near the position handle and grows height upward as `clockNaturalHeightPx` increases. Nothing new needed here either; it already behaves this way for the pre-existing zone-height feature and just keeps working once `clockNaturalHeightPx` reflects the post-scale height.
+- **Vertical anchoring is the *existing* zone-height offset formula** ([HomeScreen.kt:198](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L198): `handlePx - minGapPx - clockNaturalHeightPx`) — already pins the block's bottom edge near the position handle and grows height upward as `clockNaturalHeightPx` increases. Nothing new needed here either; it already behaves this way for the pre-existing zone-height feature and just keeps working once `clockNaturalHeightPx` reflects the post-scale height.
 
 Net effect: **both resize handles feed the same underlying `scaleX`/`scaleY` state** — neither one owns its own separate anchor. Which edge visually stays fixed is entirely a function of the current `clockAlignment` (handled by `align()`) and the existing position system (handled by the zone-height formula), not of which handle you happened to grab. This is deliberately different from a typical image editor's per-corner-anchor resize handle — it's what makes the feature work correctly across Left/Center/Right alignment without off-screen growth or extra clamping logic tied to which handle was touched.
 
@@ -188,10 +188,10 @@ Clamping (section 7) only runs live, during an active drag, checked against what
 
 ## 7. Bounds / clamping
 
-Two constraints, evaluated live during drag (same `coerceIn` pattern as `handlePx` at [HomeScreen.kt:161](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L161)):
+Two constraints, evaluated live during drag (same `coerceIn` pattern as `handlePx` at [HomeScreen.kt:161](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L161)):
 
 - **Absolute range**: hard limits per axis, e.g. `0.5f..2.5f` — prevents unreadably tiny or grotesquely oversized text.
-- **Available space**: horizontal scale shouldn't let rendered width exceed the content area's width (24dp-margined screen width). Vertical scale interacts with the *existing* zone-height ceiling (`HOME_CLOCK_ZONE_MAX_FRACTION = 0.5f`, [HomeScreen.kt:386](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L386)) — a tall scaled clock plus a dragged-down position could together overflow past the app list/dock.
+- **Available space**: horizontal scale shouldn't let rendered width exceed the content area's width (24dp-margined screen width). Vertical scale interacts with the *existing* zone-height ceiling (`HOME_CLOCK_ZONE_MAX_FRACTION = 0.5f`, [HomeScreen.kt:386](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L386)) — a tall scaled clock plus a dragged-down position could together overflow past the app list/dock.
 
 **Recommendation**: ship fixed absolute min/max bounds first (no dynamic space-aware clamping) and only add a dynamic ceiling if testing shows real overflow — the fully general "size × position both compete for the same vertical budget" case is the fiddliest part of this feature and not worth solving up front.
 
@@ -210,14 +210,14 @@ private enum class ClockAdjustMode { NONE, MENU, POSITION, RESIZE }
 var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
 ```
 
-- Long-press on the clock ([HomeScreen.kt:225](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L225), currently `onLongPress = { dragModeEnabled = true }`) now sets `clockAdjustMode = ClockAdjustMode.MENU`.
-- The existing move handle ([HomeScreen.kt:335-346](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L335-L346)) renders when `clockAdjustMode == POSITION` (was `if (dragModeEnabled)`).
+- Long-press on the clock ([HomeScreen.kt:225](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L225), currently `onLongPress = { dragModeEnabled = true }`) now sets `clockAdjustMode = ClockAdjustMode.MENU`.
+- The existing move handle ([HomeScreen.kt:335-346](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L335-L346)) renders when `clockAdjustMode == POSITION` (was `if (dragModeEnabled)`).
 - The new corner handle(s) (section 6) render when `clockAdjustMode == RESIZE`.
-- Tap-away-dismisses logic ([HomeScreen.kt:177-183](app/src/main/kotlin/com/lumenlauncher/app/ui/home/HomeScreen.kt#L177-L183)) resets to `NONE` from `POSITION` or `RESIZE`.
+- Tap-away-dismisses logic ([HomeScreen.kt:177-183](app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt#L177-L183)) resets to `NONE` from `POSITION` or `RESIZE`.
 
 ### 8.2 New sheet content — `ClockAdjustSheet.kt`
 
-Same chrome as `ContactConnectionsSheet.kt` ([ContactConnectionsSheet.kt:101-117](app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/ContactConnectionsSheet.kt#L101-L117)): `RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)` M3 modal-sheet shape, 34×4dp drag-rail affordance. Two rows, built on the `ConnectionRow` icon-tile-plus-label pattern (no subtitle/chevron needed — these aren't drill-down rows):
+Same chrome as `ContactConnectionsSheet.kt` ([ContactConnectionsSheet.kt:101-117](app/src/main/kotlin/com/facetlauncher/app/ui/drawer/ContactConnectionsSheet.kt#L101-L117)): `RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)` M3 modal-sheet shape, 34×4dp drag-rail affordance. Two rows, built on the `ConnectionRow` icon-tile-plus-label pattern (no subtitle/chevron needed — these aren't drill-down rows):
 
 ```kotlin
 @Composable
@@ -228,12 +228,12 @@ fun ClockAdjustSheet(
 )
 ```
 
-- **Row 1 — "Change widget position"**: reuse the exact icon the move handle already uses — `R.drawable.expand_content_24` rotated 315° ([ClockZoneHandle.kt:94-99](app/src/main/kotlin/com/lumenlauncher/app/ui/home/ClockZoneHandle.kt#L94-L99)). Visual continuity between the sheet option and the handle it summons, and it's already "an icon that signifies up/down movement with the bar."
+- **Row 1 — "Change widget position"**: reuse the exact icon the move handle already uses — `R.drawable.expand_content_24` rotated 315° ([ClockZoneHandle.kt:94-99](app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockZoneHandle.kt#L94-L99)). Visual continuity between the sheet option and the handle it summons, and it's already "an icon that signifies up/down movement with the bar."
 - **Row 2 — "Resize clock widget"**: needs a **new** drawable — this project only has `expand_content_24.xml` and the launcher icon in `res/drawable/` today. Material Symbols' `open_in_full` (two diagonal corner arrows pointing outward) reads well for "stretch/resize" — source it the same way `expand_content_24.xml` was added (Android Studio's vector asset picker against the Material Symbols set).
 
 ### 8.3 Hosting
 
-Mirror `AppDrawerScreen.kt`'s scrim + slide-up structure exactly ([AppDrawerScreen.kt:342-378](app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/AppDrawerScreen.kt#L342-L378)), inside `HomeScreen.kt`'s own root `Box`, alongside the existing conditional handle block:
+Mirror `AppDrawerScreen.kt`'s scrim + slide-up structure exactly ([AppDrawerScreen.kt:342-378](app/src/main/kotlin/com/facetlauncher/app/ui/drawer/AppDrawerScreen.kt#L342-L378)), inside `HomeScreen.kt`'s own root `Box`, alongside the existing conditional handle block:
 
 ```kotlin
 AnimatedVisibility(
@@ -264,7 +264,7 @@ Same 240ms scrim fade / 340ms slide with the project's standard `cubic-bezier(.3
 
 - **`SettingsRepositoryTest.kt` / `ProfileRepositoryTest.kt`**: setter persists; reset returns to `1f, 1f`; independence from other clock-bundle fields — same shape as existing `clockZoneHeightDp` tests.
 - **`HomeScreenTest.kt`**:
-  - New tests mirroring `zoneHandleCannotBeDraggedAboveTheClocksMinimumGap` / `zoneHeightCannotExceedHalfOfContentHeight` ([HomeScreenTest.kt:530-560](app/src/androidTest/kotlin/com/lumenlauncher/app/ui/home/HomeScreenTest.kt#L530-L560)) — corner-drag clamps at min/max scale; `CalendarEventsBlock`'s own bounds/testTag unaffected by clock scale; reset restores `1f,1f`.
+  - New tests mirroring `zoneHandleCannotBeDraggedAboveTheClocksMinimumGap` / `zoneHeightCannotExceedHalfOfContentHeight` ([HomeScreenTest.kt:530-560](app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/HomeScreenTest.kt#L530-L560)) — corner-drag clamps at min/max scale; `CalendarEventsBlock`'s own bounds/testTag unaffected by clock scale; reset restores `1f,1f`.
   - **Existing test impact**: the `enableClockDragMode()` helper (backing the tests above, plus others) currently does long-press → handle appears directly. It must become long-press → tap "Change widget position" row → *then* the handle appears. Update that one helper and every existing test using it gets the new flow for free. Add a parallel `enableClockResizeMode()` helper (long-press → tap "Resize clock widget") for the new corner-handle tests.
 - **`ClockStyleGalleryScreenTest.kt`**: global vs. profile-scoped scale resolution (same shape as existing `clockAlignment`/`calendarAlignment` tests); reset row clears scale too.
 

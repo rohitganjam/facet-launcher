@@ -1,4 +1,4 @@
-# Lumen Launcher — Onboarding & Coach Marks: Design Brief
+# Facet Launcher — Onboarding & Coach Marks: Design Brief
 
 For mocking the first-run flow and post-onboarding coach marks. Self-contained — you don't need
 repo access. Pairs with the existing design handoff
@@ -11,7 +11,7 @@ All copy below is **draft** — revise freely.
 
 ## 1. Product context
 
-Lumen is a minimal Android launcher. The home screen is **not an icon grid** — it's a large
+Facet is a minimal Android launcher. The home screen is **not an icon grid** — it's a large
 clock, the next calendar events, a short list of app *names*, and a fixed **dock** at the bottom.
 All apps live in one alphabetical drawer reached by swiping **up**. Widgets live on a separate
 "Hub" screen reached by swiping **right**. Users can keep up to **3 profiles** — separate home
@@ -24,7 +24,7 @@ visible behind app surfaces — surfaces are either opaque cards or translucent 
 flat colored background.
 
 **What onboarding must accomplish, in priority order:**
-1. Get the user to set Lumen as their default launcher.
+1. Get the user to set Facet as their default launcher.
 2. Convey the mental model (no grid; swipe up for apps; the dock).
 3. Let them seed favorites (and glance at the auto-filled dock).
 4. Explain **profiles** — the most differentiating feature — as a concept, not a footnote.
@@ -200,12 +200,12 @@ still populated.
 (`0 -8dp 24dp rgba(2,8,23,.10)`), `34 × 4` grab handle centered at top. Content
 `padding: 20dp 24dp 34dp`:
 
-- **Title** — `500 18sp`, Ink: *"Make Lumen your home screen"*
+- **Title** — `500 18sp`, Ink: *"Make Facet your home screen"*
 - **Explanation** — `400 13sp/1.5`, Muted, `margin-top: 8dp`:
   *"Android will ask you to confirm. You can switch back to your old launcher any time from
   Settings."*
 - **Home-app row** — `margin-top: 16dp`, bordered (1dp Hairline, 12dp corners, `12dp 14dp`):
-  Lumen icon `28dp` + *"Lumen Launcher"* `400 15sp` Ink, then pushed right *"Home app"* `400 12sp`
+  Facet icon `28dp` + *"Facet Launcher"* `400 15sp` Ink, then pushed right *"Home app"* `400 12sp`
   Muted.
 - **Actions** — `margin-top: 20dp`: **Set as default** (primary filled, Accent, white label,
   pill, `500 15sp`) · **Later** (text button, Muted).
@@ -214,7 +214,7 @@ still populated.
 - Pagination dots — 4/4 — on the sheet or on the screen behind (show one option).
 
 **Artboard 6 — already default:** the sheet swaps the row + primary button for a **Success**-colored
-check + *"Lumen is already your home screen"* and a single **Done** button.
+check + *"Facet is already your home screen"* and a single **Done** button.
 
 **Tone reference:** the app already has "special-permission explanation" screens (usage-access,
 notification-access) — same register: plain, reassuring, one clear primary, one "later".

@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Lumen Launcher"
+rootProject.name = "Facet Launcher"
 include(":app")

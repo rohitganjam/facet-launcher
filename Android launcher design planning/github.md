@@ -1,4 +1,4 @@
-repo: rohitganjam/lumen-launcher
+repo: rohitganjam/facet-launcher
 branch: master
 path: app/src/main
 
@@ -15,7 +15,7 @@ date: 2026-09-07T15:48:07Z
 ## Screen map
 | Project screen | Repo files |
 | --- | --- |
-| 5a Settings | ui/settings/SettingsScreen.kt, ui/navigation/LumenNavHost.kt |
+| 5a Settings | ui/settings/SettingsScreen.kt, ui/navigation/FacetNavHost.kt |
 | 5b/5c Appearance | ui/settings/AppearanceSettingsScreen.kt, ui/theme/AccentSwatch.kt, ui/theme/Color.kt |
 | 5d Clock & Calendar Style | ui/home/clock/ClockStyleGalleryScreen.kt, data/model/ClockTemplateId.kt, data/model/ClockFontOption.kt, data/model/ClockColorOption.kt |
 | 5e Home Apps List | ui/settings/HomeAppsListSettingsScreen.kt |

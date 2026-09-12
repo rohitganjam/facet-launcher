@@ -1,4 +1,4 @@
-# Lumen Launcher — Onboarding Flow
+# Facet Launcher — Onboarding Flow
 
 Spec for the first-run flow + post-onboarding coach marks (Phase 8 open item `4f`–`4h`) — **built,
 tested, and shipped** (see §8/§9). Built on [`CAPABILITIES.md`](CAPABILITIES.md), the
@@ -72,27 +72,27 @@ populated dock even if the user force-quits during onboarding. Favorites are **n
 
 ### Branch point — not a NavHost route
 
-Onboarding is a top-level branch in `LauncherActivity`, *outside* `LumenNavHost` (same isolation
+Onboarding is a top-level branch in `LauncherActivity`, *outside* `FacetNavHost` (same isolation
 `HomeDrawerRoute` gets; keeps it off the launcher back stack):
 
 ```
 when {
   uiState.isLoading            -> Box(fillMaxSize())                // existing blank/wallpaper frame
   !uiState.onboardingComplete  -> OnboardingScreen(onFinish = viewModel::completeOnboarding)
-  else                         -> LumenNavHost(apps = uiState.apps, ...)
+  else                         -> FacetNavHost(apps = uiState.apps, ...)
 }
 ```
 
 - `LauncherUiState` gains `onboardingComplete` (folded into `LauncherViewModel.init`'s existing
   `combine`). `isLoading` already prevents any flash before the real value loads.
 - `LauncherViewModel.completeOnboarding()` → `settingsRepository.setOnboardingComplete(true)` →
-  `settings` re-emits → activity swaps to `LumenNavHost` at Home.
+  `settings` re-emits → activity swaps to `FacetNavHost` at Home.
 
 ### Internal step navigation
 
 `OnboardingScreen` owns step state (`var step by rememberSaveable { … OnboardingStep.INTRO }`).
 Steps via `AnimatedContent` with slide + fade, standard easing (`CubicBezierEasing(.32,.72,0,1)`,
-340 ms — matches `LumenNavHost`).
+340 ms — matches `FacetNavHost`).
 
 `OnboardingViewModel` (`@HiltViewModel`) owns only data-backed state:
 - installed apps (`GetInstalledAppsUseCase`, one-shot),
@@ -177,9 +177,9 @@ Bottom sheet over a **dimmed live Home** — now genuinely showing the favorites
 |---|---|
 | **Background** | real Home render (clock, FAVORITES + rows, dock) under `Scrim`. If favorites were skipped: clock + the dashed *"Nothing here yet — pick up to 8 apps · Add apps"* strip, dock still populated. |
 | **Sheet** | rises from bottom, `Surface`, **28dp** top corners, `0 -8dp 24dp rgba(2,8,23,.1)` shadow, `34×4` grab handle. `padding: 20dp 24dp 34dp`. |
-| **Title** | `500 18sp` Ink — *"Make Lumen your home screen"* |
+| **Title** | `500 18sp` Ink — *"Make Facet your home screen"* |
 | **Explanation** | `400 13sp/1.5` Muted — *"Android will ask you to confirm. You can switch back to your old launcher any time from Settings."* |
-| **Home-app row** | 1dp Hairline, 12dp corners, `12dp 14dp` — `[Lumen icon] Lumen Launcher` … `Home app` (Muted, trailing). |
+| **Home-app row** | 1dp Hairline, 12dp corners, `12dp 14dp` — `[Facet icon] Facet Launcher` … `Home app` (Muted, trailing). |
 | **Actions** | **Set as default** (primary, pill, Accent) · **Later** (text, Muted). |
 | **Footnote** | `400 11.5sp` Faint — *"Permissions come later, one at a time, only when a feature needs them."* |
 | dots | 4/4 |
@@ -202,8 +202,8 @@ Fired via `rememberLauncherForActivityResult(StartActivityForResult())`. **On an
 > resolves — a role-grant activity restart then re-reads `onboardingCompleted = true` and lands on
 > Home.
 
-**Already-default variant:** if Lumen already holds `ROLE_HOME` (reinstall), swap the row + button
-for a Success-colored check + *"Lumen is already your home screen"* and a single **Done**.
+**Already-default variant:** if Facet already holds `ROLE_HOME` (reinstall), swap the row + button
+for a Success-colored check + *"Facet is already your home screen"* and a single **Done**.
 
 ---
 
@@ -286,7 +286,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 - `LauncherActivity` three-way `when` branch.
 
 **No new nav routes** — onboarding stays a top-level `LauncherActivity` branch, outside
-`LumenNavHost` entirely.
+`FacetNavHost` entirely.
 
 ---
 
@@ -317,7 +317,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 | Role grant restarts the activity | Flag already `true` → Home. |
 | User dismisses the role dialog / picks "Later" | `onFinish()` runs → Home. Not-default is allowed; Settings → System shows status + fix. Open question: post-onboarding Home nudge? |
 | `ROLE_HOME` unavailable | Fallback `Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)`. |
-| Lumen already default (reinstall) | "Already default" sheet variant. |
+| Facet already default (reinstall) | "Already default" sheet variant. |
 | No default apps resolvable (bare emulator) | Dock seed writes nothing; step 2 shows an empty dock row — "Manage dock apps" still opens the picker to add some. |
 | No launchable apps at all | Lists empty; Skip/Next still work. |
 | Large font scale / TalkBack | All steps scrollable; dots carry `contentDescription`; text are real nodes. |
@@ -408,7 +408,7 @@ history looks like it stalled, not because of anything in this feature's own cod
 2. **Screen 2 weight** — shipped combined (dock + favorites on one screen), matching what the
    design canvas (`Launcher.dc.html` turn 5, artboards `5c`–`5e`) had already mocked before this
    build started.
-3. **Already-default case** — shipped as a dedicated sheet variant (Success check + "Lumen is
+3. **Already-default case** — shipped as a dedicated sheet variant (Success check + "Facet is
    already your home screen" + single Done), not left to the Settings fallback.
 4. **Intro concept lines** — shipped as swipe up / swipe right / swipe left, matching the corrected
    gesture map exactly (no long-press line — that gesture doesn't exist anymore).

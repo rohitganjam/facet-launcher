@@ -13,7 +13,7 @@ This plan addresses the requirement to clear the search term, search results, an
 
 ### UI Layer
 
-#### [MODIFY] [HomeDrawerRoute.kt](file:///Volumes/NVME/repo/lumen-launcher/app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRoute.kt)
+#### [MODIFY] [HomeDrawerRoute.kt](file:///Volumes/NVME/repo/facet-launcher/app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRoute.kt)
 
 - Add a `LaunchedEffect` that monitors `isDrawerOpen`. When it transitions to `false` (drawer fully closed), reset the `drawerQuery`, notify the `DrawerViewModel`, and scroll both `listState` and `gridState` back to the top (index 0).
 - Update the `onAppClick` callback passed to `AppDrawerScreen` to trigger the drawer closure animation. This will, in turn, trigger the reset logic once the animation completes.

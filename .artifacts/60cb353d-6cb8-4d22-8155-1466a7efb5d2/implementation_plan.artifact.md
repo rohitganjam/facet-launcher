@@ -11,14 +11,14 @@ Ensure the on-screen keyboard is dismissed when returning to the home screen via
 
 ### UI Components
 
-#### [MODIFY] [HomeDrawerRoute.kt](file:///Volumes/NVME/repo/lumen-launcher/app/src/main/kotlin/com/lumenlauncher/app/ui/launcher/HomeDrawerRoute.kt)
+#### [MODIFY] [HomeDrawerRoute.kt](file:///Volumes/NVME/repo/facet-launcher/app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRoute.kt)
 - Add `LocalFocusManager` to clear focus when the home gesture is triggered.
 - Clear focus in the `homePressedEvent` collector.
 - Clear focus in the `BackHandler` when closing the drawer or hub.
 - Clear focus when an app is launched from the drawer.
 - Add a `LaunchedEffect` to clear focus whenever a drawer drag begins, ensuring the keyboard hides as the user swiped the drawer away.
 
-#### [MODIFY] [AppDrawerScreen.kt](file:///Volumes/NVME/repo/lumen-launcher/app/src/main/kotlin/com/lumenlauncher/app/ui/drawer/AppDrawerScreen.kt)
+#### [MODIFY] [AppDrawerScreen.kt](file:///Volumes/NVME/repo/facet-launcher/app/src/main/kotlin/com/facetlauncher/app/ui/drawer/AppDrawerScreen.kt)
 - Add `LocalFocusManager` to clear focus when the search query is cleared via the back button.
 
 ## Verification Plan

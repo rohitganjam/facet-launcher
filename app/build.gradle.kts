@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -6,17 +8,36 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
+// Release signing — kept out of git entirely (see .gitignore). `keystore.properties` holds the
+// real path/passwords; its absence (a fresh checkout, CI without secrets) only breaks a release
+// build, never debug, so this stays null rather than error()-ing at configuration time.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }
+}
+
 android {
-    namespace = "com.lumenlauncher.app"
+    namespace = "com.facetlauncher.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.lumenlauncher.app"
+        applicationId = "com.facetlauncher.app"
         minSdk = 33
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -26,6 +47,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -55,7 +79,7 @@ android {
             // them via Context.getAssets() at <databaseClass.canonicalName>/<version>.json, which
             // already matches this folder's own layout. AGP only merges assets for real
             // (non-unit-test) variants, so this must live on androidTest, not test — see
-            // LumenDatabaseMigrationTest.
+            // FacetDatabaseMigrationTest.
             assets.srcDirs("$projectDir/schemas")
         }
     }
@@ -91,7 +115,7 @@ dependencies {
 
     // F14 Backup & Restore — the exported/imported JSON snapshot's own model (data/model/BackupBundle.kt).
     // Pinned at exactly 1.8.1, not left to float: androidx.room:room-testing:2.8.4 (used by
-    // LumenDatabaseMigrationTest) needs 1.8.1's kotlinx-serialization, while
+    // FacetDatabaseMigrationTest) needs 1.8.1's kotlinx-serialization, while
     // androidx.navigation:navigation-common:2.9.6 only ever requests 1.7.3 — without this real
     // main-classpath dependency, AGP's automatic main/androidTest consistent-resolution settles
     // on 1.7.3 and room-testing's precompiled schema-bundle classes crash with AbstractMethodError
