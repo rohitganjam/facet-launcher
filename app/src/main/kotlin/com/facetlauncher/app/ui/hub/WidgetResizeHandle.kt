@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -56,6 +57,16 @@ fun WidgetResizeHandle(
     touchTargetWidth: Dp = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE,
     touchTargetHeight: Dp = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE,
 ) {
+    // The gesture detector below is Unit-keyed so a live drag is never interrupted by
+    // recomposition (see HubGrid's own comment on this) — which means it's launched once and
+    // keeps running across every later recomposition, including ones where HubGrid passes in a
+    // brand new onDrag/onDragEnd closing over a just-committed span. Without rememberUpdatedState
+    // the coroutine would keep calling whichever lambda instance existed when it first launched,
+    // so a second drag on the same handle within one resize session would compute off the
+    // pre-commit span instead of the just-committed one (see chat history — this was why a resize
+    // sometimes didn't stick, snapping to a much smaller size once the real state re-rendered).
+    val currentOnDrag = rememberUpdatedState(onDrag)
+    val currentOnDragEnd = rememberUpdatedState(onDragEnd)
     Box(
         modifier = modifier
             .size(width = touchTargetWidth, height = touchTargetHeight)
@@ -65,11 +76,11 @@ fun WidgetResizeHandle(
             .systemGestureExclusion()
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragEnd = onDragEnd,
-                    onDragCancel = onDragEnd,
+                    onDragEnd = { currentOnDragEnd.value() },
+                    onDragCancel = { currentOnDragEnd.value() },
                 ) { change, dragAmount ->
                     change.consume()
-                    onDrag(dragAmount)
+                    currentOnDrag.value(dragAmount)
                 }
             },
         contentAlignment = Alignment.Center,

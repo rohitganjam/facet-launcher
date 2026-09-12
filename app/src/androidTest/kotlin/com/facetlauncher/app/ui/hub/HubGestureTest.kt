@@ -364,6 +364,36 @@ class HubGestureTest {
     }
 
     @Test
+    fun draggingTheSameHandleTwiceInOneResizeSessionCompoundsFromTheJustCommittedSpan() {
+        // Given a widget already grown once via the right handle
+        setContent(listOf(placement(id = 10, row = 0, col = 0)), resolvable = setOf(10))
+        val cellWidth = cellWidthPxOf(10)
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
+        composeRule.onNodeWithText("Resize widget").performClick()
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput {
+            down(center)
+            stepMoveBy(Offset(cellWidth, 0f))
+            up()
+        }
+        awaitPlacement(10) { it?.colSpan == 2 }
+
+        // When the same handle is dragged again within the same resize session
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput {
+            down(center)
+            stepMoveBy(Offset(cellWidth, 0f))
+            up()
+        }
+
+        // Then the second drag grows from the already-committed span of 2, not from the
+        // pre-first-drag span of 1 — regression test for a stale-closure bug where
+        // WidgetResizeHandle's onDrag/onDragEnd were captured once at mount instead of via
+        // rememberUpdatedState, so a second drag on the same handle recomputed off the
+        // widget's span from before the first commit and silently reverted/shrank it.
+        awaitPlacement(10) { it?.colSpan == 3 }
+    }
+
+    @Test
     fun resizeHandleAtEdgeIsStillInteractive() {
         setContent(listOf(placement(id = 10, row = 0, col = 4)), resolvable = setOf(10))
         val cellWidth = cellWidthPxOf(10)
