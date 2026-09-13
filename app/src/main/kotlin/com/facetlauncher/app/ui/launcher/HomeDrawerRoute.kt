@@ -378,6 +378,14 @@ fun HomeDrawerRoute(
     LaunchedEffect(isHubOpen) {
         if (!isHubOpen) {
             showWidgetPicker = false
+        }
+    }
+
+    // Clear the widget picker's search whenever its own panel goes out of view — including
+    // when just the picker closes (back/onDone) while the Hub itself stays open, not only
+    // when the Hub closes underneath it.
+    LaunchedEffect(showWidgetPicker) {
+        if (!showWidgetPicker) {
             widgetPickerViewModel.reset()
         }
     }

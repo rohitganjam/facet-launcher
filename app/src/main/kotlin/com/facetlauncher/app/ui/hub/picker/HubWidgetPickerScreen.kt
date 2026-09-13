@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -123,56 +125,78 @@ internal fun HubWidgetPickerContent(
     modifier: Modifier = Modifier,
     failureMessage: String? = null,
 ) {
-    StickyHeaderLayout(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(Surface)
             .testTag("hub_widget_picker_screen"),
-        header = { HubWidgetPickerHeader(remaining = uiState.remaining, onBack = onBack) },
-        content = { headerHeight ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(horizontal = 24.dp),
-                contentPadding = PaddingValues(top = headerHeight),
-            ) {
-                item {
-                    OutlinedTextField(
-                        value = uiState.query,
-                        onValueChange = onQueryChanged,
-                        placeholder = { Text("Search widgets") },
-                        modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_search").padding(bottom = 12.dp),
-                        singleLine = true,
-                    )
-                }
-                item {
-                    AnimatedVisibility(visible = failureMessage != null, enter = fadeIn(), exit = fadeOut()) {
-                        Text(
-                            text = failureMessage.orEmpty(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = ErrorColor,
-                            modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_error").padding(bottom = 12.dp),
-                        )
-                    }
-                }
-                items(uiState.groups, key = { it.appLabel }) { group ->
-                    WidgetProviderGroupRow(group = group, onProviderSelected = onProviderSelected)
-                }
-                if (uiState.groups.isEmpty()) {
+    ) {
+        val tileWidth = widgetTileWidth(maxWidth - WIDGET_PICKER_HORIZONTAL_PADDING * 2)
+        StickyHeaderLayout(
+            modifier = Modifier.fillMaxSize(),
+            header = { HubWidgetPickerHeader(remaining = uiState.remaining, onBack = onBack) },
+            content = { headerHeight ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .padding(horizontal = WIDGET_PICKER_HORIZONTAL_PADDING),
+                    contentPadding = PaddingValues(top = headerHeight),
+                ) {
                     item {
-                        Text(
-                            text = "No widgets found",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Muted,
-                            modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                            textAlign = TextAlign.Center,
+                        OutlinedTextField(
+                            value = uiState.query,
+                            onValueChange = onQueryChanged,
+                            placeholder = { Text("Search widgets") },
+                            modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_search").padding(bottom = 12.dp),
+                            singleLine = true,
                         )
                     }
+                    item {
+                        AnimatedVisibility(visible = failureMessage != null, enter = fadeIn(), exit = fadeOut()) {
+                            Text(
+                                text = failureMessage.orEmpty(),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = ErrorColor,
+                                modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_error").padding(bottom = 12.dp),
+                            )
+                        }
+                    }
+                    items(uiState.groups, key = { it.appLabel }) { group ->
+                        WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelected = onProviderSelected)
+                    }
+                    if (uiState.groups.isEmpty()) {
+                        item {
+                            Text(
+                                text = "No widgets found",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Muted,
+                                modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
+}
+
+private val WIDGET_PICKER_HORIZONTAL_PADDING = 24.dp
+private val WIDGET_TILE_TARGET_WIDTH = 96.dp
+private val WIDGET_TILE_SPACING = 8.dp
+
+/**
+ * Tile width sized to fill [availableWidth] with as many whole [WIDGET_TILE_TARGET_WIDTH]-ish
+ * tiles as fit, rather than a fixed dp value — so the grid uses the screen's actual width
+ * instead of assuming a phone-sized column count.
+ */
+@Composable
+private fun widgetTileWidth(availableWidth: Dp): Dp {
+    val columns = ((availableWidth.value + WIDGET_TILE_SPACING.value) / (WIDGET_TILE_TARGET_WIDTH.value + WIDGET_TILE_SPACING.value))
+        .toInt()
+        .coerceAtLeast(1)
+    return ((availableWidth.value - WIDGET_TILE_SPACING.value * (columns - 1)) / columns).dp
 }
 
 @Composable
@@ -201,7 +225,12 @@ private fun HubWidgetPickerHeader(remaining: Int, onBack: () -> Unit, modifier: 
 }
 
 @Composable
-private fun WidgetProviderGroupRow(group: WidgetProviderGroup, onProviderSelected: (WidgetProviderOption) -> Unit, modifier: Modifier = Modifier) {
+private fun WidgetProviderGroupRow(
+    group: WidgetProviderGroup,
+    tileWidth: Dp,
+    onProviderSelected: (WidgetProviderOption) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.padding(top = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = group.appLabel, style = MaterialTheme.typography.bodyLarge, color = Ink)
@@ -217,21 +246,21 @@ private fun WidgetProviderGroupRow(group: WidgetProviderGroup, onProviderSelecte
         // tile's own label into a near-zero-width column that wrapped one letter per line).
         FlowRow(
             modifier = Modifier.padding(top = 11.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(WIDGET_TILE_SPACING),
             verticalArrangement = Arrangement.spacedBy(11.dp),
         ) {
             group.options.forEach { option ->
-                WidgetProviderOptionTile(option = option, onClick = { onProviderSelected(option) })
+                WidgetProviderOptionTile(option = option, tileWidth = tileWidth, onClick = { onProviderSelected(option) })
             }
         }
     }
 }
 
 @Composable
-private fun WidgetProviderOptionTile(option: WidgetProviderOption, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .width(96.dp)
+            .width(tileWidth)
             .testTag("hub_widget_option_${option.provider.flattenToShortString()}")
             .clickable(onClick = onClick),
     ) {

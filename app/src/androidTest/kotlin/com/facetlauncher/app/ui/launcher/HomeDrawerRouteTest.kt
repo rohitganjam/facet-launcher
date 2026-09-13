@@ -787,6 +787,29 @@ class HomeDrawerRouteTest {
     }
 
     @Test
+    fun closingWidgetPickerClearsItsSearchQueryEvenWhileHubStaysOpen() {
+        // Given the Hub is open with the Add-widget picker showing and a search query typed in
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        settleAnimation()
+        composeRule.onNodeWithTag("hub_add_button").performClick()
+        settleAnimation()
+
+        val query = "TestQuery"
+        composeRule.onNodeWithTag("hub_widget_picker_search").performTextInput(query)
+
+        // When the picker is dismissed via its own back button — the Hub underneath never closes
+        composeRule.onNodeWithTag("back_button").performClick()
+        settleAnimation()
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
+
+        // Then reopening the picker shows a cleared search field, not the stale query
+        composeRule.onNodeWithTag("hub_add_button").performClick()
+        settleAnimation()
+        composeRule.onNodeWithText(query).assertDoesNotExist()
+    }
+
+    @Test
     fun closingDrawerResetsSearchQueryAndScrollPosition() {
         // Given the drawer is open with a search query and scrolled down
         setContent()
