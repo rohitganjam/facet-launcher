@@ -121,7 +121,13 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.4")
     ksp("androidx.room:room-compiler:2.8.4")
 
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
+    // 1.2.1, not 1.2.0: 1.2.0's libdatastore_shared_counter.so has a GNU_RELRO segment that
+    // doesn't end on a 16 KB boundary (Play Console flags this as a crash risk on 16 KB-page
+    // devices) — confirmed by pulling both .so files from Maven and diffing their ELF program
+    // headers directly, since the 1.2.1 release notes don't call this out in prose. 1.2.1's
+    // binary is a real rebuild (new .relro_padding section, RELRO end lands exactly on 0xC000)
+    // and isn't just a relabeled 1.2.0.
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
 
     // F14 Backup & Restore — the exported/imported JSON snapshot's own model (data/model/BackupBundle.kt).
     // Pinned at exactly 1.8.1, not left to float: androidx.room:room-testing:2.8.4 (used by
