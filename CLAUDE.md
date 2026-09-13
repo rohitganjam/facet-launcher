@@ -106,6 +106,26 @@ adb shell am start -n com.facetlauncher.app/.LauncherActivity
 
 Setting Facet as the actual system default launcher is a device-wide change — leave that to the user to do manually (Settings → Apps → Default apps) rather than doing it from an automated pass.
 
+### Production (release) build
+
+Release builds are minified (`isMinifyEnabled = true`, ProGuard via `app/proguard-rules.pro`) and signed from `keystore.properties` at the repo root (git-ignored — holds `storeFile`/`storePassword`/`keyAlias`/`keyPassword`; see `app/build.gradle.kts`'s `signingConfigs`). Without that file present, `assembleRelease`/`bundleRelease` still produce an unsigned build.
+
+**Always build production releases via [`scripts/release.sh`](scripts/release.sh) — never call `./gradlew assembleRelease`/`bundleRelease` directly.** The script bumps `versionName`/`versionCode` in `app/build.gradle.kts` before building, so every shipped build carries a version bump and the version can never drift out of sync with what actually ships.
+
+```bash
+scripts/release.sh                 # bump patch (x.y.Z -> x.y.(Z+1)), build signed APK + AAB
+scripts/release.sh 0.2.0           # ship an explicit version instead of a patch bump
+scripts/release.sh --no-build      # only bump the version, skip the build (e.g. to review the diff first)
+```
+
+`versionCode` always increments by exactly 1 regardless of how `versionName` changes — Play Store requires every upload to carry a strictly higher `versionCode` than the last. Current version: `0.1.0` (code `1`). The script only edits `app/build.gradle.kts`; commit that change yourself once you're happy with the build.
+
+Output:
+```
+app/build/outputs/apk/release/app-release.apk
+app/build/outputs/bundle/release/app-release.aab
+```
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
