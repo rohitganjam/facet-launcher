@@ -1,6 +1,5 @@
 package com.facetlauncher.app.ui.onboarding
 
-import android.app.WallpaperManager
 import android.content.pm.LauncherApps
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -24,12 +23,10 @@ import androidx.test.espresso.intent.VerificationModes
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
@@ -79,8 +76,6 @@ class OnboardingScreenTest {
                         produceFile = { File(context.cacheDir, "onboarding-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                val wallpaperRepository = WallpaperRepository(WallpaperManager.getInstance(context))
-                val defaultLauncherRepository = DefaultLauncherRepository(context)
                 runBlocking { seed(appRepository, dockAppRepository, defaultFavoriteAppRepository) }
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
                 Triple(
@@ -88,8 +83,6 @@ class OnboardingScreenTest {
                         defaultFavoriteAppRepository,
                         dockAppRepository,
                         settingsRepository,
-                        wallpaperRepository,
-                        defaultLauncherRepository,
                     ),
                     // Onboarding embeds these full-screen pickers as-is (same as Settings); this
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
@@ -111,25 +104,6 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
     }
 
-    /**
-     * Waits for the set-default step to fully render, then taps whichever primary action is
-     * present — "Later" normally, or "Done" if this test APK happens to already hold the `HOME`
-     * role on this device/emulator (the already-default variant). [DefaultLauncherRepository.isDefaultLauncher]
-     * is a real, async `PackageManager` query, not caught by a single `waitForIdle()`.
-     */
-    private fun finishFromSetDefaultStep() {
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onNodeWithTag("onboarding_later").let { runCatching { it.assertExists() }.isSuccess } ||
-                composeRule.onNodeWithTag("onboarding_done").let { runCatching { it.assertExists() }.isSuccess }
-        }
-        val laterExists = runCatching { composeRule.onNodeWithTag("onboarding_later").assertExists() }.isSuccess
-        if (laterExists) {
-            composeRule.onNodeWithTag("onboarding_later").performClick()
-        } else {
-            composeRule.onNodeWithTag("onboarding_done").performClick()
-        }
-    }
-
     @Test
     fun `first run shows the intro step`() {
         setContent()
@@ -138,8 +112,9 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Next advances intro through home setup and facets to set-default`() {
-        setContent()
+    fun `Next advances intro through home setup to facets then finishes onboarding`() {
+        var finished = false
+        setContent(onFinish = { finished = true })
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
@@ -149,9 +124,13 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
 
+        // Facets' "Next" is the flow's last, real action — the "make Facet your home screen"
+        // prompt itself now lives on the real Home screen instead of a further step here (see
+        // SetDefaultLauncherSheet's own doc), so reaching it just finishes onboarding directly.
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+
+        assertTrue(finished)
     }
 
     @Test
@@ -178,50 +157,6 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
-    }
-
-    @Test
-    fun `the set-default step has no Back button or swipe-back`() {
-        // Given onboarding has advanced to the final set-default sheet
-        setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
-
-        // Then there's no "Back" affordance on the sheet itself
-        composeRule.onNodeWithTag("onboarding_back").assertDoesNotExist()
-
-        // When swiping right (the usual "go back" gesture elsewhere in onboarding)
-        composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeRight() }
-        composeRule.waitForIdle()
-
-        // Then it does nothing — still on the set-default sheet, not back on Facets
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
-    }
-
-    @Test
-    fun `system back on the set-default step dismisses it like Later`() {
-        // Given onboarding has advanced to the final set-default sheet
-        var finished = false
-        setContent(onFinish = { finished = true })
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
-
-        // When pressing the system back gesture, instead of navigating anywhere
-        pressBack()
-
-        // Then it dismisses the sheet and finishes onboarding, the same as "Later"
-        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
-        assertTrue(finished)
     }
 
     @Test
@@ -258,20 +193,19 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `swiping left on the last step does nothing`() {
-        setContent()
+    fun `swiping left on the last step finishes onboarding`() {
+        var finished = false
+        setContent(onFinish = { finished = true })
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
+        assertTrue(finished)
     }
 
     @Test
@@ -382,46 +316,6 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Later finishes onboarding`() {
-        var finished = false
-        setContent(onFinish = { finished = true })
-
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-
-        finishFromSetDefaultStep()
-
-        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
-        assertTrue(finished)
-    }
-
-    @Test
-    fun `tapping outside the set-default sheet finishes onboarding the same as Later`() {
-        var finished = false
-        setContent(onFinish = { finished = true })
-
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("onboarding_set_default_scrim").assertExists() }.isSuccess
-        }
-
-        // Tapping the dimmed area outside the sheet, not either of its own buttons
-        composeRule.onNodeWithTag("onboarding_set_default_scrim").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
-        assertTrue(finished)
-    }
-
-    @Test
     fun `completing onboarding requests no runtime permission`() {
         setContent()
         composeRule.onNodeWithTag("onboarding_next").performClick()
@@ -429,8 +323,6 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        finishFromSetDefaultStep()
         composeRule.waitForIdle()
 
         Intents.intended(
@@ -455,33 +347,19 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
     }
 
-    /**
-     * Tapping "Skip" jumps to the set-default step directly — except when
-     * [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher] resolves `true` (a
-     * real, async `PackageManager` query, same caveat as [finishFromSetDefaultStep]), in which case
-     * Skip finishes onboarding immediately instead, since that step would have nothing left to ask.
-     */
-    private fun assertSkipReachesEnd(finished: () -> Boolean) {
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            finished() || runCatching { composeRule.onNodeWithTag("onboarding_set_default_page").assertExists() }.isSuccess
-        }
-        if (!finished()) {
-            composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
-        }
-    }
-
     @Test
-    fun `Skip on the intro step jumps to the set-default step`() {
+    fun `Skip on the intro step finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
 
         composeRule.onNodeWithTag("onboarding_skip").performClick()
 
-        assertSkipReachesEnd { finished }
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
+        assertTrue(finished)
     }
 
     @Test
-    fun `Skip on the home-setup step jumps to the set-default step`() {
+    fun `Skip on the home-setup step finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
         composeRule.onNodeWithTag("onboarding_next").performClick()
@@ -490,11 +368,12 @@ class OnboardingScreenTest {
 
         composeRule.onNodeWithTag("onboarding_skip").performClick()
 
-        assertSkipReachesEnd { finished }
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
+        assertTrue(finished)
     }
 
     @Test
-    fun `Skip on the facets step jumps to the set-default step`() {
+    fun `Skip on the facets step finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
         composeRule.onNodeWithTag("onboarding_next").performClick()
@@ -505,20 +384,7 @@ class OnboardingScreenTest {
 
         composeRule.onNodeWithTag("onboarding_skip").performClick()
 
-        assertSkipReachesEnd { finished }
-    }
-
-    @Test
-    fun `Skip is not shown on the set-default step`() {
-        setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_set_default_page").assertExists()
-
-        composeRule.onNodeWithTag("onboarding_skip").assertDoesNotExist()
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
+        assertTrue(finished)
     }
 }

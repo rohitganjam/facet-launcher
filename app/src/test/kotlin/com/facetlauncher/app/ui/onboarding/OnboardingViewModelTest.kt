@@ -1,13 +1,10 @@
 package com.facetlauncher.app.ui.onboarding
 
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
-import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import kotlinx.coroutines.Dispatchers
@@ -41,12 +38,6 @@ class OnboardingViewModelTest {
 
     private fun appInfo(name: String) = AppInfo("com.example.$name", ".Main", name, icon = null)
 
-    /** A real (not Mockito) stub — plain Mockito can't reliably stub a `suspend` return, same reasoning as `DockSettingsViewModelTest`. */
-    private fun fakeWallpaperRepository() =
-        object : WallpaperRepository(mock(android.app.WallpaperManager::class.java)) {
-            override suspend fun currentHomeWallpaper(): HomeWallpaper = HomeWallpaper.Unavailable
-        }
-
     private class Fixture(
         val favorites: MutableStateFlow<List<AppInfo>>,
         val dockApps: MutableStateFlow<List<AppInfo>>,
@@ -69,14 +60,10 @@ class OnboardingViewModelTest {
         `when`(dockAppRepository.observeDockApps()).thenReturn(dockFlow)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings))
-        val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
-        `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(false)
         val viewModel = OnboardingViewModel(
             defaultFavoriteAppRepository,
             dockAppRepository,
             settingsRepository,
-            fakeWallpaperRepository(),
-            defaultLauncherRepository,
         )
         testDispatcher.scheduler.advanceUntilIdle()
         return Fixture(favoritesFlow, dockFlow, defaultFavoriteAppRepository, dockAppRepository, settingsRepository, viewModel)

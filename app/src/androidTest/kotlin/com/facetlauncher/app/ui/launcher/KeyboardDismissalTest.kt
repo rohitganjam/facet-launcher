@@ -63,6 +63,7 @@ import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
+import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
@@ -129,6 +130,7 @@ class KeyboardDismissalTest {
                     NotificationShadeRepository(context),
                     settingsRepository,
                     facetRepository,
+                    DefaultLauncherRepository(context),
                 )
             }
             launcherViewModel = remember {

@@ -78,6 +78,7 @@ import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
+import com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.resolve
@@ -722,10 +723,26 @@ fun HomeDrawerRoute(
             )
         }
 
+        // One-time "make Facet your home screen" prompt, over real Home itself rather than a
+        // mocked-up preview card — see SetDefaultLauncherSheet's own doc for why this replaced
+        // onboarding's old SET_DEFAULT step. Takes priority over the gesture hint below (both are
+        // one-time and gated the same way; this one matters more and fires first in practice).
+        AnimatedVisibility(
+            visible = homeUiState.showSetDefaultPrompt && !isDrawerOpen && !isHubOpen && !isFacetOpen,
+            enter = fadeIn(animationSpec = tween(240)),
+            exit = fadeOut(animationSpec = tween(240)),
+        ) {
+            SetDefaultLauncherSheet(
+                isDefaultLauncher = homeUiState.isDefaultLauncher,
+                requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,
+                onFinish = homeViewModel::dismissSetDefaultPrompt,
+            )
+        }
+
         // One-time post-onboarding gesture hint — only while Home is genuinely at rest, same
         // overlay-on-top-of-already-composed-content precedent as the widget picker above.
         AnimatedVisibility(
-            visible = homeUiState.showGestureHint && !isDrawerOpen && !isHubOpen && !isFacetOpen,
+            visible = homeUiState.showGestureHint && !homeUiState.showSetDefaultPrompt && !isDrawerOpen && !isHubOpen && !isFacetOpen,
             enter = fadeIn(animationSpec = tween(240)),
             exit = fadeOut(animationSpec = tween(240)),
         ) {

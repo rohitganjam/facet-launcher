@@ -1,15 +1,15 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1789191962.8083858,
-    "seen": 1789191966.558632,
-    "ast_hash": "f37f0e6e4bc44a175c723e4649907bf5",
+    "mtime": 1789274901.4468493,
+    "seen": 1789278065.972259,
+    "ast_hash": "c1ddf87fdb1bec0de2f7b408aa2f9942",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
-    "mtime": 1789190111.5420926,
-    "seen": 1789191916.666825,
-    "ast_hash": "d2c77291a1c5a382d371732d80bf9bb0",
-    "semantic_hash": "d2c77291a1c5a382d371732d80bf9bb0"
+    "mtime": 1789275073.3883011,
+    "seen": 1789278065.972502,
+    "ast_hash": "345d255b512437a5893e4cd036d2eb64",
+    "semantic_hash": ""
   },
   "gradlew": {
     "mtime": 1789190111.543632,
@@ -36,9 +36,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1789191962.8048859,
-    "seen": 1789191966.558793,
-    "ast_hash": "2bf805dadfbc6af31ede94e866a992e2",
+    "mtime": 1789274452.3533776,
+    "seen": 1789274565.969825,
+    "ast_hash": "c7c45ec044c41f191a212be1c5538b69",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
@@ -1116,9 +1116,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/HomeSurfacePreview.kt": {
-    "mtime": 1789218020.7683468,
-    "seen": 1789218587.050081,
-    "ast_hash": "cacaabfbb17a0b4cf930efe08336c5ba",
+    "mtime": 1789280116.1395233,
+    "seen": 1789280146.5358772,
+    "ast_hash": "07270cb19df567abfc6775d8c6b2c8a4",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/InheritOverrideCard.kt": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1789218020.7625184,
-    "seen": 1789218587.050097,
-    "ast_hash": "060d1697b4696bab836280aa6637c80c",
+    "mtime": 1789277062.5145826,
+    "seen": 1789278065.9723918,
+    "ast_hash": "0d0ab589293dd405d3076c5c5a6d9462",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeUiState.kt": {
@@ -1302,9 +1302,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockTemplates.kt": {
-    "mtime": 1789191962.8660767,
-    "seen": 1789191966.558717,
-    "ast_hash": "f6490774fe4d3b22941144259cc8666d",
+    "mtime": 1789279245.226997,
+    "seen": 1789279695.7145789,
+    "ast_hash": "d470c246db8e52eeef7b3374b7d6a9c4",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/TimeInWords.kt": {
@@ -1440,9 +1440,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingScreen.kt": {
-    "mtime": 1789218020.7825162,
-    "seen": 1789218587.0501142,
-    "ast_hash": "c8ef462c7eaa0d95655e38b99b82cd32",
+    "mtime": 1789279726.9482527,
+    "seen": 1789280146.5359108,
+    "ast_hash": "32d5b249470e655fd04d37e322468bd6",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingUiState.kt": {
@@ -1458,9 +1458,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/SetDefaultLauncherSheet.kt": {
-    "mtime": 1789218020.7806792,
-    "seen": 1789218587.050115,
-    "ast_hash": "adde4691e884a0ce04ac61499013022d",
+    "mtime": 1789280124.5456905,
+    "seen": 1789280146.535913,
+    "ast_hash": "c521b8fd9cdd4a3c3f8dc767d58d8a5c",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppDrawerSettingsScreen.kt": {
@@ -2082,9 +2082,9 @@
     "semantic_hash": ""
   },
   "play-store-assets/store-listing.md": {
-    "mtime": 1789210638.8891778,
-    "seen": 1789210699.9317482,
-    "ast_hash": "ef8a5866a0fdae0f93c9330cf8826062",
+    "mtime": 1789276979.3115387,
+    "seen": 1789278065.972524,
+    "ast_hash": "788caa6116d1785db2bcde6e5a70659c",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/01_home.png": {
@@ -2313,6 +2313,18 @@
     "mtime": 1789218020.743492,
     "seen": 1789218587.050163,
     "ast_hash": "0e5579d4b7516306fa0df3f23f6df700",
+    "semantic_hash": ""
+  },
+  "scripts/release.sh": {
+    "mtime": 1789274373.4887764,
+    "seen": 1789274565.9698172,
+    "ast_hash": "734bd9332c12c05fdaef38f7bbc814f8",
+    "semantic_hash": ""
+  },
+  "play-store-assets/build_screenshot.py": {
+    "mtime": 1789276797.7497854,
+    "seen": 1789278065.9725041,
+    "ast_hash": "865e5678d3881d24c550ead6d5150a82",
     "semantic_hash": ""
   }
 }

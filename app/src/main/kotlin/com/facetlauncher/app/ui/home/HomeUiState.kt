@@ -18,6 +18,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
+import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
 
 data class HomeUiState(
     val settings: LauncherSettings = LauncherSettings(),
@@ -37,6 +38,8 @@ data class HomeUiState(
      *  permission afterward, rather than reappearing every recomposition until [usageAccessGranted]
      *  catches up (see chat history). */
     val usageAccessPromptDismissed: Boolean = false,
+    /** Whether Facet currently holds the `HOME` role — see [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher]. */
+    val isDefaultLauncher: Boolean = false,
 ) {
     val activeFacet: FacetEntity?
         get() = facets.find { it.id == settings.activeFacetId }
@@ -122,4 +125,14 @@ data class HomeUiState(
     /** Shown once, immediately after onboarding finishes — scoped by `onboardingCompleted &&` rather than a launch counter, so it never reappears once dismissed (persisted in [LauncherSettings.coachMarksSeen]). */
     val showGestureHint: Boolean
         get() = settings.onboardingCompleted && HOME_GESTURES_COACH_MARK_ID !in settings.coachMarksSeen
+
+    /**
+     * The "make Facet your home screen" prompt (formerly onboarding's own final step) — shown
+     * once, the first time real Home renders after onboarding completes, regardless of
+     * [isDefaultLauncher] (a reinstall that already holds the role still sees a one-time
+     * acknowledgement, see `SetDefaultLauncherSheet`'s "already default" variant). Mirrors
+     * [showGestureHint]'s exact shape.
+     */
+    val showSetDefaultPrompt: Boolean
+        get() = settings.onboardingCompleted && HOME_SET_DEFAULT_PROMPT_ID !in settings.coachMarksSeen
 }

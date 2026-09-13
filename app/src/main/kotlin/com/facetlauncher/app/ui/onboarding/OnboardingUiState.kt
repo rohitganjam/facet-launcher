@@ -4,11 +4,7 @@ import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
-import com.facetlauncher.app.data.model.ClockColorOption
-import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerPresentation
-import com.facetlauncher.app.data.model.FontWeightOption
-import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
 
 /**
@@ -28,15 +24,8 @@ data class OnboardingUiState(
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES] — see `HomeAppsListSettingsScreen`'s own identical row. */
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
-    /** For the live "your home screen so far" preview (steps 2–4) — see `ui/components/HomeSurfacePreview.kt`. */
-    val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
-    val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     /** List vs Grid — see `AppDrawerSettingsScreen`'s own identical "Show apps as" row. */
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
-    val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
-    val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
-    /** Set-as-default step (`4h`) — whether Facet already holds the `HOME` role (e.g. a reinstall), swapping in the "already default" sheet variant. */
-    val isDefaultLauncher: Boolean = false,
 ) {
     val dockCountLabel: String get() = "${dockApps.size} of ${DockAppRepository.MAX_APPS}"
     val favoriteCountLabel: String get() = "${favoriteApps.size} of ${DefaultFavoriteAppRepository.MAX_FAVORITES}"

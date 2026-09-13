@@ -78,6 +78,7 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
+import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
@@ -200,6 +201,7 @@ class HomeDrawerRouteTest {
                     NotificationShadeRepository(context),
                     settingsRepository,
                     facetRepository,
+                    DefaultLauncherRepository(context),
                 )
             }
             val launcherViewModel = remember {
@@ -839,6 +841,56 @@ class HomeDrawerRouteTest {
         composeRule.onNodeWithTag("header_A").assertIsDisplayed()
     }
 
+    /**
+     * Waits for the one-time "make Facet your home screen" prompt to render, then dismisses it —
+     * "Later" normally, or "Done" if this test APK happens to already hold the `HOME` role on
+     * this device/emulator (a real, async [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher]
+     * query, not reliably caught by a single `waitForIdle()`).
+     */
+    private fun dismissSetDefaultPrompt() {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("onboarding_later").fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithTag("onboarding_done").fetchSemanticsNodes().isNotEmpty()
+        }
+        val laterExists = runCatching { composeRule.onNodeWithTag("onboarding_later").assertExists() }.isSuccess
+        if (laterExists) {
+            composeRule.onNodeWithTag("onboarding_later").performClick()
+        } else {
+            composeRule.onNodeWithTag("onboarding_done").performClick()
+        }
+    }
+
+    @Test
+    fun setDefaultPromptShowsOnceOnboardingHasCompletedAndDoesNotComeBackAfterDismissal() {
+        // Given onboarding has just completed
+        setContent(onboardingCompleted = true)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the one-time "make Facet your home screen" prompt shows over real Home itself —
+        // not a mocked-up preview card, so Home's own real content (e.g. "FAVORITES") is already
+        // visible underneath it (HomeViewModel's own combine is real async work, same as
+        // everywhere else in this file — not reliably caught by a single waitForIdle()).
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("set_default_launcher_prompt").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("set_default_launcher_prompt").assertIsDisplayed()
+
+        // When dismissed
+        dismissSetDefaultPrompt()
+
+        // Then it's gone and doesn't come back on a later recomposition (e.g. opening/closing the Hub)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("set_default_launcher_prompt").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        settleAnimation()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        settleAnimation()
+        composeRule.onNodeWithTag("set_default_launcher_prompt").assertDoesNotExist()
+    }
+
     @Test
     fun gestureHintShowsOnceOnboardingHasCompletedAndDismissesOnGotIt() {
         // Given onboarding has just completed
@@ -846,6 +898,10 @@ class HomeDrawerRouteTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
         }
+
+        // The one-time "make Facet your home screen" prompt shows first — dismiss it so it clears
+        // the way for the gesture hint below, which is suppressed while this prompt is showing.
+        dismissSetDefaultPrompt()
 
         // Then the one-time gesture hint overlay shows over Home (HomeViewModel's own combine is
         // real async work, same as everywhere else in this file — not reliably caught by a single

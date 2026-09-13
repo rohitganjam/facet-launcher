@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.onboarding
 
+import android.app.Activity
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,19 +49,20 @@ import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Wallpaper
 
-/** The four onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. */
+/**
+ * The three onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. Reaching the end of
+ * [FACETS] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
+ * rather than advancing to a further step — the "make Facet your home screen" prompt lives on the
+ * real Home screen instead, shown once there right after onboarding completes (see
+ * [SetDefaultLauncherSheet]'s own doc for why).
+ */
 enum class OnboardingStep {
     INTRO,
     HOME_SETUP,
     FACETS,
-    SET_DEFAULT,
 }
 
-/**
- * Steps shown in each page's [OnboardingDots] — [OnboardingStep.SET_DEFAULT] isn't counted as a
- * step of its own; it's the final action reached from Facets' last dot, not a new one (see
- * [SetDefaultLauncherSheet]).
- */
+/** Steps shown in each page's [OnboardingDots]. */
 internal const val ONBOARDING_STEP_COUNT = 3
 
 /** Full-screen pickers opened from the home-setup step — reused as-is from Settings/Facets, not part of [OnboardingStep]'s own linear flow. */
@@ -66,36 +71,33 @@ private enum class OnboardingSubScreen {
     FAVORITES_PICKER,
 }
 
-/**
- * The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.FACETS])
- * lands on — every step but [OnboardingStep.INTRO] and [OnboardingStep.SET_DEFAULT] can go back
- * this way. [OnboardingStep.SET_DEFAULT] is the final action sheet, reachable only forward from
- * Facets, so a swipe there maps to itself the same way [nextStep] already has it map to itself
- * going forward — system back on that sheet is handled separately, dismissing it instead (see
- * [OnboardingScreen]'s own `BackHandler`).
- */
+/** The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.FACETS]) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
 private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
     OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
     OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
-    OnboardingStep.SET_DEFAULT -> OnboardingStep.SET_DEFAULT
 }
 
 /**
- * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.SET_DEFAULT] has
- * no next step — finishing there has a real side effect (launching the default-launcher role
- * request), so it's deliberately reachable only via its own explicit "Set as default"/"Later"
- * buttons, never a swipe.
+ * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.FACETS] maps to
+ * itself — [OnboardingScreen] special-cases moving past it to call [OnboardingScreen]'s own
+ * `onFinish` instead of changing `step`, the same way the old `SET_DEFAULT` step used to be the
+ * fixed point every "next" resolved to.
  */
 private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.HOME_SETUP
     OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
-    OnboardingStep.FACETS -> OnboardingStep.SET_DEFAULT
-    OnboardingStep.SET_DEFAULT -> OnboardingStep.SET_DEFAULT
+    OnboardingStep.FACETS -> OnboardingStep.FACETS
 }
 
 /** A swipe shorter than this is treated as a scroll/drag within the step's own content, not a page change. */
 private val SWIPE_COMMIT_DISTANCE = 80.dp
+
+/** Blur radius applied to the real wallpaper behind the window (see [OnboardingScreen]'s background layer). */
+private val ONBOARDING_BACKDROP_BLUR = 40.dp
+
+/** Opacity of the [Wallpaper] scrim laid over the blurred backdrop. */
+private const val ONBOARDING_BACKDROP_SCRIM_ALPHA = 0.7f
 
 /**
  * First-run flow host (`ONBOARDING_FLOW.md`) — a top-level branch in [com.facetlauncher.app.LauncherActivity],
@@ -121,20 +123,28 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler(enabled = subScreen != null) { subScreen = null }
-    // The set-default sheet isn't a step to navigate away from — system back dismisses it instead,
-    // same as tapping "Later"/the scrim outside it.
-    BackHandler(enabled = subScreen == null && step == OnboardingStep.SET_DEFAULT) { onFinish() }
-    BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO && step != OnboardingStep.SET_DEFAULT) {
+    BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO) {
         step = previousStep(step)
     }
 
     val density = LocalDensity.current
     val swipeCommitPx = with(density) { SWIPE_COMMIT_DISTANCE.toPx() }
 
+    // Blurs the real wallpaper compositing behind the window (windowShowWallpaper in themes.xml)
+    // for the whole flow, rather than loading it into a bitmap ourselves and blurring that copy.
+    val activityWindow = (LocalView.current.context as? Activity)?.window
+    DisposableEffect(activityWindow) {
+        activityWindow?.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+        activityWindow?.setBackgroundBlurRadius(with(density) { ONBOARDING_BACKDROP_BLUR.roundToPx() })
+        onDispose {
+            activityWindow?.setBackgroundBlurRadius(0)
+            activityWindow?.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Wallpaper)
             .testTag("onboarding_screen")
             // Disabled while a full-screen picker sits on top — that screen's own gestures (its
             // list scroll, its own back handling) should be the only thing responding to touches
@@ -152,7 +162,7 @@ fun OnboardingScreen(
                             },
                             onDragEnd = {
                                 when {
-                                    totalDrag <= -swipeCommitPx -> step = nextStep(step)
+                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.FACETS) onFinish() else step = nextStep(step)
                                     totalDrag >= swipeCommitPx -> step = previousStep(step)
                                 }
                             },
@@ -163,6 +173,9 @@ fun OnboardingScreen(
                 },
             ),
     ) {
+        // Translucent Wallpaper-tone scrim over the blurred window backdrop set up above.
+        Box(modifier = Modifier.fillMaxSize().background(Wallpaper.copy(alpha = ONBOARDING_BACKDROP_SCRIM_ALPHA)))
+
         AnimatedContent(
             targetState = step,
             transitionSpec = {
@@ -197,12 +210,7 @@ fun OnboardingScreen(
                 OnboardingStep.FACETS -> OnboardingFacetsPage(
                     uiState = uiState,
                     onBack = { step = previousStep(step) },
-                    onNext = { step = nextStep(step) },
-                )
-                OnboardingStep.SET_DEFAULT -> SetDefaultLauncherSheet(
-                    uiState = uiState,
-                    requestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
-                    onFinish = onFinish,
+                    onNext = onFinish,
                 )
             }
         }
@@ -221,12 +229,9 @@ fun OnboardingScreen(
             null -> {}
         }
 
-        // Jumps straight to the final step from anywhere earlier in the flow — not shown on
-        // SET_DEFAULT itself (that step has its own "Later") or over a full-screen picker. If
-        // Facet already holds the default-launcher role (reinstall), that step has nothing left
-        // to ask, so Skip finishes onboarding directly instead of landing on its "already
-        // default" variant.
-        if (subScreen == null && step != OnboardingStep.SET_DEFAULT) {
+        // Jumps straight past the remaining steps and completes onboarding — the "make Facet your
+        // home screen" prompt itself now lives on the real Home screen, not here.
+        if (subScreen == null) {
             Text(
                 text = "Skip",
                 style = MaterialTheme.typography.bodyLarge,
@@ -236,7 +241,7 @@ fun OnboardingScreen(
                     .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
                     .padding(horizontal = 20.dp)
                     // 48dp minimum touch target (M3 guideline), centered on the text.
-                    .clickable(onClick = { if (uiState.isDefaultLauncher) onFinish() else step = OnboardingStep.SET_DEFAULT })
+                    .clickable(onClick = onFinish)
                     .testTag("onboarding_skip")
                     .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                     .wrapContentSize(Alignment.Center),

@@ -1,12 +1,15 @@
 package com.facetlauncher.app.ui.home
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
+import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -37,15 +40,17 @@ class HomeViewModel @Inject constructor(
     private val notificationShadeRepository: NotificationShadeRepository,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
+    private val defaultLauncherRepository: DefaultLauncherRepository,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
+    private val isDefaultLauncher = MutableStateFlow(false)
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        combine(observeHomeScreenState(), usageAccessPromptDismissed) { screenState, dismissed ->
+        combine(observeHomeScreenState(), usageAccessPromptDismissed, isDefaultLauncher) { screenState, dismissed, isDefault ->
             HomeUiState(
                 settings = screenState.settings,
                 isLoading = false,
@@ -57,6 +62,7 @@ class HomeViewModel @Inject constructor(
                 badgeCounts = screenState.badgeCounts,
                 clockAccessories = screenState.clockAccessories,
                 usageAccessPromptDismissed = dismissed,
+                isDefaultLauncher = isDefault,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
 
@@ -64,6 +70,16 @@ class HomeViewModel @Inject constructor(
             delay(LOADING_TIMEOUT_MS)
             _uiState.update { if (it.isLoading) it.copy(isLoading = false) else it }
         }
+
+        viewModelScope.launch { isDefaultLauncher.value = defaultLauncherRepository.isDefaultLauncher() }
+    }
+
+    /** [com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet]'s primary action target — see [DefaultLauncherRepository.requestDefaultLauncherIntent]. */
+    fun requestDefaultLauncherIntent(): Intent = defaultLauncherRepository.requestDefaultLauncherIntent()
+
+    /** Dismisses [HomeUiState.showSetDefaultPrompt] for good — "Set as default"/"Later"/"Done", or tapping its scrim. */
+    fun dismissSetDefaultPrompt() {
+        viewModelScope.launch { settingsRepository.markCoachMarkSeen(HOME_SET_DEFAULT_PROMPT_ID) }
     }
 
     /** `PACKAGE_USAGE_STATS` has no grant-change callback — call this from `onResume` so a grant made via Settings takes effect without waiting for an unrelated facet change. */

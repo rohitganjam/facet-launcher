@@ -26,12 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.components.AppIcon
-import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Hairline
@@ -42,38 +40,28 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SuccessColor
-import com.facetlauncher.app.ui.theme.resolve
 
 /**
- * Onboarding's final action (`4h`) — the one that matters. A bottom sheet over the user's real
- * Home so far (their step-2 picks, dimmed under [Scrim]). Not one of the numbered swipeable steps
- * (its dots below stay on Facets' own last-dot state) and not reversible — reachable only
- * forward from Facets, with no "Back" of its own. "Set as default" launches
+ * First-launch "make Facet your home screen" prompt (`4h`) — shown once, as an overlay on top of
+ * the real [com.facetlauncher.app.ui.home.HomeScreen] itself (from
+ * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute], right after onboarding completes), not as
+ * a step inside [OnboardingScreen]'s own swipeable flow. It therefore paints no backdrop of its
+ * own — just a [Scrim] dimming whatever's already on screen behind it, matching every other
+ * first-run overlay Home hosts (e.g. `GestureHintOverlay`). "Set as default" launches
  * [requestDefaultLauncherIntent] via [rememberLauncherForActivityResult]; **any** result (granted,
  * denied, or dismissed) — same as "Later" — calls [onFinish]. If Facet already holds the role
  * (reinstall), swaps in a Success-colored "already default" variant with a single Done button.
  */
 @Composable
 fun SetDefaultLauncherSheet(
-    uiState: OnboardingUiState,
+    isDefaultLauncher: Boolean,
     requestDefaultLauncherIntent: () -> Intent,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { onFinish() }
 
-    Box(modifier = modifier.fillMaxSize().testTag("onboarding_set_default_page")) {
-        HomeSurfacePreview(
-            appList = uiState.favoriteApps,
-            dockApps = uiState.dockApps,
-            labelColor = uiState.appLabelColorOption.resolve(),
-            labelFontWeight = uiState.homeAppsFontWeight.resolve(),
-            homeWallpaper = uiState.homeWallpaper,
-            dockDisplayMode = uiState.dockDisplayMode,
-            maxAppRows = 5,
-            modifier = Modifier.fillMaxSize(),
-        )
+    Box(modifier = modifier.fillMaxSize().testTag("set_default_launcher_prompt")) {
         // Tapping anywhere outside the sheet itself is treated the same as "Later"/"Done" — not
         // just those explicit buttons (see chat history).
         Box(
@@ -81,7 +69,7 @@ fun SetDefaultLauncherSheet(
                 .fillMaxSize()
                 .background(Scrim)
                 .clickable(onClick = onFinish)
-                .testTag("onboarding_set_default_scrim"),
+                .testTag("set_default_launcher_scrim"),
         )
 
         Column(
@@ -104,34 +92,26 @@ fun SetDefaultLauncherSheet(
                     .background(Faint, RoundedCornerShape(2.dp)),
             )
 
-            if (uiState.isDefaultLauncher) {
+            if (isDefaultLauncher) {
                 AlreadyDefaultContent(onDone = onFinish)
             } else {
                 SetDefaultContent(onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) })
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Same last-dot state as Facets — this sheet doesn't advance the stepper, it's
-                // the final action reached from that last step, not a step of its own.
-                OnboardingDots(step = ONBOARDING_STEP_COUNT - 1, totalSteps = ONBOARDING_STEP_COUNT)
-                if (!uiState.isDefaultLauncher) {
-                    Text(
-                        text = "Later",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Muted,
-                        // 48dp minimum touch target (M3 guideline), centered on the text.
-                        modifier = Modifier
-                            .clickable(onClick = onFinish)
-                            .testTag("onboarding_later")
-                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                            .wrapContentSize(Alignment.Center),
-                    )
-                }
+            if (!isDefaultLauncher) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "Later",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Muted,
+                    // 48dp minimum touch target (M3 guideline), centered on the text.
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clickable(onClick = onFinish)
+                        .testTag("onboarding_later")
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center),
+                )
             }
         }
     }
@@ -211,7 +191,7 @@ private fun AlreadyDefaultContent(onDone: () -> Unit, modifier: Modifier = Modif
 private fun SetDefaultLauncherSheetPreview() {
     FacetLauncherTheme {
         SetDefaultLauncherSheet(
-            uiState = OnboardingUiState(),
+            isDefaultLauncher = false,
             requestDefaultLauncherIntent = { Intent() },
             onFinish = {},
         )
@@ -223,7 +203,7 @@ private fun SetDefaultLauncherSheetPreview() {
 private fun SetDefaultLauncherSheetAlreadyDefaultPreview() {
     FacetLauncherTheme {
         SetDefaultLauncherSheet(
-            uiState = OnboardingUiState(isDefaultLauncher = true),
+            isDefaultLauncher = true,
             requestDefaultLauncherIntent = { Intent() },
             onFinish = {},
         )

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -12,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -50,6 +52,9 @@ class HomeViewModelTest {
         notificationShadeRepository: NotificationShadeRepository,
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
+        defaultLauncherRepository: DefaultLauncherRepository = mock(DefaultLauncherRepository::class.java).also {
+            runBlocking { `when`(it.isDefaultLauncher()).thenReturn(false) }
+        },
         settings: LauncherSettings = LauncherSettings(),
         facets: List<FacetEntity> = emptyList(),
     ): HomeViewModel {
@@ -68,7 +73,7 @@ class HomeViewModelTest {
                 ),
             ),
         )
-        return HomeViewModel(observeHomeScreenState, notificationShadeRepository, settingsRepository, facetRepository)
+        return HomeViewModel(observeHomeScreenState, notificationShadeRepository, settingsRepository, facetRepository, defaultLauncherRepository)
     }
 
     @Test
@@ -106,11 +111,14 @@ class HomeViewModelTest {
         // is the actual home screen, so it must never stay blank forever (see chat history).
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(MutableSharedFlow())
+        val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
+        `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(false)
         val viewModel = HomeViewModel(
             observeHomeScreenState,
             mock(NotificationShadeRepository::class.java),
             mock(SettingsRepository::class.java),
             mock(FacetRepository::class.java),
+            defaultLauncherRepository,
         )
 
         // Then it's still loading well before the timeout
