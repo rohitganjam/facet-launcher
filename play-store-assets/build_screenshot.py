@@ -10,19 +10,20 @@ two things that actually change when a screen's copy is renamed:
 2. The small uppercase "eyebrow" label above the headline (e.g. "PROFILES") —
    erased and redrawn with the new word, in the same font/size/color/position.
 
-Box coordinates below were measured directly off the existing composites
-(play-store-assets/screenshots/02_profiles.png, 06_hub.png) via pixel scanning —
-see chat history for the measurement script. They are NOT derived from a shared
-template; each slide's phone box was sized independently, so a new slide needs its
-own measured entry in SLIDES.
+Box coordinates below were originally measured off the pre-rename composites
+(02_profiles.png, 06_hub.png, since superseded) via pixel scanning — see chat
+history for the measurement script. They are NOT derived from a shared template;
+each slide's phone box was sized independently, so a new slide needs its own
+measured entry in SLIDES.
 
-Usage:
+Usage (rebuilding a slide again later — pass the current file as --base so its
+headline/background stay untouched, and the same file as --out to overwrite it):
     python3 build_screenshot.py --slide profiles --raw /path/to/raw_screenshot.png \
-        --base play-store-assets/screenshots/02_profiles.png \
+        --base play-store-assets/screenshots/02_facets.png \
         --out play-store-assets/screenshots/02_facets.png --word FACETS
 
     python3 build_screenshot.py --slide hub --raw /path/to/raw_screenshot.png \
-        --base play-store-assets/screenshots/06_hub.png \
+        --base play-store-assets/screenshots/06_widgets.png \
         --out play-store-assets/screenshots/06_widgets.png --word WIDGETS
 """
 import argparse

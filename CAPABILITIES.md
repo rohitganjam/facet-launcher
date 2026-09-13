@@ -53,7 +53,7 @@ starting at `HOME`.
 | — Favorites | `data/FavoriteAppRepository.kt`, `DefaultFavoriteAppRepository.kt` | Up to 8. Global **Default favorites** list + per-profile override (`overridingFavorites`). Uninstall-collapse + hard delete. Reorder in Settings, not the picker. |
 | — Recents / Most Used | `data/UsageStatsRepository.kt` | `UsageStatsManager`, 30-day window. **Gated on `PACKAGE_USAGE_STATS`** (special access). Shows a dashed strip + "Open settings" when ungranted; strip dismisses on tap. |
 | App list layout | `AppRowPosition` (LEFT/RIGHT), `AppRowPresentation` (ICON_ONLY / ICON_AND_TEXT / TEXT_ONLY), `AppListVerticalAlignment` (TOP/BOTTOM) | Per-profile overridable. |
-| Dock | `data/DockAppRepository.kt`, `HomeScreen.kt` | 0–5 apps, **shared across all profiles** (not per-profile). Icons or Text display mode. Omitted entirely when empty. Reorder in Settings. |
+| Dock | `data/DockAppRepository.kt`, `HomeScreen.kt` | 0–5 apps, **shared by default, with a per-profile override** (`overrideDock`) — a profile inherits the launcher-wide dock until it opts to set its own. Icons or Text display mode. Omitted entirely when empty. Reorder in Settings. |
 | Notification badges | `data/FacetNotificationListenerService.kt`, `NotificationBadgeRepository.kt` | Dot or Count (capped `9+`) on favorites list, dock, and drawer. Respects system silent-channel suppression, filters group summaries. **Gated on notification listener access** (special access). |
 | App launch | `LauncherActivity.launchApp` | `ACTION_MAIN`/`CATEGORY_LAUNCHER` component intent. |
 | App long-press context menu | `ui/components/AppContextMenu.kt`, `data/AppShortcutRepository.kt` | App info, Uninstall (`REQUEST_DELETE_PACKAGES`), and the app's own published shortcuts (App Shortcuts API — requires Facet to be default launcher; silently omitted otherwise). Rename is **not** built (deferred to icon-pack work). |
@@ -86,8 +86,9 @@ starting at `HOME`.
 - **1 profile by default, max 3** (hardcoded constant). At least one must always exist.
 - **Switch Profiles** (`ProfileCarouselScreen`, `ProfileCarouselMode.SWITCH`) — Home long-press.
   Translucent overlay over Home. Swipe to browse, **tap any card (centered or peeking) to apply
-  immediately**. Live preview cards render each profile's real clock + favorites + shared dock +
-  calendar events. Right-aligned "Reorder" button → Manage Profiles.
+  immediately**. Live preview cards render each profile's real clock + favorites + dock (that
+  profile's own if overridden, otherwise the shared default) + calendar events. Right-aligned
+  "Reorder" button → Manage Profiles.
 - **Manage Profiles** (`ManageProfilesScreen`) — Settings → Profiles. Standalone settings screen:
   drag-to-reorder list, per-row overflow (Profile settings / Delete), pinned "Add profile" row.
 - **Add profile** — duplicates the previous profile's settings, favorites start empty. Hidden at 3.
