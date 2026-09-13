@@ -7,27 +7,27 @@ Launcher, Lawnchair, Niagara, etc. are all listed).
 
 ## Short description (max 80 characters)
 
-Option A (79 chars):
-> A minimalist launcher built around profiles — work, personal, focus, one swipe.
+Option A (77 chars):
+> A minimalist launcher built around facets — work, personal, focus, one swipe.
 
-Option B (77 chars):
-> Switch your whole home screen setup in one tap. Profiles, done right.
+Option B (75 chars):
+> Switch your whole home screen setup in one tap. Facets, done right.
 
 ## Full description (max 4000 characters — this draft is ~1,750)
 
 ```
-Facet Launcher is a fast, minimal Android home screen built around one idea: your phone isn't used the same way all day. Switch your whole setup — apps, dock, clock, calendar — in one tap with Profiles.
+Facet Launcher is a fast, minimal Android home screen built around one idea: your phone isn't used the same way all day. Switch your whole setup — apps, dock, clock, calendar — in one tap with Facets.
 
-PROFILES
-Set up to 3 independent profiles: a Work profile with only what you need at your desk, a Personal profile with everything else, a Focus profile with almost nothing at all. Long-press an empty part of the home screen to browse live previews and switch instantly, or head into Settings to fine-tune each one.
+FACETS
+Set up to 3 independent facets: a Work facet with only what you need at your desk, a Personal facet with everything else, a Focus facet with almost nothing at all. Long-press an empty part of the home screen to browse live previews and switch instantly, or head into Settings to fine-tune each one.
 
 30+ CLOCK STYLES
-From clean typographic layouts to shape-based faceted marks, every clock template supports its own font, color, weight, and alignment. Drag to resize and reposition, or pick a different style per profile.
+From clean typographic layouts to shape-based faceted marks, every clock template supports its own font, color, weight, and alignment. Drag to resize and reposition, or pick a different style per facet.
 
 SMART APP DRAWER
 Browse your apps as a letter-indexed list with a locale-aware alphabet rail, or switch to a dense grid. Type to search across apps and, optionally, your contacts — with quick actions like call or message right from the result.
 
-WIDGET HUB
+WIDGETS
 Widgets get their own dedicated space, a swipe away from your home screen, instead of crowding your app list. Add up to 20, drag to reposition, resize freely.
 
 BUILT FOR PRIVACY
