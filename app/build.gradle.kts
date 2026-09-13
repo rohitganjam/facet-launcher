@@ -50,6 +50,16 @@ android {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            // This app has no native code of its own, but the release APK still bundles a
+            // handful of transitive .so libs (AndroidX Graphics' libandroidx.graphics.path.so,
+            // DataStore's libdatastore_shared_counter.so) — without this, a native crash in
+            // either would show up in Play Console's Android vitals as raw unsymbolicated hex
+            // addresses instead of a real stack trace. AGP bundles the resulting native debug
+            // symbol table directly in the release AAB (bundleRelease) automatically; no
+            // separate upload to Play Console is needed.
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
 
