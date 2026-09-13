@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -313,7 +314,16 @@ private fun RuleMeridiemTemplate(
     isCharging: Boolean,
 ) {
     val timeText = now.format(timeFormatter(use24HourTime, locale))
-    Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
+    // width(IntrinsicSize.Max) bounds this Column to its own widest child (the 82sp time row) —
+    // required for the rule/accessory rows' own fillMaxWidth() below to resolve against that
+    // content width instead of the ambient incoming constraint. Without it, since this template's
+    // root carries no fillMaxWidth of its own (see the clock hit-box fix elsewhere), that ambient
+    // constraint is whatever unconstrained width reaches all the way up from Home's own full
+    // screen — so the rule (and, before this fix, the accessory row riding along with it) rendered
+    // full-screen-wide in the real app while the Style Gallery's narrower preview card bounded it
+    // differently, producing two different-looking layouts for the same template (see chat
+    // history).
+    Column(modifier = modifier.width(IntrinsicSize.Max), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 text = timeText,
@@ -322,16 +332,21 @@ private fun RuleMeridiemTemplate(
             )
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 11.dp))
         }
-        Row(modifier = Modifier.padding(top = 22.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.weight(1f).height(1.dp).background(Hairline))
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, modifier = Modifier.padding(start = 12.dp), fontSize = 20.sp)
+        Box(modifier = Modifier.padding(top = 22.dp).fillMaxWidth().height(1.dp).background(Hairline))
+        // Accessory row moved below the rule, sharing the date's own row (rather than the rule's)
+        // — per direct request.
+        Row(
+            modifier = Modifier.padding(top = 12.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = now.format(dateFormatter(locale, dateStyle)),
+                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 20.sp, shadow = homeTextShadow(mutedTextColor)),
+                color = mutedTextColor,
+            )
+            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 20.sp)
         }
-        Text(
-            text = now.format(dateFormatter(locale, dateStyle)),
-            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 20.sp, shadow = homeTextShadow(mutedTextColor)),
-            color = mutedTextColor,
-            modifier = Modifier.padding(top = 12.dp),
-        )
     }
 }
 
@@ -977,10 +992,16 @@ private fun FluidStackTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(top = 19.dp)
         )
+        // Both branches below compensate for this Column's own Arrangement.spacedBy((-14).dp)
+        // (needed to tighten the huge 108sp digit rows' line-height gaps, but applying between
+        // EVERY child, including this one) with their own top padding — 16.dp nets a tight ~2dp
+        // gap below the date line, deliberately closer than the date's own 19.dp/~5dp gap above
+        // it, without regressing to the negative/overlapping gap this used to have (see chat
+        // history).
         if (accentHour) {
             // `8r`/`8s` — accent hour, accent alarm time; nothing else takes colour.
             if (nextAlarmText != null || batteryPercent != null) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 5.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 16.dp)) {
                     AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 19.sp)
                     if (nextAlarmText != null && batteryPercent != null) {
                         Text(text = "·", style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
@@ -990,7 +1011,7 @@ private fun FluidStackTemplate(
             }
         } else {
             // `8m`/`8n` — shares the date's own light, quiet block under the digits.
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp, fontWeight = FontWeight.Light, modifier = Modifier.padding(top = 5.dp))
+            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp, fontWeight = FontWeight.Light, modifier = Modifier.padding(top = 16.dp))
         }
     }
 }
@@ -1471,7 +1492,11 @@ private fun StubTemplate(
     batteryPercent: Int?,
     isCharging: Boolean,
 ) {
-    Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
+    // width(IntrinsicSize.Max) bounds this Column to its own widest child — same fix as
+    // RuleMeridiemTemplate's own doc comment explains: without it, the accessory row's
+    // fillMaxWidth() below resolves against Home's own full screen width instead of this card's
+    // content, rendering far wider there than in the Style Gallery's own bounded preview card.
+    Column(modifier = modifier.width(IntrinsicSize.Max), horizontalAlignment = horizontalAlignment) {
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(14.dp))
@@ -1942,8 +1967,13 @@ private fun ShelfTemplate(
     batteryPercent: Int?,
     isCharging: Boolean,
 ) {
+    // width(IntrinsicSize.Max) bounds this Column to its own widest child — same fix as
+    // RuleMeridiemTemplate's own doc comment explains: without it, the accessory row's
+    // fillMaxWidth() below resolves against Home's own full screen width instead of this card's
+    // content, rendering far wider there than in the Style Gallery's own bounded preview card.
     Column(
         modifier = modifier
+            .width(IntrinsicSize.Max)
             .clip(RoundedCornerShape(14.dp))
             .background(SurfaceContainer, RoundedCornerShape(14.dp))
             .border(1.dp, Hairline, RoundedCornerShape(14.dp)),

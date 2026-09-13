@@ -309,14 +309,18 @@ fun HomeScreen(
 
     // One-shot compact-spacing check, same pattern as the re-clamp above: this facet's own app
     // list (a different list each time this key set changes — a facet switch, a favorites edit,
-    // a content-mode/presentation change) is first measured at Home's regular row density, off-
-    // screen (see appListRevealed above). Once that measurement settles, compare its natural
-    // (unconstrained) height against the space actually available, switch every row to App
-    // Drawer's tighter COMPACT density if it would otherwise need to scroll, then reveal. Evaluated
-    // once per key-set change, not continuously — flipping to compact shrinks the content and
-    // re-triggers this same measurement, but this effect has already finished by then, so it
-    // doesn't see its own result and flip back.
-    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt) {
+    // a content-mode/presentation change, or the clock's own zone-height drag committing, which
+    // changes handlePx and therefore how much room is actually left for the list — previously
+    // missing from this key list, so lowering the clock left the list stuck at whatever spacing
+    // was decided before the drag until something else happened to change appListKey, e.g.
+    // switching facets and back; see chat history) is first measured at Home's regular row
+    // density, off-screen (see appListRevealed above). Once that measurement settles, compare its
+    // natural (unconstrained) height against the space actually available, switch every row to
+    // App Drawer's tighter COMPACT density if it would otherwise need to scroll, then reveal.
+    // Evaluated once per key-set change, not continuously — flipping to compact shrinks the
+    // content and re-triggers this same measurement, but this effect has already finished by
+    // then, so it doesn't see its own result and flip back.
+    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt, clockZoneHeightDp) {
         useCompactAppSpacing = false
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
             snapshotFlow { appListNaturalHeightPx to (contentHeightPx - handlePx) }
