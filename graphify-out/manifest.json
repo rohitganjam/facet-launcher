@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/HomeScreenTest.kt": {
-    "mtime": 1789385411.9407218,
-    "seen": 1789385415.400222,
-    "ast_hash": "c8386c6de229b069a022ee329fbd4686",
+    "mtime": 1789391387.613673,
+    "seen": 1789398112.805791,
+    "ast_hash": "fc24fd3f46628a201ef42eefad285440",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/clock/ClockAccessoryRowTest.kt": {
@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/HomeAppsListSettingsScreenTest.kt": {
-    "mtime": 1789385411.9435036,
-    "seen": 1789385415.400233,
-    "ast_hash": "e3a1f0979c07d4bf63c5dc9e884d3e9f",
+    "mtime": 1789391401.2462451,
+    "seen": 1789398112.8058019,
+    "ast_hash": "7362d8380f4216e387dc80ee288cb955",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/NotificationSettingsScreenTest.kt": {
@@ -876,9 +876,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/LauncherSettings.kt": {
-    "mtime": 1789218020.7528746,
-    "seen": 1789218587.050059,
-    "ast_hash": "58e54eb6b310be8da1e8928fb3596a23",
+    "mtime": 1789391276.474652,
+    "seen": 1789398112.805842,
+    "ast_hash": "a4b624b633d399d6cc2a78903a260c47",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/ListContentMode.kt": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1789385411.9581034,
-    "seen": 1789385415.400312,
-    "ast_hash": "5319a128ae23b057d74fd8f4c88b2259",
+    "mtime": 1789391301.5686278,
+    "seen": 1789398112.805884,
+    "ast_hash": "8bba02e4dae23c82fd1d580de323111a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeUiState.kt": {
@@ -1512,9 +1512,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/HomeAppsListSettingsScreen.kt": {
-    "mtime": 1789218020.7597432,
-    "seen": 1789218587.0501199,
-    "ast_hash": "49d2d71af7cad89238f1e1e881f90190",
+    "mtime": 1789391305.0837936,
+    "seen": 1789398112.80591,
+    "ast_hash": "4aecfc86227e1a85ce2204f6f5b05797",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/HomeAppsListSettingsViewModel.kt": {
