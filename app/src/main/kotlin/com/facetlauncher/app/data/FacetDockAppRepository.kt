@@ -2,7 +2,10 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.FacetDockAppDao
 import com.facetlauncher.app.data.local.FacetDockAppEntity
+import com.facetlauncher.app.data.local.FacetDockFolderPlacementDao
+import com.facetlauncher.app.data.local.FacetDockFolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -17,10 +20,16 @@ import javax.inject.Singleton
  * an entry whose app is no longer installed collapsed out rather than shown as a dead tile.
  * Consumed only while a facet's [com.facetlauncher.app.data.local.FacetEntity.overrideDock]
  * is set (see [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]).
+ *
+ * A folder ([FacetDockFolderPlacementDao]) occupies one slot in the same `position` ordering
+ * space as standalone dock apps, merged in Kotlin by [observeDockItems] — the per-facet
+ * counterpart of [DockAppRepository.observeDockItems].
  */
 @Singleton
 class FacetDockAppRepository @Inject constructor(
     private val facetDockAppDao: FacetDockAppDao,
+    private val facetDockFolderPlacementDao: FacetDockFolderPlacementDao,
+    private val folderRepository: FolderRepository,
     private val appRepository: AppRepository,
 ) {
 
@@ -44,6 +53,52 @@ class FacetDockAppRepository @Inject constructor(
         }
     }
 
+    /** This facet's full ordered dock content, apps and folders interleaved. A 0-app folder placed here is still emitted. */
+    fun observeDockItems(facetId: Long): Flow<List<PlacedItem>> {
+        return combine(
+            facetDockAppDao.observeForFacet(facetId),
+            facetDockFolderPlacementDao.observeForFacet(facetId),
+            folderRepository.observeFolders(),
+            appRepository.observeInstalledApps(),
+        ) { appEntities, placements, folders, installed ->
+            mergeItems(appEntities, placements, folders, installed)
+        }
+    }
+
+    /** Batched counterpart of [observeDockItems], mirroring [observeDockAppsForFacets]. */
+    fun observeDockItemsForFacets(facetIds: List<Long>): Flow<Map<Long, List<PlacedItem>>> {
+        if (facetIds.isEmpty()) return flowOf(emptyMap())
+        val appsPerFacet = combine(facetIds.map { facetDockAppDao.observeForFacet(it) }) { it }
+        val placementsPerFacet = combine(facetIds.map { facetDockFolderPlacementDao.observeForFacet(it) }) { it }
+        return combine(appsPerFacet, placementsPerFacet, folderRepository.observeFolders(), appRepository.observeInstalledApps()) { perFacetApps, perFacetPlacements, folders, installed ->
+            facetIds.indices.associate { index ->
+                facetIds[index] to mergeItems(perFacetApps[index], perFacetPlacements[index], folders, installed)
+            }
+        }
+    }
+
+    private fun mergeItems(
+        appEntities: List<FacetDockAppEntity>,
+        placements: List<FacetDockFolderPlacementEntity>,
+        folders: List<com.facetlauncher.app.data.model.Folder>,
+        installed: List<AppInfo>,
+    ): List<PlacedItem> {
+        val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+        val foldersById = folders.associateBy { it.id }
+
+        val appItems = appEntities.mapNotNull { entity ->
+            installedByComponent[entity.packageName to entity.activityName]?.let { app ->
+                entity.position to PlacedItem.SingleApp(app)
+            }
+        }
+        val folderItems = placements.mapNotNull { placement ->
+            foldersById[placement.folderId]?.let { folder ->
+                placement.position to PlacedItem.FolderItem(folder)
+            }
+        }
+        return (appItems + folderItems).sortedBy { it.first }.map { it.second }
+    }
+
     private fun hydrate(entities: List<FacetDockAppEntity>, installed: List<AppInfo>): List<AppInfo> {
         val installedByComponent = installed.associateBy { it.packageName to it.activityName }
         return entities.sortedBy { it.position }
@@ -65,6 +120,14 @@ class FacetDockAppRepository @Inject constructor(
         facetDockAppDao.deleteByComponent(facetId, app.packageName, app.activityName)
     }
 
+    suspend fun placeFolder(facetId: Long, folderId: Long, position: Int) {
+        facetDockFolderPlacementDao.upsert(FacetDockFolderPlacementEntity(facetId = facetId, folderId = folderId, position = position))
+    }
+
+    suspend fun removeFolderPlacement(facetId: Long, folderId: Long) {
+        facetDockFolderPlacementDao.deleteByFolderId(facetId, folderId)
+    }
+
     /**
      * Uninstall cleanup — permanently removes [packageName]'s dock entry from *every* facet,
      * driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. Distinct from
@@ -75,13 +138,19 @@ class FacetDockAppRepository @Inject constructor(
         facetDockAppDao.deleteByPackage(packageName)
     }
 
-    /** Replaces this facet's entire dock with [apps] — used to seed a clean copy (e.g. of the current default dock) when a facet switches to Override. */
-    suspend fun replaceDockApps(facetId: Long, apps: List<AppInfo>) {
+    /** Replaces this facet's entire dock with [items] — used to seed a clean copy (e.g. of the current default dock) when a facet switches to Override. Carries folder placements, not just apps. */
+    suspend fun replaceItems(facetId: Long, items: List<PlacedItem>) {
         facetDockAppDao.deleteAllForFacet(facetId)
-        apps.forEachIndexed { index, app ->
-            facetDockAppDao.upsert(
-                FacetDockAppEntity(facetId = facetId, packageName = app.packageName, activityName = app.activityName, position = index),
-            )
+        facetDockFolderPlacementDao.deleteAllForFacet(facetId)
+        items.forEachIndexed { index, item ->
+            when (item) {
+                is PlacedItem.SingleApp -> facetDockAppDao.upsert(
+                    FacetDockAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                )
+                is PlacedItem.FolderItem -> facetDockFolderPlacementDao.upsert(
+                    FacetDockFolderPlacementEntity(facetId = facetId, folderId = item.folder.id, position = index),
+                )
+            }
         }
     }
 
@@ -89,21 +158,30 @@ class FacetDockAppRepository @Inject constructor(
     suspend fun getRawDockAppsForFacet(facetId: Long): List<FacetDockAppEntity> =
         facetDockAppDao.observeForFacet(facetId).first()
 
+    /** F14 Backup & Restore export — raw folder-placement rows for this facet's dock. */
+    suspend fun getRawDockFolderPlacementsForFacet(facetId: Long): List<FacetDockFolderPlacementEntity> =
+        facetDockFolderPlacementDao.observeForFacet(facetId).first()
+
     /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
     suspend fun restoreDockApp(entity: FacetDockAppEntity) {
         facetDockAppDao.upsert(entity.copy(id = 0))
     }
 
-    suspend fun reorderDockApps(facetId: Long, orderedApps: List<AppInfo>) {
-        orderedApps.forEachIndexed { index, app ->
-            facetDockAppDao.upsert(
-                FacetDockAppEntity(
-                    facetId = facetId,
-                    packageName = app.packageName,
-                    activityName = app.activityName,
-                    position = index,
-                ),
-            )
+    /** F14 Backup & Restore import — places a restored folder (by its already-remapped [folderId]) into this facet's dock. */
+    suspend fun restoreDockFolderPlacement(facetId: Long, folderId: Long, position: Int) {
+        facetDockFolderPlacementDao.upsert(FacetDockFolderPlacementEntity(facetId = facetId, folderId = folderId, position = position))
+    }
+
+    suspend fun reorderDockItems(facetId: Long, orderedItems: List<PlacedItem>) {
+        orderedItems.forEachIndexed { index, item ->
+            when (item) {
+                is PlacedItem.SingleApp -> facetDockAppDao.upsert(
+                    FacetDockAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                )
+                is PlacedItem.FolderItem -> facetDockFolderPlacementDao.upsert(
+                    FacetDockFolderPlacementEntity(facetId = facetId, folderId = item.folder.id, position = index),
+                )
+            }
         }
     }
 }

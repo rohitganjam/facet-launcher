@@ -45,6 +45,7 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
@@ -63,8 +64,14 @@ import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
+import com.facetlauncher.app.domain.AddFolderToDockUseCase
+import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
+import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
+import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
+import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
@@ -163,11 +170,11 @@ class HomeDrawerRouteTest {
                     `when`(repo.observeUninstalledPackages()).thenReturn(emptyFlow())
                 }
             }
-            val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), appRepository) }
-            val facetDockAppRepository = remember { FacetDockAppRepository(database.facetDockAppDao(), appRepository) }
-            val favoriteAppRepository = remember { FavoriteAppRepository(database.favoriteAppDao(), appRepository) }
+            val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
+            val facetDockAppRepository = remember { FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
+            val favoriteAppRepository = remember { FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
             val defaultFavoriteAppRepository = remember {
-                DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository).also { repo ->
+                DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
                     // Never seeded otherwise — observeDefaultFavorites() combines DB rows against
                     // installed apps, so with zero rows the list (and "FAVORITES") stays
                     // permanently empty regardless of how fast/slow the installed-apps side is.
@@ -237,7 +244,14 @@ class HomeDrawerRouteTest {
                         facetDockAppRepository,
                     ),
                     AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    RemoveAppFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
+                    RemoveAppFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
+                    AddFolderToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    RemoveFolderFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    AddFolderToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
+                    RemoveFolderFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
+                    FolderRepository(database.folderDao(), appRepository),
                 )
             }
             val hubViewModel = remember {

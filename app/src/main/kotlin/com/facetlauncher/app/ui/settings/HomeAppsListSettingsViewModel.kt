@@ -19,6 +19,7 @@ import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -155,9 +156,10 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     }
 
     fun reorderFavorites(orderedApps: List<AppInfo>) {
+        val orderedItems = orderedApps.map { PlacedItem.SingleApp(it) }
         viewModelScope.launch {
-            facetId?.let { favoriteAppRepository.reorderFavorites(it, orderedApps) }
-                ?: defaultFavoriteAppRepository.reorderFavorites(orderedApps)
+            facetId?.let { favoriteAppRepository.reorderFavoriteItems(it, orderedItems) }
+                ?: defaultFavoriteAppRepository.reorderItems(orderedItems)
         }
     }
 }

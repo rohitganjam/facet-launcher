@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -13,13 +14,21 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
+import com.facetlauncher.app.domain.AddFolderToDockUseCase
+import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.QuickAddState
+import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
+import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
+import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
+import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -50,9 +59,16 @@ class DrawerViewModel @Inject constructor(
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
-    observeQuickAddState: ObserveQuickAddStateUseCase,
+    private val observeQuickAddState: ObserveQuickAddStateUseCase,
     private val addAppToFavorites: AddAppToFavoritesUseCase,
+    private val removeAppFromFavorites: RemoveAppFromFavoritesUseCase,
     private val addAppToDock: AddAppToDockUseCase,
+    private val removeAppFromDock: RemoveAppFromDockUseCase,
+    private val addFolderToFavorites: AddFolderToFavoritesUseCase,
+    private val removeFolderFromFavorites: RemoveFolderFromFavoritesUseCase,
+    private val addFolderToDock: AddFolderToDockUseCase,
+    private val removeFolderFromDock: RemoveFolderFromDockUseCase,
+    private val folderRepository: FolderRepository,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
@@ -173,16 +189,74 @@ class DrawerViewModel @Inject constructor(
 
     fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
 
-    /** Governs F12's own "Add to Favorites"/"Add to Dock" rows — see [ObserveQuickAddStateUseCase]'s own doc. */
-    val quickAddState: StateFlow<QuickAddState> = observeQuickAddState()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuickAddState())
+    /** Governs F12's own "Add to Favorites"/"Add to Dock" (or "Remove from…") rows — fetched fresh per app/folder, only when its menu actually opens. */
+    suspend fun quickAddStateForApp(app: AppInfo): QuickAddState = observeQuickAddState.forApp(app)
 
-    fun addToFavorites(app: AppInfo) {
-        viewModelScope.launch { addAppToFavorites(app) }
+    suspend fun quickAddStateForFolder(folder: Folder): QuickAddState = observeQuickAddState.forFolder(folder)
+
+    fun onFavoritesAction(app: AppInfo, action: QuickPlacementAction) {
+        viewModelScope.launch {
+            when (action) {
+                is QuickPlacementAction.Add -> addAppToFavorites(app)
+                is QuickPlacementAction.Remove -> removeAppFromFavorites(app)
+            }
+        }
     }
 
-    fun addToDock(app: AppInfo) {
-        viewModelScope.launch { addAppToDock(app) }
+    fun onDockAction(app: AppInfo, action: QuickPlacementAction) {
+        viewModelScope.launch {
+            when (action) {
+                is QuickPlacementAction.Add -> addAppToDock(app)
+                is QuickPlacementAction.Remove -> removeAppFromDock(app)
+            }
+        }
+    }
+
+    fun onFolderFavoritesAction(folder: Folder, action: QuickPlacementAction) {
+        viewModelScope.launch {
+            when (action) {
+                is QuickPlacementAction.Add -> addFolderToFavorites(folder)
+                is QuickPlacementAction.Remove -> removeFolderFromFavorites(folder)
+            }
+        }
+    }
+
+    fun onFolderDockAction(folder: Folder, action: QuickPlacementAction) {
+        viewModelScope.launch {
+            when (action) {
+                is QuickPlacementAction.Add -> addFolderToDock(folder)
+                is QuickPlacementAction.Remove -> removeFolderFromDock(folder)
+            }
+        }
+    }
+
+    /**
+     * The full folder library — backs F-Folders' "Add to folder" page in
+     * [com.facetlauncher.app.ui.components.AppContextMenu]. A folder is global, so this is the
+     * one list every long-press context (Drawer, Search) offers to, regardless of where (if
+     * anywhere) each folder is currently placed.
+     */
+    val folders: StateFlow<List<Folder>> = folderRepository.observeFolders()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Creates a brand-new folder and adds [app] as its first member. Membership only — placing the folder onto a Dock/Favorites list is a separate, explicit action (the picker). */
+    fun createFolder(app: AppInfo, name: String) {
+        viewModelScope.launch {
+            val folderId = folderRepository.createFolder(name)
+            folderRepository.addAppToFolder(folderId, app)
+        }
+    }
+
+    fun addToFolder(app: AppInfo, folderId: Long) {
+        viewModelScope.launch { folderRepository.addAppToFolder(folderId, app) }
+    }
+
+    fun removeFromFolder(folderId: Long, app: AppInfo) {
+        viewModelScope.launch { folderRepository.removeAppFromFolder(folderId, app) }
+    }
+
+    fun renameFolder(folderId: Long, name: String) {
+        viewModelScope.launch { folderRepository.renameFolder(folderId, name) }
     }
 
     /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (same fetch-on-open precedent as [getShortcuts]). */

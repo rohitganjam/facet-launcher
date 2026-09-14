@@ -5,8 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -27,12 +30,19 @@ data class DockAppPickerUiState(
      * only re-latches the next time the screen is freshly opened. Not reorderable here — that
      * lives in Settings' own Dock card. */
     val selectedResults: List<AppInfo> = emptyList(),
-    /** Every other matching app, in the installed-app list's own (alphabetical) order. */
+    /** Every other matching, not-already-placed app, in the installed-app list's own (alphabetical) order — a member of a folder currently placed here is excluded (see [placedFolderMemberComponents]) rather than offered as a second, standalone placement. */
     val otherResults: List<AppInfo> = emptyList(),
     val dockPackageComponents: Set<Pair<String, String>> = emptySet(),
+    /** The full folder library — every folder, regardless of where (if anywhere) it's placed. */
+    val folders: List<Folder> = emptyList(),
+    /** Which of [folders] are currently placed in *this* Dock — the Folders tab's own checkbox state. */
+    val placedFolderIds: Set<Long> = emptySet(),
     val canAddMore: Boolean = true,
     val canRemove: Boolean = true,
-)
+) {
+    val placedFolderMemberComponents: Set<Pair<String, String>>
+        get() = folders.filter { it.id in placedFolderIds }.flatMap { it.apps }.map { it.packageName to it.activityName }.toSet()
+}
 
 /**
  * Dock app picker (`4k`) — also doubles as one facet's own dock picker (reached from that
@@ -46,14 +56,15 @@ class DockAppPickerViewModel @Inject constructor(
     private val getInstalledApps: GetInstalledAppsUseCase,
     private val dockAppRepository: DockAppRepository,
     private val facetDockAppRepository: FacetDockAppRepository,
+    private val folderRepository: FolderRepository,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
     private val query = MutableStateFlow("")
     private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
 
-    private fun observeDockApps(): Flow<List<AppInfo>> =
-        facetId?.let { facetDockAppRepository.observeDockAppsForFacet(it) } ?: dockAppRepository.observeDockApps()
+    private fun observeDockItems(): Flow<List<PlacedItem>> =
+        facetId?.let { facetDockAppRepository.observeDockItems(it) } ?: dockAppRepository.observeDockItems()
 
     /** Latched from the dock's live order the first time it's observed; never updated after — see [DockAppPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<Pair<String, String>>?>(null)
@@ -61,23 +72,37 @@ class DockAppPickerViewModel @Inject constructor(
     val uiState: StateFlow<DockAppPickerUiState> = combine(
         query,
         installedApps,
-        observeDockApps(),
+        observeDockItems(),
         loadOrder,
-    ) { query, installed, dockApps, frozenOrder ->
+        folderRepository.observeFolders(),
+    ) { query, installed, dockItems, frozenOrder, folders ->
+        val dockApps = dockItems.filterIsInstance<PlacedItem.SingleApp>().map { it.app }
         val liveOrder = dockApps.map { it.packageName to it.activityName }
         if (frozenOrder == null) loadOrder.value = liveOrder
         val order = frozenOrder ?: liveOrder
+        val placedFolderIds = dockItems.filterIsInstance<PlacedItem.FolderItem>().map { it.folder.id }.toSet()
+        val placedFolderMemberComponents = folders.filter { it.id in placedFolderIds }
+            .flatMap { it.apps }.map { it.packageName to it.activityName }.toSet()
 
         val filtered = installed.filter { it.label.contains(query, ignoreCase = true) }
-        val (selected, other) = filtered.partition { (it.packageName to it.activityName) in order }
+        val (selected, otherCandidates) = filtered.partition { (it.packageName to it.activityName) in order }
+        // A member of a folder currently placed here is already occupying a Dock slot (inside
+        // that folder) — offering it again as a standalone checkbox would let it get added a
+        // second time, rendering twice.
+        val other = otherCandidates.filterNot { (it.packageName to it.activityName) in placedFolderMemberComponents }
+        // Item-counted, matching every other Dock-capacity check (ObserveQuickAddStateUseCase) —
+        // a folder costs exactly one slot regardless of how many apps it holds.
+        val itemCount = dockApps.size + placedFolderIds.size
         DockAppPickerUiState(
             isFacetScoped = facetId != null,
             query = query,
             selectedResults = selected.sortedBy { order.indexOf(it.packageName to it.activityName) },
             otherResults = other,
             dockPackageComponents = liveOrder.toSet(),
-            canAddMore = dockApps.size < DockAppRepository.MAX_APPS,
-            canRemove = dockApps.size > DockAppRepository.MIN_APPS,
+            folders = folders,
+            placedFolderIds = placedFolderIds,
+            canAddMore = itemCount < DockAppRepository.MAX_APPS,
+            canRemove = itemCount > DockAppRepository.MIN_APPS,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DockAppPickerUiState())
 
@@ -104,6 +129,27 @@ class DockAppPickerViewModel @Inject constructor(
                     if (state.canRemove) dockAppRepository.removeDockApp(app)
                 } else if (state.canAddMore) {
                     dockAppRepository.addDockApp(app, position = state.dockPackageComponents.size)
+                }
+            }
+        }
+    }
+
+    /** The Folders tab's own checkbox — un-placing here never deletes the folder, only removes it from this specific Dock. */
+    fun toggleFolder(folder: Folder) {
+        val state = uiState.value
+        val isPlaced = folder.id in state.placedFolderIds
+        viewModelScope.launch {
+            if (facetId != null) {
+                if (isPlaced) {
+                    if (state.canRemove) facetDockAppRepository.removeFolderPlacement(facetId, folder.id)
+                } else if (state.canAddMore) {
+                    facetDockAppRepository.placeFolder(facetId, folder.id, position = state.dockPackageComponents.size + state.placedFolderIds.size)
+                }
+            } else {
+                if (isPlaced) {
+                    if (state.canRemove) dockAppRepository.removeFolderFromDock(folder.id)
+                } else if (state.canAddMore) {
+                    dockAppRepository.placeFolderInDock(folder.id, position = state.dockPackageComponents.size + state.placedFolderIds.size)
                 }
             }
         }

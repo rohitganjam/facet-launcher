@@ -1,12 +1,13 @@
 package com.facetlauncher.app.ui.settings
 
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.PlacedItem
 
 data class SettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
-    val dockApps: List<AppInfo> = emptyList(),
-    val defaultFavorites: List<AppInfo> = emptyList(),
+    val dockItems: List<PlacedItem> = emptyList(),
+    val defaultFavorites: List<PlacedItem> = emptyList(),
+    val folderCount: Int = 0,
     val isDefaultLauncher: Boolean = false,
     val isLoading: Boolean = true,
 ) {

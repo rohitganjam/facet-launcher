@@ -1189,3 +1189,322 @@ is already reused for both the global and per-facet cases:
 - Tests: `FacetSettingsScreenTest` rewritten for the nav list; `HomeAppsListSettingsScreenTest` /
   `DockSettingsScreenTest` / their VM tests cover both the global and a facet-scoped instance
   (setter routing, preview renders); `AppearanceSettingsScreenTest` unchanged.
+
+---
+
+## Dock Folders (F-Folders) — Phase 1: global Dock scope
+
+Grouping several apps into one Dock slot. Full design discussion (including the competitor
+reference that shaped the final shape) lives in the feature branch's own plan doc; this entry
+records what actually landed. Built on `feature/folders`.
+
+**Scope for this phase**: Dock only (global, not per-facet) — Favorites folders and per-facet
+folder overrides are explicitly deferred, mirroring how every other Dock feature in this app
+shipped global-first (see the per-facet Dock override entry above). Folder creation/membership is
+driven entirely through the existing long-press context menu — no drag-to-merge gesture (ruled
+out early: this app uses that gesture nowhere else, and it's the riskiest mechanic to get right)
+— plus a "+ Create folder" entry directly in the Dock's own picker screen.
+
+### Data layer
+- **Schema v17 → v18** (`Migrations.MIGRATION_17_18`): new `dock_folders` (id, name, position —
+  occupies one slot in the *same* ordering space as `dock_apps.position`, merged in Kotlin, not
+  enforced across tables by Room) and `dock_folder_apps` (folderId FK cascade, packageName,
+  activityName, position — membership, unique per folder+component). No facetId on either table
+  yet (global scope only, matching `dock_apps` itself having none).
+- **`DockFolderDao`** — `observeAllWithApps()` (a `@Relation` query returning `DockFolderWithApps`),
+  folder/membership CRUD, `deleteEmptyFolders()` (a folder is never shown/left empty), and a
+  dedicated `updateFolderPosition()` — deliberately a plain `UPDATE`, not `upsertFolder`'s
+  `REPLACE` conflict strategy, since `REPLACE` on an existing row is a delete-then-insert at the
+  SQLite level and would cascade-delete the folder's own membership rows via its FK.
+- **`data/model/DockItem.kt`** — `sealed interface DockItem { SingleApp(app) | Folder(id, name, apps) }`,
+  the shared vocabulary threaded through every surface below instead of raw `AppInfo`.
+- **`DockAppRepository`** gained `observeDockItems()` (merges `dock_apps` + `dock_folders`-with-apps
+  + installed apps, sorted by position; a folder emptied by an uninstall is dropped from the
+  emitted list entirely rather than shown empty) plus `createFolder`/`addAppToFolder`/
+  `removeAppFromFolder`/`renameFolder`/`ungroupFolder`/`reorderDockItems`. `removeByPackage`
+  (uninstall cleanup) now also purges folder membership and deletes emptied folders — no separate
+  change needed in `CleanUpUninstalledAppsUseCase`, since it already calls this method.
+- **`ObserveQuickAddStateUseCase`**'s dock-capacity check now counts `DockItem`s, not raw apps — a
+  folder costs exactly one Dock slot regardless of how many apps it holds.
+- Backup/restore, per-facet Dock override, and the Dock's Settings picker/reorder screens are
+  **not yet wired to folders** in this phase (see "Deferred" below) — folders don't yet round-trip
+  through export/import, and a facet overriding its own dock always sees plain apps.
+
+### UI
+- **`AppContextMenu`** gained a third page (alongside its existing single page) via
+  `AnimatedContent` — mirrors `ContactConnectionsSheet`'s own main-list/disambiguation-page slide,
+  so folder-adding stays inside the *same* `ModalBottomSheet` instance rather than closing one
+  sheet and opening another. A new **"Add to folder"** row (`folderCandidates` non-null) opens it:
+  "+ Create new folder" first (opens `RenameDialog`, named at creation), then every existing
+  folder. A separate **"Remove from folder"** row (`removeFromFolderId` non-null) replaces it when
+  the menu is opened from inside a folder's own contents sheet — the two never both apply to the
+  same app.
+- **`DockFolderSheet`** (new, `ui/home/`) — tapping a folder tile opens this. Deliberately the same
+  hand-rolled bottom-sheet idiom as `ContactConnectionsSheet` (scrim + slide-up, dynamic height,
+  `CardDivider` rows), not a `Dialog`/`Popup` look — matches this app's own established shape for
+  "tap something small, reveal what's inside," as opposed to `AppContextMenu`'s real
+  `ModalBottomSheet` (reserved for long-press menus). Wrapped in a full-screen `Dialog` so it can
+  be hosted locally from `DockIcon` without threading extra state through `HomeScreen`'s already
+  large prop surface. Header has an inline rename affordance; each app row's long-press reuses
+  `AppContextMenu` a third time with "Remove from folder".
+- **`DockFolderContextMenu`** (new, `ui/components/`) — long-pressing the folder *tile itself* (not
+  an app inside it) opens this instead of `AppContextMenu`: Rename / Ungroup only, since a folder
+  has no app-info/uninstall/shortcuts of its own. Ungroup returns every member to the Dock as its
+  own standalone tile — no destructive "delete folder and its apps" action exists, matching
+  platform convention.
+- **`HomeScreen`'s `DockIcon`** now takes a `DockItem` instead of raw `AppInfo`, branching into
+  `SingleAppDockIcon` (unchanged rendering) or the new `FolderDockIcon` — a `medium`/12dp-shaped
+  tile (CLAUDE.md's M3 shape table, tile scale) showing a 2×2 mini-grid of the folder's first 4
+  app icons (`FolderTileGlyph`). This rippled into every `DockIcon` consumer: the facet carousel's
+  read-only preview cards (`FacetCarouselScreen`) and `ObserveFacetPreviewsUseCase`'s
+  `FacetPreviewData.dockApps` (now `List<DockItem>`; a facet's own per-facet dock override still
+  maps to plain `SingleApp` entries, since per-facet folders aren't built yet).
+- **`AppDrawerScreen`** — `DrawerAppRow`/`DrawerGridTile` (browse mode) and `DrawerSearchResults`
+  (which already renders through those same two composables, so no extra plumbing was needed) all
+  gained the same `folderCandidates`/`onCreateFolder`/`onAddToFolder` params, so "Add to folder" is
+  reachable from every long-press context: Dock, Drawer, and Search alike. Favorites' own `AppRow`
+  deliberately does **not** get the row yet — there's no Favorites-folder surface to route into
+  until Phase 2.
+- **`DrawerViewModel`** gained `dockFolders` (a `StateFlow<List<DockItem.Folder>>`, filtered from
+  `DockAppRepository.observeDockItems()`) plus `createDockFolder`/`addToDockFolder`/
+  `removeFromDockFolder`/`renameDockFolder`/`ungroupDockFolder` — single-repository logic, so per
+  `CLAUDE.md`'s layering rule these call `DockAppRepository` directly rather than going through a
+  new domain use case.
+
+### Tests
+New `DockFolderDaoTest` (JVM/Robolectric, real in-memory Room — hydration/ordering, cascade delete,
+`updateFolderPosition` preserving membership where `upsertFolder`'s `REPLACE` would have wiped it,
+`deleteEmptyFolders`/`deleteAllFolders`, unique-index dedup), mirroring `FacetDockAppDaoTest`.
+`DockAppRepositoryTest` additions (a hand-written `FakeDockFolderDao` alongside the existing
+`FakeDockAppDao`; merge/sort ordering, uninstall-collapse for both standalone apps and folder
+members, every CRUD method, reorder across both tables), `ObserveQuickAddStateUseCaseTest`
+(item-counted capacity), `AppContextMenuTest` additions (folder page navigation, create/add/remove
+flows, back-without-dismiss), new `DockFolderContextMenuTest` and `DockFolderSheetTest`, and a
+`HomeScreenTest` case for the folder tile opening its sheet. Full `./gradlew test` (JVM) and
+`ANDROID_SERIAL=<emulator-serial> ./gradlew connectedDebugAndroidTest` (the full existing suite,
+run once before these additions to confirm zero regressions, then again with them included) both
+green on `Medium_Phone_API_36.1`.
+
+### Deferred (not built in this phase)
+- **Favorites folders** — `FavoriteFolderEntity`/`FavoriteFolderAppEntity` + a `FavoriteItem`
+  sealed type, built as a near-identical twin of everything above (the way `DockAppPickerScreen`/
+  `FavoritesPickerScreen` already are today). At that point the "Add to folder" page gains
+  "Dock"/"Favorites" sections when opened from Drawer/Search, and `AppRow`'s long-press gains the
+  row too.
+- **Per-facet folder overrides** — `FacetDockFolderRepository`, mirroring exactly how per-facet
+  Dock overrides shipped as a distinct pass after global Dock (see above).
+- **Backup & Restore** — dock folders don't yet round-trip through export/import
+  (`BackupMapping.kt`/`ExportBackupUseCase`/`ImportBackupUseCase` untouched); `DockAppRepository`
+  already exposes `getRawDockFolders()`/`restoreDockFolder()` as the hooks for this, just not
+  wired into the backup use cases yet.
+- **`DockAppPickerScreen`** still only toggles installed apps — the competitor-informed "+ Create
+  folder" entry (and rendering an existing folder as its own row instead of a checkbox) discussed
+  in this feature's design pass was **not** built this phase. Folder creation/membership is
+  reachable only via the long-press "Add to folder" flow for now.
+- **`DockSettingsScreen`'s reorder row** doesn't yet render folders (still
+  `DragReorderState<AppInfo>`) — a folder placed via long-press won't show up in that Settings
+  screen's reorder list yet, only in the live Dock itself. Its own "Preview" card
+  (`HomeSurfacePreview`) and "Select Dock Apps" checklist are similarly still `AppInfo`-only, so a
+  folder's members don't render there either — this was caught during on-device verification (see
+  below) as a real bug (a folder's app looked like it had silently vanished from Settings), not
+  merely a missing enhancement; it's called out here as the next thing to fix in this area.
+
+### On-device verification pass (found and fixed two real gaps)
+
+Manually verified on the `Medium_Phone_API_36.1` emulator, set as the actual default launcher —
+create folder → tile renders → tap opens contents → long-press an app inside → remove from
+folder → long-press the tile → rename/ungroup, exercised in both Dock display styles (Icons and
+Text — both render and open the sheet correctly; an earlier report of "only works in Icons mode"
+traced back to leftover corrupted state from an earlier fumbled manual-testing pass, not a real
+bug in either display mode). Two real, user-facing bugs were caught and fixed in this pass:
+
+- **`ObserveSettingsScreenStateUseCase`/`SettingsUiState`/`SettingsViewModel`** still read
+  `DockAppRepository.observeDockApps()` (the old flat method) — a folder's member apps vanished
+  entirely from the main Settings screen's "Dock" row subtitle (`SettingsScreenState.dockApps` →
+  renamed `dockItems`, now `List<DockItem>` via `observeDockItems()`). The subtitle itself
+  (`dockSummary()` in `SettingsScreen.kt`) now reads "4 Dock Apps, 1 Folder" instead of silently
+  under-counting — previously it read "4 of 5" with the folder's app simply missing, which looks
+  exactly like data loss to a user, not a cosmetic gap.
+- **Settings had no folder management surface independent of long-press** — added a **"Folders"**
+  row under HOME & APPS (competitor-informed, matches the Slate-launcher reference from this
+  feature's design pass): `FoldersSettingsScreen`/`FoldersSettingsViewModel` (new), listing every
+  Dock folder (name + app count), tapping a row opens the same `DockFolderSheet` used from the
+  live Dock, and Ungroup sits directly on the row as its own icon button (this app's "few
+  always-visible actions, no '...' overflow menu" convention). Route `FOLDERS_SETTINGS` in
+  `FacetNavHost.kt`. `DockAppPickerScreen`'s own "+ Create folder" entry (mentioned as
+  competitor-informed but not built, above) is still not built — this new screen is a *view/manage*
+  surface for folders that already exist, not a second creation path.
+- Tests: new `FoldersSettingsScreenTest` (empty state, row rendering, opens `DockFolderSheet`,
+  Ungroup fires without opening the sheet, launching an app from the sheet dismisses + fires
+  `onAppClick`), a new `SettingsScreenTest` case for the Folders row, and the existing
+  `dockRowIsClickableAndReflectsDockAppCount` test's assertion continues to pass unchanged (the
+  no-folder case still reads "N Dock Apps", so the format is additive, not a breaking change).
+  Full `./gradlew test` and `ANDROID_SERIAL=<emulator-serial> ./gradlew connectedDebugAndroidTest`
+  both green after these fixes.
+
+---
+
+## Folders — Phase 2: generalized to Favorites + per-facet overrides, backup/restore wired
+
+Supersedes Phase 1's "Deferred" list above — everything it named as not-yet-built (Favorites
+folders, per-facet folder overrides, backup/restore round-trip) landed in this pass, alongside a
+model rename that replaced the Dock-only `DockItem` with a shared vocabulary used everywhere a
+folder can live. **Phase 1's own `DockFolderDao`/`DockFolderSheet`/`DockFolderContextMenu`/
+`DockItem` never actually landed as committed code** — this phase's design (below) is what's
+actually in the tree; treat Phase 1's UI/data-layer bullets above as superseded, not as history.
+
+### Data layer
+- **Schema v17 → v18** (`Migrations.MIGRATION_17_18`): `folders` (id, name) + `folder_apps` (id,
+  folderId FK cascade, packageName, activityName, position; unique index on
+  folderId+packageName+activityName) are the folder library itself — global, not per-list. Four
+  placement tables point a folder at one slot in a specific list, each just (folderId[, facetId],
+  position) with an FK cascade back to `folders`: `dock_folder_placements` (unique on folderId),
+  `default_favorite_folder_placements` (unique on folderId), `facet_dock_folder_placements`
+  (facetId FK→facets, unique on facetId+folderId), `favorite_folder_placements` (facetId
+  FK→facets, unique on facetId+folderId).
+- **`data/model/PlacedItem.kt`** — `data class Folder(id, name, apps: List<AppInfo>)` (hydrated,
+  live) and `sealed interface PlacedItem { SingleApp(app) | FolderItem(folder) }`, the one shared
+  model used by Dock, Favorites, the default Favorites list, and every per-facet override alike.
+- **`FolderRepository`** (new) owns folder identity/membership centrally: `observeFolders()`
+  (hydrates against installed apps, drops uninstalled members, keeps 0-app folders — never
+  auto-deleted for being empty), `createFolder`/`renameFolder`/`deleteFolder` (cascades through
+  membership + all four placement tables via FK), `addAppToFolder`/`removeAppFromFolder`/
+  `reorderFolderApps`, `removeByPackage` (uninstall cleanup), plus backup hooks
+  `getRawFolders()`/`restoreFolder()`/`deleteAllFolders()`.
+- **`DockAppRepository`/`FacetDockAppRepository`/`FavoriteAppRepository`/
+  `DefaultFavoriteAppRepository`** each gained an item-merging observer (`observeDockItems()`,
+  `observeDockItems(facetId)`/`observeDockItemsForFacets(...)`, `observeFavoriteItems(facetId)`/
+  `observeFavoriteItemsForFacets(...)`, `observeDefaultItems()`) — combines its existing app DAO +
+  the matching folder-placement DAO + `FolderRepository.observeFolders()` + installed apps into
+  one `List<PlacedItem>`, sorted by a shared `position` space. Each also gained
+  `placeFolder`/`placeFolderInDock`, `removeFolderPlacement`/`removeFolderFromDock`, an
+  item-aware reorder (`reorderDockItems`/`reorderFavoriteItems`/`reorderItems`), and
+  `replaceItems(facetId, items: List<PlacedItem>)` (renamed from the old app-only
+  `replaceDockApps`/`replaceFavorites`) so switching a facet to Override now seeds folder
+  placements too, not just apps. `removeByPackage` now also calls
+  `folderRepository.removeByPackage`.
+- **Per-facet folder overrides are fully wired** — `FacetSettingsViewModel`'s Dock/Favorites
+  override toggles read/seed via the new `observeDockItems`/`observeFavoriteItems`/`replaceItems`,
+  and `ObserveHomeScreenStateUseCase`/`ObserveFacetPreviewsUseCase` both switch between the
+  per-facet observer (override case) and the global one (inherit case) — a facet's own folder
+  placements flow into the live Home screen and the facet-carousel preview cards.
+- New `AddFolderToDockUseCase`/`RemoveFolderFromDockUseCase`/`AddFolderToFavoritesUseCase`/
+  `RemoveFolderFromFavoritesUseCase` resolve the active facet's override exactly like
+  `AddAppToDockUseCase`/`AddAppToFavoritesUseCase` already did for apps.
+
+### Backup & Restore — now fully round-trips (was explicitly deferred in Phase 1)
+`CURRENT_BACKUP_VERSION` bumped 2→3. `BackupBundle.kt` gained `folders: List<BackupFolder>`
+(global, index-referenced like `activeFacetIndex`), `dockFolderPlacements`/
+`defaultFavoriteFolderPlacements` (`List<BackupFolderPlacement>`), and `BackupFacet` gained its
+own `dockFolderPlacements`/`favoriteFolderPlacements` — all defaulted for a tolerant read of
+pre-v3 backups. `BackupFolderPlacement(folderIndex, position)` references the folder library by
+index. `ExportBackupUseCase` exports the folder library once with a `folderId→index` map, then
+each of the four placement lists through that map; `ImportBackupUseCase` restores folders first
+(before facets/dock/favorites — `deleteAllFolders()` cascades every placement table), builds
+`newFolderIdByIndex`, then restores each placement list. A placement whose folder no longer
+exists on export is dropped rather than exported dangling.
+
+### UI
+- **`DockAppPickerScreen`/`FavoritesPickerScreen`** each gained an Apps/Folders tab
+  (`AnimatedContent` slide) with a `showFoldersTab: Boolean = true` param — forced `false` from
+  `OnboardingScreen` (no folder can exist that early in the flow).
+- **`DockSettingsScreen`'s reorder row** now takes `dockItems: List<PlacedItem>` — folders render
+  and reorder in Settings (Phase 1 had flagged this as a real gap; closed here).
+- **`SettingsScreen`** gained a "Folders" row (subtitle "No folders yet"/"N folder(s)") into
+  `FoldersSettingsScreen`; the Dock row's own subtitle now reads `dockSummary(uiState.dockItems)`.
+- **`FolderTileContextMenu`** (new, `ui/components/`) replaces the never-shipped Phase-1
+  `DockFolderContextMenu` design — long-pressing a folder *tile* opens Rename only at this point
+  (the quick Add/Remove Favorites/Dock rows described below landed in Phase 3, not here).
+- **`FoldersSettingsScreen`/`FoldersSettingsViewModel`** (new) list the whole folder library from
+  `FolderRepository`, navigate to a new **`FolderDetailScreen`** (own drag-reorder +
+  "Add to folder" → **`FolderAppPickerScreen`**), with delete gated by `ConfirmDialog`. Wired into
+  `FacetNavHost` via new `FOLDERS_SETTINGS`/`FOLDER_DETAIL`/`FOLDER_APP_PICKER` routes.
+- **`FolderContentsSheet`** (new, `ui/components/`) — tapping a folder tile anywhere (Home, Dock,
+  Favorites) opens this: a hand-rolled `Dialog`-hosted sheet (mirrors `ContactConnectionsSheet`'s
+  idiom, not a real `ModalBottomSheet`) showing the folder's live contents, with inline rename and
+  an "Add here" header action reused by `AppContextMenu`'s own folder-preview page.
+- **`HomeScreen`'s `DockIcon`/`AppRow`** now branch on `PlacedItem` instead of raw `AppInfo`,
+  rendering `FolderDockIcon`/`FolderRow` (a `medium`/12dp 2×2 mini-grid tile, `FolderTileGlyph`)
+  for a `PlacedItem.FolderItem` — this now applies to the Favorites list too, not just the Dock.
+
+### Tests
+Repository tests for every new observer/CRUD method across all four repositories, `FolderDao`
+hydration/cascade/uniqueness tests, `ExportBackupUseCase`/`ImportBackupUseCase` round-trip tests
+for folders + all four placement kinds, and UI test coverage for the picker tabs, Settings'
+Folders row/screen, and `FolderDetailScreen`/`FolderAppPickerScreen`.
+
+---
+
+## Folders — Phase 3: membership-aware Add/Remove for apps and folders (Dock + Favorites)
+
+Phase 2 gave folders parity with apps for *placement* (both can occupy a Dock/Favorites slot,
+both round-trip through backup), but the long-press menu only ever offered **Add** — there was no
+way to remove a placed app from Home/Drawer's long-press menu, and folder tiles had no
+Favorites/Dock row at all (Rename only). Root cause: `ObserveQuickAddStateUseCase`/`QuickAddState`
+was capacity-only — it hid the Add row once a list was full, but never checked whether the
+specific item was *already* a member, so nothing could know "Remove" applied.
+
+### Domain
+- **`ObserveQuickAddStateUseCase`** reworked around a new sealed `QuickPlacementAction`
+  (`Add(isFacetOverride)` / `Remove(isFacetOverride)`). `QuickAddState` is now
+  `data class QuickAddState(val favoritesAction: QuickPlacementAction?, val dockAction: QuickPlacementAction?)`
+  — `null` still hides the row (not a member *and* the list is full), but a member now always gets
+  `Remove` regardless of capacity. Dropped the old `operator fun invoke(): Flow<QuickAddState>`
+  (it was capacity-only and shared globally, the wrong shape once membership matters per-item) for
+  two one-shot suspend functions, `forApp(app: AppInfo)` and `forFolder(folder: Folder)`, each
+  resolving the active facet's override via `facetRepository.getById(activeFacetId)` (matching
+  `AddAppToDockUseCase`'s own style) then checking `items.any { ... }` against the resolved
+  `List<PlacedItem>` for that specific app's component or that specific folder's id.
+- New **`RemoveAppFromDockUseCase`**/**`RemoveAppFromFavoritesUseCase`** mirror
+  `AddAppToDockUseCase`/`AddAppToFavoritesUseCase`'s override resolution exactly, calling
+  `removeDockApp`/`removeFavorite` instead of the add methods.
+
+### UI
+- **`AppContextMenu`** — the old `addToFavoritesOverride: Boolean?`/`onAddToFavorites`/
+  `addToDockOverride: Boolean?`/`onAddToDock` params became
+  `onRequestQuickAddState: suspend (AppInfo) -> QuickAddState`, `onFavoritesAction`, `onDockAction`
+  (all keyed on the new `QuickPlacementAction`). Fetched in the same `LaunchedEffect(expanded, app)`
+  block as shortcuts (fetched fresh only when the menu opens). `QuickPlacementAction` carries a
+  nullable `facetName` (the active facet's real name when overriding, `null` for the launcher-wide
+  default) rather than a plain `isFacetOverride: Boolean` — the row's own label never changes
+  ("Add to Favorites"/"Remove from Dock", via `quickPlacementLabel()`), and a small trailing
+  `QuickPlacementBadge` pill names the target list ("Global" or the facet's name, via
+  `quickPlacementBadgeText()`). Decided explicitly over folding that distinction into the sentence
+  itself (e.g. "Add to facet favorites") — see chat history; a `Global`/name badge reads
+  unambiguously where the old "Favorites" vs "facet favorites" pair didn't. `AppContextMenuItem`
+  gained an optional `trailingContent` slot and its label `Text` a `weight(1f)` to push it to the
+  row's trailing edge; the badge itself uses `MaterialTheme.shapes.small` (8dp, CLAUDE.md's own
+  Chips token) rather than a fully-rounded pill, and stays `Muted`-only (no accent tint) to match
+  this menu's existing single-tone restraint. Existing test tags
+  (`app_context_menu_add_to_favorites`/`_add_to_dock`) kept for both Add and Remove rows rather
+  than renamed.
+- **`FolderTileContextMenu`** gained the same two rows (Favorites/Dock, same `quickPlacementLabel`/
+  `QuickPlacementBadge` treatment, same `onRequestQuickAddState`/`onFavoritesAction`/`onDockAction`
+  shape but keyed on `Folder`) — closing the gap Phase 2 left open (folder tiles had Rename only).
+- **`DrawerViewModel`** — dropped the old shared `quickAddState: StateFlow<QuickAddState>` for
+  `quickAddStateForApp`/`quickAddStateForFolder` (fetch-on-open, like `getShortcuts`) plus
+  `onFavoritesAction`/`onDockAction`/`onFolderFavoritesAction`/`onFolderDockAction`, each
+  dispatching to the matching Add/Remove use case based on the tapped `QuickPlacementAction`.
+- **`HomeScreen`** threaded the new params (app + folder variants) through every intermediate
+  composable — `AppRow`, `DockIcon`/`SingleAppDockIcon`/`FolderDockIcon`, `FolderRow` — down into
+  the `AppContextMenu`/`FolderTileContextMenu` call sites. **`AppDrawerScreen`** got the app-only
+  swap (Drawer has no folder tiles). **`HomeDrawerRoute`** rewired both screens' call sites
+  accordingly.
+
+### Tests
+Rewrote `ObserveQuickAddStateUseCaseTest` for `forApp`/`forFolder` + membership (mocking
+`facetRepository.getById`, not `observeFacets()`); new `RemoveAppFromDockUseCaseTest`/
+`RemoveAppFromFavoritesUseCaseTest`/`AddFolderToDockUseCaseTest`/`RemoveFolderFromDockUseCaseTest`/
+`AddFolderToFavoritesUseCaseTest`/`RemoveFolderFromFavoritesUseCaseTest` (mirroring
+`AddAppToDockUseCaseTest`'s fixture style). Rewrote `AppContextMenuTest`'s Favorites/Dock cases for
+the new `onRequestQuickAddState` shape and added Remove-row cases; new `FolderTileContextMenuTest`
+(previously missing entirely) covers Rename plus both new rows' Add/Remove/facet-override wording.
+`DrawerViewModelTest`/`HomeDrawerRouteTest`/`KeyboardDismissalTest` updated for the new
+`DrawerViewModel` constructor shape. Full `./gradlew test` green. On-device on
+`Medium_Phone_API_36.1`: `FolderTileContextMenuTest` (12/12) passed cleanly; `AppContextMenuTest`
+initially showed one pre-existing, unrelated failure —
+`tappingAnExistingFolderPreviewsItRatherThanAddingImmediately` asserted on `onNodeWithText("Games")`
+while a folder-candidate row and `FolderContentsSheet`'s own header both showed that text at once
+(the underlying `ModalBottomSheet` isn't dismissed while the preview `Dialog` opens on top of it —
+unrelated to this phase's own rows) — fixed by scoping the assertion to the sheet itself
+(`onNode(hasTestTag("folder_contents_sheet") and hasAnyDescendant(hasText("Games")))`).

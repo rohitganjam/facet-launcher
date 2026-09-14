@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -70,6 +71,7 @@ fun SettingsScreen(
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
+    onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
     modifier: Modifier = Modifier,
@@ -88,6 +90,7 @@ fun SettingsScreen(
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
+        onNavigateToFolders = onNavigateToFolders,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
         onRequestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
@@ -107,6 +110,7 @@ private fun SettingsContent(
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
+    onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
     onRequestDefaultLauncherIntent: () -> Intent,
@@ -196,7 +200,7 @@ private fun SettingsContent(
                     SettingsCard {
                         ClickableRow(
                             title = "Dock",
-                            subtitle = "${uiState.dockApps.size} Dock Apps",
+                            subtitle = dockSummary(uiState.dockItems),
                             onClick = onNavigateToDockSettings,
                             testTag = "dock_settings_row",
                             trailing = { NavigationChevron() },
@@ -227,6 +231,14 @@ private fun SettingsContent(
                             },
                             onClick = onNavigateToNotificationSettings,
                             testTag = "notification_settings_row",
+                            trailing = { NavigationChevron() },
+                        )
+                        CardDivider()
+                        ClickableRow(
+                            title = "Folders",
+                            subtitle = folderCountSummary(uiState.folderCount),
+                            onClick = onNavigateToFolders,
+                            testTag = "folders_settings_row",
                             trailing = { NavigationChevron() },
                         )
                     }
@@ -304,6 +316,18 @@ private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEna
     return "Show as $layout · Contact search $contactSearch · Settings search $settingsSearch"
 }
 
+/** "4 Dock Apps" / "3 Dock Apps, 1 Folder" — Dock capacity is counted by item (a folder costs one slot regardless of how many apps it holds), so this mirrors that rather than the old flat app count, which silently dropped folder members entirely. */
+private fun dockSummary(items: List<PlacedItem>): String {
+    val folderCount = items.count { it is PlacedItem.FolderItem }
+    val appCount = items.size - folderCount
+    val appsPart = "$appCount " + if (appCount == 1) "Dock App" else "Dock Apps"
+    return if (folderCount == 0) appsPart else "$appsPart, $folderCount " + if (folderCount == 1) "Folder" else "Folders"
+}
+
+/** "No folders yet" / "1 folder" / "3 folders" for the Folders row's own subtitle — the full folder library's size, independent of where (if anywhere) each folder is placed. */
+private fun folderCountSummary(count: Int): String =
+    if (count == 0) "No folders yet" else "$count " + if (count == 1) "folder" else "folders"
+
 /** "Dots"/"Counts" — the actual configured badge style, not a generic "dots/badges" placeholder. */
 private fun NotificationBadgeStyle.notificationsSummaryLabel(): String = when (this) {
     NotificationBadgeStyle.DOT -> "Dots"
@@ -372,8 +396,8 @@ private fun SettingsScreenPreview() {
     FacetLauncherTheme {
         SettingsContent(
             uiState = SettingsUiState(
-                dockApps = (1..4).map {
-                    AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null)
+                dockItems = (1..4).map {
+                    PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null))
                 },
             ),
             onBack = {},
@@ -385,6 +409,7 @@ private fun SettingsScreenPreview() {
             onNavigateToHomeAppsListSettings = {},
             onNavigateToAppDrawerSettings = {},
             onNavigateToNotificationSettings = {},
+            onNavigateToFolders = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
             onRequestDefaultLauncherIntent = { Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS) },

@@ -216,15 +216,17 @@ fun OnboardingScreen(
         }
 
         when (subScreen) {
+            // No folder can exist yet this early in first-run — showFoldersTab = false takes
+            // the user straight to the apps list, matching this picker's pre-Folders behavior.
             OnboardingSubScreen.DOCK_PICKER -> if (dockPickerViewModel != null) {
-                DockAppPickerScreen(onDone = { subScreen = null }, viewModel = dockPickerViewModel)
+                DockAppPickerScreen(onDone = { subScreen = null }, showFoldersTab = false, viewModel = dockPickerViewModel)
             } else {
-                DockAppPickerScreen(onDone = { subScreen = null })
+                DockAppPickerScreen(onDone = { subScreen = null }, showFoldersTab = false)
             }
             OnboardingSubScreen.FAVORITES_PICKER -> if (favoritesPickerViewModel != null) {
-                FavoritesPickerScreen(onDone = { subScreen = null }, viewModel = favoritesPickerViewModel)
+                FavoritesPickerScreen(onDone = { subScreen = null }, showFoldersTab = false, viewModel = favoritesPickerViewModel)
             } else {
-                FavoritesPickerScreen(onDone = { subScreen = null })
+                FavoritesPickerScreen(onDone = { subScreen = null }, showFoldersTab = false)
             }
             null -> {}
         }

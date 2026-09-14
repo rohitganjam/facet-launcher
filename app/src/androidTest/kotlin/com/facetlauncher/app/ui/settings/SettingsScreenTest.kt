@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
@@ -44,6 +45,7 @@ class SettingsScreenTest {
         onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToAppDrawerSettings: () -> Unit = {},
         onNavigateToNotificationSettings: () -> Unit = {},
+        onNavigateToFolders: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
     ): SettingsRepository {
@@ -58,10 +60,11 @@ class SettingsScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
                 SettingsViewModel(
-                    ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository),
+                    ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
                     DefaultLauncherRepository(context),
                 )
             }
@@ -76,6 +79,7 @@ class SettingsScreenTest {
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
                     onNavigateToNotificationSettings = onNavigateToNotificationSettings,
+                    onNavigateToFolders = onNavigateToFolders,
                     onNavigateToPermissions = onNavigateToPermissions,
                     onNavigateToBackupRestore = onNavigateToBackupRestore,
                     viewModel = viewModel,
@@ -138,6 +142,21 @@ class SettingsScreenTest {
 
         // When tapping it
         composeRule.onNodeWithTag("appearance_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun foldersRowIsClickableAndShowsNoFoldersYetWhenNoneExist() {
+        // Given the settings screen, scrolled to the new "Folders" row under HOME & APPS
+        var navigated = false
+        setContent(onNavigateToFolders = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("folders_settings_row"))
+        composeRule.onNodeWithTag("folders_settings_row").assertTextContains("No folders yet", substring = true)
+
+        // When tapping it
+        composeRule.onNodeWithTag("folders_settings_row").performClick()
 
         // Then its callback fires
         assertEquals(true, navigated)

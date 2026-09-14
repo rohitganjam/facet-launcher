@@ -6,23 +6,37 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.data.model.PlacedItem
 import javax.inject.Inject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 /**
- * Backs the "Add to Favorites"/"Add to Dock" rows in [com.facetlauncher.app.ui.components.AppContextMenu].
- * A `null` field hides its row entirely (that list is already at its cap); a non-null [Boolean]
- * shows it and says whether it reads "Add to facet favorites/dock" (the active facet is
- * overriding its own) or "Add to Favorites/Dock" (the launcher-wide default).
+ * Whether the "Add to X"/"Remove from X" row shows, and which action it performs. [facetName] is
+ * `null` for the launcher-wide default list or the active facet's own real name when it's
+ * overriding — [com.facetlauncher.app.ui.components.AppContextMenu] renders it as a small
+ * trailing badge next to the row's own unconditional "Add to Favorites"/"Add to Dock" label
+ * ("Global" when `null`, the facet's name otherwise) rather than folding it into the sentence,
+ * so the two cases read unambiguously (see chat history).
+ */
+sealed interface QuickPlacementAction {
+    val facetName: String?
+    data class Add(override val facetName: String?) : QuickPlacementAction
+    data class Remove(override val facetName: String?) : QuickPlacementAction
+}
+
+/**
+ * Backs the Favorites/Dock rows in [com.facetlauncher.app.ui.components.AppContextMenu] and
+ * [com.facetlauncher.app.ui.components.FolderTileContextMenu]. A `null` field hides its row
+ * entirely (the item isn't already a member AND the list is at its cap); a non-null
+ * [QuickPlacementAction] shows the row as either Add or Remove, naming either the launcher-wide
+ * default list or the active facet's own (see [QuickPlacementAction]'s own doc).
  */
 data class QuickAddState(
-    val favoritesOverride: Boolean? = null,
-    val dockOverride: Boolean? = null,
+    val favoritesAction: QuickPlacementAction? = null,
+    val dockAction: QuickPlacementAction? = null,
 )
 
 /**
@@ -40,33 +54,54 @@ class ObserveQuickAddStateUseCase @Inject constructor(
     private val dockAppRepository: DockAppRepository,
     private val facetDockAppRepository: FacetDockAppRepository,
 ) {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    operator fun invoke(): Flow<QuickAddState> {
-        val activeFacet = combine(settingsRepository.settings, facetRepository.observeFacets()) { settings, facets ->
-            facets.find { it.id == settings.activeFacetId }
+    suspend fun forApp(app: AppInfo): QuickAddState {
+        val component = app.packageName to app.activityName
+        return resolve(
+            isMember = { it is PlacedItem.SingleApp && (it.app.packageName to it.app.activityName) == component },
+        )
+    }
+
+    suspend fun forFolder(folder: Folder): QuickAddState {
+        return resolve(
+            isMember = { it is PlacedItem.FolderItem && it.folder.id == folder.id },
+        )
+    }
+
+    private suspend fun resolve(isMember: (PlacedItem) -> Boolean): QuickAddState {
+        val activeFacetId = settingsRepository.settings.first().activeFacetId
+        val facet = facetRepository.getById(activeFacetId)
+
+        val favoritesAction: QuickPlacementAction?
+        if (facet != null && facet.overridingFavorites) {
+            val favoriteItems = favoriteAppRepository.observeFavoriteItems(facet.id).first()
+            favoritesAction = quickPlacementAction(favoriteItems, isMember, facet.name, AppListLimits.MAX_FAVORITES)
+        } else {
+            val favoriteItems = defaultFavoriteAppRepository.observeDefaultItems().first()
+            favoritesAction = quickPlacementAction(favoriteItems, isMember, facetName = null, AppListLimits.MAX_FAVORITES)
         }
 
-        val favorites = activeFacet.flatMapLatest { facet ->
-            if (facet?.overridingFavorites == true) {
-                favoriteAppRepository.observeFavoritesForFacet(facet.id).map { it.size to true }
-            } else {
-                defaultFavoriteAppRepository.observeDefaultFavorites().map { it.size to false }
-            }
+        val dockAction: QuickPlacementAction?
+        if (facet != null && facet.overrideDock) {
+            val dockItems = facetDockAppRepository.observeDockItems(facet.id).first()
+            dockAction = quickPlacementAction(dockItems, isMember, facet.name, DockAppRepository.MAX_APPS)
+        } else {
+            val dockItems = dockAppRepository.observeDockItems().first()
+            dockAction = quickPlacementAction(dockItems, isMember, facetName = null, DockAppRepository.MAX_APPS)
         }
 
-        val dock = activeFacet.flatMapLatest { facet ->
-            if (facet?.overrideDock == true) {
-                facetDockAppRepository.observeDockAppsForFacet(facet.id).map { it.size to true }
-            } else {
-                dockAppRepository.observeDockApps().map { it.size to false }
-            }
-        }
+        return QuickAddState(favoritesAction = favoritesAction, dockAction = dockAction)
+    }
 
-        return combine(favorites, dock) { (favoritesCount, favoritesOverride), (dockCount, dockOverride) ->
-            QuickAddState(
-                favoritesOverride = favoritesOverride.takeIf { favoritesCount < AppListLimits.MAX_FAVORITES },
-                dockOverride = dockOverride.takeIf { dockCount < DockAppRepository.MAX_APPS },
-            )
+    private fun quickPlacementAction(
+        items: List<PlacedItem>,
+        isMember: (PlacedItem) -> Boolean,
+        facetName: String?,
+        maxItems: Int,
+    ): QuickPlacementAction? {
+        return when {
+            items.any(isMember) -> QuickPlacementAction.Remove(facetName)
+            items.size < maxItems -> QuickPlacementAction.Add(facetName)
+            else -> null
         }
     }
 }

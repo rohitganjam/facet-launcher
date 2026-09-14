@@ -22,6 +22,7 @@ import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -67,8 +68,8 @@ class FacetCarouselScreenTest {
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val usageStatsRepository = com.facetlauncher.app.data.UsageStatsRepository(
                     context.getSystemService(android.app.usage.UsageStatsManager::class.java),
                     appRepository
@@ -79,8 +80,8 @@ class FacetCarouselScreenTest {
                 )
                 val calendarPermissionRepository = com.facetlauncher.app.data.CalendarPermissionRepository(context)
                 val calendarRepository = com.facetlauncher.app.data.CalendarRepository(context.contentResolver)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val wallpaperRepository = com.facetlauncher.app.data.WallpaperRepository(
                     android.app.WallpaperManager.getInstance(context),
                 )

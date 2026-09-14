@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveOverride
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -16,6 +15,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
@@ -24,9 +24,9 @@ data class HomeUiState(
     val settings: LauncherSettings = LauncherSettings(),
     /** True until the first real state emission arrives — see [HomeViewModel]'s own doc for why this exists and how it resolves. */
     val isLoading: Boolean = true,
-    val dockApps: List<AppInfo> = emptyList(),
-    /** Favorites, Recents, or Most Used, depending on the active facet's [ListContentMode]. */
-    val appListItems: List<AppInfo> = emptyList(),
+    val dockApps: List<PlacedItem> = emptyList(),
+    /** Favorites, Recents, or Most Used, depending on the active facet's [ListContentMode]. Only the Favorites case can ever contain a [PlacedItem.FolderItem]. */
+    val appListItems: List<PlacedItem> = emptyList(),
     val facets: List<FacetEntity> = emptyList(),
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),

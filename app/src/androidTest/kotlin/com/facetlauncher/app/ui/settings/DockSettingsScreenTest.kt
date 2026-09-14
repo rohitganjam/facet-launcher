@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -51,8 +52,8 @@ class DockSettingsScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val facetRepository = FacetRepository(database.facetDao())
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
@@ -130,8 +131,8 @@ class DockSettingsScreenTest {
                     SavedStateHandle(mapOf("facetId" to pid)),
                     settingsRepository,
                     facetRepo,
-                    DockAppRepository(database.dockAppDao(), appRepository),
-                    FacetDockAppRepository(database.facetDockAppDao(), appRepository),
+                    DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }

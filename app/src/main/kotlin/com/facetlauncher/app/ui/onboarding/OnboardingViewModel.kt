@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +66,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun reorderFavorites(orderedApps: List<AppInfo>) {
-        viewModelScope.launch { defaultFavoriteAppRepository.reorderFavorites(orderedApps) }
+        viewModelScope.launch { defaultFavoriteAppRepository.reorderItems(orderedApps.map { PlacedItem.SingleApp(it) }) }
     }
 
     /** Clears the default favorites list in one action, instead of unchecking every app in the picker. */

@@ -23,10 +23,12 @@ class AddAppToDockUseCase @Inject constructor(
         val activeFacetId = settingsRepository.settings.first().activeFacetId
         val facet = facetRepository.getById(activeFacetId)
         if (facet?.overrideDock == true) {
-            val position = facetDockAppRepository.observeDockAppsForFacet(facet.id).first().size
+            // Item-counted, not app-counted — a folder occupies a slot too, and an app-only count
+            // would let a new app's computed position collide with an existing folder's.
+            val position = facetDockAppRepository.observeDockItems(facet.id).first().size
             facetDockAppRepository.addDockApp(facet.id, app, position)
         } else {
-            val position = dockAppRepository.observeDockApps().first().size
+            val position = dockAppRepository.observeDockItems().first().size
             dockAppRepository.addDockApp(app, position)
         }
     }

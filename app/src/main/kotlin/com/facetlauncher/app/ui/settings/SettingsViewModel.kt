@@ -34,8 +34,9 @@ class SettingsViewModel @Inject constructor(
     ) { screenState, isDefaultLauncher ->
         SettingsUiState(
             settings = screenState.settings,
-            dockApps = screenState.dockApps,
+            dockItems = screenState.dockItems,
             defaultFavorites = screenState.defaultFavorites,
+            folderCount = screenState.folderCount,
             isDefaultLauncher = isDefaultLauncher,
             isLoading = false,
         )

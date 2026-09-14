@@ -2,7 +2,9 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.DefaultFavoriteAppDao
 import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
+import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +52,11 @@ class DefaultFavoriteAppRepositoryTest {
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
+    private fun repository(dao: DefaultFavoriteAppDao, appRepository: AppRepository): DefaultFavoriteAppRepository {
+        val folderRepository = FolderRepository(FakeFolderDao(), appRepository)
+        return DefaultFavoriteAppRepository(dao, FakeDefaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+    }
+
     @Test
     fun `default favorites list reflects stored entries hydrated against installed apps, ordered by position`() = runTest {
         // Given two installed apps and default-favorite entries referencing them out of position order
@@ -62,7 +69,7 @@ class DefaultFavoriteAppRepositoryTest {
         dao.upsert(DefaultFavoriteAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
 
         // When observing the default favorites list
-        val result = DefaultFavoriteAppRepository(dao, appRepository).observeDefaultFavorites().first()
+        val result = repository(dao, appRepository).observeDefaultFavorites().first()
 
         // Then it returns the hydrated AppInfo list, ordered by position
         assertEquals(listOf(a, b), result)
@@ -77,7 +84,7 @@ class DefaultFavoriteAppRepositoryTest {
         dao.upsert(DefaultFavoriteAppEntity(packageName = "com.example.uninstalled", activityName = ".Main", position = 0))
 
         // When observing the default favorites list
-        val result = DefaultFavoriteAppRepository(dao, appRepository).observeDefaultFavorites().first()
+        val result = repository(dao, appRepository).observeDefaultFavorites().first()
 
         // Then the unresolvable entry is collapsed out, not shown as a dead tile
         assertEquals(emptyList<AppInfo>(), result)
@@ -94,7 +101,7 @@ class DefaultFavoriteAppRepositoryTest {
         dao.upsert(DefaultFavoriteAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
 
         val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
-        val collectJob = launch { DefaultFavoriteAppRepository(dao, appRepository).observeDefaultFavorites().collect { emissions.send(it) } }
+        val collectJob = launch { repository(dao, appRepository).observeDefaultFavorites().collect { emissions.send(it) } }
         assertEquals(listOf(a), emissions.receive())
 
         // When AppRepository's live flow reports it uninstalled (F12's long-press menu, or any
@@ -107,22 +114,41 @@ class DefaultFavoriteAppRepositoryTest {
     }
 
     @Test
-    fun `reorderFavorites persists the new order`() = runTest {
+    fun `reorderItems persists the new order`() = runTest {
         // Given two default favorites in one order
         val a = appInfo('a')
         val b = appInfo('b')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeDefaultFavoriteAppDao()
-        val repository = DefaultFavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(a, position = 0)
         repository.addFavorite(b, position = 1)
 
         // When reordered
-        repository.reorderFavorites(listOf(b, a))
+        repository.reorderItems(listOf(PlacedItem.SingleApp(b), PlacedItem.SingleApp(a)))
 
         // Then the new order is reflected
         assertEquals(listOf(b, a), repository.observeDefaultFavorites().first())
+    }
+
+    @Test
+    fun `a folder placed in the default favorites list is never dropped from observeDefaultItems even with zero apps`() = runTest {
+        // Given a folder with no members, placed in the default favorites list
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val dao = FakeDefaultFavoriteAppDao()
+        val folderDao = FakeFolderDao()
+        val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
+        val folderRepository = FolderRepository(folderDao, appRepository)
+        val repository = DefaultFavoriteAppRepository(dao, FakeDefaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+
+        // When placing it
+        repository.placeFolder(folderId, position = 0)
+
+        // Then it's still emitted, not hidden for having zero apps
+        val folder = com.facetlauncher.app.data.model.Folder(folderId, "Games", emptyList())
+        assertEquals(listOf(PlacedItem.FolderItem(folder)), repository.observeDefaultItems().first())
     }
 
     @Test
@@ -132,7 +158,7 @@ class DefaultFavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
         val dao = FakeDefaultFavoriteAppDao()
-        val repository = DefaultFavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(a, position = 0)
 
         // When it is removed

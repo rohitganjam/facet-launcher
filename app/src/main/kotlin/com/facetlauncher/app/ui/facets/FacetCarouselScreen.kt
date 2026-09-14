@@ -75,6 +75,8 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
@@ -86,6 +88,7 @@ import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.ClockBlock
 import com.facetlauncher.app.ui.home.DockIcon
+import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
 import com.facetlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.facetlauncher.app.ui.theme.Accent
@@ -424,7 +427,7 @@ private fun FacetPreviewPage(
     facet: FacetEntity,
     /** Whether this is the facet currently applied to Home — distinct from which page the pager is centered on. */
     isActive: Boolean,
-    favorites: List<AppInfo>,
+    favorites: List<PlacedItem>,
     listContentMode: ListContentMode,
     clockTemplateId: ClockTemplateId,
     clockFontOption: ClockFontOption,
@@ -451,7 +454,7 @@ private fun FacetPreviewPage(
     appRowPresentation: AppRowPresentation,
     appLabelColorOption: ClockColorOption,
     homeAppsFontWeight: FontWeightOption,
-    dockApps: List<AppInfo>,
+    dockApps: List<PlacedItem>,
     dockDisplayMode: DockDisplayMode,
     canDelete: Boolean,
     onEditFacetClick: () -> Unit,
@@ -581,30 +584,48 @@ private fun FacetPreviewPage(
                         Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
                     } else {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            favorites.forEach { app ->
-                                AppRow(
-                                    app = app,
-                                    onClick = onCardClick,
-                                    badgeCount = null,
-                                    badgeStyle = NotificationBadgeStyle.DOT,
-                                    onRequestShortcuts = { emptyList() },
-                                    onLaunchShortcut = {},
-                                    position = appRowPosition,
-                                    presentation = appRowPresentation,
-                                    labelColor = appLabelColorOption.resolve(),
-                                    labelFontWeight = homeAppsFontWeight.resolve(),
-                                    // This card is a read-only preview of a facet's Home layout,
-                                    // not a place to manage apps — long-press must not open the
-                                    // real Uninstall/App Info/shortcuts menu (see chat history).
-                                    enableLongPressMenu = false,
-                                    // Uses AppRow's own real Home density (16dp) — the scaled
-                                    // LocalDensity above shrinks it proportionally already, so no
-                                    // fixed override is needed here (see chat history).
-                                    // This card can be present in the same semantics tree as
-                                    // Home's own real AppRow for the same favorite app — a
-                                    // distinct prefix keeps onNodeWithTag lookups unambiguous.
-                                    testTagPrefix = "facet_preview_",
-                                )
+                            favorites.forEach { item ->
+                                when (item) {
+                                    is PlacedItem.SingleApp -> AppRow(
+                                        app = item.app,
+                                        onClick = onCardClick,
+                                        badgeCount = null,
+                                        badgeStyle = NotificationBadgeStyle.DOT,
+                                        onRequestShortcuts = { emptyList() },
+                                        onLaunchShortcut = {},
+                                        position = appRowPosition,
+                                        presentation = appRowPresentation,
+                                        labelColor = appLabelColorOption.resolve(),
+                                        labelFontWeight = homeAppsFontWeight.resolve(),
+                                        // This card is a read-only preview of a facet's Home layout,
+                                        // not a place to manage apps — long-press must not open the
+                                        // real Uninstall/App Info/shortcuts menu (see chat history).
+                                        enableLongPressMenu = false,
+                                        // Uses AppRow's own real Home density (16dp) — the scaled
+                                        // LocalDensity above shrinks it proportionally already, so no
+                                        // fixed override is needed here (see chat history).
+                                        // This card can be present in the same semantics tree as
+                                        // Home's own real AppRow for the same favorite app — a
+                                        // distinct prefix keeps onNodeWithTag lookups unambiguous.
+                                        testTagPrefix = "facet_preview_",
+                                    )
+                                    is PlacedItem.FolderItem -> FolderRow(
+                                        folder = item.folder,
+                                        onAppClick = {},
+                                        onRequestShortcuts = { emptyList() },
+                                        onLaunchShortcut = {},
+                                        onRemoveFromFolder = { _, _ -> },
+                                        onRenameFolder = { _, _ -> },
+                                        drawerPresentation = DrawerPresentation.LIST,
+                                        position = appRowPosition,
+                                        presentation = appRowPresentation,
+                                        labelColor = appLabelColorOption.resolve(),
+                                        labelFontWeight = homeAppsFontWeight.resolve(),
+                                        enableLongPressMenu = false,
+                                        onClick = onCardClick,
+                                        testTagPrefix = "facet_preview_",
+                                    )
+                                }
                             }
                         }
                     }
@@ -618,11 +639,11 @@ private fun FacetPreviewPage(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
-                            dockApps.forEach { app ->
+                            dockApps.forEach { item ->
                                 DockIcon(
-                                    app = app,
+                                    item = item,
                                     displayMode = dockDisplayMode,
-                                    onClick = onCardClick,
+                                    onClick = { onCardClick() },
                                     labelColor = appLabelColorOption.resolve(),
                                     labelFontWeight = homeAppsFontWeight.resolve(),
                                     // Same read-only-preview reasoning as the AppRow above.

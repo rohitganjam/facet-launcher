@@ -25,6 +25,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -67,10 +68,11 @@ class OnboardingScreenTest {
             val viewModels = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "onboarding-test-${System.nanoTime()}.preferences_pb") },
@@ -88,8 +90,8 @@ class OnboardingScreenTest {
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
                     // FavoritesPickerScreenTest — an empty SavedStateHandle means the launcher-wide
                     // default dock/favorites, matching onboarding's own scope.
-                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, facetDockAppRepository),
-                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, favoriteAppRepository, defaultFavoriteAppRepository),
+                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, facetDockAppRepository, folderRepository),
+                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, favoriteAppRepository, defaultFavoriteAppRepository, folderRepository),
                 )
             }
             FacetLauncherTheme {
@@ -131,6 +133,28 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(finished)
+    }
+
+    @Test
+    fun `dock and favorites pickers reached from onboarding skip the Folders tab`() {
+        // No folder can exist yet this early in first-run (they're only ever created via the
+        // Drawer/Search's own "Add to folder" long-press flow, unreachable from onboarding), so
+        // both pickers should go straight to the apps list rather than offering a dead-end tab.
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_manage_dock").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("dock_picker_tab_folders").assertDoesNotExist()
+        composeRule.onNodeWithTag("dock_picker_search").assertExists()
+        composeRule.onNodeWithTag("back_button").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_edit_favorites").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("favorites_picker_tab_folders").assertDoesNotExist()
+        composeRule.onNodeWithTag("favorites_picker_search").assertExists()
     }
 
     @Test

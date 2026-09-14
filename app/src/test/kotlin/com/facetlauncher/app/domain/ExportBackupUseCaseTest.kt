@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
@@ -18,6 +19,7 @@ import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -35,6 +37,9 @@ class ExportBackupUseCaseTest {
     private val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
     private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+    private val folderRepository = mock(FolderRepository::class.java).also {
+        runBlocking { `when`(it.getRawFolders()).thenReturn(emptyList()) }
+    }
     private val backupRepository = mock(BackupRepository::class.java)
 
     private val useCase = ExportBackupUseCase(
@@ -45,6 +50,7 @@ class ExportBackupUseCaseTest {
         facetDockAppRepository,
         defaultFavoriteAppRepository,
         widgetPlacementRepository,
+        folderRepository,
         backupRepository,
     )
 
@@ -63,9 +69,13 @@ class ExportBackupUseCaseTest {
         `when`(facetDockAppRepository.getRawDockAppsForFacet(7)).thenReturn(
             listOf(FacetDockAppEntity(id = 1, facetId = 7, packageName = "com.example.d", activityName = ".Main", position = 0)),
         )
+        `when`(facetDockAppRepository.getRawDockFolderPlacementsForFacet(7)).thenReturn(emptyList())
+        `when`(favoriteAppRepository.getRawFavoriteFolderPlacementsForFacet(7)).thenReturn(emptyList())
         `when`(defaultFavoriteAppRepository.getRawDefaultFavorites()).thenReturn(
             listOf(DefaultFavoriteAppEntity(id = 1, packageName = "com.example.c", activityName = ".Main", position = 0)),
         )
+        `when`(dockAppRepository.getRawDockFolderPlacements()).thenReturn(emptyList())
+        `when`(defaultFavoriteAppRepository.getRawDefaultFavoriteFolderPlacements()).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(
             flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1))),
         )
@@ -98,7 +108,9 @@ class ExportBackupUseCaseTest {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(emptyList()))
         `when`(dockAppRepository.getRawDockApps()).thenReturn(emptyList())
+        `when`(dockAppRepository.getRawDockFolderPlacements()).thenReturn(emptyList())
         `when`(defaultFavoriteAppRepository.getRawDefaultFavorites()).thenReturn(emptyList())
+        `when`(defaultFavoriteAppRepository.getRawDefaultFavoriteFolderPlacements()).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         val uri = mock(Uri::class.java)
 

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -39,7 +40,7 @@ class DockAppPickerScreenTest {
     private fun setContent(
         onDone: () -> Unit = {},
         facetId: Long? = null,
-        seed: (AppRepository, DockAppRepository, FacetDockAppRepository) -> Unit = { _, _, _ -> },
+        seed: (AppRepository, DockAppRepository, FacetDockAppRepository, FolderRepository) -> Unit = { _, _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -47,17 +48,19 @@ class DockAppPickerScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), appRepository)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                seed(appRepository, dockAppRepository, facetDockAppRepository)
+                seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository)
                 DockAppPickerViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     GetInstalledAppsUseCase(appRepository),
                     dockAppRepository,
                     facetDockAppRepository,
+                    folderRepository,
                 )
             }
             FacetLauncherTheme {
@@ -86,7 +89,7 @@ class DockAppPickerScreenTest {
         // repository the ViewModel uses, rather than assuming a specific package is visible —
         // package-visibility rules can differ between this test APK and the app under test)
         var targetApp: AppInfo? = null
-        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "dock_picker_row_${app.packageName}"
 
@@ -112,7 +115,7 @@ class DockAppPickerScreenTest {
     @Test
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already in the dock, so both "IN DOCK" and "ALL APPS" render
-        setContent { appRepository, dockAppRepository, _ ->
+        setContent { appRepository, dockAppRepository, _, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             installed.take(2).forEachIndexed { index, app -> runBlocking { dockAppRepository.addDockApp(app, index) } }
         }
@@ -132,7 +135,7 @@ class DockAppPickerScreenTest {
     fun inDockAppsRenderFirstUnderTheirOwnSectionHeader() {
         // Given two real apps already in the dock
         var dockApps: List<AppInfo> = emptyList()
-        setContent { appRepository, dockAppRepository, _ ->
+        setContent { appRepository, dockAppRepository, _, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             dockApps = installed.take(2)
             dockApps.forEachIndexed { index, app -> runBlocking { dockAppRepository.addDockApp(app, index) } }
@@ -152,7 +155,7 @@ class DockAppPickerScreenTest {
     fun uncheckingIsAllowedDownToAnEmptyDock() {
         // Given a dock with a single app — no floor blocks removing it (MIN_APPS = 0)
         var onlyDockApp: AppInfo? = null
-        setContent { appRepository, dockAppRepository, _ ->
+        setContent { appRepository, dockAppRepository, _, _ ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             onlyDockApp = app
             runBlocking { dockAppRepository.addDockApp(app, 0) }
@@ -183,7 +186,7 @@ class DockAppPickerScreenTest {
         // Given the picker opened for facet 7 (not the launcher-wide default) with one app
         // already in facet 7's own dock and NOT in the shared default dock
         var seededApp: AppInfo? = null
-        setContent(facetId = 7L) { appRepository, dockAppRepository, facetDockAppRepository ->
+        setContent(facetId = 7L) { appRepository, dockAppRepository, facetDockAppRepository, _ ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
             runBlocking { facetDockAppRepository.addDockApp(7L, app, 0) }
@@ -202,6 +205,58 @@ class DockAppPickerScreenTest {
         // own dock, not the (empty) shared one
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertIsOn() }.isSuccess
+        }
+    }
+
+    @Test
+    fun foldersTabCheckboxReflectsWhetherTheFolderIsPlacedInThisDock() {
+        // Given a folder that exists but isn't placed in the dock yet
+        var folderId: Long? = null
+        setContent { _, _, _, folderRepository ->
+            folderId = runBlocking { folderRepository.createFolder("Games") }
+        }
+        val id = requireNotNull(folderId)
+
+        composeRule.onNodeWithTag("dock_picker_tab_folders").performClick()
+        // The tab switch now slides+fades the panel in — give it a moment to land before querying.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").assertIsOff() }.isSuccess
+        }
+
+        // When checking it
+        composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").performClick()
+
+        // Then it's placed — the checkbox reflects placement-in-this-list, not folder existence
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").assertIsOn() }.isSuccess
+        }
+    }
+
+    @Test
+    fun uncheckingAFolderInThePickerUnplacesItWithoutDeletingIt() {
+        // Given a folder already placed in the dock
+        var folderId: Long? = null
+        setContent { _, dockAppRepository, _, folderRepository ->
+            folderId = runBlocking {
+                val id = folderRepository.createFolder("Games")
+                dockAppRepository.placeFolderInDock(id, position = 0)
+                id
+            }
+        }
+        val id = requireNotNull(folderId)
+
+        composeRule.onNodeWithTag("dock_picker_tab_folders").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").assertIsOn() }.isSuccess
+        }
+
+        // When unchecking it
+        composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").performClick()
+
+        // Then it's un-placed from the dock, but the folder itself still exists (it would
+        // simply not appear here at all if it had been deleted rather than un-placed)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").assertIsOff() }.isSuccess
         }
     }
 }

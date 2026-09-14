@@ -20,6 +20,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -65,8 +66,8 @@ class HomeAppsListSettingsScreenTest {
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
-                    FavoriteAppRepository(database.favoriteAppDao(), appRepository),
-                    DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository),
+                    FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),

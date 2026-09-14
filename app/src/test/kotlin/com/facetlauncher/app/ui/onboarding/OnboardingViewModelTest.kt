@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -178,6 +179,6 @@ class OnboardingViewModelTest {
         f.viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(f.defaultFavoriteAppRepository).reorderFavorites(reordered)
+        verify(f.defaultFavoriteAppRepository).reorderItems(reordered.map { PlacedItem.SingleApp(it) })
     }
 }

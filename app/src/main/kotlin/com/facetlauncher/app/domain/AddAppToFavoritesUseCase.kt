@@ -25,10 +25,12 @@ class AddAppToFavoritesUseCase @Inject constructor(
         val activeFacetId = settingsRepository.settings.first().activeFacetId
         val facet = facetRepository.getById(activeFacetId)
         if (facet?.overridingFavorites == true) {
-            val position = favoriteAppRepository.observeFavoritesForFacet(facet.id).first().size
+            // Item-counted, not app-counted — a folder occupies a slot too, and an app-only count
+            // would let a new app's computed position collide with an existing folder's.
+            val position = favoriteAppRepository.observeFavoriteItems(facet.id).first().size
             favoriteAppRepository.addFavorite(facet.id, app, position)
         } else {
-            val position = defaultFavoriteAppRepository.observeDefaultFavorites().first().size
+            val position = defaultFavoriteAppRepository.observeDefaultItems().first().size
             defaultFavoriteAppRepository.addFavorite(app, position)
         }
     }

@@ -19,6 +19,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -70,10 +71,10 @@ class FacetSettingsScreenTest {
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     facetRepository,
                     settingsRepository,
-                    FavoriteAppRepository(database.favoriteAppDao(), appRepository),
-                    DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository),
-                    FacetDockAppRepository(database.facetDockAppDao(), appRepository),
-                    DockAppRepository(database.dockAppDao(), appRepository),
+                    FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                 )
             }
             FacetLauncherTheme {
