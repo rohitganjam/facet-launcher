@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementDao
 import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -38,9 +39,9 @@ class DefaultFavoriteAppRepository @Inject constructor(
 
     fun observeDefaultFavorites(): Flow<List<AppInfo>> {
         return combine(defaultFavoriteAppDao.observeAll(), appRepository.observeInstalledApps()) { entities, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.profile) }
             entities.sortedBy { it.position }
-                .mapNotNull { entity -> installedByComponent[entity.packageName to entity.activityName] }
+                .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.profile)] }
         }
     }
 
@@ -52,11 +53,11 @@ class DefaultFavoriteAppRepository @Inject constructor(
             folderRepository.observeFolders(),
             appRepository.observeInstalledApps(),
         ) { appEntities, placements, folders, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.profile) }
             val foldersById = folders.associateBy { it.id }
 
             val appItems = appEntities.mapNotNull { entity ->
-                installedByComponent[entity.packageName to entity.activityName]?.let { app ->
+                installedByComponent[Triple(entity.packageName, entity.activityName, entity.profile)]?.let { app ->
                     entity.position to PlacedItem.SingleApp(app)
                 }
             }
@@ -71,12 +72,12 @@ class DefaultFavoriteAppRepository @Inject constructor(
 
     suspend fun addFavorite(app: AppInfo, position: Int) {
         defaultFavoriteAppDao.upsert(
-            DefaultFavoriteAppEntity(packageName = app.packageName, activityName = app.activityName, position = position),
+            DefaultFavoriteAppEntity(packageName = app.packageName, activityName = app.activityName, position = position, profile = app.profile),
         )
     }
 
     suspend fun removeFavorite(app: AppInfo) {
-        defaultFavoriteAppDao.deleteByComponent(app.packageName, app.activityName)
+        defaultFavoriteAppDao.deleteByComponent(app.packageName, app.activityName, app.profile)
     }
 
     suspend fun placeFolder(folderId: Long, position: Int) {
@@ -88,8 +89,13 @@ class DefaultFavoriteAppRepository @Inject constructor(
     }
 
     /** Uninstall cleanup — driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. */
-    suspend fun removeByPackage(packageName: String) {
-        defaultFavoriteAppDao.deleteByPackage(packageName)
+    suspend fun removeByPackage(packageName: String, profile: AppProfile) {
+        defaultFavoriteAppDao.deleteByPackage(packageName, profile)
+    }
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
+    suspend fun removeByProfile(profile: AppProfile) {
+        defaultFavoriteAppDao.deleteByProfile(profile)
     }
 
     /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
@@ -119,7 +125,7 @@ class DefaultFavoriteAppRepository @Inject constructor(
         orderedItems.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> defaultFavoriteAppDao.upsert(
-                    DefaultFavoriteAppEntity(packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    DefaultFavoriteAppEntity(packageName = item.app.packageName, activityName = item.app.activityName, position = index, profile = item.app.profile),
                 )
                 is PlacedItem.FolderItem -> defaultFavoriteFolderPlacementDao.upsert(
                     DefaultFavoriteFolderPlacementEntity(folderId = item.folder.id, position = index),

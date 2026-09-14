@@ -5,6 +5,7 @@ import android.app.WallpaperManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +27,12 @@ object AppModule {
     fun provideLauncherApps(@ApplicationContext context: Context): LauncherApps =
         context.getSystemService(LauncherApps::class.java)
             ?: error("LauncherApps service unavailable on this device")
+
+    @Provides
+    @Singleton
+    fun provideUserManager(@ApplicationContext context: Context): UserManager =
+        context.getSystemService(UserManager::class.java)
+            ?: error("UserManager service unavailable on this device")
 
     @Provides
     @Singleton

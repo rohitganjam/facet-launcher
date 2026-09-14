@@ -2,6 +2,7 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -83,7 +84,7 @@ class FavoriteAppDaoTest {
         )
 
         // When deleting it by component for just facet one
-        database.favoriteAppDao().deleteByComponent(facetOneId, "com.example.a", ".Main")
+        database.favoriteAppDao().deleteByComponent(facetOneId, "com.example.a", ".Main", AppProfile.PERSONAL)
 
         // Then only facet one's entry is gone
         assertTrue(database.favoriteAppDao().observeForFacet(facetOneId).first().isEmpty())

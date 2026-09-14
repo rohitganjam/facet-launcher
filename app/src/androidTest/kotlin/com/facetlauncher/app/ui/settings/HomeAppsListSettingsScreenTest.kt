@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.settings
 import android.app.WallpaperManager
 import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -58,7 +59,7 @@ class HomeAppsListSettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val facetRepository = FacetRepository(database.facetDao())
                 val facetId = if (facetScoped) runBlocking { facetRepository.addFacet().id } else null
                 onFacetRepo(facetRepository, facetId)

@@ -155,6 +155,8 @@ data class BackupAppEntry(
     val packageName: String,
     val activityName: String,
     val position: Int,
+    /** Raw `AppProfile.name` — defaulted so a backup exported before Work Profile support still imports cleanly (as `PERSONAL`, the only profile that existed then). */
+    val profile: String = "PERSONAL",
 )
 
 /** One folder's identity + membership — a global, independent entity (F-Folders); see [BackupBundle.folders]' own doc for how it's referenced by index from every placement list. */

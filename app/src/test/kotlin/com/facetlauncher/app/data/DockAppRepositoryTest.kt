@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.local.FolderAppEntity
 import com.facetlauncher.app.data.local.FolderDao
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +30,7 @@ private class FakeDockAppDao : DockAppDao {
     override fun observeAll(): Flow<List<DockAppEntity>> = state
 
     override suspend fun upsert(dockApp: DockAppEntity): Long {
-        state.value = state.value.filterNot { it.packageName == dockApp.packageName && it.activityName == dockApp.activityName } + dockApp
+        state.value = state.value.filterNot { it.packageName == dockApp.packageName && it.activityName == dockApp.activityName && it.profile == dockApp.profile } + dockApp
         return 0
     }
 
@@ -37,12 +38,16 @@ private class FakeDockAppDao : DockAppDao {
         state.value = state.value.filterNot { it.id == dockApp.id }
     }
 
-    override suspend fun deleteByComponent(packageName: String, activityName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName }
+    override suspend fun deleteByComponent(packageName: String, activityName: String, profile: AppProfile) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName && it.profile == profile }
     }
 
-    override suspend fun deleteByPackage(packageName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteByPackage(packageName: String, profile: AppProfile) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.profile == profile }
+    }
+
+    override suspend fun deleteByProfile(profile: AppProfile) {
+        state.value = state.value.filterNot { it.profile == profile }
     }
 
     override suspend fun deleteAll() {
@@ -133,10 +138,31 @@ class DockAppRepositoryTest {
         dao.upsert(DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = 0))
 
         // When the app is uninstalled
-        repository(appRepository, dao = dao).removeByPackage(app.packageName)
+        repository(appRepository, dao = dao).removeByPackage(app.packageName, AppProfile.PERSONAL)
 
         // Then its dock row is gone
         assertEquals(emptyList<AppInfo>(), repository(appRepository, dao = dao).observeDockApps().first())
+    }
+
+    @Test
+    fun `a personal and Work Profile app sharing the same package and activity are kept as distinct dock entries`() = runTest {
+        // Given the same package+activity installed in both profiles (a duplicate-installed app)
+        val personalApp = AppInfo(packageName = "com.example.chat", activityName = ".Main", label = "Chat", icon = null, profile = AppProfile.PERSONAL)
+        val workApp = personalApp.copy(profile = AppProfile.WORK)
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(personalApp, workApp)))
+        val repo = repository(appRepository)
+
+        // When both are added to the dock
+        repo.addDockApp(personalApp, position = 0)
+        repo.addDockApp(workApp, position = 1)
+
+        // Then both are present, not collapsed into one row
+        assertEquals(listOf(personalApp, workApp), repo.observeDockApps().first())
+
+        // And removing the Work Profile copy by uninstall-cleanup leaves the personal one intact
+        repo.removeByPackage(workApp.packageName, AppProfile.WORK)
+        assertEquals(listOf(personalApp), repo.observeDockApps().first())
     }
 
     @Test

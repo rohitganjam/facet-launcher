@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.FolderWithApps
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupAppEntry
@@ -29,31 +30,32 @@ import com.facetlauncher.app.data.selectedCalendarIds
 
 /** F14 Backup & Restore — entity <-> DTO mapping shared by [ExportBackupUseCase]/[ImportBackupUseCase]. Every enum round-trips through its raw name with a fallback to the field's own default, matching `Converters.kt`'s established pattern. */
 
-fun FavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
+fun FavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
 
-fun DockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
+fun DockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
 
-fun FacetDockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
+fun FacetDockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
 
 fun BackupAppEntry.toFacetDockAppEntity(facetId: Long): FacetDockAppEntity =
-    FacetDockAppEntity(facetId = facetId, packageName = packageName, activityName = activityName, position = position)
+    FacetDockAppEntity(facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
-fun DefaultFavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position)
+fun DefaultFavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
 
 fun BackupAppEntry.toFavoriteAppEntity(facetId: Long): FavoriteAppEntity =
-    FavoriteAppEntity(facetId = facetId, packageName = packageName, activityName = activityName, position = position)
+    FavoriteAppEntity(facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
-fun BackupAppEntry.toDockAppEntity(): DockAppEntity = DockAppEntity(packageName = packageName, activityName = activityName, position = position)
+fun BackupAppEntry.toDockAppEntity(): DockAppEntity =
+    DockAppEntity(packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 fun BackupAppEntry.toDefaultFavoriteAppEntity(): DefaultFavoriteAppEntity =
-    DefaultFavoriteAppEntity(packageName = packageName, activityName = activityName, position = position)
+    DefaultFavoriteAppEntity(packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
     BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan)
 
 fun FolderWithApps.toBackupFolder(): BackupFolder = BackupFolder(
     name = folder.name,
-    apps = apps.map { BackupAppEntry(it.packageName, it.activityName, it.position) },
+    apps = apps.map { BackupAppEntry(it.packageName, it.activityName, it.position, it.profile.name) },
 )
 
 /** [folderIndexById] maps each folder's live row id to its position in [com.facetlauncher.app.data.model.BackupBundle.folders] — `null` only if the folder vanished between reads (a race, not a normal case), in which case the placement is simply dropped rather than exported with a dangling index. */
@@ -135,7 +137,7 @@ fun BackupFolder.toFolderEntity(): com.facetlauncher.app.data.local.FolderEntity
     com.facetlauncher.app.data.local.FolderEntity(id = 0, name = name)
 
 fun BackupAppEntry.toFolderAppEntity(): com.facetlauncher.app.data.local.FolderAppEntity =
-    com.facetlauncher.app.data.local.FolderAppEntity(folderId = 0, packageName = packageName, activityName = activityName, position = position)
+    com.facetlauncher.app.data.local.FolderAppEntity(folderId = 0, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 /** An unrecognized stored name (an old export from before an enum constant was renamed) falls back to [default] rather than failing the whole import — same contract as `Converters.kt`. */
 inline fun <reified T : Enum<T>> String.toEnumOrDefault(default: T): T =

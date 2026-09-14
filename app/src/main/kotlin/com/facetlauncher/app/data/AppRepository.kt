@@ -1,5 +1,9 @@
 package com.facetlauncher.app.data
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.LauncherApps
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -8,9 +12,13 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserHandle
+import android.os.UserManager
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -56,30 +64,66 @@ private fun flattenIcon(drawable: Drawable): Bitmap {
     return bitmap
 }
 
-/** Wraps [LauncherApps] to expose the launchable apps visible to this launcher. */
+/**
+ * Broadcasts that mean "the set of profiles itself changed" (a Work Profile was enrolled,
+ * unenrolled, or its quiet-mode state flipped) rather than "a package within an already-known
+ * profile changed" — [LauncherApps.Callback] only ever reports the latter, so these need their
+ * own [BroadcastReceiver] to keep [AppRepository.observeInstalledApps] live across profile
+ * add/remove, not just package add/remove within a profile that was already there.
+ */
+private val PROFILE_CHANGE_ACTIONS = IntentFilter().apply {
+    addAction(Intent.ACTION_MANAGED_PROFILE_ADDED)
+    addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED)
+    addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
+    addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
+}
+
+/** Wraps [LauncherApps] to expose the launchable apps visible to this launcher, across every profile (personal + a Work Profile, if one exists). */
 @Singleton
-class AppRepository @Inject constructor(private val launcherApps: LauncherApps) {
+class AppRepository @Inject constructor(
+    private val launcherApps: LauncherApps,
+    private val userManager: UserManager,
+    @ApplicationContext private val context: Context,
+) {
 
     /**
-     * All launchable activities for the current user, sorted alphabetically (locale-aware).
-     * Each app's icon decode/flatten runs as its own [async] on [Dispatchers.Default]'s thread
-     * pool rather than one after another — on a real device with 100+ installed apps, decoding
-     * every icon sequentially before this ever emits once took multiple real seconds; spreading
-     * that work across all available cores cuts it down to roughly the slowest single icon
-     * instead of the sum of all of them (see chat history: this was invisible before Home started
-     * gating its own first paint on this list, since default content rendered over it in the
-     * meantime).
+     * The primary user's own handle is always [AppProfile.PERSONAL]; [UserManager.getUserProfiles]
+     * returns at most one other handle for a launcher's purposes (a Work Profile) — see
+     * [AppProfile]'s own doc for why that 2-valued assumption is a deliberate scope choice.
+     */
+    private fun profileFor(handle: UserHandle): AppProfile =
+        if (handle == Process.myUserHandle()) AppProfile.PERSONAL else AppProfile.WORK
+
+    /**
+     * Resolves [profile] to its real Android user handle, for callers that need to launch an
+     * activity in it (see [com.facetlauncher.app.LauncherActivity.launchApp]) — `null` only if a
+     * Work Profile was expected but no longer exists (a race with unenrollment; the live app list
+     * should already be dropping its apps around the same time via [observeProfileRemoved]).
+     */
+    fun resolveUserHandle(profile: AppProfile): UserHandle? = userManager.userProfiles.firstOrNull { profileFor(it) == profile }
+
+    /**
+     * All launchable activities across every profile (personal, plus a Work Profile if one
+     * exists), sorted alphabetically (locale-aware) as one combined list. Each app's icon
+     * decode/flatten runs as its own [async] on [Dispatchers.Default]'s thread pool rather than
+     * one after another — on a real device with 100+ installed apps, decoding every icon
+     * sequentially before this ever emits once took multiple real seconds; spreading that work
+     * across all available cores cuts it down to roughly the slowest single icon instead of the
+     * sum of all of them (see chat history: this was invisible before Home started gating its own
+     * first paint on this list, since default content rendered over it in the meantime).
      */
     suspend fun getInstalledApps(): List<AppInfo> = withContext(Dispatchers.Default) {
         val collator = Collator.getInstance()
-        launcherApps.getActivityList(null, Process.myUserHandle())
-            .map { info ->
+        userManager.userProfiles
+            .flatMap { handle -> launcherApps.getActivityList(null, handle).map { it to profileFor(handle) } }
+            .map { (info, profile) ->
                 async {
                     AppInfo(
                         packageName = info.applicationInfo.packageName,
                         activityName = info.componentName.className,
                         label = info.label.toString(),
                         icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
+                        profile = profile,
                     )
                 }
             }
@@ -89,13 +133,16 @@ class AppRepository @Inject constructor(private val launcherApps: LauncherApps) 
 
     /**
      * Live-updating installed-app list — re-emits whenever a package is added, removed, or
-     * changed while the launcher is running, via [LauncherApps.registerCallback]. [getInstalledApps]
-     * only fetches once; without this, any install/uninstall happening while Facet is in the
-     * foreground (including via the app long-press context menu's Uninstall action) wouldn't be
-     * reflected anywhere — Home/Drawer/Dock would keep showing the stale entry until the process
-     * restarts. [FavoriteAppRepository]/[DockAppRepository] both hydrate against this live flow
-     * too, so an uninstall collapses Favorites/Dock/Drawer alike; one-shot callers (picker seed
-     * steps) can still use [getInstalledApps] directly where a live subscription isn't needed.
+     * changed in any profile while the launcher is running, via [LauncherApps.registerCallback],
+     * or whenever a Work Profile itself is added/removed/paused/resumed, via [PROFILE_CHANGE_ACTIONS]
+     * (a profile appearing or disappearing isn't a per-package event, so [LauncherApps.Callback]
+     * alone can't be relied on to trigger a refresh for it). [getInstalledApps] only fetches once;
+     * without this, any install/uninstall happening while Facet is in the foreground (including
+     * via the app long-press context menu's Uninstall action) wouldn't be reflected anywhere —
+     * Home/Drawer/Dock would keep showing the stale entry until the process restarts.
+     * [FavoriteAppRepository]/[DockAppRepository] both hydrate against this live flow too, so an
+     * uninstall collapses Favorites/Dock/Drawer alike; one-shot callers (picker seed steps) can
+     * still use [getInstalledApps] directly where a live subscription isn't needed.
      */
     fun observeInstalledApps(): Flow<List<AppInfo>> = callbackFlow {
         val refresh: () -> Unit = { launch { trySend(getInstalledApps()) } }
@@ -108,22 +155,38 @@ class AppRepository @Inject constructor(private val launcherApps: LauncherApps) 
             override fun onPackagesUnavailable(packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean) = refresh()
         }
         launcherApps.registerCallback(callback)
+
+        val profileReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) = refresh()
+        }
+        ContextCompat.registerReceiver(context, profileReceiver, PROFILE_CHANGE_ACTIONS, ContextCompat.RECEIVER_NOT_EXPORTED)
+
         refresh()
-        awaitClose { launcherApps.unregisterCallback(callback) }
+        awaitClose {
+            launcherApps.unregisterCallback(callback)
+            context.unregisterReceiver(profileReceiver)
+        }
     }
 
     /**
-     * Emits a package name each time it's genuinely, permanently uninstalled — unlike
-     * [observeInstalledApps], which also re-emits (the *whole* list) for reasons an app might
-     * only be momentarily missing (e.g. `onPackagesUnavailable` mid-update). Backs
+     * Emits `(packageName, profile)` each time an app is genuinely, permanently uninstalled from
+     * some profile — unlike [observeInstalledApps], which also re-emits (the *whole* list) for
+     * reasons an app might only be momentarily missing (e.g. `onPackagesUnavailable` mid-update).
+     * The profile is included because a personal and Work Profile app can share the exact same
+     * package name (a duplicate-installed app) — without it, uninstalling one would look
+     * indistinguishable from uninstalling the other to callers. Backs
      * [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase], which deletes the
-     * corresponding Favorites/Dock rows outright rather than just filtering them from view.
+     * corresponding Favorites/Dock rows outright rather than just filtering them from view. Does
+     * *not* cover a whole profile being removed (see [observeProfileRemoved] instead) — that's a
+     * profile-level event, not a per-package one, and isn't guaranteed to fire a per-app callback
+     * for every app on its way out.
      */
-    fun observeUninstalledPackages(): Flow<String> = callbackFlow {
+    fun observeUninstalledPackages(): Flow<Pair<String, AppProfile>> = callbackFlow {
         val callback = object : LauncherApps.Callback() {
             override fun onPackageAdded(packageName: String?, user: UserHandle?) = Unit
             override fun onPackageRemoved(packageName: String?, user: UserHandle?) {
-                packageName?.let { trySend(it) }
+                val packageAndProfile = packageName?.let { it to profileFor(user ?: Process.myUserHandle()) }
+                packageAndProfile?.let { trySend(it) }
             }
             override fun onPackageChanged(packageName: String?, user: UserHandle?) = Unit
             override fun onPackagesAvailable(packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean) = Unit
@@ -131,5 +194,23 @@ class AppRepository @Inject constructor(private val launcherApps: LauncherApps) 
         }
         launcherApps.registerCallback(callback)
         awaitClose { launcherApps.unregisterCallback(callback) }
+    }
+
+    /**
+     * Emits once whenever the Work Profile itself is removed (unenrolled) — a coarser, bulk
+     * signal deliberately kept separate from [observeUninstalledPackages]: removing a whole
+     * profile tears down every app in it atomically, and there's no guarantee each one also fires
+     * its own [LauncherApps.Callback.onPackageRemoved] on the way out. Callers should treat this
+     * as "drop every stored row tagged [AppProfile.WORK] outright", not wait on per-package events.
+     */
+    fun observeProfileRemoved(): Flow<Unit> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_MANAGED_PROFILE_REMOVED) trySend(Unit)
+            }
+        }
+        val filter = IntentFilter(Intent.ACTION_MANAGED_PROFILE_REMOVED)
+        ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        awaitClose { context.unregisterReceiver(receiver) }
     }
 }

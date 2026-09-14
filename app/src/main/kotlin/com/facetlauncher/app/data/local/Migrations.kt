@@ -260,8 +260,59 @@ object Migrations {
         }
     }
 
+    /**
+     * Android Work Profile support: every place an app is identified by (packageName,
+     * activityName) also needs to know *which* Android user it came from, or a personal and a
+     * Work Profile copy of the same app (identical package + activity, different user) collide as
+     * the same row. Adds a `profile` column (`'PERSONAL'`/`'WORK'`, `NOT NULL DEFAULT 'PERSONAL'`
+     * — every existing row predates Work Profile support, so it's unambiguously personal) to every
+     * table keyed that way, and widens their unique indices to include it. `widget_placements` is
+     * keyed on the real system `appWidgetId` instead, so it only needs the plain column, no index
+     * change.
+     */
+    val MIGRATION_18_19: Migration = object : Migration(18, 19) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE favorite_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_favorite_apps_facetId_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_favorite_apps_facetId_packageName_activityName_profile " +
+                    "ON favorite_apps (facetId, packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE facet_dock_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_facet_dock_apps_facetId_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_facet_dock_apps_facetId_packageName_activityName_profile " +
+                    "ON facet_dock_apps (facetId, packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE dock_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_dock_apps_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_dock_apps_packageName_activityName_profile " +
+                    "ON dock_apps (packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE default_favorite_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_default_favorite_apps_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_default_favorite_apps_packageName_activityName_profile " +
+                    "ON default_favorite_apps (packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE folder_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_folder_apps_folderId_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_folder_apps_folderId_packageName_activityName_profile " +
+                    "ON folder_apps (folderId, packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE widget_placements ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
-        MIGRATION_16_17, MIGRATION_17_18,
+        MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19,
     )
 }

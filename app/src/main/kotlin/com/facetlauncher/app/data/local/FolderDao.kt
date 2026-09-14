@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Relation
 import androidx.room.Transaction
+import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.flow.Flow
 
 data class FolderWithApps(
@@ -39,10 +40,14 @@ interface FolderDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertFolderApp(folderApp: FolderAppEntity): Long
 
-    @Query("DELETE FROM folder_apps WHERE folderId = :folderId AND packageName = :packageName AND activityName = :activityName")
-    suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String)
+    @Query("DELETE FROM folder_apps WHERE folderId = :folderId AND packageName = :packageName AND activityName = :activityName AND profile = :profile")
+    suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String, profile: AppProfile)
 
-    /** Uninstall cleanup — removes every folder's membership row for [packageName] regardless of activity. Deliberately does not touch the folder itself — a folder emptied by an uninstall stays a valid, visible, 0-app folder. */
-    @Query("DELETE FROM folder_apps WHERE packageName = :packageName")
-    suspend fun deleteFolderAppsByPackage(packageName: String)
+    /** Uninstall cleanup — removes every folder's membership row for [packageName] in [profile] regardless of activity. Deliberately does not touch the folder itself — a folder emptied by an uninstall stays a valid, visible, 0-app folder. */
+    @Query("DELETE FROM folder_apps WHERE packageName = :packageName AND profile = :profile")
+    suspend fun deleteFolderAppsByPackage(packageName: String, profile: AppProfile)
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment). */
+    @Query("DELETE FROM folder_apps WHERE profile = :profile")
+    suspend fun deleteFolderAppsByProfile(profile: AppProfile)
 }

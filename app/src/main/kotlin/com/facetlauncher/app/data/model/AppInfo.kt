@@ -8,6 +8,7 @@ data class AppInfo(
     val activityName: String,
     val label: String,
     val icon: ImageBitmap?,
+    val profile: AppProfile = AppProfile.PERSONAL,
 )
 
 /**

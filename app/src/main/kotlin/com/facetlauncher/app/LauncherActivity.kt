@@ -2,6 +2,7 @@ package com.facetlauncher.app
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.LauncherApps
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,7 +13,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.navigation.FacetNavHost
@@ -20,11 +23,16 @@ import com.facetlauncher.app.ui.onboarding.OnboardingScreen
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LauncherActivity : ComponentActivity() {
 
     private val viewModel: LauncherViewModel by viewModels()
+
+    @Inject lateinit var launcherApps: LauncherApps
+
+    @Inject lateinit var appRepository: AppRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,9 +84,20 @@ class LauncherActivity : ComponentActivity() {
     }
 
     private fun launchApp(app: AppInfo) {
+        val component = ComponentName(app.packageName, app.activityName)
+        if (app.profile == AppProfile.WORK) {
+            // A plain launch Intent doesn't resolve correctly for a Work Profile activity —
+            // LauncherApps.startMainActivity is the API a launcher must use to cross into another
+            // profile. No handle only if the Work Profile vanished in the race between this list
+            // loading and the tap landing (observeProfileRemoved should already be dropping these
+            // entries around the same time) — nothing sensible to launch in that case.
+            val workHandle = appRepository.resolveUserHandle(AppProfile.WORK) ?: return
+            runCatching { launcherApps.startMainActivity(component, workHandle, null, null) }
+            return
+        }
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
-            component = ComponentName(app.packageName, app.activityName)
+            this.component = component
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         runCatching { startActivity(intent) }

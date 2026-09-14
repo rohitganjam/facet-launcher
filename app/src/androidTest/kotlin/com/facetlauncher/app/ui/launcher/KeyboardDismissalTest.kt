@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsFocused
@@ -105,7 +106,7 @@ class KeyboardDismissalTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
@@ -149,7 +150,7 @@ class KeyboardDismissalTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
@@ -173,7 +174,7 @@ class KeyboardDismissalTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
@@ -238,7 +239,7 @@ class KeyboardDismissalTest {
                     ),
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val facetRepository = FacetRepository(database.facetDao())
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)

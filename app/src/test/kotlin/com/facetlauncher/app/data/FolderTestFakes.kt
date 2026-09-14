@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.local.FolderAppEntity
 import com.facetlauncher.app.data.local.FolderDao
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.local.FolderWithApps
+import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -55,17 +56,21 @@ internal class FakeFolderDao : FolderDao {
         val id = if (folderApp.id != 0L) folderApp.id else nextFolderAppId++
         val toStore = folderApp.copy(id = id)
         folderApps.value = folderApps.value.filterNot {
-            it.folderId == toStore.folderId && it.packageName == toStore.packageName && it.activityName == toStore.activityName
+            it.folderId == toStore.folderId && it.packageName == toStore.packageName && it.activityName == toStore.activityName && it.profile == toStore.profile
         } + toStore
         return id
     }
 
-    override suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String) {
-        folderApps.value = folderApps.value.filterNot { it.folderId == folderId && it.packageName == packageName && it.activityName == activityName }
+    override suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String, profile: AppProfile) {
+        folderApps.value = folderApps.value.filterNot { it.folderId == folderId && it.packageName == packageName && it.activityName == activityName && it.profile == profile }
     }
 
-    override suspend fun deleteFolderAppsByPackage(packageName: String) {
-        folderApps.value = folderApps.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteFolderAppsByPackage(packageName: String, profile: AppProfile) {
+        folderApps.value = folderApps.value.filterNot { it.packageName == packageName && it.profile == profile }
+    }
+
+    override suspend fun deleteFolderAppsByProfile(profile: AppProfile) {
+        folderApps.value = folderApps.value.filterNot { it.profile == profile }
     }
 }
 

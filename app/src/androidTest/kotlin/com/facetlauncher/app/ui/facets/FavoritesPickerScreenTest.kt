@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.facets
 
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -45,7 +46,7 @@ class FavoritesPickerScreenTest {
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
@@ -224,7 +225,7 @@ class FavoritesPickerScreenTest {
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                appRepository = AppRepository(launcherApps)
+                appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
                 defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)

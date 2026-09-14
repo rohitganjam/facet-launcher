@@ -108,7 +108,7 @@ class FolderRepositoryTest {
         repository.addAppToFolder(folder2, app)
 
         // When that package is cleaned up (uninstall)
-        repository.removeByPackage(app.packageName)
+        repository.removeByPackage(app.packageName, app.profile)
 
         // Then both folders survive, now with zero members
         val folders = repository.observeFolders().first()

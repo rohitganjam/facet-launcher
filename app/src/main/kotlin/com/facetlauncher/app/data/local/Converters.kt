@@ -1,6 +1,7 @@
 package com.facetlauncher.app.data.local
 
 import androidx.room.TypeConverter
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -71,4 +72,12 @@ class Converters {
     @TypeConverter
     fun toAppRowPresentation(value: String?): AppRowPresentation =
         value?.let { runCatching { AppRowPresentation.valueOf(it) }.getOrNull() } ?: AppRowPresentation.ICON_AND_TEXT
+
+    /** An unrecognized/corrupted value defaults to [AppProfile.PERSONAL], never [AppProfile.WORK] — the safer failure direction. */
+    @TypeConverter
+    fun fromAppProfile(profile: AppProfile): String = profile.name
+
+    @TypeConverter
+    fun toAppProfile(value: String?): AppProfile =
+        value?.let { runCatching { AppProfile.valueOf(it) }.getOrNull() } ?: AppProfile.PERSONAL
 }

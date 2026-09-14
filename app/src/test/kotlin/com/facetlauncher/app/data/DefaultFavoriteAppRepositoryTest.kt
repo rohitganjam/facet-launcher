@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.local.DefaultFavoriteAppDao
 import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +26,7 @@ private class FakeDefaultFavoriteAppDao : DefaultFavoriteAppDao {
 
     override suspend fun upsert(defaultFavoriteApp: DefaultFavoriteAppEntity): Long {
         state.value = state.value.filterNot {
-            it.packageName == defaultFavoriteApp.packageName && it.activityName == defaultFavoriteApp.activityName
+            it.packageName == defaultFavoriteApp.packageName && it.activityName == defaultFavoriteApp.activityName && it.profile == defaultFavoriteApp.profile
         } + defaultFavoriteApp
         return 0
     }
@@ -34,12 +35,16 @@ private class FakeDefaultFavoriteAppDao : DefaultFavoriteAppDao {
         state.value = state.value.filterNot { it.id == defaultFavoriteApp.id }
     }
 
-    override suspend fun deleteByComponent(packageName: String, activityName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName }
+    override suspend fun deleteByComponent(packageName: String, activityName: String, profile: AppProfile) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName && it.profile == profile }
     }
 
-    override suspend fun deleteByPackage(packageName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteByPackage(packageName: String, profile: AppProfile) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.profile == profile }
+    }
+
+    override suspend fun deleteByProfile(profile: AppProfile) {
+        state.value = state.value.filterNot { it.profile == profile }
     }
 
     override suspend fun deleteAll() {

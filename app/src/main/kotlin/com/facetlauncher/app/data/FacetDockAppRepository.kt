@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.local.FacetDockAppEntity
 import com.facetlauncher.app.data.local.FacetDockFolderPlacementDao
 import com.facetlauncher.app.data.local.FacetDockFolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -83,11 +84,11 @@ class FacetDockAppRepository @Inject constructor(
         folders: List<com.facetlauncher.app.data.model.Folder>,
         installed: List<AppInfo>,
     ): List<PlacedItem> {
-        val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.profile) }
         val foldersById = folders.associateBy { it.id }
 
         val appItems = appEntities.mapNotNull { entity ->
-            installedByComponent[entity.packageName to entity.activityName]?.let { app ->
+            installedByComponent[Triple(entity.packageName, entity.activityName, entity.profile)]?.let { app ->
                 entity.position to PlacedItem.SingleApp(app)
             }
         }
@@ -100,9 +101,9 @@ class FacetDockAppRepository @Inject constructor(
     }
 
     private fun hydrate(entities: List<FacetDockAppEntity>, installed: List<AppInfo>): List<AppInfo> {
-        val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.profile) }
         return entities.sortedBy { it.position }
-            .mapNotNull { entity -> installedByComponent[entity.packageName to entity.activityName] }
+            .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.profile)] }
     }
 
     suspend fun addDockApp(facetId: Long, app: AppInfo, position: Int) {
@@ -112,12 +113,13 @@ class FacetDockAppRepository @Inject constructor(
                 packageName = app.packageName,
                 activityName = app.activityName,
                 position = position,
+                profile = app.profile,
             ),
         )
     }
 
     suspend fun removeDockApp(facetId: Long, app: AppInfo) {
-        facetDockAppDao.deleteByComponent(facetId, app.packageName, app.activityName)
+        facetDockAppDao.deleteByComponent(facetId, app.packageName, app.activityName, app.profile)
     }
 
     suspend fun placeFolder(facetId: Long, folderId: Long, position: Int) {
@@ -129,13 +131,18 @@ class FacetDockAppRepository @Inject constructor(
     }
 
     /**
-     * Uninstall cleanup — permanently removes [packageName]'s dock entry from *every* facet,
-     * driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. Distinct from
-     * [observeDockAppsForFacet]'s own runtime filtering, which only hides a momentarily-missing
-     * app without deleting anything.
+     * Uninstall cleanup — permanently removes [packageName]'s dock entry (in [profile]) from
+     * *every* facet, driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase].
+     * Distinct from [observeDockAppsForFacet]'s own runtime filtering, which only hides a
+     * momentarily-missing app without deleting anything.
      */
-    suspend fun removeByPackage(packageName: String) {
-        facetDockAppDao.deleteByPackage(packageName)
+    suspend fun removeByPackage(packageName: String, profile: AppProfile) {
+        facetDockAppDao.deleteByPackage(packageName, profile)
+    }
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
+    suspend fun removeByProfile(profile: AppProfile) {
+        facetDockAppDao.deleteByProfile(profile)
     }
 
     /** Replaces this facet's entire dock with [items] — used to seed a clean copy (e.g. of the current default dock) when a facet switches to Override. Carries folder placements, not just apps. */
@@ -145,7 +152,7 @@ class FacetDockAppRepository @Inject constructor(
         items.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> facetDockAppDao.upsert(
-                    FacetDockAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    FacetDockAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index, profile = item.app.profile),
                 )
                 is PlacedItem.FolderItem -> facetDockFolderPlacementDao.upsert(
                     FacetDockFolderPlacementEntity(facetId = facetId, folderId = item.folder.id, position = index),
@@ -176,7 +183,7 @@ class FacetDockAppRepository @Inject constructor(
         orderedItems.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> facetDockAppDao.upsert(
-                    FacetDockAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    FacetDockAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index, profile = item.app.profile),
                 )
                 is PlacedItem.FolderItem -> facetDockFolderPlacementDao.upsert(
                     FacetDockFolderPlacementEntity(facetId = facetId, folderId = item.folder.id, position = index),

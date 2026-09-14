@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertHasClickAction
@@ -59,7 +60,7 @@ class SettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)

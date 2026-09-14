@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
@@ -7,8 +8,12 @@ import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
 import android.os.Process
+import android.os.UserHandle
+import android.os.UserManager
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -24,6 +29,15 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class AppRepositoryTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+
+    /** A [UserManager] reporting only the personal profile — the common, no-Work-Profile case every other test in this file assumes. */
+    private fun personalOnlyUserManager(): UserManager {
+        val userManager = mock(UserManager::class.java)
+        `when`(userManager.userProfiles).thenReturn(listOf(Process.myUserHandle()))
+        return userManager
+    }
 
     private fun fakeActivity(packageName: String, className: String, label: String): LauncherActivityInfo {
         val appInfo = ApplicationInfo().apply { this.packageName = packageName }
@@ -49,7 +63,7 @@ class AppRepositoryTest {
         `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(activity))
 
         // When fetching installed apps
-        val result = AppRepository(launcherApps).getInstalledApps()
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
 
         // Then the flattened icon's corner pixel is opaque, not masked away
         val bitmap = result[0].icon!!.asAndroidBitmap()
@@ -65,7 +79,7 @@ class AppRepositoryTest {
         `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(one, two))
 
         // When fetching installed apps
-        val result = AppRepository(launcherApps).getInstalledApps()
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
 
         // Then both are mapped with their package/activity/label preserved
         assertEquals(2, result.size)
@@ -84,7 +98,7 @@ class AppRepositoryTest {
         `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(zebra, apple, mango))
 
         // When fetching installed apps
-        val result = AppRepository(launcherApps).getInstalledApps()
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
 
         // Then they come back sorted case-insensitively: Apple, mango, zebra
         assertEquals(listOf("Apple", "mango", "zebra"), result.map { it.label })
@@ -98,7 +112,7 @@ class AppRepositoryTest {
         val two = fakeActivity("com.example.two", ".Main", "Two")
         `when`(launcherApps.getActivityList(eq(null), any()))
             .thenReturn(listOf(one, two), listOf(one))
-        val repository = AppRepository(launcherApps)
+        val repository = AppRepository(launcherApps, personalOnlyUserManager(), context)
 
         // When collecting the live flow into a channel — genuine suspension on receive() (unlike
         // advanceUntilIdle(), which only pumps the virtual test-dispatcher queue) correctly waits
@@ -116,6 +130,46 @@ class AppRepositoryTest {
 
         assertEquals(listOf("One"), emissions.receive().map { it.label })
         collectJob.cancel()
+    }
+
+    @Test
+    fun `tags apps from a second user profile as WORK, leaving the primary user's apps PERSONAL`() = runTest {
+        // Given a UserManager reporting a Work Profile alongside the primary user, each with its own app
+        val launcherApps = mock(LauncherApps::class.java)
+        val personalHandle = Process.myUserHandle()
+        val workHandle = mock(UserHandle::class.java)
+        val userManager = mock(UserManager::class.java)
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
+
+        val personalApp = fakeActivity("com.example.chat", ".Main", "Chat")
+        val workApp = fakeActivity("com.example.chat", ".Main", "Chat")
+        `when`(launcherApps.getActivityList(null, personalHandle)).thenReturn(listOf(personalApp))
+        `when`(launcherApps.getActivityList(null, workHandle)).thenReturn(listOf(workApp))
+
+        // When fetching installed apps across every profile
+        val result = AppRepository(launcherApps, userManager, context).getInstalledApps()
+
+        // Then the same package+activity appears twice, tagged by the profile it came from
+        assertEquals(2, result.size)
+        assertEquals(setOf(AppProfile.PERSONAL, AppProfile.WORK), result.map { it.profile }.toSet())
+    }
+
+    @Test
+    fun `resolveUserHandle finds the Work Profile handle, and returns null when there isn't one`() {
+        // Given a Work Profile alongside the primary user
+        val personalHandle = Process.myUserHandle()
+        val workHandle = mock(UserHandle::class.java)
+        val userManager = mock(UserManager::class.java)
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
+        val repository = AppRepository(mock(LauncherApps::class.java), userManager, context)
+
+        // Then WORK resolves to the non-primary handle, and PERSONAL to the primary one
+        assertEquals(workHandle, repository.resolveUserHandle(AppProfile.WORK))
+        assertEquals(personalHandle, repository.resolveUserHandle(AppProfile.PERSONAL))
+
+        // And when no Work Profile exists at all, WORK resolves to nothing
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle))
+        assertEquals(null, repository.resolveUserHandle(AppProfile.WORK))
     }
 }
 

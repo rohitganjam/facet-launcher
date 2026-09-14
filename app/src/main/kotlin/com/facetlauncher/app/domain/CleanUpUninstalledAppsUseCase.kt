@@ -6,8 +6,11 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.model.AppProfile
 import javax.inject.Inject
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /**
  * Permanently deletes an app's Favorites (every facet, plus the launcher-wide default list),
@@ -19,6 +22,11 @@ import kotlinx.coroutines.flow.collect
  * same app would otherwise silently restore its old slot/membership. Runs for as long as it's
  * collected — launched once, for the app's lifetime, from
  * [com.facetlauncher.app.ui.launcher.LauncherViewModel].
+ *
+ * Also collects [AppRepository.observeProfileRemoved] alongside the per-package stream: a Work
+ * Profile being unenrolled tears down every app in it atomically, with no guarantee each one also
+ * fires its own per-package uninstall event on the way out — so that case is handled as its own
+ * bulk `removeByProfile(AppProfile.WORK)` sweep rather than relying on individual events for it.
  */
 class CleanUpUninstalledAppsUseCase @Inject constructor(
     private val appRepository: AppRepository,
@@ -28,13 +36,24 @@ class CleanUpUninstalledAppsUseCase @Inject constructor(
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val folderRepository: FolderRepository,
 ) {
-    suspend operator fun invoke() {
-        appRepository.observeUninstalledPackages().collect { packageName ->
-            dockAppRepository.removeByPackage(packageName)
-            facetDockAppRepository.removeByPackage(packageName)
-            favoriteAppRepository.removeByPackage(packageName)
-            defaultFavoriteAppRepository.removeByPackage(packageName)
-            folderRepository.removeByPackage(packageName)
+    suspend operator fun invoke() = coroutineScope {
+        launch {
+            appRepository.observeUninstalledPackages().collect { (packageName, profile) ->
+                dockAppRepository.removeByPackage(packageName, profile)
+                facetDockAppRepository.removeByPackage(packageName, profile)
+                favoriteAppRepository.removeByPackage(packageName, profile)
+                defaultFavoriteAppRepository.removeByPackage(packageName, profile)
+                folderRepository.removeByPackage(packageName, profile)
+            }
+        }
+        launch {
+            appRepository.observeProfileRemoved().collect {
+                dockAppRepository.removeByProfile(AppProfile.WORK)
+                facetDockAppRepository.removeByProfile(AppProfile.WORK)
+                favoriteAppRepository.removeByProfile(AppProfile.WORK)
+                defaultFavoriteAppRepository.removeByProfile(AppProfile.WORK)
+                folderRepository.removeByProfile(AppProfile.WORK)
+            }
         }
     }
 }

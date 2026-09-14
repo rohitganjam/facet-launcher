@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.settings
 
 import android.app.WallpaperManager
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -51,7 +52,7 @@ class DockSettingsScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val facetRepository = FacetRepository(database.facetDao())
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 if (facetId != null) {
@@ -125,7 +126,7 @@ class DockSettingsScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 facetRepo = FacetRepository(database.facetDao())
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val pid = runBlocking { facetRepo.addFacet().id }
                 DockSettingsViewModel(
                     SavedStateHandle(mapOf("facetId" to pid)),

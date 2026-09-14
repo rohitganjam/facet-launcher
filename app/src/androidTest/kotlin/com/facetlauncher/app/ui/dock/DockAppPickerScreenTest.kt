@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.dock
 
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -47,7 +48,7 @@ class DockAppPickerScreenTest {
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
                 val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)

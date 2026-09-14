@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.local.FavoriteFolderPlacementDao
 import com.facetlauncher.app.data.local.FavoriteFolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -91,11 +92,11 @@ class FavoriteAppRepository @Inject constructor(
         folders: List<com.facetlauncher.app.data.model.Folder>,
         installed: List<AppInfo>,
     ): List<PlacedItem> {
-        val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.profile) }
         val foldersById = folders.associateBy { it.id }
 
         val appItems = appEntities.mapNotNull { entity ->
-            installedByComponent[entity.packageName to entity.activityName]?.let { app ->
+            installedByComponent[Triple(entity.packageName, entity.activityName, entity.profile)]?.let { app ->
                 entity.position to PlacedItem.SingleApp(app)
             }
         }
@@ -108,9 +109,9 @@ class FavoriteAppRepository @Inject constructor(
     }
 
     private fun hydrate(entities: List<FavoriteAppEntity>, installed: List<AppInfo>): List<AppInfo> {
-        val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.profile) }
         return entities.sortedBy { it.position }
-            .mapNotNull { entity -> installedByComponent[entity.packageName to entity.activityName] }
+            .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.profile)] }
     }
 
     suspend fun addFavorite(facetId: Long, app: AppInfo, position: Int) {
@@ -120,12 +121,13 @@ class FavoriteAppRepository @Inject constructor(
                 packageName = app.packageName,
                 activityName = app.activityName,
                 position = position,
+                profile = app.profile,
             ),
         )
     }
 
     suspend fun removeFavorite(facetId: Long, app: AppInfo) {
-        favoriteAppDao.deleteByComponent(facetId, app.packageName, app.activityName)
+        favoriteAppDao.deleteByComponent(facetId, app.packageName, app.activityName, app.profile)
     }
 
     suspend fun placeFolder(facetId: Long, folderId: Long, position: Int) {
@@ -137,14 +139,19 @@ class FavoriteAppRepository @Inject constructor(
     }
 
     /**
-     * Uninstall cleanup — permanently removes [packageName]'s favorite entry from *every*
-     * facet, driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. Distinct
-     * from [observeFavoritesForFacet]'s own runtime filtering, which reacts to any reason an
-     * app might be momentarily missing without deleting anything — this only runs for a
+     * Uninstall cleanup — permanently removes [packageName]'s favorite entry (in [profile]) from
+     * *every* facet, driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase].
+     * Distinct from [observeFavoritesForFacet]'s own runtime filtering, which reacts to any reason
+     * an app might be momentarily missing without deleting anything — this only runs for a
      * genuine, permanent uninstall.
      */
-    suspend fun removeByPackage(packageName: String) {
-        favoriteAppDao.deleteByPackage(packageName)
+    suspend fun removeByPackage(packageName: String, profile: AppProfile) {
+        favoriteAppDao.deleteByPackage(packageName, profile)
+    }
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
+    suspend fun removeByProfile(profile: AppProfile) {
+        favoriteAppDao.deleteByProfile(profile)
     }
 
     /** Replaces this facet's entire favorites list with [items] — used to seed a clean copy (e.g. of the current default list) when a facet switches to Override. Carries folder placements, not just apps. */
@@ -154,7 +161,7 @@ class FavoriteAppRepository @Inject constructor(
         items.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> favoriteAppDao.upsert(
-                    FavoriteAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    FavoriteAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index, profile = item.app.profile),
                 )
                 is PlacedItem.FolderItem -> favoriteFolderPlacementDao.upsert(
                     FavoriteFolderPlacementEntity(facetId = facetId, folderId = item.folder.id, position = index),
@@ -185,7 +192,7 @@ class FavoriteAppRepository @Inject constructor(
         orderedItems.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> favoriteAppDao.upsert(
-                    FavoriteAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    FavoriteAppEntity(facetId = facetId, packageName = item.app.packageName, activityName = item.app.activityName, position = index, profile = item.app.profile),
                 )
                 is PlacedItem.FolderItem -> favoriteFolderPlacementDao.upsert(
                     FavoriteFolderPlacementEntity(facetId = facetId, folderId = item.folder.id, position = index),

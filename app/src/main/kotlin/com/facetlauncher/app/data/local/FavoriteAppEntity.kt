@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.facetlauncher.app.data.model.AppProfile
 
 @Entity(
     tableName = "favorite_apps",
@@ -15,7 +16,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["facetId", "packageName", "activityName"], unique = true)],
+    indices = [Index(value = ["facetId", "packageName", "activityName", "profile"], unique = true)],
 )
 data class FavoriteAppEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -23,4 +24,5 @@ data class FavoriteAppEntity(
     val packageName: String,
     val activityName: String,
     val position: Int,
+    val profile: AppProfile = AppProfile.PERSONAL,
 )
