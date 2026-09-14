@@ -55,10 +55,13 @@ enum class NotificationBadgeStyle {
  * `LEFT` (the default) is today's unchanged layout — icon then label, normal reading order,
  * packed against the row's start edge. `RIGHT` both reverses the internal order (label then icon,
  * icon landing on the row's trailing edge) and packs the whole row's content against the
- * available width's end, so the row visually hugs the right edge of the screen.
+ * available width's end, so the row visually hugs the right edge of the screen. `CENTER` keeps
+ * `LEFT`'s normal reading order (icon then label) but centers that group within the row's full
+ * width instead of packing it to either edge.
  */
 enum class AppRowPosition {
     LEFT,
+    CENTER,
     RIGHT,
 }
 

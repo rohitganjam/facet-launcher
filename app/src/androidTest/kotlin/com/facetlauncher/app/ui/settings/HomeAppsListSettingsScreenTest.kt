@@ -112,6 +112,18 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
+    fun appRowPositionDropdownOffersCenter() {
+        setContent()
+        composeRule.onNodeWithTag("default_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("default_app_row_position_row_option_CENTER").performClick()
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("default_app_row_position_row").assertTextContains("Center") }.isSuccess
+        }
+    }
+
+    @Test
     fun favoritesRowIsClickable() {
         var navigated = false
         setContent(onEditFavorites = { navigated = true })

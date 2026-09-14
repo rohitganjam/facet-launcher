@@ -547,7 +547,11 @@ fun HomeScreen(
                                 },
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     shadow = homeAppLabelShadow(listLabelColor),
-                                    textAlign = if (appRowPosition == AppRowPosition.RIGHT) TextAlign.End else TextAlign.Start,
+                                    textAlign = when (appRowPosition) {
+                                        AppRowPosition.RIGHT -> TextAlign.End
+                                        AppRowPosition.CENTER -> TextAlign.Center
+                                        AppRowPosition.LEFT -> TextAlign.Start
+                                    },
                                 ),
                                 color = listLabelColor,
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
@@ -950,11 +954,12 @@ internal fun AppRow(
                 .padding(horizontal = 8.dp, vertical = verticalPadding),
             verticalAlignment = Alignment.CenterVertically,
             // RIGHT packs the whole row's content against the trailing edge (not just reversed
-            // order while left-anchored) so the row visually hugs the screen's right edge.
-            horizontalArrangement = if (position == AppRowPosition.RIGHT) {
-                Arrangement.spacedBy(14.dp, Alignment.End)
-            } else {
-                Arrangement.spacedBy(14.dp)
+            // order while left-anchored) so the row visually hugs the screen's right edge; CENTER
+            // centers that same (unreversed) group within the row's full width instead.
+            horizontalArrangement = when (position) {
+                AppRowPosition.RIGHT -> Arrangement.spacedBy(14.dp, Alignment.End)
+                AppRowPosition.CENTER -> Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)
+                AppRowPosition.LEFT -> Arrangement.spacedBy(14.dp)
             },
         ) {
             val icon: @Composable () -> Unit = {
@@ -1338,10 +1343,10 @@ internal fun FolderRow(
             .testTag("${testTagPrefix}folder_row_${folder.id}")
             .padding(horizontal = 8.dp, vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = if (position == AppRowPosition.RIGHT) {
-            Arrangement.spacedBy(14.dp, Alignment.End)
-        } else {
-            Arrangement.spacedBy(14.dp)
+        horizontalArrangement = when (position) {
+            AppRowPosition.RIGHT -> Arrangement.spacedBy(14.dp, Alignment.End)
+            AppRowPosition.CENTER -> Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)
+            AppRowPosition.LEFT -> Arrangement.spacedBy(14.dp)
         },
     ) {
         val icon: @Composable () -> Unit = {

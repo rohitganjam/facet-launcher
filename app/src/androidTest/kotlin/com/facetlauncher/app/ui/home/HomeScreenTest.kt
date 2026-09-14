@@ -432,6 +432,28 @@ class HomeScreenTest {
     }
 
     @Test
+    fun centerPositionRendersTheIconBeforeTheLabelAndCentersTheRowContent() {
+        // Given Center position
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.CENTER)
+            }
+        }
+
+        // Then the internal order stays normal — icon before label, same as Left
+        // (useUnmergedTree = true — see leftPositionRendersTheIconBeforeTheLabel's note above)
+        val iconNode = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode()
+        val labelNode = composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).fetchSemanticsNode()
+        assert(iconNode.boundsInRoot.left < labelNode.boundsInRoot.left)
+
+        // And the (icon + label) group sits centered within the row's width — not packed against
+        // either edge like Left/Right are
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val groupCenter = (iconNode.boundsInRoot.left + labelNode.boundsInRoot.right) / 2f
+        assert(groupCenter > rootWidth * 0.35f && groupCenter < rootWidth * 0.65f)
+    }
+
+    @Test
     fun rightPositionAlsoRightAlignsTheSectionHeading() {
         // Given Left position (default) — the "FAVORITES" heading hugs the left edge
         var appRowPosition by mutableStateOf(AppRowPosition.LEFT)

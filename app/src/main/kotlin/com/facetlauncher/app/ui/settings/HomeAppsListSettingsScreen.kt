@@ -211,6 +211,7 @@ private fun HomeAppsListSettingsHeader(onBack: () -> Unit, modifier: Modifier = 
 
 private fun AppRowPosition.homeAppsListDisplayLabel(): String = when (this) {
     AppRowPosition.LEFT -> "Left"
+    AppRowPosition.CENTER -> "Center"
     AppRowPosition.RIGHT -> "Right"
 }
 
