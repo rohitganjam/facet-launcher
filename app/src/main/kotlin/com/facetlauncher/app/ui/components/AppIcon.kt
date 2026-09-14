@@ -10,6 +10,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
@@ -95,16 +96,22 @@ fun AppIcon(
     cornerRadius: Dp = appIconCornerRadiusFor(size),
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
+    isWorkApp: Boolean = false,
 ) {
-    if (notificationCount != null && notificationCount > 0) {
-        BadgedBox(
-            badge = { NotificationBadge(count = notificationCount, style = badgeStyle) },
-            modifier = modifier,
-        ) {
+    Box(modifier = modifier) {
+        if (notificationCount != null && notificationCount > 0) {
+            BadgedBox(badge = { NotificationBadge(count = notificationCount, style = badgeStyle) }) {
+                AppIconGlyph(icon = icon, size = size, cornerRadius = cornerRadius, contentDescription = contentDescription)
+            }
+        } else {
             AppIconGlyph(icon = icon, size = size, cornerRadius = cornerRadius, contentDescription = contentDescription)
         }
-    } else {
-        AppIconGlyph(icon = icon, size = size, cornerRadius = cornerRadius, contentDescription = contentDescription, modifier = modifier)
+        // Bottom-start, not stacked with the notification dot above (top-end, via BadgedBox) —
+        // matches every other Android launcher's own convention for where a Work Profile badge
+        // sits, so a user switching from another launcher isn't relearning icon language.
+        if (isWorkApp) {
+            WorkProfileBadge(modifier = Modifier.align(Alignment.BottomStart))
+        }
     }
 }
 
@@ -118,6 +125,19 @@ fun NotificationBadge(count: Int, style: NotificationBadgeStyle, modifier: Modif
     } else {
         Badge(containerColor = Accent, modifier = modifier.testTag("app_icon_badge"))
     }
+}
+
+/**
+ * A themed marker for a Work Profile app's icon — deliberately not Android's own
+ * [android.content.pm.PackageManager.getUserBadgedIcon] briefcase asset, which would render with
+ * the OS's own baseline tones instead of this app's palette (CLAUDE.md's shape/theming rule).
+ * Reuses [Badge]'s own plain-dot construction (same as [NotificationBadge]'s `DOT` style) so it
+ * reads as the same visual family, just placed at a different corner and always-Accent (a Work
+ * Profile marker isn't a count, so [NotificationBadgeStyle.COUNT] has no equivalent here).
+ */
+@Composable
+private fun WorkProfileBadge(modifier: Modifier = Modifier) {
+    Badge(containerColor = Accent, modifier = modifier.testTag("work_profile_badge"))
 }
 
 /**

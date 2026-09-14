@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -79,6 +81,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -86,8 +89,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
@@ -158,6 +163,8 @@ private const val EDGE_ZONE_WIDTH_DP = 48
 fun AppDrawerScreen(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
+    /** Whether a Work Profile currently exists — see [com.facetlauncher.app.ui.launcher.LauncherUiState.hasWorkProfile]'s own doc for why this isn't just inferred from [apps]. */
+    hasWorkProfile: Boolean = false,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     gridState: LazyGridState = rememberLazyGridState(),
@@ -201,14 +208,21 @@ fun AppDrawerScreen(
     isDrawerOpen: Boolean = true,
 ) {
     val rankBySearchRelevance = remember { RankBySearchRelevanceUseCase() }
-    val filteredApps = remember(apps, query) { rankBySearchRelevance(apps, query) { it.label } }
+    val isSearching = query.isNotBlank()
+    // Browse mode is scoped to the selected tab; search spans every profile regardless of which
+    // tab is active — the tab is a browsing filter, not a search filter (decided explicitly: the
+    // whole point of switching tabs is narrowing what you scroll through, not what you can find).
+    var selectedTab by remember { mutableStateOf(DrawerTab.PERSONAL) }
+    val tabScopedApps = remember(apps, isSearching, selectedTab) {
+        if (isSearching || !hasWorkProfile) apps else apps.filter { it.profile == selectedTab.toAppProfile() }
+    }
+    val filteredApps = remember(tabScopedApps, query) { rankBySearchRelevance(tabScopedApps, query) { it.label } }
     val groupUseCase = remember { GroupAppsByLetterUseCase() }
     val groupedApps = remember(filteredApps) { groupUseCase(filteredApps) }
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     var draggingLetter by remember { mutableStateOf<String?>(null) }
     var railHeightPx by remember { mutableFloatStateOf(0f) }
-    val isSearching = query.isNotBlank()
     // Phase 9's connections sheet — hoisted here (not down in DrawerSearchResults/ContactRow) so
     // it can overlay the *whole* screen.
     var connectionsSheetContact by remember { mutableStateOf<ContactInfo?>(null) }
@@ -260,6 +274,16 @@ fun AppDrawerScreen(
     ) {
         if (searchBarPosition == SearchBarPosition.TOP) {
             DrawerSearchBar(query = query, onQueryChanged = onQueryChanged, onNavigateToSettings = onNavigateToSettings)
+        }
+
+        // Browse-mode only (see isSearching's own doc above) — hidden entirely on a device with
+        // no Work Profile, so this is a genuine no-op for the common case.
+        if (hasWorkProfile && !isSearching) {
+            DrawerProfileTabRow(
+                selected = selectedTab,
+                onSelect = { selectedTab = it },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
 
         Box(modifier = Modifier.weight(1f)) {
@@ -434,6 +458,75 @@ fun AppDrawerScreen(
     }
 }
 
+/** Duration for [DrawerProfileTabRow]'s selection-indicator slide — matches `DockPickerTabRow`'s own `TAB_TRANSITION_DURATION_MS`. */
+private const val DRAWER_TAB_TRANSITION_DURATION_MS = 220
+
+/** Which profile's apps the App Drawer is currently browsing — a browse-mode filter only, see [AppDrawerScreen]'s own `isSearching` doc. */
+private enum class DrawerTab {
+    PERSONAL,
+    WORK,
+    ;
+
+    fun toAppProfile(): AppProfile = if (this == WORK) AppProfile.WORK else AppProfile.PERSONAL
+}
+
+/**
+ * Personal/Work switcher shown above the app list only when a Work Profile exists — mirrors
+ * `DockPickerTabRow`'s own pill/sliding-indicator construction (`DockAppPickerScreen.kt`) so it
+ * reads as the same visual language rather than a one-off.
+ */
+@Composable
+private fun DrawerProfileTabRow(selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
+    val tabs = DrawerTab.entries
+    val selectedIndex = tabs.indexOf(selected)
+    val density = LocalDensity.current
+    var rowSizePx by remember { mutableStateOf(IntSize.Zero) }
+
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(SurfaceContainer)
+            .padding(4.dp)
+            .onSizeChanged { rowSizePx = it },
+    ) {
+        if (rowSizePx.width > 0) {
+            val tabWidth = with(density) { (rowSizePx.width / tabs.size).toDp() }
+            val tabHeight = with(density) { rowSizePx.height.toDp() }
+            val indicatorOffset by animateDpAsState(
+                targetValue = tabWidth * selectedIndex,
+                animationSpec = tween(DRAWER_TAB_TRANSITION_DURATION_MS),
+                label = "drawer_profile_tab_indicator",
+            )
+            Box(
+                modifier = Modifier
+                    .offset(x = indicatorOffset)
+                    .size(width = tabWidth, height = tabHeight)
+                    .clip(CircleShape)
+                    .background(Accent),
+            )
+        }
+        Row {
+            tabs.forEach { tab ->
+                val isSelected = tab == selected
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = { onSelect(tab) })
+                        .testTag("drawer_profile_tab_${tab.name.lowercase()}")
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (tab == DrawerTab.PERSONAL) "Personal" else "Work",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) Surface else Ink,
+                    )
+                }
+            }
+        }
+    }
+}
+
 /**
  * Rounded-rectangle search bar (`1j`) — text-filters the drawer's app list. The 3-dot overflow
  * menu is a second entry point into Launcher Settings, alongside the long-press sheet. When
@@ -589,7 +682,7 @@ private fun DrawerSearchResults(
                     }
                 }
             } else {
-                items(apps, key = { "app_" + it.packageName + it.activityName }) { app ->
+                items(apps, key = { "app_" + it.packageName + it.activityName + it.profile }) { app ->
                     DrawerAppRow(
                         app = app,
                         onClick = { onAppClick(app) },
@@ -924,7 +1017,7 @@ private fun DrawerListContent(
                         .testTag("header_$letter"),
                 )
             }
-            items(appsInGroup, key = { it.packageName + it.activityName }) { app ->
+            items(appsInGroup, key = { it.packageName + it.activityName + it.profile }) { app ->
                 DrawerAppRow(
                     app = app,
                     onClick = { onAppClick(app) },
@@ -992,6 +1085,7 @@ private fun DrawerAppRow(
                     icon = app.icon,
                     size = itemSize.iconSizeDp.dp,
                     contentDescription = null,
+                    isWorkApp = app.profile == AppProfile.WORK,
                 )
             }
             Text(text = app.label, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight), color = DrawerAppTextColor)
@@ -1068,7 +1162,7 @@ private fun DrawerGridContent(
             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(apps, key = { it.packageName + it.activityName }) { app ->
+            items(apps, key = { it.packageName + it.activityName + it.profile }) { app ->
                 DrawerGridTile(
                     app = app,
                     onClick = { onAppClick(app) },
@@ -1128,6 +1222,7 @@ private fun DrawerGridTile(
                 contentDescription = null,
                 notificationCount = badgeCount,
                 badgeStyle = badgeStyle,
+                isWorkApp = app.profile == AppProfile.WORK,
             )
             if (showLabel) {
                 Spacer(modifier = Modifier.height(7.dp))

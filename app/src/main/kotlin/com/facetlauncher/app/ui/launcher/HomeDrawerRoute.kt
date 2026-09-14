@@ -244,6 +244,7 @@ fun HomeDrawerRoute(
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val drawerSettings by drawerViewModel.settings.collectAsStateWithLifecycle()
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
     val settingsResults by drawerViewModel.settingsResults.collectAsStateWithLifecycle()
@@ -634,6 +635,7 @@ fun HomeDrawerRoute(
 
         AppDrawerScreen(
             apps = apps,
+            hasWorkProfile = launcherUiState.hasWorkProfile,
             onAppClick = { app ->
                 focusManager.clearFocus()
                 onAppClick(app)

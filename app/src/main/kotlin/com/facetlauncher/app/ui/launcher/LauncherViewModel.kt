@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.launcher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -50,6 +51,13 @@ data class LauncherUiState(
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /** Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted]. */
     val onboardingCompleted: Boolean = false,
+    /**
+     * Whether a Work Profile currently exists on this device — sourced from
+     * [WorkProfileRepository] rather than inferred from `apps.any { it.profile == WORK }`, so the
+     * App Drawer's Work tab stays visible (with an empty/paused state) while the profile is
+     * paused, instead of disappearing just because its apps momentarily aren't enumerable.
+     */
+    val hasWorkProfile: Boolean = false,
 )
 
 @HiltViewModel
@@ -59,6 +67,7 @@ class LauncherViewModel @Inject constructor(
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
     private val seedDefaultDock: SeedDefaultDockUseCase,
     private val settingsRepository: SettingsRepository,
+    private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LauncherUiState())
@@ -80,7 +89,7 @@ class LauncherViewModel @Inject constructor(
         // Live, not one-shot — an install/uninstall/update while Facet is in the foreground
         // (including via the app long-press menu's Uninstall action) must be reflected without
         // requiring a process restart; see AppRepository.observeInstalledApps.
-        combine(getInstalledApps.observe(), settingsRepository.settings) { apps, settings ->
+        combine(getInstalledApps.observe(), settingsRepository.settings, workProfileRepository.hasWorkProfile()) { apps, settings, hasWorkProfile ->
             LauncherUiState(
                 apps = apps,
                 isLoading = false,
@@ -91,6 +100,7 @@ class LauncherViewModel @Inject constructor(
                 iconRenderMode = settings.iconRenderMode,
                 launcherFontOption = settings.launcherFontOption,
                 onboardingCompleted = settings.onboardingCompleted,
+                hasWorkProfile = hasWorkProfile,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
         viewModelScope.launch { ensureActiveFacet() }

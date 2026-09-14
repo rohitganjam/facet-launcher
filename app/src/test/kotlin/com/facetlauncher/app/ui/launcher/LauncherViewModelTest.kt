@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.launcher
 
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
@@ -39,6 +40,12 @@ class LauncherViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun fakeWorkProfileRepository(hasWorkProfile: Boolean = false): WorkProfileRepository {
+        val repository = mock(WorkProfileRepository::class.java)
+        `when`(repository.hasWorkProfile()).thenReturn(flowOf(hasWorkProfile))
+        return repository
+    }
+
     @Test
     fun `exposes loading state until the use case resolves, then the fetched apps`() = runTest {
         // Given a repository that will return two apps
@@ -59,6 +66,7 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             seedDefaultDock,
             settingsRepository,
+            fakeWorkProfileRepository(),
         )
 
         // Then immediately after construction it's still loading (the fetch coroutine hasn't run yet)
@@ -90,6 +98,7 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             seedDefaultDock,
             settingsRepository,
+            fakeWorkProfileRepository(),
         )
 
         // Then it's still loading well before the timeout
@@ -120,6 +129,7 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             seedDefaultDock,
             settingsRepository,
+            fakeWorkProfileRepository(),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -132,5 +142,29 @@ class LauncherViewModelTest {
 
         // Then the repository is told to persist it
         org.mockito.Mockito.verify(settingsRepository).setOnboardingCompleted(true)
+    }
+
+    @Test
+    fun `reflects hasWorkProfile from WorkProfileRepository`() = runTest {
+        // Given a Work Profile that exists
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveFacet,
+            cleanUpUninstalledApps,
+            seedDefaultDock,
+            settingsRepository,
+            fakeWorkProfileRepository(hasWorkProfile = true),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the ui state reflects it
+        assertTrue(viewModel.uiState.value.hasWorkProfile)
     }
 }

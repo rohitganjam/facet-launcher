@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +36,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.BatteryRepository
@@ -168,6 +170,9 @@ class HomeDrawerRouteTest {
                     // NPEs immediately. No real uninstalls happen in these tests, so an empty,
                     // never-emitting Flow is the correct fake here.
                     `when`(repo.observeUninstalledPackages()).thenReturn(emptyFlow())
+                    // Same reasoning as observeUninstalledPackages above, for the Work Profile
+                    // bulk-removal path CleanUpUninstalledAppsUseCase also collects.
+                    `when`(repo.observeProfileRemoved()).thenReturn(emptyFlow())
                 }
             }
             val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
@@ -222,6 +227,7 @@ class HomeDrawerRouteTest {
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
+                    WorkProfileRepository(context.getSystemService(UserManager::class.java), context),
                 )
             }
             val drawerViewModel = remember {

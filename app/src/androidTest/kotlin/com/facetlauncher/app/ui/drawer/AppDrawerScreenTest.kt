@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.down
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.moveTo
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -24,6 +26,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactConnectionType
@@ -700,5 +703,65 @@ class AppDrawerScreenTest {
 
         // Then the context menu opens
         composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun profileTabRowIsHiddenWithoutAWorkProfile() {
+        // Given the default, no-Work-Profile case (hasWorkProfile defaults to false)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {})
+            }
+        }
+
+        // Then no Personal/Work switcher renders — a device without a Work Profile sees no change
+        composeRule.onNodeWithTag("drawer_profile_tab_personal").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_profile_tab_work").assertDoesNotExist()
+    }
+
+    @Test
+    fun switchingToTheWorkTabShowsOnlyWorkProfileApps() {
+        // Given a mix of personal and Work Profile apps, with a Work Profile present
+        val mixedApps = listOf(
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "A App", icon = null, profile = AppProfile.PERSONAL),
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "A App", icon = null, profile = AppProfile.WORK),
+        )
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = mixedApps, onAppClick = {}, hasWorkProfile = true)
+            }
+        }
+
+        // Then the Personal tab is selected by default, showing just one "A App"
+        composeRule.onNodeWithTag("drawer_profile_tab_personal").assertExists()
+        composeRule.onAllNodesWithText("A App").assertCountEquals(1)
+
+        // When switching to the Work tab
+        composeRule.onNodeWithTag("drawer_profile_tab_work").performClick()
+
+        // Then it still shows one "A App" — the Work Profile copy, not the personal one collapsed together
+        composeRule.onAllNodesWithText("A App").assertCountEquals(1)
+    }
+
+    @Test
+    fun searchingShowsResultsFromBothProfilesRegardlessOfTheSelectedTab() {
+        // Given the same package installed in both profiles, and the Personal tab selected
+        val mixedApps = listOf(
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "Chat", icon = null, profile = AppProfile.PERSONAL),
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "Chat", icon = null, profile = AppProfile.WORK),
+        )
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = mixedApps, onAppClick = {}, hasWorkProfile = true, query = query, onQueryChanged = { query = it })
+            }
+        }
+
+        // When searching for it
+        query = "Chat"
+
+        // Then both the personal and Work Profile copies show up as separate result rows — search
+        // isn't scoped to the tab. 3, not 2: the search field's own typed value also matches "Chat".
+        composeRule.onAllNodesWithText("Chat").assertCountEquals(3)
     }
 }

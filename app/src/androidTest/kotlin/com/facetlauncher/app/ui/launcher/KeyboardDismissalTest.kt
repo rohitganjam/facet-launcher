@@ -22,6 +22,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.BatteryRepository
@@ -165,6 +166,7 @@ class KeyboardDismissalTest {
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
+                    WorkProfileRepository(context.getSystemService(UserManager::class.java), context),
                 )
             }
             val drawerViewModel = remember {
