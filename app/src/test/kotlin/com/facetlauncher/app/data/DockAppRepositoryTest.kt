@@ -122,6 +122,24 @@ class DockAppRepositoryTest {
     }
 
     @Test
+    fun `removeByPackage deletes its own dock row`() = runTest {
+        // Given an app in the Dock — folder-membership cleanup is CleanUpUninstalledAppsUseCase's
+        // own direct responsibility (via FolderRepository), not this repository's, so this only
+        // covers the Dock row itself. See CleanUpUninstalledAppsUseCaseTest for the folder case.
+        val app = appInfo('a')
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(app)))
+        val dao = FakeDockAppDao()
+        dao.upsert(DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = 0))
+
+        // When the app is uninstalled
+        repository(appRepository, dao = dao).removeByPackage(app.packageName)
+
+        // Then its dock row is gone
+        assertEquals(emptyList<AppInfo>(), repository(appRepository, dao = dao).observeDockApps().first())
+    }
+
+    @Test
     fun `observeDockItems merges apps and placed folders sorted by position`() = runTest {
         // Given a standalone app at position 1 and a folder placed at position 0
         val a = appInfo('a')

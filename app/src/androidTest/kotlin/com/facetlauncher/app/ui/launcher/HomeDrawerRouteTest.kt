@@ -215,7 +215,10 @@ class HomeDrawerRouteTest {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveFacetUseCase(facetRepository, settingsRepository),
-                    CleanUpUninstalledAppsUseCase(appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository),
+                    CleanUpUninstalledAppsUseCase(
+                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        FolderRepository(database.folderDao(), appRepository),
+                    ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                 )

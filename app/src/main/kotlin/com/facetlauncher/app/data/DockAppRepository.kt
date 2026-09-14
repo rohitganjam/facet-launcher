@@ -97,16 +97,15 @@ class DockAppRepository @Inject constructor(
     }
 
     /**
-     * Uninstall cleanup — permanently removes [packageName]'s dock entry (if any) and every
-     * folder's membership row for it, driven by
-     * [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. Distinct from
+     * Uninstall cleanup — permanently removes [packageName]'s dock entry (if any), driven by
+     * [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase] (which cleans up
+     * [FolderRepository] itself directly, alongside every placement repository). Distinct from
      * [observeDockApps]/[observeDockItems]'s own runtime filtering, which reacts to *any* reason
      * an app might be momentarily missing (mid-update via `onPackagesUnavailable`, for instance)
      * without deleting anything — this only runs for a genuine, permanent uninstall.
      */
     suspend fun removeByPackage(packageName: String) {
         dockAppDao.deleteByPackage(packageName)
-        folderRepository.removeByPackage(packageName)
     }
 
     /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
