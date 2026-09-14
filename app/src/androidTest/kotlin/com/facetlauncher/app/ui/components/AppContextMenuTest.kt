@@ -391,6 +391,21 @@ class AppContextMenuTest {
     }
 
     @Test
+    fun folderPreviewBackChevronReturnsToTheFolderListWithoutDismissing() {
+        var dismissed = false
+        val folder = Folder(id = 7L, name = "Games", apps = emptyList())
+        setContent(folderCandidates = listOf(folder), onDismissRequest = { dismissed = true })
+
+        composeRule.onNodeWithTag("app_context_menu_add_to_folder").performClick()
+        composeRule.onNodeWithTag("app_context_menu_folder_7").performClick()
+        composeRule.onNodeWithTag("folder_contents_sheet_back").performClick()
+
+        composeRule.onNodeWithTag("folder_contents_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_context_menu_folder_7").assertExists()
+        assert(!dismissed)
+    }
+
+    @Test
     fun tappingCreateNewFolderOpensRenameDialogAndSavingCallsOnCreateFolder() {
         var createdApp: AppInfo? = null
         var createdName: String? = null

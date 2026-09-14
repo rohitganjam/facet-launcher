@@ -343,6 +343,7 @@ fun AppContextMenu(
                     onDismissRequest()
                     onAddToFolder(app, folder.id)
                 },
+                onBack = { previewingFolder = null },
             ),
         )
     }

@@ -21,24 +21,27 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -55,8 +58,8 @@ sealed interface FolderSheetHeaderAction {
     /** The normal case: tapping a folder tile opens its contents with a rename pencil. */
     data class Rename(val onRename: (Long, String) -> Unit) : FolderSheetHeaderAction
 
-    /** Reached from [AppContextMenu]'s "Add to folder" list — previews this folder's real contents before the pending app is actually added; tapping Add performs the add and dismisses. */
-    data class AddHere(val onAdd: () -> Unit) : FolderSheetHeaderAction
+    /** Reached from [AppContextMenu]'s "Add to folder" list — previews this folder's real contents before the pending app is actually added; tapping Add performs the add and dismisses. [onBack] returns to that folder list (a leading chevron in the header, since this preview sits on top of it rather than replacing it) rather than dismissing the whole flow. */
+    data class AddHere(val onAdd: () -> Unit, val onBack: () -> Unit) : FolderSheetHeaderAction
 }
 
 /**
@@ -73,9 +76,10 @@ sealed interface FolderSheetHeaderAction {
  * empty-state message for a 0-app folder rather than a bare blank sheet — a folder is never
  * auto-deleted for being empty, so this is a real, reachable state.
  *
- * [headerAction] governs the trailing header icon: [FolderSheetHeaderAction.Rename] (the normal
- * case) or [FolderSheetHeaderAction.AddHere] (reached from "Add to folder"'s existing-folder row —
- * see [AppContextMenu]'s own doc for why picking an existing folder previews instead of adding
+ * [headerAction] governs the trailing header action, both rendered as the same `Accent` text-button
+ * treatment: [FolderSheetHeaderAction.Rename] ("Rename", the normal case) or
+ * [FolderSheetHeaderAction.AddHere] ("Add to folder", reached from "Add to folder"'s existing-folder
+ * row — see [AppContextMenu]'s own doc for why picking an existing folder previews instead of adding
  * immediately). Long-pressing a contained app reuses [AppContextMenu] a third time (Dock/Drawer/
  * Search's "Add to folder" being the other two), with [AppContextMenu.removeFromFolderId] swapping
  * in "Remove from folder" in place of "Add to folder".
@@ -96,10 +100,13 @@ fun FolderContentsSheet(
     var showRenameDialog by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        // Disable the platform Dialog's own default window dim — it would stack on top of the Scrim Box below.
+        val view = LocalView.current
+        SideEffect { (view.parent as? DialogWindowProvider)?.window?.setDimAmount(0f) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Scrim)
+                .then(if (headerAction is FolderSheetHeaderAction.AddHere) Modifier else Modifier.background(Scrim))
                 .clickable(onClick = onDismissRequest),
         ) {
             BoxWithConstraints(modifier = modifier.fillMaxWidth().align(Alignment.BottomCenter)) {
@@ -123,23 +130,34 @@ fun FolderContentsSheet(
                             .background(color = Faint, shape = RoundedCornerShape(2.dp)),
                     )
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 24.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        if (headerAction is FolderSheetHeaderAction.AddHere) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Back",
+                                tint = Ink,
+                                modifier = Modifier
+                                    .testTag("folder_contents_sheet_back")
+                                    .clickable(onClick = headerAction.onBack)
+                                    .padding(8.dp),
+                            )
+                        }
                         Text(
                             text = folder.name,
                             style = MaterialTheme.typography.titleMedium,
                             color = Ink,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).padding(start = if (headerAction is FolderSheetHeaderAction.AddHere) 0.dp else 12.dp),
                         )
                         when (headerAction) {
-                            is FolderSheetHeaderAction.Rename -> Icon(
-                                imageVector = Icons.Outlined.DriveFileRenameOutline,
-                                contentDescription = "Rename folder",
-                                tint = Muted,
+                            is FolderSheetHeaderAction.Rename -> Text(
+                                text = "Rename",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Accent,
                                 modifier = Modifier
                                     .testTag("folder_contents_sheet_rename")
                                     .clickable(onClick = { showRenameDialog = true }),

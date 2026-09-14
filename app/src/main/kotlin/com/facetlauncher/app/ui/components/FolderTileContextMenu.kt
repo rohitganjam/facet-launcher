@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
@@ -35,7 +36,8 @@ import com.facetlauncher.app.ui.theme.Surface
 
 /**
  * Long-pressing a folder *tile* itself (on Home, in the Dock, or in a Favorites list) — distinct
- * from [AppContextMenu], since a folder has no app-info/uninstall/shortcuts of its own. Rename,
+ * from [AppContextMenu], since a folder has no app-info/uninstall/shortcuts of its own. Header
+ * mirrors [AppContextMenu]'s own (icon + name) using [FolderTileGlyph] in place of [AppIcon]. Rename,
  * plus the same membership-aware "Add to"/"Remove from Favorites"/"Dock" rows as [AppContextMenu]
  * (from [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase] via [onRequestQuickAddState]) —
  * a folder placed in the Dock/Favorites occupies a slot exactly like a standalone app, so it gets
@@ -85,7 +87,13 @@ fun FolderTileContextMenu(
             modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = folder.name, style = MaterialTheme.typography.titleLarge, color = Ink)
+            FolderTileGlyph(folder = folder)
+            Text(
+                text = folder.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = Ink,
+                modifier = Modifier.padding(start = 16.dp),
+            )
         }
         AppContextMenuItem(
             label = "Rename",
