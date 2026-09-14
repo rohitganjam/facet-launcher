@@ -7,7 +7,11 @@ import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
+import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
+import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,6 +45,7 @@ class HomeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val defaultLauncherRepository: DefaultLauncherRepository,
+    private val quickAddState: ObserveQuickAddStateUseCase,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
@@ -56,6 +61,7 @@ class HomeViewModel @Inject constructor(
                 isLoading = false,
                 dockApps = screenState.dockApps,
                 appListItems = screenState.appListItems,
+                favoriteItems = screenState.favoriteItems,
                 facets = screenState.facets,
                 usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,
@@ -124,6 +130,24 @@ class HomeViewModel @Inject constructor(
             owningFacet?.let { facetRepository.setClockScale(it, scale) }
                 ?: settingsRepository.setClockScale(scale)
         }
+    }
+
+    /**
+     * Resolves the long-press menu's Add/Remove Favorites/Dock rows synchronously against this
+     * ViewModel's own already-live [uiState] — no repository read, so a long-press context menu
+     * (Home's own Dock/Favorites, the App Drawer, Search — every one of them, threaded through
+     * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]) never has to resolve those rows after
+     * first appearing (see chat history).
+     */
+    fun quickAddStateForApp(app: AppInfo): QuickAddState {
+        val state = _uiState.value
+        return quickAddState.forApp(app, state.dockApps, state.favoriteItems, state.dockOverrideFacetName, state.favoritesOverrideFacetName)
+    }
+
+    /** Folder-tile counterpart of [quickAddStateForApp]. */
+    fun quickAddStateForFolder(folder: Folder): QuickAddState {
+        val state = _uiState.value
+        return quickAddState.forFolder(folder, state.dockApps, state.favoriteItems, state.dockOverrideFacetName, state.favoritesOverrideFacetName)
     }
 
     private companion object {

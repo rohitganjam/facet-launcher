@@ -27,6 +27,8 @@ data class HomeUiState(
     val dockApps: List<PlacedItem> = emptyList(),
     /** Favorites, Recents, or Most Used, depending on the active facet's [ListContentMode]. Only the Favorites case can ever contain a [PlacedItem.FolderItem]. */
     val appListItems: List<PlacedItem> = emptyList(),
+    /** The active facet's real Favorites contents, resolved unconditionally — see [com.facetlauncher.app.domain.HomeScreenState.favoriteItems]'s own doc for why this is separate from [appListItems]. */
+    val favoriteItems: List<PlacedItem> = emptyList(),
     val facets: List<FacetEntity> = emptyList(),
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
@@ -113,6 +115,14 @@ data class HomeUiState(
     /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
     val clockPositionOwningFacet: FacetEntity?
         get() = activeFacet?.takeIf { it.overrideClock }
+
+    /** Names the facet overriding the Dock right now, for [com.facetlauncher.app.ui.components.QuickPlacementBadge] — `null` for the launcher-wide default, mirroring [com.facetlauncher.app.domain.QuickPlacementAction.facetName]'s own convention. */
+    val dockOverrideFacetName: String?
+        get() = activeFacet?.takeIf { it.overrideDock }?.name
+
+    /** Mirrors [dockOverrideFacetName] for Favorites — uses `overridingFavorites`, this app's own (differently-named) override flag for that list. */
+    val favoritesOverrideFacetName: String?
+        get() = activeFacet?.takeIf { it.overridingFavorites }?.name
 
     /** The active facet's app-list vertical anchor, falling back to the global default when not overriding — mirrors [activeAppRowPosition]'s own resolution shape. */
     val activeAppListVerticalAlignment: AppListVerticalAlignment

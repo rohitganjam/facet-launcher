@@ -14,7 +14,6 @@ import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFolderToDockUseCase
 import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
-import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
 import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
@@ -89,7 +88,6 @@ class DrawerViewModelTest {
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
-            observeQuickAddState = mock(ObserveQuickAddStateUseCase::class.java),
             addAppToFavorites = mock(AddAppToFavoritesUseCase::class.java),
             removeAppFromFavorites = mock(RemoveAppFromFavoritesUseCase::class.java),
             addAppToDock = mock(AddAppToDockUseCase::class.java),

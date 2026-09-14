@@ -118,6 +118,27 @@ class ObserveHomeScreenStateUseCaseTest {
     }
 
     @Test
+    fun `favoriteItems resolves the real favorites list even in Recents mode`() = runTest {
+        // Given a facet set to Recents (so appListItems won't be Favorites), but with real
+        // favorites of its own on the launcher-wide default list
+        val fixture = Fixture()
+        fixture.facetsFlow.value = listOf(
+            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
+        )
+        `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(emptyList())
+        `when`(fixture.defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('f')))))
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then favoriteItems still exposes the real Favorites list, independent of appListItems
+        // (which is Recents-shaped here) — this is what lets HomeViewModel.quickAddStateForApp
+        // resolve the Favorites row without a fresh repository read regardless of Home's display mode.
+        assertEquals(emptyList<PlacedItem>(), result.appListItems)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('f'))), result.favoriteItems)
+    }
+
+    @Test
     fun `recents mode reads from UsageStatsRepository when usage access is granted`() = runTest {
         // Given a facet set to Recents, usage access granted
         val fixture = Fixture()

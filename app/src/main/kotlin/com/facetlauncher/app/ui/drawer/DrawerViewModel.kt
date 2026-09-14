@@ -21,8 +21,6 @@ import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFolderToDockUseCase
 import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
-import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
-import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
@@ -59,7 +57,6 @@ class DrawerViewModel @Inject constructor(
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
-    private val observeQuickAddState: ObserveQuickAddStateUseCase,
     private val addAppToFavorites: AddAppToFavoritesUseCase,
     private val removeAppFromFavorites: RemoveAppFromFavoritesUseCase,
     private val addAppToDock: AddAppToDockUseCase,
@@ -188,11 +185,6 @@ class DrawerViewModel @Inject constructor(
     suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName)
 
     fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
-
-    /** Governs F12's own "Add to Favorites"/"Add to Dock" (or "Remove from…") rows — fetched fresh per app/folder, only when its menu actually opens. */
-    suspend fun quickAddStateForApp(app: AppInfo): QuickAddState = observeQuickAddState.forApp(app)
-
-    suspend fun quickAddStateForFolder(folder: Folder): QuickAddState = observeQuickAddState.forFolder(folder)
 
     fun onFavoritesAction(app: AppInfo, action: QuickPlacementAction) {
         viewModelScope.launch {

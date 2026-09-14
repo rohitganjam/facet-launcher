@@ -214,4 +214,44 @@ class HomeUiStateTest {
 
         assertEquals(false, state.showGestureHint)
     }
+
+    @Test
+    fun `dock override facet name is null when the active facet isn't overriding the dock`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overrideDock = false)),
+        )
+
+        assertEquals(null, state.dockOverrideFacetName)
+    }
+
+    @Test
+    fun `dock override facet name is the active facet's own name when it overrides the dock`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overrideDock = true)),
+        )
+
+        assertEquals("Work", state.dockOverrideFacetName)
+    }
+
+    @Test
+    fun `favorites override facet name is null when the active facet isn't overriding favorites`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overridingFavorites = false)),
+        )
+
+        assertEquals(null, state.favoritesOverrideFacetName)
+    }
+
+    @Test
+    fun `favorites override facet name is the active facet's own name when it overrides favorites`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overridingFavorites = true)),
+        )
+
+        assertEquals("Work", state.favoritesOverrideFacetName)
+    }
 }

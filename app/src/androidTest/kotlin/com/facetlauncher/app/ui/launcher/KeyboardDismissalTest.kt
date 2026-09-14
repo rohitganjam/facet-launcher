@@ -138,6 +138,7 @@ class KeyboardDismissalTest {
                     settingsRepository,
                     facetRepository,
                     DefaultLauncherRepository(context),
+                    ObserveQuickAddStateUseCase(),
                 )
             }
             launcherViewModel = remember {
@@ -187,14 +188,6 @@ class KeyboardDismissalTest {
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
-                    ObserveQuickAddStateUseCase(
-                        settingsRepository,
-                        facetRepository,
-                        favoriteAppRepository,
-                        defaultFavoriteAppRepository,
-                        dockAppRepository,
-                        facetDockAppRepository,
-                    ),
                     AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     RemoveAppFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),

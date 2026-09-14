@@ -6,9 +6,13 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.domain.HomeScreenState
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
+import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
+import com.facetlauncher.app.domain.QuickPlacementAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,6 +23,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -57,14 +62,17 @@ class HomeViewModelTest {
         },
         settings: LauncherSettings = LauncherSettings(),
         facets: List<FacetEntity> = emptyList(),
+        dockApps: List<PlacedItem> = emptyList(),
+        favoriteItems: List<PlacedItem> = emptyList(),
     ): HomeViewModel {
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(
             flowOf(
                 HomeScreenState(
                     settings = settings,
-                    dockApps = emptyList(),
+                    dockApps = dockApps,
                     appListItems = emptyList(),
+                    favoriteItems = favoriteItems,
                     facets = facets,
                     usageAccessGranted = true,
                     calendarEvents = emptyList(),
@@ -73,7 +81,14 @@ class HomeViewModelTest {
                 ),
             ),
         )
-        return HomeViewModel(observeHomeScreenState, notificationShadeRepository, settingsRepository, facetRepository, defaultLauncherRepository)
+        return HomeViewModel(
+            observeHomeScreenState,
+            notificationShadeRepository,
+            settingsRepository,
+            facetRepository,
+            defaultLauncherRepository,
+            ObserveQuickAddStateUseCase(),
+        )
     }
 
     @Test
@@ -119,6 +134,7 @@ class HomeViewModelTest {
             mock(SettingsRepository::class.java),
             mock(FacetRepository::class.java),
             defaultLauncherRepository,
+            ObserveQuickAddStateUseCase(),
         )
 
         // Then it's still loading well before the timeout
@@ -181,5 +197,21 @@ class HomeViewModelTest {
 
         // Then it persists via the same coach-mark mechanism the hint's visibility reads from
         verify(settingsRepository).markCoachMarkSeen("HOME_GESTURES")
+    }
+
+    @Test
+    fun `quickAddStateForApp resolves synchronously against the already-live uiState`() = runTest {
+        // Given a HomeViewModel whose dock already contains this app
+        val app = AppInfo(packageName = "com.example.a", activityName = ".Main", label = "A", icon = null)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), dockApps = listOf(PlacedItem.SingleApp(app)))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When its long-press menu asks for quick-add state
+        val result = viewModel.quickAddStateForApp(app)
+
+        // Then it resolves Remove from Dock without any further coroutine work — no repository
+        // read, since the answer was already sitting in uiState (see chat history: this used to
+        // be a fresh suspend fetch on every open, causing the sheet to visibly reflow).
+        assertEquals(QuickPlacementAction.Remove(facetName = null), result.dockAction)
     }
 }

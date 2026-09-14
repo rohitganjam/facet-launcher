@@ -32,6 +32,12 @@ data class HomeScreenState(
     val settings: LauncherSettings,
     val dockApps: List<PlacedItem>,
     val appListItems: List<PlacedItem>,
+    /** The active facet's real Favorites contents, resolved unconditionally — independent of
+     *  [appListItems], which only holds Favorites when the active list mode actually is
+     *  `FAVORITES`. Lets [com.facetlauncher.app.ui.components.AppContextMenu]'s Add/Remove
+     *  Favorites row resolve instantly from already-live state instead of a fresh repository
+     *  read on every long-press, regardless of which mode Home is currently showing. */
+    val favoriteItems: List<PlacedItem>,
     val facets: List<FacetEntity>,
     /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
     val usageAccessGranted: Boolean,
@@ -91,6 +97,18 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             }
         }
 
+        // Unconditional — unlike appListItems, which only resolves Favorites when the active list
+        // mode actually is FAVORITES. Paired with dockApps below purely to stay within combine()'s
+        // supported arity (see badgeCountsAndAccessories' own comment further down).
+        val favoriteItems = activeFacet.flatMapLatest { facet ->
+            if (facet != null && facet.overridingFavorites) {
+                favoriteAppRepository.observeFavoriteItems(facet.id)
+            } else {
+                defaultFavoriteAppRepository.observeDefaultItems()
+            }
+        }
+        val dockAndFavoriteItems = combine(dockApps, favoriteItems) { dock, favorites -> dock to favorites }
+
         val calendarEvents = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
             facet to settings
         }.flatMapLatest { (facet, settings) -> observeCalendarEvents(facet, settings) }
@@ -107,16 +125,17 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
         return combine(
             settingsRepository.settings,
-            dockApps,
+            dockAndFavoriteItems,
             appListItems,
             facetRepository.observeFacets(),
             calendarEvents,
             badgeCountsAndAccessories,
-        ) { settings, dockApps, items, facets, events, (badges, accessories) ->
+        ) { settings, (dockApps, favoriteItems), items, facets, events, (badges, accessories) ->
             HomeScreenState(
                 settings = settings,
                 dockApps = dockApps,
                 appListItems = items,
+                favoriteItems = favoriteItems,
                 facets = facets,
                 usageAccessGranted = usageAccessRepository.isGranted(),
                 calendarEvents = events,

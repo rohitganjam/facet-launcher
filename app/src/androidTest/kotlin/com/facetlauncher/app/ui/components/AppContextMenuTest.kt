@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.components
 
+import android.app.Activity
+import android.app.Instrumentation
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.runtime.CompositionLocalProvider
@@ -95,6 +97,11 @@ class AppContextMenuTest {
     @Test
     fun tappingAppInfoLaunchesApplicationDetailsSettingsForThisPackage() {
         setContent()
+        // app's package doesn't actually exist on the test device — without this stub, the real
+        // system Activity resolution still runs and can hang the test on an error dialog (see
+        // tappingUninstallLaunchesActionDeleteForThisPackage's own note).
+        Intents.intending(hasAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
+            .respondWith(Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null))
 
         composeRule.onNodeWithTag("app_context_menu_app_info").performClick()
 
@@ -109,6 +116,15 @@ class AppContextMenuTest {
     @Test
     fun tappingUninstallLaunchesActionDeleteForThisPackage() {
         setContent()
+        // Stub the real system Uninstall confirmation before it fires — app's package
+        // ("com.example.mail") isn't actually installed on the test device, so unstubbed this
+        // would launch the real PackageInstaller, which shows a real "app isn't installed" dialog
+        // that nothing in the test ever dismisses (previously left the test stuck on that dialog
+        // for ~30s before some external timeout finally let it proceed — see chat history).
+        // Intents.intended below only checks the recorded intent history, which stubbing doesn't
+        // affect, so the assertion is unchanged.
+        Intents.intending(hasAction(android.content.Intent.ACTION_DELETE))
+            .respondWith(Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null))
 
         composeRule.onNodeWithTag("app_context_menu_uninstall").performClick()
 
