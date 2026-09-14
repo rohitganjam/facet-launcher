@@ -91,6 +91,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -99,6 +100,8 @@ import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.domain.GroupedApps
+import com.facetlauncher.app.domain.QuickAddState
+import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
@@ -177,10 +180,13 @@ fun AppDrawerScreen(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
     /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
-    addToFavoritesOverride: Boolean? = null,
-    onAddToFavorites: (AppInfo) -> Unit = {},
-    addToDockOverride: Boolean? = null,
-    onAddToDock: (AppInfo) -> Unit = {},
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    /** F-Folders' "Add to folder" row — Dock-only for this phase, shared across browse and search. */
+    folderCandidates: List<Folder>? = null,
+    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
+    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     onRequestConnections: suspend (ContactInfo) -> List<ContactConnection> = { emptyList() },
     /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
     showContactsPermissionPrompt: Boolean = false,
@@ -275,10 +281,12 @@ fun AppDrawerScreen(
                 onClearSearch = { onQueryChanged("") },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
-                addToFavoritesOverride = addToFavoritesOverride,
-                onAddToFavorites = onAddToFavorites,
-                addToDockOverride = addToDockOverride,
-                onAddToDock = onAddToDock,
+                onRequestQuickAddState = onRequestQuickAddState,
+                onFavoritesAction = onFavoritesAction,
+                onDockAction = onDockAction,
+                folderCandidates = folderCandidates,
+                onCreateFolder = onCreateFolder,
+                onAddToFolder = onAddToFolder,
                 // Closing the keyboard here (not just clearing text-field focus) matters
                 // specifically because the user was very likely still typing their search query
                 // when they tapped a contact result — leaving it open behind the sheet looked
@@ -310,10 +318,12 @@ fun AppDrawerScreen(
                     badgeCounts = badgeCounts,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
-                    addToFavoritesOverride = addToFavoritesOverride,
-                    onAddToFavorites = onAddToFavorites,
-                    addToDockOverride = addToDockOverride,
-                    onAddToDock = onAddToDock,
+                    onRequestQuickAddState = onRequestQuickAddState,
+                    onFavoritesAction = onFavoritesAction,
+                    onDockAction = onDockAction,
+                    folderCandidates = folderCandidates,
+                    onCreateFolder = onCreateFolder,
+                    onAddToFolder = onAddToFolder,
                     modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_grid"),
                 )
             } else {
@@ -328,10 +338,12 @@ fun AppDrawerScreen(
                     badgeCounts = badgeCounts,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
-                    addToFavoritesOverride = addToFavoritesOverride,
-                    onAddToFavorites = onAddToFavorites,
-                    addToDockOverride = addToDockOverride,
-                    onAddToDock = onAddToDock,
+                    onRequestQuickAddState = onRequestQuickAddState,
+                    onFavoritesAction = onFavoritesAction,
+                    onDockAction = onDockAction,
+                    folderCandidates = folderCandidates,
+                    onCreateFolder = onCreateFolder,
+                    onAddToFolder = onAddToFolder,
                     modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_list"),
                 )
             }
@@ -514,10 +526,12 @@ private fun DrawerSearchResults(
     onClearSearch: () -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    addToFavoritesOverride: Boolean?,
-    onAddToFavorites: (AppInfo) -> Unit,
-    addToDockOverride: Boolean?,
-    onAddToDock: (AppInfo) -> Unit,
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
+    folderCandidates: List<Folder>?,
+    onCreateFolder: (AppInfo, String) -> Unit,
+    onAddToFolder: (AppInfo, Long) -> Unit,
     onContactClick: (ContactInfo) -> Unit,
     showContactsPermissionPrompt: Boolean,
     onContactsPermissionPromptClick: () -> Unit,
@@ -563,10 +577,12 @@ private fun DrawerSearchResults(
                                     badgeStyle = badgeStyle,
                                     onRequestShortcuts = onRequestShortcuts,
                                     onLaunchShortcut = onLaunchShortcut,
-                                    addToFavoritesOverride = addToFavoritesOverride,
-                                    onAddToFavorites = onAddToFavorites,
-                                    addToDockOverride = addToDockOverride,
-                                    onAddToDock = onAddToDock,
+                                    onRequestQuickAddState = onRequestQuickAddState,
+                                    onFavoritesAction = onFavoritesAction,
+                                    onDockAction = onDockAction,
+                                    folderCandidates = folderCandidates,
+                                    onCreateFolder = onCreateFolder,
+                                    onAddToFolder = onAddToFolder,
                                 )
                             }
                         }
@@ -584,10 +600,12 @@ private fun DrawerSearchResults(
                         badgeStyle = badgeStyle,
                         onRequestShortcuts = onRequestShortcuts,
                         onLaunchShortcut = onLaunchShortcut,
-                        addToFavoritesOverride = addToFavoritesOverride,
-                        onAddToFavorites = onAddToFavorites,
-                        addToDockOverride = addToDockOverride,
-                        onAddToDock = onAddToDock,
+                        onRequestQuickAddState = onRequestQuickAddState,
+                        onFavoritesAction = onFavoritesAction,
+                        onDockAction = onDockAction,
+                        folderCandidates = folderCandidates,
+                        onCreateFolder = onCreateFolder,
+                        onAddToFolder = onAddToFolder,
                     )
                 }
             }
@@ -879,10 +897,12 @@ private fun DrawerListContent(
     badgeCounts: Map<String, Int>,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    addToFavoritesOverride: Boolean?,
-    onAddToFavorites: (AppInfo) -> Unit,
-    addToDockOverride: Boolean?,
-    onAddToDock: (AppInfo) -> Unit,
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
+    folderCandidates: List<Folder>?,
+    onCreateFolder: (AppInfo, String) -> Unit,
+    onAddToFolder: (AppInfo, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -915,10 +935,12 @@ private fun DrawerListContent(
                     badgeStyle = badgeStyle,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
-                    addToFavoritesOverride = addToFavoritesOverride,
-                    onAddToFavorites = onAddToFavorites,
-                    addToDockOverride = addToDockOverride,
-                    onAddToDock = onAddToDock,
+                    onRequestQuickAddState = onRequestQuickAddState,
+                    onFavoritesAction = onFavoritesAction,
+                    onDockAction = onDockAction,
+                    folderCandidates = folderCandidates,
+                    onCreateFolder = onCreateFolder,
+                    onAddToFolder = onAddToFolder,
                 )
             }
         }
@@ -937,10 +959,12 @@ private fun DrawerAppRow(
     badgeStyle: NotificationBadgeStyle,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    addToFavoritesOverride: Boolean? = null,
-    onAddToFavorites: (AppInfo) -> Unit = {},
-    addToDockOverride: Boolean? = null,
-    onAddToDock: (AppInfo) -> Unit = {},
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    folderCandidates: List<Folder>? = null,
+    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
+    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -979,10 +1003,13 @@ private fun DrawerAppRow(
             onDismissRequest = { menuExpanded = false },
             onRequestShortcuts = onRequestShortcuts,
             onLaunchShortcut = onLaunchShortcut,
-            addToFavoritesOverride = addToFavoritesOverride,
-            onAddToFavorites = onAddToFavorites,
-            addToDockOverride = addToDockOverride,
-            onAddToDock = onAddToDock,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
+            folderCandidates = folderCandidates,
+            onCreateFolder = onCreateFolder,
+            onAddToFolder = onAddToFolder,
+            drawerPresentation = DrawerPresentation.LIST,
         )
     }
 }
@@ -1018,10 +1045,12 @@ private fun DrawerGridContent(
     badgeCounts: Map<String, Int>,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    addToFavoritesOverride: Boolean?,
-    onAddToFavorites: (AppInfo) -> Unit,
-    addToDockOverride: Boolean?,
-    onAddToDock: (AppInfo) -> Unit,
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
+    folderCandidates: List<Folder>?,
+    onCreateFolder: (AppInfo, String) -> Unit,
+    onAddToFolder: (AppInfo, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val apps = remember(groupedApps) { groupedApps.groups.values.flatten() }
@@ -1049,10 +1078,12 @@ private fun DrawerGridContent(
                     badgeStyle = badgeStyle,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
-                    addToFavoritesOverride = addToFavoritesOverride,
-                    onAddToFavorites = onAddToFavorites,
-                    addToDockOverride = addToDockOverride,
-                    onAddToDock = onAddToDock,
+                    onRequestQuickAddState = onRequestQuickAddState,
+                    onFavoritesAction = onFavoritesAction,
+                    onDockAction = onDockAction,
+                    folderCandidates = folderCandidates,
+                    onCreateFolder = onCreateFolder,
+                    onAddToFolder = onAddToFolder,
                     modifier = Modifier.height(rowHeight),
                 )
             }
@@ -1071,10 +1102,12 @@ private fun DrawerGridTile(
     badgeStyle: NotificationBadgeStyle,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    addToFavoritesOverride: Boolean? = null,
-    onAddToFavorites: (AppInfo) -> Unit = {},
-    addToDockOverride: Boolean? = null,
-    onAddToDock: (AppInfo) -> Unit = {},
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    folderCandidates: List<Folder>? = null,
+    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
+    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -1115,10 +1148,13 @@ private fun DrawerGridTile(
             onDismissRequest = { menuExpanded = false },
             onRequestShortcuts = onRequestShortcuts,
             onLaunchShortcut = onLaunchShortcut,
-            addToFavoritesOverride = addToFavoritesOverride,
-            onAddToFavorites = onAddToFavorites,
-            addToDockOverride = addToDockOverride,
-            onAddToDock = onAddToDock,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
+            folderCandidates = folderCandidates,
+            onCreateFolder = onCreateFolder,
+            onAddToFolder = onAddToFolder,
+            drawerPresentation = DrawerPresentation.GRID,
         )
     }
 }

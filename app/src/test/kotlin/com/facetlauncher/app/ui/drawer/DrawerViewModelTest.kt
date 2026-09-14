@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.drawer
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -11,9 +12,14 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
+import com.facetlauncher.app.domain.AddFolderToDockUseCase
+import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
-import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
+import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
+import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
+import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,8 +77,8 @@ class DrawerViewModelTest {
         val notificationBadgeRepository = mock(NotificationBadgeRepository::class.java)
         `when`(notificationBadgeRepository.badgeCounts).thenReturn(MutableStateFlow(emptyMap()))
 
-        val observeQuickAddState = mock(ObserveQuickAddStateUseCase::class.java)
-        `when`(observeQuickAddState.invoke()).thenReturn(flowOf(QuickAddState()))
+        val folderRepository = mock(FolderRepository::class.java)
+        `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
 
         return DrawerViewModel(
             settingsRepository = settingsRepository,
@@ -83,9 +89,16 @@ class DrawerViewModelTest {
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
-            observeQuickAddState = observeQuickAddState,
+            observeQuickAddState = mock(ObserveQuickAddStateUseCase::class.java),
             addAppToFavorites = mock(AddAppToFavoritesUseCase::class.java),
+            removeAppFromFavorites = mock(RemoveAppFromFavoritesUseCase::class.java),
             addAppToDock = mock(AddAppToDockUseCase::class.java),
+            removeAppFromDock = mock(RemoveAppFromDockUseCase::class.java),
+            addFolderToFavorites = mock(AddFolderToFavoritesUseCase::class.java),
+            removeFolderFromFavorites = mock(RemoveFolderFromFavoritesUseCase::class.java),
+            addFolderToDock = mock(AddFolderToDockUseCase::class.java),
+            removeFolderFromDock = mock(RemoveFolderFromDockUseCase::class.java),
+            folderRepository = folderRepository,
         )
     }
 

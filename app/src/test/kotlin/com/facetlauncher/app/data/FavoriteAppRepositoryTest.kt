@@ -2,7 +2,9 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.FavoriteAppDao
 import com.facetlauncher.app.data.local.FavoriteAppEntity
+import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,6 +56,11 @@ class FavoriteAppRepositoryTest {
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
+    private fun repository(dao: FavoriteAppDao, appRepository: AppRepository): FavoriteAppRepository {
+        val folderRepository = FolderRepository(FakeFolderDao(), appRepository)
+        return FavoriteAppRepository(dao, FakeFavoriteFolderPlacementDao(), folderRepository, appRepository)
+    }
+
     @Test
     fun `favorites list reflects stored entries hydrated against installed apps, ordered by position`() = runTest {
         // Given two installed apps and favorite entries for one facet, out of position order
@@ -62,7 +69,7 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = b, position = 1)
         repository.addFavorite(facetId = 1, app = a, position = 0)
 
@@ -79,7 +86,7 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = appInfo('a'), position = 0)
 
         // When observing that facet's favorites
@@ -96,7 +103,7 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
 
         // Then only facet 1 sees it — facet 2 sees none
@@ -111,7 +118,7 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
 
         // When it is removed
@@ -129,7 +136,7 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
         repository.addFavorite(facetId = 2, app = b, position = 0)
 
@@ -150,7 +157,7 @@ class FavoriteAppRepositoryTest {
         val installedApps = MutableStateFlow(listOf(a, b))
         `when`(appRepository.observeInstalledApps()).thenReturn(installedApps)
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
         repository.addFavorite(facetId = 1, app = b, position = 1)
 
@@ -168,7 +175,7 @@ class FavoriteAppRepositoryTest {
     }
 
     @Test
-    fun `replaceFavorites wipes the facet's existing list and inserts the new one in order`() = runTest {
+    fun `replaceItems wipes the facet's existing list and inserts the new one in order`() = runTest {
         // Given a facet with an existing favorite that isn't in the replacement list
         val a = appInfo('a')
         val b = appInfo('b')
@@ -176,14 +183,35 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b, c)))
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = c, position = 0)
 
         // When replacing this facet's favorites with a different list
-        repository.replaceFavorites(facetId = 1, apps = listOf(b, a))
+        repository.replaceItems(facetId = 1, items = listOf(PlacedItem.SingleApp(b), PlacedItem.SingleApp(a)))
 
         // Then only the new list remains, in the given order — the stale entry is gone
         assertEquals(listOf(b, a), repository.observeFavoritesForFacet(1).first())
+    }
+
+    @Test
+    fun `replaceItems carries a folder placement, not just apps`() = runTest {
+        // Given a folder that exists but isn't placed anywhere, and a facet's own dock/favorites Override-seed carrying it alongside an app
+        val a = appInfo('a')
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
+        val folderDao = FakeFolderDao()
+        val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
+        val folderRepository = FolderRepository(folderDao, appRepository)
+        val dao = FakeFavoriteAppDao()
+        val repository = FavoriteAppRepository(dao, FakeFavoriteFolderPlacementDao(), folderRepository, appRepository)
+
+        // When replacing this facet's favorites with an app and the folder together
+        val folder = com.facetlauncher.app.data.model.Folder(folderId, "Games", emptyList())
+        repository.replaceItems(facetId = 1, items = listOf(PlacedItem.SingleApp(a), PlacedItem.FolderItem(folder)))
+
+        // Then both are reflected — the folder placement wasn't silently dropped
+        val items = repository.observeFavoriteItems(1).first()
+        assertEquals(listOf(PlacedItem.SingleApp(a), PlacedItem.FolderItem(folder)), items)
     }
 
     @Test
@@ -191,7 +219,7 @@ class FavoriteAppRepositoryTest {
         // Given no facets to observe
         val appRepository = mock(AppRepository::class.java)
         val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, appRepository)
+        val repository = repository(dao, appRepository)
 
         // Then it emits immediately without needing AppRepository at all
         assertEquals(emptyMap<Long, List<AppInfo>>(), repository.observeFavoritesForFacets(emptyList()).first())

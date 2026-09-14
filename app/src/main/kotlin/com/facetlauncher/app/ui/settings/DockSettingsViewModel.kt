@@ -8,14 +8,15 @@ import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.data.model.PlacedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,7 @@ data class DockSettingsUiState(
     /** `false` when editing the launcher-wide default dock (reached from Settings) rather than one facet's own. */
     val isFacetScoped: Boolean = false,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
-    val dockApps: List<AppInfo> = emptyList(),
+    val dockItems: List<PlacedItem> = emptyList(),
     /** Home's app label color/weight — global only, no per-facet override; used only to render the preview exactly as Home would. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -56,20 +57,21 @@ class DockSettingsViewModel @Inject constructor(
 
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
 
-    private val dockAppsFlow =
-        facetId?.let { facetDockAppRepository.observeDockAppsForFacet(it) } ?: dockAppRepository.observeDockApps()
+    private val dockItemsFlow: Flow<List<PlacedItem>> = facetId?.let {
+        facetDockAppRepository.observeDockItems(it)
+    } ?: dockAppRepository.observeDockItems()
 
     val uiState: StateFlow<DockSettingsUiState> = combine(
         settingsRepository.settings,
         facetRepository.observeFacets(),
-        dockAppsFlow,
+        dockItemsFlow,
         homeWallpaper,
-    ) { settings, facets, dockApps, wallpaper ->
+    ) { settings, facets, dockItems, wallpaper ->
         val facet = facets.find { it.id == facetId }
         DockSettingsUiState(
             isFacetScoped = facetId != null,
             dockDisplayMode = facet?.dockDisplayMode ?: settings.dockDisplayMode,
-            dockApps = dockApps,
+            dockItems = dockItems,
             appLabelColorOption = settings.appLabelColorOption,
             homeAppsFontWeight = settings.homeAppsFontWeight,
             homeWallpaper = wallpaper,
@@ -88,10 +90,11 @@ class DockSettingsViewModel @Inject constructor(
         }
     }
 
-    fun reorderDockApps(orderedApps: List<AppInfo>) {
+    fun reorderDockItems(orderedItems: List<PlacedItem>) {
         viewModelScope.launch {
-            facetId?.let { facetDockAppRepository.reorderDockApps(it, orderedApps) }
-                ?: dockAppRepository.reorderDockApps(orderedApps)
+            facetId?.let { facetId ->
+                facetDockAppRepository.reorderDockItems(facetId, orderedItems)
+            } ?: dockAppRepository.reorderDockItems(orderedItems)
         }
     }
 }

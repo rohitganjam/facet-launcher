@@ -10,7 +10,6 @@ import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -21,6 +20,7 @@ import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.selectedCalendarIds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -33,13 +33,13 @@ import kotlinx.coroutines.launch
 data class FacetSettingsUiState(
     val facet: FacetEntity? = null,
     /** This facet's own favorites — only meaningful/used while [isOverridingApps] is true. */
-    val favorites: List<AppInfo> = emptyList(),
+    val favorites: List<PlacedItem> = emptyList(),
     /** The launcher-wide default Favorites list — shown read-only while inheriting. */
-    val defaultFavorites: List<AppInfo> = emptyList(),
+    val defaultFavorites: List<PlacedItem> = emptyList(),
     /** This facet's own dock — only meaningful/used while [isOverridingDock] is true. */
-    val dockApps: List<AppInfo> = emptyList(),
+    val dockApps: List<PlacedItem> = emptyList(),
     /** The launcher-wide default dock — shown read-only while inheriting, and copied in when the facet switches to Override with an empty list. */
-    val defaultDockApps: List<AppInfo> = emptyList(),
+    val defaultDockApps: List<PlacedItem> = emptyList(),
     val globalDockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val globalClockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val globalClockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
@@ -86,13 +86,13 @@ data class FacetSettingsUiState(
     val appRowPresentation: AppRowPresentation get() = if (isOverridingApps) facet?.appRowPresentation ?: globalAppRowPresentation else globalAppRowPresentation
     val listContentMode: ListContentMode get() = if (isOverridingApps) facet?.listContentMode ?: globalListContentMode else globalListContentMode
     val appsToShowCount: Int get() = if (isOverridingApps) facet?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
-    val effectiveFavorites: List<AppInfo> get() = if (facet?.overridingFavorites == true) favorites else defaultFavorites
+    val effectiveFavorites: List<PlacedItem> get() = if (facet?.overridingFavorites == true) favorites else defaultFavorites
     val favoritesLabel: String get() = "${effectiveFavorites.size} of ${FavoriteAppRepository.MAX_FAVORITES}"
 
     /** The Dock card's single inherit/override switch — governs the dock's app list and its Icons/Text display style together. */
     val isOverridingDock: Boolean get() = facet?.overrideDock ?: false
     val dockDisplayMode: DockDisplayMode get() = if (isOverridingDock) facet?.dockDisplayMode ?: globalDockDisplayMode else globalDockDisplayMode
-    val effectiveDockApps: List<AppInfo> get() = if (isOverridingDock) dockApps else defaultDockApps
+    val effectiveDockApps: List<PlacedItem> get() = if (isOverridingDock) dockApps else defaultDockApps
     val dockLabel: String get() = "${effectiveDockApps.size} of ${DockAppRepository.MAX_APPS}"
 
     /** Calendar *selection* has its own override flag, independent of [isOverridingClock] — see `CalendarSettingsUiState`'s own doc comment. */
@@ -120,13 +120,13 @@ class FacetSettingsViewModel @Inject constructor(
         facetRepository.observeFacets(),
         settingsRepository.settings,
         combine(
-            favoriteAppRepository.observeFavoritesForFacet(facetId),
-            defaultFavoriteAppRepository.observeDefaultFavorites(),
+            favoriteAppRepository.observeFavoriteItems(facetId),
+            defaultFavoriteAppRepository.observeDefaultItems(),
             ::Pair,
         ),
         combine(
-            facetDockAppRepository.observeDockAppsForFacet(facetId),
-            dockAppRepository.observeDockApps(),
+            facetDockAppRepository.observeDockItems(facetId),
+            dockAppRepository.observeDockItems(),
             ::Pair,
         ),
     ) { facets, settings, favs, docks ->
@@ -202,7 +202,7 @@ class FacetSettingsViewModel @Inject constructor(
         val state = uiState.value
         viewModelScope.launch {
             if (overriding && state.favorites.isEmpty()) {
-                favoriteAppRepository.replaceFavorites(facetId, state.defaultFavorites)
+                favoriteAppRepository.replaceItems(facetId, state.defaultFavorites)
             }
             facetRepository.updateOverridingApps(
                 facet = facet,
@@ -227,7 +227,7 @@ class FacetSettingsViewModel @Inject constructor(
         val state = uiState.value
         viewModelScope.launch {
             if (overriding && state.dockApps.isEmpty()) {
-                facetDockAppRepository.replaceDockApps(facetId, state.defaultDockApps)
+                facetDockAppRepository.replaceItems(facetId, state.defaultDockApps)
             }
             facetRepository.updateOverridingDock(facet, overriding, state.dockDisplayMode)
         }

@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -34,7 +35,7 @@ class AddAppToFavoritesUseCaseTest {
         // Given facet 1 active, not overriding its own favorites, with 2 already in the default list
         val fixture = Fixture()
         `when`(fixture.facetRepository.getById(1L)).thenReturn(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = false))
-        `when`(fixture.defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(listOf(app, app)))
+        `when`(fixture.defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(listOf(app, app).map { PlacedItem.SingleApp(it) }))
 
         // When adding an app
         fixture.useCase(app)
@@ -48,7 +49,7 @@ class AddAppToFavoritesUseCaseTest {
         // Given facet 1 active, overriding its own favorites, with 1 already there
         val fixture = Fixture()
         `when`(fixture.facetRepository.getById(1L)).thenReturn(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true))
-        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(1L)).thenReturn(flowOf(listOf(app)))
+        `when`(fixture.favoriteAppRepository.observeFavoriteItems(1L)).thenReturn(flowOf(listOf(app).map { PlacedItem.SingleApp(it) }))
 
         // When adding an app
         fixture.useCase(app)

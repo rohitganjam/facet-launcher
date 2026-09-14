@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -65,12 +66,20 @@ class ImportBackupUseCase @Inject constructor(
     private val dockAppRepository: DockAppRepository,
     private val facetDockAppRepository: FacetDockAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val folderRepository: FolderRepository,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
         val bundle = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
         if (bundle.backupVersion > CURRENT_BACKUP_VERSION) return ImportBackupResult.UnsupportedVersion(bundle.backupVersion)
 
         applySettings(bundle.settings)
+
+        // Folders are restored first, before anything that places them — deleteAllFolders also
+        // wipes every placement table via FK cascade, so this alone clears the old folder state.
+        folderRepository.deleteAllFolders()
+        val newFolderIdByIndex = bundle.folders.mapIndexed { index, backupFolder ->
+            index to folderRepository.restoreFolder(backupFolder.toFolderEntity(), backupFolder.apps.map { it.toFolderAppEntity() })
+        }.toMap()
 
         facetRepository.deleteAllFacets()
         var activeFacetId: Long? = null
@@ -82,15 +91,35 @@ class ImportBackupUseCase @Inject constructor(
             backupFacet.dockApps.forEach { entry ->
                 facetDockAppRepository.restoreDockApp(entry.toFacetDockAppEntity(newId))
             }
+            backupFacet.dockFolderPlacements.forEach { placement ->
+                newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                    facetDockAppRepository.restoreDockFolderPlacement(newId, folderId, placement.position)
+                }
+            }
+            backupFacet.favoriteFolderPlacements.forEach { placement ->
+                newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                    favoriteAppRepository.restoreFavoriteFolderPlacement(newId, folderId, placement.position)
+                }
+            }
             if (index == bundle.settings.activeFacetIndex) activeFacetId = newId
         }
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
 
         dockAppRepository.deleteAllDockApps()
         bundle.dockApps.forEach { dockAppRepository.restoreDockApp(it.toDockAppEntity()) }
+        bundle.dockFolderPlacements.forEach { placement ->
+            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                dockAppRepository.restoreDockFolderPlacement(folderId, placement.position)
+            }
+        }
 
         defaultFavoriteAppRepository.deleteAllDefaultFavorites()
         bundle.defaultFavoriteApps.forEach { defaultFavoriteAppRepository.restoreDefaultFavorite(it.toDefaultFavoriteAppEntity()) }
+        bundle.defaultFavoriteFolderPlacements.forEach { placement ->
+            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                defaultFavoriteAppRepository.restoreDefaultFavoriteFolderPlacement(folderId, placement.position)
+            }
+        }
 
         return ImportBackupResult.Success(
             facetCount = bundle.facets.size,

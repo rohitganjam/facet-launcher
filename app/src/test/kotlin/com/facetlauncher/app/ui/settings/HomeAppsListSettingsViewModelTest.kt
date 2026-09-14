@@ -15,6 +15,7 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import kotlinx.coroutines.Dispatchers
@@ -144,7 +145,7 @@ class HomeAppsListSettingsViewModelTest {
         viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(defaultFavoriteAppRepository).reorderFavorites(reordered)
+        verify(defaultFavoriteAppRepository).reorderItems(reordered.map { PlacedItem.SingleApp(it) })
     }
 
     @Test
@@ -156,6 +157,6 @@ class HomeAppsListSettingsViewModelTest {
         viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(favoriteAppRepository).reorderFavorites(7L, reordered)
+        verify(favoriteAppRepository).reorderFavoriteItems(7L, reordered.map { PlacedItem.SingleApp(it) })
     }
 }

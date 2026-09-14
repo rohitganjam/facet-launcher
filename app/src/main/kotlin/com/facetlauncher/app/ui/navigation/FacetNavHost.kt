@@ -28,6 +28,9 @@ import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
+import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
+import com.facetlauncher.app.ui.settings.FolderDetailScreen
+import com.facetlauncher.app.ui.settings.FoldersSettingsScreen
 import com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreen
 import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.facetlauncher.app.ui.settings.NotificationAccessExplanationScreen
@@ -49,6 +52,9 @@ object FacetDestinations {
     const val USAGE_ACCESS_EXPLANATION = "usageAccessExplanation"
     const val PERMISSIONS = "permissions"
     const val NOTIFICATION_SETTINGS = "notificationSettings"
+    const val FOLDERS_SETTINGS = "foldersSettings"
+    const val FOLDER_DETAIL = "folderDetail/{folderId}"
+    const val FOLDER_APP_PICKER = "folderAppPicker/{folderId}"
     const val NOTIFICATION_ACCESS_EXPLANATION = "notificationAccessExplanation"
     const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
@@ -61,6 +67,10 @@ object FacetDestinations {
     fun facetClockStyleGallery(facetId: Long) = "facetClockStyleGallery/$facetId"
 
     fun facetSettings(facetId: Long) = "facetSettings/$facetId"
+
+    fun folderDetail(folderId: Long) = "folderDetail/$folderId"
+
+    fun folderAppPicker(folderId: Long) = "folderAppPicker/$folderId"
 
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide default Favorites list. */
     fun favoritesPicker(facetId: Long? = null) =
@@ -162,6 +172,7 @@ fun FacetNavHost(
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
+                onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
             )
@@ -223,6 +234,28 @@ fun FacetNavHost(
         }
         composable(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) {
             NotificationAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
+        }
+        composable(FacetDestinations.FOLDERS_SETTINGS) {
+            FoldersSettingsScreen(
+                onBack = { navController.popBackStackSafely() },
+                onOpenFolder = { folderId -> navController.navigate(FacetDestinations.folderDetail(folderId)) },
+            )
+        }
+        composable(
+            FacetDestinations.FOLDER_DETAIL,
+            arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            val folderId = checkNotNull(backStackEntry.arguments?.getLong("folderId"))
+            FolderDetailScreen(
+                onBack = { navController.popBackStackSafely() },
+                onAddToFolder = { navController.navigate(FacetDestinations.folderAppPicker(folderId)) },
+            )
+        }
+        composable(
+            FacetDestinations.FOLDER_APP_PICKER,
+            arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
+        ) {
+            FolderAppPickerScreen(onDone = { navController.popBackStackSafely() })
         }
         composable(
             FacetDestinations.DOCK_PICKER,

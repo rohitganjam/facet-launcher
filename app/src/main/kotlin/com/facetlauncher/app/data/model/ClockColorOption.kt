@@ -15,14 +15,17 @@ package com.facetlauncher.app.data.model
  * so this always flips to whichever of the two actually contrasts once the app's theme mode
  * changes, rather than needing to be re-picked (see chat history).
  *
- * [ACCENT_PRIMARY]/[ACCENT_SECONDARY] track Settings → Theme → Accent color's own two tonal
+ * [ACCENT_PRIMARY]/[ACCENT_SECONDARY] both track Settings → Theme → Accent color's own two tonal
  * extremes (`ui/theme/Color.kt`'s `accentTonalExtremes()`) — the same "Basic colors" swatch pick,
  * or the wallpaper's own Material You tones when "Wallpaper colors" is selected there, rather than
- * a fixed color of their own. Offered as two explicit, independently-pickable choices instead of
- * one that silently follows the app's current theme mode, so a user can pin their clock text to a
- * specific accent tone regardless of light/dark theme (see chat history). Whichever option is
- * picked overall, `homeTextShadow()`'s existing luminance-based flip automatically shadows it with
- * the tone that contrasts correctly, since that's resolved from the text color's own luminance.
+ * a fixed color of their own. [ACCENT_PRIMARY] always matches the phone's current theme mode
+ * (`ui/theme/ClockColors.kt`'s `resolve()` — effectively the same tone as [Accent] itself);
+ * [ACCENT_SECONDARY] is deliberately the *other* tonal extreme, kept available as its own pickable
+ * option for a user who prefers that specific tone regardless of theme (see chat history — an
+ * earlier version pinned both options to a fixed light/dark tone rather than tracking the theme).
+ * Whichever option is picked overall, `homeTextShadow()`'s existing luminance-based flip
+ * automatically shadows it with the tone that contrasts correctly, since that's resolved from the
+ * text color's own luminance.
  */
 enum class ClockColorOption(val displayName: String) {
     THEME("Theme"),

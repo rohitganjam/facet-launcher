@@ -178,8 +178,90 @@ object Migrations {
         }
     }
 
+    /**
+     * Folders (F-Folders): a folder is a first-class, independent, global entity (`folders` +
+     * its membership `folder_apps`) with no position of its own — it can be placed into any of
+     * the four existing Dock/Favorites slot lists via four purely-additive placement tables,
+     * each just a (folder, position) pointer merged in Kotlin against its own list's app rows.
+     * A 0-app folder is valid and persists — nothing here auto-deletes on empty membership.
+     */
+    val MIGRATION_17_18: Migration = object : Migration(17, 18) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `folders` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`name` TEXT NOT NULL)",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `folder_apps` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`folderId` INTEGER NOT NULL, " +
+                    "`packageName` TEXT NOT NULL, " +
+                    "`activityName` TEXT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`folderId`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_folder_apps_folderId_packageName_activityName` " +
+                    "ON `folder_apps` (`folderId`, `packageName`, `activityName`)",
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `dock_folder_placements` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`folderId` INTEGER NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`folderId`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_dock_folder_placements_folderId` " +
+                    "ON `dock_folder_placements` (`folderId`)",
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `default_favorite_folder_placements` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`folderId` INTEGER NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`folderId`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_default_favorite_folder_placements_folderId` " +
+                    "ON `default_favorite_folder_placements` (`folderId`)",
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `facet_dock_folder_placements` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`facetId` INTEGER NOT NULL, " +
+                    "`folderId` INTEGER NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                    "FOREIGN KEY(`folderId`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_facet_dock_folder_placements_facetId_folderId` " +
+                    "ON `facet_dock_folder_placements` (`facetId`, `folderId`)",
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `favorite_folder_placements` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`facetId` INTEGER NOT NULL, " +
+                    "`folderId` INTEGER NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                    "FOREIGN KEY(`folderId`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_favorite_folder_placements_facetId_folderId` " +
+                    "ON `favorite_folder_placements` (`facetId`, `folderId`)",
+            )
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
-        MIGRATION_16_17,
+        MIGRATION_16_17, MIGRATION_17_18,
     )
 }

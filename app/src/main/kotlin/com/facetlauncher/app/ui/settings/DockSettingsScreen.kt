@@ -43,6 +43,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
@@ -53,6 +54,7 @@ import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.rememberDragReorderState
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
@@ -73,7 +75,7 @@ fun DockSettingsScreen(
         onBack = onBack,
         onAddDockApp = onAddDockApp,
         onDockDisplayModeChanged = viewModel::setDockDisplayMode,
-        onReorderDockApps = viewModel::reorderDockApps,
+        onReorderDockItems = viewModel::reorderDockItems,
         modifier = modifier,
     )
 }
@@ -84,7 +86,7 @@ private fun DockSettingsContent(
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
     onDockDisplayModeChanged: (DockDisplayMode) -> Unit,
-    onReorderDockApps: (List<AppInfo>) -> Unit,
+    onReorderDockItems: (List<PlacedItem>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -103,7 +105,15 @@ private fun DockSettingsContent(
                 item {
                     HomeSurfacePreview(
                         appList = emptyList(),
-                        dockApps = uiState.dockApps,
+                        // Flattened, ungrouped — HomeSurfacePreview doesn't render folder tiles
+                        // (see IMPLEMENTATION_PLAN.md's own note on this gap); at minimum every
+                        // app remains visible here rather than a folder's members vanishing.
+                        dockApps = uiState.dockItems.flatMap {
+                            when (it) {
+                                is PlacedItem.SingleApp -> listOf(it.app)
+                                is PlacedItem.FolderItem -> it.folder.apps
+                            }
+                        },
                         dockDisplayMode = uiState.dockDisplayMode,
                         labelColor = uiState.appLabelColorOption.resolve(),
                         labelFontWeight = uiState.homeAppsFontWeight.resolve(),
@@ -124,13 +134,13 @@ private fun DockSettingsContent(
                         CardDivider()
                         DockClickableRow(
                             title = "Select Dock Apps",
-                            subtitle = "${uiState.dockApps.size} of ${DockAppRepository.MAX_APPS}",
+                            subtitle = "${uiState.dockItems.size} of ${DockAppRepository.MAX_APPS}",
                             onClick = onAddDockApp,
                             testTag = "add_dock_app_row",
                         )
-                        if (uiState.dockApps.isNotEmpty()) {
+                        if (uiState.dockItems.isNotEmpty()) {
                             CardDivider()
-                            DockAppsRow(dockApps = uiState.dockApps, onReorder = onReorderDockApps)
+                            DockAppsRow(dockItems = uiState.dockItems, onReorder = onReorderDockItems)
                         }
                     }
                 }
@@ -183,22 +193,28 @@ private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Un
 
 private val DOCK_TILE_SHAPE = RoundedCornerShape(14.dp)
 
+/** A [PlacedItem]'s stable identity for keying/reordering — a folder's own id, or its app's component. */
+private fun PlacedItem.reorderKey(): Any = when (this) {
+    is PlacedItem.SingleApp -> app.packageName to app.activityName
+    is PlacedItem.FolderItem -> "folder_${folder.id}"
+}
+
 @Composable
 private fun DockAppsRow(
-    dockApps: List<AppInfo>,
-    onReorder: (List<AppInfo>) -> Unit,
+    dockItems: List<PlacedItem>,
+    onReorder: (List<PlacedItem>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
-        // Keyed on component identity only, not the raw `dockApps` list — that list's AppInfo.icon
+        // Keyed on component identity only, not the raw `dockItems` list — an app's AppInfo.icon
         // is a freshly-decoded bitmap on every LauncherApps re-emission, so keying `remember` on
         // the raw list would reset drag state mid-drag on re-emissions unrelated to the dock.
-        val componentsKey = dockApps.map { it.packageName to it.activityName }
-        var order by remember(componentsKey) { mutableStateOf(dockApps) }
+        val componentsKey = dockItems.map { it.reorderKey() }
+        var order by remember(componentsKey) { mutableStateOf(dockItems) }
         val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
         val reorderState = rememberDragReorderState(
             items = order,
-            key = { it.packageName to it.activityName },
+            key = { it.reorderKey() },
             axis = Orientation.Horizontal,
             slotSizePx = slotWidthPx,
             onOrderChanged = { order = it },
@@ -211,11 +227,16 @@ private fun DockAppsRow(
             verticalAlignment = Alignment.CenterVertically,
             userScrollEnabled = false,
         ) {
-            items(order, key = { it.packageName + it.activityName }) { app ->
-                val isDragging = reorderState.isDragging(app)
+            items(order, key = { it.reorderKey() }) { item ->
+                val isDragging = reorderState.isDragging(item)
                 Box(
                     modifier = Modifier
-                        .testTag("dock_app_${app.packageName}")
+                        .testTag(
+                            when (item) {
+                                is PlacedItem.SingleApp -> "dock_app_${item.app.packageName}"
+                                is PlacedItem.FolderItem -> "dock_folder_${item.folder.id}"
+                            },
+                        )
                         .zIndex(if (isDragging) 1f else 0f)
                         .graphicsLayer {
                             translationX = if (isDragging) reorderState.dragOffset else 0f
@@ -226,9 +247,12 @@ private fun DockAppsRow(
                             clip = false
                         }
                         .then(if (isDragging) Modifier else Modifier.animateItem())
-                        .then(reorderState.dragModifier(app)),
+                        .then(reorderState.dragModifier(item)),
                 ) {
-                    AppIcon(icon = app.icon, size = AppIconSize.TILE, contentDescription = app.label)
+                    when (item) {
+                        is PlacedItem.SingleApp -> AppIcon(icon = item.app.icon, size = AppIconSize.TILE, contentDescription = item.app.label)
+                        is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
+                    }
                 }
             }
         }
@@ -248,14 +272,14 @@ private fun DockSettingsScreenPreview() {
     FacetLauncherTheme {
         DockSettingsContent(
             uiState = DockSettingsUiState(
-                dockApps = (1..4).map {
-                    AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null)
+                dockItems = (1..4).map {
+                    PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null))
                 },
             ),
             onBack = {},
             onAddDockApp = {},
             onDockDisplayModeChanged = {},
-            onReorderDockApps = {},
+            onReorderDockItems = {},
         )
     }
 }

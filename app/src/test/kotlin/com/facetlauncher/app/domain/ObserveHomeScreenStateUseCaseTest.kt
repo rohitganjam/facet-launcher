@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -34,11 +35,11 @@ class ObserveHomeScreenStateUseCaseTest {
     private class Fixture {
         val settingsFlow = MutableStateFlow(LauncherSettings(activeFacetId = 1L))
         val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settingsFlow) }
-        val dockAppRepository = mock(DockAppRepository::class.java).also { `when`(it.observeDockApps()).thenReturn(flowOf(emptyList())) }
+        val dockAppRepository = mock(DockAppRepository::class.java).also { `when`(it.observeDockItems()).thenReturn(flowOf(emptyList())) }
         val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
         val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
-            .also { `when`(it.observeDefaultFavorites()).thenReturn(flowOf(emptyList())) }
+            .also { `when`(it.observeDefaultItems()).thenReturn(flowOf(emptyList())) }
         val facetsFlow = MutableStateFlow<List<FacetEntity>>(emptyList())
         val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facetsFlow) }
         val usageStatsRepository = mock(UsageStatsRepository::class.java)
@@ -73,36 +74,36 @@ class ObserveHomeScreenStateUseCaseTest {
     fun `emits the active facet's own favorites when it overrides them`() = runTest {
         // Given settings pointing at facet 1, overriding its own favorites, resolving to one app
         val fixture = Fixture()
-        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(1L)).thenReturn(flowOf(listOf(appInfo('a'))))
+        `when`(fixture.favoriteAppRepository.observeFavoriteItems(1L)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('a')))))
         fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
         // Then it exposes facet 1's own favorites
-        assertEquals(listOf(appInfo('a')), result.appListItems)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('a'))), result.appListItems)
     }
 
     @Test
     fun `emits the launcher-wide default favorites when the active facet isn't overriding`() = runTest {
         // Given settings pointing at facet 1, which hasn't overridden its own favorites
         val fixture = Fixture()
-        `when`(fixture.defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(listOf(appInfo('d'))))
+        `when`(fixture.defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = false))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
         // Then it exposes the default list, not a per-facet one
-        assertEquals(listOf(appInfo('d')), result.appListItems)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('d'))), result.appListItems)
     }
 
     @Test
     fun `re-subscribes to the new facet's favorites when the active facet changes`() = runTest {
         // Given facet 1 active initially, each facet overriding with its own distinct favorite
         val fixture = Fixture()
-        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(1L)).thenReturn(flowOf(listOf(appInfo('a'))))
-        `when`(fixture.favoriteAppRepository.observeFavoritesForFacet(2L)).thenReturn(flowOf(listOf(appInfo('b'))))
+        `when`(fixture.favoriteAppRepository.observeFavoriteItems(1L)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('a')))))
+        `when`(fixture.favoriteAppRepository.observeFavoriteItems(2L)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('b')))))
         fixture.facetsFlow.value = listOf(
             FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true),
             FacetEntity(id = 2L, name = "P2", position = 1, overridingFavorites = true),
@@ -113,7 +114,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val result = fixture.useCase().first()
 
         // Then favorites reflect facet 2, not the stale facet-1 value
-        assertEquals(listOf(appInfo('b')), result.appListItems)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('b'))), result.appListItems)
     }
 
     @Test
@@ -129,7 +130,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val result = fixture.useCase().first()
 
         // Then it exposes the ranked recents, not favorites
-        assertEquals(listOf(appInfo('r')), result.appListItems)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('r'))), result.appListItems)
         assertEquals(true, result.usageAccessGranted)
     }
 
@@ -146,7 +147,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val result = fixture.useCase().first()
 
         // Then it exposes the ranked most-used apps
-        assertEquals(listOf(appInfo('m')), result.appListItems)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('m'))), result.appListItems)
     }
 
     @Test
@@ -162,7 +163,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val result = fixture.useCase().first()
 
         // Then the list is empty (never a broken partial list) and the ungranted state is surfaced
-        assertEquals(emptyList<AppInfo>(), result.appListItems)
+        assertEquals(emptyList<PlacedItem>(), result.appListItems)
         assertEquals(false, result.usageAccessGranted)
     }
 
@@ -170,28 +171,28 @@ class ObserveHomeScreenStateUseCaseTest {
     fun `emits the active facet's own dock when it overrides the dock`() = runTest {
         // Given facet 1 active and overriding its dock, resolving to one app
         val fixture = Fixture()
-        `when`(fixture.facetDockAppRepository.observeDockAppsForFacet(1L)).thenReturn(flowOf(listOf(appInfo('p'))))
+        `when`(fixture.facetDockAppRepository.observeDockItems(1L)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('p')))))
         fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
         // Then the dock is the facet's own list, not the launcher-wide default
-        assertEquals(listOf(appInfo('p')), result.dockApps)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('p'))), result.dockApps)
     }
 
     @Test
     fun `emits the launcher-wide dock when the active facet isn't overriding the dock`() = runTest {
         // Given facet 1 active, NOT overriding its dock, and a non-empty default dock
         val fixture = Fixture()
-        `when`(fixture.dockAppRepository.observeDockApps()).thenReturn(flowOf(listOf(appInfo('g'))))
+        `when`(fixture.dockAppRepository.observeDockItems()).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('g')))))
         fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
         // Then the dock is the launcher-wide default, and the per-facet dock is never consulted
-        assertEquals(listOf(appInfo('g')), result.dockApps)
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('g'))), result.dockApps)
     }
 
     @Test

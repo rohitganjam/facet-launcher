@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** Bumped whenever [BackupBundle]'s shape changes — [com.facetlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands. */
-const val CURRENT_BACKUP_VERSION = 2
+const val CURRENT_BACKUP_VERSION = 3
 
 /**
  * The full exported/imported settings snapshot for F14 Backup & Restore (PRD: "not limited to
@@ -47,6 +47,19 @@ data class BackupBundle(
     val dockApps: List<BackupAppEntry>,
     val defaultFavoriteApps: List<BackupAppEntry>,
     val widgetPlacements: List<BackupWidgetPlacement>,
+    /**
+     * The whole folder library (F-Folders) — every folder, regardless of where (if anywhere) it's
+     * placed, in no particular order. Referenced by index (not id — a folder's own row id isn't
+     * portable, same reasoning as [BackupSettings.activeFacetIndex]) from [dockFolderPlacements],
+     * [defaultFavoriteFolderPlacements], and each [BackupFacet]'s own placement lists. Defaulted —
+     * tolerant-reader discipline, see this file's own doc comment (a pre-Folders backup still
+     * deserializes cleanly, with no folders to restore).
+     */
+    val folders: List<BackupFolder> = emptyList(),
+    /** A folder placed in the launcher-wide default Dock — mirrors [dockApps] on the folder side. */
+    val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
+    /** A folder placed in the launcher-wide default Favorites list — mirrors [defaultFavoriteApps] on the folder side. */
+    val defaultFavoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
 )
 
 @Serializable
@@ -130,6 +143,10 @@ data class BackupFacet(
     val selectedCalendarIds: List<String>? = null,
     /** This facet's own favorites — only meaningful when [overridingFavorites], but exported unconditionally for simplicity; restoring is harmless either way since the global default list governs whenever it isn't. */
     val favorites: List<BackupAppEntry>,
+    /** A folder placed in this facet's own Dock — only meaningful when [overrideDock], mirrors [dockApps] on the folder side. Defaulted — tolerant-reader discipline. */
+    val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
+    /** A folder placed in this facet's own Favorites list — only meaningful when [overridingFavorites], mirrors [favorites] on the folder side. Defaulted — tolerant-reader discipline. */
+    val favoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
 )
 
 /** A single app-list entry — dock, default favorites, or one facet's own favorites. */
@@ -137,6 +154,20 @@ data class BackupFacet(
 data class BackupAppEntry(
     val packageName: String,
     val activityName: String,
+    val position: Int,
+)
+
+/** One folder's identity + membership — a global, independent entity (F-Folders); see [BackupBundle.folders]' own doc for how it's referenced by index from every placement list. */
+@Serializable
+data class BackupFolder(
+    val name: String,
+    val apps: List<BackupAppEntry>,
+)
+
+/** A folder occupying one slot in some Dock/Favorites list. [folderIndex] indexes into [BackupBundle.folders] — not a raw id, same reasoning as [BackupSettings.activeFacetIndex]. */
+@Serializable
+data class BackupFolderPlacement(
+    val folderIndex: Int,
     val position: Int,
 )
 

@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FavoriteAppEntity
 import com.facetlauncher.app.data.local.FacetEntity
@@ -39,6 +40,7 @@ class ImportBackupUseCaseTest {
     private val dockAppRepository = mock(DockAppRepository::class.java)
     private val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
     private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
+    private val folderRepository = mock(FolderRepository::class.java)
 
     private val useCase = ImportBackupUseCase(
         backupRepository,
@@ -48,6 +50,7 @@ class ImportBackupUseCaseTest {
         dockAppRepository,
         facetDockAppRepository,
         defaultFavoriteAppRepository,
+        folderRepository,
     )
 
     private fun minimalSettings(activeFacetIndex: Int? = null) = BackupSettings(
@@ -161,6 +164,7 @@ class ImportBackupUseCaseTest {
         val result = useCase(uri) as ImportBackupResult.Success
 
         // Then existing data is wiped first...
+        verify(folderRepository).deleteAllFolders()
         verify(facetRepository).deleteAllFacets()
         verify(dockAppRepository).deleteAllDockApps()
         verify(defaultFavoriteAppRepository).deleteAllDefaultFavorites()

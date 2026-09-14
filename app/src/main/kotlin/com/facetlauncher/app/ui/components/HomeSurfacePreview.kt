@@ -25,6 +25,7 @@ import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.DockIcon
@@ -106,7 +107,7 @@ fun HomeSurfacePreview(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     dockApps.forEach { app ->
                         DockIcon(
-                            app = app,
+                            item = PlacedItem.SingleApp(app),
                             displayMode = dockDisplayMode,
                             onClick = {},
                             labelColor = labelColor,

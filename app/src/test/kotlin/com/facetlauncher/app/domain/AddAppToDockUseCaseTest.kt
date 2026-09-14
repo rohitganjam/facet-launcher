@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -34,7 +35,7 @@ class AddAppToDockUseCaseTest {
         // Given facet 1 active, not overriding its own dock, with 3 already in the default dock
         val fixture = Fixture()
         `when`(fixture.facetRepository.getById(1L)).thenReturn(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
-        `when`(fixture.dockAppRepository.observeDockApps()).thenReturn(flowOf(listOf(app, app, app)))
+        `when`(fixture.dockAppRepository.observeDockItems()).thenReturn(flowOf(listOf(app, app, app).map { PlacedItem.SingleApp(it) }))
 
         // When adding an app
         fixture.useCase(app)
@@ -48,7 +49,7 @@ class AddAppToDockUseCaseTest {
         // Given facet 1 active, overriding its own dock, empty so far
         val fixture = Fixture()
         `when`(fixture.facetRepository.getById(1L)).thenReturn(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
-        `when`(fixture.facetDockAppRepository.observeDockAppsForFacet(1L)).thenReturn(flowOf(emptyList()))
+        `when`(fixture.facetDockAppRepository.observeDockItems(1L)).thenReturn(flowOf(emptyList()))
 
         // When adding an app
         fixture.useCase(app)

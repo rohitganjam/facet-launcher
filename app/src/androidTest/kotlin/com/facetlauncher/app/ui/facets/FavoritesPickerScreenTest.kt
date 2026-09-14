@@ -17,6 +17,7 @@ import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
@@ -35,24 +36,29 @@ class FavoritesPickerScreenTest {
     private var facetId = 0L
 
     /** [seed] runs against real (throwaway, in-memory) repositories before the screen renders. */
-    private fun setContent(onDone: () -> Unit = {}, seed: suspend (AppRepository, FavoriteAppRepository) -> Unit = { _, _ -> }) {
+    private fun setContent(
+        onDone: () -> Unit = {},
+        seed: suspend (AppRepository, FavoriteAppRepository, FolderRepository) -> Unit = { _, _, _ -> },
+    ) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
                 runBlocking {
                     facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
-                    seed(appRepository, favoriteAppRepository)
+                    seed(appRepository, favoriteAppRepository, folderRepository)
                 }
                 FavoritesPickerViewModel(
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     GetInstalledAppsUseCase(appRepository),
                     favoriteAppRepository,
                     defaultFavoriteAppRepository,
+                    folderRepository,
                 )
             }
             FacetLauncherTheme {
@@ -66,7 +72,7 @@ class FavoritesPickerScreenTest {
     fun checkingAnAppAddsItToFavorites() {
         // Given the picker, searched down to some real installed app
         var targetApp: AppInfo? = null
-        setContent { appRepository, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "favorites_picker_row_${app.packageName}"
 
@@ -92,7 +98,7 @@ class FavoritesPickerScreenTest {
     @Test
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already favorited, so both "FAVORITES" and "ALL APPS" render
-        setContent { appRepository, favoriteAppRepository ->
+        setContent { appRepository, favoriteAppRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             installed.take(2).forEachIndexed { index, app -> favoriteAppRepository.addFavorite(facetId, app, index) }
         }
@@ -112,7 +118,7 @@ class FavoritesPickerScreenTest {
     fun favoritedAppsRenderFirstUnderTheirOwnSectionHeader() {
         // Given two real apps already favorited
         var favorites: List<AppInfo> = emptyList()
-        setContent { appRepository, favoriteAppRepository ->
+        setContent { appRepository, favoriteAppRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             favorites = installed.take(2)
             favorites.forEachIndexed { index, app -> favoriteAppRepository.addFavorite(facetId, app, index) }
@@ -132,7 +138,7 @@ class FavoritesPickerScreenTest {
     fun checkingIsBlockedAtTheMaxFavoritesCap() {
         // Given favorites already at the cap
         var overflowApp: AppInfo? = null
-        setContent { appRepository, favoriteAppRepository ->
+        setContent { appRepository, favoriteAppRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             val capApps = installed.take(FavoriteAppRepository.MAX_FAVORITES)
             overflowApp = installed.getOrNull(FavoriteAppRepository.MAX_FAVORITES)
@@ -161,6 +167,54 @@ class FavoritesPickerScreenTest {
         composeRule.onNodeWithTag(rowTag).assertIsOff()
     }
 
+    @Test
+    fun foldersTabCheckboxReflectsWhetherTheFolderIsPlacedInThisFavoritesList() {
+        // Given a folder that exists but isn't placed in favorites yet
+        var folderId: Long? = null
+        setContent { _, _, folderRepository -> folderId = folderRepository.createFolder("Games") }
+        val id = requireNotNull(folderId)
+
+        composeRule.onNodeWithTag("favorites_picker_tab_folders").performClick()
+        // The tab switch now slides+fades the panel in — give it a moment to land before querying.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("favorites_folder_picker_row_${id}_checkbox").assertIsOff() }.isSuccess
+        }
+
+        // When checking it
+        composeRule.onNodeWithTag("favorites_folder_picker_row_${id}_checkbox").performClick()
+
+        // Then it's placed — the checkbox reflects placement-in-this-list, not folder existence
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("favorites_folder_picker_row_${id}_checkbox").assertIsOn() }.isSuccess
+        }
+    }
+
+    @Test
+    fun uncheckingAFolderInThePickerUnplacesItWithoutDeletingIt() {
+        // Given a folder already placed in favorites
+        var folderId: Long? = null
+        setContent { _, favoriteAppRepository, folderRepository ->
+            val id = folderRepository.createFolder("Games")
+            folderId = id
+            favoriteAppRepository.placeFolder(facetId, id, position = 0)
+        }
+        val id = requireNotNull(folderId)
+
+        composeRule.onNodeWithTag("favorites_picker_tab_folders").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("favorites_folder_picker_row_${id}_checkbox").assertIsOn() }.isSuccess
+        }
+
+        // When unchecking it
+        composeRule.onNodeWithTag("favorites_folder_picker_row_${id}_checkbox").performClick()
+
+        // Then it's un-placed from favorites, but the folder itself still exists (it would
+        // simply not appear here at all if it had been deleted rather than un-placed)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("favorites_folder_picker_row_${id}_checkbox").assertIsOff() }.isSuccess
+        }
+    }
+
     /** No `facetId` — the launcher-wide default Favorites list, reached from Settings. */
     private fun setContentForDefaultFavorites(): Pair<AppRepository, DefaultFavoriteAppRepository> {
         lateinit var appRepository: AppRepository
@@ -171,9 +225,10 @@ class FavoritesPickerScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 appRepository = AppRepository(launcherApps)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), appRepository)
-                defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), appRepository)
-                FavoritesPickerViewModel(SavedStateHandle(), GetInstalledAppsUseCase(appRepository), favoriteAppRepository, defaultFavoriteAppRepository)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
+                defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                FavoritesPickerViewModel(SavedStateHandle(), GetInstalledAppsUseCase(appRepository), favoriteAppRepository, defaultFavoriteAppRepository, folderRepository)
             }
             FacetLauncherTheme {
                 FavoritesPickerScreen(onDone = {}, viewModel = viewModel)

@@ -14,10 +14,10 @@ import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.selectedCalendarIds
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -26,11 +26,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 data class HomeScreenState(
     val settings: LauncherSettings,
-    val dockApps: List<AppInfo>,
-    val appListItems: List<AppInfo>,
+    val dockApps: List<PlacedItem>,
+    val appListItems: List<PlacedItem>,
     val facets: List<FacetEntity>,
     /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
     val usageAccessGranted: Boolean,
@@ -84,9 +85,9 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
         val dockApps = activeFacet.flatMapLatest { facet ->
             if (facet?.overrideDock == true) {
-                facetDockAppRepository.observeDockAppsForFacet(facet.id)
+                facetDockAppRepository.observeDockItems(facet.id)
             } else {
-                dockAppRepository.observeDockApps()
+                dockAppRepository.observeDockItems()
             }
         }
 
@@ -125,16 +126,16 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
     }
 
-    private fun observeAppListItems(facet: FacetEntity?, settings: LauncherSettings): Flow<List<AppInfo>> {
+    private fun observeAppListItems(facet: FacetEntity?, settings: LauncherSettings): Flow<List<PlacedItem>> {
         if (facet == null) return flowOf(emptyList())
         val mode = if (facet.overrideApps) facet.listContentMode else settings.listContentMode
         val appsToShowCount = if (facet.overrideApps) facet.appsToShowCount else settings.appsToShowCount
         return when {
-            mode == ListContentMode.FAVORITES && facet.overridingFavorites -> favoriteAppRepository.observeFavoritesForFacet(facet.id)
-            mode == ListContentMode.FAVORITES -> defaultFavoriteAppRepository.observeDefaultFavorites()
+            mode == ListContentMode.FAVORITES && facet.overridingFavorites -> favoriteAppRepository.observeFavoriteItems(facet.id)
+            mode == ListContentMode.FAVORITES -> defaultFavoriteAppRepository.observeDefaultItems()
             !usageAccessRepository.isGranted() -> flowOf(emptyList())
-            mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount)) }
-            else -> flow { emit(usageStatsRepository.getMostUsedApps(appsToShowCount)) }
+            mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
+            else -> flow { emit(usageStatsRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
         }
     }
 

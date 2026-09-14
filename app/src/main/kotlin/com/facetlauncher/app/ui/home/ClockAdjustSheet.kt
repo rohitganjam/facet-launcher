@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.FacetScopeBadge
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
@@ -44,6 +45,13 @@ import com.facetlauncher.app.ui.theme.Surface
  * or launcher-wide settings — each row carries a subheading, same pattern as
  * [com.facetlauncher.app.ui.facets.FacetCarouselScreen]'s own "Launcher settings" row and its
  * per-card "Facet settings" gear.
+ *
+ * "Edit clock & calendar styles"'s own label text never changes; a trailing [FacetScopeBadge]
+ * names which style set it edits instead — "Global" or the overriding facet's own real name — same
+ * pattern as [com.facetlauncher.app.ui.components.QuickPlacementBadge] on the app context menu's
+ * Favorites/Dock rows (decided explicitly by the user to apply that same badge logic here, over
+ * folding the distinction into the sentence itself, e.g. "Edit Facet clock & calendar styles" —
+ * see chat history).
  */
 @Composable
 fun ClockAdjustSheet(
@@ -51,7 +59,8 @@ fun ClockAdjustSheet(
     onEditStylesClick: () -> Unit,
     onFacetSettingsClick: () -> Unit,
     onLauncherSettingsClick: () -> Unit,
-    isOverridden: Boolean,
+    /** Non-null names the facet whose own clock/calendar styles are in effect right now; `null` means the launcher-wide default applies — see [FacetScopeBadge]. */
+    overrideFacetName: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -80,10 +89,11 @@ fun ClockAdjustSheet(
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(painter = painterResource(R.drawable.ic_palette_24), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = if (isOverridden) "Edit Facet clock & calendar styles" else "Edit Default clock & calendar styles",
+            label = "Edit clock & calendar styles",
             subtitle = "Templates, fonts, colors, and alignment",
             onClick = onEditStylesClick,
             testTag = "clock_adjust_edit_styles",
+            trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
         )
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
@@ -112,6 +122,7 @@ private fun AdjustRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     testTag: String? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -132,6 +143,7 @@ private fun AdjustRow(
             Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink)
             Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
+        trailingContent?.invoke()
     }
 }
 
@@ -145,7 +157,7 @@ private fun ClockAdjustSheetPreview() {
             onEditStylesClick = {},
             onFacetSettingsClick = {},
             onLauncherSettingsClick = {},
-            isOverridden = false,
+            overrideFacetName = null,
         )
     }
 }

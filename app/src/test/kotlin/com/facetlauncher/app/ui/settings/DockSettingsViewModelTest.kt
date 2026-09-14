@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,7 @@ class DockSettingsViewModelTest {
 
     private fun createViewModel(
         facetId: Long? = null,
-        dockApps: List<AppInfo> = emptyList(),
+        dockItems: List<PlacedItem> = emptyList(),
         facets: List<FacetEntity> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
@@ -61,8 +62,8 @@ class DockSettingsViewModelTest {
     ): DockSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(dockAppRepository.observeDockApps()).thenReturn(flowOf(dockApps))
-        `when`(facetDockAppRepository.observeDockAppsForFacet(anyLong())).thenReturn(flowOf(dockApps))
+        `when`(dockAppRepository.observeDockItems()).thenReturn(flowOf(dockItems))
+        `when`(facetDockAppRepository.observeDockItems(anyLong())).thenReturn(flowOf(dockItems))
         return DockSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
@@ -74,13 +75,13 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `dock apps flow through to uiState`() = runTest {
-        val fiveApps = (1..5).map(::appInfo)
-        val viewModel = createViewModel(dockApps = fiveApps)
+    fun `dock items flow through to uiState`() = runTest {
+        val fiveItems = (1..5).map { PlacedItem.SingleApp(appInfo(it)) }
+        val viewModel = createViewModel(dockItems = fiveItems)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(5, viewModel.uiState.value.dockApps.size)
+        assertEquals(5, viewModel.uiState.value.dockItems.size)
     }
 
     @Test
@@ -88,14 +89,14 @@ class DockSettingsViewModelTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val dockAppRepository = mock(DockAppRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository, dockAppRepository = dockAppRepository)
-        val reordered = listOf(appInfo(2), appInfo(1))
+        val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
-        viewModel.reorderDockApps(reordered)
+        viewModel.reorderDockItems(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setDockDisplayMode(DockDisplayMode.TEXT)
-        verify(dockAppRepository).reorderDockApps(reordered)
+        verify(dockAppRepository).reorderDockItems(reordered)
     }
 
     @Test
@@ -103,7 +104,7 @@ class DockSettingsViewModelTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
         val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
-        `when`(facetDockAppRepository.observeDockAppsForFacet(anyLong())).thenReturn(flowOf(emptyList()))
+        `when`(facetDockAppRepository.observeDockItems(anyLong())).thenReturn(flowOf(emptyList()))
         val facet = FacetEntity(id = 7L, name = "Work", position = 0)
         `when`(facetRepository.getById(7L)).thenReturn(facet)
         val viewModel = createViewModel(
@@ -113,14 +114,14 @@ class DockSettingsViewModelTest {
             facetRepository = facetRepository,
             facetDockAppRepository = facetDockAppRepository,
         )
-        val reordered = listOf(appInfo(2), appInfo(1))
+        val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
-        viewModel.reorderDockApps(reordered)
+        viewModel.reorderDockItems(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(facetRepository).setDockDisplayMode(facet, DockDisplayMode.TEXT)
-        verify(facetDockAppRepository).reorderDockApps(7L, reordered)
+        verify(facetDockAppRepository).reorderDockItems(7L, reordered)
         verify(settingsRepository, never()).setDockDisplayMode(DockDisplayMode.TEXT)
     }
 }
