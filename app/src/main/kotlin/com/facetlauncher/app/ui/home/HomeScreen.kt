@@ -35,6 +35,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Folder as FolderIcon
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -81,16 +84,25 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.domain.QuickAddState
+import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.FolderContentsSheet
+import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
+import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
+import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -109,6 +121,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 /** [MENU] shows the long-press bottom sheet; [ADJUST] shows the move handle *and* the resize handles together. */
 enum class ClockAdjustMode { NONE, MENU, ADJUST }
 
+/** A [PlacedItem]'s stable identity for keying/reordering — a folder's own id, or its app's component. */
+internal fun PlacedItem.stableKey(): Any = when (this) {
+    is PlacedItem.SingleApp -> app.packageName to app.activityName
+    is PlacedItem.FolderItem -> "folder_${folder.id}"
+}
+
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
  * [appListItems] (Favorites/Recents/Most Used depending on [listContentMode], from
@@ -119,8 +137,8 @@ enum class ClockAdjustMode { NONE, MENU, ADJUST }
  */
 @Composable
 fun HomeScreen(
-    appListItems: List<AppInfo>,
-    dockApps: List<AppInfo>,
+    appListItems: List<PlacedItem>,
+    dockApps: List<PlacedItem>,
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     listContentMode: ListContentMode = ListContentMode.FAVORITES,
@@ -159,6 +177,8 @@ fun HomeScreen(
     onDraggingHandleChange: (Boolean) -> Unit = {},
     /** Id of the facet whose `overrideClock` bundle governs the clock widget's position/scale right now, or `null` if the global default applies. */
     clockPositionOwnerFacetId: Long? = null,
+    /** That same facet's own real name, for [ClockAdjustSheet]'s "Edit clock & calendar styles" row badge — `null` alongside [clockPositionOwnerFacetId] when the global default applies. */
+    clockPositionOwnerFacetName: String? = null,
     /** Fired by a plain tap on the clock (time/date), not a calendar event row — opens the device's default clock app. */
     onClockClick: () -> Unit = {},
     /** Fired when the user selects "Edit Styles" from the clock's adjustment menu. */
@@ -180,11 +200,22 @@ fun HomeScreen(
     onEventClick: (CalendarEvent) -> Unit = {},
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
-    /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
-    addToFavoritesOverride: Boolean? = null,
-    onAddToFavorites: (AppInfo) -> Unit = {},
-    addToDockOverride: Boolean? = null,
-    onAddToDock: (AppInfo) -> Unit = {},
+    /** F12's long-press "Add to Favorites"/"Add to Dock" (or "Remove from…") rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc. */
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    /** Folder-tile counterpart of [onRequestQuickAddState]/[onFavoritesAction]/[onDockAction]. */
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    /** F-Folders' "Add to folder" row on Dock icons' long-press menu, and folder-tile rendering/interaction — see [DockIcon]'s own doc. The full folder library, not just those already placed here. */
+    folderCandidates: List<Folder>? = null,
+    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
+    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+    onRemoveFromFolder: (Long, AppInfo) -> Unit = { _, _ -> },
+    onRenameFolder: (Long, String) -> Unit = { _, _ -> },
+    /** Folder-contents sheets (Home tiles, and the "Add to folder" preview) follow this exactly, mirroring the App Drawer's own List/Grid setting. */
+    drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -293,7 +324,7 @@ fun HomeScreen(
     // hasn't (same reasoning as the drag-jump bug fixed elsewhere via this exact pattern — see
     // e.g. DockSettingsScreen's own componentsKey). Keying on this instead of appListItems itself
     // keeps the effect below from re-firing (and re-hiding the list) on every such relist.
-    val appListKey = appListItems.map { it.packageName to it.activityName }
+    val appListKey = appListItems.map { it.stableKey() }
 
     // Hidden until the compact-spacing decision below has actually been made for the current
     // list, then fades in once — same reveal mechanism as the clock's own clockAppearAlpha. Without
@@ -526,25 +557,48 @@ fun HomeScreen(
                             UsageAccessStrip(onClick = onUsageAccessPromptClick)
                         } else {
                             Column {
-                                appListItems.forEach { app ->
-                                    AppRow(
-                                        app = app,
-                                        onClick = { onAppClick(app) },
-                                        badgeCount = badgeCounts[app.packageName],
-                                        badgeStyle = notificationBadgeStyle,
-                                        onRequestShortcuts = onRequestShortcuts,
-                                        onLaunchShortcut = onLaunchShortcut,
-                                        addToFavoritesOverride = addToFavoritesOverride,
-                                        onAddToFavorites = onAddToFavorites,
-                                        addToDockOverride = addToDockOverride,
-                                        onAddToDock = onAddToDock,
-                                        position = appRowPosition,
-                                        presentation = appRowPresentation,
-                                        labelColor = appLabelColor,
-                                        labelFontWeight = appLabelFontWeight,
-                                        verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
-                                        iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
-                                    )
+                                appListItems.forEach { item ->
+                                    when (item) {
+                                        is PlacedItem.SingleApp -> AppRow(
+                                            app = item.app,
+                                            onClick = { onAppClick(item.app) },
+                                            badgeCount = badgeCounts[item.app.packageName],
+                                            badgeStyle = notificationBadgeStyle,
+                                            onRequestShortcuts = onRequestShortcuts,
+                                            onLaunchShortcut = onLaunchShortcut,
+                                            onRequestQuickAddState = onRequestQuickAddState,
+                                            onFavoritesAction = onFavoritesAction,
+                                            onDockAction = onDockAction,
+                                            folderCandidates = folderCandidates,
+                                            onCreateFolder = onCreateFolder,
+                                            onAddToFolder = onAddToFolder,
+                                            drawerPresentation = drawerPresentation,
+                                            position = appRowPosition,
+                                            presentation = appRowPresentation,
+                                            labelColor = appLabelColor,
+                                            labelFontWeight = appLabelFontWeight,
+                                            verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                            iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
+                                        )
+                                        is PlacedItem.FolderItem -> FolderRow(
+                                            folder = item.folder,
+                                            onAppClick = onAppClick,
+                                            onRequestShortcuts = onRequestShortcuts,
+                                            onLaunchShortcut = onLaunchShortcut,
+                                            onRemoveFromFolder = onRemoveFromFolder,
+                                            onRenameFolder = onRenameFolder,
+                                            drawerPresentation = drawerPresentation,
+                                            onRequestQuickAddState = onRequestFolderQuickAddState,
+                                            onFavoritesAction = onFolderFavoritesAction,
+                                            onDockAction = onFolderDockAction,
+                                            position = appRowPosition,
+                                            presentation = appRowPresentation,
+                                            labelColor = appLabelColor,
+                                            labelFontWeight = appLabelFontWeight,
+                                            verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                            iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -567,19 +621,27 @@ fun HomeScreen(
                         .testTag("home_dock_row"),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    dockApps.forEach { app ->
+                    dockApps.forEach { item ->
                         DockIcon(
-                            app = app,
+                            item = item,
                             displayMode = dockDisplayMode,
-                            onClick = { onAppClick(app) },
-                            badgeCount = badgeCounts[app.packageName],
+                            onClick = onAppClick,
+                            badgeCount = (item as? PlacedItem.SingleApp)?.let { badgeCounts[it.app.packageName] },
                             badgeStyle = notificationBadgeStyle,
                             onRequestShortcuts = onRequestShortcuts,
                             onLaunchShortcut = onLaunchShortcut,
-                            addToFavoritesOverride = addToFavoritesOverride,
-                            onAddToFavorites = onAddToFavorites,
-                            addToDockOverride = addToDockOverride,
-                            onAddToDock = onAddToDock,
+                            onRequestQuickAddState = onRequestQuickAddState,
+                            onFavoritesAction = onFavoritesAction,
+                            onDockAction = onDockAction,
+                            onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                            onFolderFavoritesAction = onFolderFavoritesAction,
+                            onFolderDockAction = onFolderDockAction,
+                            folderCandidates = folderCandidates,
+                            onCreateFolder = onCreateFolder,
+                            onAddToFolder = onAddToFolder,
+                            onRemoveFromFolder = onRemoveFromFolder,
+                            onRenameFolder = onRenameFolder,
+                            drawerPresentation = drawerPresentation,
                             labelColor = appLabelColor,
                             labelFontWeight = appLabelFontWeight,
                         )
@@ -733,7 +795,7 @@ fun HomeScreen(
                     onAdjustModeChange(ClockAdjustMode.NONE)
                     onNavigateToSettings()
                 },
-                isOverridden = clockPositionOwnerFacetId != null,
+                overrideFacetName = clockPositionOwnerFacetName,
             )
         }
     }
@@ -832,10 +894,14 @@ internal fun AppRow(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
     modifier: Modifier = Modifier,
-    addToFavoritesOverride: Boolean? = null,
-    onAddToFavorites: (AppInfo) -> Unit = {},
-    addToDockOverride: Boolean? = null,
-    onAddToDock: (AppInfo) -> Unit = {},
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    /** The full folder library — see [AppContextMenu]'s own doc for what non-null means. Non-Dock-only: this closes the earlier "Dock-only" gap for Favorites' own long-press. */
+    folderCandidates: List<Folder>? = null,
+    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
+    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+    drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     position: AppRowPosition = AppRowPosition.LEFT,
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     labelColor: Color = HomeAppTextColor,
@@ -935,37 +1001,123 @@ internal fun AppRow(
                 onDismissRequest = { menuExpanded = false },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
-                addToFavoritesOverride = addToFavoritesOverride,
-                onAddToFavorites = onAddToFavorites,
-                addToDockOverride = addToDockOverride,
-                onAddToDock = onAddToDock,
+                onRequestQuickAddState = onRequestQuickAddState,
+                onFavoritesAction = onFavoritesAction,
+                onDockAction = onDockAction,
+                folderCandidates = folderCandidates,
+                onCreateFolder = onCreateFolder,
+                onAddToFolder = onAddToFolder,
+                drawerPresentation = drawerPresentation,
             )
         }
     }
 }
 
-/** Not private: reused by the facet carousel's preview cards ([com.facetlauncher.app.ui.facets.FacetCarouselScreen]) so the dock renders identically there. */
+/**
+ * Not private: reused by the facet carousel's preview cards ([com.facetlauncher.app.ui.facets.FacetCarouselScreen])
+ * so the dock renders identically there.
+ *
+ * [item] is either a standalone app ([PlacedItem.SingleApp], rendered exactly as before) or a
+ * folder ([PlacedItem.FolderItem]) — a `medium`/12dp-shaped tile (CLAUDE.md's M3 shape table, tile
+ * scale) showing a 2x2 mini-grid of its first 4 app icons. Tapping a folder tile opens
+ * [FolderContentsSheet]; long-pressing it opens [com.facetlauncher.app.ui.components.FolderTileContextMenu]
+ * (Rename only — no removal, see that composable's own doc) instead of [AppContextMenu] — a folder
+ * has no app-info/uninstall/shortcuts of its own. Both are gated by [enableLongPressMenu] exactly
+ * like [AppContextMenu] below, since the facet carousel's read-only preview cards aren't a place
+ * you manage folders either.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun DockIcon(
-    app: AppInfo,
+    item: PlacedItem,
     displayMode: DockDisplayMode,
-    onClick: () -> Unit,
+    onClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     badgeCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
-    addToFavoritesOverride: Boolean? = null,
-    onAddToFavorites: (AppInfo) -> Unit = {},
-    addToDockOverride: Boolean? = null,
-    onAddToDock: (AppInfo) -> Unit = {},
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    folderCandidates: List<Folder>? = null,
+    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
+    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+    onRemoveFromFolder: (Long, AppInfo) -> Unit = { _, _ -> },
+    onRenameFolder: (Long, String) -> Unit = { _, _ -> },
+    drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
     // False for the facet carousel's read-only preview cards (see
     // com.facetlauncher.app.ui.facets.FacetCarouselScreen) — long-press there must not open
     // Home's real Uninstall/App Info/shortcuts menu, since the preview isn't a place you manage apps.
     enableLongPressMenu: Boolean = true,
+) {
+    when (item) {
+        is PlacedItem.SingleApp -> SingleAppDockIcon(
+            app = item.app,
+            displayMode = displayMode,
+            onClick = { onClick(item.app) },
+            modifier = modifier,
+            badgeCount = badgeCount,
+            badgeStyle = badgeStyle,
+            onRequestShortcuts = onRequestShortcuts,
+            onLaunchShortcut = onLaunchShortcut,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
+            folderCandidates = folderCandidates,
+            onCreateFolder = onCreateFolder,
+            onAddToFolder = onAddToFolder,
+            drawerPresentation = drawerPresentation,
+            labelColor = labelColor,
+            labelFontWeight = labelFontWeight,
+            enableLongPressMenu = enableLongPressMenu,
+        )
+        is PlacedItem.FolderItem -> FolderDockIcon(
+            folder = item.folder,
+            displayMode = displayMode,
+            onAppClick = onClick,
+            modifier = modifier,
+            labelColor = labelColor,
+            labelFontWeight = labelFontWeight,
+            onRequestShortcuts = onRequestShortcuts,
+            onLaunchShortcut = onLaunchShortcut,
+            onRequestQuickAddState = onRequestFolderQuickAddState,
+            onFavoritesAction = onFolderFavoritesAction,
+            onDockAction = onFolderDockAction,
+            onRemoveFromFolder = onRemoveFromFolder,
+            onRenameFolder = onRenameFolder,
+            drawerPresentation = drawerPresentation,
+            enableLongPressMenu = enableLongPressMenu,
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SingleAppDockIcon(
+    app: AppInfo,
+    displayMode: DockDisplayMode,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    badgeCount: Int?,
+    badgeStyle: NotificationBadgeStyle,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
+    folderCandidates: List<Folder>?,
+    onCreateFolder: (AppInfo, String) -> Unit,
+    onAddToFolder: (AppInfo, Long) -> Unit,
+    drawerPresentation: DrawerPresentation,
+    labelColor: Color,
+    labelFontWeight: FontWeight,
+    enableLongPressMenu: Boolean,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val clickModifier = if (enableLongPressMenu) {
@@ -1011,12 +1163,229 @@ internal fun DockIcon(
                 onDismissRequest = { menuExpanded = false },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
-                addToFavoritesOverride = addToFavoritesOverride,
-                onAddToFavorites = onAddToFavorites,
-                addToDockOverride = addToDockOverride,
-                onAddToDock = onAddToDock,
+                onRequestQuickAddState = onRequestQuickAddState,
+                onFavoritesAction = onFavoritesAction,
+                onDockAction = onDockAction,
+                folderCandidates = folderCandidates,
+                onCreateFolder = onCreateFolder,
+                onAddToFolder = onAddToFolder,
+                drawerPresentation = drawerPresentation,
             )
         }
+    }
+}
+
+/** [PlacedItem.FolderItem]'s own tile — a mini-grid preview instead of a single app icon. See [DockIcon]'s own doc for tap/long-press behavior. */
+@Composable
+private fun FolderDockIcon(
+    folder: Folder,
+    displayMode: DockDisplayMode,
+    onAppClick: (AppInfo) -> Unit,
+    modifier: Modifier,
+    labelColor: Color,
+    labelFontWeight: FontWeight,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onRequestQuickAddState: suspend (Folder) -> QuickAddState,
+    onFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
+    onDockAction: (Folder, QuickPlacementAction) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    drawerPresentation: DrawerPresentation,
+    enableLongPressMenu: Boolean,
+) {
+    var sheetOpen by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    val clickModifier = if (enableLongPressMenu) {
+        Modifier.combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+    } else {
+        Modifier.clickable(onClick = {})
+    }
+    when (displayMode) {
+        DockDisplayMode.ICONS -> Box(modifier = modifier.then(clickModifier).testTag("dock_folder_tile_${folder.id}")) {
+            FolderTileGlyph(folder = folder)
+        }
+        DockDisplayMode.TEXT -> Row(
+            modifier = modifier
+                .then(clickModifier)
+                .testTag("dock_folder_tile_${folder.id}")
+                .padding(vertical = 14.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = folder.name,
+                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
+                color = labelColor,
+            )
+        }
+    }
+    if (enableLongPressMenu && sheetOpen) {
+        FolderContentsSheet(
+            folder = folder,
+            onDismissRequest = { sheetOpen = false },
+            onAppClick = onAppClick,
+            presentation = drawerPresentation,
+            onRemoveFromFolder = onRemoveFromFolder,
+            headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+            onRequestShortcuts = onRequestShortcuts,
+            onLaunchShortcut = onLaunchShortcut,
+        )
+    }
+    if (enableLongPressMenu) {
+        FolderTileContextMenu(
+            folder = folder,
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+            onRename = onRenameFolder,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
+        )
+    }
+}
+
+/** A [AppIconSize.TILE]-sized, `medium`/12dp-shaped tile showing up to 4 of the folder's app icons in a 2x2 grid — CLAUDE.md's M3 shape table, tile scale. A 0-app folder (valid, persistent — never auto-deleted) renders a single centered muted folder glyph instead of 4 blank boxes. */
+@Composable
+internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(AppIconSize.TILE)
+            .clip(RoundedCornerShape(12.dp))
+            .background(IconTile)
+            .padding(3.dp),
+    ) {
+        if (folder.apps.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Outlined.FolderIcon,
+                    contentDescription = null,
+                    tint = Muted,
+                    modifier = Modifier.size(AppIconSize.SHORTCUT),
+                )
+            }
+        } else {
+            val previewApps = folder.apps.take(4)
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+                for (rowIndex in 0..1) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        for (colIndex in 0..1) {
+                            val app = previewApps.getOrNull(rowIndex * 2 + colIndex)
+                            if (app != null) {
+                                AppIcon(
+                                    icon = app.icon,
+                                    size = AppIconSize.SHORTCUT,
+                                    contentDescription = null,
+                                    cornerRadius = 3.dp,
+                                )
+                            } else {
+                                Box(modifier = Modifier.size(AppIconSize.SHORTCUT))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The app-list (Favorites) counterpart to [FolderDockIcon] — a row instead of a tile, mirroring
+ * [AppRow]'s exact layout (icon + label, position/presentation-aware) since a folder can now
+ * occupy a slot in the Favorites list, not just the Dock. Tapping opens [FolderContentsSheet];
+ * long-pressing opens [FolderTileContextMenu] (Rename only), exactly like [FolderDockIcon].
+ */
+@Composable
+internal fun FolderRow(
+    folder: Folder,
+    onAppClick: (AppInfo) -> Unit,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    drawerPresentation: DrawerPresentation,
+    modifier: Modifier = Modifier,
+    onRequestQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    position: AppRowPosition = AppRowPosition.LEFT,
+    presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+    labelColor: Color = HomeAppTextColor,
+    labelFontWeight: FontWeight = FontWeight.Normal,
+    verticalPadding: Dp = HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+    iconSize: Dp = AppIconSize.ROW_REGULAR,
+    testTagPrefix: String = "home_",
+    // False for the facet carousel's read-only preview cards — see [AppRow]'s own doc for why;
+    // when disabled, a tap falls through to [onClick] (e.g. "apply this facet") instead of opening
+    // the folder's own contents sheet, and no long-press menu is offered at all.
+    enableLongPressMenu: Boolean = true,
+    onClick: () -> Unit = {},
+) {
+    var sheetOpen by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    val showIcon = presentation != AppRowPresentation.TEXT_ONLY
+    val showLabel = presentation != AppRowPresentation.ICON_ONLY
+    val clickModifier = if (enableLongPressMenu) {
+        Modifier.combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+    } else {
+        Modifier.clickable(onClick = onClick)
+    }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .then(clickModifier)
+            .testTag("${testTagPrefix}folder_row_${folder.id}")
+            .padding(horizontal = 8.dp, vertical = verticalPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (position == AppRowPosition.RIGHT) {
+            Arrangement.spacedBy(14.dp, Alignment.End)
+        } else {
+            Arrangement.spacedBy(14.dp)
+        },
+    ) {
+        val icon: @Composable () -> Unit = {
+            if (showIcon) FolderTileGlyph(folder = folder, modifier = Modifier.size(iconSize))
+        }
+        val label: @Composable () -> Unit = {
+            if (showLabel) {
+                Text(
+                    text = folder.name,
+                    style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
+                    color = labelColor,
+                )
+            }
+        }
+        if (position == AppRowPosition.RIGHT) {
+            label()
+            icon()
+        } else {
+            icon()
+            label()
+        }
+    }
+    if (enableLongPressMenu && sheetOpen) {
+        FolderContentsSheet(
+            folder = folder,
+            onDismissRequest = { sheetOpen = false },
+            onAppClick = onAppClick,
+            presentation = drawerPresentation,
+            onRemoveFromFolder = onRemoveFromFolder,
+            headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+            onRequestShortcuts = onRequestShortcuts,
+            onLaunchShortcut = onLaunchShortcut,
+        )
+    }
+    if (enableLongPressMenu) {
+        FolderTileContextMenu(
+            folder = folder,
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+            onRename = onRenameFolder,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
+        )
     }
 }
 
@@ -1029,8 +1398,8 @@ private fun HomeScreenPreview() {
             AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
         }
         HomeScreen(
-            appListItems = apps.take(5),
-            dockApps = apps.drop(5).take(4),
+            appListItems = apps.take(5).map { PlacedItem.SingleApp(it) },
+            dockApps = apps.drop(5).take(4).map { PlacedItem.SingleApp(it) },
             onAppClick = {},
         )
     }
@@ -1052,7 +1421,7 @@ private fun HomeScreenRightPositionPreview() {
             AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
         }
         HomeScreen(
-            appListItems = apps,
+            appListItems = apps.map { PlacedItem.SingleApp(it) },
             dockApps = emptyList(),
             onAppClick = {},
             appRowPosition = AppRowPosition.RIGHT,
@@ -1069,7 +1438,7 @@ private fun HomeScreenTextOnlyPresentationPreview() {
             AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
         }
         HomeScreen(
-            appListItems = apps,
+            appListItems = apps.map { PlacedItem.SingleApp(it) },
             dockApps = emptyList(),
             onAppClick = {},
             appRowPresentation = AppRowPresentation.TEXT_ONLY,

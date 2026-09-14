@@ -250,7 +250,7 @@ fun HomeDrawerRoute(
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
     val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
     val showContactsSettingPrompt by drawerViewModel.showContactsSettingPrompt.collectAsStateWithLifecycle()
-    val quickAddState by drawerViewModel.quickAddState.collectAsStateWithLifecycle()
+    val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
 
     if (homeUiState.isLoading) {
         // Real Home state (dock/app list, theme-driven colors and fonts) hasn't loaded yet —
@@ -442,6 +442,7 @@ fun HomeDrawerRoute(
             onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
             clockScale = homeUiState.clockScale,
             clockPositionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
+            clockPositionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
             clockAdjustMode = clockAdjustMode,
             onAdjustModeChange = { clockAdjustMode = it },
             draggingHandle = draggingHandle,
@@ -492,10 +493,17 @@ fun HomeDrawerRoute(
             homeAppsFontWeight = homeUiState.settings.homeAppsFontWeight,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
-            addToFavoritesOverride = quickAddState.favoritesOverride,
-            onAddToFavorites = drawerViewModel::addToFavorites,
-            addToDockOverride = quickAddState.dockOverride,
-            onAddToDock = drawerViewModel::addToDock,
+            onRequestQuickAddState = drawerViewModel::quickAddStateForApp,
+            onFavoritesAction = drawerViewModel::onFavoritesAction,
+            onDockAction = drawerViewModel::onDockAction,
+            onRequestFolderQuickAddState = drawerViewModel::quickAddStateForFolder,
+            onFolderFavoritesAction = drawerViewModel::onFolderFavoritesAction,
+            onFolderDockAction = drawerViewModel::onFolderDockAction,
+            folderCandidates = folders,
+            onCreateFolder = drawerViewModel::createFolder,
+            onAddToFolder = drawerViewModel::addToFolder,
+            onRemoveFromFolder = drawerViewModel::removeFromFolder,
+            onRenameFolder = drawerViewModel::renameFolder,
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
@@ -650,10 +658,12 @@ fun HomeDrawerRoute(
             contacts = contactResults,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
-            addToFavoritesOverride = quickAddState.favoritesOverride,
-            onAddToFavorites = drawerViewModel::addToFavorites,
-            addToDockOverride = quickAddState.dockOverride,
-            onAddToDock = drawerViewModel::addToDock,
+            onRequestQuickAddState = drawerViewModel::quickAddStateForApp,
+            onFavoritesAction = drawerViewModel::onFavoritesAction,
+            onDockAction = drawerViewModel::onDockAction,
+            folderCandidates = folders,
+            onCreateFolder = drawerViewModel::createFolder,
+            onAddToFolder = drawerViewModel::addToFolder,
             onRequestConnections = drawerViewModel::getConnections,
             showContactsPermissionPrompt = showContactsPermissionPrompt,
             onContactsPermissionPromptClick = {
