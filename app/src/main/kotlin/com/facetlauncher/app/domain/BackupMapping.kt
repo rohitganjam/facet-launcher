@@ -51,7 +51,7 @@ fun BackupAppEntry.toDefaultFavoriteAppEntity(): DefaultFavoriteAppEntity =
     DefaultFavoriteAppEntity(packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
-    BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan)
+    BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name)
 
 fun FolderWithApps.toBackupFolder(): BackupFolder = BackupFolder(
     name = folder.name,

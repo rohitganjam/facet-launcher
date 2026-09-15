@@ -278,6 +278,7 @@ class HomeDrawerRouteTest {
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
                 )
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),
@@ -296,6 +297,7 @@ class HomeDrawerRouteTest {
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }

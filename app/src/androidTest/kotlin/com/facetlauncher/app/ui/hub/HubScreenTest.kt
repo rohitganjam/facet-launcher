@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.hub
 
 import android.appwidget.AppWidgetManager
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -43,6 +44,7 @@ class HubScreenTest {
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
                 )
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),

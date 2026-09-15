@@ -58,7 +58,7 @@ class BackupRestoreScreenTest {
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
                 val backupRepository = BackupRepository(context)
-                val appWidgetRepository = AppWidgetRepository(context, AppWidgetManager.getInstance(context), LauncherAppWidgetHost(context))
+                val appWidgetRepository = AppWidgetRepository(context, AppWidgetManager.getInstance(context), LauncherAppWidgetHost(context), context.getSystemService(UserManager::class.java))
                 BackupRestoreViewModel(
                     ExportBackupUseCase(
                         settingsRepository, facetRepository, favoriteAppRepository, dockAppRepository,

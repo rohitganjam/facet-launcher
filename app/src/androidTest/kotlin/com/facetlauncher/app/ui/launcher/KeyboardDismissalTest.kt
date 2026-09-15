@@ -209,6 +209,7 @@ class KeyboardDismissalTest {
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
                 )
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),
@@ -227,6 +228,7 @@ class KeyboardDismissalTest {
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }

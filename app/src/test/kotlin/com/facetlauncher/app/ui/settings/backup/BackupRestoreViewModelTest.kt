@@ -7,6 +7,7 @@ import android.content.IntentSender
 import android.net.Uri
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -166,12 +167,13 @@ class BackupRestoreViewModelTest {
     fun `re-adding a widget that binds synchronously with no configure activity places it at the backup's own recorded position`() = runTest {
         givenOnePendingWidget()
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(5)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider)).thenReturn(true)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider, AppProfile.PERSONAL)).thenReturn(true)
         val info = AppWidgetProviderInfo()
         info.provider = provider
         info.configure = null
         `when`(appWidgetRepository.getAppWidgetInfo(5)).thenReturn(info)
         `when`(appWidgetRepository.createConfigureIntentSender(5, info)).thenReturn(null)
+        `when`(appWidgetRepository.profileForWidget(5)).thenReturn(AppProfile.PERSONAL)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(placeWidget.invoke(emptyList(), 2, 1, 1, 2)).thenReturn(PlaceWidgetResult.Placed(row = 1, col = 2))
 
@@ -179,7 +181,7 @@ class BackupRestoreViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(widgetPlacementRepository).upsert(
-            WidgetPlacementEntity(appWidgetId = 5, providerPackageName = "com.example.widgets", providerClassName = ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1),
+            WidgetPlacementEntity(appWidgetId = 5, providerPackageName = "com.example.widgets", providerClassName = ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL),
         )
         assertEquals(true, viewModel.uiState.value.pendingWidgets[0].done)
     }
@@ -188,9 +190,9 @@ class BackupRestoreViewModelTest {
     fun `re-adding a widget needing the system bind dialog emits LaunchBindPermission and does not place it yet`() = runTest {
         givenOnePendingWidget()
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(5)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider)).thenReturn(false)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider, AppProfile.PERSONAL)).thenReturn(false)
         val bindIntent = Intent("bind")
-        `when`(appWidgetRepository.createBindIntent(5, provider)).thenReturn(bindIntent)
+        `when`(appWidgetRepository.createBindIntent(5, provider, AppProfile.PERSONAL)).thenReturn(bindIntent)
         val events = mutableListOf<BackupRestoreEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
 

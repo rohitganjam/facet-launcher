@@ -190,4 +190,6 @@ data class BackupWidgetPlacement(
     val col: Int,
     val colSpan: Int,
     val rowSpan: Int,
+    /** Raw `AppProfile.name` — defaulted so a backup exported before Work Profile support still imports cleanly (as `PERSONAL`). Only a hint for the guided re-add queue's initial bind attempt; re-adding always goes through a real bind, since a Work Profile widget's grant can't be restored from a backup file. */
+    val profile: String = "PERSONAL",
 )

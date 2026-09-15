@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -51,9 +52,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.WorkScopeBadge
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -264,30 +267,37 @@ private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp
             .testTag("hub_widget_option_${option.provider.flattenToShortString()}")
             .clickable(onClick = onClick),
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(66.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, Hairline, RoundedCornerShape(12.dp))
-                .padding(4.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .border(1.dp, Hairline, RoundedCornerShape(12.dp)),
         ) {
-            val previewIcon = option.previewIcon
-            if (previewIcon != null) {
-                Image(
-                    bitmap = previewIcon.asImageBitmap(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                Text(
-                    text = "${option.columns}×${option.rows}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Muted,
-                )
+            Column(
+                modifier = Modifier.fillMaxSize().padding(4.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                val previewIcon = option.previewIcon
+                if (previewIcon != null) {
+                    Image(
+                        bitmap = previewIcon.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Text(
+                        text = "${option.columns}×${option.rows}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Muted,
+                    )
+                }
+            }
+            // Bottom-start, matching AppIcon's own Work Profile badge placement convention.
+            if (option.profile == AppProfile.WORK) {
+                WorkScopeBadge(modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).testTag("hub_widget_option_work_badge"))
             }
         }
         Text(
