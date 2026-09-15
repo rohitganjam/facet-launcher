@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
@@ -50,6 +51,8 @@ class SettingsViewModelTest {
         folderCount: Int = 0,
         isDefaultLauncher: Boolean = false,
         settings: LauncherSettings = LauncherSettings(),
+        hasWorkProfile: Boolean = false,
+        isWorkProfilePaused: Boolean = false,
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
@@ -61,8 +64,11 @@ class SettingsViewModelTest {
         `when`(folderRepository.observeFolders()).thenReturn(flowOf((1..folderCount).map { mock(com.facetlauncher.app.data.model.Folder::class.java) }))
         val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
         runBlocking { `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
+        val workProfileRepository = mock(WorkProfileRepository::class.java)
+        `when`(workProfileRepository.hasWorkProfile()).thenReturn(flowOf(hasWorkProfile))
+        `when`(workProfileRepository.isWorkProfilePaused()).thenReturn(flowOf(isWorkProfilePaused))
         val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository)
-        return SettingsViewModel(useCase, defaultLauncherRepository)
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository)
     }
 
     @Test
@@ -116,5 +122,24 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(0, viewModel.uiState.value.selectedCalendarCount)
+    }
+
+    @Test
+    fun `uiState reflects no Work Profile by default`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.uiState.value.hasWorkProfile)
+    }
+
+    @Test
+    fun `uiState reflects a Work Profile that exists and is paused`() = runTest {
+        val viewModel = createViewModel(hasWorkProfile = true, isWorkProfilePaused = true)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(true, viewModel.uiState.value.hasWorkProfile)
+        assertEquals(true, viewModel.uiState.value.isWorkProfilePaused)
     }
 }

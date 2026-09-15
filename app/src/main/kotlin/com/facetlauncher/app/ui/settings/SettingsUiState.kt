@@ -10,6 +10,10 @@ data class SettingsUiState(
     val folderCount: Int = 0,
     val isDefaultLauncher: Boolean = false,
     val isLoading: Boolean = true,
+    /** Whether a Work Profile exists on this device — gates the "Work Profile" row entirely. */
+    val hasWorkProfile: Boolean = false,
+    /** Only meaningful while [hasWorkProfile] is true. */
+    val isWorkProfilePaused: Boolean = false,
 ) {
     /** `null` (nothing explicitly chosen yet) counts as zero here — it isn't the same as "every calendar", it's "none decided". See [LauncherSettings.selectedCalendarIds]. */
     val selectedCalendarCount: Int get() = settings.selectedCalendarIds?.size ?: 0

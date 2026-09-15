@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
@@ -190,13 +191,16 @@ fun AppContextMenu(
                         modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AppIcon(icon = app.icon, size = AppIconSize.ROW_SPACIOUS, contentDescription = null)
+                        AppIcon(icon = app.icon, size = AppIconSize.ROW_SPACIOUS, contentDescription = null, isWorkApp = app.profile == AppProfile.WORK)
                         Text(
                             text = app.label,
                             style = MaterialTheme.typography.titleLarge,
                             color = Ink,
                             modifier = Modifier.padding(start = 16.dp),
                         )
+                        if (app.profile == AppProfile.WORK) {
+                            WorkScopeBadge(modifier = Modifier.padding(start = 8.dp).testTag("app_context_menu_work_badge"))
+                        }
                     }
                     AppContextMenuItem(
                         label = "App info",

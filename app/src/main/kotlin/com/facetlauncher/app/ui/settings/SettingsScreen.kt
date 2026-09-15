@@ -94,6 +94,7 @@ fun SettingsScreen(
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
         onRequestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
+        onRequestWorkProfileSettingsIntent = viewModel::workProfileSettingsIntent,
         modifier = modifier,
     )
 }
@@ -114,6 +115,7 @@ private fun SettingsContent(
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
     onRequestDefaultLauncherIntent: () -> Intent,
+    onRequestWorkProfileSettingsIntent: () -> Intent,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -270,6 +272,20 @@ private fun SettingsContent(
                             testTag = "set_default_launcher_row",
                             trailing = { NavigationChevron() },
                         )
+                        // Read-only: this app reflects the Work Profile's state, it doesn't
+                        // control it — Android already owns a pause/resume toggle (system
+                        // Settings, and usually a Quick Settings tile); see WorkProfileRepository's
+                        // own doc for why this app doesn't add a second one.
+                        if (uiState.hasWorkProfile) {
+                            CardDivider()
+                            ClickableRow(
+                                title = "Work Profile",
+                                subtitle = if (uiState.isWorkProfilePaused) "Paused" else "Active",
+                                onClick = { runCatching { context.startActivity(onRequestWorkProfileSettingsIntent()) } },
+                                testTag = "work_profile_row",
+                                trailing = { NavigationChevron() },
+                            )
+                        }
                     }
                 }
 
@@ -413,6 +429,7 @@ private fun SettingsScreenPreview() {
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
             onRequestDefaultLauncherIntent = { Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS) },
+            onRequestWorkProfileSettingsIntent = { Intent(Settings.ACTION_SETTINGS) },
         )
     }
 }

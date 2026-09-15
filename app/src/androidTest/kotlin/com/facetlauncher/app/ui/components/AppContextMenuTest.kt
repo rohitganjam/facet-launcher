@@ -21,6 +21,7 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
@@ -49,6 +50,7 @@ class AppContextMenuTest {
     fun tearDown() = Intents.release()
 
     private fun setContent(
+        app: AppInfo = this.app,
         onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
         onLaunchShortcut: (AppShortcut) -> Unit = {},
         onDismissRequest: () -> Unit = {},
@@ -92,6 +94,20 @@ class AppContextMenuTest {
         composeRule.onNodeWithText("Mail").assertExists()
         composeRule.onNodeWithTag("app_context_menu_app_info").assertExists()
         composeRule.onNodeWithTag("app_context_menu_uninstall").assertExists()
+    }
+
+    @Test
+    fun headerShowsAWorkBadgeForAWorkProfileAppButNotAPersonalOne() {
+        setContent(app = app.copy(profile = AppProfile.WORK))
+
+        composeRule.onNodeWithTag("app_context_menu_work_badge").assertExists()
+    }
+
+    @Test
+    fun headerShowsNoWorkBadgeForAPersonalApp() {
+        setContent(app = app.copy(profile = AppProfile.PERSONAL))
+
+        composeRule.onNodeWithTag("app_context_menu_work_badge").assertDoesNotExist()
     }
 
     @Test

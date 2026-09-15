@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
@@ -67,6 +68,7 @@ class SettingsScreenTest {
                 SettingsViewModel(
                     ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
                     DefaultLauncherRepository(context),
+                    WorkProfileRepository(context.getSystemService(UserManager::class.java), context),
                 )
             }
             FacetLauncherTheme {
