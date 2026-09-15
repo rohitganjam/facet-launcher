@@ -4,6 +4,9 @@ import android.content.ContentResolver
 import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.CalendarContract
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.TimeZone
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -143,6 +146,33 @@ class CalendarRepositoryTest {
 
         // Then only the timed event is returned
         assertEquals(listOf("Standup"), result.map { it.title })
+    }
+
+    @Test
+    fun `getTodayEvents excludes an all-day event whose real UTC date is yesterday`() = runTest {
+        // Given a device timezone ahead of UTC (IST, +5:30), where the Instances query's
+        // local-midnight window overlaps into yesterday's UTC-anchored all-day event
+        val originalTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"))
+        try {
+            val today = LocalDate.now()
+            val yesterdayAllDayStart = today.minusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+            val todayAllDayStart = today.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+            stubInstances(
+                listOf(
+                    InstanceRow(eventId = 1, calendarId = 1, title = "Stale holiday", beginMillis = yesterdayAllDayStart, allDay = true),
+                    InstanceRow(eventId = 2, calendarId = 1, title = "Today holiday", beginMillis = todayAllDayStart, allDay = true),
+                ),
+            )
+
+            // When fetching today's events
+            val result = repository.getTodayEvents(calendarIds = null, includeAllDay = true)
+
+            // Then only the all-day event actually dated today survives
+            assertEquals(listOf("Today holiday"), result.map { it.title })
+        } finally {
+            TimeZone.setDefault(originalTimeZone)
+        }
     }
 
     @Test
