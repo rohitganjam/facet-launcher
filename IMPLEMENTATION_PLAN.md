@@ -1508,3 +1508,85 @@ while a folder-candidate row and `FolderContentsSheet`'s own header both showed 
 (the underlying `ModalBottomSheet` isn't dismissed while the preview `Dialog` opens on top of it —
 unrelated to this phase's own rows) — fixed by scoping the assertion to the sheet itself
 (`onNode(hasTestTag("folder_contents_sheet") and hasAnyDescendant(hasText("Games")))`).
+
+## Android Work Profile support
+
+Scoped through discussion before building (see chat history): Facets and the OS-level Android
+Work Profile are different kinds of things — Facets are a soft, purely local, user-created
+construct; a Work Profile is a hard, MDM-owned Android user that can appear/vanish outside the
+launcher's control. So this stays entirely in `data/`, visible equally to every Facet — no Facet
+schema changes, no new per-Facet "show work apps" toggle (a work app is just another pickable app,
+the same way the existing Favorites/Dock pickers already let you hand-pick which apps appear).
+
+### Data
+- New `AppProfile` enum (`PERSONAL`/`WORK`) — Android exposes at most one extra profile for a
+  launcher's purposes, so a 2-valued enum is a deliberate scope choice. Only `AppRepository`/
+  `AppWidgetRepository`/`WorkProfileRepository` ever hold a real `android.os.UserHandle`; every
+  Facet-adjacent `data:model.AppInfo`/`WidgetProviderOption` gains a `profile: AppProfile` field
+  instead.
+- **`AppRepository`** iterates every `UserManager.userProfiles` handle instead of the hardcoded
+  `Process.myUserHandle()`, tagging each `AppInfo`. Live updates now also react to a new
+  `BroadcastReceiver` for `ACTION_MANAGED_PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE` (a profile
+  appearing/disappearing isn't a per-package `LauncherApps.Callback` event). `observeUninstalledPackages()`
+  emits `(packageName, profile)` instead of a bare package name, and a new `observeProfileRemoved()`
+  drives a **bulk** cleanup path — removing a whole profile tears down every app in it atomically,
+  with no guarantee each one also fires its own per-package uninstall event.
+- New `WorkProfileRepository` — **read-only** `hasWorkProfile()`/`isWorkProfilePaused()`. Deliberately
+  no write path: Android already gives the user a system Settings toggle (and usually a Quick
+  Settings tile) for pausing/resuming a Work Profile, so this app reflects that state rather than
+  reimplementing the control surface.
+- Every table keyed by `(packageName, activityName)` — `favorite_apps`, `facet_dock_apps`,
+  `dock_apps`, `default_favorite_apps`, `folder_apps` — gains a `profile` column and a widened
+  unique index (Room migration `18→19`), or a personal and Work Profile copy of the same app
+  (identical package+activity, different Android user) collide as one row. `widget_placements`
+  gets the plain column only (keyed on the real system `appWidgetId`, no index to widen).
+  Uninstall-collapse (`CleanUpUninstalledAppsUseCase`) is now profile-scoped end to end, plus the
+  separate bulk sweep on `observeProfileRemoved()`. `BackupAppEntry`/`BackupWidgetPlacement` carry
+  the profile through export/import too (defaulted, so a pre-existing backup still imports cleanly).
+- `LauncherActivity.launchApp()` launches a Work Profile app via `LauncherApps.startMainActivity`
+  instead of a plain launch `Intent`, which doesn't resolve correctly across profiles.
+- **Hub widgets**: `AppWidgetRepository` enumerates providers from every profile
+  (`AppWidgetManager.getInstalledProvidersForProfile`), and binds a Work Profile widget via the
+  4-arg `bindAppWidgetIdIfAllowed`/`EXTRA_APPWIDGET_PROVIDER_PROFILE` overloads instead of the
+  personal-only ones. A placed widget's actual profile is read back from the system
+  (`profileForWidget`, via `AppWidgetProviderInfo`) after binding rather than carried through the
+  bind/configure round trip as extra state. Deliberately **no** bulk Hub-placement cleanup on
+  Work Profile removal — the existing orphan-detection path (`ObserveHubStateUseCase`, a widget
+  whose `getAppWidgetInfo` returns null) already covers this for free once the profile's ids stop
+  resolving.
+
+### UI
+- **App Drawer** gains a Personal/Work pill switcher (`DrawerProfileTabRow`, mirroring
+  `DockPickerTabRow`'s own pill/indicator construction), shown only when a Work Profile exists.
+  Browsing is scoped to the selected tab; **searching spans both regardless of tab** — the tab is
+  a browsing filter, not a search filter. `hasWorkProfile` is threaded from `WorkProfileRepository`
+  through `LauncherUiState`, not inferred from "any app tagged WORK", so the tab still shows (with
+  an empty/paused state) while the profile is paused.
+- **`AppIcon`** gains an `isWorkApp` corner badge — a themed `Accent` dot via M3's own `Badge`
+  composable (bottom-start, matching every other launcher's own Work Profile badge convention),
+  not Android's stock `getUserBadgedIcon` briefcase asset, which would render with the OS's own
+  tones instead of this app's palette (CLAUDE.md's theming rule). `FacetScopeBadge`'s pill
+  construction generalized into a shared `ScopeBadge` primitive, reused by a new `WorkScopeBadge`
+  pill shown next to a Work Profile app's name in `AppContextMenu`'s header and in the Hub widget
+  picker's tiles.
+- **Settings** gets a read-only "Work Profile" row (Active/Paused, from `WorkProfileRepository`)
+  shown only when a Work Profile exists, tapping through to the system Settings app — no
+  pause/resume control from inside this app.
+- **Hub widget picker**: every profile's widgets show in one list, badged — no separate tab here
+  either, matching the Favorites/Dock pickers' own "just show everything, badged" treatment.
+
+### Tests
+`AppRepositoryTest`/`AppWidgetRepositoryTest` cover multi-profile enumeration, `resolveUserHandle`/
+`profileForWidget`, and the Work Profile bind/bind-intent paths (`EXTRA_APPWIDGET_PROVIDER_PROFILE`).
+`CleanUpUninstalledAppsUseCaseTest` covers both the per-package profile-scoped path and the new
+bulk profile-removed sweep. `LauncherViewModelTest`/`SettingsViewModelTest` cover `hasWorkProfile`/
+`isWorkProfilePaused` flowing into their respective UI states. New Room migration test
+(`migration18To19...`) on `FacetDatabaseMigrationTest`, run on-device (`Medium_Phone_API_36.1`) —
+confirms existing rows default to `PERSONAL` and the widened index actually allows a personal/work
+pair to coexist. `AppDrawerScreenTest` (tab visibility, tab filtering, search-spans-both-tabs) also
+caught a real crash during development: the Drawer's search-results `LazyColumn` keyed items by
+`packageName + activityName` alone, so a personal/Work Profile pair collided as a duplicate
+`LazyList` key — fixed by keying with `profile` included everywhere apps are listed. New
+`AppContextMenuTest` cases cover the Work badge's presence/absence. Full `./gradlew test` green;
+`FacetDatabaseMigrationTest`, `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`,
+`AppContextMenuTest`, and every Hub/Settings instrumented test green on `Medium_Phone_API_36.1`.
