@@ -68,7 +68,7 @@ class SettingsScreenTest {
                 SettingsViewModel(
                     ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
                     DefaultLauncherRepository(context),
-                    WorkProfileRepository(context.getSystemService(UserManager::class.java), context),
+                    WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
             }
             FacetLauncherTheme {

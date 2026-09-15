@@ -8,4 +8,6 @@ data class AppShortcut(
     val packageName: String,
     val label: String,
     val icon: ImageBitmap? = null,
+    /** Which profile this shortcut was fetched from — [AppShortcutRepository][com.facetlauncher.app.data.AppShortcutRepository]'s `launchShortcut` needs this to resolve the right `UserHandle`, since by then it's disconnected from the [AppInfo] that originally requested it. */
+    val profile: AppProfile = AppProfile.PERSONAL,
 )

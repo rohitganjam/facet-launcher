@@ -10,6 +10,7 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
@@ -87,12 +88,26 @@ class AppRepository @Inject constructor(
 ) {
 
     /**
-     * The primary user's own handle is always [AppProfile.PERSONAL]; [UserManager.getUserProfiles]
-     * returns at most one other handle for a launcher's purposes (a Work Profile) — see
-     * [AppProfile]'s own doc for why that 2-valued assumption is a deliberate scope choice.
+     * The primary user's own handle is always [AppProfile.PERSONAL]. Any other handle is
+     * positively checked against [LauncherApps.getLauncherUserInfo]'s `userType`
+     * (`UserManager.USER_TYPE_PROFILE_MANAGED` = a real Work Profile) rather than assumed —
+     * confirmed live on a real API 36 emulator (see chat history) that `UserManager.getUserProfiles()`
+     * *also* returns an Android 15+ Private Space's handle even without holding
+     * `ACCESS_HIDDEN_PROFILES`, and `getLauncherUserInfo` correctly comes back `null` for it in
+     * that case (a Work Profile's comes back non-null, `userType = "...profile.MANAGED"`) — so a
+     * naive "not primary = WORK" check would have shown a permanently-empty "Work" tab/Settings
+     * row on any device with a Private Space configured, real Work Profile or not.
+     * `getLauncherUserInfo` itself needs API 35 — on 33/34 (where Private Space can't exist yet
+     * anyway) this falls back to the old, still-safe "not primary" check. Public — the single
+     * source of truth for this check, reused by [com.facetlauncher.app.data.widget.AppWidgetRepository]
+     * and (via [resolveUserHandle]) [WorkProfileRepository] rather than each keeping its own copy.
      */
-    private fun profileFor(handle: UserHandle): AppProfile =
-        if (handle == Process.myUserHandle()) AppProfile.PERSONAL else AppProfile.WORK
+    fun profileFor(handle: UserHandle): AppProfile {
+        if (handle == Process.myUserHandle()) return AppProfile.PERSONAL
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return AppProfile.WORK
+        val isManaged = runCatching { launcherApps.getLauncherUserInfo(handle)?.userType }.getOrNull() == UserManager.USER_TYPE_PROFILE_MANAGED
+        return if (isManaged) AppProfile.WORK else AppProfile.PERSONAL
+    }
 
     /**
      * Resolves [profile] to its real Android user handle, for callers that need to launch an

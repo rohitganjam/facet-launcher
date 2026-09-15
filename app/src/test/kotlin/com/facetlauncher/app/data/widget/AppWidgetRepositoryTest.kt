@@ -6,6 +6,8 @@ import android.content.ComponentName
 import android.content.IntentSender
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
+import android.content.pm.LauncherApps
+import android.content.pm.LauncherUserInfo
 import android.content.pm.PackageInfo
 import android.os.Bundle
 import android.os.Process
@@ -13,6 +15,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import android.util.SizeF
 import androidx.test.core.app.ApplicationProvider
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.model.AppProfile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,6 +32,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 class AppWidgetRepositoryTest {
@@ -41,6 +45,25 @@ class AppWidgetRepositoryTest {
         `when`(userManager.userProfiles).thenReturn(listOf(Process.myUserHandle()))
         return userManager
     }
+
+    /**
+     * A real [AppRepository] (not a mock) backing [AppWidgetRepository]'s own delegated
+     * `profileFor`/`resolveUserHandle` — [workHandle], when given, is stubbed to resolve as a
+     * genuine Work Profile via `getLauncherUserInfo` (`userType = USER_TYPE_PROFILE_MANAGED`),
+     * matching the real API 35+ check `AppRepository.profileFor` now does, so these tests aren't
+     * silently dependent on Robolectric's default simulated SDK level being above or below 35.
+     */
+    private fun fakeAppRepository(userManager: UserManager, workHandle: UserHandle? = null): AppRepository {
+        val launcherApps = mock(LauncherApps::class.java)
+        if (workHandle != null) {
+            val info = mock(LauncherUserInfo::class.java)
+            `when`(info.userType).thenReturn(UserManager.USER_TYPE_PROFILE_MANAGED)
+            `when`(launcherApps.getLauncherUserInfo(workHandle)).thenReturn(info)
+        }
+        return AppRepository(launcherApps, userManager, context)
+    }
+
+    private fun fakeAppRepository(): AppRepository = fakeAppRepository(personalOnlyUserManager())
 
     /**
      * [AppWidgetProviderInfo.loadLabel]/`loadIcon`/`loadPreviewImage` all read a private
@@ -66,7 +89,7 @@ class AppWidgetRepositoryTest {
         // Given a host that hands out id 42
         val host = mock(LauncherAppWidgetHost::class.java)
         `when`(host.allocateAppWidgetId()).thenReturn(42)
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
 
         // Then the repository passes it through unchanged
         assertEquals(42, repository.allocateAppWidgetId())
@@ -75,7 +98,7 @@ class AppWidgetRepositoryTest {
     @Test
     fun `createBindIntent carries the right action and extras`() {
         // Given a provider component
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val provider = ComponentName("com.example.widgets", ".MyWidgetProvider")
 
         // When building the bind intent
@@ -90,7 +113,7 @@ class AppWidgetRepositoryTest {
     @Test
     fun `createConfigureIntentSender returns null when the provider declares no configure activity`() {
         // Given a provider with no configure component
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val provider = AppWidgetProviderInfo().apply { configure = null }
 
         // Then no configure step is needed
@@ -105,7 +128,7 @@ class AppWidgetRepositoryTest {
         val host = mock(LauncherAppWidgetHost::class.java)
         val sender = mock(IntentSender::class.java)
         `when`(host.configureIntentSender(7)).thenReturn(sender)
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
         val configureComponent = ComponentName("com.example.widgets", ".ConfigureActivity")
         val provider = AppWidgetProviderInfo().apply { configure = configureComponent }
 
@@ -118,7 +141,7 @@ class AppWidgetRepositoryTest {
         // Given a manager that has no record of this widget id (e.g. its provider was uninstalled)
         val appWidgetManager = mock(AppWidgetManager::class.java)
         `when`(appWidgetManager.getAppWidgetInfo(99)).thenReturn(null)
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
 
         // Then the repository surfaces that as null (the orphan signal), not a crash
         assertNull(repository.getAppWidgetInfo(99))
@@ -127,7 +150,7 @@ class AppWidgetRepositoryTest {
     @Test
     fun `defaultSpanFor prefers the provider's target cell size over minWidth math`() {
         // Given a modern provider that declares 0dp minWidth but a real 4x2-cell target
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val info = AppWidgetProviderInfo().apply {
             minWidth = 0
             minHeight = 0
@@ -141,7 +164,7 @@ class AppWidgetRepositoryTest {
 
     @Test
     fun `defaultSpanFor clamps the column span to the Hub's own column count`() {
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val info = AppWidgetProviderInfo().apply { targetCellWidth = 12; targetCellHeight = 3 }
 
         // 12 columns can't fit a 5-column grid
@@ -150,7 +173,7 @@ class AppWidgetRepositoryTest {
 
     @Test
     fun `defaultSpanFor falls back to minWidth for a provider with no target cells`() {
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val info = AppWidgetProviderInfo().apply {
             minWidth = 300
             minHeight = 60
@@ -168,7 +191,7 @@ class AppWidgetRepositoryTest {
     fun `updateWidgetSize sets a non-empty OPTION_APPWIDGET_SIZES`() {
         // Given a repository over a mock AppWidgetManager
         val appWidgetManager = mock(AppWidgetManager::class.java)
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
 
         // When pushing a tile's on-screen size
         repository.updateWidgetSize(appWidgetId = 7, widthDp = 200, heightDp = 120)
@@ -188,7 +211,7 @@ class AppWidgetRepositoryTest {
     fun `updateWidgetSize ignores a zero-size tile`() {
         // Given a repository over a mock AppWidgetManager
         val appWidgetManager = mock(AppWidgetManager::class.java)
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
 
         // When the tile hasn't been measured yet (0 x 0)
         repository.updateWidgetSize(appWidgetId = 7, widthDp = 0, heightDp = 0)
@@ -201,7 +224,7 @@ class AppWidgetRepositoryTest {
     fun `deleteAppWidgetId releases the id through the host`() {
         // Given a host
         val host = mock(LauncherAppWidgetHost::class.java)
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
 
         // When deleting a widget id
         repository.deleteAppWidgetId(7)
@@ -211,6 +234,7 @@ class AppWidgetRepositoryTest {
     }
 
     @Test
+    @Config(sdk = [35])
     fun `getWidgetProviderOptions tags a Work Profile provider as WORK, leaving the primary user's as PERSONAL`() {
         // Given a resolvable owning app (getWidgetProviderOptions filters out anything whose
         // package the PackageManager can't resolve a label for) with a Work Profile alongside the
@@ -227,7 +251,7 @@ class AppWidgetRepositoryTest {
         val workProvider = AppWidgetProviderInfo().apply { provider = ComponentName("com.example.widgets", ".Clock") }.withResolvableLabel(appInfo)
         `when`(appWidgetManager.getInstalledProvidersForProfile(personalHandle)).thenReturn(listOf(personalProvider))
         `when`(appWidgetManager.getInstalledProvidersForProfile(workHandle)).thenReturn(listOf(workProvider))
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager)
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle))
 
         // When fetching provider options across every profile
         val options = repository.getWidgetProviderOptions()
@@ -238,6 +262,7 @@ class AppWidgetRepositoryTest {
     }
 
     @Test
+    @Config(sdk = [35])
     fun `bindAppWidgetIdIfAllowed resolves the Work Profile handle and binds against it`() {
         // Given a Work Profile alongside the primary user
         val personalHandle = Process.myUserHandle()
@@ -247,7 +272,7 @@ class AppWidgetRepositoryTest {
         val appWidgetManager = mock(AppWidgetManager::class.java)
         val provider = ComponentName("com.example.widgets", ".Clock")
         `when`(appWidgetManager.bindAppWidgetIdIfAllowed(7, workHandle, provider, null)).thenReturn(true)
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager)
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle))
 
         // When binding a Work Profile widget
         val bound = repository.bindAppWidgetIdIfAllowed(appWidgetId = 7, provider = provider, profile = AppProfile.WORK)
@@ -259,20 +284,21 @@ class AppWidgetRepositoryTest {
     @Test
     fun `bindAppWidgetIdIfAllowed returns false when WORK is requested but no Work Profile exists`() {
         // Given no Work Profile on this device
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
 
         // Then there's no handle to bind against — false, not a crash
         assertFalse(repository.bindAppWidgetIdIfAllowed(appWidgetId = 7, provider = ComponentName("com.example.widgets", ".Clock"), profile = AppProfile.WORK))
     }
 
     @Test
+    @Config(sdk = [35])
     fun `createBindIntent for a Work Profile widget carries EXTRA_APPWIDGET_PROVIDER_PROFILE`() {
         // Given a Work Profile alongside the primary user
         val personalHandle = Process.myUserHandle()
         val workHandle = mock(UserHandle::class.java)
         val userManager = mock(UserManager::class.java)
         `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), userManager)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle))
         val provider = ComponentName("com.example.widgets", ".Clock")
 
         // When building the bind intent for a Work Profile provider

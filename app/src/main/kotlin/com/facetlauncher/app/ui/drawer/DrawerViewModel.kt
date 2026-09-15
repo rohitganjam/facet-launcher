@@ -182,7 +182,7 @@ class DrawerViewModel @Inject constructor(
     }
 
     /** F12's long-press context menu — fetched fresh per app, only when its menu actually opens. */
-    suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName)
+    suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName, app.profile)
 
     fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
 

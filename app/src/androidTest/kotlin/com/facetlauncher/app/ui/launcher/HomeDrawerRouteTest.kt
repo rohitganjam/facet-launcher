@@ -227,7 +227,7 @@ class HomeDrawerRouteTest {
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
-                    WorkProfileRepository(context.getSystemService(UserManager::class.java), context),
+                    WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
             }
             val drawerViewModel = remember {
@@ -241,7 +241,7 @@ class HomeDrawerRouteTest {
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
-                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
+                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java), appRepository),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
@@ -279,6 +279,7 @@ class HomeDrawerRouteTest {
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                     context.getSystemService(UserManager::class.java),
+                    appRepository,
                 )
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),
@@ -298,6 +299,7 @@ class HomeDrawerRouteTest {
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                     context.getSystemService(UserManager::class.java),
+                    appRepository,
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }

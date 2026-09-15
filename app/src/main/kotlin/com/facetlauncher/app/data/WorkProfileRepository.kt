@@ -4,9 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Process
 import android.os.UserManager
 import androidx.core.content.ContextCompat
+import com.facetlauncher.app.data.model.AppProfile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,10 +35,19 @@ private val PROFILE_STATE_ACTIONS = IntentFilter().apply {
 @Singleton
 class WorkProfileRepository @Inject constructor(
     private val userManager: UserManager,
+    private val appRepository: AppRepository,
     @ApplicationContext private val context: Context,
 ) {
 
-    private fun findWorkProfileHandle() = userManager.userProfiles.firstOrNull { it != Process.myUserHandle() }
+    /**
+     * Delegates to [AppRepository.resolveUserHandle] rather than its own "any non-primary handle"
+     * check — verified live on a real API 36 emulator that `UserManager.getUserProfiles()` also
+     * returns an Android 15+ Private Space's handle, work profile or not, so that naive check
+     * would report `hasWorkProfile() == true` (and show an always-empty "Work" row/tab) on any
+     * device with a Private Space configured. [AppRepository.resolveUserHandle] positively checks
+     * for a real Work Profile via `LauncherApps.getLauncherUserInfo`.
+     */
+    private fun findWorkProfileHandle() = appRepository.resolveUserHandle(AppProfile.WORK)
 
     /** Re-emits once immediately, then again whenever a Work Profile is added, removed, paused, or resumed. */
     private fun observeProfileStateChanges(): Flow<Unit> = callbackFlow {

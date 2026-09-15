@@ -12,10 +12,10 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
 import android.util.SizeF
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.domain.HUB_COLUMNS
@@ -45,13 +45,14 @@ class AppWidgetRepository @Inject constructor(
     private val appWidgetManager: AppWidgetManager,
     private val host: LauncherAppWidgetHost,
     private val userManager: UserManager,
+    private val appRepository: AppRepository,
 ) {
 
-    private fun profileFor(handle: UserHandle): AppProfile =
-        if (handle == Process.myUserHandle()) AppProfile.PERSONAL else AppProfile.WORK
+    /** Delegates to [AppRepository.profileFor] — the single, verified source of truth (see its own doc), rather than a second copy here. */
+    private fun profileFor(handle: UserHandle): AppProfile = appRepository.profileFor(handle)
 
     /** `null` only if [profile] is [AppProfile.WORK] and the Work Profile has since vanished (a race with unenrollment). */
-    private fun resolveUserHandle(profile: AppProfile): UserHandle? = userManager.userProfiles.firstOrNull { profileFor(it) == profile }
+    private fun resolveUserHandle(profile: AppProfile): UserHandle? = appRepository.resolveUserHandle(profile)
 
     /**
      * Converts a provider's min dimension (dp) into Hub grid cells. The Hub grid is square,

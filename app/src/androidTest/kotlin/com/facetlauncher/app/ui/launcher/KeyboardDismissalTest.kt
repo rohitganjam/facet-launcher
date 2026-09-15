@@ -166,7 +166,7 @@ class KeyboardDismissalTest {
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
-                    WorkProfileRepository(context.getSystemService(UserManager::class.java), context),
+                    WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
             }
             val drawerViewModel = remember {
@@ -187,7 +187,7 @@ class KeyboardDismissalTest {
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
-                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
+                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java), appRepository),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
@@ -205,11 +205,13 @@ class KeyboardDismissalTest {
             val hubViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val appWidgetRepository = AppWidgetRepository(
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                     context.getSystemService(UserManager::class.java),
+                    appRepository,
                 )
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),
@@ -224,11 +226,13 @@ class KeyboardDismissalTest {
             val widgetPickerViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val appWidgetRepository = AppWidgetRepository(
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
                     context.getSystemService(UserManager::class.java),
+                    appRepository,
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }

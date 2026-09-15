@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.LauncherUserInfo
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
@@ -26,6 +27,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 class AppRepositoryTest {
@@ -37,6 +39,13 @@ class AppRepositoryTest {
         val userManager = mock(UserManager::class.java)
         `when`(userManager.userProfiles).thenReturn(listOf(Process.myUserHandle()))
         return userManager
+    }
+
+    /** Stubs [handle] to positively resolve as a real Work Profile via `getLauncherUserInfo`, matching [AppRepository.profileFor]'s real API 35+ check. */
+    private fun stubAsManagedProfile(launcherApps: LauncherApps, handle: UserHandle) {
+        val info = mock(LauncherUserInfo::class.java)
+        `when`(info.userType).thenReturn(UserManager.USER_TYPE_PROFILE_MANAGED)
+        `when`(launcherApps.getLauncherUserInfo(handle)).thenReturn(info)
     }
 
     private fun fakeActivity(packageName: String, className: String, label: String): LauncherActivityInfo {
@@ -133,6 +142,7 @@ class AppRepositoryTest {
     }
 
     @Test
+    @Config(sdk = [35])
     fun `tags apps from a second user profile as WORK, leaving the primary user's apps PERSONAL`() = runTest {
         // Given a UserManager reporting a Work Profile alongside the primary user, each with its own app
         val launcherApps = mock(LauncherApps::class.java)
@@ -140,6 +150,7 @@ class AppRepositoryTest {
         val workHandle = mock(UserHandle::class.java)
         val userManager = mock(UserManager::class.java)
         `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
+        stubAsManagedProfile(launcherApps, workHandle)
 
         val personalApp = fakeActivity("com.example.chat", ".Main", "Chat")
         val workApp = fakeActivity("com.example.chat", ".Main", "Chat")
@@ -155,13 +166,16 @@ class AppRepositoryTest {
     }
 
     @Test
+    @Config(sdk = [35])
     fun `resolveUserHandle finds the Work Profile handle, and returns null when there isn't one`() {
         // Given a Work Profile alongside the primary user
         val personalHandle = Process.myUserHandle()
         val workHandle = mock(UserHandle::class.java)
         val userManager = mock(UserManager::class.java)
         `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
-        val repository = AppRepository(mock(LauncherApps::class.java), userManager, context)
+        val launcherApps = mock(LauncherApps::class.java)
+        stubAsManagedProfile(launcherApps, workHandle)
+        val repository = AppRepository(launcherApps, userManager, context)
 
         // Then WORK resolves to the non-primary handle, and PERSONAL to the primary one
         assertEquals(workHandle, repository.resolveUserHandle(AppProfile.WORK))
@@ -170,6 +184,28 @@ class AppRepositoryTest {
         // And when no Work Profile exists at all, WORK resolves to nothing
         `when`(userManager.userProfiles).thenReturn(listOf(personalHandle))
         assertEquals(null, repository.resolveUserHandle(AppProfile.WORK))
+    }
+
+    @Test
+    @Config(sdk = [35])
+    fun `does not classify a non-Work profile handle as WORK — regression for the Private Space false positive`() {
+        // Given a second profile handle that exists (like Android 15+'s Private Space) but isn't
+        // a real Work Profile — getLauncherUserInfo returns null for it without ACCESS_HIDDEN_PROFILES,
+        // confirmed live against a real Private Space profile on an API 36 emulator (see chat history):
+        // UserManager.getUserProfiles() includes it, but getLauncherUserInfo comes back null.
+        val personalHandle = Process.myUserHandle()
+        val otherHandle = mock(UserHandle::class.java)
+        val userManager = mock(UserManager::class.java)
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, otherHandle))
+        val launcherApps = mock(LauncherApps::class.java)
+        `when`(launcherApps.getLauncherUserInfo(otherHandle)).thenReturn(null)
+        val repository = AppRepository(launcherApps, userManager, context)
+
+        // Then WorkProfileRepository-style resolution (via resolveUserHandle) finds no Work
+        // Profile at all — the other handle is never mistaken for one, so hasWorkProfile() (and
+        // the Drawer's Work tab, and the Settings row) stay correctly hidden.
+        assertEquals(null, repository.resolveUserHandle(AppProfile.WORK))
+        assertEquals(personalHandle, repository.resolveUserHandle(AppProfile.PERSONAL))
     }
 }
 
