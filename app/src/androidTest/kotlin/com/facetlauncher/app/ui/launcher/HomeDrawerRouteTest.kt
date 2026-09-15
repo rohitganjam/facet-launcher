@@ -63,6 +63,7 @@ import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.AddAppToDockUseCase
@@ -174,6 +175,11 @@ class HomeDrawerRouteTest {
                     // Same reasoning as observeUninstalledPackages above, for the Work Profile
                     // bulk-removal path CleanUpUninstalledAppsUseCase also collects.
                     `when`(repo.observeProfileRemoved()).thenReturn(emptyFlow())
+                    // AppWidgetRepository.getWidgetProviderOptions() delegates its own profileFor()
+                    // to this mock — an unstubbed call returns null despite the non-null return
+                    // type, which Kotlin's runtime null-check turns into an NPE the moment the Hub
+                    // widget picker opens. This AVD only ever has the one (personal) profile.
+                    `when`(repo.profileFor(any())).thenReturn(AppProfile.PERSONAL)
                 }
             }
             val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
@@ -975,3 +981,6 @@ class HomeDrawerRouteTest {
         composeRule.onNodeWithTag("gesture_hint_overlay").assertDoesNotExist()
     }
 }
+
+/** Plain `org.mockito.ArgumentMatchers.any()` returns null, which Kotlin's non-null parameter check rejects. */
+private fun <T> any(): T = org.mockito.Mockito.any()
