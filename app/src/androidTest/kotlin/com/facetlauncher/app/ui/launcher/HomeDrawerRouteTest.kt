@@ -36,6 +36,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.AppShortcutRepository
@@ -254,6 +255,7 @@ class HomeDrawerRouteTest {
                     AddFolderToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
                     RemoveFolderFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
                     FolderRepository(database.folderDao(), appRepository),
+                    SecureFolderRepository(context),
                 )
             }
             val hubViewModel = remember {

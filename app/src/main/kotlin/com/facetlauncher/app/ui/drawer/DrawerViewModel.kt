@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -66,10 +67,18 @@ class DrawerViewModel @Inject constructor(
     private val addFolderToDock: AddFolderToDockUseCase,
     private val removeFolderFromDock: RemoveFolderFromDockUseCase,
     private val folderRepository: FolderRepository,
+    private val secureFolderRepository: SecureFolderRepository,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LauncherSettings())
+
+    /**
+     * `null` when Secure Folder isn't installed/available — gates the overflow menu's "Open
+     * Secure Folder" row entirely. A one-shot check (not a `Flow`): whether Secure Folder is
+     * installed essentially never changes mid-session, unlike Work Profile state.
+     */
+    val secureFolderIntent = secureFolderRepository.launchIntent()
 
     /** F13 — empty unless both the "Notification badges" setting is on and access is granted; see `ObserveHomeScreenStateUseCase`'s identical gating for Home. */
     val badgeCounts: StateFlow<Map<String, Int>> = combine(

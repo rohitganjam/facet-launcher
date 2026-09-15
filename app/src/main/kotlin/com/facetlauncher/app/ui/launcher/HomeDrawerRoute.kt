@@ -657,6 +657,8 @@ fun HomeDrawerRoute(
             onQueryChanged = { drawerQuery = it; drawerViewModel.onQueryChanged(it) },
             searchBarPosition = drawerSettings.searchBarPosition,
             onNavigateToSettings = onNavigateToSettings,
+            secureFolderIntent = drawerViewModel.secureFolderIntent,
+            onOpenSecureFolder = { intent -> runCatching { context.startActivity(intent) } },
             contacts = contactResults,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,

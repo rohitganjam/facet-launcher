@@ -1590,3 +1590,32 @@ caught a real crash during development: the Drawer's search-results `LazyColumn`
 `AppContextMenuTest` cases cover the Work badge's presence/absence. Full `./gradlew test` green;
 `FacetDatabaseMigrationTest`, `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`,
 `AppContextMenuTest`, and every Hub/Settings instrumented test green on `Medium_Phone_API_36.1`.
+
+### Follow-up: profile-aware shortcuts, Secure Folder, and known gaps
+
+- **App shortcuts are now profile-aware.** `AppShortcut` carries its own `profile: AppProfile`;
+  `AppShortcutRepository.getShortcuts()`/`launchShortcut()` resolve the shortcut's own profile to
+  a `UserHandle` via `AppRepository.resolveUserHandle()` rather than always querying the personal
+  profile, and no-op gracefully if that profile has since vanished (a Work Profile removal racing
+  a long-press).
+- **Quiet-mode (pause/resume) toggle — deliberately not built, by explicit user decision.**
+  `UserManager.requestQuietModeEnabled()` (the actual pause/resume call) turns out to be callable
+  not just by a profile owner but also by whichever app is the current default launcher — so this
+  app technically *could* add its own pause/resume control. The user chose not to: Android already
+  surfaces this via system Settings and (on most OEMs) a Quick Settings tile, and a second control
+  surface for the same OS state would just risk drifting out of sync with it. This is a known,
+  deliberate gap, not an oversight — revisit only if a user-facing need for an in-app toggle shows up.
+- **Samsung Secure Folder** — its own launcher-visible app (`com.samsung.knox.securefolder`), not
+  reachable through `UserManager.getUserProfiles()`/Work-Profile APIs at all (Samsung deliberately
+  doesn't expose it to third-party launchers even post-Android-15). New `SecureFolderRepository`
+  checks `PackageManager.getLaunchIntentForPackage()` for it; when present, the App Drawer's 3-dot
+  overflow menu (`AppDrawerScreen`/`DrawerViewModel.secureFolderIntent`) gets an "Open Secure
+  Folder" row that starts its own launch intent — same treatment as opening any other app, since
+  that's all it structurally is from this launcher's point of view.
+- **Private Space (Android 15+) is still out of scope.** A fuller design was discussed — a 3-dot
+  menu entry opening a dedicated incognito-styled drawer route scoped to Private Space apps only,
+  with its own search and a two-step back-gesture (first back returns to the regular drawer,
+  second exits) — but nothing beyond this discussion has been built. Requires declaring
+  `android.permission.ACCESS_HIDDEN_PROFILES` and holding `RoleManager.ROLE_HOME`, detecting the
+  profile via `LauncherApps.getLauncherUserInfo(handle).userType == USER_TYPE_PROFILE_PRIVATE`, and
+  a new UI route — build only on explicit go-ahead given the scope.

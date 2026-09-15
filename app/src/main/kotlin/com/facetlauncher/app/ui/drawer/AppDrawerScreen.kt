@@ -183,6 +183,9 @@ fun AppDrawerScreen(
     onQueryChanged: (String) -> Unit = {},
     searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
     onNavigateToSettings: () -> Unit = {},
+    /** `null` when Secure Folder isn't installed — see [DrawerSearchBar]'s own doc for why this isn't Work-Profile-style enumeration. */
+    secureFolderIntent: Intent? = null,
+    onOpenSecureFolder: (Intent) -> Unit = {},
     contacts: List<ContactInfo> = emptyList(),
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
@@ -273,7 +276,13 @@ fun AppDrawerScreen(
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
         if (searchBarPosition == SearchBarPosition.TOP) {
-            DrawerSearchBar(query = query, onQueryChanged = onQueryChanged, onNavigateToSettings = onNavigateToSettings)
+            DrawerSearchBar(
+                query = query,
+                onQueryChanged = onQueryChanged,
+                onNavigateToSettings = onNavigateToSettings,
+                secureFolderIntent = secureFolderIntent,
+                onOpenSecureFolder = onOpenSecureFolder,
+            )
         }
 
         // Browse-mode only (see isSearching's own doc above) — hidden entirely on a device with
@@ -413,6 +422,8 @@ fun AppDrawerScreen(
                 query = query,
                 onQueryChanged = onQueryChanged,
                 onNavigateToSettings = onNavigateToSettings,
+                secureFolderIntent = secureFolderIntent,
+                onOpenSecureFolder = onOpenSecureFolder,
                 modifier = Modifier.imePadding(),
             )
         }
@@ -540,6 +551,8 @@ private fun DrawerSearchBar(
     query: String,
     onQueryChanged: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
+    secureFolderIntent: Intent? = null,
+    onOpenSecureFolder: (Intent) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -584,6 +597,13 @@ private fun DrawerSearchBar(
                     onClick = { menuExpanded = false; onNavigateToSettings() },
                     modifier = Modifier.testTag("drawer_search_overflow_settings"),
                 )
+                if (secureFolderIntent != null) {
+                    ThemedDropdownMenuItem(
+                        label = "Open Secure Folder",
+                        onClick = { menuExpanded = false; onOpenSecureFolder(secureFolderIntent) },
+                        modifier = Modifier.testTag("drawer_search_overflow_secure_folder"),
+                    )
+                }
             }
         }
     }

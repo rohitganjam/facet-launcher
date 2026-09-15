@@ -321,6 +321,46 @@ class AppDrawerScreenTest {
     }
 
     @Test
+    fun overflowMenuHasNoSecureFolderRowWhenItIsNotInstalled() {
+        // Given Secure Folder isn't installed (no launch intent available)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {}, secureFolderIntent = null)
+            }
+        }
+
+        // When opening the overflow menu
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+
+        // Then there's no row to open it
+        composeRule.onNodeWithTag("drawer_search_overflow_secure_folder").assertDoesNotExist()
+    }
+
+    @Test
+    fun overflowMenuOpensSecureFolderWhenInstalled() {
+        // Given Secure Folder is installed
+        var openedIntent: Intent? = null
+        val secureFolderIntent = Intent(Intent.ACTION_MAIN)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    secureFolderIntent = secureFolderIntent,
+                    onOpenSecureFolder = { openedIntent = it },
+                )
+            }
+        }
+
+        // When opening the overflow menu and tapping "Open Secure Folder"
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+        composeRule.onNodeWithTag("drawer_search_overflow_secure_folder").performClick()
+
+        // Then it launches Secure Folder's own intent
+        assertEquals(secureFolderIntent, openedIntent)
+    }
+
+    @Test
     fun topPositionedSearchBarSitsInTheUpperHalfOfTheScreen() {
         // Given the drawer rendered with the search bar at the top
         composeRule.setContent {

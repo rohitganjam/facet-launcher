@@ -1,11 +1,13 @@
 package com.facetlauncher.app.ui.drawer
 
+import android.content.Intent
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -69,6 +71,7 @@ class DrawerViewModelTest {
                 flowOf(LauncherSettings(searchContactsEnabled = searchContactsEnabled, searchSettingsEnabled = searchSettingsEnabled)),
             )
         },
+        secureFolderIntent: Intent? = null,
     ): DrawerViewModel {
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(contactsPermissionGranted)
@@ -78,6 +81,9 @@ class DrawerViewModelTest {
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
+
+        val secureFolderRepository = mock(SecureFolderRepository::class.java)
+        `when`(secureFolderRepository.launchIntent()).thenReturn(secureFolderIntent)
 
         return DrawerViewModel(
             settingsRepository = settingsRepository,
@@ -97,6 +103,7 @@ class DrawerViewModelTest {
             addFolderToDock = mock(AddFolderToDockUseCase::class.java),
             removeFolderFromDock = mock(RemoveFolderFromDockUseCase::class.java),
             folderRepository = folderRepository,
+            secureFolderRepository = secureFolderRepository,
         )
     }
 
@@ -264,5 +271,20 @@ class DrawerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(entry), viewModel.settingsResults.value)
+    }
+
+    @Test
+    fun `secure folder intent is null when Secure Folder isn't installed`() {
+        val viewModel = drawerViewModel(secureFolderIntent = null)
+
+        assertEquals(null, viewModel.secureFolderIntent)
+    }
+
+    @Test
+    fun `secure folder intent surfaces the repository's launch intent when installed`() {
+        val intent = mock(Intent::class.java)
+        val viewModel = drawerViewModel(secureFolderIntent = intent)
+
+        assertEquals(intent, viewModel.secureFolderIntent)
     }
 }
