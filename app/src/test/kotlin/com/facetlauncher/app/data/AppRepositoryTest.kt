@@ -157,10 +157,68 @@ class AppRepositoryTest {
         assertEquals(listOf("One", "Two"), emissions.receive().map { it.label })
 
         val callbackCaptor = ArgumentCaptor.forClass(LauncherApps.Callback::class.java)
-        verify(launcherApps).registerCallback(callbackCaptor.capture())
+        verify(launcherApps).registerCallback(callbackCaptor.capture(), any())
         callbackCaptor.value.onPackageRemoved("com.example.two", Process.myUserHandle())
 
         assertEquals(listOf("One"), emissions.receive().map { it.label })
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `observeInstalledApps registers its LauncherApps callback with the main thread's Looper — regression for a Dispatchers-Default crash`() = runTest {
+        // Given a LauncherApps double and a repository whose sharing coroutine runs on a real
+        // background scope, same as observeInstalledAppsUncached's applicationScope in production
+        val launcherApps = mock(LauncherApps::class.java)
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(emptyList())
+        val repository = AppRepository(launcherApps, personalOnlyUserManager(), context, backgroundScope)
+
+        // When the live flow is collected, triggering registerCallback — genuine suspension on
+        // receive() (unlike advanceUntilIdle()) correctly waits out getInstalledApps()'s real
+        // withContext(Dispatchers.Default) hop before the initial refresh() emission arrives
+        val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
+        val collectJob = launch { repository.observeInstalledApps().collect { emissions.send(it) } }
+        emissions.receive()
+
+        // Then the callback is registered with an explicit main-thread Handler — not the single-arg
+        // overload, which binds to the calling thread's own Looper and crashed with "Can't create
+        // handler inside thread ... that has not called Looper.prepare()" when called from
+        // Dispatchers.Default (a real Looper-less worker thread) on a real API 36 run
+        val handlerCaptor = ArgumentCaptor.forClass(android.os.Handler::class.java)
+        verify(launcherApps).registerCallback(any(), handlerCaptor.capture())
+        assertEquals(android.os.Looper.getMainLooper(), handlerCaptor.value.looper)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `observeInstalledApps re-emits after a generic ACTION_PROFILE_ADDED broadcast — regression for a stale Private Space app list`() = runTest {
+        // Given a LauncherApps that reports one app for the primary user, then two once a second
+        // profile (standing in for a newly-added Private Space) is enumerated too — simulating
+        // Facet already running when the profile is added, so its cached app list predates it
+        val launcherApps = mock(LauncherApps::class.java)
+        val personalHandle = Process.myUserHandle()
+        val privateHandle = mock(UserHandle::class.java)
+        val userManager = mock(UserManager::class.java)
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle))
+        val personalApp = fakeActivity("com.example.one", ".Main", "One")
+        val privateApp = fakeActivity("com.example.two", ".Main", "Two")
+        `when`(launcherApps.getActivityList(null, personalHandle)).thenReturn(listOf(personalApp))
+        `when`(launcherApps.getActivityList(null, privateHandle)).thenReturn(listOf(privateApp))
+        val repository = AppRepository(launcherApps, userManager, context, backgroundScope)
+
+        // When collecting the live flow, then a real ACTION_PROFILE_ADDED broadcast arrives — the
+        // generic action Android 15+ uses for Private Space, distinct from the Work-Profile-only
+        // ACTION_MANAGED_PROFILE_ADDED the existing PROFILE_CHANGE_ACTIONS filter already covered
+        val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
+        val collectJob = launch { repository.observeInstalledApps().collect { emissions.send(it) } }
+        assertEquals(listOf("One"), emissions.receive().map { it.label })
+
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, privateHandle))
+        context.sendBroadcast(android.content.Intent(android.content.Intent.ACTION_PROFILE_ADDED))
+        idle()
+
+        // Then the live list picks up the newly-visible profile's apps without a process restart
+        assertEquals(listOf("One", "Two"), emissions.receive().map { it.label })
         collectJob.cancel()
     }
 

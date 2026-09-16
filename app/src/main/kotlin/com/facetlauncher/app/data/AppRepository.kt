@@ -12,6 +12,8 @@ import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
@@ -78,16 +80,27 @@ private fun flattenIcon(drawable: Drawable): Bitmap {
 
 /**
  * Broadcasts that mean "the set of profiles itself changed" (a Work Profile was enrolled,
- * unenrolled, or its quiet-mode state flipped) rather than "a package within an already-known
- * profile changed" — [LauncherApps.Callback] only ever reports the latter, so these need their
- * own [BroadcastReceiver] to keep [AppRepository.observeInstalledApps] live across profile
- * add/remove, not just package add/remove within a profile that was already there.
+ * unenrolled, or its quiet-mode state flipped; or, via the generic `ACTION_PROFILE_*` actions, any
+ * other profile type — e.g. an Android 15+ Private Space — was added, removed, locked, or
+ * unlocked) rather than "a package within an already-known profile changed" —
+ * [LauncherApps.Callback] only ever reports the latter, so these need their own
+ * [BroadcastReceiver] to keep [AppRepository.observeInstalledApps] live across profile
+ * add/remove, not just package add/remove within a profile that was already there. The generic
+ * actions mirror [PrivateSpaceRepository]'s own `PROFILE_STATE_ACTIONS`, which only drives that
+ * repository's lock-state tracking — without them here too, a Private Space added while Facet is
+ * already running left [installedApps] cached from before it existed, showing zero apps until the
+ * process was force-stopped and relaunched (confirmed live: Private Space correctly appeared in
+ * the profile carousel, but its app list stayed empty until restart).
  */
 private val PROFILE_CHANGE_ACTIONS = IntentFilter().apply {
     addAction(Intent.ACTION_MANAGED_PROFILE_ADDED)
     addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED)
     addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
     addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
+    addAction(Intent.ACTION_PROFILE_ADDED)
+    addAction(Intent.ACTION_PROFILE_REMOVED)
+    addAction(Intent.ACTION_PROFILE_AVAILABLE)
+    addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
 }
 
 /** Wraps [LauncherApps] to expose the launchable apps visible to this launcher, across every profile (personal + a Work Profile, if one exists). */
@@ -204,9 +217,10 @@ class AppRepository @Inject constructor(
     /**
      * Live-updating installed-app list — re-emits whenever a package is added, removed, or
      * changed in any profile while the launcher is running, via [LauncherApps.registerCallback],
-     * or whenever a Work Profile itself is added/removed/paused/resumed, via [PROFILE_CHANGE_ACTIONS]
-     * (a profile appearing or disappearing isn't a per-package event, so [LauncherApps.Callback]
-     * alone can't be relied on to trigger a refresh for it). [getInstalledApps] only fetches once;
+     * or whenever a profile itself is added/removed/paused/resumed (a Work Profile, or an
+     * Android 15+ Private Space), via [PROFILE_CHANGE_ACTIONS] (a profile appearing or
+     * disappearing isn't a per-package event, so [LauncherApps.Callback] alone can't be relied on
+     * to trigger a refresh for it). [getInstalledApps] only fetches once;
      * without this, any install/uninstall happening while Facet is in the foreground (including
      * via the app long-press context menu's Uninstall action) wouldn't be reflected anywhere —
      * Home/Drawer/Dock would keep showing the stale entry until the process restarts.
@@ -238,7 +252,7 @@ class AppRepository @Inject constructor(
             override fun onPackagesAvailable(packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean) = refresh()
             override fun onPackagesUnavailable(packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean) = refresh()
         }
-        launcherApps.registerCallback(callback)
+        launcherApps.registerCallback(callback, mainThreadHandler)
 
         val profileReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) = refresh()
@@ -251,6 +265,16 @@ class AppRepository @Inject constructor(
             context.unregisterReceiver(profileReceiver)
         }
     }
+
+    /**
+     * [LauncherApps.registerCallback]'s single-arg overload binds to the *calling* thread's own
+     * [Looper] rather than main — fine from a main-dispatched caller, but this repository's
+     * [callbackFlow]s run on [applicationScope] ([Dispatchers.Default], a plain worker thread with
+     * no Looper at all), which crashed with "Can't create handler inside thread ... that has not
+     * called Looper.prepare()" on a real API 36 run. Passing the main-thread handler explicitly
+     * makes registration correct regardless of which thread calls it.
+     */
+    private val mainThreadHandler = Handler(Looper.getMainLooper())
 
     /**
      * Emits `(packageName, userId)` each time an app is genuinely, permanently uninstalled from
@@ -278,7 +302,7 @@ class AppRepository @Inject constructor(
             override fun onPackagesAvailable(packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean) = Unit
             override fun onPackagesUnavailable(packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean) = Unit
         }
-        launcherApps.registerCallback(callback)
+        launcherApps.registerCallback(callback, mainThreadHandler)
         awaitClose { launcherApps.unregisterCallback(callback) }
     }
 

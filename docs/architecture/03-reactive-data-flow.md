@@ -33,7 +33,7 @@ sequenceDiagram
     UC->>SH: collect (1st subscriber overall)
     activate SH
     SH->>LA: registerCallback(LauncherApps.Callback)
-    SH->>OS: registerReceiver(MANAGED_PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE)
+    SH->>OS: registerReceiver(MANAGED_PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE + PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE)
     SH->>SH: refresh()  →  launch { trySend(getInstalledApps()) }
     SH->>LA: userManager.userProfiles
     loop each UserHandle
@@ -65,7 +65,7 @@ Key properties of this flow:
 | Property | Value | Consequence |
 |---|---|---|
 | Source of truth | `LauncherApps.getActivityList()` per `UserManager.userProfiles` handle | Work Profile / Private Space / OEM clone apps arrive in the same list, tagged by `AppInfo.profile` + `userHandle`. |
-| Trigger | `LauncherApps.Callback` (5 package events) + 4 `ACTION_MANAGED_PROFILE_*` broadcasts + one initial `refresh()` | Installs, uninstalls, updates and profile pause/resume all propagate without a restart. |
+| Trigger | `LauncherApps.Callback` (5 package events) + 4 `ACTION_MANAGED_PROFILE_*` broadcasts + 4 generic `ACTION_PROFILE_*` broadcasts (the actions Android 15+ Private Space uses, added/removed/available/unavailable) + one initial `refresh()` | Installs, uninstalls, updates and any profile appearing/disappearing/pausing/resuming (Work Profile or Private Space) all propagate without a restart. |
 | Work per emission | One full re-list + parallel icon decode of every app, **shared** across every collector | O(apps) per event, but exactly once app-wide, not once per collector. |
 | Sharing | `shareIn(@ApplicationScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000), replay = 1)` | One `LauncherApps` registration for the whole app; survives brief gaps (a Home↔Drawer transition) without re-registering; torn down 5s after the last collector goes away. `replay = 1` gives every new collector (a freshly opened screen) the current list immediately. |
 | Profile classification | `profileFor(handle)` via `getLauncherUserInfo().userType` (API 35+), `OTHER` below | Single source of truth reused by `WorkProfileRepository`, `PrivateSpaceRepository`, `AppWidgetRepository`. |
