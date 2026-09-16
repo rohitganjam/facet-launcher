@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data.local
 
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -50,5 +51,12 @@ class ConvertersTest {
     fun `a recognized value round-trips unchanged`() {
         assertEquals(ClockColorOption.ACCENT_SECONDARY, converters.toClockColorOption(converters.fromClockColorOption(ClockColorOption.ACCENT_SECONDARY)))
         assertEquals(AppRowPosition.RIGHT, converters.toAppRowPosition(converters.fromAppRowPosition(AppRowPosition.RIGHT)))
+    }
+
+    @Test
+    fun `AppProfile PRIVATE round-trips unchanged, and an unrecognized value falls back to PERSONAL`() {
+        assertEquals(AppProfile.PRIVATE, converters.toAppProfile(converters.fromAppProfile(AppProfile.PRIVATE)))
+        assertEquals(AppProfile.WORK, converters.toAppProfile(converters.fromAppProfile(AppProfile.WORK)))
+        assertEquals(AppProfile.PERSONAL, converters.toAppProfile("NOT_A_REAL_VALUE"))
     }
 }

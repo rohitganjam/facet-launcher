@@ -22,6 +22,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.DefaultAppRepository
@@ -72,10 +73,12 @@ import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
+import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
+import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
@@ -165,6 +168,10 @@ class KeyboardDismissalTest {
                         appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
+                    RepairOrphanedProfileRowsUseCase(
+                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        FolderRepository(database.folderDao(), appRepository),
+                    ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
@@ -184,11 +191,12 @@ class KeyboardDismissalTest {
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 DrawerViewModel(
+                    appRepository,
                     settingsRepository,
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
-                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java), appRepository),
+                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
@@ -202,7 +210,13 @@ class KeyboardDismissalTest {
                     RemoveFolderFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
+                    PrivateSpaceRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
+            }
+            val privateSpaceViewModel = remember {
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
+                val privateSpaceRepository = PrivateSpaceRepository(context.getSystemService(UserManager::class.java), appRepository, context)
+                PrivateSpaceViewModel(privateSpaceRepository, RankBySearchRelevanceUseCase())
             }
             val hubViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
@@ -285,6 +299,7 @@ class KeyboardDismissalTest {
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
+                    privateSpaceViewModel = privateSpaceViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
                     facetViewModel = facetViewModel,

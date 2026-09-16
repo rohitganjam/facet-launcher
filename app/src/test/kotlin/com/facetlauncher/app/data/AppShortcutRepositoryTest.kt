@@ -3,7 +3,7 @@ package com.facetlauncher.app.data
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.os.Process
-import com.facetlauncher.app.data.model.AppProfile
+import android.os.UserHandle
 import com.facetlauncher.app.data.model.AppShortcut
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -16,13 +16,6 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class AppShortcutRepositoryTest {
-
-    /** An [AppRepository] that resolves [AppProfile.PERSONAL] to this process's own handle — the common case every test but the "no handle" one assumes. */
-    private fun fakeAppRepository(): AppRepository {
-        val appRepository = mock(AppRepository::class.java)
-        `when`(appRepository.resolveUserHandle(AppProfile.PERSONAL)).thenReturn(Process.myUserHandle())
-        return appRepository
-    }
 
     private fun fakeShortcut(
         id: String,
@@ -45,7 +38,7 @@ class AppShortcutRepositoryTest {
         `when`(launcherApps.hasShortcutHostPermission()).thenReturn(false)
 
         // When requesting shortcuts
-        val result = AppShortcutRepository(launcherApps, fakeAppRepository()).getShortcuts("com.example.app", AppProfile.PERSONAL)
+        val result = AppShortcutRepository(launcherApps).getShortcuts("com.example.app", Process.myUserHandle())
 
         // Then it's an empty list, not an exception — the menu simply omits the section
         assertEquals(emptyList<AppShortcut>(), result)
@@ -60,10 +53,10 @@ class AppShortcutRepositoryTest {
         `when`(launcherApps.getShortcuts(any(), any())).thenReturn(listOf(shortcut))
 
         // When requesting shortcuts for that package
-        val result = AppShortcutRepository(launcherApps, fakeAppRepository()).getShortcuts("com.example.mail", AppProfile.PERSONAL)
+        val result = AppShortcutRepository(launcherApps).getShortcuts("com.example.mail", Process.myUserHandle())
 
-        // Then it maps id/package/label straight through
-        assertEquals(listOf(AppShortcut(id = "compose", packageName = "com.example.mail", label = "Compose")), result)
+        // Then it maps id/package/label straight through, carrying the requested handle
+        assertEquals(listOf(AppShortcut(id = "compose", packageName = "com.example.mail", label = "Compose", userHandle = Process.myUserHandle())), result)
     }
 
     @Test
@@ -75,7 +68,7 @@ class AppShortcutRepositoryTest {
         `when`(launcherApps.getShortcuts(any(), any())).thenReturn(listOf(disabled))
 
         // When requesting shortcuts
-        val result = AppShortcutRepository(launcherApps, fakeAppRepository()).getShortcuts("com.example.app", AppProfile.PERSONAL)
+        val result = AppShortcutRepository(launcherApps).getShortcuts("com.example.app", Process.myUserHandle())
 
         // Then it's excluded
         assertEquals(emptyList<AppShortcut>(), result)
@@ -90,7 +83,7 @@ class AppShortcutRepositoryTest {
         `when`(launcherApps.getShortcuts(any(), any())).thenReturn(shortcuts)
 
         // When requesting shortcuts
-        val result = AppShortcutRepository(launcherApps, fakeAppRepository()).getShortcuts("com.example.app", AppProfile.PERSONAL)
+        val result = AppShortcutRepository(launcherApps).getShortcuts("com.example.app", Process.myUserHandle())
 
         // Then only the first 5 come back
         assertEquals(5, result.size)
@@ -104,57 +97,52 @@ class AppShortcutRepositoryTest {
         `when`(launcherApps.getShortcuts(any(), any())).thenReturn(null)
 
         // When requesting shortcuts
-        val result = AppShortcutRepository(launcherApps, fakeAppRepository()).getShortcuts("com.example.app", AppProfile.PERSONAL)
+        val result = AppShortcutRepository(launcherApps).getShortcuts("com.example.app", Process.myUserHandle())
 
         // Then it degrades to empty rather than crashing the long-press menu
         assertEquals(emptyList<AppShortcut>(), result)
     }
 
     @Test
-    fun `returns empty list when the requested profile has no resolvable handle`() = runTest {
-        // Given a Work Profile that no longer exists (a race with unenrollment)
+    fun `returns empty list when the requested handle's profile has since vanished`() = runTest {
+        // Given a Work Profile handle that no longer exists (a race with unenrollment) — the
+        // underlying system query throws for it
         val launcherApps = mock(LauncherApps::class.java)
         `when`(launcherApps.hasShortcutHostPermission()).thenReturn(true)
-        val appRepository = mock(AppRepository::class.java)
-        `when`(appRepository.resolveUserHandle(AppProfile.WORK)).thenReturn(null)
+        val vanishedHandle = mock(UserHandle::class.java)
+        `when`(launcherApps.getShortcuts(any(), org.mockito.ArgumentMatchers.eq(vanishedHandle))).thenThrow(IllegalStateException("no such user"))
 
         // When requesting shortcuts for it
-        val result = AppShortcutRepository(launcherApps, appRepository).getShortcuts("com.example.app", AppProfile.WORK)
+        val result = AppShortcutRepository(launcherApps).getShortcuts("com.example.app", vanishedHandle)
 
-        // Then there's no handle to query against — empty, not a crash
+        // Then there's no crash — empty, not a propagated exception
         assertEquals(emptyList<AppShortcut>(), result)
     }
 
     @Test
-    fun `launchShortcut resolves the shortcut's own profile, not the personal handle unconditionally`() {
-        // Given a Work Profile shortcut
+    fun `launchShortcut launches against the shortcut's own carried handle`() {
+        // Given a shortcut fetched from a specific (e.g. Work Profile) handle
         val launcherApps = mock(LauncherApps::class.java)
-        val appRepository = mock(AppRepository::class.java)
-        val workHandle = mock(android.os.UserHandle::class.java)
-        `when`(appRepository.resolveUserHandle(AppProfile.WORK)).thenReturn(workHandle)
-        val shortcut = AppShortcut(id = "compose", packageName = "com.example.mail", label = "Compose", profile = AppProfile.WORK)
+        val workHandle = mock(UserHandle::class.java)
+        val shortcut = AppShortcut(id = "compose", packageName = "com.example.mail", label = "Compose", userHandle = workHandle)
 
         // When launching it
-        AppShortcutRepository(launcherApps, appRepository).launchShortcut(shortcut)
+        AppShortcutRepository(launcherApps).launchShortcut(shortcut)
 
-        // Then it's started against the Work Profile's own handle
+        // Then it's started against that same handle, not re-derived from anything else
         org.mockito.Mockito.verify(launcherApps).startShortcut("com.example.mail", "compose", null, null, workHandle)
     }
 
     @Test
-    fun `launchShortcut is a no-op when the shortcut's profile has vanished`() {
-        // Given a Work Profile that's since been unenrolled
+    fun `launchShortcut swallows an exception when the shortcut's profile has since vanished`() {
+        // Given a shortcut whose profile has since been unenrolled — the system call throws
         val launcherApps = mock(LauncherApps::class.java)
-        val appRepository = mock(AppRepository::class.java)
-        `when`(appRepository.resolveUserHandle(AppProfile.WORK)).thenReturn(null)
-        val shortcut = AppShortcut(id = "compose", packageName = "com.example.mail", label = "Compose", profile = AppProfile.WORK)
+        val vanishedHandle = mock(UserHandle::class.java)
+        `when`(launcherApps.startShortcut(any(), any(), any(), any(), org.mockito.ArgumentMatchers.eq(vanishedHandle)))
+            .thenThrow(IllegalStateException("no such user"))
+        val shortcut = AppShortcut(id = "compose", packageName = "com.example.mail", label = "Compose", userHandle = vanishedHandle)
 
-        // When attempting to launch it
-        AppShortcutRepository(launcherApps, appRepository).launchShortcut(shortcut)
-
-        // Then nothing is started — no handle to launch it in
-        org.mockito.Mockito.verify(launcherApps, org.mockito.Mockito.never()).startShortcut(
-            org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(), any(), any(), any(),
-        )
+        // When attempting to launch it — then it doesn't propagate the exception
+        AppShortcutRepository(launcherApps).launchShortcut(shortcut)
     }
 }

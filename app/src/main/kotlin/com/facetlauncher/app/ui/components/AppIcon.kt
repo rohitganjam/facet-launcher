@@ -5,8 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +31,7 @@ import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
+import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 
 /** F13's badge count is capped at a single digit for legibility at these icon sizes — "9+" beyond that, not the more common "99+". */
@@ -97,6 +101,11 @@ fun AppIcon(
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     isWorkApp: Boolean = false,
+    /** True for [com.facetlauncher.app.data.model.AppProfile.OTHER] — a profile that exists but
+     * isn't positively identified as Work/Private (most commonly an OEM dual-app/clone profile).
+     * Mutually exclusive with [isWorkApp] in practice (an app has exactly one [AppProfile]), so
+     * both never render at once. */
+    isOtherProfileApp: Boolean = false,
 ) {
     Box(modifier = modifier) {
         if (notificationCount != null && notificationCount > 0) {
@@ -111,6 +120,8 @@ fun AppIcon(
         // sits, so a user switching from another launcher isn't relearning icon language.
         if (isWorkApp) {
             WorkProfileBadge(modifier = Modifier.align(Alignment.BottomStart))
+        } else if (isOtherProfileApp) {
+            OtherProfileBadge(modifier = Modifier.align(Alignment.BottomStart))
         }
     }
 }
@@ -138,6 +149,14 @@ fun NotificationBadge(count: Int, style: NotificationBadgeStyle, modifier: Modif
 @Composable
 private fun WorkProfileBadge(modifier: Modifier = Modifier) {
     Badge(containerColor = Accent, modifier = modifier.testTag("work_profile_badge"))
+}
+
+/** Sibling to [WorkProfileBadge] for [com.facetlauncher.app.data.model.AppProfile.OTHER] apps — a small person glyph (not just a plain dot) so it reads as visually distinct from the Work badge at a glance. */
+@Composable
+private fun OtherProfileBadge(modifier: Modifier = Modifier) {
+    Badge(containerColor = Muted, contentColor = Surface, modifier = modifier.testTag("other_profile_badge")) {
+        Icon(imageVector = Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(10.dp))
+    }
 }
 
 /**

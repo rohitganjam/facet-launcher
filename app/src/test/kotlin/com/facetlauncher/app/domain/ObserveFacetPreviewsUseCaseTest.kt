@@ -25,7 +25,10 @@ import org.junit.Test
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class ObserveFacetPreviewsUseCaseTest {
 
     private fun appInfo(letter: Char) =

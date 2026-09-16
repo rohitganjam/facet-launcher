@@ -20,18 +20,22 @@ interface DockAppDao {
     @Delete
     suspend fun delete(dockApp: DockAppEntity)
 
-    @Query("DELETE FROM dock_apps WHERE packageName = :packageName AND activityName = :activityName AND profile = :profile")
-    suspend fun deleteByComponent(packageName: String, activityName: String, profile: AppProfile)
+    @Query("DELETE FROM dock_apps WHERE packageName = :packageName AND activityName = :activityName AND userId = :userId")
+    suspend fun deleteByComponent(packageName: String, activityName: String, userId: Int)
 
-    /** Uninstall cleanup — removes the dock entry for [packageName] in [profile] regardless of activity. */
-    @Query("DELETE FROM dock_apps WHERE packageName = :packageName AND profile = :profile")
-    suspend fun deleteByPackage(packageName: String, profile: AppProfile)
+    /** Uninstall cleanup — removes the dock entry for [packageName] belonging to [userId] regardless of activity. */
+    @Query("DELETE FROM dock_apps WHERE packageName = :packageName AND userId = :userId")
+    suspend fun deleteByPackage(packageName: String, userId: Int)
 
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment). */
-    @Query("DELETE FROM dock_apps WHERE profile = :profile")
-    suspend fun deleteByProfile(profile: AppProfile)
+    @Query("DELETE FROM dock_apps WHERE userId = :userId")
+    suspend fun deleteByUserId(userId: Int)
 
     /** F14 Backup & Restore — wipes the whole dock before restoring from a backup. */
     @Query("DELETE FROM dock_apps")
     suspend fun deleteAll()
+
+    /** Rows still at [Migrations.MIGRATION_19_20]'s `-1` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
+    @Query("SELECT * FROM dock_apps WHERE userId = -1")
+    suspend fun getOrphaned(): List<DockAppEntity>
 }

@@ -83,9 +83,9 @@ class HubWidgetPickerViewModel @Inject constructor(
                 return@launch
             }
             val appWidgetId = appWidgetRepository.allocateAppWidgetId()
-            if (!appWidgetRepository.bindAppWidgetIdIfAllowed(appWidgetId, option.provider, option.profile)) {
+            if (!appWidgetRepository.bindAppWidgetIdIfAllowed(appWidgetId, option.provider, option.userHandle)) {
                 pendingAppWidgetId = appWidgetId
-                _events.emit(HubAddWidgetEvent.LaunchBindPermission(appWidgetRepository.createBindIntent(appWidgetId, option.provider, option.profile)))
+                _events.emit(HubAddWidgetEvent.LaunchBindPermission(appWidgetRepository.createBindIntent(appWidgetId, option.provider, option.userHandle)))
                 return@launch
             }
             proceedAfterBind(appWidgetId)
@@ -155,6 +155,7 @@ class HubWidgetPickerViewModel @Inject constructor(
                         colSpan = colSpan,
                         rowSpan = rowSpan,
                         profile = appWidgetRepository.profileForWidget(appWidgetId),
+                        userId = appWidgetRepository.userIdForWidget(appWidgetId),
                     ),
                 )
                 _events.emit(HubAddWidgetEvent.WidgetAdded)

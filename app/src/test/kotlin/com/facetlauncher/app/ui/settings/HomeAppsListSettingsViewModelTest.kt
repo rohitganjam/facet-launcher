@@ -37,6 +37,8 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** A real (not Mockito) stub — plain Mockito can't reliably stub a `suspend` return. */
 private fun fakeWallpaperRepository() =
@@ -45,6 +47,7 @@ private fun fakeWallpaperRepository() =
     }
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class HomeAppsListSettingsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()

@@ -2,7 +2,6 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -86,7 +85,7 @@ class FacetDockAppDaoTest {
         )
 
         // When the package is cleaned up after an uninstall
-        database.facetDockAppDao().deleteByPackage("com.example.a", AppProfile.PERSONAL)
+        database.facetDockAppDao().deleteByPackage("com.example.a", -1)
 
         // Then it's gone from every facet's dock
         assertTrue(database.facetDockAppDao().observeForFacet(facetOneId).first().isEmpty())

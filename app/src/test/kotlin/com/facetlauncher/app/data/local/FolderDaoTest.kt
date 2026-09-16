@@ -2,7 +2,6 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -90,7 +89,7 @@ class FolderDaoTest {
         dao.upsertFolderApp(FolderAppEntity(folderId = folder2, packageName = "com.example.a", activityName = ".Main", position = 0))
 
         // When that package's membership is cleaned up (uninstall)
-        dao.deleteFolderAppsByPackage("com.example.a", AppProfile.PERSONAL)
+        dao.deleteFolderAppsByPackage("com.example.a", -1)
 
         // Then both folders survive, now with zero members — an uninstall never deletes the folder
         val result = dao.observeAllWithApps().first()
@@ -107,7 +106,7 @@ class FolderDaoTest {
         dao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = "com.example.b", activityName = ".Main", position = 1))
 
         // When one member is removed
-        dao.deleteFolderApp(folderId, "com.example.a", ".Main", AppProfile.PERSONAL)
+        dao.deleteFolderApp(folderId, "com.example.a", ".Main", -1)
 
         // Then only the other remains, and the folder itself survives
         val result = dao.observeAllWithApps().first().single()

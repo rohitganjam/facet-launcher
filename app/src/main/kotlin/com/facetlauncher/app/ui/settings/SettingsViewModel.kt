@@ -33,9 +33,8 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = combine(
         observeSettingsScreenState(),
         isDefaultLauncher,
-        workProfileRepository.hasWorkProfile(),
-        workProfileRepository.isWorkProfilePaused(),
-    ) { screenState, isDefaultLauncher, hasWorkProfile, isWorkProfilePaused ->
+        workProfileRepository.observeWorkProfiles(),
+    ) { screenState, isDefaultLauncher, workProfiles ->
         SettingsUiState(
             settings = screenState.settings,
             dockItems = screenState.dockItems,
@@ -43,8 +42,7 @@ class SettingsViewModel @Inject constructor(
             folderCount = screenState.folderCount,
             isDefaultLauncher = isDefaultLauncher,
             isLoading = false,
-            hasWorkProfile = hasWorkProfile,
-            isWorkProfilePaused = isWorkProfilePaused,
+            workProfiles = workProfiles,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 

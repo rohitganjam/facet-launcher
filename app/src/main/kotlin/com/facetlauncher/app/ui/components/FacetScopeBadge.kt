@@ -48,3 +48,15 @@ fun FacetScopeBadge(facetName: String?, modifier: Modifier = Modifier) {
 fun WorkScopeBadge(modifier: Modifier = Modifier) {
     ScopeBadge(label = "Work", color = Accent, modifier = modifier)
 }
+
+/**
+ * Marks a row as belonging to an [AppProfile.OTHER][com.facetlauncher.app.data.model.AppProfile]
+ * app — a profile that exists but can't be positively identified as a Work Profile or Private
+ * Space (an OEM dual-app/clone profile, most commonly, or any non-primary profile at all below
+ * API 35). Sibling to [WorkScopeBadge] — same shape, [Muted] tone since it's informational
+ * ("there's a second copy of this") rather than a specific category name the way "Work" is.
+ */
+@Composable
+fun OtherScopeBadge(modifier: Modifier = Modifier) {
+    ScopeBadge(label = "Other profile", color = Muted, modifier = modifier)
+}

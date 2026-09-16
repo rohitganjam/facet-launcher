@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.settings.backup
 
 import android.content.ComponentName
 import android.net.Uri
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppProfile
@@ -42,6 +43,7 @@ import androidx.lifecycle.viewModelScope
 class BackupRestoreViewModel @Inject constructor(
     private val exportBackup: ExportBackupUseCase,
     private val importBackup: ImportBackupUseCase,
+    private val appRepository: AppRepository,
     private val appWidgetRepository: AppWidgetRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val placeWidget: PlaceWidgetUseCase,
@@ -118,12 +120,22 @@ class BackupRestoreViewModel @Inject constructor(
             // The backup's own recorded profile is only a hint for this first attempt — a Work
             // Profile widget's bind grant can't survive a backup/restore round trip regardless, so
             // this always goes through a real bind either way (see BackupWidgetPlacement's own doc).
+            // A backup only ever recorded a display category, never a real UserHandle, so this is
+            // the sanctioned single-representative lookup (see AppRepository.resolveUserHandle's
+            // own doc) — null means that category no longer has a live match (e.g. the Work
+            // Profile from the backup's source device isn't this device's), so this widget simply
+            // can't be restored; marked done rather than left stuck.
             val profile = pending.placement.profile.toEnumOrDefault(AppProfile.PERSONAL)
+            val handle = appRepository.resolveUserHandle(profile)
+            if (handle == null) {
+                _uiState.update { it.withPendingMarkedDone(index) }
+                return@launch
+            }
             val appWidgetId = appWidgetRepository.allocateAppWidgetId()
             pendingIndex = index
-            if (!appWidgetRepository.bindAppWidgetIdIfAllowed(appWidgetId, provider, profile)) {
+            if (!appWidgetRepository.bindAppWidgetIdIfAllowed(appWidgetId, provider, handle)) {
                 pendingAppWidgetId = appWidgetId
-                _events.emit(BackupRestoreEvent.LaunchBindPermission(appWidgetRepository.createBindIntent(appWidgetId, provider, profile)))
+                _events.emit(BackupRestoreEvent.LaunchBindPermission(appWidgetRepository.createBindIntent(appWidgetId, provider, handle)))
                 return@launch
             }
             proceedAfterBind(appWidgetId)
@@ -199,6 +211,7 @@ class BackupRestoreViewModel @Inject constructor(
                         colSpan = placement.colSpan,
                         rowSpan = placement.rowSpan,
                         profile = appWidgetRepository.profileForWidget(appWidgetId),
+                        userId = appWidgetRepository.userIdForWidget(appWidgetId),
                     ),
                 )
                 pendingIndex = null

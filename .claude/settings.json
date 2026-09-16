@@ -19,6 +19,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "( git status --porcelain -- app/src/test/kotlin app/src/androidTest/kotlin | grep -q . && python3 scripts/gen-test-registry.py ) 2>/dev/null; true",
+            "statusMessage": "Regenerating test registry..."
+          }
+        ]
+      }
     ]
   }
 }

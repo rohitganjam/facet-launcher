@@ -20,18 +20,22 @@ interface DefaultFavoriteAppDao {
     @Delete
     suspend fun delete(defaultFavoriteApp: DefaultFavoriteAppEntity)
 
-    @Query("DELETE FROM default_favorite_apps WHERE packageName = :packageName AND activityName = :activityName AND profile = :profile")
-    suspend fun deleteByComponent(packageName: String, activityName: String, profile: AppProfile)
+    @Query("DELETE FROM default_favorite_apps WHERE packageName = :packageName AND activityName = :activityName AND userId = :userId")
+    suspend fun deleteByComponent(packageName: String, activityName: String, userId: Int)
 
-    /** Uninstall cleanup — removes the default-favorite entry for [packageName] in [profile] regardless of activity. */
-    @Query("DELETE FROM default_favorite_apps WHERE packageName = :packageName AND profile = :profile")
-    suspend fun deleteByPackage(packageName: String, profile: AppProfile)
+    /** Uninstall cleanup — removes the default-favorite entry for [packageName] belonging to [userId] regardless of activity. */
+    @Query("DELETE FROM default_favorite_apps WHERE packageName = :packageName AND userId = :userId")
+    suspend fun deleteByPackage(packageName: String, userId: Int)
 
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment). */
-    @Query("DELETE FROM default_favorite_apps WHERE profile = :profile")
-    suspend fun deleteByProfile(profile: AppProfile)
+    @Query("DELETE FROM default_favorite_apps WHERE userId = :userId")
+    suspend fun deleteByUserId(userId: Int)
 
     /** F14 Backup & Restore — wipes the whole list before restoring from a backup. */
     @Query("DELETE FROM default_favorite_apps")
     suspend fun deleteAll()
+
+    /** Rows still at [Migrations.MIGRATION_19_20]'s `-1` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
+    @Query("SELECT * FROM default_favorite_apps WHERE userId = -1")
+    suspend fun getOrphaned(): List<DefaultFavoriteAppEntity>
 }

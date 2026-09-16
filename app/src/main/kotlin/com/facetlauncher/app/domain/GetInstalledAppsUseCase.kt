@@ -2,15 +2,21 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.FACET_LAUNCHER_PACKAGE_NAME
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Fetches every launchable app visible to this launcher, alphabetically sorted. */
+/**
+ * Fetches every launchable app visible to this launcher, alphabetically sorted — excluding
+ * Private Space apps, which only ever appear in their own dedicated screen
+ * ([com.facetlauncher.app.ui.drawer.PrivateSpaceScreen]), not the main Drawer or any
+ * Favorites/Dock/Folder picker sourced from here.
+ */
 class GetInstalledAppsUseCase @Inject constructor(private val appRepository: AppRepository) {
     /** One-shot fetch — for pickers (Favorites/Dock) that just need a seed list, not live updates. */
-    suspend operator fun invoke(): List<AppInfo> = appRepository.getInstalledApps()
+    suspend operator fun invoke(): List<AppInfo> = appRepository.getInstalledApps().filterNot { it.profile == AppProfile.PRIVATE }
 
     /**
      * Live-updating list for the App Drawer — re-emits on install/uninstall/update while
@@ -20,6 +26,6 @@ class GetInstalledAppsUseCase @Inject constructor(private val appRepository: App
      * launcher there is a harmless, if unusual, choice to leave available.
      */
     fun observe(): Flow<List<AppInfo>> = appRepository.observeInstalledApps().map { apps ->
-        apps.filterNot { it.packageName == FACET_LAUNCHER_PACKAGE_NAME }
+        apps.filterNot { it.packageName == FACET_LAUNCHER_PACKAGE_NAME || it.profile == AppProfile.PRIVATE }
     }
 }

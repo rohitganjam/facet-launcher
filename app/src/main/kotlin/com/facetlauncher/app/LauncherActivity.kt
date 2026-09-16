@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.os.Bundle
+import android.os.Process
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -13,9 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.navigation.FacetNavHost
@@ -31,8 +30,6 @@ class LauncherActivity : ComponentActivity() {
     private val viewModel: LauncherViewModel by viewModels()
 
     @Inject lateinit var launcherApps: LauncherApps
-
-    @Inject lateinit var appRepository: AppRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,14 +82,15 @@ class LauncherActivity : ComponentActivity() {
 
     private fun launchApp(app: AppInfo) {
         val component = ComponentName(app.packageName, app.activityName)
-        if (app.profile == AppProfile.WORK) {
-            // A plain launch Intent doesn't resolve correctly for a Work Profile activity —
-            // LauncherApps.startMainActivity is the API a launcher must use to cross into another
-            // profile. No handle only if the Work Profile vanished in the race between this list
-            // loading and the tap landing (observeProfileRemoved should already be dropping these
-            // entries around the same time) — nothing sensible to launch in that case.
-            val workHandle = appRepository.resolveUserHandle(AppProfile.WORK) ?: return
-            runCatching { launcherApps.startMainActivity(component, workHandle, null, null) }
+        if (app.userHandle != Process.myUserHandle()) {
+            // A plain launch Intent doesn't resolve correctly for a Work Profile/Private
+            // Space/clone-profile activity — LauncherApps.startMainActivity is the API a launcher
+            // must use to cross into another profile. Uses app.userHandle directly — the exact
+            // handle this AppInfo was enumerated from — rather than re-deriving one from its
+            // display AppProfile category, since two distinct real profiles can share that
+            // category (see AppProfile's own doc) and a re-derived handle could resolve to the
+            // wrong one.
+            runCatching { launcherApps.startMainActivity(component, app.userHandle, null, null) }
             return
         }
         val intent = Intent(Intent.ACTION_MAIN).apply {

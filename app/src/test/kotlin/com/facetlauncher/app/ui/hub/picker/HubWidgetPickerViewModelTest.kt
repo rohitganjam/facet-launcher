@@ -54,7 +54,7 @@ class HubWidgetPickerViewModelTest {
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(1)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, AppProfile.PERSONAL)).thenReturn(true)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, option.userHandle)).thenReturn(true)
         // Not `.apply { this.provider = provider }` — inside that lambda, the bare `provider` on
         // the right-hand side resolves to AppWidgetProviderInfo's own (still-null) field via
         // implicit-receiver scoping, not the outer val, so it silently self-assigns null.
@@ -65,6 +65,7 @@ class HubWidgetPickerViewModelTest {
         `when`(appWidgetRepository.createConfigureIntentSender(1, info)).thenReturn(null)
         `when`(appWidgetRepository.defaultSpan(1)).thenReturn(2 to 1)
         `when`(appWidgetRepository.profileForWidget(1)).thenReturn(AppProfile.PERSONAL)
+        `when`(appWidgetRepository.userIdForWidget(1)).thenReturn(0)
         `when`(placeWidget.invoke(emptyList(), 2, 1)).thenReturn(PlaceWidgetResult.Placed(row = 0, col = 0))
 
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
@@ -80,7 +81,7 @@ class HubWidgetPickerViewModelTest {
 
         assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
         verify(widgetPlacementRepository).upsert(
-            WidgetPlacementEntity(appWidgetId = 1, providerPackageName = provider.packageName, providerClassName = provider.className, row = 0, col = 0, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL),
+            WidgetPlacementEntity(appWidgetId = 1, providerPackageName = provider.packageName, providerClassName = provider.className, row = 0, col = 0, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL, userId = 0),
         )
         job.cancel()
         uiStateJob.cancel()
@@ -91,19 +92,21 @@ class HubWidgetPickerViewModelTest {
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
-        val workOption = option.copy(profile = AppProfile.WORK)
+        val workHandle = mock(android.os.UserHandle::class.java)
+        val workOption = option.copy(profile = AppProfile.WORK, userHandle = workHandle)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(1)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, AppProfile.WORK)).thenReturn(true)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, workHandle)).thenReturn(true)
         val info = AppWidgetProviderInfo()
         info.provider = provider
         info.configure = null
         `when`(appWidgetRepository.getAppWidgetInfo(1)).thenReturn(info)
         `when`(appWidgetRepository.createConfigureIntentSender(1, info)).thenReturn(null)
         `when`(appWidgetRepository.defaultSpan(1)).thenReturn(2 to 1)
-        // The placement's profile comes from the system (profileForWidget), not carried through
-        // from the picker option — see HubWidgetPickerViewModel.finishPlacing's own doc.
+        // The placement's profile/userId come from the system (profileForWidget/userIdForWidget),
+        // not carried through from the picker option — see HubWidgetPickerViewModel.finishPlacing's own doc.
         `when`(appWidgetRepository.profileForWidget(1)).thenReturn(AppProfile.WORK)
+        `when`(appWidgetRepository.userIdForWidget(1)).thenReturn(10)
         `when`(placeWidget.invoke(emptyList(), 2, 1)).thenReturn(PlaceWidgetResult.Placed(row = 0, col = 0))
 
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
@@ -114,7 +117,7 @@ class HubWidgetPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(widgetPlacementRepository).upsert(
-            WidgetPlacementEntity(appWidgetId = 1, providerPackageName = provider.packageName, providerClassName = provider.className, row = 0, col = 0, colSpan = 2, rowSpan = 1, profile = AppProfile.WORK),
+            WidgetPlacementEntity(appWidgetId = 1, providerPackageName = provider.packageName, providerClassName = provider.className, row = 0, col = 0, colSpan = 2, rowSpan = 1, profile = AppProfile.WORK, userId = 10),
         )
         uiStateJob.cancel()
     }
@@ -126,9 +129,9 @@ class HubWidgetPickerViewModelTest {
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(1)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, AppProfile.PERSONAL)).thenReturn(false)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, option.userHandle)).thenReturn(false)
         val bindIntent = Intent("bind")
-        `when`(appWidgetRepository.createBindIntent(1, provider, AppProfile.PERSONAL)).thenReturn(bindIntent)
+        `when`(appWidgetRepository.createBindIntent(1, provider, option.userHandle)).thenReturn(bindIntent)
 
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
@@ -154,8 +157,8 @@ class HubWidgetPickerViewModelTest {
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(1)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, AppProfile.PERSONAL)).thenReturn(false)
-        `when`(appWidgetRepository.createBindIntent(1, provider, AppProfile.PERSONAL)).thenReturn(Intent("bind"))
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, option.userHandle)).thenReturn(false)
+        `when`(appWidgetRepository.createBindIntent(1, provider, option.userHandle)).thenReturn(Intent("bind"))
 
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
@@ -184,7 +187,7 @@ class HubWidgetPickerViewModelTest {
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(1)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, AppProfile.PERSONAL)).thenReturn(true)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, option.userHandle)).thenReturn(true)
         val configureComponent = ComponentName("com.example.widgets", ".Configure")
         val info = AppWidgetProviderInfo()
         info.provider = provider

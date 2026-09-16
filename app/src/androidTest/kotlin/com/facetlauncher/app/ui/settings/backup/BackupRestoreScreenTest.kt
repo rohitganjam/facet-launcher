@@ -68,6 +68,7 @@ class BackupRestoreScreenTest {
                         backupRepository, settingsRepository, facetRepository, favoriteAppRepository,
                         dockAppRepository, facetDockAppRepository, defaultFavoriteAppRepository, folderRepository,
                     ),
+                    appRepository,
                     appWidgetRepository,
                     widgetPlacementRepository,
                     PlaceWidgetUseCase(),

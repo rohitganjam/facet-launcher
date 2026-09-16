@@ -40,14 +40,18 @@ interface FolderDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertFolderApp(folderApp: FolderAppEntity): Long
 
-    @Query("DELETE FROM folder_apps WHERE folderId = :folderId AND packageName = :packageName AND activityName = :activityName AND profile = :profile")
-    suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String, profile: AppProfile)
+    @Query("DELETE FROM folder_apps WHERE folderId = :folderId AND packageName = :packageName AND activityName = :activityName AND userId = :userId")
+    suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String, userId: Int)
 
-    /** Uninstall cleanup — removes every folder's membership row for [packageName] in [profile] regardless of activity. Deliberately does not touch the folder itself — a folder emptied by an uninstall stays a valid, visible, 0-app folder. */
-    @Query("DELETE FROM folder_apps WHERE packageName = :packageName AND profile = :profile")
-    suspend fun deleteFolderAppsByPackage(packageName: String, profile: AppProfile)
+    /** Uninstall cleanup — removes every folder's membership row for [packageName] belonging to [userId] regardless of activity. Deliberately does not touch the folder itself — a folder emptied by an uninstall stays a valid, visible, 0-app folder. */
+    @Query("DELETE FROM folder_apps WHERE packageName = :packageName AND userId = :userId")
+    suspend fun deleteFolderAppsByPackage(packageName: String, userId: Int)
 
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment). */
-    @Query("DELETE FROM folder_apps WHERE profile = :profile")
-    suspend fun deleteFolderAppsByProfile(profile: AppProfile)
+    @Query("DELETE FROM folder_apps WHERE userId = :userId")
+    suspend fun deleteFolderAppsByUserId(userId: Int)
+
+    /** Rows still at [Migrations.MIGRATION_19_20]'s `-1` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
+    @Query("SELECT * FROM folder_apps WHERE userId = -1")
+    suspend fun getOrphanedFolderApps(): List<FolderAppEntity>
 }

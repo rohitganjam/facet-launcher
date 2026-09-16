@@ -1,9 +1,9 @@
 package com.facetlauncher.app.data
 
 import android.content.pm.LauncherApps
+import android.os.UserHandle
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
-import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,17 +21,15 @@ import kotlinx.coroutines.withContext
 @Singleton
 class AppShortcutRepository @Inject constructor(
     private val launcherApps: LauncherApps,
-    private val appRepository: AppRepository,
 ) {
 
     companion object {
         private const val MAX_SHORTCUTS = 5
     }
 
-    /** `emptyList()` (not a crash) when [profile] is [AppProfile.WORK] and no Work Profile handle can be resolved — same race-with-unenrollment reasoning as [AppRepository.resolveUserHandle]. */
-    suspend fun getShortcuts(packageName: String, profile: AppProfile): List<AppShortcut> = withContext(Dispatchers.Default) {
+    /** Fetches shortcuts for [packageName] in the specific real profile [userHandle] came from — the exact handle the calling [com.facetlauncher.app.data.model.AppInfo] carries, not re-derived from any display category. */
+    suspend fun getShortcuts(packageName: String, userHandle: UserHandle): List<AppShortcut> = withContext(Dispatchers.Default) {
         if (!launcherApps.hasShortcutHostPermission()) return@withContext emptyList()
-        val handle = appRepository.resolveUserHandle(profile) ?: return@withContext emptyList()
         val query = LauncherApps.ShortcutQuery()
             .setPackage(packageName)
             .setQueryFlags(
@@ -39,7 +37,7 @@ class AppShortcutRepository @Inject constructor(
                     LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
                     LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED,
             )
-        runCatching { launcherApps.getShortcuts(query, handle) }
+        runCatching { launcherApps.getShortcuts(query, userHandle) }
             .getOrNull()
             .orEmpty()
             .filter { it.isEnabled }
@@ -53,16 +51,15 @@ class AppShortcutRepository @Inject constructor(
                         .getOrNull()
                         ?.toBitmap()
                         ?.asImageBitmap(),
-                    profile = profile,
+                    userHandle = userHandle,
                 )
             }
     }
 
-    /** Resolves [AppShortcut.profile] back to a real `UserHandle` — a no-op (not a crash) if that profile has since vanished (Work Profile unenrolled between fetch and tap). */
+    /** Launches [shortcut] in the real profile it carries — a no-op (not a crash) if that profile has since vanished (Work Profile unenrolled between fetch and tap). */
     fun launchShortcut(shortcut: AppShortcut) {
-        val handle = appRepository.resolveUserHandle(shortcut.profile) ?: return
         runCatching {
-            launcherApps.startShortcut(shortcut.packageName, shortcut.id, null, null, handle)
+            launcherApps.startShortcut(shortcut.packageName, shortcut.id, null, null, shortcut.userHandle)
         }
     }
 }

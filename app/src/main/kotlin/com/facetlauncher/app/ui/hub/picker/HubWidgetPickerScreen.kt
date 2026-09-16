@@ -56,6 +56,7 @@ import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.OtherScopeBadge
 import com.facetlauncher.app.ui.components.WorkScopeBadge
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Hairline
@@ -298,6 +299,8 @@ private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp
             // Bottom-start, matching AppIcon's own Work Profile badge placement convention.
             if (option.profile == AppProfile.WORK) {
                 WorkScopeBadge(modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).testTag("hub_widget_option_work_badge"))
+            } else if (option.profile == AppProfile.OTHER) {
+                OtherScopeBadge(modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).testTag("hub_widget_option_other_badge"))
             }
         }
         Text(

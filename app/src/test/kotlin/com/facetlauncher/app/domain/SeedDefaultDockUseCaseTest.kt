@@ -13,7 +13,10 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class SeedDefaultDockUseCaseTest {
 
     private fun appInfo(packageName: String) = AppInfo(packageName, "MainActivity", packageName, icon = null)

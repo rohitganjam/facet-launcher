@@ -5,6 +5,8 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.IntentSender
 import android.net.Uri
+import android.os.Process
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppProfile
@@ -51,11 +53,16 @@ class BackupRestoreViewModelTest {
 
     private val exportBackup = mock(ExportBackupUseCase::class.java)
     private val importBackup = mock(ImportBackupUseCase::class.java)
+    private val appRepository = mock(AppRepository::class.java).also {
+        // The common case every test but the "no live handle" one assumes — a backup's own
+        // recorded profile (defaulted to PERSONAL) resolves to this process's own handle.
+        `when`(it.resolveUserHandle(AppProfile.PERSONAL)).thenReturn(Process.myUserHandle())
+    }
     private val appWidgetRepository = mock(AppWidgetRepository::class.java)
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
     private val placeWidget = mock(PlaceWidgetUseCase::class.java)
 
-    private val viewModel = BackupRestoreViewModel(exportBackup, importBackup, appWidgetRepository, widgetPlacementRepository, placeWidget)
+    private val viewModel = BackupRestoreViewModel(exportBackup, importBackup, appRepository, appWidgetRepository, widgetPlacementRepository, placeWidget)
 
     private val provider = ComponentName("com.example.widgets", ".Provider")
     private val placement = BackupWidgetPlacement("com.example.widgets", ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1)
@@ -167,13 +174,14 @@ class BackupRestoreViewModelTest {
     fun `re-adding a widget that binds synchronously with no configure activity places it at the backup's own recorded position`() = runTest {
         givenOnePendingWidget()
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(5)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider, AppProfile.PERSONAL)).thenReturn(true)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider, Process.myUserHandle())).thenReturn(true)
         val info = AppWidgetProviderInfo()
         info.provider = provider
         info.configure = null
         `when`(appWidgetRepository.getAppWidgetInfo(5)).thenReturn(info)
         `when`(appWidgetRepository.createConfigureIntentSender(5, info)).thenReturn(null)
         `when`(appWidgetRepository.profileForWidget(5)).thenReturn(AppProfile.PERSONAL)
+        `when`(appWidgetRepository.userIdForWidget(5)).thenReturn(0)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(placeWidget.invoke(emptyList(), 2, 1, 1, 2)).thenReturn(PlaceWidgetResult.Placed(row = 1, col = 2))
 
@@ -181,7 +189,7 @@ class BackupRestoreViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(widgetPlacementRepository).upsert(
-            WidgetPlacementEntity(appWidgetId = 5, providerPackageName = "com.example.widgets", providerClassName = ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL),
+            WidgetPlacementEntity(appWidgetId = 5, providerPackageName = "com.example.widgets", providerClassName = ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL, userId = 0),
         )
         assertEquals(true, viewModel.uiState.value.pendingWidgets[0].done)
     }
@@ -190,9 +198,9 @@ class BackupRestoreViewModelTest {
     fun `re-adding a widget needing the system bind dialog emits LaunchBindPermission and does not place it yet`() = runTest {
         givenOnePendingWidget()
         `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(5)
-        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider, AppProfile.PERSONAL)).thenReturn(false)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(5, provider, Process.myUserHandle())).thenReturn(false)
         val bindIntent = Intent("bind")
-        `when`(appWidgetRepository.createBindIntent(5, provider, AppProfile.PERSONAL)).thenReturn(bindIntent)
+        `when`(appWidgetRepository.createBindIntent(5, provider, Process.myUserHandle())).thenReturn(bindIntent)
         val events = mutableListOf<BackupRestoreEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
 
@@ -216,5 +224,21 @@ class BackupRestoreViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(appWidgetRepository, never()).allocateAppWidgetId()
+    }
+
+    @Test
+    fun `re-adding a widget whose backed-up profile no longer has a live matching handle is marked done without a bind attempt`() = runTest {
+        // Given a backup's own recorded profile that no longer resolves to any live handle on this
+        // device (e.g. the Work Profile it came from isn't this device's) — the sanctioned
+        // single-representative lookup (AppRepository.resolveUserHandle) returns null
+        `when`(appRepository.resolveUserHandle(AppProfile.PERSONAL)).thenReturn(null)
+        givenOnePendingWidget()
+
+        viewModel.onReimportWidget(0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then no bind is even attempted — the widget is simply marked done (skipped)
+        verify(appWidgetRepository, never()).allocateAppWidgetId()
+        assertEquals(true, viewModel.uiState.value.pendingWidgets[0].done)
     }
 }

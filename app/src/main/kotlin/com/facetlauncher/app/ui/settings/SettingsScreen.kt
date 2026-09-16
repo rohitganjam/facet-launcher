@@ -275,12 +275,15 @@ private fun SettingsContent(
                         // Read-only: this app reflects the Work Profile's state, it doesn't
                         // control it — Android already owns a pause/resume toggle (system
                         // Settings, and usually a Quick Settings tile); see WorkProfileRepository's
-                        // own doc for why this app doesn't add a second one.
-                        if (uiState.hasWorkProfile) {
+                        // own doc for why this app doesn't add a second one. One row per entry —
+                        // almost always 0 or 1 in practice, since stock Android only provisions one
+                        // real Work Profile per user, but list-shaped so it stays correct if that
+                        // ever isn't true.
+                        uiState.workProfiles.forEach { workProfile ->
                             CardDivider()
                             ClickableRow(
-                                title = "Work Profile",
-                                subtitle = if (uiState.isWorkProfilePaused) "Paused" else "Active",
+                                title = workProfile.label,
+                                subtitle = if (workProfile.isPaused) "Paused" else "Active",
                                 onClick = { runCatching { context.startActivity(onRequestWorkProfileSettingsIntent()) } },
                                 testTag = "work_profile_row",
                                 trailing = { NavigationChevron() },

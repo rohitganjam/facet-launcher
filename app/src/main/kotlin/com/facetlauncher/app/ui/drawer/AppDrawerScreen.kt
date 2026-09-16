@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.drawer
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.UserHandle
 import android.net.Uri
 import android.provider.ContactsContract
 import androidx.activity.compose.BackHandler
@@ -91,6 +92,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
+import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
@@ -163,8 +165,8 @@ private const val EDGE_ZONE_WIDTH_DP = 48
 fun AppDrawerScreen(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
-    /** Whether a Work Profile currently exists — see [com.facetlauncher.app.ui.launcher.LauncherUiState.hasWorkProfile]'s own doc for why this isn't just inferred from [apps]. */
-    hasWorkProfile: Boolean = false,
+    /** Every genuine Work Profile currently on this device — see [com.facetlauncher.app.ui.launcher.LauncherUiState.workProfiles]'s own doc for why this isn't just inferred from [apps]. One tab per entry, in addition to the always-present Personal tab (which also carries [AppProfile.OTHER] apps — an unclassifiable profile, like an OEM clone/dual-app profile, badged but not split into its own tab). */
+    workProfiles: List<WorkProfileInfo> = emptyList(),
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     gridState: LazyGridState = rememberLazyGridState(),
@@ -186,9 +188,13 @@ fun AppDrawerScreen(
     /** `null` when Secure Folder isn't installed — see [DrawerSearchBar]'s own doc for why this isn't Work-Profile-style enumeration. */
     secureFolderIntent: Intent? = null,
     onOpenSecureFolder: (Intent) -> Unit = {},
+    /** Shown for [com.facetlauncher.app.data.PrivateSpaceState.Locked]/`.Unlocked`, hidden for `.NotConfigured`. */
+    showPrivateSpaceRow: Boolean = false,
+    onPrivateSpaceRowClick: () -> Unit = {},
     contacts: List<ContactInfo> = emptyList(),
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    onAppInfo: (AppInfo) -> Unit = {},
     /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -215,9 +221,21 @@ fun AppDrawerScreen(
     // Browse mode is scoped to the selected tab; search spans every profile regardless of which
     // tab is active — the tab is a browsing filter, not a search filter (decided explicitly: the
     // whole point of switching tabs is narrowing what you scroll through, not what you can find).
-    var selectedTab by remember { mutableStateOf(DrawerTab.PERSONAL) }
-    val tabScopedApps = remember(apps, isSearching, selectedTab) {
-        if (isSearching || !hasWorkProfile) apps else apps.filter { it.profile == selectedTab.toAppProfile() }
+    val drawerTabs = remember(workProfiles) { listOf(DrawerTab.Personal) + workProfiles.map { DrawerTab.Work(it.handle, it.label) } }
+    var selectedTab by remember { mutableStateOf<DrawerTab>(DrawerTab.Personal) }
+    // A Work Profile can vanish (unenrolled) while its tab is selected — fall back to Personal
+    // rather than keep filtering by a handle that no longer resolves to anything.
+    LaunchedEffect(drawerTabs) {
+        if (selectedTab !in drawerTabs) selectedTab = DrawerTab.Personal
+    }
+    val tabScopedApps = remember(apps, isSearching, selectedTab, workProfiles) {
+        when {
+            isSearching || workProfiles.isEmpty() -> apps
+            else -> when (val tab = selectedTab) {
+                DrawerTab.Personal -> apps.filter { it.profile == AppProfile.PERSONAL || it.profile == AppProfile.OTHER }
+                is DrawerTab.Work -> apps.filter { it.userHandle == tab.handle }
+            }
+        }
     }
     val filteredApps = remember(tabScopedApps, query) { rankBySearchRelevance(tabScopedApps, query) { it.label } }
     val groupUseCase = remember { GroupAppsByLetterUseCase() }
@@ -282,13 +300,16 @@ fun AppDrawerScreen(
                 onNavigateToSettings = onNavigateToSettings,
                 secureFolderIntent = secureFolderIntent,
                 onOpenSecureFolder = onOpenSecureFolder,
+                showPrivateSpaceRow = showPrivateSpaceRow,
+                onPrivateSpaceRowClick = onPrivateSpaceRowClick,
             )
         }
 
         // Browse-mode only (see isSearching's own doc above) — hidden entirely on a device with
         // no Work Profile, so this is a genuine no-op for the common case.
-        if (hasWorkProfile && !isSearching) {
+        if (workProfiles.isNotEmpty() && !isSearching) {
             DrawerProfileTabRow(
+                tabs = drawerTabs,
                 selected = selectedTab,
                 onSelect = { selectedTab = it },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -314,6 +335,7 @@ fun AppDrawerScreen(
                 onClearSearch = { onQueryChanged("") },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
                 onRequestQuickAddState = onRequestQuickAddState,
                 onFavoritesAction = onFavoritesAction,
                 onDockAction = onDockAction,
@@ -351,6 +373,7 @@ fun AppDrawerScreen(
                     badgeCounts = badgeCounts,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
+                    onAppInfo = onAppInfo,
                     onRequestQuickAddState = onRequestQuickAddState,
                     onFavoritesAction = onFavoritesAction,
                     onDockAction = onDockAction,
@@ -371,6 +394,7 @@ fun AppDrawerScreen(
                     badgeCounts = badgeCounts,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
+                    onAppInfo = onAppInfo,
                     onRequestQuickAddState = onRequestQuickAddState,
                     onFavoritesAction = onFavoritesAction,
                     onDockAction = onDockAction,
@@ -424,6 +448,8 @@ fun AppDrawerScreen(
                 onNavigateToSettings = onNavigateToSettings,
                 secureFolderIntent = secureFolderIntent,
                 onOpenSecureFolder = onOpenSecureFolder,
+                showPrivateSpaceRow = showPrivateSpaceRow,
+                onPrivateSpaceRowClick = onPrivateSpaceRowClick,
                 modifier = Modifier.imePadding(),
             )
         }
@@ -472,13 +498,19 @@ fun AppDrawerScreen(
 /** Duration for [DrawerProfileTabRow]'s selection-indicator slide — matches `DockPickerTabRow`'s own `TAB_TRANSITION_DURATION_MS`. */
 private const val DRAWER_TAB_TRANSITION_DURATION_MS = 220
 
-/** Which profile's apps the App Drawer is currently browsing — a browse-mode filter only, see [AppDrawerScreen]'s own `isSearching` doc. */
-private enum class DrawerTab {
-    PERSONAL,
-    WORK,
-    ;
-
-    fun toAppProfile(): AppProfile = if (this == WORK) AppProfile.WORK else AppProfile.PERSONAL
+/**
+ * Which profile's apps the App Drawer is currently browsing — a browse-mode filter only, see
+ * [AppDrawerScreen]'s own `isSearching` doc. [Personal] is always present and merges
+ * [AppProfile.PERSONAL] with [AppProfile.OTHER] (an unclassifiable profile — most commonly an OEM
+ * clone/dual-app profile — gets a badge on its tile, not its own tab, since below API 35 there's
+ * no way to positively identify what it actually is). [Work] is one per live, positively-classified
+ * Work Profile handle — almost always 0 or 1 in practice (stock Android provisions at most one),
+ * but keyed by the real handle rather than the display category so it stays correct even if that
+ * ever isn't true.
+ */
+private sealed class DrawerTab {
+    data object Personal : DrawerTab()
+    data class Work(val handle: UserHandle, val label: String) : DrawerTab()
 }
 
 /**
@@ -487,9 +519,8 @@ private enum class DrawerTab {
  * reads as the same visual language rather than a one-off.
  */
 @Composable
-private fun DrawerProfileTabRow(selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
-    val tabs = DrawerTab.entries
-    val selectedIndex = tabs.indexOf(selected)
+private fun DrawerProfileTabRow(tabs: List<DrawerTab>, selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
+    val selectedIndex = tabs.indexOf(selected).coerceAtLeast(0)
     val density = LocalDensity.current
     var rowSizePx by remember { mutableStateOf(IntSize.Zero) }
 
@@ -519,16 +550,20 @@ private fun DrawerProfileTabRow(selected: DrawerTab, onSelect: (DrawerTab) -> Un
         Row {
             tabs.forEach { tab ->
                 val isSelected = tab == selected
+                val testTagSuffix = when (tab) {
+                    DrawerTab.Personal -> "personal"
+                    is DrawerTab.Work -> "work_${tab.handle.hashCode()}"
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clickable(onClick = { onSelect(tab) })
-                        .testTag("drawer_profile_tab_${tab.name.lowercase()}")
+                        .testTag("drawer_profile_tab_$testTagSuffix")
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = if (tab == DrawerTab.PERSONAL) "Personal" else "Work",
+                        text = if (tab == DrawerTab.Personal) "Personal" else (tab as DrawerTab.Work).label,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) Surface else Ink,
                     )
@@ -553,6 +588,8 @@ private fun DrawerSearchBar(
     onNavigateToSettings: () -> Unit,
     secureFolderIntent: Intent? = null,
     onOpenSecureFolder: (Intent) -> Unit = {},
+    showPrivateSpaceRow: Boolean = false,
+    onPrivateSpaceRowClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -604,6 +641,13 @@ private fun DrawerSearchBar(
                         modifier = Modifier.testTag("drawer_search_overflow_secure_folder"),
                     )
                 }
+                if (showPrivateSpaceRow) {
+                    ThemedDropdownMenuItem(
+                        label = "Private Space",
+                        onClick = { menuExpanded = false; onPrivateSpaceRowClick() },
+                        modifier = Modifier.testTag("drawer_search_overflow_private_space"),
+                    )
+                }
             }
         }
     }
@@ -639,6 +683,7 @@ private fun DrawerSearchResults(
     onClearSearch: () -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
@@ -690,6 +735,7 @@ private fun DrawerSearchResults(
                                     badgeStyle = badgeStyle,
                                     onRequestShortcuts = onRequestShortcuts,
                                     onLaunchShortcut = onLaunchShortcut,
+                                    onAppInfo = onAppInfo,
                                     onRequestQuickAddState = onRequestQuickAddState,
                                     onFavoritesAction = onFavoritesAction,
                                     onDockAction = onDockAction,
@@ -702,7 +748,7 @@ private fun DrawerSearchResults(
                     }
                 }
             } else {
-                items(apps, key = { "app_" + it.packageName + it.activityName + it.profile }) { app ->
+                items(apps, key = { "app_" + it.packageName + it.activityName + it.userHandle.hashCode() }) { app ->
                     DrawerAppRow(
                         app = app,
                         onClick = { onAppClick(app) },
@@ -713,6 +759,7 @@ private fun DrawerSearchResults(
                         badgeStyle = badgeStyle,
                         onRequestShortcuts = onRequestShortcuts,
                         onLaunchShortcut = onLaunchShortcut,
+                        onAppInfo = onAppInfo,
                         onRequestQuickAddState = onRequestQuickAddState,
                         onFavoritesAction = onFavoritesAction,
                         onDockAction = onDockAction,
@@ -1010,6 +1057,7 @@ private fun DrawerListContent(
     badgeCounts: Map<String, Int>,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
@@ -1037,7 +1085,7 @@ private fun DrawerListContent(
                         .testTag("header_$letter"),
                 )
             }
-            items(appsInGroup, key = { it.packageName + it.activityName + it.profile }) { app ->
+            items(appsInGroup, key = { it.packageName + it.activityName + it.userHandle.hashCode() }) { app ->
                 DrawerAppRow(
                     app = app,
                     onClick = { onAppClick(app) },
@@ -1048,6 +1096,7 @@ private fun DrawerListContent(
                     badgeStyle = badgeStyle,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
+                    onAppInfo = onAppInfo,
                     onRequestQuickAddState = onRequestQuickAddState,
                     onFavoritesAction = onFavoritesAction,
                     onDockAction = onDockAction,
@@ -1072,6 +1121,7 @@ private fun DrawerAppRow(
     badgeStyle: NotificationBadgeStyle,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -1106,6 +1156,7 @@ private fun DrawerAppRow(
                     size = itemSize.iconSizeDp.dp,
                     contentDescription = null,
                     isWorkApp = app.profile == AppProfile.WORK,
+                    isOtherProfileApp = app.profile == AppProfile.OTHER,
                 )
             }
             Text(text = app.label, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight), color = DrawerAppTextColor)
@@ -1117,6 +1168,7 @@ private fun DrawerAppRow(
             onDismissRequest = { menuExpanded = false },
             onRequestShortcuts = onRequestShortcuts,
             onLaunchShortcut = onLaunchShortcut,
+            onAppInfo = onAppInfo,
             onRequestQuickAddState = onRequestQuickAddState,
             onFavoritesAction = onFavoritesAction,
             onDockAction = onDockAction,
@@ -1159,6 +1211,7 @@ private fun DrawerGridContent(
     badgeCounts: Map<String, Int>,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
@@ -1182,7 +1235,7 @@ private fun DrawerGridContent(
             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(apps, key = { it.packageName + it.activityName + it.profile }) { app ->
+            items(apps, key = { it.packageName + it.activityName + it.userHandle.hashCode() }) { app ->
                 DrawerGridTile(
                     app = app,
                     onClick = { onAppClick(app) },
@@ -1192,6 +1245,7 @@ private fun DrawerGridContent(
                     badgeStyle = badgeStyle,
                     onRequestShortcuts = onRequestShortcuts,
                     onLaunchShortcut = onLaunchShortcut,
+                    onAppInfo = onAppInfo,
                     onRequestQuickAddState = onRequestQuickAddState,
                     onFavoritesAction = onFavoritesAction,
                     onDockAction = onDockAction,
@@ -1216,6 +1270,7 @@ private fun DrawerGridTile(
     badgeStyle: NotificationBadgeStyle,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -1243,6 +1298,7 @@ private fun DrawerGridTile(
                 notificationCount = badgeCount,
                 badgeStyle = badgeStyle,
                 isWorkApp = app.profile == AppProfile.WORK,
+                isOtherProfileApp = app.profile == AppProfile.OTHER,
             )
             if (showLabel) {
                 Spacer(modifier = Modifier.height(7.dp))
@@ -1263,6 +1319,7 @@ private fun DrawerGridTile(
             onDismissRequest = { menuExpanded = false },
             onRequestShortcuts = onRequestShortcuts,
             onLaunchShortcut = onLaunchShortcut,
+            onAppInfo = onAppInfo,
             onRequestQuickAddState = onRequestQuickAddState,
             onFavoritesAction = onFavoritesAction,
             onDockAction = onDockAction,

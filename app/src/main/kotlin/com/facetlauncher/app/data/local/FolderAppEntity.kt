@@ -17,7 +17,7 @@ import com.facetlauncher.app.data.model.AppProfile
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["folderId", "packageName", "activityName", "profile"], unique = true)],
+    indices = [Index(value = ["folderId", "packageName", "activityName", "userId"], unique = true)],
 )
 data class FolderAppEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -26,4 +26,6 @@ data class FolderAppEntity(
     val activityName: String,
     val position: Int,
     val profile: AppProfile = AppProfile.PERSONAL,
+    /** The real `UserHandle.hashCode()` this app came from (`getIdentifier()` itself is hidden API, not in the public SDK — see [Migrations.MIGRATION_19_20]) — the actual identity key; [profile] is display-only. */
+    val userId: Int = -1,
 )

@@ -2,7 +2,6 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -55,7 +54,7 @@ class DockAppDaoTest {
         dao.upsert(DockAppEntity(packageName = "com.example.b", activityName = ".Main", position = 1))
 
         // When one is deleted by its component
-        dao.deleteByComponent("com.example.a", ".Main", AppProfile.PERSONAL)
+        dao.deleteByComponent("com.example.a", ".Main", -1)
 
         // Then only the other remains
         val result = dao.observeAll().first()

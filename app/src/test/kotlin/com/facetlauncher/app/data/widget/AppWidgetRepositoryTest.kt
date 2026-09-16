@@ -48,17 +48,23 @@ class AppWidgetRepositoryTest {
 
     /**
      * A real [AppRepository] (not a mock) backing [AppWidgetRepository]'s own delegated
-     * `profileFor`/`resolveUserHandle` — [workHandle], when given, is stubbed to resolve as a
-     * genuine Work Profile via `getLauncherUserInfo` (`userType = USER_TYPE_PROFILE_MANAGED`),
-     * matching the real API 35+ check `AppRepository.profileFor` now does, so these tests aren't
-     * silently dependent on Robolectric's default simulated SDK level being above or below 35.
+     * `profileFor`/`resolveUserHandle` — [workHandle]/[privateHandle], when given, are stubbed to
+     * resolve as a genuine Work Profile/Private Space via `getLauncherUserInfo`
+     * (`userType = USER_TYPE_PROFILE_MANAGED`/`USER_TYPE_PROFILE_PRIVATE`), matching the real API
+     * 35+ check `AppRepository.profileFor` now does, so these tests aren't silently dependent on
+     * Robolectric's default simulated SDK level being above or below 35.
      */
-    private fun fakeAppRepository(userManager: UserManager, workHandle: UserHandle? = null): AppRepository {
+    private fun fakeAppRepository(userManager: UserManager, workHandle: UserHandle? = null, privateHandle: UserHandle? = null): AppRepository {
         val launcherApps = mock(LauncherApps::class.java)
         if (workHandle != null) {
             val info = mock(LauncherUserInfo::class.java)
             `when`(info.userType).thenReturn(UserManager.USER_TYPE_PROFILE_MANAGED)
             `when`(launcherApps.getLauncherUserInfo(workHandle)).thenReturn(info)
+        }
+        if (privateHandle != null) {
+            val info = mock(LauncherUserInfo::class.java)
+            `when`(info.userType).thenReturn(UserManager.USER_TYPE_PROFILE_PRIVATE)
+            `when`(launcherApps.getLauncherUserInfo(privateHandle)).thenReturn(info)
         }
         return AppRepository(launcherApps, userManager, context)
     }
@@ -102,7 +108,7 @@ class AppWidgetRepositoryTest {
         val provider = ComponentName("com.example.widgets", ".MyWidgetProvider")
 
         // When building the bind intent
-        val intent = repository.createBindIntent(appWidgetId = 7, provider = provider, profile = AppProfile.PERSONAL)
+        val intent = repository.createBindIntent(appWidgetId = 7, provider = provider, userHandle = Process.myUserHandle())
 
         // Then it's a real ACTION_APPWIDGET_BIND intent addressed at this widget id/provider
         assertEquals(AppWidgetManager.ACTION_APPWIDGET_BIND, intent.action)
@@ -263,46 +269,69 @@ class AppWidgetRepositoryTest {
 
     @Test
     @Config(sdk = [35])
-    fun `bindAppWidgetIdIfAllowed resolves the Work Profile handle and binds against it`() {
-        // Given a Work Profile alongside the primary user
+    fun `getWidgetProviderOptions and getInstalledProviders exclude Private Space providers`() {
+        // Given a Private Space alongside the primary user, each with its own provider — Hub
+        // widgets from Private Space are explicitly out of scope (its apps only ever appear in
+        // their own dedicated screen)
+        val appInfo = ApplicationInfo().apply { packageName = "com.example.widgets" }
+        val packageInfo = PackageInfo().apply { packageName = "com.example.widgets"; applicationInfo = appInfo }
+        shadowOf(context.packageManager).installPackage(packageInfo)
         val personalHandle = Process.myUserHandle()
-        val workHandle = mock(UserHandle::class.java)
+        val privateHandle = mock(UserHandle::class.java)
         val userManager = mock(UserManager::class.java)
-        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, privateHandle))
+        val appWidgetManager = mock(AppWidgetManager::class.java)
+        val personalProvider = AppWidgetProviderInfo().apply { provider = ComponentName("com.example.widgets", ".Clock") }.withResolvableLabel(appInfo)
+        val privateProvider = AppWidgetProviderInfo().apply { provider = ComponentName("com.example.widgets", ".Clock") }.withResolvableLabel(appInfo)
+        `when`(appWidgetManager.getInstalledProvidersForProfile(personalHandle)).thenReturn(listOf(personalProvider))
+        `when`(appWidgetManager.getInstalledProvidersForProfile(privateHandle)).thenReturn(listOf(privateProvider))
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, privateHandle = privateHandle))
+
+        // Then only the personal profile's provider survives, in both entry points
+        assertEquals(listOf(AppProfile.PERSONAL), repository.getWidgetProviderOptions().map { it.profile })
+        assertEquals(listOf(personalProvider), repository.getInstalledProviders())
+    }
+
+    @Test
+    fun `bindAppWidgetIdIfAllowed binds against exactly the handle it's given, not re-derived from anything else`() {
+        // Given a Work Profile handle — bindAppWidgetIdIfAllowed no longer re-resolves a handle
+        // from a display AppProfile internally; the caller (e.g. WidgetProviderOption.userHandle)
+        // is trusted to hand over the real one directly.
+        val workHandle = mock(UserHandle::class.java)
         val appWidgetManager = mock(AppWidgetManager::class.java)
         val provider = ComponentName("com.example.widgets", ".Clock")
         `when`(appWidgetManager.bindAppWidgetIdIfAllowed(7, workHandle, provider, null)).thenReturn(true)
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle))
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
 
-        // When binding a Work Profile widget
-        val bound = repository.bindAppWidgetIdIfAllowed(appWidgetId = 7, provider = provider, profile = AppProfile.WORK)
+        // When binding against that exact handle
+        val bound = repository.bindAppWidgetIdIfAllowed(appWidgetId = 7, provider = provider, userHandle = workHandle)
 
-        // Then it resolved to the Work Profile's own handle, not the primary user's
+        // Then the bind call carried that same handle straight through
         assertTrue(bound)
     }
 
     @Test
-    fun `bindAppWidgetIdIfAllowed returns false when WORK is requested but no Work Profile exists`() {
-        // Given no Work Profile on this device
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
+    fun `bindAppWidgetIdIfAllowed returns false when the system declines to auto-bind`() {
+        // Given the system requires the user to confirm via its own bind-permission dialog
+        val appWidgetManager = mock(AppWidgetManager::class.java)
+        val provider = ComponentName("com.example.widgets", ".Clock")
+        `when`(appWidgetManager.bindAppWidgetIdIfAllowed(7, Process.myUserHandle(), provider, null)).thenReturn(false)
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
 
-        // Then there's no handle to bind against — false, not a crash
-        assertFalse(repository.bindAppWidgetIdIfAllowed(appWidgetId = 7, provider = ComponentName("com.example.widgets", ".Clock"), profile = AppProfile.WORK))
+        // Then the repository surfaces that as false, not a crash — the caller launches createBindIntent instead
+        assertFalse(repository.bindAppWidgetIdIfAllowed(appWidgetId = 7, provider = provider, userHandle = Process.myUserHandle()))
     }
 
     @Test
-    @Config(sdk = [35])
     fun `createBindIntent for a Work Profile widget carries EXTRA_APPWIDGET_PROVIDER_PROFILE`() {
-        // Given a Work Profile alongside the primary user
-        val personalHandle = Process.myUserHandle()
+        // Given a Work Profile handle — createBindIntent no longer re-derives it from a display
+        // AppProfile internally, the caller hands over the real handle directly.
         val workHandle = mock(UserHandle::class.java)
-        val userManager = mock(UserManager::class.java)
-        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle))
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val provider = ComponentName("com.example.widgets", ".Clock")
 
-        // When building the bind intent for a Work Profile provider
-        val intent = repository.createBindIntent(appWidgetId = 7, provider = provider, profile = AppProfile.WORK)
+        // When building the bind intent for that provider
+        val intent = repository.createBindIntent(appWidgetId = 7, provider = provider, userHandle = workHandle)
 
         // Then the system's own bind-permission dialog is told which profile this is
         assertEquals(workHandle, intent.getParcelableExtra<UserHandle>(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE))

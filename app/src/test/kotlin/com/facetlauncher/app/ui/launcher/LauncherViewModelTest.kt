@@ -2,12 +2,14 @@ package com.facetlauncher.app.ui.launcher
 
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,10 +24,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class LauncherViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -40,9 +45,9 @@ class LauncherViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun fakeWorkProfileRepository(hasWorkProfile: Boolean = false): WorkProfileRepository {
+    private fun fakeWorkProfileRepository(workProfiles: List<WorkProfileInfo> = emptyList()): WorkProfileRepository {
         val repository = mock(WorkProfileRepository::class.java)
-        `when`(repository.hasWorkProfile()).thenReturn(flowOf(hasWorkProfile))
+        `when`(repository.observeWorkProfiles()).thenReturn(flowOf(workProfiles))
         return repository
     }
 
@@ -57,6 +62,7 @@ class LauncherViewModelTest {
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(apps))
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
@@ -64,6 +70,7 @@ class LauncherViewModelTest {
             GetInstalledAppsUseCase(repository),
             ensureActiveFacet,
             cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
             seedDefaultDock,
             settingsRepository,
             fakeWorkProfileRepository(),
@@ -89,6 +96,7 @@ class LauncherViewModelTest {
         `when`(repository.observeInstalledApps()).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
@@ -96,6 +104,7 @@ class LauncherViewModelTest {
             GetInstalledAppsUseCase(repository),
             ensureActiveFacet,
             cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
             seedDefaultDock,
             settingsRepository,
             fakeWorkProfileRepository(),
@@ -120,6 +129,7 @@ class LauncherViewModelTest {
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(onboardingCompleted = false)))
@@ -127,6 +137,7 @@ class LauncherViewModelTest {
             GetInstalledAppsUseCase(repository),
             ensureActiveFacet,
             cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
             seedDefaultDock,
             settingsRepository,
             fakeWorkProfileRepository(),
@@ -145,26 +156,57 @@ class LauncherViewModelTest {
     }
 
     @Test
-    fun `reflects hasWorkProfile from WorkProfileRepository`() = runTest {
+    fun `reflects workProfiles from WorkProfileRepository`() = runTest {
         // Given a Work Profile that exists
         val repository = mock(AppRepository::class.java)
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val workProfile = WorkProfileInfo(handle = mock(android.os.UserHandle::class.java), isPaused = false, label = "Work")
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
             ensureActiveFacet,
             cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
             seedDefaultDock,
             settingsRepository,
-            fakeWorkProfileRepository(hasWorkProfile = true),
+            fakeWorkProfileRepository(listOf(workProfile)),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then the ui state reflects it
-        assertTrue(viewModel.uiState.value.hasWorkProfile)
+        assertEquals(listOf(workProfile), viewModel.uiState.value.workProfiles)
+    }
+
+    @Test
+    fun `runs repairOrphanedProfileRows once on init`() = runTest {
+        // Given a fresh ViewModel
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+
+        // When it's constructed
+        LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveFacet,
+            cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
+            seedDefaultDock,
+            settingsRepository,
+            fakeWorkProfileRepository(),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the one-time backfill pass ran
+        org.mockito.Mockito.verify(repairOrphanedProfileRows).invoke()
     }
 }

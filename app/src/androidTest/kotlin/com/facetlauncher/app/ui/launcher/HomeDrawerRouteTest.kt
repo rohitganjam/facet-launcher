@@ -36,6 +36,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.PrivateSpaceRepository
+import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.DefaultAppRepository
@@ -88,10 +90,12 @@ import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
+import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
+import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
@@ -130,6 +134,7 @@ class HomeDrawerRouteTest {
         onNavigateToFacetSettings: (Long) -> Unit = {},
         onNavigateToManageFacets: () -> Unit = {},
         onboardingCompleted: Boolean = false,
+        privateSpaceState: PrivateSpaceState = PrivateSpaceState.NotConfigured,
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -232,10 +237,20 @@ class HomeDrawerRouteTest {
                         appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
+                    RepairOrphanedProfileRowsUseCase(
+                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        FolderRepository(database.folderDao(), appRepository),
+                    ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     settingsRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
+            }
+            val privateSpaceRepository = remember {
+                mock(PrivateSpaceRepository::class.java).also { repo ->
+                    `when`(repo.observePrivateSpaceState()).thenReturn(flowOf(privateSpaceState))
+                    `when`(repo.observePrivateSpaceApps()).thenReturn(flowOf(emptyList()))
+                }
             }
             val drawerViewModel = remember {
                 val settingsRepository = SettingsRepository(
@@ -244,11 +259,12 @@ class HomeDrawerRouteTest {
                     ),
                 )
                 DrawerViewModel(
+                    appRepository,
                     settingsRepository,
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
-                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java), appRepository),
+                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
                     NotificationBadgeRepository(),
                     NotificationAccessRepository(context),
                     RankBySearchRelevanceUseCase(),
@@ -262,7 +278,11 @@ class HomeDrawerRouteTest {
                     RemoveFolderFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
+                    privateSpaceRepository,
                 )
+            }
+            val privateSpaceViewModel = remember {
+                PrivateSpaceViewModel(privateSpaceRepository, RankBySearchRelevanceUseCase())
             }
             val hubViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
@@ -346,6 +366,7 @@ class HomeDrawerRouteTest {
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,
+                    privateSpaceViewModel = privateSpaceViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
                     facetViewModel = facetViewModel,
@@ -518,6 +539,50 @@ class HomeDrawerRouteTest {
         // Then it closes back to Home
         composeRule.onNodeWithText("FAVORITES").assertExists()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun systemBackFromPrivateSpaceReturnsToTheDrawerNotHome() {
+        // Given the drawer is open with Private Space unlocked, and Private Space itself opened
+        // via the overflow menu
+        setContent(privateSpaceState = PrivateSpaceState.Unlocked)
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+        composeRule.onNodeWithTag("drawer_search_overflow_private_space").performClick()
+        settleAnimation()
+        composeRule.onNodeWithTag("private_space_screen_overlay").assertIsDisplayed()
+
+        // When the system back gesture fires once
+        Espresso.pressBack()
+        settleAnimation()
+
+        // Then it returns to the regular Drawer — not all the way to Home
+        composeRule.onNodeWithTag("private_space_screen_overlay").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+
+        // And a second back press then closes the Drawer to Home, same as normal
+        Espresso.pressBack()
+        settleAnimation()
+        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun overflowMenuPrivateSpaceRowWhileLockedDoesNotOpenTheScreen() {
+        // Given the drawer is open with Private Space locked (still configured, so the row shows)
+        setContent(privateSpaceState = PrivateSpaceState.Locked)
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+
+        // When tapping the "Private Space" row
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+        composeRule.onNodeWithTag("drawer_search_overflow_private_space").performClick()
+        settleAnimation()
+
+        // Then it doesn't open the screen — a locked space triggers the OS unlock flow instead,
+        // never a direct navigation (see HomeDrawerRoute's onPrivateSpaceRowClick)
+        composeRule.onNodeWithTag("private_space_screen_overlay").assertIsNotDisplayed()
     }
 
     @Test

@@ -18,6 +18,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** In-memory fake — mirrors `FavoriteAppRepositoryTest`'s `FakeFavoriteAppDao`. */
 private class FakeFacetDockAppDao : FacetDockAppDao {
@@ -28,7 +30,7 @@ private class FakeFacetDockAppDao : FacetDockAppDao {
 
     override suspend fun upsert(dockApp: FacetDockAppEntity): Long {
         state.value = state.value.filterNot {
-            it.facetId == dockApp.facetId && it.packageName == dockApp.packageName && it.activityName == dockApp.activityName && it.profile == dockApp.profile
+            it.facetId == dockApp.facetId && it.packageName == dockApp.packageName && it.activityName == dockApp.activityName && it.userId == dockApp.userId
         } + dockApp
         return 0
     }
@@ -37,25 +39,28 @@ private class FakeFacetDockAppDao : FacetDockAppDao {
         state.value = state.value.filterNot { it.id == dockApp.id }
     }
 
-    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String, profile: AppProfile) {
+    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String, userId: Int) {
         state.value = state.value.filterNot {
-            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName && it.profile == profile
+            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName && it.userId == userId
         }
     }
 
-    override suspend fun deleteByPackage(packageName: String, profile: AppProfile) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.profile == profile }
+    override suspend fun deleteByPackage(packageName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
     }
 
-    override suspend fun deleteByProfile(profile: AppProfile) {
-        state.value = state.value.filterNot { it.profile == profile }
+    override suspend fun deleteByUserId(userId: Int) {
+        state.value = state.value.filterNot { it.userId == userId }
     }
 
     override suspend fun deleteAllForFacet(facetId: Long) {
         state.value = state.value.filterNot { it.facetId == facetId }
     }
+
+    override suspend fun getOrphaned(): List<FacetDockAppEntity> = state.value.filter { it.userId == -1 }
 }
 
+@RunWith(RobolectricTestRunner::class)
 class FacetDockAppRepositoryTest {
 
     private fun appInfo(letter: Char) =
@@ -174,6 +179,25 @@ class FacetDockAppRepositoryTest {
 
         val items = repository.observeDockItems(1).first()
         assertEquals(listOf(PlacedItem.SingleApp(a), PlacedItem.FolderItem(folder)), items)
+    }
+
+    @Test
+    fun `removeByUserId only removes the matching user's rows, leaving a same-category colliding profile's rows intact`() = runTest {
+        // Given two rows in different facets that share the same display profile (both OTHER —
+        // e.g. a clone-profile collision below API 35) but come from two distinct real handles
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val dao = FakeFacetDockAppDao()
+        dao.upsert(FacetDockAppEntity(facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
+        dao.upsert(FacetDockAppEntity(facetId = 2, packageName = "com.example.b", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 20))
+        val repository = repository(appRepository, dao)
+
+        // When removing only the first handle's rows
+        repository.removeByUserId(10)
+
+        // Then only that handle's row is gone — the other colliding-category row survives
+        assertEquals(emptyList<AppInfo>(), repository.observeDockAppsForFacet(1).first())
+        assertEquals(listOf(20), dao.observeForFacet(2).first().map { it.userId })
     }
 
     @Test
