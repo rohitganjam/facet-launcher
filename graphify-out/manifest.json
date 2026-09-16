@@ -2712,9 +2712,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/03-reactive-data-flow.md": {
-    "mtime": 1789531919.9212718,
-    "seen": 1789532716.027841,
-    "ast_hash": "fc4200664f5746eeb4cb1dac01568d8d",
+    "mtime": 1789543967.8498776,
+    "seen": 1789544106.518591,
+    "ast_hash": "59f270a0192cea3ae871b1eb8d551246",
     "semantic_hash": ""
   },
   "docs/architecture/04-package-structure.md": {
@@ -2790,8 +2790,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1789543863.589719,
-    "seen": 1789543872.472105,
+    "mtime": 1789544019.7267861,
+    "seen": 1789544106.5185988,
     "ast_hash": "32218ed97206dab1270e90db74f997dd",
     "semantic_hash": ""
   },
