@@ -36,9 +36,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1789532512.6730201,
-    "seen": 1789532716.027835,
-    "ast_hash": "148bf8fe61a5467133e9cb238cdff765",
+    "mtime": 1789534613.915633,
+    "seen": 1789537920.903826,
+    "ast_hash": "0869aefbab102904d6fab98766840bac",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppRepository.kt": {
-    "mtime": 1789531919.909356,
-    "seen": 1789532716.027623,
-    "ast_hash": "e9ed8096a6053eef48b21be5f8f3a2dc",
+    "mtime": 1789533033.9996397,
+    "seen": 1789537920.903637,
+    "ast_hash": "24f8b7ee56d98418774159924175cac4",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppShortcutRepository.kt": {
@@ -1668,9 +1668,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/AppRepositoryTest.kt": {
-    "mtime": 1789531919.9162908,
-    "seen": 1789532716.027767,
-    "ast_hash": "7ffb7fbf6cd9f6679d00a186b07822ff",
+    "mtime": 1789533078.4612541,
+    "seen": 1789537920.903765,
+    "ast_hash": "3ca3e0b7d8fe9af4e91979c08b73d797",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/AppShortcutRepositoryTest.kt": {
@@ -2304,9 +2304,9 @@
     "semantic_hash": ""
   },
   "scripts/release.sh": {
-    "mtime": 1789532498.985844,
-    "seen": 1789532716.0278249,
-    "ast_hash": "610ffd73d950f962ed85a27141acb8f2",
+    "mtime": 1789534599.3335218,
+    "seen": 1789537920.903817,
+    "ast_hash": "dbcb32a178d71c0a8bcf5a422a76a60a",
     "semantic_hash": ""
   },
   "play-store-assets/build_screenshot.py": {
@@ -2790,15 +2790,21 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1789531919.9223332,
-    "seen": 1789532716.027848,
-    "ast_hash": "78560b764f74f07e115946b8ba8b368d",
+    "mtime": 1789537353.9949057,
+    "seen": 1789537920.9038389,
+    "ast_hash": "ffef44e8cd46755f9906ea35e2caf393",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
     "mtime": 1789532654.649763,
     "seen": 1789532716.0278242,
     "ast_hash": "bde40c248427cf4d4959213815fb360a",
+    "semantic_hash": ""
+  },
+  "scripts/gen-release-notes.py": {
+    "mtime": 1789534577.81544,
+    "seen": 1789537920.903815,
+    "ast_hash": "06f0be3894fda229f935810a1f0b4799",
     "semantic_hash": ""
   }
 }
