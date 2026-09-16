@@ -1,18 +1,16 @@
-# Facet Launcher 0.1.7
+# Facet Launcher 0.1.8
 
 ## New Features
-- (none)
+- Added an "About Facet Launcher" screen in Settings with the app version and links to the Play Store listing and Discord.
+- App pickers (Favorites, Dock, and Folder) now have a sort control, letting you sort not-yet-added apps alphabetically, by last used, by install date, or by last updated, with an ascending/descending toggle.
 
 ## Fixes
-- Fixed an issue where adding a new Private Space while the launcher was already running could leave the app list out of date until you restarted the launcher.
-- Fixed a rare crash that could occur while loading the list of installed apps if a single app's info failed to load; the launcher now skips that one app instead of crashing.
+- Fixed the "Last used" sort option in app pickers so it properly prompts you to grant Usage Access permission instead of trying to apply without it.
 
 ## Improvements
 - (none)
 
 ## Internal
-- Update knowledge graph (x2).
-- Add per-entry guard around AppInfo construction in AppRepository.getInstalledApps(), matching the existing per-profile getActivityList() guard.
-- Add scripts/gen-release-notes.py and wire it into release.sh to auto-generate categorized RELEASE_NOTES.md via `claude -p` after a successful build (best-effort, non-blocking).
-- Release 0.1.6: bump versionName/versionCode.
-- release.sh now requires a clean working tree before building and records the built commit in scripts/last-release.json for future release-notes generation; backfilled last-release.json for the 0.1.6 build.
+- Consolidated the three near-duplicate app picker screens into a shared AppPickerScreen and AppSortControl component.
+- Updated knowledge graph.
+- Release 0.1.7.
