@@ -2,7 +2,9 @@ package com.facetlauncher.app
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.LauncherApps
 import android.os.Bundle
+import android.os.Process
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -20,11 +22,14 @@ import com.facetlauncher.app.ui.onboarding.OnboardingScreen
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LauncherActivity : ComponentActivity() {
 
     private val viewModel: LauncherViewModel by viewModels()
+
+    @Inject lateinit var launcherApps: LauncherApps
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,9 +81,21 @@ class LauncherActivity : ComponentActivity() {
     }
 
     private fun launchApp(app: AppInfo) {
+        val component = ComponentName(app.packageName, app.activityName)
+        if (app.userHandle != Process.myUserHandle()) {
+            // A plain launch Intent doesn't resolve correctly for a Work Profile/Private
+            // Space/clone-profile activity — LauncherApps.startMainActivity is the API a launcher
+            // must use to cross into another profile. Uses app.userHandle directly — the exact
+            // handle this AppInfo was enumerated from — rather than re-deriving one from its
+            // display AppProfile category, since two distinct real profiles can share that
+            // category (see AppProfile's own doc) and a re-derived handle could resolve to the
+            // wrong one.
+            runCatching { launcherApps.startMainActivity(component, app.userHandle, null, null) }
+            return
+        }
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
-            component = ComponentName(app.packageName, app.activityName)
+            this.component = component
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         runCatching { startActivity(intent) }

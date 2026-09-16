@@ -1,13 +1,27 @@
 package com.facetlauncher.app.data.model
 
+import android.os.Process
+import android.os.UserHandle
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.ImageBitmap
 
-/** A single launchable app activity, as surfaced by `LauncherApps`. */
+/**
+ * A single launchable app activity, as surfaced by `LauncherApps`. [userHandle] is the real
+ * identity — the actual Android user this activity was enumerated from, used for launch routing,
+ * Favorites/Dock/Folder dedup, and uninstall cleanup; [profile] is a display-only category
+ * derived from it (see [AppProfile]'s own doc) and must never be used in place of [userHandle]
+ * for any of those. `@Immutable`, not just a plain `data class` — [UserHandle] is a framework
+ * type the Compose compiler can't infer stability for on its own, and this class is passed
+ * through Compose pervasively (Home/Drawer/Dock rows).
+ */
+@Immutable
 data class AppInfo(
     val packageName: String,
     val activityName: String,
     val label: String,
     val icon: ImageBitmap?,
+    val profile: AppProfile = AppProfile.PERSONAL,
+    val userHandle: UserHandle = Process.myUserHandle(),
 )
 
 /**

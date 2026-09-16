@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.local.FolderDao
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.local.FolderWithApps
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.Folder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -26,7 +27,7 @@ class FolderRepository @Inject constructor(
     /** Every folder, hydrated against installed apps. A 0-app (or all-uninstalled) folder is still emitted. */
     fun observeFolders(): Flow<List<Folder>> {
         return combine(folderDao.observeAllWithApps(), appRepository.observeInstalledApps()) { folders, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
             folders.map { it.hydrate(installedByComponent) }
         }
     }
@@ -45,27 +46,32 @@ class FolderRepository @Inject constructor(
     suspend fun addAppToFolder(folderId: Long, app: AppInfo) {
         val currentSize = folderDao.observeAllWithApps().first().find { it.folder.id == folderId }?.apps?.size ?: 0
         folderDao.upsertFolderApp(
-            FolderAppEntity(folderId = folderId, packageName = app.packageName, activityName = app.activityName, position = currentSize),
+            FolderAppEntity(folderId = folderId, packageName = app.packageName, activityName = app.activityName, position = currentSize, profile = app.profile, userId = app.userHandle.hashCode()),
         )
     }
 
     /** No auto-delete when this empties the folder out — a 0-app folder persists until explicitly deleted. */
     suspend fun removeAppFromFolder(folderId: Long, app: AppInfo) {
-        folderDao.deleteFolderApp(folderId, app.packageName, app.activityName)
+        folderDao.deleteFolderApp(folderId, app.packageName, app.activityName, app.userHandle.hashCode())
     }
 
     /** Rewrites `position` across this folder's own membership to match [orderedApps]' order — the Folder Detail screen's own drag-to-reorder. */
     suspend fun reorderFolderApps(folderId: Long, orderedApps: List<AppInfo>) {
         orderedApps.forEachIndexed { index, app ->
             folderDao.upsertFolderApp(
-                FolderAppEntity(folderId = folderId, packageName = app.packageName, activityName = app.activityName, position = index),
+                FolderAppEntity(folderId = folderId, packageName = app.packageName, activityName = app.activityName, position = index, profile = app.profile, userId = app.userHandle.hashCode()),
             )
         }
     }
 
-    /** Uninstall cleanup — removes every folder's membership row for [packageName]; folders themselves are untouched. */
-    suspend fun removeByPackage(packageName: String) {
-        folderDao.deleteFolderAppsByPackage(packageName)
+    /** Uninstall cleanup — removes every folder's membership row for [packageName] (belonging to [userId]); folders themselves are untouched. */
+    suspend fun removeByPackage(packageName: String, userId: Int) {
+        folderDao.deleteFolderAppsByPackage(packageName, userId)
+    }
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
+    suspend fun removeByUserId(userId: Int) {
+        folderDao.deleteFolderAppsByUserId(userId)
     }
 
     /** F14 Backup & Restore export — raw, unhydrated folders + membership rows. */
@@ -83,9 +89,17 @@ class FolderRepository @Inject constructor(
         folderDao.deleteAllFolders()
     }
 
-    private fun FolderWithApps.hydrate(installedByComponent: Map<Pair<String, String>, AppInfo>): Folder {
+    /** Rows still at the migration's `-1` `userId` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
+    suspend fun getOrphanedRows(): List<FolderAppEntity> = folderDao.getOrphanedFolderApps()
+
+    /** Backfills [entity]'s real `userId` once [RepairOrphanedProfileRowsUseCase] resolves it — updates in place (same `id`), doesn't create a new row. */
+    suspend fun backfillUserId(entity: FolderAppEntity, userId: Int) {
+        folderDao.upsertFolderApp(entity.copy(userId = userId))
+    }
+
+    private fun FolderWithApps.hydrate(installedByComponent: Map<Triple<String, String, Int>, AppInfo>): Folder {
         val hydratedApps = apps.sortedBy { it.position }
-            .mapNotNull { installedByComponent[it.packageName to it.activityName] }
+            .mapNotNull { installedByComponent[Triple(it.packageName, it.activityName, it.userId)] }
         return Folder(id = folder.id, name = folder.name, apps = hydratedApps)
     }
 }

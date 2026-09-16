@@ -96,6 +96,7 @@ fun FolderContentsSheet(
     gridColumns: Int = 5,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
+    onAppInfo: (AppInfo) -> Unit = {},
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
 
@@ -181,6 +182,7 @@ fun FolderContentsSheet(
                             onAppClick = { app -> onDismissRequest(); onAppClick(app) },
                             onRequestShortcuts = onRequestShortcuts,
                             onLaunchShortcut = onLaunchShortcut,
+                            onAppInfo = onAppInfo,
                             onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
                         )
                     } else {
@@ -189,6 +191,7 @@ fun FolderContentsSheet(
                             onAppClick = { app -> onDismissRequest(); onAppClick(app) },
                             onRequestShortcuts = onRequestShortcuts,
                             onLaunchShortcut = onLaunchShortcut,
+                            onAppInfo = onAppInfo,
                             onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
                         )
                     }
@@ -238,6 +241,7 @@ private fun FolderContentsList(
     onAppClick: (AppInfo) -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -249,6 +253,7 @@ private fun FolderContentsList(
                 onClick = { onAppClick(app) },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
                 onRemoveFromFolder = { onRemoveFromFolder(app) },
             )
         }
@@ -263,6 +268,7 @@ private fun FolderContentsAppRow(
     onClick: () -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -286,6 +292,7 @@ private fun FolderContentsAppRow(
             onDismissRequest = { menuExpanded = false },
             onRequestShortcuts = onRequestShortcuts,
             onLaunchShortcut = onLaunchShortcut,
+            onAppInfo = onAppInfo,
             removeFromFolderId = 0L,
             onRemoveFromFolder = { _, _ -> onRemoveFromFolder() },
         )
@@ -300,6 +307,7 @@ private fun FolderContentsGrid(
     onAppClick: (AppInfo) -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -312,6 +320,7 @@ private fun FolderContentsGrid(
                         onClick = { onAppClick(app) },
                         onRequestShortcuts = onRequestShortcuts,
                         onLaunchShortcut = onLaunchShortcut,
+                        onAppInfo = onAppInfo,
                         onRemoveFromFolder = { onRemoveFromFolder(app) },
                     )
                 }
@@ -327,6 +336,7 @@ private fun FolderContentsGridTile(
     onClick: () -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -355,6 +365,7 @@ private fun FolderContentsGridTile(
             onDismissRequest = { menuExpanded = false },
             onRequestShortcuts = onRequestShortcuts,
             onLaunchShortcut = onLaunchShortcut,
+            onAppInfo = onAppInfo,
             removeFromFolderId = 0L,
             onRemoveFromFolder = { _, _ -> onRemoveFromFolder() },
         )

@@ -54,7 +54,7 @@ class DockAppDaoTest {
         dao.upsert(DockAppEntity(packageName = "com.example.b", activityName = ".Main", position = 1))
 
         // When one is deleted by its component
-        dao.deleteByComponent("com.example.a", ".Main")
+        dao.deleteByComponent("com.example.a", ".Main", -1)
 
         // Then only the other remains
         val result = dao.observeAll().first()

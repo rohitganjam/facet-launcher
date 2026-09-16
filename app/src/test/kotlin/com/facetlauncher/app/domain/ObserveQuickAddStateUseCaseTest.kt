@@ -5,7 +5,10 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class ObserveQuickAddStateUseCaseTest {
 
     private val useCase = ObserveQuickAddStateUseCase()

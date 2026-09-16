@@ -1,7 +1,7 @@
 package com.facetlauncher.app.data
 
 import android.content.pm.LauncherApps
-import android.os.Process
+import android.os.UserHandle
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.model.AppShortcut
@@ -19,13 +19,16 @@ import kotlinx.coroutines.withContext
  * long-press menu simply omits the quick-actions section.
  */
 @Singleton
-class AppShortcutRepository @Inject constructor(private val launcherApps: LauncherApps) {
+class AppShortcutRepository @Inject constructor(
+    private val launcherApps: LauncherApps,
+) {
 
     companion object {
         private const val MAX_SHORTCUTS = 5
     }
 
-    suspend fun getShortcuts(packageName: String): List<AppShortcut> = withContext(Dispatchers.Default) {
+    /** Fetches shortcuts for [packageName] in the specific real profile [userHandle] came from — the exact handle the calling [com.facetlauncher.app.data.model.AppInfo] carries, not re-derived from any display category. */
+    suspend fun getShortcuts(packageName: String, userHandle: UserHandle): List<AppShortcut> = withContext(Dispatchers.Default) {
         if (!launcherApps.hasShortcutHostPermission()) return@withContext emptyList()
         val query = LauncherApps.ShortcutQuery()
             .setPackage(packageName)
@@ -34,7 +37,7 @@ class AppShortcutRepository @Inject constructor(private val launcherApps: Launch
                     LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
                     LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED,
             )
-        runCatching { launcherApps.getShortcuts(query, Process.myUserHandle()) }
+        runCatching { launcherApps.getShortcuts(query, userHandle) }
             .getOrNull()
             .orEmpty()
             .filter { it.isEnabled }
@@ -48,13 +51,15 @@ class AppShortcutRepository @Inject constructor(private val launcherApps: Launch
                         .getOrNull()
                         ?.toBitmap()
                         ?.asImageBitmap(),
+                    userHandle = userHandle,
                 )
             }
     }
 
+    /** Launches [shortcut] in the real profile it carries — a no-op (not a crash) if that profile has since vanished (Work Profile unenrolled between fetch and tap). */
     fun launchShortcut(shortcut: AppShortcut) {
         runCatching {
-            launcherApps.startShortcut(shortcut.packageName, shortcut.id, null, null, Process.myUserHandle())
+            launcherApps.startShortcut(shortcut.packageName, shortcut.id, null, null, shortcut.userHandle)
         }
     }
 }

@@ -3,6 +3,8 @@ package com.facetlauncher.app.ui.launcher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileInfo
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -11,6 +13,7 @@ import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -50,6 +53,14 @@ data class LauncherUiState(
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /** Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted]. */
     val onboardingCompleted: Boolean = false,
+    /**
+     * Every genuine Work Profile currently on this device — sourced from [WorkProfileRepository]
+     * rather than inferred from `apps.any { it.profile == WORK }`, so the App Drawer's Work tab(s)
+     * stay visible (with an empty/paused state) while a profile is paused, instead of disappearing
+     * just because its apps momentarily aren't enumerable. List-shaped (not a boolean) so it stays
+     * correct even in the (today, rare) case of more than one — see [WorkProfileInfo]'s own doc.
+     */
+    val workProfiles: List<WorkProfileInfo> = emptyList(),
 )
 
 @HiltViewModel
@@ -57,8 +68,10 @@ class LauncherViewModel @Inject constructor(
     getInstalledApps: GetInstalledAppsUseCase,
     private val ensureActiveFacet: EnsureActiveFacetUseCase,
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
+    private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
     private val seedDefaultDock: SeedDefaultDockUseCase,
     private val settingsRepository: SettingsRepository,
+    private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LauncherUiState())
@@ -80,7 +93,7 @@ class LauncherViewModel @Inject constructor(
         // Live, not one-shot — an install/uninstall/update while Facet is in the foreground
         // (including via the app long-press menu's Uninstall action) must be reflected without
         // requiring a process restart; see AppRepository.observeInstalledApps.
-        combine(getInstalledApps.observe(), settingsRepository.settings) { apps, settings ->
+        combine(getInstalledApps.observe(), settingsRepository.settings, workProfileRepository.observeWorkProfiles()) { apps, settings, workProfiles ->
             LauncherUiState(
                 apps = apps,
                 isLoading = false,
@@ -91,12 +104,16 @@ class LauncherViewModel @Inject constructor(
                 iconRenderMode = settings.iconRenderMode,
                 launcherFontOption = settings.launcherFontOption,
                 onboardingCompleted = settings.onboardingCompleted,
+                workProfiles = workProfiles,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
         viewModelScope.launch { ensureActiveFacet() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }
+        // A single one-time pass, not a live collector (unlike the launches above/below it) — see
+        // RepairOrphanedProfileRowsUseCase's own doc.
+        viewModelScope.launch { repairOrphanedProfileRows() }
         // Not gated on the onboarding UI being shown or completed — a fresh install's dock is
         // seeded even if onboarding is killed/skipped partway through, see SeedDefaultDockUseCase.
         viewModelScope.launch { seedDefaultDock() }

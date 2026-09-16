@@ -83,7 +83,7 @@ class FavoriteAppDaoTest {
         )
 
         // When deleting it by component for just facet one
-        database.favoriteAppDao().deleteByComponent(facetOneId, "com.example.a", ".Main")
+        database.favoriteAppDao().deleteByComponent(facetOneId, "com.example.a", ".Main", -1)
 
         // Then only facet one's entry is gone
         assertTrue(database.favoriteAppDao().observeForFacet(facetOneId).first().isEmpty())

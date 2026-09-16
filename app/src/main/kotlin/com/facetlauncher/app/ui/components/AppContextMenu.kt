@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.components
 
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -51,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
@@ -116,6 +116,7 @@ fun AppContextMenu(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
     modifier: Modifier = Modifier,
+    onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -190,13 +191,24 @@ fun AppContextMenu(
                         modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AppIcon(icon = app.icon, size = AppIconSize.ROW_SPACIOUS, contentDescription = null)
+                        AppIcon(
+                            icon = app.icon,
+                            size = AppIconSize.ROW_SPACIOUS,
+                            contentDescription = null,
+                            isWorkApp = app.profile == AppProfile.WORK,
+                            isOtherProfileApp = app.profile == AppProfile.OTHER,
+                        )
                         Text(
                             text = app.label,
                             style = MaterialTheme.typography.titleLarge,
                             color = Ink,
                             modifier = Modifier.padding(start = 16.dp),
                         )
+                        if (app.profile == AppProfile.WORK) {
+                            WorkScopeBadge(modifier = Modifier.padding(start = 8.dp).testTag("app_context_menu_work_badge"))
+                        } else if (app.profile == AppProfile.OTHER) {
+                            OtherScopeBadge(modifier = Modifier.padding(start = 8.dp).testTag("app_context_menu_other_badge"))
+                        }
                     }
                     AppContextMenuItem(
                         label = "App info",
@@ -204,8 +216,7 @@ fun AppContextMenu(
                         leadingIcon = { Icon(imageVector = Icons.Outlined.Info, contentDescription = null, tint = Muted) },
                         onClick = {
                             onDismissRequest()
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", app.packageName, null))
-                            runCatching { context.startActivity(intent) }
+                            onAppInfo(app)
                         },
                     )
                     quickAddState.favoritesAction?.let { action ->
@@ -269,6 +280,11 @@ fun AppContextMenu(
                         leadingIcon = { Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = null, tint = ErrorColor) },
                         onClick = {
                             onDismissRequest()
+                            // Unlike App Info (LauncherApps.startAppDetailsActivity, see
+                            // AppRepository.openAppDetails), there's no public per-profile-targeted
+                            // uninstall API for a third-party launcher — the OS resolves this by
+                            // ambient calling context, same as every other launcher. A genuine
+                            // platform limitation, not an oversight.
                             val intent = Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null))
                             runCatching { context.startActivity(intent) }
                         },

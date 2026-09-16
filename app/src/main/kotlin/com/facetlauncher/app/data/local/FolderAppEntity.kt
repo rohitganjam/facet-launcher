@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.facetlauncher.app.data.model.AppProfile
 
 /** A folder's membership — which apps it contains, and their order within it. Global, shared by every placement of the folder. */
 @Entity(
@@ -16,7 +17,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["folderId", "packageName", "activityName"], unique = true)],
+    indices = [Index(value = ["folderId", "packageName", "activityName", "userId"], unique = true)],
 )
 data class FolderAppEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -24,4 +25,7 @@ data class FolderAppEntity(
     val packageName: String,
     val activityName: String,
     val position: Int,
+    val profile: AppProfile = AppProfile.PERSONAL,
+    /** The real `UserHandle.hashCode()` this app came from (`getIdentifier()` itself is hidden API, not in the public SDK — see [Migrations.MIGRATION_19_20]) — the actual identity key; [profile] is display-only. */
+    val userId: Int = -1,
 )

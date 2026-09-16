@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsActions
@@ -51,7 +52,7 @@ class AppearanceSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "appearance-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 defaultAppRepository = DefaultAppRepository(context)
                 val wallpaperRepository = com.facetlauncher.app.data.WallpaperRepository(
                     android.app.WallpaperManager.getInstance(context),

@@ -12,7 +12,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class FolderRepositoryTest {
 
     private fun appInfo(letter: Char) =
@@ -108,12 +111,36 @@ class FolderRepositoryTest {
         repository.addAppToFolder(folder2, app)
 
         // When that package is cleaned up (uninstall)
-        repository.removeByPackage(app.packageName)
+        repository.removeByPackage(app.packageName, app.userHandle.hashCode())
 
         // Then both folders survive, now with zero members
         val folders = repository.observeFolders().first()
         assertEquals(2, folders.size)
         assertTrue(folders.all { it.apps.isEmpty() })
+    }
+
+    @Test
+    fun `removeByUserId only removes the matching user's membership rows, leaving a same-category colliding profile's rows intact`() = runTest {
+        // Given the same package as a member of two folders, added by two distinct handles that
+        // share the same display profile (both OTHER — e.g. a clone-profile collision below API 35)
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val folderDao = FakeFolderDao()
+        val repository = FolderRepository(folderDao, appRepository)
+        val folderId = repository.createFolder("Games")
+        folderDao.upsertFolderApp(
+            com.facetlauncher.app.data.local.FolderAppEntity(folderId = folderId, packageName = "com.example.a", activityName = ".Main", position = 0, profile = com.facetlauncher.app.data.model.AppProfile.OTHER, userId = 10),
+        )
+        folderDao.upsertFolderApp(
+            com.facetlauncher.app.data.local.FolderAppEntity(folderId = folderId, packageName = "com.example.b", activityName = ".Main", position = 1, profile = com.facetlauncher.app.data.model.AppProfile.OTHER, userId = 20),
+        )
+
+        // When removing only the first handle's rows
+        repository.removeByUserId(10)
+
+        // Then only that handle's membership row is gone — the other colliding-category row survives
+        val remainingUserIds = folderDao.observeAllWithApps().first().single().apps.map { it.userId }
+        assertEquals(listOf(20), remainingUserIds)
     }
 
     @Test

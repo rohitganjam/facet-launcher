@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementDao
 import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -38,9 +39,9 @@ class DefaultFavoriteAppRepository @Inject constructor(
 
     fun observeDefaultFavorites(): Flow<List<AppInfo>> {
         return combine(defaultFavoriteAppDao.observeAll(), appRepository.observeInstalledApps()) { entities, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
             entities.sortedBy { it.position }
-                .mapNotNull { entity -> installedByComponent[entity.packageName to entity.activityName] }
+                .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)] }
         }
     }
 
@@ -52,11 +53,11 @@ class DefaultFavoriteAppRepository @Inject constructor(
             folderRepository.observeFolders(),
             appRepository.observeInstalledApps(),
         ) { appEntities, placements, folders, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
             val foldersById = folders.associateBy { it.id }
 
             val appItems = appEntities.mapNotNull { entity ->
-                installedByComponent[entity.packageName to entity.activityName]?.let { app ->
+                installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)]?.let { app ->
                     entity.position to PlacedItem.SingleApp(app)
                 }
             }
@@ -71,12 +72,12 @@ class DefaultFavoriteAppRepository @Inject constructor(
 
     suspend fun addFavorite(app: AppInfo, position: Int) {
         defaultFavoriteAppDao.upsert(
-            DefaultFavoriteAppEntity(packageName = app.packageName, activityName = app.activityName, position = position),
+            DefaultFavoriteAppEntity(packageName = app.packageName, activityName = app.activityName, position = position, profile = app.profile, userId = app.userHandle.hashCode()),
         )
     }
 
     suspend fun removeFavorite(app: AppInfo) {
-        defaultFavoriteAppDao.deleteByComponent(app.packageName, app.activityName)
+        defaultFavoriteAppDao.deleteByComponent(app.packageName, app.activityName, app.userHandle.hashCode())
     }
 
     suspend fun placeFolder(folderId: Long, position: Int) {
@@ -88,8 +89,13 @@ class DefaultFavoriteAppRepository @Inject constructor(
     }
 
     /** Uninstall cleanup — driven by [com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase]. */
-    suspend fun removeByPackage(packageName: String) {
-        defaultFavoriteAppDao.deleteByPackage(packageName)
+    suspend fun removeByPackage(packageName: String, userId: Int) {
+        defaultFavoriteAppDao.deleteByPackage(packageName, userId)
+    }
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
+    suspend fun removeByUserId(userId: Int) {
+        defaultFavoriteAppDao.deleteByUserId(userId)
     }
 
     /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
@@ -102,6 +108,14 @@ class DefaultFavoriteAppRepository @Inject constructor(
     /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
     suspend fun restoreDefaultFavorite(entity: DefaultFavoriteAppEntity) {
         defaultFavoriteAppDao.upsert(entity.copy(id = 0))
+    }
+
+    /** Rows still at the migration's `-1` `userId` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
+    suspend fun getOrphanedRows(): List<DefaultFavoriteAppEntity> = defaultFavoriteAppDao.getOrphaned()
+
+    /** Backfills [entity]'s real `userId` once [RepairOrphanedProfileRowsUseCase] resolves it — updates in place (same `id`), doesn't create a new row. */
+    suspend fun backfillUserId(entity: DefaultFavoriteAppEntity, userId: Int) {
+        defaultFavoriteAppDao.upsert(entity.copy(userId = userId))
     }
 
     /** F14 Backup & Restore import — places a restored folder (by its already-remapped [folderId]) into the default favorites list. */
@@ -119,7 +133,13 @@ class DefaultFavoriteAppRepository @Inject constructor(
         orderedItems.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> defaultFavoriteAppDao.upsert(
-                    DefaultFavoriteAppEntity(packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    DefaultFavoriteAppEntity(
+                        packageName = item.app.packageName,
+                        activityName = item.app.activityName,
+                        position = index,
+                        profile = item.app.profile,
+                        userId = item.app.userHandle.hashCode(),
+                    ),
                 )
                 is PlacedItem.FolderItem -> defaultFavoriteFolderPlacementDao.upsert(
                     DefaultFavoriteFolderPlacementEntity(folderId = item.folder.id, position = index),

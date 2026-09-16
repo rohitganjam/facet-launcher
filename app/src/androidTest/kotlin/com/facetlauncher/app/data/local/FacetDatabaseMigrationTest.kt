@@ -325,6 +325,56 @@ class FacetDatabaseMigrationTest {
         favoriteCursor.close()
     }
 
+    @Test
+    fun migration18To19AddsProfileColumnAndWidensUniqueIndicesWithoutLosingExistingRows() {
+        // Given a v18 database with one real row in each of favorite_apps (facetId-scoped, has a
+        // unique index), dock_apps (global, has a unique index), and widget_placements (keyed on
+        // appWidgetId, no index to widen) — every row predates Work Profile support.
+        val dbV18 = helper.createDatabase(TEST_DB, 18)
+        dbV18.execSQL(
+            "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
+                "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, calendarFontOption, calendarColorOption, " +
+                "calendarFontWeight, clockAlignment, calendarAlignment, clockZoneHeightDp, clockScale, overrideApps, appRowPosition, " +
+                "appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment, overridingFavorites, overrideDock, " +
+                "dockDisplayMode, overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv) VALUES " +
+                "(1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LAUNCHER_DEFAULT', " +
+                "'THEME', 'REGULAR', 'LEFT', 'LEFT', NULL, 0.8, 0, 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 0, 0, 'ICONS', 0, 1, NULL)",
+        )
+        dbV18.execSQL("INSERT INTO favorite_apps (facetId, packageName, activityName, position) VALUES (1, 'com.example.a', '.Main', 0)")
+        dbV18.execSQL("INSERT INTO dock_apps (packageName, activityName, position) VALUES ('com.example.b', '.Main', 0)")
+        dbV18.execSQL("INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan) VALUES (1, 'com.example.widget', '.WidgetProvider', 0, 0, 2, 2)")
+        dbV18.close()
+
+        // When migrating to v19
+        val dbV19 = helper.runMigrationsAndValidate(TEST_DB, 19, true, Migrations.MIGRATION_18_19)
+
+        // Then every existing row survived, defaulted to profile = 'PERSONAL' — nothing that
+        // predates Work Profile support should retroactively look like a Work Profile app.
+        val favoriteCursor = dbV19.query("SELECT profile FROM favorite_apps WHERE facetId = 1 AND packageName = 'com.example.a'")
+        assertTrue(favoriteCursor.moveToFirst())
+        assertEquals("PERSONAL", favoriteCursor.getString(favoriteCursor.getColumnIndexOrThrow("profile")))
+        favoriteCursor.close()
+
+        val dockCursor = dbV19.query("SELECT profile FROM dock_apps WHERE packageName = 'com.example.b'")
+        assertTrue(dockCursor.moveToFirst())
+        assertEquals("PERSONAL", dockCursor.getString(dockCursor.getColumnIndexOrThrow("profile")))
+        dockCursor.close()
+
+        val widgetCursor = dbV19.query("SELECT profile FROM widget_placements WHERE appWidgetId = 1")
+        assertTrue(widgetCursor.moveToFirst())
+        assertEquals("PERSONAL", widgetCursor.getString(widgetCursor.getColumnIndexOrThrow("profile")))
+        widgetCursor.close()
+
+        // ...and the widened unique index now allows a WORK-profile row sharing the exact same
+        // (facetId, packageName, activityName) as the existing PERSONAL row — the whole point of
+        // this migration: a personal and Work Profile copy of the same app must coexist as
+        // distinct favorite/dock rows instead of colliding on the old, profile-blind index.
+        dbV19.execSQL("INSERT INTO favorite_apps (facetId, packageName, activityName, position, profile) VALUES (1, 'com.example.a', '.Main', 1, 'WORK')")
+        val bothCursor = dbV19.query("SELECT profile FROM favorite_apps WHERE facetId = 1 AND packageName = 'com.example.a' ORDER BY profile")
+        assertEquals(2, bothCursor.count)
+        bothCursor.close()
+    }
+
     private companion object {
         const val TEST_DB = "facet-migration-test.db"
     }

@@ -4,6 +4,9 @@ import android.content.ContentResolver
 import android.provider.CalendarContract
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,6 +52,7 @@ open class CalendarRepository @Inject constructor(
     suspend fun getTodayEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(Dispatchers.IO) {
         val begin = startOfToday()
         val end = begin + DAY_MILLIS - 1
+        val today = LocalDate.now()
 
         val projection = arrayOf(
             CalendarContract.Instances.EVENT_ID,
@@ -71,6 +75,7 @@ open class CalendarRepository @Inject constructor(
                     val isAllDay = cursor.getInt(allDayCol) != 0
                     if (calendarIds != null && calendarId !in calendarIds) continue
                     if (isAllDay && !includeAllDay) continue
+                    if (isAllDay && !isOnLocalDate(cursor.getLong(beginCol), today)) continue
                     add(
                         CalendarEvent(
                             id = cursor.getLong(eventIdCol),
@@ -86,6 +91,16 @@ open class CalendarRepository @Inject constructor(
         }.orEmpty()
         events.sortedBy { it.startTimeMillis }
     }
+
+    /**
+     * All-day events are stored as UTC-midnight boundaries independent of device timezone, so
+     * [CalendarContract.Instances.query]'s overlap check against a *local*-midnight begin/end
+     * window can hand back yesterday's (or tomorrow's) all-day event whenever the device is ahead
+     * of or behind UTC. Re-derive the event's actual date from its UTC-anchored start and compare
+     * against today's local date instead of trusting the query window alone.
+     */
+    private fun isOnLocalDate(allDayStartMillis: Long, today: LocalDate): Boolean =
+        Instant.ofEpochMilli(allDayStartMillis).atZone(ZoneOffset.UTC).toLocalDate() == today
 
     private fun startOfToday(): Long = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, 0)

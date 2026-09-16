@@ -64,11 +64,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.ui.components.GestureHintOverlay
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
+import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
+import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
@@ -238,18 +241,23 @@ fun HomeDrawerRoute(
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
+    privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
     widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
     facetViewModel: FacetCarouselViewModel = hiltViewModel(),
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val drawerSettings by drawerViewModel.settings.collectAsStateWithLifecycle()
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
     val settingsResults by drawerViewModel.settingsResults.collectAsStateWithLifecycle()
     val drawerBadgeCounts by drawerViewModel.badgeCounts.collectAsStateWithLifecycle()
     val showContactsPermissionPrompt by drawerViewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle()
     val showContactsSettingPrompt by drawerViewModel.showContactsSettingPrompt.collectAsStateWithLifecycle()
+    val privateSpaceState by drawerViewModel.privateSpaceState.collectAsStateWithLifecycle()
+    val privateSpaceApps by privateSpaceViewModel.filteredApps.collectAsStateWithLifecycle()
+    var privateSpaceQuery by remember { mutableStateOf("") }
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
 
     if (homeUiState.isLoading) {
@@ -294,6 +302,7 @@ fun HomeDrawerRoute(
     // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
     // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
     var showWidgetPicker by remember { mutableStateOf(false) }
+    var showPrivateSpaceDrawer by remember { mutableStateOf(false) }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
     var draggingHandle by remember { mutableStateOf(false) }
     var drawerQuery by remember { mutableStateOf("") }
@@ -371,6 +380,7 @@ fun HomeDrawerRoute(
             listState.scrollToItem(0)
             gridState.scrollToItem(0)
             searchListState.scrollToItem(0)
+            showPrivateSpaceDrawer = false
         }
     }
 
@@ -390,6 +400,15 @@ fun HomeDrawerRoute(
         }
     }
 
+    // Clear the Private Space screen's own search whenever it closes — independent of the main
+    // Drawer's own query state (drawerQuery), which it never shares.
+    LaunchedEffect(showPrivateSpaceDrawer) {
+        if (!showPrivateSpaceDrawer) {
+            privateSpaceQuery = ""
+            privateSpaceViewModel.onQueryChanged("")
+        }
+    }
+
     // Cancel clock adjustment when navigating away from Home.
     LaunchedEffect(isDrawerOpen, isHubOpen, isFacetOpen) {
         if (isDrawerOpen || isHubOpen || isFacetOpen) {
@@ -397,10 +416,11 @@ fun HomeDrawerRoute(
         }
     }
 
-    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || showWidgetPicker) {
+    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || showWidgetPicker || showPrivateSpaceDrawer) {
         focusManager.clearFocus()
         when {
             showWidgetPicker -> showWidgetPicker = false
+            showPrivateSpaceDrawer -> showPrivateSpaceDrawer = false
             isDrawerOpen -> coroutineScope.launch { drawerAxis.close() }
             isHubOpen -> coroutineScope.launch { hubAxis.close() }
             isFacetOpen -> coroutineScope.launch { facetAxis.close() }
@@ -493,6 +513,7 @@ fun HomeDrawerRoute(
             homeAppsFontWeight = homeUiState.settings.homeAppsFontWeight,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
+            onAppInfo = drawerViewModel::openAppInfo,
             onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
             onFavoritesAction = drawerViewModel::onFavoritesAction,
             onDockAction = drawerViewModel::onDockAction,
@@ -634,6 +655,7 @@ fun HomeDrawerRoute(
 
         AppDrawerScreen(
             apps = apps,
+            workProfiles = launcherUiState.workProfiles,
             onAppClick = { app ->
                 focusManager.clearFocus()
                 onAppClick(app)
@@ -655,9 +677,20 @@ fun HomeDrawerRoute(
             onQueryChanged = { drawerQuery = it; drawerViewModel.onQueryChanged(it) },
             searchBarPosition = drawerSettings.searchBarPosition,
             onNavigateToSettings = onNavigateToSettings,
+            secureFolderIntent = drawerViewModel.secureFolderIntent,
+            onOpenSecureFolder = { intent -> runCatching { context.startActivity(intent) } },
+            showPrivateSpaceRow = privateSpaceState !is PrivateSpaceState.NotConfigured,
+            onPrivateSpaceRowClick = {
+                when (privateSpaceState) {
+                    is PrivateSpaceState.Unlocked -> showPrivateSpaceDrawer = true
+                    is PrivateSpaceState.Locked -> drawerViewModel.requestUnlockPrivateSpace()
+                    is PrivateSpaceState.NotConfigured -> Unit
+                }
+            },
             contacts = contactResults,
             onRequestShortcuts = drawerViewModel::getShortcuts,
             onLaunchShortcut = drawerViewModel::launchShortcut,
+            onAppInfo = drawerViewModel::openAppInfo,
             onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
             onFavoritesAction = drawerViewModel::onFavoritesAction,
             onDockAction = drawerViewModel::onDockAction,
@@ -682,6 +715,28 @@ fun HomeDrawerRoute(
                 .offset { IntOffset(0, ((1f - drawerAxis.progress.value) * containerHeightPx).toInt()) }
                 .nestedScroll(nestedScrollConnection),
         )
+
+        // Private Space — an in-place overlay over the App Drawer, same "sub-screen without
+        // leaving composition" precedent as the Hub widget picker below (one back press returns
+        // here; a second closes the Drawer to Home, per the BackHandler above).
+        AnimatedVisibility(
+            visible = showPrivateSpaceDrawer,
+            enter = fadeIn(animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
+            exit = fadeOut(animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
+            modifier = Modifier.testTag("private_space_screen_overlay"),
+        ) {
+            PrivateSpaceScreen(
+                state = privateSpaceState,
+                apps = privateSpaceApps,
+                query = privateSpaceQuery,
+                onQueryChanged = { privateSpaceQuery = it; privateSpaceViewModel.onQueryChanged(it) },
+                onAppClick = { app ->
+                    onAppClick(app)
+                    showPrivateSpaceDrawer = false
+                    coroutineScope.launch { drawerAxis.close() }
+                },
+            )
+        }
 
         // Add-widget picker — an in-place overlay (see the showWidgetPicker declaration above for
         // why), sliding in over the Hub the same direction a NavHost push would have, so it still

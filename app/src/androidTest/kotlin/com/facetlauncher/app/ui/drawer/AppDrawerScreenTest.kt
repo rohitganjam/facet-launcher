@@ -2,9 +2,12 @@ package com.facetlauncher.app.ui.drawer
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Parcel
+import android.os.UserHandle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.down
@@ -12,6 +15,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.moveTo
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -23,7 +27,9 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
+import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactConnectionType
@@ -37,6 +43,24 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+
+/**
+ * A real, distinct [UserHandle] for [id] — not `mock(UserHandle::class.java)`. Mockito bypasses
+ * the real constructor, so a mocked `UserHandle`'s private `mHandle` field is left at Java's
+ * default `0`, which is also the *real* primary user's own id — meaning `Process.myUserHandle()
+ * .equals(mock(UserHandle::class.java))` spuriously returns `true` on a real device/emulator
+ * (confirmed: this caused `AppDrawerScreen`'s Work-tab filter, which correctly compares real
+ * `UserHandle`s via `==`, to match the personal app too). `UserHandle`'s public `Parcel`
+ * constructor is the real, working way to get a genuinely distinct one for instrumented tests.
+ */
+private fun fakeUserHandle(id: Int): UserHandle {
+    val parcel = Parcel.obtain()
+    parcel.writeInt(id)
+    parcel.setDataPosition(0)
+    val handle = UserHandle(parcel)
+    parcel.recycle()
+    return handle
+}
 
 class AppDrawerScreenTest {
 
@@ -315,6 +339,86 @@ class AppDrawerScreenTest {
 
         // Then it navigates to settings
         assertEquals(true, settingsClicked)
+    }
+
+    @Test
+    fun overflowMenuHasNoSecureFolderRowWhenItIsNotInstalled() {
+        // Given Secure Folder isn't installed (no launch intent available)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {}, secureFolderIntent = null)
+            }
+        }
+
+        // When opening the overflow menu
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+
+        // Then there's no row to open it
+        composeRule.onNodeWithTag("drawer_search_overflow_secure_folder").assertDoesNotExist()
+    }
+
+    @Test
+    fun overflowMenuOpensSecureFolderWhenInstalled() {
+        // Given Secure Folder is installed
+        var openedIntent: Intent? = null
+        val secureFolderIntent = Intent(Intent.ACTION_MAIN)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    secureFolderIntent = secureFolderIntent,
+                    onOpenSecureFolder = { openedIntent = it },
+                )
+            }
+        }
+
+        // When opening the overflow menu and tapping "Open Secure Folder"
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+        composeRule.onNodeWithTag("drawer_search_overflow_secure_folder").performClick()
+
+        // Then it launches Secure Folder's own intent
+        assertEquals(secureFolderIntent, openedIntent)
+    }
+
+    @Test
+    fun overflowMenuHasNoPrivateSpaceRowWhenItIsNotConfigured() {
+        // Given Private Space isn't configured on this device
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {}, showPrivateSpaceRow = false)
+            }
+        }
+
+        // When opening the overflow menu
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+
+        // Then there's no row for it
+        composeRule.onNodeWithTag("drawer_search_overflow_private_space").assertDoesNotExist()
+    }
+
+    @Test
+    fun overflowMenuTapsThroughToPrivateSpaceWhenShown() {
+        // Given Private Space is configured (locked or unlocked — the row itself doesn't branch on which)
+        var clicked = false
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    showPrivateSpaceRow = true,
+                    onPrivateSpaceRowClick = { clicked = true },
+                )
+            }
+        }
+
+        // When opening the overflow menu and tapping "Private Space"
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+        composeRule.onNodeWithTag("drawer_search_overflow_private_space").performClick()
+
+        // Then the caller's own click handler fires — it's the one that decides whether that
+        // means opening the screen or triggering the OS unlock flow, based on the actual state
+        assertEquals(true, clicked)
     }
 
     @Test
@@ -700,5 +804,72 @@ class AppDrawerScreenTest {
 
         // Then the context menu opens
         composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun profileTabRowIsHiddenWithoutAWorkProfile() {
+        // Given the default, no-Work-Profile case (hasWorkProfile defaults to false)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {})
+            }
+        }
+
+        // Then no Personal/Work switcher renders — a device without a Work Profile sees no change
+        composeRule.onNodeWithTag("drawer_profile_tab_personal").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_profile_tab_work").assertDoesNotExist()
+    }
+
+    @Test
+    fun switchingToTheWorkTabShowsOnlyWorkProfileApps() {
+        // Given a mix of personal and Work Profile apps, with a Work Profile present — the two
+        // copies differ by real UserHandle (not just display profile), since that's the actual
+        // identity the Work tab filters on (AppDrawerScreen's tabScopedApps).
+        val workHandle = fakeUserHandle(10)
+        val mixedApps = listOf(
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "A App", icon = null, profile = AppProfile.PERSONAL),
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "A App", icon = null, profile = AppProfile.WORK, userHandle = workHandle),
+        )
+        val workProfiles = listOf(WorkProfileInfo(handle = workHandle, isPaused = false, label = "Work"))
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = mixedApps, onAppClick = {}, workProfiles = workProfiles)
+            }
+        }
+
+        // Then the Personal tab is selected by default, showing just one "A App"
+        composeRule.onNodeWithTag("drawer_profile_tab_personal").assertExists()
+        composeRule.onAllNodesWithText("A App").assertCountEquals(1)
+
+        // When switching to the Work tab
+        composeRule.onNodeWithTag("drawer_profile_tab_work_${workHandle.hashCode()}").performClick()
+
+        // Then it still shows one "A App" — the Work Profile copy, not the personal one collapsed together
+        composeRule.onAllNodesWithText("A App").assertCountEquals(1)
+    }
+
+    @Test
+    fun searchingShowsResultsFromBothProfilesRegardlessOfTheSelectedTab() {
+        // Given the same package installed in both profiles, and the Personal tab selected — the
+        // two copies differ by real UserHandle, not just display profile.
+        val workHandle = fakeUserHandle(10)
+        val mixedApps = listOf(
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "Chat", icon = null, profile = AppProfile.PERSONAL),
+            AppInfo(packageName = "com.example.a", activityName = ".Main", label = "Chat", icon = null, profile = AppProfile.WORK, userHandle = workHandle),
+        )
+        val workProfiles = listOf(WorkProfileInfo(handle = workHandle, isPaused = false, label = "Work"))
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = mixedApps, onAppClick = {}, workProfiles = workProfiles, query = query, onQueryChanged = { query = it })
+            }
+        }
+
+        // When searching for it
+        query = "Chat"
+
+        // Then both the personal and Work Profile copies show up as separate result rows — search
+        // isn't scoped to the tab. 3, not 2: the search field's own typed value also matches "Chat".
+        composeRule.onAllNodesWithText("Chat").assertCountEquals(3)
     }
 }

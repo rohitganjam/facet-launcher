@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.onboarding
 
+import android.app.Activity
+import android.app.Instrumentation
 import android.content.Intent
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -63,6 +65,11 @@ class SetDefaultLauncherSheetTest {
     @Test
     fun `tapping Set as default launches the request intent`() {
         setContent(isDefaultLauncher = false)
+        // The request action is test-only and no real Activity handles it — stub a response so
+        // Espresso-Intents short-circuits the launch instead of letting it actually resolve and
+        // throw ActivityNotFoundException (same pattern as AppContextMenuTest).
+        Intents.intending(hasAction(requestIntentAction))
+            .respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, null))
 
         composeRule.onNodeWithTag("onboarding_set_default").performClick()
 

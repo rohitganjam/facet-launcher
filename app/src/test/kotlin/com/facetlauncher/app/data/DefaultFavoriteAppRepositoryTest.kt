@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.local.DefaultFavoriteAppDao
 import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** In-memory fake — simpler than mocking every [DefaultFavoriteAppDao] method for this repository's needs. */
 private class FakeDefaultFavoriteAppDao : DefaultFavoriteAppDao {
@@ -25,7 +28,7 @@ private class FakeDefaultFavoriteAppDao : DefaultFavoriteAppDao {
 
     override suspend fun upsert(defaultFavoriteApp: DefaultFavoriteAppEntity): Long {
         state.value = state.value.filterNot {
-            it.packageName == defaultFavoriteApp.packageName && it.activityName == defaultFavoriteApp.activityName
+            it.packageName == defaultFavoriteApp.packageName && it.activityName == defaultFavoriteApp.activityName && it.userId == defaultFavoriteApp.userId
         } + defaultFavoriteApp
         return 0
     }
@@ -34,21 +37,29 @@ private class FakeDefaultFavoriteAppDao : DefaultFavoriteAppDao {
         state.value = state.value.filterNot { it.id == defaultFavoriteApp.id }
     }
 
-    override suspend fun deleteByComponent(packageName: String, activityName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName }
+    override suspend fun deleteByComponent(packageName: String, activityName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName && it.userId == userId }
     }
 
-    override suspend fun deleteByPackage(packageName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteByPackage(packageName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
+    }
+
+    override suspend fun deleteByUserId(userId: Int) {
+        state.value = state.value.filterNot { it.userId == userId }
     }
 
     override suspend fun deleteAll() {
         state.value = emptyList()
     }
+
+    override suspend fun getOrphaned(): List<DefaultFavoriteAppEntity> = state.value.filter { it.userId == -1 }
 }
 
+@RunWith(RobolectricTestRunner::class)
 class DefaultFavoriteAppRepositoryTest {
 
+    /** Defaults to the primary user's handle — [android.os.UserHandle.hashCode] is always `0` for it (see `AppRepository`'s own doc). */
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
@@ -65,8 +76,8 @@ class DefaultFavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeDefaultFavoriteAppDao()
-        dao.upsert(DefaultFavoriteAppEntity(packageName = b.packageName, activityName = b.activityName, position = 1))
-        dao.upsert(DefaultFavoriteAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
+        dao.upsert(DefaultFavoriteAppEntity(packageName = b.packageName, activityName = b.activityName, position = 1, userId = 0))
+        dao.upsert(DefaultFavoriteAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
 
         // When observing the default favorites list
         val result = repository(dao, appRepository).observeDefaultFavorites().first()
@@ -81,7 +92,7 @@ class DefaultFavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val dao = FakeDefaultFavoriteAppDao()
-        dao.upsert(DefaultFavoriteAppEntity(packageName = "com.example.uninstalled", activityName = ".Main", position = 0))
+        dao.upsert(DefaultFavoriteAppEntity(packageName = "com.example.uninstalled", activityName = ".Main", position = 0, userId = 0))
 
         // When observing the default favorites list
         val result = repository(dao, appRepository).observeDefaultFavorites().first()
@@ -98,7 +109,7 @@ class DefaultFavoriteAppRepositoryTest {
         val installedApps = MutableStateFlow(listOf(a))
         `when`(appRepository.observeInstalledApps()).thenReturn(installedApps)
         val dao = FakeDefaultFavoriteAppDao()
-        dao.upsert(DefaultFavoriteAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
+        dao.upsert(DefaultFavoriteAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
 
         val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
         val collectJob = launch { repository(dao, appRepository).observeDefaultFavorites().collect { emissions.send(it) } }
@@ -166,5 +177,24 @@ class DefaultFavoriteAppRepositoryTest {
 
         // Then it's gone
         assertEquals(emptyList<AppInfo>(), repository.observeDefaultFavorites().first())
+    }
+
+    @Test
+    fun `removeByUserId only removes the matching user's rows, leaving a same-category colliding profile's rows intact`() = runTest {
+        // Given two rows that share the same display profile (both OTHER — e.g. a clone-profile
+        // collision below API 35) but come from two distinct real handles
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val dao = FakeDefaultFavoriteAppDao()
+        dao.upsert(DefaultFavoriteAppEntity(packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
+        dao.upsert(DefaultFavoriteAppEntity(packageName = "com.example.b", activityName = ".Main", position = 1, profile = AppProfile.OTHER, userId = 20))
+        val repository = repository(dao, appRepository)
+
+        // When removing only the first handle's rows
+        repository.removeByUserId(10)
+
+        // Then only that handle's row is gone — the other colliding-category row survives
+        val remaining = dao.observeAll().first()
+        assertEquals(listOf(20), remaining.map { it.userId })
     }
 }

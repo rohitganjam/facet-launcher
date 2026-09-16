@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.local.FavoriteAppDao
 import com.facetlauncher.app.data.local.FavoriteAppEntity
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** In-memory fake — simpler than mocking every [FavoriteAppDao] method for this repository's needs. */
 private class FakeFavoriteAppDao : FavoriteAppDao {
@@ -27,7 +30,7 @@ private class FakeFavoriteAppDao : FavoriteAppDao {
 
     override suspend fun upsert(favoriteApp: FavoriteAppEntity): Long {
         state.value = state.value.filterNot {
-            it.facetId == favoriteApp.facetId && it.packageName == favoriteApp.packageName && it.activityName == favoriteApp.activityName
+            it.facetId == favoriteApp.facetId && it.packageName == favoriteApp.packageName && it.activityName == favoriteApp.activityName && it.userId == favoriteApp.userId
         } + favoriteApp
         return 0
     }
@@ -36,21 +39,28 @@ private class FakeFavoriteAppDao : FavoriteAppDao {
         state.value = state.value.filterNot { it.id == favoriteApp.id }
     }
 
-    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String) {
+    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String, userId: Int) {
         state.value = state.value.filterNot {
-            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName
+            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName && it.userId == userId
         }
     }
 
-    override suspend fun deleteByPackage(packageName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteByPackage(packageName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
+    }
+
+    override suspend fun deleteByUserId(userId: Int) {
+        state.value = state.value.filterNot { it.userId == userId }
     }
 
     override suspend fun deleteAllForFacet(facetId: Long) {
         state.value = state.value.filterNot { it.facetId == facetId }
     }
+
+    override suspend fun getOrphaned(): List<FavoriteAppEntity> = state.value.filter { it.userId == -1 }
 }
 
+@RunWith(RobolectricTestRunner::class)
 class FavoriteAppRepositoryTest {
 
     private fun appInfo(letter: Char) =
@@ -126,6 +136,25 @@ class FavoriteAppRepositoryTest {
 
         // Then it's gone
         assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForFacet(1).first())
+    }
+
+    @Test
+    fun `removeByUserId only removes the matching user's rows, leaving a same-category colliding profile's rows intact`() = runTest {
+        // Given two rows in different facets that share the same display profile (both OTHER —
+        // e.g. a clone-profile collision below API 35) but come from two distinct real handles
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val dao = FakeFavoriteAppDao()
+        dao.upsert(FavoriteAppEntity(facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
+        dao.upsert(FavoriteAppEntity(facetId = 2, packageName = "com.example.b", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 20))
+        val repository = repository(dao, appRepository)
+
+        // When removing only the first handle's rows
+        repository.removeByUserId(10)
+
+        // Then only that handle's row is gone — the other colliding-category row survives
+        assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForFacet(1).first())
+        assertEquals(listOf(20), dao.observeForFacet(2).first().map { it.userId })
     }
 
     @Test

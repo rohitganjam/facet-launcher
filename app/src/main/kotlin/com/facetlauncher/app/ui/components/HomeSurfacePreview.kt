@@ -91,6 +91,7 @@ fun HomeSurfacePreview(
                     badgeStyle = NotificationBadgeStyle.DOT,
                     onRequestShortcuts = { emptyList() },
                     onLaunchShortcut = {},
+                    onAppInfo = {},
                     position = appRowPosition,
                     presentation = appRowPresentation,
                     labelColor = labelColor,

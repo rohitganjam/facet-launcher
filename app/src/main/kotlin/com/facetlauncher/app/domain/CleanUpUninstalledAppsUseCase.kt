@@ -7,7 +7,9 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import javax.inject.Inject
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /**
  * Permanently deletes an app's Favorites (every facet, plus the launcher-wide default list),
@@ -19,6 +21,15 @@ import kotlinx.coroutines.flow.collect
  * same app would otherwise silently restore its old slot/membership. Runs for as long as it's
  * collected — launched once, for the app's lifetime, from
  * [com.facetlauncher.app.ui.launcher.LauncherViewModel].
+ *
+ * Also collects [AppRepository.observeProfileRemoved] alongside the per-package stream: a Work
+ * Profile being unenrolled tears down every app in it atomically, with no guarantee each one also
+ * fires its own per-package uninstall event on the way out — so that case is handled as its own
+ * bulk `removeByUserId` sweep rather than relying on individual events for it. Scoped to the
+ * *specific* handle that was removed (via `Intent.EXTRA_USER`), not every row sharing its display
+ * [com.facetlauncher.app.data.model.AppProfile] category — two distinct profiles (e.g. a real Work
+ * Profile and a clone profile) can land on the same category, and a bulk-by-category sweep would
+ * wipe the surviving one's still-live rows too.
  */
 class CleanUpUninstalledAppsUseCase @Inject constructor(
     private val appRepository: AppRepository,
@@ -28,13 +39,25 @@ class CleanUpUninstalledAppsUseCase @Inject constructor(
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val folderRepository: FolderRepository,
 ) {
-    suspend operator fun invoke() {
-        appRepository.observeUninstalledPackages().collect { packageName ->
-            dockAppRepository.removeByPackage(packageName)
-            facetDockAppRepository.removeByPackage(packageName)
-            favoriteAppRepository.removeByPackage(packageName)
-            defaultFavoriteAppRepository.removeByPackage(packageName)
-            folderRepository.removeByPackage(packageName)
+    suspend operator fun invoke() = coroutineScope {
+        launch {
+            appRepository.observeUninstalledPackages().collect { (packageName, userId) ->
+                dockAppRepository.removeByPackage(packageName, userId)
+                facetDockAppRepository.removeByPackage(packageName, userId)
+                favoriteAppRepository.removeByPackage(packageName, userId)
+                defaultFavoriteAppRepository.removeByPackage(packageName, userId)
+                folderRepository.removeByPackage(packageName, userId)
+            }
+        }
+        launch {
+            appRepository.observeProfileRemoved().collect { handle ->
+                val userId = handle.hashCode()
+                dockAppRepository.removeByUserId(userId)
+                facetDockAppRepository.removeByUserId(userId)
+                favoriteAppRepository.removeByUserId(userId)
+                defaultFavoriteAppRepository.removeByUserId(userId)
+                folderRepository.removeByUserId(userId)
+            }
         }
     }
 }

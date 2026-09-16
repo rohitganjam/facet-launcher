@@ -2,12 +2,16 @@ package com.facetlauncher.app.ui.drawer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.PrivateSpaceRepository
+import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
@@ -49,6 +53,7 @@ private const val MAX_SETTINGS_RESULTS = 5
 /** Read-only settings needed to render the Drawer (icon visibility, opacity, left-edge rail toggle), plus F6's contacts search. */
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
+    private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val contactPermissionRepository: ContactPermissionRepository,
     private val contactRepository: ContactRepository,
@@ -66,10 +71,33 @@ class DrawerViewModel @Inject constructor(
     private val addFolderToDock: AddFolderToDockUseCase,
     private val removeFolderFromDock: RemoveFolderFromDockUseCase,
     private val folderRepository: FolderRepository,
+    private val secureFolderRepository: SecureFolderRepository,
+    private val privateSpaceRepository: PrivateSpaceRepository,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LauncherSettings())
+
+    /**
+     * `null` when Secure Folder isn't installed/available — gates the overflow menu's "Open
+     * Secure Folder" row entirely. A one-shot check (not a `Flow`): whether Secure Folder is
+     * installed essentially never changes mid-session, unlike Work Profile state.
+     */
+    val secureFolderIntent = secureFolderRepository.launchIntent()
+
+    /**
+     * Gates the overflow menu's "Private Space" row (shown for [PrivateSpaceState.Locked] and
+     * [PrivateSpaceState.Unlocked], hidden for [PrivateSpaceState.NotConfigured]) and its
+     * behavior. A live `StateFlow`, unlike [secureFolderIntent]'s one-shot `val` — lock state can
+     * change mid-session, unlike whether Secure Folder is installed.
+     */
+    val privateSpaceState: StateFlow<PrivateSpaceState> = privateSpaceRepository.observePrivateSpaceState()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PrivateSpaceState.NotConfigured)
+
+    /** Called when the overflow menu's "Private Space" row is tapped while [privateSpaceState] is [PrivateSpaceState.Locked]. */
+    fun requestUnlockPrivateSpace() {
+        privateSpaceRepository.requestUnlock()
+    }
 
     /** F13 — empty unless both the "Notification badges" setting is on and access is granted; see `ObserveHomeScreenStateUseCase`'s identical gating for Home. */
     val badgeCounts: StateFlow<Map<String, Int>> = combine(
@@ -182,9 +210,12 @@ class DrawerViewModel @Inject constructor(
     }
 
     /** F12's long-press context menu — fetched fresh per app, only when its menu actually opens. */
-    suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName)
+    suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName, app.userHandle)
 
     fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
+
+    /** F12's long-press "App info" row — see [AppRepository.openAppDetails]. */
+    fun openAppInfo(app: AppInfo) = appRepository.openAppDetails(app)
 
     fun onFavoritesAction(app: AppInfo, action: QuickPlacementAction) {
         viewModelScope.launch {

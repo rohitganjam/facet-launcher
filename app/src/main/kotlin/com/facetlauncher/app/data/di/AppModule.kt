@@ -5,13 +5,28 @@ import android.app.WallpaperManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.time.Clock
+import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+
+/**
+ * A [CoroutineScope] that lives as long as the process, for singletons that need to share a hot
+ * flow app-wide (e.g. [com.facetlauncher.app.data.AppRepository.observeInstalledApps]'s
+ * `shareIn`) rather than restart their upstream work per collector. Not tied to any UI lifecycle —
+ * never use it for anything that should stop when a screen/ViewModel goes away.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -23,9 +38,20 @@ object AppModule {
 
     @Provides
     @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @Provides
+    @Singleton
     fun provideLauncherApps(@ApplicationContext context: Context): LauncherApps =
         context.getSystemService(LauncherApps::class.java)
             ?: error("LauncherApps service unavailable on this device")
+
+    @Provides
+    @Singleton
+    fun provideUserManager(@ApplicationContext context: Context): UserManager =
+        context.getSystemService(UserManager::class.java)
+            ?: error("UserManager service unavailable on this device")
 
     @Provides
     @Singleton

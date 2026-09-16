@@ -8,7 +8,9 @@ import com.facetlauncher.app.data.local.FolderAppEntity
 import com.facetlauncher.app.data.local.FolderDao
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
+import android.os.UserHandle
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +21,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.robolectric.RobolectricTestRunner
 
 /** In-memory fake — simpler than mocking every [DockAppDao] method for this repository's needs. */
 private class FakeDockAppDao : DockAppDao {
@@ -29,7 +33,7 @@ private class FakeDockAppDao : DockAppDao {
     override fun observeAll(): Flow<List<DockAppEntity>> = state
 
     override suspend fun upsert(dockApp: DockAppEntity): Long {
-        state.value = state.value.filterNot { it.packageName == dockApp.packageName && it.activityName == dockApp.activityName } + dockApp
+        state.value = state.value.filterNot { it.packageName == dockApp.packageName && it.activityName == dockApp.activityName && it.userId == dockApp.userId } + dockApp
         return 0
     }
 
@@ -37,21 +41,29 @@ private class FakeDockAppDao : DockAppDao {
         state.value = state.value.filterNot { it.id == dockApp.id }
     }
 
-    override suspend fun deleteByComponent(packageName: String, activityName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName }
+    override suspend fun deleteByComponent(packageName: String, activityName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.activityName == activityName && it.userId == userId }
     }
 
-    override suspend fun deleteByPackage(packageName: String) {
-        state.value = state.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteByPackage(packageName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
+    }
+
+    override suspend fun deleteByUserId(userId: Int) {
+        state.value = state.value.filterNot { it.userId == userId }
     }
 
     override suspend fun deleteAll() {
         state.value = emptyList()
     }
+
+    override suspend fun getOrphaned(): List<DockAppEntity> = state.value.filter { it.userId == -1 }
 }
 
+@RunWith(RobolectricTestRunner::class)
 class DockAppRepositoryTest {
 
+    /** Defaults to the primary user's handle — [UserHandle.hashCode] is always `0` for it (see `AppRepository`'s own doc). */
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
@@ -73,8 +85,8 @@ class DockAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
         val dao = FakeDockAppDao()
-        dao.upsert(DockAppEntity(packageName = b.packageName, activityName = b.activityName, position = 1))
-        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
+        dao.upsert(DockAppEntity(packageName = b.packageName, activityName = b.activityName, position = 1, userId = 0))
+        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
 
         // When observing the dock
         val result = repository(appRepository, dao).observeDockApps().first()
@@ -89,7 +101,7 @@ class DockAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val dao = FakeDockAppDao()
-        dao.upsert(DockAppEntity(packageName = "com.example.uninstalled", activityName = ".Main", position = 0))
+        dao.upsert(DockAppEntity(packageName = "com.example.uninstalled", activityName = ".Main", position = 0, userId = 0))
 
         // When observing the dock
         val result = repository(appRepository, dao).observeDockApps().first()
@@ -106,7 +118,7 @@ class DockAppRepositoryTest {
         val installedApps = MutableStateFlow(listOf(a))
         `when`(appRepository.observeInstalledApps()).thenReturn(installedApps)
         val dao = FakeDockAppDao()
-        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
+        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
 
         val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
         val collectJob = launch { repository(appRepository, dao).observeDockApps().collect { emissions.send(it) } }
@@ -130,13 +142,57 @@ class DockAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(app)))
         val dao = FakeDockAppDao()
-        dao.upsert(DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = 0))
+        dao.upsert(DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = 0, userId = 0))
 
         // When the app is uninstalled
-        repository(appRepository, dao = dao).removeByPackage(app.packageName)
+        repository(appRepository, dao = dao).removeByPackage(app.packageName, 0)
 
         // Then its dock row is gone
         assertEquals(emptyList<AppInfo>(), repository(appRepository, dao = dao).observeDockApps().first())
+    }
+
+    @Test
+    fun `a personal and Work Profile app sharing the same package and activity are kept as distinct dock entries`() = runTest {
+        // Given the same package+activity installed in both profiles (a duplicate-installed app) —
+        // the collision this guards against is about the real UserHandle, not the display profile,
+        // so the two AppInfos differ by a distinct mocked UserHandle, not just by `profile`.
+        val personalHandle = mock(UserHandle::class.java)
+        val workHandle = mock(UserHandle::class.java)
+        val personalApp = AppInfo(packageName = "com.example.chat", activityName = ".Main", label = "Chat", icon = null, profile = AppProfile.PERSONAL, userHandle = personalHandle)
+        val workApp = personalApp.copy(profile = AppProfile.WORK, userHandle = workHandle)
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(personalApp, workApp)))
+        val repo = repository(appRepository)
+
+        // When both are added to the dock
+        repo.addDockApp(personalApp, position = 0)
+        repo.addDockApp(workApp, position = 1)
+
+        // Then both are present, not collapsed into one row
+        assertEquals(listOf(personalApp, workApp), repo.observeDockApps().first())
+
+        // And removing the Work Profile copy by uninstall-cleanup leaves the personal one intact
+        repo.removeByPackage(workApp.packageName, workHandle.hashCode())
+        assertEquals(listOf(personalApp), repo.observeDockApps().first())
+    }
+
+    @Test
+    fun `removeByUserId only removes the matching user's rows, leaving a same-category colliding profile's rows intact`() = runTest {
+        // Given two rows that share the same display profile (both OTHER — e.g. a clone-profile
+        // collision below API 35) but come from two distinct real handles
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val dao = FakeDockAppDao()
+        dao.upsert(DockAppEntity(packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
+        dao.upsert(DockAppEntity(packageName = "com.example.b", activityName = ".Main", position = 1, profile = AppProfile.OTHER, userId = 20))
+        val repo = repository(appRepository, dao = dao)
+
+        // When removing only the first handle's rows
+        repo.removeByUserId(10)
+
+        // Then only that handle's row is gone — the other colliding-category row survives
+        val remaining = dao.observeAll().first()
+        assertEquals(listOf(20), remaining.map { it.userId })
     }
 
     @Test
@@ -150,10 +206,10 @@ class DockAppRepositoryTest {
         val dao = FakeDockAppDao()
         val placementDao = FakeDockFolderPlacementDao()
         val folderDao = FakeFolderDao()
-        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 1))
+        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 1, userId = 0))
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = b.packageName, activityName = b.activityName, position = 0))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = c.packageName, activityName = c.activityName, position = 1))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = b.packageName, activityName = b.activityName, position = 0, userId = 0))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = c.packageName, activityName = c.activityName, position = 1, userId = 0))
         placementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = 0))
 
         // When observing dock items
@@ -178,8 +234,8 @@ class DockAppRepositoryTest {
         val placementDao = FakeDockFolderPlacementDao()
         val folderDao = FakeFolderDao()
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = b.packageName, activityName = b.activityName, position = 0))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = "com.example.gone", activityName = ".Main", position = 1))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = b.packageName, activityName = b.activityName, position = 0, userId = 0))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = "com.example.gone", activityName = ".Main", position = 1, userId = 0))
         placementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = 0))
 
         // When observing dock items
@@ -199,7 +255,7 @@ class DockAppRepositoryTest {
         val placementDao = FakeDockFolderPlacementDao()
         val folderDao = FakeFolderDao()
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = "com.example.gone", activityName = ".Main", position = 0))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = "com.example.gone", activityName = ".Main", position = 0, userId = 0))
         placementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = 0))
 
         // When observing dock items
@@ -217,7 +273,7 @@ class DockAppRepositoryTest {
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
         val folderDao = FakeFolderDao()
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = a.packageName, activityName = a.activityName, position = 0))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
         val repo = repository(appRepository, folderDao = folderDao)
         assertTrue(repo.observeDockItems().first().isEmpty())
 
@@ -238,7 +294,7 @@ class DockAppRepositoryTest {
         val placementDao = FakeDockFolderPlacementDao()
         val folderDao = FakeFolderDao()
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = a.packageName, activityName = a.activityName, position = 0))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
         placementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = 0))
         val repo = repository(appRepository, placementDao = placementDao, folderDao = folderDao)
 
@@ -260,9 +316,9 @@ class DockAppRepositoryTest {
         val dao = FakeDockAppDao()
         val placementDao = FakeDockFolderPlacementDao()
         val folderDao = FakeFolderDao()
-        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0))
+        dao.upsert(DockAppEntity(packageName = a.packageName, activityName = a.activityName, position = 0, userId = 0))
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
-        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = b.packageName, activityName = b.activityName, position = 0))
+        folderDao.upsertFolderApp(FolderAppEntity(folderId = folderId, packageName = b.packageName, activityName = b.activityName, position = 0, userId = 0))
         placementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = 1))
         val repo = repository(appRepository, dao, placementDao, folderDao)
         val folder = PlacedItem.FolderItem(com.facetlauncher.app.data.model.Folder(folderId, "Games", listOf(b)))

@@ -55,18 +55,24 @@ internal class FakeFolderDao : FolderDao {
         val id = if (folderApp.id != 0L) folderApp.id else nextFolderAppId++
         val toStore = folderApp.copy(id = id)
         folderApps.value = folderApps.value.filterNot {
-            it.folderId == toStore.folderId && it.packageName == toStore.packageName && it.activityName == toStore.activityName
+            it.folderId == toStore.folderId && it.packageName == toStore.packageName && it.activityName == toStore.activityName && it.userId == toStore.userId
         } + toStore
         return id
     }
 
-    override suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String) {
-        folderApps.value = folderApps.value.filterNot { it.folderId == folderId && it.packageName == packageName && it.activityName == activityName }
+    override suspend fun deleteFolderApp(folderId: Long, packageName: String, activityName: String, userId: Int) {
+        folderApps.value = folderApps.value.filterNot { it.folderId == folderId && it.packageName == packageName && it.activityName == activityName && it.userId == userId }
     }
 
-    override suspend fun deleteFolderAppsByPackage(packageName: String) {
-        folderApps.value = folderApps.value.filterNot { it.packageName == packageName }
+    override suspend fun deleteFolderAppsByPackage(packageName: String, userId: Int) {
+        folderApps.value = folderApps.value.filterNot { it.packageName == packageName && it.userId == userId }
     }
+
+    override suspend fun deleteFolderAppsByUserId(userId: Int) {
+        folderApps.value = folderApps.value.filterNot { it.userId == userId }
+    }
+
+    override suspend fun getOrphanedFolderApps(): List<FolderAppEntity> = folderApps.value.filter { it.userId == -1 }
 }
 
 internal class FakeDockFolderPlacementDao : DockFolderPlacementDao {

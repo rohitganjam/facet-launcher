@@ -1,6 +1,8 @@
 package com.facetlauncher.app.ui.hub
 
 import android.appwidget.AppWidgetManager
+import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.room.Room
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
@@ -39,10 +42,13 @@ class HubScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
                 runBlocking { seed(widgetPlacementRepository) }
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val appWidgetRepository = AppWidgetRepository(
                     context,
                     AppWidgetManager.getInstance(context),
                     LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
                 )
                 HubViewModel(
                     ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository),

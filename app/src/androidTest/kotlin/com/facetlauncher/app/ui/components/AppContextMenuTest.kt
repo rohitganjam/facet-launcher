@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.components
 import android.app.Activity
 import android.app.Instrumentation
 import android.net.Uri
-import android.provider.Settings
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +20,7 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import org.hamcrest.CoreMatchers.allOf
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,6 +50,7 @@ class AppContextMenuTest {
     fun tearDown() = Intents.release()
 
     private fun setContent(
+        app: AppInfo = this.app,
         onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
         onLaunchShortcut: (AppShortcut) -> Unit = {},
         onDismissRequest: () -> Unit = {},
@@ -61,6 +63,7 @@ class AppContextMenuTest {
         onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
         removeFromFolderId: Long? = null,
         onRemoveFromFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+        onAppInfo: (AppInfo) -> Unit = {},
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
@@ -79,6 +82,7 @@ class AppContextMenuTest {
                         onAddToFolder = onAddToFolder,
                         removeFromFolderId = removeFromFolderId,
                         onRemoveFromFolder = onRemoveFromFolder,
+                        onAppInfo = onAppInfo,
                     )
                 }
             }
@@ -95,22 +99,31 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun tappingAppInfoLaunchesApplicationDetailsSettingsForThisPackage() {
-        setContent()
-        // app's package doesn't actually exist on the test device — without this stub, the real
-        // system Activity resolution still runs and can hang the test on an error dialog (see
-        // tappingUninstallLaunchesActionDeleteForThisPackage's own note).
-        Intents.intending(hasAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
-            .respondWith(Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null))
+    fun headerShowsAWorkBadgeForAWorkProfileAppButNotAPersonalOne() {
+        setContent(app = app.copy(profile = AppProfile.WORK))
+
+        composeRule.onNodeWithTag("app_context_menu_work_badge").assertExists()
+    }
+
+    @Test
+    fun headerShowsNoWorkBadgeForAPersonalApp() {
+        setContent(app = app.copy(profile = AppProfile.PERSONAL))
+
+        composeRule.onNodeWithTag("app_context_menu_work_badge").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingAppInfoInvokesTheOnAppInfoCallbackForThisApp() {
+        // AppContextMenu no longer launches Settings.ACTION_APPLICATION_DETAILS_SETTINGS inline —
+        // it delegates to AppRepository.openAppDetails (via the onAppInfo callback), which targets
+        // the tapped app's own real profile through LauncherApps.startAppDetailsActivity rather
+        // than an ambiguous, profile-less Settings intent. See AppRepository.openAppDetails's own doc.
+        var infoRequestedFor: AppInfo? = null
+        setContent(onAppInfo = { infoRequestedFor = it })
 
         composeRule.onNodeWithTag("app_context_menu_app_info").performClick()
 
-        Intents.intended(
-            allOf(
-                hasAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS),
-                hasData(Uri.fromParts("package", app.packageName, null)),
-            ),
-        )
+        assertEquals(app, infoRequestedFor)
     }
 
     @Test

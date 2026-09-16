@@ -85,7 +85,7 @@ class FacetDockAppDaoTest {
         )
 
         // When the package is cleaned up after an uninstall
-        database.facetDockAppDao().deleteByPackage("com.example.a")
+        database.facetDockAppDao().deleteByPackage("com.example.a", -1)
 
         // Then it's gone from every facet's dock
         assertTrue(database.facetDockAppDao().observeForFacet(facetOneId).first().isEmpty())

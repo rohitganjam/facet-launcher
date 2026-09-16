@@ -36,6 +36,13 @@
          silently does nothing. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- Private Space (Android 15+) — required for LauncherApps.getLauncherUserInfo to positively
+         identify a Private Space handle (USER_TYPE_PROFILE_PRIVATE) rather than silently falling
+         back to PERSONAL; see AppRepository.profileFor's doc. Per Android's own launcher-integration
+         docs, this also requires holding RoleManager.ROLE_HOME, which this app already holds once
+         set as the default launcher (see DefaultLauncherRepository) — no separate role request. -->
+    <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
+
     <application
         android:name=".FacetApplication"
         android:allowBackup="true"

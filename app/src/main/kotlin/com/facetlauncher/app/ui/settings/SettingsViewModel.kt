@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DefaultLauncherRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel @Inject constructor(
     observeSettingsScreenState: ObserveSettingsScreenStateUseCase,
     private val defaultLauncherRepository: DefaultLauncherRepository,
+    private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
 
     private val isDefaultLauncher = MutableStateFlow(false)
@@ -31,7 +33,8 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = combine(
         observeSettingsScreenState(),
         isDefaultLauncher,
-    ) { screenState, isDefaultLauncher ->
+        workProfileRepository.observeWorkProfiles(),
+    ) { screenState, isDefaultLauncher, workProfiles ->
         SettingsUiState(
             settings = screenState.settings,
             dockItems = screenState.dockItems,
@@ -39,6 +42,7 @@ class SettingsViewModel @Inject constructor(
             folderCount = screenState.folderCount,
             isDefaultLauncher = isDefaultLauncher,
             isLoading = false,
+            workProfiles = workProfiles,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
@@ -50,4 +54,14 @@ class SettingsViewModel @Inject constructor(
 
     /** The "Set as default launcher" row's target — an in-place role request when available, a Settings screen otherwise. See [DefaultLauncherRepository.requestDefaultLauncherIntent]. */
     fun requestDefaultLauncherIntent(): Intent = defaultLauncherRepository.requestDefaultLauncherIntent()
+
+    /**
+     * The "Work Profile" row's tap-through target. There's no OEM-reliable public deep link
+     * straight to a "Work Profile" settings page (unlike [requestDefaultLauncherIntent]'s
+     * role-request intent) — [android.provider.Settings.ACTION_SETTINGS] (the Settings app's own
+     * home) is the honest, always-resolving choice rather than guessing at an unstable or
+     * non-public action name. This app deliberately has no pause/resume control of its own — see
+     * [WorkProfileRepository]'s own doc for why.
+     */
+    fun workProfileSettingsIntent(): Intent = Intent(android.provider.Settings.ACTION_SETTINGS)
 }

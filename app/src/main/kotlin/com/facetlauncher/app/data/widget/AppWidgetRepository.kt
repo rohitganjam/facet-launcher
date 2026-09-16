@@ -12,7 +12,11 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.UserHandle
+import android.os.UserManager
 import android.util.SizeF
+import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.domain.HUB_COLUMNS
 import com.facetlauncher.app.domain.calculateHubCellWidth
@@ -40,7 +44,12 @@ class AppWidgetRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val appWidgetManager: AppWidgetManager,
     private val host: LauncherAppWidgetHost,
+    private val userManager: UserManager,
+    private val appRepository: AppRepository,
 ) {
+
+    /** Delegates to [AppRepository.profileFor] — the single, verified source of truth (see its own doc), rather than a second copy here. */
+    private fun profileFor(handle: UserHandle): AppProfile = appRepository.profileFor(handle)
 
     /**
      * Converts a provider's min dimension (dp) into Hub grid cells. The Hub grid is square,
@@ -67,12 +76,25 @@ class AppWidgetRepository @Inject constructor(
     /** [defaultSpanFor] by id — `null` when the id is orphaned (its provider was uninstalled). */
     fun defaultSpan(appWidgetId: Int): Pair<Int, Int>? = getAppWidgetInfo(appWidgetId)?.let(::defaultSpanFor)
 
-    fun getInstalledProviders(): List<AppWidgetProviderInfo> = appWidgetManager.installedProviders
+    /**
+     * Every profile's installed providers (personal, plus a Work Profile's if one exists), paired
+     * with which profile each came from and the real handle it came from. Excludes Private Space —
+     * Hub widgets from it are explicitly out of scope; its apps only ever appear in their own
+     * dedicated screen.
+     */
+    private fun installedProvidersWithProfile(): List<Triple<AppWidgetProviderInfo, AppProfile, UserHandle>> =
+        userManager.userProfiles.flatMap { handle ->
+            val profile = profileFor(handle)
+            if (profile == AppProfile.PRIVATE) return@flatMap emptyList()
+            appWidgetManager.getInstalledProvidersForProfile(handle).map { Triple(it, profile, handle) }
+        }
+
+    fun getInstalledProviders(): List<AppWidgetProviderInfo> = installedProvidersWithProfile().map { it.first }
 
     /** Stable UI options for the add-widget picker (README `4c`) — grouped by the picker's own owning-app logic, not here. */
     fun getWidgetProviderOptions(): List<WidgetProviderOption> {
         val packageManager = context.packageManager
-        return getInstalledProviders().mapNotNull { info ->
+        return installedProvidersWithProfile().mapNotNull { (info, profile, handle) ->
             val appLabel = runCatching {
                 packageManager.getApplicationLabel(packageManager.getApplicationInfo(info.provider.packageName, 0)).toString()
             }.getOrNull() ?: return@mapNotNull null
@@ -88,20 +110,29 @@ class AppWidgetRepository @Inject constructor(
                 // Most providers declare a preview image; ones that don't fall back to the app's
                 // own icon, matching AOSP's own launcher convention for the add-widget picker.
                 previewIcon = (info.loadPreviewImage(context, 0) ?: info.loadIcon(context, 0))?.toBitmap(),
+                profile = profile,
+                userHandle = handle,
             )
         }
     }
 
     fun allocateAppWidgetId(): Int = host.allocateAppWidgetId()
 
-    /** `false` means the system needs to show its own bind-permission dialog — launch [createBindIntent] instead. */
-    fun bindAppWidgetIdIfAllowed(appWidgetId: Int, provider: ComponentName): Boolean =
-        appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider)
+    /**
+     * `false` means the system needs to show its own bind-permission dialog — launch
+     * [createBindIntent] instead. [userHandle] is the exact handle [WidgetProviderOption] was
+     * enumerated from — used directly, never re-derived from its display [AppProfile], so binding
+     * can't land on the wrong profile if two happen to share a display category.
+     */
+    fun bindAppWidgetIdIfAllowed(appWidgetId: Int, provider: ComponentName, userHandle: UserHandle): Boolean =
+        appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, userHandle, provider, null)
 
-    fun createBindIntent(appWidgetId: Int, provider: ComponentName): Intent =
+    /** [AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE] tells the system's own bind-permission dialog which profile's provider this is. */
+    fun createBindIntent(appWidgetId: Int, provider: ComponentName, userHandle: UserHandle): Intent =
         Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, provider)
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE, userHandle)
         }
 
     /**
@@ -121,6 +152,16 @@ class AppWidgetRepository @Inject constructor(
 
     /** `null` when orphaned — resolving the label needs `PackageManager`, so it stays in this Repository rather than domain/. */
     fun getProviderLabel(appWidgetId: Int): String? = getAppWidgetInfo(appWidgetId)?.loadLabel(context.packageManager)
+
+    /**
+     * Which profile [appWidgetId]'s provider belongs to, read back from the system rather than
+     * carried through the bind/configure round trip as extra state — [AppWidgetProviderInfo]
+     * already knows. `PERSONAL` if the id is orphaned/unknown (nothing better to fall back to).
+     */
+    fun profileForWidget(appWidgetId: Int): AppProfile = getAppWidgetInfo(appWidgetId)?.profile?.let(::profileFor) ?: AppProfile.PERSONAL
+
+    /** The real per-user id [appWidgetId]'s provider is bound from — [WidgetPlacementEntity.userId]'s source. `0` (the primary user) if the id is orphaned/unknown. */
+    fun userIdForWidget(appWidgetId: Int): Int = getAppWidgetInfo(appWidgetId)?.profile?.hashCode() ?: 0
 
     /** Releases the host id — always call this alongside removing the placement row, or the id leaks. */
     fun deleteAppWidgetId(appWidgetId: Int) = host.deleteAppWidgetId(appWidgetId)

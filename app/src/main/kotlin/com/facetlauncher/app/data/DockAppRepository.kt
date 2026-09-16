@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.local.DockAppEntity
 import com.facetlauncher.app.data.local.DockFolderPlacementDao
 import com.facetlauncher.app.data.local.DockFolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -41,9 +42,9 @@ class DockAppRepository @Inject constructor(
 
     fun observeDockApps(): Flow<List<AppInfo>> {
         return combine(dockAppDao.observeAll(), appRepository.observeInstalledApps()) { entities, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
             entities.sortedBy { it.position }
-                .mapNotNull { entity -> installedByComponent[entity.packageName to entity.activityName] }
+                .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)] }
         }
     }
 
@@ -59,11 +60,11 @@ class DockAppRepository @Inject constructor(
             folderRepository.observeFolders(),
             appRepository.observeInstalledApps(),
         ) { appEntities, placements, folders, installed ->
-            val installedByComponent = installed.associateBy { it.packageName to it.activityName }
+            val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
             val foldersById = folders.associateBy { it.id }
 
             val appItems = appEntities.mapNotNull { entity ->
-                installedByComponent[entity.packageName to entity.activityName]?.let { app ->
+                installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)]?.let { app ->
                     entity.position to PlacedItem.SingleApp(app)
                 }
             }
@@ -80,12 +81,12 @@ class DockAppRepository @Inject constructor(
 
     suspend fun addDockApp(app: AppInfo, position: Int) {
         dockAppDao.upsert(
-            DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = position),
+            DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = position, profile = app.profile, userId = app.userHandle.hashCode()),
         )
     }
 
     suspend fun removeDockApp(app: AppInfo) {
-        dockAppDao.deleteByComponent(app.packageName, app.activityName)
+        dockAppDao.deleteByComponent(app.packageName, app.activityName, app.userHandle.hashCode())
     }
 
     suspend fun placeFolderInDock(folderId: Long, position: Int) {
@@ -104,8 +105,13 @@ class DockAppRepository @Inject constructor(
      * an app might be momentarily missing (mid-update via `onPackagesUnavailable`, for instance)
      * without deleting anything — this only runs for a genuine, permanent uninstall.
      */
-    suspend fun removeByPackage(packageName: String) {
-        dockAppDao.deleteByPackage(packageName)
+    suspend fun removeByPackage(packageName: String, userId: Int) {
+        dockAppDao.deleteByPackage(packageName, userId)
+    }
+
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
+    suspend fun removeByUserId(userId: Int) {
+        dockAppDao.deleteByUserId(userId)
     }
 
     /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
@@ -117,6 +123,14 @@ class DockAppRepository @Inject constructor(
     /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
     suspend fun restoreDockApp(entity: DockAppEntity) {
         dockAppDao.upsert(entity.copy(id = 0))
+    }
+
+    /** Rows still at the migration's `-1` `userId` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
+    suspend fun getOrphanedRows(): List<DockAppEntity> = dockAppDao.getOrphaned()
+
+    /** Backfills [entity]'s real `userId` once [RepairOrphanedProfileRowsUseCase] resolves it — updates in place (same `id`), doesn't create a new row. */
+    suspend fun backfillUserId(entity: DockAppEntity, userId: Int) {
+        dockAppDao.upsert(entity.copy(userId = userId))
     }
 
     /** F14 Backup & Restore import — places a restored folder (by its already-remapped [folderId]) into the Dock. */
@@ -133,7 +147,7 @@ class DockAppRepository @Inject constructor(
     suspend fun reorderDockApps(orderedApps: List<AppInfo>) {
         orderedApps.forEachIndexed { index, app ->
             dockAppDao.upsert(
-                DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = index),
+                DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = index, profile = app.profile, userId = app.userHandle.hashCode()),
             )
         }
     }
@@ -143,7 +157,13 @@ class DockAppRepository @Inject constructor(
         orderedItems.forEachIndexed { index, item ->
             when (item) {
                 is PlacedItem.SingleApp -> dockAppDao.upsert(
-                    DockAppEntity(packageName = item.app.packageName, activityName = item.app.activityName, position = index),
+                    DockAppEntity(
+                        packageName = item.app.packageName,
+                        activityName = item.app.activityName,
+                        position = index,
+                        profile = item.app.profile,
+                        userId = item.app.userHandle.hashCode(),
+                    ),
                 )
                 is PlacedItem.FolderItem -> dockFolderPlacementDao.upsert(
                     DockFolderPlacementEntity(folderId = item.folder.id, position = index),

@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.facets
 
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertTextContains
@@ -60,7 +61,7 @@ class FacetSettingsScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 facetRepository = FacetRepository(database.facetDao())
-                val appRepository = AppRepository(launcherApps)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "facet-settings-test-${System.nanoTime()}.preferences_pb") },

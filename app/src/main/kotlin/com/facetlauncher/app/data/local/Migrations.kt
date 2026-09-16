@@ -260,8 +260,124 @@ object Migrations {
         }
     }
 
+    /**
+     * Android Work Profile support: every place an app is identified by (packageName,
+     * activityName) also needs to know *which* Android user it came from, or a personal and a
+     * Work Profile copy of the same app (identical package + activity, different user) collide as
+     * the same row. Adds a `profile` column (`'PERSONAL'`/`'WORK'`, `NOT NULL DEFAULT 'PERSONAL'`
+     * — every existing row predates Work Profile support, so it's unambiguously personal) to every
+     * table keyed that way, and widens their unique indices to include it. `widget_placements` is
+     * keyed on the real system `appWidgetId` instead, so it only needs the plain column, no index
+     * change.
+     */
+    val MIGRATION_18_19: Migration = object : Migration(18, 19) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE favorite_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_favorite_apps_facetId_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_favorite_apps_facetId_packageName_activityName_profile " +
+                    "ON favorite_apps (facetId, packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE facet_dock_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_facet_dock_apps_facetId_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_facet_dock_apps_facetId_packageName_activityName_profile " +
+                    "ON facet_dock_apps (facetId, packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE dock_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_dock_apps_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_dock_apps_packageName_activityName_profile " +
+                    "ON dock_apps (packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE default_favorite_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_default_favorite_apps_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_default_favorite_apps_packageName_activityName_profile " +
+                    "ON default_favorite_apps (packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE folder_apps ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_folder_apps_folderId_packageName_activityName")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_folder_apps_folderId_packageName_activityName_profile " +
+                    "ON folder_apps (folderId, packageName, activityName, profile)",
+            )
+
+            db.execSQL("ALTER TABLE widget_placements ADD COLUMN profile TEXT NOT NULL DEFAULT 'PERSONAL'")
+        }
+    }
+
+    /**
+     * `profile` (PERSONAL/WORK/PRIVATE/OTHER) turned out to not be a safe identity key on its
+     * own: two distinct real Android user profiles can land on the same `profile` value (e.g. a
+     * genuine Work Profile and an OEM clone/dual-app profile both classify as WORK below API 35,
+     * where `LauncherApps.getLauncherUserInfo` doesn't exist to tell them apart) — so favoriting
+     * one could silently collide with the other in these unique indices, and launch routing could
+     * resolve to the wrong one. Adds `userId` (the real `UserHandle.hashCode()` — AOSP's own
+     * implementation returns its internal per-user int id verbatim, and this is the standard
+     * workaround third-party launchers use since `UserHandle.getIdentifier()` itself is hidden
+     * API, not part of the public SDK) as the actual identity key, moving the unique indices from
+     * `(..., profile)` to `(..., userId)`; `profile` stays as a plain column for display/backup.
+     * The calling (primary) process's own `UserHandle` hashes to `0` (`UserHandle.USER_SYSTEM`)
+     * — this launcher never runs inside a Work Profile/clone profile itself — so every existing
+     * `'PERSONAL'` row can be backfilled deterministically here.
+     * Non-PERSONAL rows are left at the `-1` sentinel: their real historical `UserHandle` was
+     * never stored pre-v20, so pure SQL can't recover it — see `RepairOrphanedProfileRowsUseCase`
+     * for the one-time startup backfill against whichever live handle currently matches.
+     */
+    val MIGRATION_19_20: Migration = object : Migration(19, 20) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE favorite_apps ADD COLUMN userId INTEGER NOT NULL DEFAULT -1")
+            db.execSQL("UPDATE favorite_apps SET userId = 0 WHERE profile = 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_favorite_apps_facetId_packageName_activityName_profile")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_favorite_apps_facetId_packageName_activityName_userId " +
+                    "ON favorite_apps (facetId, packageName, activityName, userId)",
+            )
+
+            db.execSQL("ALTER TABLE facet_dock_apps ADD COLUMN userId INTEGER NOT NULL DEFAULT -1")
+            db.execSQL("UPDATE facet_dock_apps SET userId = 0 WHERE profile = 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_facet_dock_apps_facetId_packageName_activityName_profile")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_facet_dock_apps_facetId_packageName_activityName_userId " +
+                    "ON facet_dock_apps (facetId, packageName, activityName, userId)",
+            )
+
+            db.execSQL("ALTER TABLE dock_apps ADD COLUMN userId INTEGER NOT NULL DEFAULT -1")
+            db.execSQL("UPDATE dock_apps SET userId = 0 WHERE profile = 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_dock_apps_packageName_activityName_profile")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_dock_apps_packageName_activityName_userId " +
+                    "ON dock_apps (packageName, activityName, userId)",
+            )
+
+            db.execSQL("ALTER TABLE default_favorite_apps ADD COLUMN userId INTEGER NOT NULL DEFAULT -1")
+            db.execSQL("UPDATE default_favorite_apps SET userId = 0 WHERE profile = 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_default_favorite_apps_packageName_activityName_profile")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_default_favorite_apps_packageName_activityName_userId " +
+                    "ON default_favorite_apps (packageName, activityName, userId)",
+            )
+
+            db.execSQL("ALTER TABLE folder_apps ADD COLUMN userId INTEGER NOT NULL DEFAULT -1")
+            db.execSQL("UPDATE folder_apps SET userId = 0 WHERE profile = 'PERSONAL'")
+            db.execSQL("DROP INDEX IF EXISTS index_folder_apps_folderId_packageName_activityName_profile")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_folder_apps_folderId_packageName_activityName_userId " +
+                    "ON folder_apps (folderId, packageName, activityName, userId)",
+            )
+
+            db.execSQL("ALTER TABLE widget_placements ADD COLUMN userId INTEGER NOT NULL DEFAULT -1")
+            db.execSQL("UPDATE widget_placements SET userId = 0 WHERE profile = 'PERSONAL'")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
-        MIGRATION_16_17, MIGRATION_17_18,
+        MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
     )
 }

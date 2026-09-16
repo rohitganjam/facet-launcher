@@ -31,6 +31,8 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /**
  * The notification-shade platform call itself is covered by [com.facetlauncher.app.data.NotificationShadeRepositoryTest];
@@ -39,6 +41,7 @@ import org.mockito.Mockito.`when`
  * ViewModel rather than skipping it.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()

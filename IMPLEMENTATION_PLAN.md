@@ -1508,3 +1508,308 @@ while a folder-candidate row and `FolderContentsSheet`'s own header both showed 
 (the underlying `ModalBottomSheet` isn't dismissed while the preview `Dialog` opens on top of it —
 unrelated to this phase's own rows) — fixed by scoping the assertion to the sheet itself
 (`onNode(hasTestTag("folder_contents_sheet") and hasAnyDescendant(hasText("Games")))`).
+
+## Android Work Profile support
+
+Scoped through discussion before building (see chat history): Facets and the OS-level Android
+Work Profile are different kinds of things — Facets are a soft, purely local, user-created
+construct; a Work Profile is a hard, MDM-owned Android user that can appear/vanish outside the
+launcher's control. So this stays entirely in `data/`, visible equally to every Facet — no Facet
+schema changes, no new per-Facet "show work apps" toggle (a work app is just another pickable app,
+the same way the existing Favorites/Dock pickers already let you hand-pick which apps appear).
+
+### Data
+- New `AppProfile` enum (`PERSONAL`/`WORK`) — Android exposes at most one extra profile for a
+  launcher's purposes, so a 2-valued enum is a deliberate scope choice. Only `AppRepository`/
+  `AppWidgetRepository`/`WorkProfileRepository` ever hold a real `android.os.UserHandle`; every
+  Facet-adjacent `data:model.AppInfo`/`WidgetProviderOption` gains a `profile: AppProfile` field
+  instead.
+- **`AppRepository`** iterates every `UserManager.userProfiles` handle instead of the hardcoded
+  `Process.myUserHandle()`, tagging each `AppInfo`. Live updates now also react to a new
+  `BroadcastReceiver` for `ACTION_MANAGED_PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE` (a profile
+  appearing/disappearing isn't a per-package `LauncherApps.Callback` event). `observeUninstalledPackages()`
+  emits `(packageName, profile)` instead of a bare package name, and a new `observeProfileRemoved()`
+  drives a **bulk** cleanup path — removing a whole profile tears down every app in it atomically,
+  with no guarantee each one also fires its own per-package uninstall event.
+- New `WorkProfileRepository` — **read-only** `hasWorkProfile()`/`isWorkProfilePaused()`. Deliberately
+  no write path: Android already gives the user a system Settings toggle (and usually a Quick
+  Settings tile) for pausing/resuming a Work Profile, so this app reflects that state rather than
+  reimplementing the control surface.
+- Every table keyed by `(packageName, activityName)` — `favorite_apps`, `facet_dock_apps`,
+  `dock_apps`, `default_favorite_apps`, `folder_apps` — gains a `profile` column and a widened
+  unique index (Room migration `18→19`), or a personal and Work Profile copy of the same app
+  (identical package+activity, different Android user) collide as one row. `widget_placements`
+  gets the plain column only (keyed on the real system `appWidgetId`, no index to widen).
+  Uninstall-collapse (`CleanUpUninstalledAppsUseCase`) is now profile-scoped end to end, plus the
+  separate bulk sweep on `observeProfileRemoved()`. `BackupAppEntry`/`BackupWidgetPlacement` carry
+  the profile through export/import too (defaulted, so a pre-existing backup still imports cleanly).
+- `LauncherActivity.launchApp()` launches a Work Profile app via `LauncherApps.startMainActivity`
+  instead of a plain launch `Intent`, which doesn't resolve correctly across profiles.
+- **Hub widgets**: `AppWidgetRepository` enumerates providers from every profile
+  (`AppWidgetManager.getInstalledProvidersForProfile`), and binds a Work Profile widget via the
+  4-arg `bindAppWidgetIdIfAllowed`/`EXTRA_APPWIDGET_PROVIDER_PROFILE` overloads instead of the
+  personal-only ones. A placed widget's actual profile is read back from the system
+  (`profileForWidget`, via `AppWidgetProviderInfo`) after binding rather than carried through the
+  bind/configure round trip as extra state. Deliberately **no** bulk Hub-placement cleanup on
+  Work Profile removal — the existing orphan-detection path (`ObserveHubStateUseCase`, a widget
+  whose `getAppWidgetInfo` returns null) already covers this for free once the profile's ids stop
+  resolving.
+
+### UI
+- **App Drawer** gains a Personal/Work pill switcher (`DrawerProfileTabRow`, mirroring
+  `DockPickerTabRow`'s own pill/indicator construction), shown only when a Work Profile exists.
+  Browsing is scoped to the selected tab; **searching spans both regardless of tab** — the tab is
+  a browsing filter, not a search filter. `hasWorkProfile` is threaded from `WorkProfileRepository`
+  through `LauncherUiState`, not inferred from "any app tagged WORK", so the tab still shows (with
+  an empty/paused state) while the profile is paused.
+- **`AppIcon`** gains an `isWorkApp` corner badge — a themed `Accent` dot via M3's own `Badge`
+  composable (bottom-start, matching every other launcher's own Work Profile badge convention),
+  not Android's stock `getUserBadgedIcon` briefcase asset, which would render with the OS's own
+  tones instead of this app's palette (CLAUDE.md's theming rule). `FacetScopeBadge`'s pill
+  construction generalized into a shared `ScopeBadge` primitive, reused by a new `WorkScopeBadge`
+  pill shown next to a Work Profile app's name in `AppContextMenu`'s header and in the Hub widget
+  picker's tiles.
+- **Settings** gets a read-only "Work Profile" row (Active/Paused, from `WorkProfileRepository`)
+  shown only when a Work Profile exists, tapping through to the system Settings app — no
+  pause/resume control from inside this app.
+- **Hub widget picker**: every profile's widgets show in one list, badged — no separate tab here
+  either, matching the Favorites/Dock pickers' own "just show everything, badged" treatment.
+
+### Tests
+`AppRepositoryTest`/`AppWidgetRepositoryTest` cover multi-profile enumeration, `resolveUserHandle`/
+`profileForWidget`, and the Work Profile bind/bind-intent paths (`EXTRA_APPWIDGET_PROVIDER_PROFILE`).
+`CleanUpUninstalledAppsUseCaseTest` covers both the per-package profile-scoped path and the new
+bulk profile-removed sweep. `LauncherViewModelTest`/`SettingsViewModelTest` cover `hasWorkProfile`/
+`isWorkProfilePaused` flowing into their respective UI states. New Room migration test
+(`migration18To19...`) on `FacetDatabaseMigrationTest`, run on-device (`Medium_Phone_API_36.1`) —
+confirms existing rows default to `PERSONAL` and the widened index actually allows a personal/work
+pair to coexist. `AppDrawerScreenTest` (tab visibility, tab filtering, search-spans-both-tabs) also
+caught a real crash during development: the Drawer's search-results `LazyColumn` keyed items by
+`packageName + activityName` alone, so a personal/Work Profile pair collided as a duplicate
+`LazyList` key — fixed by keying with `profile` included everywhere apps are listed. New
+`AppContextMenuTest` cases cover the Work badge's presence/absence. Full `./gradlew test` green;
+`FacetDatabaseMigrationTest`, `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`,
+`AppContextMenuTest`, and every Hub/Settings instrumented test green on `Medium_Phone_API_36.1`.
+
+### Follow-up: profile-aware shortcuts, Secure Folder, and known gaps
+
+- **App shortcuts are now profile-aware.** `AppShortcut` carries its own `profile: AppProfile`;
+  `AppShortcutRepository.getShortcuts()`/`launchShortcut()` resolve the shortcut's own profile to
+  a `UserHandle` via `AppRepository.resolveUserHandle()` rather than always querying the personal
+  profile, and no-op gracefully if that profile has since vanished (a Work Profile removal racing
+  a long-press).
+- **Quiet-mode (pause/resume) toggle — deliberately not built, by explicit user decision.**
+  `UserManager.requestQuietModeEnabled()` (the actual pause/resume call) turns out to be callable
+  not just by a profile owner but also by whichever app is the current default launcher — so this
+  app technically *could* add its own pause/resume control. The user chose not to: Android already
+  surfaces this via system Settings and (on most OEMs) a Quick Settings tile, and a second control
+  surface for the same OS state would just risk drifting out of sync with it. This is a known,
+  deliberate gap, not an oversight — revisit only if a user-facing need for an in-app toggle shows up.
+- **Samsung Secure Folder** — its own launcher-visible app (`com.samsung.knox.securefolder`), not
+  reachable through `UserManager.getUserProfiles()`/Work-Profile APIs at all (Samsung deliberately
+  doesn't expose it to third-party launchers even post-Android-15). New `SecureFolderRepository`
+  checks `PackageManager.getLaunchIntentForPackage()` for it; when present, the App Drawer's 3-dot
+  overflow menu (`AppDrawerScreen`/`DrawerViewModel.secureFolderIntent`) gets an "Open Secure
+  Folder" row that starts its own launch intent — same treatment as opening any other app, since
+  that's all it structurally is from this launcher's point of view.
+## Private Space support (Android 15+)
+
+A hidden secondary profile (`UserManager.USER_TYPE_PROFILE_PRIVATE`) the user locks/unlocks with
+biometrics/PIN — distinct from Work Profile (a hard MDM-owned profile) and Secure Folder (a plain
+launchable app, not a profile at all). Scoped deliberately narrow for v1: browse + launch + search
+only, no Favorites/Dock/Hub integration, no Room migration needed as a result.
+
+Building this surfaced a live correctness bug that had to be fixed first: `AppRepository.profileFor()`
+had no branch for a Private Space handle, so it silently fell through to `PERSONAL` — meaning a
+configured Private Space's apps already leaked into the main Drawer (unconditionally in search,
+and in browse mode on any device without a Work Profile, per `AppDrawerScreen`'s own
+`isSearching || !hasWorkProfile` filter-bypass condition).
+
+### Data
+- `AppProfile` gains a third value, `PRIVATE`. `AppRepository.profileFor()` now positively checks
+  `USER_TYPE_PROFILE_PRIVATE` alongside the existing `USER_TYPE_PROFILE_MANAGED` check.
+  `LauncherActivity.launchApp()`'s Work-Profile-only branch widened to `profile != PERSONAL`
+  (Private Space apps launch via the identical `LauncherApps.startMainActivity` cross-profile path).
+  `GetInstalledAppsUseCase` (both `invoke()` and `observe()`) now excludes `PRIVATE` apps — the
+  single choke point keeping them out of the main Drawer and every Favorites/Dock/Folder picker;
+  `AppWidgetRepository.installedProvidersWithProfile()` excludes them the same way for Hub widgets.
+- New `PrivateSpaceRepository`, modeled on `WorkProfileRepository` but with a 3-state
+  `PrivateSpaceState` (`NotConfigured`/`Locked`/`Unlocked`) instead of a boolean pair — verified
+  against Android's own launcher-integration docs and a real reference implementation that, unlike
+  first assumed, a locked Private Space's handle *stays* enumerable via `userManager.userProfiles`
+  (same as a paused Work Profile), so `UserManager.isQuietModeEnabled(handle)` is what actually
+  distinguishes Locked from Unlocked — no broadcast-history inference needed. Listens for the
+  generic, profile-type-agnostic `ACTION_PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE` broadcasts
+  (Android 15+, distinct from Work Profile's `ACTION_MANAGED_PROFILE_*` ones). Also exposes
+  `requestUnlock()` — unlike Work Profile's deliberately read-only design, a locked Private Space
+  isn't meaningfully browsable at all, so triggering the OS's own unlock prompt (via
+  `UserManager.requestQuietModeEnabled(false, handle)`) is required for the feature to work, not an
+  optional control surface.
+- New manifest permission `android.permission.ACCESS_HIDDEN_PROFILES` — per Android's own docs,
+  also requires holding `RoleManager.ROLE_HOME`, which this app already holds once set as the
+  default launcher (no separate role-request code needed).
+
+### UI
+- New `PrivateSpaceScreen`/`PrivateSpaceViewModel` — a separate, deliberately minimal pair rather
+  than a mode flag on `AppDrawerScreen`/`DrawerViewModel` (which carry ~30 params of behavior
+  irrelevant here: folders, favorites/dock quick-add, contacts/settings search, shortcuts). Its own
+  small search bar, scoped only to Private Space's own apps — never merged with the main Drawer's
+  search. Wrapped in a new `PrivateSpaceTheme` — a small, fixed-dark "incognito" palette
+  (`ui/theme/PrivateSpaceTheme.kt`) that nests its own `MaterialTheme` inside the app's own
+  `FacetLauncherTheme` rather than threading a third axis through the shared token system in
+  `Color.kt`, which has no existing precedent for a screen-local override.
+- App Drawer's 3-dot overflow menu gains a "Private Space" row (`DrawerViewModel.privateSpaceState`,
+  a live `StateFlow` unlike `secureFolderIntent`'s one-shot `val` — lock state changes mid-session),
+  shown for `Locked`/`Unlocked`, hidden for `NotConfigured`. Tapping it while `Unlocked` opens the
+  screen; while `Locked`, triggers the OS unlock flow instead — the user re-taps once unlocked
+  rather than auto-navigating on unlock, avoiding fragile timing against the availability broadcast.
+- Two-level back gesture in `HomeDrawerRoute.kt`: a new `showPrivateSpaceDrawer` boolean, checked in
+  the existing `BackHandler`'s `when` chain at the same priority tier as `showWidgetPicker` (both
+  are "innermost sub-panel of an already-open parent surface") — one back press closes Private
+  Space back to the regular Drawer, a second then closes the Drawer to Home, unchanged from before.
+
+### Tests
+`AppRepositoryTest`/`AppWidgetRepositoryTest` cover the `PRIVATE` classification and its exclusion
+from Hub widgets; `GetInstalledAppsUseCaseTest` covers its exclusion from the Drawer/pickers;
+`ConvertersTest` covers the Room enum round-trip. New `PrivateSpaceRepositoryTest` covers the
+3-state derivation and `requestUnlock()`. `DrawerViewModelTest` covers `privateSpaceState`
+exposure. `AppDrawerScreenTest` covers the overflow row's visibility/click delegation;
+`HomeDrawerRouteTest` covers the two-level back gesture (`Espresso.pressBack()`, same pattern as
+the existing Drawer/Hub/Facet-carousel back tests) and that tapping the row while `Locked` doesn't
+open the screen. Full `./gradlew test` green; `AppDrawerScreenTest`, `HomeDrawerRouteTest`, and
+`KeyboardDismissalTest` (whose `DrawerViewModel` construction needed the new `PrivateSpaceRepository`
+param) green on `Medium_Phone_API_36.1`.
+
+### Out of scope for v1
+Favorites/Dock picking of Private Space apps, Hub widgets from it, Room persistence of any
+Private-Space-specific state, the long-press context menu/shortcuts/"add to folder" from its
+screen, and respecting the user's Drawer grid/list presentation setting inside it (a fixed list for
+now). No per-icon "Private" badge either — unlike Work Profile apps, which visually mix with
+Personal apps in the same list, Private Space apps only ever appear in their own separately-themed
+screen.
+
+## Per-profile identity fix (crash + clone/dual-app correctness)
+
+Motivated by a real user-reported crash on a Techno Spark 20 Pro (Android 14, HiOS): below API 35
+`AppRepository.profileFor()` had no way to ask `LauncherApps.getLauncherUserInfo` (API 35+ only),
+so it guessed "any non-primary handle = WORK." HiOS's "App Clone"/dual-apps feature creates exactly
+such a non-primary handle (Android's native Clone Profile mechanism), so it got misclassified as a
+Work Profile — which crashed via an unguarded `UserManager.isQuietModeEnabled()` call on a handle
+that wasn't actually managed, and even guarded, hid clone apps behind a Work tab instead of the
+main list. Investigating the fix (see chat history) surfaced a deeper, pre-existing latent bug:
+`AppProfile` was being used as the *identity* key for launch routing and Room dedup, not just a
+display label — two distinct real profiles landing on the same enum value (a genuine Work Profile
+*and* a clone profile, both guessable as WORK pre-35) could silently collide: favoriting one could
+overwrite the other, and tapping one's tile could launch the other's copy instead. This mattered
+beyond clone apps — a genuine MDM/Work Profile user hits the identical collision risk if a clone
+profile also exists on their device, which this app can't tell apart from a real Work Profile
+before API 35.
+
+### What got built
+- `AppProfile` gained a 4th value, `OTHER` — any profile that can't be positively identified (always
+  true below API 35; an unrecognized `userType` on API 35+, e.g. a clone profile). `PERSONAL` is now
+  reserved strictly for the true primary user.
+- Identity moved off the enum entirely: `AppInfo` gained `val userHandle: UserHandle` (the real
+  handle it was enumerated from, never reconstructed) as its true identity; `AppProfile` is now
+  purely a *display* category (tab/badge), still computed via `profileFor()`, but never used for
+  dedup/launch/storage identity again.
+- Room migration `MIGRATION_19_20` (`FacetDatabase.VERSION` 19→20): adds `userId: Int` to the six
+  profile-keyed tables (`favorite_apps`, `dock_apps`, `facet_dock_apps`, `default_favorite_apps`,
+  `folder_apps`, `widget_placements`), widens their unique indices from `(..., profile)` to
+  `(..., userId)`, backfills `userId = 0` for existing `'PERSONAL'` rows deterministically (the
+  primary user always hashes to `0`) via raw SQL. Non-PERSONAL rows are left at a `-1` sentinel —
+  new `RepairOrphanedProfileRowsUseCase` (wired into `LauncherViewModel.init` as a one-time suspend
+  pass, not a live collector) backfills each to the single currently-live matching handle if exactly
+  one candidate exists, else leaves it orphaned (won't hydrate until re-added — graceful, not a
+  crash). **`UserHandle.getIdentifier()` turned out to be hidden API, not in the public SDK**
+  (confirmed against compileSdk 36's `android.jar` stub) — `UserHandle.hashCode()` is used instead
+  everywhere a stable `Int` is needed; AOSP's own implementation returns the internal per-user id
+  verbatim, the standard workaround other third-party launchers use for this.
+- `LauncherActivity.launchApp()`, `AppShortcutRepository`, `AppWidgetRepository`
+  (`bindAppWidgetIdIfAllowed`/`createBindIntent`), and every Favorites/Dock/Folder repository's
+  hydrate/add/remove path now use `AppInfo.userHandle`/`WidgetProviderOption.userHandle` directly —
+  no more re-deriving a handle from the display enum via `resolveUserHandle()`.
+- `CleanUpUninstalledAppsUseCase`'s profile-removal sweep changed from a bulk
+  `removeByProfile(AppProfile.WORK)` (would wipe a surviving colliding profile's rows too) to a
+  precise `removeByUserId(removedHandle.hashCode())`, reading the exact removed handle off
+  `ACTION_MANAGED_PROFILE_REMOVED`'s `Intent.EXTRA_USER` extra (`AppRepository.observeProfileRemoved()`
+  now emits `UserHandle`, not `Unit`).
+- `WorkProfileRepository.hasWorkProfile()`/`isWorkProfilePaused()` (booleans) replaced by
+  `observeWorkProfiles(): Flow<List<WorkProfileInfo>>` — 0 or 1 entries in practice (stock Android
+  provisions at most one real Work Profile), but list-shaped so it stays correct under the rare
+  case it ever isn't. `isQuietModeEnabled` calls in both `WorkProfileRepository` and
+  `PrivateSpaceRepository` are now wrapped in `runCatching` (previously unguarded — the actual
+  crash's proximate cause).
+- App Drawer's Work/Personal tab switcher became fully dynamic (`DrawerTab` a sealed type, not a
+  fixed 2-value enum): one tab per live Work Profile handle, plus an always-present Personal tab
+  that merges `PERSONAL` and `OTHER` apps — decided explicitly by the user: a clone app should "just
+  show up in the list," not get hidden behind its own tab, since below API 35 there's no way to know
+  what it actually is. A new person-icon badge (`OtherProfileBadge`/`OtherScopeBadge`, mirroring the
+  existing Work badge pattern in `AppIcon.kt`/`FacetScopeBadge.kt`) marks an `OTHER` app inline so
+  it's still visually distinguishable. Settings' single "Work Profile" row became one row per
+  `WorkProfileInfo` entry the same way.
+- Fixed App Info's profile targeting as a related fix while already touching
+  `AppContextMenu.kt`: it now uses `LauncherApps.startAppDetailsActivity` (via a new
+  `AppRepository.openAppDetails`, threaded as an `onAppInfo` callback the same way
+  `onLaunchShortcut` already was) instead of an untargeted `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`
+  intent. Uninstall stays untargeted — there's no public per-profile uninstall API for a
+  third-party launcher, a genuine platform limitation, documented inline rather than worked around.
+
+### Tests
+New: `AppRepositoryTest` (`OTHER` fallback below API 35, `getInstalledApps` carrying real
+`UserHandle`s, per-profile `getActivityList` failure isolation, `observeProfileRemoved`'s
+`EXTRA_USER` handling, and — the actual stress case this whole redesign exists to survive — a
+real Work Profile + a real Private Space + an unclassifiable third profile all present on the same
+device at once, asserting all three classify distinctly and never collide); `removeByUserId`
+collision-regression tests in all five profile-keyed repositories; new
+`RepairOrphanedProfileRowsUseCaseTest` (single/zero/multiple-candidate resolution, already-resolved
+rows untouched); `PrivateSpaceRepositoryTest`'s `isQuietModeEnabled` throwing-doesn't-crash case
+(resolves to `Unlocked`, per the `getOrDefault(false)` fallback). ~22 pre-existing pure-JVM test
+files that construct `AppInfo` via its default constructor needed `@RunWith(RobolectricTestRunner::class)`
+added — `AppInfo.userHandle`'s default (`Process.myUserHandle()`) calls a real Android API at
+construction time now, a real, broad behavioral cost of this design worth knowing about. Full
+`./gradlew test` green (555 tests, 0 failures).
+
+### Real bug found and fixed running on-device (`Medium_Phone_API_36.1`)
+`connectedDebugAndroidTest` (417 tests) surfaced a genuine bug the JVM/Robolectric suite couldn't:
+`switchingToTheWorkTabShowsOnlyWorkProfileApps` reliably failed — after tapping the Work tab, both
+the personal *and* the Work Profile copy of the same app stayed visible (`CollectionInfo(rowCount=3)`
+confirmed via `printToLog` that the LazyColumn genuinely held 2 app rows, not a stale-semantics
+artifact). Root cause: the test built its "Work Profile" `UserHandle` via
+`mock(UserHandle::class.java)`. Mockito bypasses the real constructor, so the mock's private
+`mHandle` field is left at Java's `int` default, `0` — which is also the *real* primary user's own
+id. `AppDrawerScreen`'s Work-tab filter (`apps.filter { it.userHandle == tab.handle }`) is correct
+production code, comparing real `UserHandle`s via `==`; on a real device/emulator this calls AOSP's
+actual `UserHandle.equals()`, which reads `mHandle` directly — so the personal app's genuinely-real
+handle spuriously compared equal to the mock's zeroed-out one. Robolectric's shadowed `UserHandle`
+apparently doesn't hit this path, which is why the JVM-side tests never caught it. Fixed by
+replacing the mock with a real, distinct `UserHandle` built via its public `Parcel` constructor
+(`UserHandle(Parcel)`, writing a non-zero int and reading it back) — a `fakeUserHandle(id)` helper
+added to `AppDrawerScreenTest.kt`, the only file using `mock(UserHandle::class.java)`. Confirmed
+fixed (`AppDrawerScreenTest` standalone: 35/35) and confirmed the fix doesn't regress anything else
+(full suite re-run: 417/417 excluding one unrelated, pre-existing flake — see below). This is worth
+remembering for any *future* test needing a "different but real" `UserHandle` on this project:
+`mock(UserHandle::class.java)` is unsafe wherever code compares handles via `==`/`.equals()`, even
+though it's fine for tests that only ever pass the mock through opaquely (never compared).
+
+The full-suite re-run's one remaining failure — `DockAppPickerScreenTest.foldersTabCheckboxReflectsWhetherTheFolderIsPlacedInThisDock`,
+a `ComposeTimeoutException` on `waitUntil` — is unrelated: that file/screen was untouched this pass,
+and it passes cleanly (7/7) run standalone, so it's a pre-existing timing flake under full-suite
+load rather than a regression.
+
+### Deliberately out of scope
+Turning Settings/Drawer into a UI that distinguishes *which* `OTHER` profile an app belongs to
+when more than one exists simultaneously (e.g. two separate clone profiles) — they still merge into
+one Personal tab, still each launch/favorite/dock correctly via their own real handle, just without
+a way to tell them apart from each other visually. Accepted: below API 35 there's no API to name
+what an `OTHER` profile even is, so a per-profile UI split would have nothing meaningful to label
+itself with.
+
+### Related gap closed in passing
+`AndroidManifest.xml` was missing the `android.permission.ACCESS_HIDDEN_PROFILES` permission that
+the earlier "Private Space support" write-up above already documents as required —
+`LauncherApps.getLauncherUserInfo` needs it to positively identify a Private Space handle
+(`USER_TYPE_PROFILE_PRIVATE`) rather than it coming back `null` and silently falling through to
+`profileFor()`'s `else` branch (`OTHER`, post this pass's fix — previously `PERSONAL`). The
+permission was apparently never actually added when that feature was originally built, only
+documented; added now since this pass's work touches the exact same classification path.

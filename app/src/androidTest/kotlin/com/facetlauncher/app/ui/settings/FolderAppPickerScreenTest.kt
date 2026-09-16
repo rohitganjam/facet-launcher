@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsOff
@@ -41,7 +42,7 @@ class FolderAppPickerScreenTest {
             val context = LocalContext.current
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java))
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val folderId = runBlocking {
                     val id = folderRepository.createFolder("Games")

@@ -5,6 +5,8 @@ import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileInfo
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
@@ -23,11 +25,14 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.robolectric.RobolectricTestRunner
 
 /** [SettingsViewModel] is purely observational now — every mutable section lives in its own screen/ViewModel — so this only exercises the summary state it composes for the main list's rows. */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class SettingsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -50,6 +55,7 @@ class SettingsViewModelTest {
         folderCount: Int = 0,
         isDefaultLauncher: Boolean = false,
         settings: LauncherSettings = LauncherSettings(),
+        workProfiles: List<WorkProfileInfo> = emptyList(),
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
@@ -61,8 +67,10 @@ class SettingsViewModelTest {
         `when`(folderRepository.observeFolders()).thenReturn(flowOf((1..folderCount).map { mock(com.facetlauncher.app.data.model.Folder::class.java) }))
         val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
         runBlocking { `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
+        val workProfileRepository = mock(WorkProfileRepository::class.java)
+        `when`(workProfileRepository.observeWorkProfiles()).thenReturn(flowOf(workProfiles))
         val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository)
-        return SettingsViewModel(useCase, defaultLauncherRepository)
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository)
     }
 
     @Test
@@ -116,5 +124,25 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(0, viewModel.uiState.value.selectedCalendarCount)
+    }
+
+    @Test
+    fun `uiState reflects no Work Profile by default`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(emptyList<WorkProfileInfo>(), viewModel.uiState.value.workProfiles)
+    }
+
+    @Test
+    fun `uiState reflects a Work Profile that exists and is paused`() = runTest {
+        val workProfile = WorkProfileInfo(handle = mock(android.os.UserHandle::class.java), isPaused = true, label = "Work")
+        val viewModel = createViewModel(workProfiles = listOf(workProfile))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(workProfile), viewModel.uiState.value.workProfiles)
+        assertEquals(true, viewModel.uiState.value.workProfiles.single().isPaused)
     }
 }
