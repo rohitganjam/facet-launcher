@@ -30,3 +30,5 @@ graphify-out/.rebuild.lock
 keystore.properties
 *.jks
 *.keystore
+
+__pycache__/

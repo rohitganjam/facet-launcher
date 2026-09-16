@@ -309,6 +309,26 @@ class AppRepositoryTest {
     }
 
     @Test
+    fun `getInstalledApps drops a single entry whose fields throw BadParcelableException, without losing the rest`() = runTest {
+        // Given getActivityList() itself succeeds, but one returned LauncherActivityInfo throws
+        // on field access — a real crash confirmed on a Techno Spark 20 Pro: the OS/OEM's
+        // LauncherApps implementation for some profile (e.g. an OEM clone profile) can hand back
+        // an entry whose embedded Parcelable fields don't unmarshal cleanly in this process, even
+        // though the getActivityList() call that returned it didn't throw at all.
+        val launcherApps = mock(LauncherApps::class.java)
+        val goodApp = fakeActivity("com.example.good", ".Main", "Good")
+        val brokenApp = mock(LauncherActivityInfo::class.java)
+        `when`(brokenApp.applicationInfo).thenThrow(android.os.BadParcelableException("corrupt"))
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(goodApp, brokenApp))
+
+        // When fetching installed apps
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
+
+        // Then the broken entry is silently dropped, not crashing the whole fetch
+        assertEquals(listOf("Good"), result.map { it.label })
+    }
+
+    @Test
     fun `observeProfileRemoved emits the removed handle from EXTRA_USER`() = runTest {
         // Given a live subscription to observeProfileRemoved
         val launcherApps = mock(LauncherApps::class.java)

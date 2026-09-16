@@ -177,17 +177,27 @@ class AppRepository @Inject constructor(
             .flatMap { handle -> runCatching { launcherApps.getActivityList(null, handle) }.getOrDefault(emptyList()).map { it to handle } }
             .map { (info, handle) ->
                 async {
-                    AppInfo(
-                        packageName = info.applicationInfo.packageName,
-                        activityName = info.componentName.className,
-                        label = info.label.toString(),
-                        icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
-                        profile = profileFor(handle),
-                        userHandle = handle,
-                    )
+                    // getActivityList() succeeding doesn't guarantee every entry it returns is
+                    // safe to read — a single LauncherActivityInfo's embedded Parcelable fields
+                    // (applicationInfo, componentName, label) can still throw BadParcelableException
+                    // on first access if the OS/OEM's LauncherApps implementation for that profile
+                    // (e.g. an OEM clone profile) hands back something that doesn't unmarshal
+                    // cleanly in this process — confirmed via a real Techno Spark 20 Pro crash.
+                    // One bad entry should drop just itself, not the whole list.
+                    runCatching {
+                        AppInfo(
+                            packageName = info.applicationInfo.packageName,
+                            activityName = info.componentName.className,
+                            label = info.label.toString(),
+                            icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
+                            profile = profileFor(handle),
+                            userHandle = handle,
+                        )
+                    }.getOrNull()
                 }
             }
             .awaitAll()
+            .filterNotNull()
             .sortedWith(Comparator { a, b -> collator.compare(a.label, b.label) })
     }
 

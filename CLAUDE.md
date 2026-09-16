@@ -100,7 +100,9 @@ scripts/release.sh --no-build      # only bump the version, skip the build (e.g.
 
 `versionCode` always increments by exactly 1 regardless of how `versionName` changes — Play Store requires every upload to carry a strictly higher `versionCode` than the last. Current version: `0.1.0` (code `1`). The script only edits `app/build.gradle.kts` (plus `scripts/last-release.json`, see below); commit those changes yourself once you're happy with the build.
 
-A real build (anything other than `--no-build`) refuses to run unless the working tree is fully committed (`git status --porcelain` empty) — this guarantees the APK/AAB were built from exactly one commit, with no uncommitted edits mixed in. On success, the script records that commit id, the shipped version, and a timestamp in `scripts/last-release.json` — the start point for next time's release notes (`git log $(jq -r .commit scripts/last-release.json)..HEAD`).
+A real build (anything other than `--no-build`) refuses to run unless the working tree is fully committed (`git status --porcelain` empty) — this guarantees the APK/AAB were built from exactly one commit, with no uncommitted edits mixed in. On success, the script records that commit id, the shipped version, and a timestamp in `scripts/last-release.json` — the start point for next time's release notes.
+
+It also regenerates `RELEASE_NOTES.md` automatically, covering every commit since the *previous* recorded release, categorized into New Features / Fixes / Improvements / Internal by [`scripts/gen-release-notes.py`](scripts/gen-release-notes.py) — which pipes the commit log to `claude -p` (Claude Code must be installed and logged in) rather than a hand-rolled heuristic, so it can split a compound commit into separate bullets in the right sections and rewrite the user-facing ones in plain language. Best-effort: a failure here (Claude Code missing/not logged in/timed out) prints a warning but doesn't fail the build — the APK/AAB are unaffected. Printed to the terminal and written to the file; not committed automatically, same as the version bump. Always worth a skim before sharing it externally (e.g. a Play Store listing).
 
 Output:
 ```

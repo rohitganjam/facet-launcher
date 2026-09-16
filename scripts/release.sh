@@ -20,6 +20,12 @@
 # edit) is written to scripts/last-release.json alongside the version — the start point for next
 # time's release notes (`git log <that commit>..HEAD`). Not committed automatically; review and
 # commit it alongside the version bump, same as always.
+#
+# RELEASE_NOTES.md is (re)generated automatically right after a successful build, covering every
+# commit since the *previous* build recorded in scripts/last-release.json, categorized into New
+# Features / Fixes / Improvements / Internal (see scripts/gen-release-notes.py — heuristic, always
+# worth a skim before sharing externally). Printed to the terminal and written to RELEASE_NOTES.md
+# alongside the APK/AAB; not committed automatically, same as the version bump.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -56,6 +62,12 @@ if [[ "$do_build" == true ]]; then
         exit 1
     fi
     build_commit="$(cd "$REPO_ROOT" && git rev-parse HEAD)"
+    # Captured before this run's own last-release.json write, below — the previous release's
+    # build commit, i.e. the start point for this run's release notes.
+    previous_commit=""
+    if [[ -f "$LAST_RELEASE_FILE" ]]; then
+        previous_commit="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('commit',''))" "$LAST_RELEASE_FILE" 2>/dev/null || true)"
+    fi
 fi
 
 current_version="$(grep -m1 'versionName = "' "$BUILD_GRADLE" | sed -E 's/.*versionName = "([^"]+)".*/\1/')"
@@ -88,6 +100,23 @@ if [[ "$do_build" == true ]]; then
     echo "APK: app/build/outputs/apk/release/app-release.apk"
     echo "AAB: app/build/outputs/bundle/release/app-release.aab"
 
+    if [[ -n "$previous_commit" ]]; then
+        echo
+        echo "Release notes ($previous_commit -> $build_commit):"
+        echo
+        # Best-effort — a hiccup here (claude CLI missing/not logged in/timed out) shouldn't fail
+        # the whole script after a successful build; the APK/AAB already exist regardless.
+        if (cd "$REPO_ROOT" && python3 scripts/gen-release-notes.py --since "$previous_commit" --to "$build_commit" --version "$new_version"); then
+            echo "Written to RELEASE_NOTES.md."
+        else
+            echo "warning: release notes generation failed — see error above. Build artifacts are unaffected." >&2
+        fi
+    else
+        echo
+        echo "No previous scripts/last-release.json found — skipping release notes (nothing to start from)."
+        echo "Run scripts/gen-release-notes.py manually with an explicit --since once you have one."
+    fi
+
     built_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     cat > "$LAST_RELEASE_FILE" <<EOF
 {
@@ -104,7 +133,7 @@ fi
 
 echo
 if [[ "$do_build" == true ]]; then
-    echo "Done — review the version bump in app/build.gradle.kts and scripts/last-release.json, and commit both when ready."
+    echo "Done — review the version bump in app/build.gradle.kts, scripts/last-release.json, and RELEASE_NOTES.md, and commit them when ready."
 else
     echo "Done — review the version bump in app/build.gradle.kts and commit when ready."
 fi
