@@ -1,45 +1,45 @@
 # Graph Report - lumen-launcher  (2026-09-16)
 
 ## Corpus Check
-- 433 files · ~878,110 words
+- 433 files · ~877,911 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4224 nodes · 11458 edges · 222 communities (163 shown, 53 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 858 edges (avg confidence: 0.85)
+- 4354 nodes · 11288 edges · 244 communities (175 shown, 63 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 1002 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `61df34e7`
+- Built from commit: `ad8eb394`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- ClockStyleGalleryViewModel
+- ClockStyleGalleryViewModelTest
 - design_handoff_minimal_launcher/support.js
-- BatteryStatus
+- Fixture
 - .setContent
 - FacetDockAppEntity
-- SettingsRepository
+- CalendarPermissionRepository
 - .setContent
 - Android launcher design planning/support.js
-- FacetDockFolderPlacementEntity
+- FolderEntity
 - Screens
 - ManageFacetsViewModel
-- EnsureActiveFacetUseCase
-- DockAppEntity
+- FakeFacetDao
+- .repository
 - 05 — Architect's Review: Findings & Recommendations
 - ClockColorOption
 - AppWidgetRepository
 - Screens
-- FavoriteAppRepository
-- Fixture
+- FavoriteAppRepository.kt
+- SettingsRepository
 - LauncherSettings
 - FacetCarouselUiState
 - .createViewModel
-- FolderTestFakes.kt
+- DefaultFavoriteFolderPlacementEntity
 - 4. Feature Requirements
-- PlacedItem
+- .homeViewModel
 - .setContent
 - 4. Feature Requirements
 - Keyboard Dismissal on Home Gesture (fix plan)
@@ -47,25 +47,25 @@
 - .setContent
 - Row
 - ClockTemplateId
-- HomeViewModel
+- HomeViewModel.kt
 - AppShortcut
 - CalendarSettingsScreen.kt
 - FacetNavHost
-- WidgetPlacementRepository
-- DrawerGridSize
-- AppRepository
+- WidgetPlacementEntity
+- AppDrawerSettingsViewModel
+- AppRepositoryTest
 - ComponentName
 - SetDefaultLauncherSheetTest
-- ContactRepositoryTest
+- ContactConnectionsSheet.kt
 - Manrope Font License (SIL OFL 1.1)
 - .setContent
-- DockAppRepository
+- FacetDockAppRepository
 - LauncherViewModel
 - .setContent
 - FacetCarouselScreen.kt
 - Clock Widget Resize — Implementation Spec
 - PrivateSpaceRepository
-- CalendarRepository
+- CalendarInfo
 - BackupMapping.kt
 - DockAppPickerScreen.kt
 - CardDivider
@@ -75,7 +75,7 @@
 - AppInfo
 - HubGrid
 - HomeScreen
-- SettingsSearchEntry
+- SystemSettingsRepositoryTest
 - .setContent
 - .createViewModel
 - CalendarEventsBlock.kt
@@ -95,65 +95,65 @@
 - CompactWidgetsUseCaseTest
 - Lumen Launcher Engineering Conventions (CLAUDE.md)
 - FavoriteAppEntity
-- ExportBackupUseCase.kt
+- BackupBundle
 - BackupRestoreViewModelTest
-- ManageFacetsScreen.kt
+- FolderDetailScreen.kt
 - AppProfile
 - GroupAppsByLetterUseCaseTest
 - Lumen Launcher Implementation Plan
-- BackupRestoreContent
+- DefaultFavoriteAppRepository
 - Play Console — sensitive permission disclosures
 - .setContent
 - CalendarSettingsViewModel
-- ImportBackupUseCase.kt
+- FolderTestFakes.kt
 - Facet Launcher — Built Capabilities
 - FolderDetailViewModel
 - Play Console — store listing text
-- NextAlarmRepositoryTest
-- ObserveQuickAddStateUseCaseTest
 - HomeScreen.kt
+- ObserveQuickAddStateUseCaseTest
+- AppContextMenu
 - .createViewModel
-- DrawerViewModel
+- FakeFacetDao
 - AppDrawerScreen
 - FacetLauncherTheme
 - 02 — Database & Persistence Architecture
 - LabeledDropdownRow
-- FolderEntity
+- FolderAppEntity
 - Instrumented (Compose UI, emulator) — 36 classes
-- WallpaperRepository
+- .setContent
 - DefaultAppRepositoryTest
-- BackupRestoreScreenTest.kt
+- DockAppRepository
 - Unit (JVM) — 87 classes
-- ObserveFacetPreviewsUseCase.kt
+- ObserveFacetPreviewsUseCaseTest
 - FacetEntity
-- FacetSettingsUiState
+- FacetSettingsContent
 - HubWidgetPickerViewModel
 - .setContent
 - Folder
 - FacetDatabaseMigrationTest
 - HomeWallpaper
-- .createViewModel
+- DockAppEntity
 - PlaceWidgetUseCaseTest
 - AppModule
 - BackButton
-- FolderRepository
-- dashedBorder
+- FolderDao
+- homeAppLabelShadow
 - FacetDao
 - gradlew
 - FacetApplication.kt
 - Noto Sans Font License (SIL OFL 1.1)
 - Poppins Font License (SIL OFL 1.1)
-- AppDrawerSettingsViewModelTest
+- ContactRepositoryTest
 - NotificationShadeRepository
-- WidgetPlacementEntity
-- FolderDetailScreen.kt
+- ResolveWidgetDropUseCase
+- ClockStyleGalleryViewModel
 - Facet Launcher — Onboarding Flow
 - FolderAppPickerScreen.kt
 - GestureHintOverlay
 - HubViewModel
 - .setContent
 - BackupRestoreViewModel
-- DefaultFavoriteAppRepository
+- DefaultFavoriteAppEntity
 - Facet Launcher — Onboarding & Coach Marks: Design Brief
 - 3. Canvas plan (artboards)
 - OnboardingScreen
@@ -162,22 +162,22 @@
 - FakeFavoriteAppDao
 - WallpaperRepositoryTest
 - SetDefaultLauncherSheet
-- OnboardingViewModel
+- OnboardingViewModelTest
 - build_screenshot.py
-- Color.kt
+- AppIconSize
 - 2. Design tokens
-- .repository
+- FakeFolderDao
 - .setContent
 - architecture/README.md
 - 2. Gate, seeding & architecture
 - 3. Screen-by-screen
 - DockSettingsScreen.kt
-- FacetScopeBadge.kt
-- FoldersSettingsContent
+- LauncherFontOption
+- FoldersSettingsViewModel
 - FolderAppPickerViewModelTest
 - HubContent
-- StickyHeaderLayout
-- UsageAccessExplanationScreen.kt
+- QuickAddState
+- UsageAccessExplanationViewModel
 - Fixture
 - AccentSwatch
 - ClockAdjustSheet.kt
@@ -187,23 +187,23 @@
 - DockAppPickerViewModel
 - WidgetResizeHandle.kt
 - FacetDatabase
-- FavoriteAppDao
-- FavoritesPickerViewModel
+- DrawerPresentation
+- AppRepository.kt
 - 5.4 Key registry by section
-- .setContent
+- ContactRepository
 - AppDrawerSettingsScreen.kt
 - AppearanceSettingsScreen.kt
 - FolderContentsSheet
-- OnboardingIntroPage.kt
+- CalendarRepositoryTest
 - HubWidgetPickerScreen.kt
-- BackupRestoreMessage
+- BackupRestoreContent
 - 06 — Testing Strategy & Practice
 - .setContent
-- NextAlarmRepository.kt
+- DefaultAppRepository
 - .useCase
 - SettingsScreen.kt
-- DockFolderPlacementEntity
-- AssignCalendarColorsUseCaseTest
+- DockAppRepository.kt
+- NotificationAccessRepository
 - ClockAdjustMode
 - ColorTest
 - 01 — High-Level Architecture & Layer Boundaries
@@ -211,50 +211,72 @@
 - gen-test-registry.py
 - release.sh
 - .setContent
-- .setContent
+- ConvertersTest
 - 03 — Core Reactive & Data Flow
 - 07 — Repository & Use Case Registries
 - 08 — Flow: Placements (Favorites, Dock, Folders) — add, remove, reorder, clean up
 - 11 — Flow: Profiles & Spaces (Work Profile, Private Space, Secure Folder)
 - 13 — Flows: Facets, Theme resolution, Notification badges, Onboarding
-- HubAddWidgetEvent
+- DockFolderPlacementEntity
 - ClockAlignment.kt
-- ImportBackupUseCaseTest
+- HomeSurfacePreview
 - 04 — Directory & Package Structure Map
 - 09 — Flow: Backup & Restore
 - 10 — Flow: Hub Widgets (host lifecycle, add, move, resize, delete, orphans)
-- PermissionsScreen.kt
+- StickyHeaderLayout
 - 12 — Flow: App Drawer — search, tabs, and per-app actions
-- AddFolderToDockUseCaseTest
-- Fixture
-- ClockAccessoryIconsTest
 - .setContent
+- AddFolderToDockUseCase
+- FavoriteFolderPlacementDao
+- Fixture
+- ObserveQuickAddStateUseCase
+- ClockAccessoryIconsTest
+- OnboardingFacetsPage.kt
+- PermissionKind
+- ObserveFacetPreviewsUseCase
+- ObserveHomeScreenStateUseCase
+- AddFolderToFavoritesUseCase
+- .setContent
+- FacetEntityTest
+- HubGridConstants.kt
+- PlaceWidgetResult
+- AddAppToDockUseCaseTest
+- AddAppToFavoritesUseCaseTest
+- RemoveAppFromDockUseCaseTest
+- Fixture
+- Fixture
+- Axis
+- any
+- AppWidgetHostView
 - ClockCornerHandle
+- IntentSender
+- Uri
+- Path
 - WeatherInfo.kt
 
 ## God Nodes (most connected - your core abstractions)
-1. `FacetLauncherTheme()` - 257 edges
+1. `FacetLauncherTheme()` - 246 edges
 2. `AppInfo` - 238 edges
-3. `FacetEntity` - 212 edges
-4. `SettingsRepository` - 160 edges
-5. `Row` - 147 edges
-6. `FacetRepository` - 134 edges
-7. `LauncherSettings` - 124 edges
-8. `Folder` - 96 edges
-9. `AppRepository` - 82 edges
-10. `FolderRepository` - 82 edges
+3. `FacetEntity` - 154 edges
+4. `Row` - 147 edges
+5. `SettingsRepository` - 131 edges
+6. `FacetRepository` - 114 edges
+7. `AppRepository` - 82 edges
+8. `FolderRepository` - 82 edges
+9. `LauncherSettings` - 76 edges
+10. `DockAppRepository` - 75 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Lumen Launcher Engineering Conventions (CLAUDE.md)` --references--> `Lumen Launcher Implementation Plan`  [EXTRACTED]
   CLAUDE.md → IMPLEMENTATION_PLAN.md
 - `Phase 10 — Advanced Clock Templates (F1 follow-up)` --references--> `Roboto Flex Font License (SIL OFL 1.1)`  [INFERRED]
   IMPLEMENTATION_PLAN.md → THIRD_PARTY_FONT_LICENSES/robotoflex_OFL.txt
-- `BatteryRepositoryTest` --calls--> `BatteryRepository`  [INFERRED]
-  app/src/test/kotlin/com/facetlauncher/app/data/BatteryRepositoryTest.kt → app/src/main/kotlin/com/facetlauncher/app/data/BatteryRepository.kt
-- `CalendarRepositoryTest` --calls--> `CalendarRepository`  [INFERRED]
-  app/src/test/kotlin/com/facetlauncher/app/data/CalendarRepositoryTest.kt → app/src/main/kotlin/com/facetlauncher/app/data/CalendarRepository.kt
-- `DefaultAppRepositoryTest` --calls--> `DefaultAppRepository`  [INFERRED]
-  app/src/test/kotlin/com/facetlauncher/app/data/DefaultAppRepositoryTest.kt → app/src/main/kotlin/com/facetlauncher/app/data/DefaultAppRepository.kt
+- `AppContextMenu()` --calls--> `QuickAddState`  [INFERRED]
+  app/src/main/kotlin/com/facetlauncher/app/ui/components/AppContextMenu.kt → app/src/main/kotlin/com/facetlauncher/app/domain/ObserveQuickAddStateUseCase.kt
+- `AppContextMenu()` --calls--> `AppIcon()`  [INFERRED]
+  app/src/main/kotlin/com/facetlauncher/app/ui/components/AppContextMenu.kt → app/src/main/kotlin/com/facetlauncher/app/ui/components/AppIcon.kt
+- `AppContextMenu()` --calls--> `OtherScopeBadge()`  [INFERRED]
+  app/src/main/kotlin/com/facetlauncher/app/ui/components/AppContextMenu.kt → app/src/main/kotlin/com/facetlauncher/app/ui/components/FacetScopeBadge.kt
 
 ## Import Cycles
 - None detected.
@@ -264,55 +286,47 @@
 - **Async-vs-waitForIdle Compose testing lessons** — claude_testing_requirement, claude_animation_scale_rule, implementation_plan_waitforidle_vs_async_lesson, implementation_plan_animation_scale_incident [INFERRED 0.85]
 - **MVVM layering conventions (composables/state-hoisting/strict-layering)** — claude_mvvm_layering, claude_strict_layering_rule, claude_stateless_composables_state_hoisting [INFERRED 0.85]
 
-## Communities (222 total, 53 thin omitted)
-
-### Community 0 - "ClockStyleGalleryViewModel"
-Cohesion: 0.08
-Nodes (5): ClockStyleGalleryUiState, ClockStyleGalleryViewModel, StateFlow, ViewModel, ClockStyleGalleryViewModelTest
+## Communities (244 total, 63 thin omitted)
 
 ### Community 1 - "design_handoff_minimal_launcher/support.js"
 Cohesion: 0.06
 Nodes (75): boot(), bundledBlob(), cdnScriptFor(), collectProps(), compileAttr(), compileTemplate(), contentKey(), createComponentFactory() (+67 more)
 
-### Community 2 - "BatteryStatus"
-Cohesion: 0.17
-Nodes (9): BroadcastReceiver, BroadcastReceiver, Context, Flow, Intent, toBatteryStatus(), BatteryStatus, BatteryRepositoryTest (+1 more)
+### Community 2 - "Fixture"
+Cohesion: 0.06
+Nodes (22): BatteryRepository, BroadcastReceiver, BroadcastReceiver, Context, Flow, Intent, toBatteryStatus(), BatteryStatus (+14 more)
 
 ### Community 4 - "FacetDockAppEntity"
-Cohesion: 0.09
-Nodes (6): FacetDockAppDao, Flow, FacetDockAppEntity, FakeFacetDockAppDao, Flow, FacetDockAppDaoTest
+Cohesion: 0.07
+Nodes (7): FacetDockAppDao, Flow, FacetDockAppEntity, FacetDockAppRepositoryTest, FakeFacetDockAppDao, Flow, FacetDockAppDaoTest
 
-### Community 5 - "SettingsRepository"
-Cohesion: 0.05
-Nodes (11): FakeCalendarPermissionRepository, PermissionsScreenGrantedTest, PermissionsScreenTest, CalendarPermissionRepository, NotificationAccessRepository, SettingsRepository, UsageAccessRepository, StateFlow (+3 more)
-
-### Community 6 - ".setContent"
-Cohesion: 0.13
-Nodes (4): AppearanceSettingsScreenTest, DefaultAppRepository, Intent, SelectPreviewAppsUseCase
+### Community 5 - "CalendarPermissionRepository"
+Cohesion: 0.11
+Nodes (10): FakeCalendarPermissionRepository, PermissionsScreenGrantedTest, PermissionsScreenTest, CalendarPermissionRepository, ContactPermissionRepository, UsageAccessRepository, StateFlow, ViewModel (+2 more)
 
 ### Community 7 - "Android launcher design planning/support.js"
 Cohesion: 0.06
 Nodes (75): boot(), bundledBlob(), cdnScriptFor(), collectProps(), compileAttr(), compileTemplate(), contentKey(), createComponentFactory() (+67 more)
 
-### Community 8 - "FacetDockFolderPlacementEntity"
-Cohesion: 0.12
-Nodes (4): FacetDockFolderPlacementDao, Flow, FacetDockFolderPlacementEntity, FacetDockFolderPlacementDaoTest
+### Community 8 - "FolderEntity"
+Cohesion: 0.22
+Nodes (5): FacetDockFolderPlacementEntity, FavoriteFolderPlacementEntity, FolderEntity, FacetDockFolderPlacementDaoTest, FavoriteFolderPlacementDaoTest
 
 ### Community 9 - "Screens"
 Cohesion: 0.06
 Nodes (32): About the Design Files, Accent handling, App Drawer (`1a`, `1h`, `1i`), App long-press menu (`4i`), Assets, Clock style page (`3e` default, `3f` profile override), Clock variants, Dark (`Launcher Dark.dc.html`) (+24 more)
 
 ### Community 10 - "ManageFacetsViewModel"
-Cohesion: 0.13
-Nodes (6): StateFlow, ViewModel, ManageFacetsViewModel, FakeFacetDao, Flow, ManageFacetsViewModelTest
-
-### Community 11 - "EnsureActiveFacetUseCase"
-Cohesion: 0.18
-Nodes (4): EnsureActiveFacetUseCase, EnsureActiveFacetUseCaseTest, FakeFacetDao, Flow
-
-### Community 12 - "DockAppEntity"
 Cohesion: 0.09
-Nodes (8): DockAppDao, Flow, DockAppEntity, DockAppRepositoryTest, FakeDockAppDao, Flow, FakeDockFolderPlacementDao, DockAppDaoTest
+Nodes (8): ManageFacetsScreenTest, StateFlow, ViewModel, ManageFacetsUiState, ManageFacetsViewModel, FakeFacetDao, Flow, ManageFacetsViewModelTest
+
+### Community 11 - "FakeFacetDao"
+Cohesion: 0.15
+Nodes (8): DataStoreModule, Context, EnsureActiveFacetUseCase, EnsureActiveFacetUseCaseTest, FakeFacetDao, Flow, DataStore, Preferences
+
+### Community 12 - ".repository"
+Cohesion: 0.19
+Nodes (4): DockAppRepositoryTest, FakeDockAppDao, DockFolderPlacementDao, Flow
 
 ### Community 13 - "05 — Architect's Review: Findings & Recommendations"
 Cohesion: 0.15
@@ -320,107 +334,115 @@ Nodes (13): 05 — Architect's Review: Findings & Recommendations, F10 — One-s
 
 ### Community 14 - "ClockColorOption"
 Cohesion: 0.03
-Nodes (67): DataStoreModule, Context, Flow, Converters, T, resolveOverride(), ClockColorOption, ACCENT_PRIMARY (+59 more)
+Nodes (58): Converters, T, resolveOverride(), ClockColorOption, ACCENT_PRIMARY, ACCENT_SECONDARY, THEME, THEME_INVERTED (+50 more)
 
 ### Community 15 - "AppWidgetRepository"
-Cohesion: 0.10
-Nodes (12): AppWidgetRepository, AppWidgetHostView, AppWidgetProviderInfo, Bitmap, Context, Flow, Intent, IntentSender (+4 more)
+Cohesion: 0.11
+Nodes (10): AppWidgetRepository, AppWidgetProviderInfo, Bitmap, Context, Flow, Intent, UserHandle, toBitmap() (+2 more)
 
 ### Community 16 - "Screens"
 Cohesion: 0.06
 Nodes (32): About the Design Files, Accent handling, App Drawer (`1a`, `1h`, `1i`), App long-press menu (`4i`), Assets, Clock card (`3d`) and Calendar settings (new screen, wraps `4l`), Clock variants, Dark (`Launcher Dark.dc.html`) (+24 more)
 
-### Community 17 - "FavoriteAppRepository"
-Cohesion: 0.09
-Nodes (5): FavoriteAppRepository, com, Flow, FavoriteFolderPlacementEntity, FakeFavoriteFolderPlacementDao
+### Community 17 - "FavoriteAppRepository.kt"
+Cohesion: 0.24
+Nodes (4): com, FavoriteFolderPlacementEntity, Flow, PlacedItem
+
+### Community 18 - "SettingsRepository"
+Cohesion: 0.05
+Nodes (8): CalendarRepository, Flow, SettingsRepository, FacetPreviewData, Flow, ObserveSettingsScreenStateUseCase, SettingsScreenState, SeedDefaultDockUseCase
 
 ### Community 19 - "LauncherSettings"
-Cohesion: 0.14
+Cohesion: 0.15
 Nodes (5): LauncherSettings, HomeUiState, ExportBackupUseCaseTest, FacetCarouselUiStateTest, HomeUiStateTest
 
 ### Community 21 - ".createViewModel"
-Cohesion: 0.22
-Nodes (4): fakeWallpaperRepository(), WallpaperRepository, HomeAppsListSettingsViewModelTest, WallpaperRepository
+Cohesion: 0.15
+Nodes (9): fakeWallpaperRepository(), WallpaperRepository, HomeAppsListSettingsViewModelTest, FacetEntity, FacetRepository, HomeWallpaper, SettingsRepository, WallpaperRepository (+1 more)
 
-### Community 22 - "FolderTestFakes.kt"
-Cohesion: 0.08
-Nodes (7): DefaultFavoriteFolderPlacementDao, Flow, DefaultFavoriteFolderPlacementEntity, FakeDefaultFavoriteFolderPlacementDao, FakeFacetDockFolderPlacementDao, Flow, DefaultFavoriteFolderPlacementDaoTest
+### Community 22 - "DefaultFavoriteFolderPlacementEntity"
+Cohesion: 0.20
+Nodes (4): DefaultFavoriteFolderPlacementDao, Flow, DefaultFavoriteFolderPlacementEntity, DefaultFavoriteFolderPlacementDaoTest
 
 ### Community 23 - "4. Feature Requirements"
 Cohesion: 0.07
 Nodes (26): 10. Open Questions / Decisions Needed, 1. Overview, 2. Goals, 3. Non-Goals (v1), 3a. Parked for Future Consideration, 4. Feature Requirements, 5. Gesture Map, 6. Additional Considerations Still Open (+18 more)
 
-### Community 24 - "PlacedItem"
-Cohesion: 0.11
-Nodes (12): FolderItem, PlacedItem, SingleApp, HomeScreenState, Flow, ObserveHomeScreenStateUseCase, DockSettingsUiState, DockSettingsViewModel (+4 more)
+### Community 24 - ".homeViewModel"
+Cohesion: 0.19
+Nodes (8): HomeScreenState, HomeViewModelTest, FacetEntity, FacetRepository, HomeViewModel, LauncherSettings, PlacedItem, SettingsRepository
 
 ### Community 26 - "4. Feature Requirements"
 Cohesion: 0.07
 Nodes (26): 10. Open Questions / Decisions Needed, 1. Overview, 2. Goals, 3. Non-Goals (v1), 3a. Parked for Future Consideration, 4. Feature Requirements, 5. Gesture Map, 6. Additional Considerations Still Open (+18 more)
+
+### Community 28 - ".setContent"
+Cohesion: 0.18
+Nodes (5): FavoritesPickerScreenTest, FavoritesPickerViewModel, Flow, StateFlow, ViewModel
 
 ### Community 29 - ".setContent"
 Cohesion: 0.33
 Nodes (3): HubGestureTest, Offset, T
 
 ### Community 30 - "Row"
-Cohesion: 0.14
-Nodes (77): ClockDateStyle, CONDENSED, FULL, LauncherFontOption, MANROPE, NOTO_SANS, POPPINS, ROBOTO_FLEX (+69 more)
+Cohesion: 0.17
+Nodes (75): ClockDateStyle, CONDENSED, FULL, AlarmAccessoryContent(), BatteryAccessoryContent(), ClockAccessoryRow(), Color, FontFamily (+67 more)
 
 ### Community 31 - "ClockTemplateId"
 Cohesion: 0.05
 Nodes (37): ClockTemplateId, ACCENT_CONTRAST, ACCENT_FIELD, ACCENTED_FLUID_STACK, ACCENTED_FLUID_STACK_INVERTED, BOLD_COLON, BRACKET_MINIMAL, CHIP (+29 more)
 
-### Community 32 - "HomeViewModel"
-Cohesion: 0.11
-Nodes (6): AppListLimits, ObserveQuickAddStateUseCase, HomeViewModel, Intent, StateFlow, ViewModel
+### Community 32 - "HomeViewModel.kt"
+Cohesion: 0.16
+Nodes (4): HomeViewModel, Intent, StateFlow, ViewModel
 
 ### Community 33 - "AppShortcut"
 Cohesion: 0.18
 Nodes (5): AppShortcutRepository, UserHandle, AppShortcut, AppShortcutRepositoryTest, ShortcutInfo
 
 ### Community 34 - "CalendarSettingsScreen.kt"
-Cohesion: 0.44
-Nodes (8): CalendarPickerRow(), CalendarSettingsContent(), CalendarSettingsHeader(), CalendarSettingsScreen(), CalendarSettingsScreenPreview(), Modifier, PermissionDeniedStrip(), CalendarSettingsUiState
+Cohesion: 0.30
+Nodes (12): InheritOverrideCard(), Modifier, RadioDot(), RadioOptionRow(), CalendarPickerRow(), CalendarSettingsContent(), CalendarSettingsHeader(), CalendarSettingsScreen() (+4 more)
 
 ### Community 35 - "FacetNavHost"
-Cohesion: 0.23
-Nodes (7): ClockStyleGalleryRoute(), FacetClockStyleGalleryScreen(), FacetDestinations, FacetNavHost(), Modifier, popBackStackSafely(), NavHostController
+Cohesion: 0.17
+Nodes (13): ClockPositionResetRow(), clockStyleGalleryDisplayLabel(), ClockStyleGalleryHeader(), ClockStyleGalleryRoute(), ClockStyleGalleryScreen(), ClockStyleGalleryScreenPreview(), FacetClockStyleGalleryScreen(), Modifier (+5 more)
 
-### Community 36 - "WidgetPlacementRepository"
-Cohesion: 0.15
-Nodes (6): Flow, WidgetPlacementRepository, FakeWidgetPlacementDao, Flow, WidgetPlacementRepositoryTest, DeleteWidgetUseCaseTest
+### Community 36 - "WidgetPlacementEntity"
+Cohesion: 0.11
+Nodes (9): Flow, WidgetPlacementDao, WidgetPlacementEntity, Flow, WidgetPlacementRepository, FakeWidgetPlacementDao, Flow, WidgetPlacementRepositoryTest (+1 more)
 
-### Community 37 - "DrawerGridSize"
-Cohesion: 0.08
-Nodes (12): AppDrawerSettingsScreenTest, DrawerGridSize, FIVE_BY_FIVE, FIVE_BY_SIX, FOUR_BY_FIVE, FOUR_BY_FOUR, SearchBarPosition, BOTTOM (+4 more)
+### Community 37 - "AppDrawerSettingsViewModel"
+Cohesion: 0.06
+Nodes (17): AppDrawerSettingsScreenTest, DrawerGridSize, FIVE_BY_FIVE, FIVE_BY_SIX, FOUR_BY_FIVE, FOUR_BY_FOUR, DrawerListItemSize, COMPACT (+9 more)
 
-### Community 38 - "AppRepository"
-Cohesion: 0.18
-Nodes (10): AppRepository, any(), AppRepositoryTest, eq(), Context, LauncherApps, T, UserHandle (+2 more)
+### Community 38 - "AppRepositoryTest"
+Cohesion: 0.17
+Nodes (6): AppRepositoryTest, Context, LauncherApps, UserHandle, UserManager, LauncherActivityInfo
 
 ### Community 39 - "ComponentName"
-Cohesion: 0.24
+Cohesion: 0.23
 Nodes (6): AppWidgetRepositoryTest, AppWidgetProviderInfo, UserHandle, UserManager, ApplicationInfo, ComponentName
 
-### Community 41 - "ContactRepositoryTest"
-Cohesion: 0.06
-Nodes (26): ContactConnectionsSheetTest, ContactRepository, LabeledValue, ConnectionDetail, ConnectionOption, ContactConnection, ContactConnectionType, CALL (+18 more)
+### Community 41 - "ContactConnectionsSheet.kt"
+Cohesion: 0.14
+Nodes (20): ContactConnectionsSheetTest, ConnectionDetail, ConnectionOption, ContactConnection, ContactConnectionType, CALL, EMAIL, MESSAGE (+12 more)
 
-### Community 44 - "DockAppRepository"
-Cohesion: 0.06
-Nodes (16): DockAppRepository, Flow, FacetDockAppRepository, com, Flow, combine(), Flow, CleanUpUninstalledAppsUseCaseTest (+8 more)
+### Community 44 - "FacetDockAppRepository"
+Cohesion: 0.09
+Nodes (16): Flow, FacetDockAppRepository, com, FacetDockFolderPlacementEntity, Flow, PlacedItem, Flow, combine() (+8 more)
 
 ### Community 45 - "LauncherViewModel"
 Cohesion: 0.21
 Nodes (6): SharedFlow, StateFlow, ViewModel, LauncherUiState, LauncherViewModel, LauncherViewModelTest
 
 ### Community 46 - ".setContent"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (3): FacetCarouselScreenTest, UsageStatsRepository, UsageStatsRepositoryTest
 
 ### Community 47 - "FacetCarouselScreen.kt"
-Cohesion: 0.24
-Nodes (14): AddFacetPage(), FacetCarouselContent(), NestedScrollConnection, FacetCarouselHeader(), FacetCarouselScreen(), FacetCarouselScreenPreview(), FacetPreviewPage(), Modifier (+6 more)
+Cohesion: 0.12
+Nodes (31): AddFacetPage(), FacetCarouselContent(), NestedScrollConnection, FacetCarouselHeader(), FacetCarouselScreen(), FacetCarouselScreenPreview(), FacetPreviewPage(), AppRowPosition (+23 more)
 
 ### Community 48 - "Clock Widget Resize — Implementation Spec"
 Cohesion: 0.11
@@ -430,21 +452,21 @@ Nodes (18): 10. Open decisions (resolve before implementing), 1. Scope, 2. Data 
 Cohesion: 0.16
 Nodes (8): BroadcastReceiver, Context, Flow, Intent, PrivateSpaceRepository, BroadcastReceiver, Context, PrivateSpaceRepositoryTest
 
-### Community 50 - "CalendarRepository"
-Cohesion: 0.18
-Nodes (5): CalendarSettingsScreenGrantedTest, CalendarSettingsScreenTest, FakeCalendarRepository, CalendarRepository, CalendarInfo
+### Community 50 - "CalendarInfo"
+Cohesion: 0.13
+Nodes (5): CalendarSettingsScreenGrantedTest, CalendarSettingsScreenTest, FakeCalendarRepository, CalendarInfo, CalendarSettingsViewModelTest
 
 ### Community 51 - "BackupMapping.kt"
-Cohesion: 0.18
-Nodes (19): BackupAppEntry, BackupFacet, BackupFolder, BackupFolderPlacement, BackupWidgetPlacement, com, T, toBackupEntry() (+11 more)
+Cohesion: 0.19
+Nodes (18): BackupAppEntry, BackupFacet, BackupFolder, BackupFolderPlacement, com, T, toBackupEntry(), toBackupFacet() (+10 more)
 
 ### Community 52 - "DockAppPickerScreen.kt"
 Cohesion: 0.31
 Nodes (15): DockAppPickerContent(), DockAppPickerHeader(), DockAppPickerScreen(), DockAppPickerScreenPreview(), DockAppsList(), DockFolderPickerRow(), DockFoldersList(), DockPickerRow() (+7 more)
 
 ### Community 53 - "CardDivider"
-Cohesion: 0.34
-Nodes (14): CardDivider(), Modifier, SettingsCard(), AppDrawerSection(), DockAppsReorderRow(), DockClickableRow(), DockSection(), FavoritesClickableRow() (+6 more)
+Cohesion: 0.21
+Nodes (21): ConfirmDialog(), Modifier, CardDivider(), Modifier, SettingsCard(), AppDrawerSection(), DockAppsReorderRow(), DockClickableRow() (+13 more)
 
 ### Community 54 - "FavoritesPickerScreen.kt"
 Cohesion: 0.31
@@ -455,40 +477,44 @@ Cohesion: 0.07
 Nodes (26): 10. Open Questions / Decisions Needed, 1. Overview, 2. Goals, 3. Non-Goals (v1), 3a. Parked for Future Consideration, 4. Feature Requirements, 5. Gesture Map, 6. Additional Considerations Still Open (+18 more)
 
 ### Community 56 - "AppDrawerScreen.kt"
-Cohesion: 0.13
-Nodes (32): DrawerListItemSize, COMPACT, REGULAR, SPACIOUS, NotificationBadgeStyle, COUNT, DOT, GroupAppsByLetterUseCase (+24 more)
+Cohesion: 0.17
+Nodes (32): AppDrawerScreenGridPreview(), ContactRow(), ContactsAccessStrip(), ContactsSettingOffStrip(), DrawerAppRow(), drawerDashedBorder(), DrawerGridContent(), DrawerGridTile() (+24 more)
 
 ### Community 57 - "AppInfo"
-Cohesion: 0.13
-Nodes (5): AppInfo, GetInstalledAppsUseCase, Flow, GetInstalledAppsUseCaseTest, UsageStatsManager
+Cohesion: 0.07
+Nodes (15): AppRepository, BroadcastReceiver, Flow, FavoriteAppRepository, FolderRepository, AppInfo, CleanUpUninstalledAppsUseCase, GetInstalledAppsUseCase (+7 more)
 
 ### Community 58 - "HubGrid"
-Cohesion: 0.13
-Nodes (23): Composable, Modifier, PaddingValues, ThemedDropdownMenu(), ThemedDropdownMenuItem(), DrawerSearchBar(), Intent, HubGrid() (+15 more)
+Cohesion: 0.16
+Nodes (16): HubGrid(), AppWidgetHostView, Context, Modifier, resizedSpan(), ResizeEdge, END, START (+8 more)
 
-### Community 59 - "HomeScreen"
-Cohesion: 0.13
-Nodes (4): HomeScreenTest, HomeScreen(), HomeScreenTextOnlyPresentationPreview(), stableKey()
+### Community 60 - "SystemSettingsRepositoryTest"
+Cohesion: 0.22
+Nodes (4): SettingsSearchEntry, CatalogEntry, SystemSettingsRepository, SystemSettingsRepositoryTest
 
-### Community 60 - "SettingsSearchEntry"
-Cohesion: 0.20
-Nodes (3): SettingsSearchEntry, CatalogEntry, SystemSettingsRepositoryTest
+### Community 62 - ".createViewModel"
+Cohesion: 0.19
+Nodes (9): DockSettingsViewModelTest, WallpaperRepository, FacetEntity, FacetRepository, HomeWallpaper, PlacedItem, SettingsRepository, WallpaperRepository (+1 more)
 
 ### Community 63 - "CalendarEventsBlock.kt"
-Cohesion: 0.29
-Nodes (11): CalendarEventsBlock(), EventRow(), Color, FontFamily, FontWeight, Modifier, BroadcastReceiver, Context (+3 more)
+Cohesion: 0.27
+Nodes (12): CalendarEventsBlock(), EventRow(), Color, FontFamily, FontWeight, Modifier, BroadcastReceiver, Context (+4 more)
+
+### Community 64 - ".drawerViewModel"
+Cohesion: 0.15
+Nodes (3): DrawerViewModelTest, Intent, SettingsRepository
 
 ### Community 66 - "AppIcon"
-Cohesion: 0.23
-Nodes (17): AppIcon(), appIconCornerRadiusFor(), AppIconGlyph(), AppIconSize, badgeLabel(), Dp, Modifier, NotificationBadge() (+9 more)
+Cohesion: 0.37
+Nodes (11): AppIcon(), appIconCornerRadiusFor(), AppIconGlyph(), badgeLabel(), Dp, Modifier, NotificationBadgeStyle, NotificationBadge() (+3 more)
 
 ### Community 67 - "github.md"
 Cohesion: 0.40
 Nodes (4): Last sync, Screen map, Sync history, Updated in this project
 
 ### Community 68 - "HomeDrawerRoute"
-Cohesion: 0.19
-Nodes (11): Axis, HORIZONTAL, VERTICAL, HomeDrawerRoute(), NestedScrollConnection, androidx, Modifier, NestedScrollConnection (+3 more)
+Cohesion: 0.23
+Nodes (10): HomeDrawerRoute(), NestedScrollConnection, androidx, FacetCarouselViewModel, HomeViewModel, Modifier, NestedScrollConnection, NestedScrollSource (+2 more)
 
 ### Community 69 - "ClockAccessoryIcons.kt"
 Cohesion: 0.31
@@ -499,20 +525,20 @@ Cohesion: 0.33
 Nodes (5): BroadcastReceiver, Context, Flow, Intent, BroadcastReceiver
 
 ### Community 71 - ".setContent"
-Cohesion: 0.09
-Nodes (5): AppContextMenuTest, SharedFlow, FolderTileContextMenuTest, SharedFlow, QuickAddState
+Cohesion: 0.12
+Nodes (3): AppContextMenuTest, Folder, SharedFlow
 
 ### Community 72 - "HomeAppsListSettingsScreen.kt"
-Cohesion: 0.53
-Nodes (8): DefaultFavoritesReorderList(), HomeAppsListClickableRow(), homeAppsListDisplayLabel(), HomeAppsListSettingsContent(), HomeAppsListSettingsHeader(), HomeAppsListSettingsScreen(), HomeAppsListSettingsScreenPreview(), Modifier
+Cohesion: 0.47
+Nodes (9): DefaultFavoritesReorderList(), HomeAppsListClickableRow(), homeAppsListDisplayLabel(), HomeAppsListSettingsContent(), HomeAppsListSettingsHeader(), HomeAppsListSettingsScreen(), HomeAppsListSettingsScreenPreview(), Modifier (+1 more)
 
 ### Community 74 - "NotificationBadgeRepository"
-Cohesion: 0.19
+Cohesion: 0.20
 Nodes (7): FacetNotificationListenerService, NotificationInfo, StateFlow, NotificationBadgeRepository, NotificationBadgeRepositoryTest, NotificationListenerService, StatusBarNotification
 
 ### Community 75 - "WallpaperAccentRole"
-Cohesion: 0.08
-Nodes (16): IconRenderMode, MONOCHROME_ACCENT, MONOCHROME_BLACK_WHITE, SYSTEM_DEFAULT, ThemeMode, DARK, LIGHT, SYSTEM (+8 more)
+Cohesion: 0.13
+Nodes (9): IconRenderMode, MONOCHROME_ACCENT, MONOCHROME_BLACK_WHITE, SYSTEM_DEFAULT, WallpaperAccentRole, PRIMARY, SECONDARY, TERTIARY (+1 more)
 
 ### Community 76 - "TonalButton"
 Cohesion: 0.30
@@ -522,68 +548,80 @@ Nodes (9): Modifier, ScreenHeader(), ScreenHeaderPreview(), ImageVector, Modifie
 Cohesion: 0.21
 Nodes (12): Never disable device/emulator animation scales rule, Lumen Launcher Engineering Conventions (CLAUDE.md), Instrumented tests run on emulator only rule, Material 3 real shape-scale governing principle, Theme every Material3 component explicitly (never stock defaults), MVVM layering (composables -> ViewModels -> Repositories -> domain use cases), Stateless composables + state hoisting convention, Strict layering rule (composables never call data/domain directly) (+4 more)
 
-### Community 80 - "ExportBackupUseCase.kt"
-Cohesion: 0.20
-Nodes (8): BackupRepository, Uri, BackupBundle, BackupSettings, ExportBackupUseCase, Uri, toBackupSettings(), BackupRepositoryTest
+### Community 79 - "FavoriteAppEntity"
+Cohesion: 0.09
+Nodes (5): FavoriteAppDao, Flow, FavoriteAppEntity, Flow, FavoriteAppDaoTest
 
-### Community 82 - "ManageFacetsScreen.kt"
-Cohesion: 0.16
-Nodes (18): DragReorderState, Modifier, T, rememberDragReorderState(), AddFacetRow(), FacetReorderList(), FacetReorderRow(), Modifier (+10 more)
+### Community 80 - "BackupBundle"
+Cohesion: 0.18
+Nodes (4): Uri, BackupBundle, BackupRepositoryTest, ImportBackupUseCaseTest
+
+### Community 82 - "FolderDetailScreen.kt"
+Cohesion: 0.21
+Nodes (13): DragReorderState, Modifier, T, rememberDragReorderState(), detectHomeSwipeGestures(), FolderAppsReorderList(), FolderDetailContent(), FolderDetailHeader() (+5 more)
 
 ### Community 83 - "AppProfile"
-Cohesion: 0.07
-Nodes (19): BroadcastReceiver, Callback, BroadcastReceiver, Callback, flattenIcon(), Bitmap, BroadcastReceiver, Context (+11 more)
+Cohesion: 0.12
+Nodes (9): Callback, Callback, UserHandle, AppProfile, OTHER, PERSONAL, PRIVATE, WORK (+1 more)
+
+### Community 84 - "GroupAppsByLetterUseCaseTest"
+Cohesion: 0.24
+Nodes (3): GroupAppsByLetterUseCase, GroupedApps, GroupAppsByLetterUseCaseTest
 
 ### Community 85 - "Lumen Launcher Implementation Plan"
 Cohesion: 0.11
 Nodes (19): Standing convention: every non-root screen gets a back button, Default favorites (global list, mirrors Dock), Lumen Launcher Implementation Plan, Inherit-default / Override-for-this-profile switch pattern, Known gap: no second clock style exists yet, Phase 0 — Repo & tooling setup, Phase 10 — Advanced Clock Templates (F1 follow-up), Phase 1 — Project scaffold + Home/Drawer skeleton (+11 more)
 
-### Community 86 - "BackupRestoreContent"
-Cohesion: 0.38
-Nodes (10): ConfirmDialog(), Modifier, BackupRestoreContent(), BackupRestoreHeader(), BackupRestoreScreen(), BackupRestoreScreenPreview(), Modifier, MessageBanner() (+2 more)
+### Community 86 - "DefaultFavoriteAppRepository"
+Cohesion: 0.12
+Nodes (6): DefaultFavoriteAppRepository, DefaultFavoriteFolderPlacementEntity, Flow, PlacedItem, AppListLimits, Keys
 
 ### Community 87 - "Play Console — sensitive permission disclosures"
 Cohesion: 0.25
 Nodes (7): Calendar — `READ_CALENDAR` (normal runtime permission, lower scrutiny), Contacts — `READ_CONTACTS` (normal runtime permission, lower scrutiny), Data Safety section — top-level answer, Notification access (powers app-icon badges), Play Console — sensitive permission disclosures, Uninstall shortcut — `REQUEST_DELETE_PACKAGES`, Usage access — `PACKAGE_USAGE_STATS` (powers "Most used" app sort)
 
 ### Community 89 - "CalendarSettingsViewModel"
-Cohesion: 0.22
-Nodes (4): AssignCalendarColorsUseCase, CalendarSettingsViewModel, StateFlow, ViewModel
+Cohesion: 0.12
+Nodes (5): AssignCalendarColorsUseCase, CalendarSettingsViewModel, StateFlow, ViewModel, AssignCalendarColorsUseCaseTest
 
-### Community 90 - "ImportBackupUseCase.kt"
-Cohesion: 0.27
-Nodes (6): ImportBackupResult, ImportBackupUseCase, InvalidFile, Uri, Success, UnsupportedVersion
+### Community 90 - "FolderTestFakes.kt"
+Cohesion: 0.08
+Nodes (14): FakeDefaultFavoriteFolderPlacementDao, FakeDockFolderPlacementDao, FakeFacetDockFolderPlacementDao, FakeFavoriteFolderPlacementDao, DefaultFavoriteFolderPlacementDao, DefaultFavoriteFolderPlacementEntity, DockFolderPlacementDao, DockFolderPlacementEntity (+6 more)
 
 ### Community 91 - "Facet Launcher — Built Capabilities"
 Cohesion: 0.18
 Nodes (11): 10. Gaps relevant to building onboarding, 1. What exists at launch today (no onboarding), 2. Home surface, 3. App Drawer, 4. Profiles, 5. Launcher Hub (widgets), 6. Appearance & theming, 7. Settings map (all built unless noted) (+3 more)
 
 ### Community 92 - "FolderDetailViewModel"
-Cohesion: 0.19
-Nodes (5): FolderDetailUiState, FolderDetailViewModel, StateFlow, ViewModel, FolderDetailViewModelTest
+Cohesion: 0.22
+Nodes (4): FolderDetailViewModel, StateFlow, ViewModel, FolderDetailViewModelTest
 
 ### Community 93 - "Play Console — store listing text"
 Cohesion: 0.40
 Nodes (4): Category, Full description (max 4000 characters — this draft is ~1,750), Play Console — store listing text, Short description (max 80 characters)
 
-### Community 96 - "HomeScreen.kt"
-Cohesion: 0.17
-Nodes (29): DrawerPresentation, GRID, LIST, Add, QuickPlacementAction, Remove, AppContextMenu(), AppContextMenuDragHandle() (+21 more)
+### Community 94 - "HomeScreen.kt"
+Cohesion: 0.16
+Nodes (31): AppRow(), dashedBorder(), DockIcon(), FolderDockIcon(), FolderRow(), FolderTileGlyph(), HomeScreenTextOnlyPresentationPreview(), AppRowPosition (+23 more)
+
+### Community 96 - "AppContextMenu"
+Cohesion: 0.25
+Nodes (14): AppContextMenu(), AppContextMenuDragHandle(), AppContextMenuItem(), FolderCandidateRow(), Composable, DrawerPresentation, Folder, Modifier (+6 more)
 
 ### Community 97 - ".createViewModel"
 Cohesion: 0.20
 Nodes (3): AppearanceSettingsViewModelTest, WallpaperRepository, WallpaperRepository
 
-### Community 98 - "DrawerViewModel"
-Cohesion: 0.10
-Nodes (10): Locked, NotConfigured, PrivateSpaceState, Unlocked, DrawerViewModel, StateFlow, ViewModel, StateFlow (+2 more)
+### Community 98 - "FakeFacetDao"
+Cohesion: 0.12
+Nodes (3): FacetRepositoryTest, FakeFacetDao, Flow
 
 ### Community 99 - "AppDrawerScreen"
-Cohesion: 0.10
-Nodes (6): AppDrawerScreenTest, fakeUserHandle(), UserHandle, ContactInfo, WorkProfileInfo, AppDrawerScreen()
+Cohesion: 0.09
+Nodes (7): AppDrawerScreenTest, fakeUserHandle(), UserHandle, WorkProfileInfo, AppDrawerScreen(), DrawerGridSize, SearchBarPosition
 
 ### Community 100 - "FacetLauncherTheme"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (8): AlphabetRailTest, ClockBlockTest, CalendarEvent, ClockBlock(), ClockBlockPreview(), Modifier, uniformScale(), FacetLauncherTheme()
 
 ### Community 101 - "02 — Database & Persistence Architecture"
@@ -591,84 +629,80 @@ Cohesion: 0.12
 Nodes (17): 02 — Database & Persistence Architecture, 0. Storage map — everything Facet persists, and where, 1. Entity-Relationship diagram, 2. DAO → Repository → Flow mapping, 3. Type converters, 4. Migration policy (as configured), 5.1 Key diagram — every key, and what it overrides in `facets`, 5.2 Read path (+9 more)
 
 ### Community 102 - "LabeledDropdownRow"
-Cohesion: 0.30
-Nodes (10): Modifier, T, LabeledDropdownRow(), displayLabel(), Modifier, NotificationSettingsContent(), NotificationSettingsScreen(), NotificationSettingsScreenPreview() (+2 more)
-
-### Community 103 - "FolderEntity"
-Cohesion: 0.22
-Nodes (3): FolderEntity, FavoriteFolderPlacementDaoTest, FolderDaoTest
+Cohesion: 0.21
+Nodes (19): Modifier, T, LabeledDropdownRow(), Composable, Modifier, PaddingValues, ThemedDropdownMenu(), ThemedDropdownMenuItem() (+11 more)
 
 ### Community 104 - "Instrumented (Compose UI, emulator) — 36 classes"
 Cohesion: 0.12
 Nodes (17): `data/local/`, Instrumented (Compose UI, emulator) — 36 classes, Main-source classes with no mirrored test class, Test Case Registry, `ui/components/`, `ui/dock/`, `ui/drawer/`, `ui/facets/` (+9 more)
 
-### Community 105 - "WallpaperRepository"
-Cohesion: 0.23
-Nodes (4): DockSettingsScreenTest, Bitmap, WallpaperRepository, WallpaperManager
+### Community 105 - ".setContent"
+Cohesion: 0.18
+Nodes (9): DockSettingsScreenTest, Bitmap, WallpaperRepository, DockSettingsUiState, DockSettingsViewModel, Flow, StateFlow, ViewModel (+1 more)
 
-### Community 107 - "BackupRestoreScreenTest.kt"
-Cohesion: 0.14
-Nodes (12): Context, WidgetModule, AppWidgetProviderInfo, IntentSender, SharedFlow, LauncherAppWidgetHost, HubFull, Placed (+4 more)
+### Community 107 - "DockAppRepository"
+Cohesion: 0.07
+Nodes (24): BackupRestoreScreenTest, BackupRepository, Context, WidgetModule, DockAppRepository, BackupSettings, BackupWidgetPlacement, AppWidgetProviderInfo (+16 more)
 
 ### Community 108 - "Unit (JVM) — 87 classes"
 Cohesion: 0.12
 Nodes (16): `data/`, `data/local/`, `data/widget/`, `domain/`, `ui/drawer/`, `ui/facets/`, `ui/home/`, `ui/home/clock/` (+8 more)
 
-### Community 109 - "ObserveFacetPreviewsUseCase.kt"
-Cohesion: 0.21
-Nodes (6): FacetPreviewData, Inputs, Flow, ObserveFacetPreviewsUseCase, Fixture, ObserveFacetPreviewsUseCaseTest
-
 ### Community 110 - "FacetEntity"
-Cohesion: 0.04
-Nodes (19): FacetRepository, toCsv(), FacetEntity, FacetRepositoryTest, FakeFacetDao, Flow, FacetEntityTest, AddAppToDockUseCaseTest (+11 more)
+Cohesion: 0.10
+Nodes (4): FacetRepository, Flow, toCsv(), FacetEntity
 
-### Community 111 - "FacetSettingsUiState"
-Cohesion: 0.21
-Nodes (16): InheritOverrideCard(), Modifier, RadioDot(), RadioOptionRow(), FacetSettingsHeader(), FacetSettingsRow(), Composable, Modifier (+8 more)
+### Community 111 - "FacetSettingsContent"
+Cohesion: 0.23
+Nodes (13): Modifier, RenameDialog(), FacetSettingsHeader(), FacetSettingsRow(), Composable, Modifier, NavigationChevron(), SectionHeader() (+5 more)
 
 ### Community 112 - "HubWidgetPickerViewModel"
-Cohesion: 0.15
-Nodes (5): HubWidgetPickerViewModel, SharedFlow, StateFlow, ViewModel, HubWidgetPickerViewModelTest
-
-### Community 114 - "Folder"
-Cohesion: 0.12
-Nodes (3): FolderDetailScreenTest, FoldersSettingsScreenTest, Folder
+Cohesion: 0.11
+Nodes (9): AddFailureReason, WidgetProviderOption, HubWidgetPickerViewModel, HubWidgetPickerUiState, SharedFlow, StateFlow, ViewModel, HubWidgetPickerViewModelTest (+1 more)
 
 ### Community 116 - "HomeWallpaper"
-Cohesion: 0.24
-Nodes (9): HomeWallpaper, Image, Tones, Unavailable, Alignment, Modifier, WallpaperBackground(), WallpaperRepository (+1 more)
+Cohesion: 0.36
+Nodes (7): HomeWallpaper, Image, Tones, Unavailable, Alignment, Modifier, WallpaperBackground()
+
+### Community 117 - "DockAppEntity"
+Cohesion: 0.11
+Nodes (4): DockAppDao, Flow, DockAppEntity, DockAppDaoTest
 
 ### Community 119 - "AppModule"
-Cohesion: 0.19
-Nodes (6): AppModule, Context, LauncherApps, UserManager, AppOpsManager, CoroutineScope
+Cohesion: 0.24
+Nodes (5): AppModule, Context, LauncherApps, UserManager, CoroutineScope
 
 ### Community 120 - "BackButton"
-Cohesion: 0.26
-Nodes (9): BackButton(), Modifier, Modifier, NotificationAccessExplanationContent(), NotificationAccessExplanationScreen(), NotificationAccessExplanationScreenPreview(), StateFlow, ViewModel (+1 more)
+Cohesion: 0.19
+Nodes (16): BackButton(), Modifier, Modifier, NotificationAccessExplanationContent(), NotificationAccessExplanationScreen(), NotificationAccessExplanationScreenPreview(), displayLabel(), Modifier (+8 more)
 
-### Community 121 - "FolderRepository"
-Cohesion: 0.06
-Nodes (8): FolderRepository, Flow, FolderAppEntity, FolderDao, FolderWithApps, Flow, FolderRepositoryTest, FakeFolderDao
+### Community 121 - "FolderDao"
+Cohesion: 0.10
+Nodes (7): Flow, Folder, FolderEntity, FolderDao, FolderWithApps, Flow, FolderEntity
 
-### Community 122 - "dashedBorder"
-Cohesion: 0.18
-Nodes (13): dashedBorder(), Color, Dp, Modifier, HubAtCapacityStrip(), HubAtCapacityStripPreview(), Modifier, HubEmptyState() (+5 more)
+### Community 122 - "homeAppLabelShadow"
+Cohesion: 0.13
+Nodes (22): dashedBorder(), Color, Dp, Modifier, HubAtCapacityStrip(), HubAtCapacityStripPreview(), Modifier, HubEmptyState() (+14 more)
 
 ### Community 123 - "FacetDao"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (3): FacetDao, Flow, FacetDaoTest
 
 ### Community 124 - "gradlew"
 Cohesion: 0.83
 Nodes (3): gradlew script, die(), warn()
 
-### Community 133 - "WidgetPlacementEntity"
-Cohesion: 0.11
-Nodes (13): WidgetPlacementEntity, CompactWidgetsUseCase, DeleteWidgetUseCase, HubDomainState, HubWidgetState, Flow, ObserveHubStateUseCase, ResolveWidgetDropUseCase (+5 more)
+### Community 131 - "ContactRepositoryTest"
+Cohesion: 0.22
+Nodes (3): eq(), ContactRepositoryTest, MatrixCursor
 
-### Community 134 - "FolderDetailScreen.kt"
-Cohesion: 0.32
-Nodes (9): Modifier, RenameDialog(), ReorderRowDefaults, FolderAppsReorderList(), FolderDetailContent(), FolderDetailHeader(), FolderDetailScreen(), FolderDetailScreenEmptyPreview() (+1 more)
+### Community 133 - "ResolveWidgetDropUseCase"
+Cohesion: 0.15
+Nodes (10): CompactWidgetsUseCase, DeleteWidgetUseCase, HubDomainState, HubWidgetState, Flow, ObserveHubStateUseCase, ResolveWidgetDropUseCase, ResolveWidgetResizeUseCase (+2 more)
+
+### Community 134 - "ClockStyleGalleryViewModel"
+Cohesion: 0.13
+Nodes (4): ClockStyleGalleryUiState, ClockStyleGalleryViewModel, StateFlow, ViewModel
 
 ### Community 135 - "Facet Launcher — Onboarding Flow"
 Cohesion: 0.20
@@ -683,20 +717,20 @@ Cohesion: 0.43
 Nodes (5): GestureHintOverlay(), GestureHintOverlayPreview(), Modifier, Modifier, SurfaceButton()
 
 ### Community 138 - "HubViewModel"
-Cohesion: 0.20
-Nodes (4): HubUiState, HubWidgetUi, HubViewModel, ViewModel
+Cohesion: 0.15
+Nodes (6): HubUiState, HubWidgetUi, HubViewModel, AppWidgetHostView, Context, ViewModel
 
 ### Community 139 - ".setContent"
 Cohesion: 0.06
-Nodes (12): SettingsScreenTest, DefaultLauncherRepository, Intent, Flow, ObserveSettingsScreenStateUseCase, SettingsScreenState, Intent, StateFlow (+4 more)
+Nodes (10): SettingsScreenTest, DefaultLauncherRepository, Intent, Intent, StateFlow, ViewModel, SettingsViewModel, DefaultLauncherRepositoryTest (+2 more)
 
 ### Community 140 - "BackupRestoreViewModel"
-Cohesion: 0.22
-Nodes (6): BackupRestoreUiState, BackupRestoreViewModel, SharedFlow, StateFlow, Uri, ViewModel
+Cohesion: 0.23
+Nodes (6): BackupRestoreViewModel, SharedFlow, StateFlow, ViewModel, BackupRestoreEvent, BackupRestoreUiState
 
-### Community 141 - "DefaultFavoriteAppRepository"
-Cohesion: 0.08
-Nodes (8): DefaultFavoriteAppRepository, Flow, DefaultFavoriteAppDao, Flow, DefaultFavoriteAppEntity, DefaultFavoriteAppRepositoryTest, FakeDefaultFavoriteAppDao, Flow
+### Community 141 - "DefaultFavoriteAppEntity"
+Cohesion: 0.10
+Nodes (6): DefaultFavoriteAppDao, Flow, DefaultFavoriteAppEntity, DefaultFavoriteAppRepositoryTest, FakeDefaultFavoriteAppDao, Flow
 
 ### Community 142 - "Facet Launcher — Onboarding & Coach Marks: Design Brief"
 Cohesion: 0.25
@@ -711,28 +745,24 @@ Cohesion: 0.24
 Nodes (11): Modifier, nextStep(), OnboardingScreen(), OnboardingStep, FACETS, HOME_SETUP, INTRO, OnboardingSubScreen (+3 more)
 
 ### Community 146 - "LauncherActivity.kt"
-Cohesion: 0.39
-Nodes (5): Intent, LauncherApps, LauncherActivity, Bundle, ComponentActivity
-
-### Community 147 - "FakeFavoriteAppDao"
-Cohesion: 0.21
-Nodes (3): FakeFavoriteAppDao, FavoriteAppRepositoryTest, Flow
+Cohesion: 0.27
+Nodes (7): Intent, LauncherApps, LauncherActivity, Color, resolvedColor(), Bundle, ComponentActivity
 
 ### Community 149 - "SetDefaultLauncherSheet"
 Cohesion: 0.73
 Nodes (5): AlreadyDefaultContent(), Modifier, SetDefaultContent(), SetDefaultLauncherSheet(), SetDefaultLauncherSheetAlreadyDefaultPreview()
 
-### Community 150 - "OnboardingViewModel"
-Cohesion: 0.09
-Nodes (14): Modifier, OnboardingDots(), FacetSwitchDemo(), Modifier, MockFacet, MockFacetCard(), OnboardingFacetsPage(), OnboardingFacetsPagePreview() (+6 more)
+### Community 150 - "OnboardingViewModelTest"
+Cohesion: 0.26
+Nodes (3): Fixture, LauncherSettings, OnboardingViewModelTest
 
 ### Community 151 - "build_screenshot.py"
 Cohesion: 0.38
 Nodes (6): ImageDraw, build(), draw_tracked_text(), Path, Refresh one Play Store marketing screenshot after a raw device capture changes.…, rounded_mask()
 
-### Community 152 - "Color.kt"
-Cohesion: 0.29
-Nodes (8): Color, resolve(), accentTonalExtremes(), Color, toneOf(), wallpaperPrimaryAndSecondary(), ColorScheme, Shadow
+### Community 152 - "AppIconSize"
+Cohesion: 0.44
+Nodes (7): AppIconSize, Modifier, PrivateSpaceAppRow(), PrivateSpaceMessage(), PrivateSpaceScreen(), PrivateSpaceSearchBar(), PrivateSpaceTheme()
 
 ### Community 153 - "2. Design tokens"
 Cohesion: 0.33
@@ -751,44 +781,40 @@ Cohesion: 0.40
 Nodes (5): 3. Screen-by-screen, Step 1 — Intro (`4f`), Step 2 — Your home screen (`4g`, extended), Step 3 — Profiles (mockup + animated demo, zero real interaction), Step 4 — Set as default (`4h`)
 
 ### Community 159 - "DockSettingsScreen.kt"
-Cohesion: 0.47
-Nodes (9): DockAppsRow(), DockClickableRow(), dockDisplayLabel(), DockSettingsContent(), DockSettingsHeader(), DockSettingsScreen(), DockSettingsScreenPreview(), Modifier (+1 more)
+Cohesion: 0.35
+Nodes (10): ReorderRowDefaults, DockAppsRow(), DockClickableRow(), dockDisplayLabel(), DockSettingsContent(), DockSettingsHeader(), DockSettingsScreen(), DockSettingsScreenPreview() (+2 more)
 
-### Community 160 - "FacetScopeBadge.kt"
-Cohesion: 0.67
-Nodes (6): FacetScopeBadge(), Color, Modifier, OtherScopeBadge(), ScopeBadge(), WorkScopeBadge()
+### Community 160 - "LauncherFontOption"
+Cohesion: 0.14
+Nodes (12): LauncherFontOption, MANROPE, NOTO_SANS, POPPINS, ROBOTO_FLEX, SYSTEM, FontFamily, resolveFontFamily() (+4 more)
 
-### Community 161 - "FoldersSettingsContent"
-Cohesion: 0.29
-Nodes (9): FolderRow(), FoldersSettingsContent(), FoldersSettingsScreen(), FoldersSettingsScreenPreview(), Modifier, FoldersSettingsUiState, FoldersSettingsViewModel, StateFlow (+1 more)
+### Community 161 - "FoldersSettingsViewModel"
+Cohesion: 0.43
+Nodes (4): FoldersSettingsUiState, FoldersSettingsViewModel, StateFlow, ViewModel
 
 ### Community 163 - "HubContent"
 Cohesion: 0.67
 Nodes (5): HubContent(), HubScreen(), AppWidgetHostView, Context, Modifier
 
-### Community 164 - "StickyHeaderLayout"
-Cohesion: 0.40
-Nodes (8): Modifier, StickyHeaderLayout(), ClockPositionResetRow(), clockStyleGalleryDisplayLabel(), ClockStyleGalleryHeader(), ClockStyleGalleryScreen(), ClockStyleGalleryScreenPreview(), Modifier
+### Community 164 - "QuickAddState"
+Cohesion: 0.27
+Nodes (3): FolderTileContextMenuTest, SharedFlow, QuickAddState
 
-### Community 165 - "UsageAccessExplanationScreen.kt"
-Cohesion: 0.33
-Nodes (7): Modifier, UsageAccessExplanationContent(), UsageAccessExplanationScreen(), UsageAccessExplanationScreenPreview(), StateFlow, ViewModel, UsageAccessExplanationViewModel
-
-### Community 166 - "Fixture"
-Cohesion: 0.38
-Nodes (4): any(), Fixture, T, RepairOrphanedProfileRowsUseCaseTest
+### Community 165 - "UsageAccessExplanationViewModel"
+Cohesion: 0.60
+Nodes (3): StateFlow, ViewModel, UsageAccessExplanationViewModel
 
 ### Community 167 - "AccentSwatch"
-Cohesion: 0.15
-Nodes (13): AccentSwatch, AMBER, BLUE, CYAN, GREEN, INDIGO, ORANGE, PINK (+5 more)
+Cohesion: 0.09
+Nodes (18): ThemeMode, DARK, LIGHT, SYSTEM, AppearanceSettingsViewModel, StateFlow, ViewModel, AccentSwatch (+10 more)
 
 ### Community 168 - "ClockAdjustSheet.kt"
 Cohesion: 0.19
 Nodes (10): ClockAdjustSheetTest, AdjustRow(), ClockAdjustSheet(), ClockAdjustSheetPreview(), Composable, Modifier, ClockZoneHandle(), ClockZoneHandlePreview() (+2 more)
 
 ### Community 169 - "HomeDrawerRouteTest.kt"
-Cohesion: 0.11
-Nodes (26): any(), T, KeyboardDismissalTest, BatteryRepository, ContactPermissionRepository, NextAlarmRepository, Intent, SecureFolderRepository (+18 more)
+Cohesion: 0.05
+Nodes (36): any(), T, KeyboardDismissalTest, Locked, NotConfigured, PrivateSpaceState, Unlocked, Intent (+28 more)
 
 ### Community 171 - "Type.kt"
 Cohesion: 0.47
@@ -803,16 +829,24 @@ Cohesion: 0.70
 Nodes (4): Dp, Modifier, WidgetResizeHandle(), WidgetResizeHandlePreview()
 
 ### Community 174 - "FacetDatabase"
-Cohesion: 0.08
-Nodes (10): DatabaseModule, Context, FacetDatabase, FavoriteFolderPlacementDao, Flow, Migrations, Flow, WidgetPlacementDao (+2 more)
+Cohesion: 0.07
+Nodes (13): DatabaseModule, Context, FacetDatabase, DefaultFavoriteFolderPlacementDao, DockFolderPlacementDao, FacetDockFolderPlacementDao, FavoriteFolderPlacementDao, FacetDockFolderPlacementDao (+5 more)
 
-### Community 176 - "FavoritesPickerViewModel"
-Cohesion: 0.31
-Nodes (4): FavoritesPickerViewModel, Flow, StateFlow, ViewModel
+### Community 175 - "DrawerPresentation"
+Cohesion: 0.15
+Nodes (6): DrawerPresentation, GRID, LIST, StateFlow, ViewModel, OnboardingViewModel
+
+### Community 176 - "AppRepository.kt"
+Cohesion: 0.24
+Nodes (8): BroadcastReceiver, flattenIcon(), Bitmap, BroadcastReceiver, Context, Intent, SharedFlow, Drawable
 
 ### Community 177 - "5.4 Key registry by section"
 Cohesion: 0.17
 Nodes (12): 5.4 Key registry by section, App drawer, Calendar selection (global; overridden when `facets.overrideCalendar`), Clock + calendar design (global; overridden per facet when `facets.overrideClock`), Dock (global; overridden when `facets.overrideDock`), Facets, First-run & coach marks, Home app list (global; overridden when `facets.overrideApps` / `overridingFavorites`) (+4 more)
+
+### Community 178 - "ContactRepository"
+Cohesion: 0.32
+Nodes (3): ContactRepository, LabeledValue, ContactInfo
 
 ### Community 179 - "AppDrawerSettingsScreen.kt"
 Cohesion: 0.53
@@ -823,40 +857,40 @@ Cohesion: 0.27
 Nodes (16): FontWeightSlider(), FontWeightSliderAllStopsContent(), Modifier, AccentColorSection(), AccentSwatchCircle(), AccentSwatchGrid(), appearanceDisplayLabel(), AppearanceSettingsContent() (+8 more)
 
 ### Community 181 - "FolderContentsSheet"
-Cohesion: 0.40
-Nodes (10): AddHere, FolderContentsAppRow(), FolderContentsEmptyState(), FolderContentsGrid(), FolderContentsGridTile(), FolderContentsList(), FolderContentsSheet(), FolderSheetHeaderAction (+2 more)
-
-### Community 182 - "OnboardingIntroPage.kt"
-Cohesion: 0.53
-Nodes (8): AppRowBar(), ConceptLine(), HomeDiagram(), Dp, Modifier, LeaderRow(), OnboardingIntroPage(), OnboardingIntroPagePreview()
+Cohesion: 0.36
+Nodes (12): AddHere, FolderContentsAppRow(), FolderContentsEmptyState(), FolderContentsGrid(), FolderContentsGridTile(), FolderContentsList(), FolderContentsSheet(), FolderSheetHeaderAction (+4 more)
 
 ### Community 183 - "HubWidgetPickerScreen.kt"
-Cohesion: 0.23
-Nodes (15): WidgetProviderOption, HubWidgetPickerContent(), HubWidgetPickerHeader(), HubWidgetPickerScreen(), HubWidgetPickerScreenPreview(), Dp, Modifier, WidgetProviderGroupRow() (+7 more)
+Cohesion: 0.26
+Nodes (17): FacetScopeBadge(), Color, Modifier, OtherScopeBadge(), ScopeBadge(), WorkScopeBadge(), HubWidgetPickerContent(), HubWidgetPickerHeader() (+9 more)
 
-### Community 184 - "BackupRestoreMessage"
-Cohesion: 0.18
-Nodes (10): BackupRestoreEvent, BackupRestoreMessage, ExportFailed, ExportSucceeded, ImportFailedInvalidFile, ImportFailedUnsupportedVersion, ImportSucceeded, LaunchBindPermission (+2 more)
+### Community 184 - "BackupRestoreContent"
+Cohesion: 0.16
+Nodes (19): BackupRestoreContent(), BackupRestoreHeader(), BackupRestoreScreen(), BackupRestoreScreenPreview(), Modifier, MessageBanner(), PendingWidgetRow(), RowScaffold() (+11 more)
 
 ### Community 185 - "06 — Testing Strategy & Practice"
 Cohesion: 0.18
 Nodes (11): 06 — Testing Strategy & Practice, 1. The two tiers, 2. What each layer's tests look like, 3. Conventions (enforced by review), 4. Running, 5. Known coverage gaps (from the registry's last section), Migrations (`androidTest/data/local/FacetDatabaseMigrationTest`), Repositories (`data/*RepositoryTest`) (+3 more)
 
 ### Community 186 - ".setContent"
-Cohesion: 0.15
-Nodes (5): FakeNotificationAccessRepository, NotificationSettingsScreenTest, StateFlow, ViewModel, NotificationSettingsViewModel
+Cohesion: 0.16
+Nodes (7): NotificationSettingsScreenTest, NotificationBadgeStyle, COUNT, DOT, StateFlow, ViewModel, NotificationSettingsViewModel
 
-### Community 187 - "NextAlarmRepository.kt"
-Cohesion: 0.36
-Nodes (5): BroadcastReceiver, Context, Flow, Intent, BroadcastReceiver
+### Community 187 - "DefaultAppRepository"
+Cohesion: 0.27
+Nodes (3): DefaultAppRepository, Intent, SelectPreviewAppsUseCase
 
 ### Community 189 - "SettingsScreen.kt"
-Cohesion: 0.28
-Nodes (15): appDrawerSummary(), appsListSummary(), ClickableRow(), dockSummary(), folderCountSummary(), Composable, Modifier, NavigationChevron() (+7 more)
+Cohesion: 0.23
+Nodes (18): appDrawerSummary(), appsListSummary(), ClickableRow(), dockSummary(), folderCountSummary(), Composable, DrawerPresentation, ListContentMode (+10 more)
 
-### Community 190 - "DockFolderPlacementEntity"
-Cohesion: 0.13
-Nodes (4): DockFolderPlacementDao, Flow, DockFolderPlacementEntity, DockFolderPlacementDaoTest
+### Community 190 - "DockAppRepository.kt"
+Cohesion: 0.16
+Nodes (4): DockFolderPlacementEntity, PlacedItem, DockFolderPlacementDao, Flow
+
+### Community 191 - "NotificationAccessRepository"
+Cohesion: 0.27
+Nodes (5): FakeNotificationAccessRepository, NotificationAccessRepository, StateFlow, ViewModel, NotificationAccessExplanationViewModel
 
 ### Community 192 - "ClockAdjustMode"
 Cohesion: 0.50
@@ -872,7 +906,11 @@ Nodes (5): AlphabetRail(), Modifier, letterAt(), magnifyScale(), AlphabetRailMap
 
 ### Community 196 - "gen-test-registry.py"
 Cohesion: 0.38
-Nodes (6): main_subject(), Path, Regenerates docs/architecture/TEST_REGISTRY.md from the test source sets. Run…, Best-effort path of the class under test, mirrored from the test's package., render(), scan()
+Nodes (6): Path, main_subject(), Regenerates docs/architecture/TEST_REGISTRY.md from the test source sets. Run…, Best-effort path of the class under test, mirrored from the test's package., render(), scan()
+
+### Community 198 - ".setContent"
+Cohesion: 0.15
+Nodes (11): HubWidgetPickerScreenTest, AddFailed, AddFailureReason, HUB_FULL, SETUP_CANCELLED, HubAddWidgetEvent, HubWidgetPickerUiState, LaunchBindPermission (+3 more)
 
 ### Community 200 - "03 — Core Reactive & Data Flow"
 Cohesion: 0.33
@@ -894,9 +932,9 @@ Nodes (6): 11 — Flow: Profiles & Spaces (Work Profile, Private Space, Secure F
 Cohesion: 0.33
 Nodes (5): 13 — Flows: Facets, Theme resolution, Notification badges, Onboarding, 1. Facets — create, switch, preview, override, 2. Theme resolution — from DataStore to `MaterialTheme`, 3. Notification badges, 4. Onboarding & first run
 
-### Community 205 - "HubAddWidgetEvent"
-Cohesion: 0.40
-Nodes (5): AddFailed, HubAddWidgetEvent, LaunchBindPermission, LaunchConfigure, WidgetAdded
+### Community 207 - "HomeSurfacePreview"
+Cohesion: 0.42
+Nodes (8): HomeSurfacePreview(), AppRowPosition, AppRowPresentation, Color, DockDisplayMode, FontWeight, HomeWallpaper, Modifier
 
 ### Community 208 - "04 — Directory & Package Structure Map"
 Cohesion: 0.40
@@ -910,33 +948,65 @@ Nodes (5): 09 — Flow: Backup & Restore, 1. Export, 2. Import, 3. Widget re-bin
 Cohesion: 0.40
 Nodes (5): 10 — Flow: Hub Widgets (host lifecycle, add, move, resize, delete, orphans), 1. Who owns what, 2. Add a widget (`HubWidgetPickerViewModel`), 3. Move, resize, delete (`HubViewModel`), 4. Persistence & recovery matrix
 
-### Community 211 - "PermissionsScreen.kt"
-Cohesion: 0.23
-Nodes (13): Modifier, PermissionRow(), PermissionsContent(), PermissionsHeader(), PermissionsScreen(), PermissionsScreenPreview(), PermissionKind, CALENDAR (+5 more)
+### Community 211 - "StickyHeaderLayout"
+Cohesion: 0.40
+Nodes (9): Modifier, StickyHeaderLayout(), Modifier, PermissionRow(), PermissionsContent(), PermissionsHeader(), PermissionsScreen(), PermissionsScreenPreview() (+1 more)
 
 ### Community 212 - "12 — Flow: App Drawer — search, tabs, and per-app actions"
 Cohesion: 0.40
 Nodes (5): 12 — Flow: App Drawer — search, tabs, and per-app actions, 1. Data in, 2. Search pipeline, 3. Per-app actions (long-press → `AppContextMenu`), 4. Gestures & routing (why the drawer isn't a nav destination)
 
+### Community 214 - "AddFolderToDockUseCase"
+Cohesion: 0.60
+Nodes (3): AddFolderToDockUseCase, AddFolderToDockUseCaseTest, Fixture
+
+### Community 217 - "ObserveQuickAddStateUseCase"
+Cohesion: 0.43
+Nodes (4): Add, ObserveQuickAddStateUseCase, QuickPlacementAction, Remove
+
+### Community 219 - "OnboardingFacetsPage.kt"
+Cohesion: 0.54
+Nodes (7): FacetSwitchDemo(), Modifier, MockFacet, MockFacetCard(), OnboardingFacetsPage(), OnboardingFacetsPagePreview(), OnboardingUiState
+
+### Community 220 - "PermissionKind"
+Cohesion: 0.29
+Nodes (6): PermissionKind, CALENDAR, CONTACTS, NOTIFICATION_ACCESS, USAGE_ACCESS, PermissionsUiState
+
+### Community 221 - "ObserveFacetPreviewsUseCase"
+Cohesion: 0.67
+Nodes (3): Inputs, Flow, ObserveFacetPreviewsUseCase
+
+### Community 223 - "AddFolderToFavoritesUseCase"
+Cohesion: 0.60
+Nodes (3): AddFolderToFavoritesUseCase, AddFolderToFavoritesUseCaseTest, Fixture
+
+### Community 227 - "PlaceWidgetResult"
+Cohesion: 0.67
+Nodes (3): HubFull, Placed, PlaceWidgetResult
+
+### Community 233 - "Axis"
+Cohesion: 0.67
+Nodes (3): Axis, HORIZONTAL, VERTICAL
+
 ## Knowledge Gaps
-- **500 isolated node(s):** `NotConfigured`, `Locked`, `Unlocked`, `Keys`, `CatalogEntry` (+495 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 903 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **53 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **502 isolated node(s):** `NotConfigured`, `Locked`, `Unlocked`, `PERSONAL`, `WORK` (+497 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 910 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **63 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `FacetLauncherTheme()` connect `FacetLauncherTheme` to `.setContent`, `WidgetPlacementEntity`, `.setContent`, `SettingsRepository`, `FolderAppPickerScreen.kt`, `GestureHintOverlay`, `AppDrawerSettingsScreen.kt`, `.setContent`, `FolderDetailScreen.kt`, `ClockColorOption`, `LauncherActivity.kt`, `SetDefaultLauncherSheet`, `OnboardingViewModel`, `.setContent`, `.setContent`, `.setContent`, `.setContent`, `Row`, `DockSettingsScreen.kt`, `FoldersSettingsContent`, `CalendarSettingsScreen.kt`, `StickyHeaderLayout`, `DrawerGridSize`, `UsageAccessExplanationScreen.kt`, `AccentSwatch`, `ClockAdjustSheet.kt`, `ContactRepositoryTest`, `HomeDrawerRouteTest.kt`, `.setContent`, `DockAppRepository`, `SetDefaultLauncherSheetTest`, `.setContent`, `FacetCarouselScreen.kt`, `WidgetResizeHandle.kt`, `Type.kt`, `.setContent`, `CalendarRepository`, `AppearanceSettingsScreen.kt`, `DockAppPickerScreen.kt`, `FavoritesPickerScreen.kt`, `HubWidgetPickerScreen.kt`, `AppDrawerScreen.kt`, `AppInfo`, `.setContent`, `HomeScreen`, `SettingsSearchEntry`, `.setContent`, `CardDivider`, `OnboardingIntroPage.kt`, `SettingsScreen.kt`, `ColorTest`, `.setContent`, `.setContent`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `WallpaperAccentRole`, `TonalButton`, `ManageFacetsScreen.kt`, `PermissionsScreen.kt`, `BackupRestoreContent`, `.setContent`, `.setContent`, `HomeScreen.kt`, `AppDrawerScreen`, `LabeledDropdownRow`, `WallpaperRepository`, `BackupRestoreScreenTest.kt`, `ObserveFacetPreviewsUseCase.kt`, `FacetSettingsUiState`, `.setContent`, `Folder`, `BackButton`, `dashedBorder`?**
-  _High betweenness centrality (0.174) - this node is a cross-community bridge._
-- **Why does `AppInfo` connect `AppInfo` to `.setContent`, `FacetDockAppEntity`, `SettingsRepository`, `.setContent`, `FolderDetailScreen.kt`, `FolderAppPickerScreen.kt`, `.setContent`, `DockAppEntity`, `DefaultFavoriteAppRepository`, `ClockColorOption`, `FavoriteAppRepository`, `LauncherActivity.kt`, `FakeFavoriteAppDao`, `Fixture`, `.createViewModel`, `OnboardingViewModel`, `PlacedItem`, `.repository`, `DockSettingsScreen.kt`, `HomeViewModel`, `AppShortcut`, `FoldersSettingsContent`, `FacetNavHost`, `FolderAppPickerViewModelTest`, `AppRepository`, `HomeDrawerRouteTest.kt`, `DockAppRepository`, `DockAppPickerViewModel`, `.setContent`, `FacetCarouselScreen.kt`, `FavoritesPickerViewModel`, `PrivateSpaceRepository`, `LauncherViewModel`, `DockAppPickerScreen.kt`, `FolderContentsSheet`, `FavoritesPickerScreen.kt`, `CardDivider`, `AppDrawerScreen.kt`, `AppearanceSettingsScreen.kt`, `HomeScreen`, `.useCase`, `SettingsScreen.kt`, `.createViewModel`, `AppIcon`, `HomeDrawerRoute`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `SelectPreviewAppsUseCaseTest`, `WallpaperAccentRole`, `AppProfile`, `GroupAppsByLetterUseCaseTest`, `AddFolderToDockUseCaseTest`, `Fixture`, `FolderDetailViewModel`, `ObserveQuickAddStateUseCaseTest`, `HomeScreen.kt`, `DrawerViewModel`, `AppDrawerScreen`, `FacetLauncherTheme`, `ObserveFacetPreviewsUseCase.kt`, `FacetEntity`, `Folder`, `FolderRepository`?**
-  _High betweenness centrality (0.151) - this node is a cross-community bridge._
-- **Why does `SettingsRepository` connect `SettingsRepository` to `ClockStyleGalleryViewModel`, `.setContent`, `AppDrawerSettingsViewModelTest`, `.setContent`, `ManageFacetsViewModel`, `.setContent`, `EnsureActiveFacetUseCase`, `DefaultFavoriteAppRepository`, `ClockColorOption`, `FavoriteAppRepository`, `SettingsRepositoryTest`, `LauncherSettings`, `.createViewModel`, `OnboardingViewModel`, `PlacedItem`, `.setContent`, `.setContent`, `Row`, `ClockTemplateId`, `HomeViewModel`, `DrawerGridSize`, `HomeDrawerRouteTest.kt`, `.setContent`, `DockAppRepository`, `LauncherViewModel`, `.setContent`, `.setContent`, `CalendarRepository`, `BackupMapping.kt`, `AppInfo`, `.setContent`, `.useCase`, `.setContent`, `.createViewModel`, `.drawerViewModel`, `.setContent`, `WallpaperAccentRole`, `ExportBackupUseCase.kt`, `CalendarSettingsViewModel`, `ImportBackupUseCase.kt`, `.createViewModel`, `WallpaperRepository`, `BackupRestoreScreenTest.kt`, `ObserveFacetPreviewsUseCase.kt`, `FacetEntity`, `.createViewModel`, `BackButton`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
-- **Are the 2 inferred relationships involving `FacetLauncherTheme()` (e.g. with `.themed()` and `facetTypography()`) actually correct?**
-  _`FacetLauncherTheme()` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 24 inferred relationships involving `FacetEntity` (e.g. with `.`a non-null listContentMode round-trips through Room, not just an in-memory copy`()` and `.`every ListContentMode value round-trips`()`) actually correct?**
-  _`FacetEntity` has 24 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `AppInfo` connect `AppInfo` to `Fixture`, `.setContent`, `FacetDockAppEntity`, `.setContent`, `FolderAppPickerScreen.kt`, `.setContent`, `.repository`, `DefaultFavoriteAppEntity`, `ClockColorOption`, `FavoriteAppRepository.kt`, `LauncherActivity.kt`, `FakeFavoriteAppDao`, `.createViewModel`, `OnboardingViewModelTest`, `AppIconSize`, `.homeViewModel`, `FakeFolderDao`, `.setContent`, `DockSettingsScreen.kt`, `HomeViewModel.kt`, `FolderAppPickerViewModelTest`, `FacetNavHost`, `AppRepositoryTest`, `ComponentName`, `AccentSwatch`, `HomeDrawerRouteTest.kt`, `FacetDockAppRepository`, `DockAppPickerViewModel`, `.setContent`, `FacetCarouselScreen.kt`, `AppRepository.kt`, `PrivateSpaceRepository`, `LauncherViewModel`, `DrawerPresentation`, `DockAppPickerScreen.kt`, `FolderContentsSheet`, `FavoritesPickerScreen.kt`, `CardDivider`, `AppDrawerScreen.kt`, `AppearanceSettingsScreen.kt`, `DefaultAppRepository`, `HomeScreen`, `SettingsScreen.kt`, `DockAppRepository.kt`, `.useCase`, `.createViewModel`, `AppIcon`, `HomeDrawerRoute`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `SelectPreviewAppsUseCaseTest`, `FavoriteAppEntity`, `HomeSurfacePreview`, `FolderDetailScreen.kt`, `GroupAppsByLetterUseCaseTest`, `.setContent`, `DefaultFavoriteAppRepository`, `AddFolderToDockUseCase`, `Fixture`, `ObserveQuickAddStateUseCase`, `FolderDetailViewModel`, `HomeScreen.kt`, `AddFolderToFavoritesUseCase`, `AppContextMenu`, `ObserveQuickAddStateUseCaseTest`, `AppDrawerScreen`, `AddAppToDockUseCaseTest`, `AddAppToFavoritesUseCaseTest`, `RemoveAppFromDockUseCaseTest`, `FolderAppEntity`, `DockAppRepository`, `ObserveFacetPreviewsUseCaseTest`, `Folder`, `DockAppEntity`, `FolderDao`?**
+  _High betweenness centrality (0.196) - this node is a cross-community bridge._
+- **Why does `FacetLauncherTheme()` connect `FacetLauncherTheme` to `.setContent`, `ResolveWidgetDropUseCase`, `.setContent`, `CalendarPermissionRepository`, `FolderAppPickerScreen.kt`, `GestureHintOverlay`, `ManageFacetsViewModel`, `.setContent`, `ClockColorOption`, `SettingsRepository`, `LauncherActivity.kt`, `SetDefaultLauncherSheet`, `.setContent`, `.setContent`, `.setContent`, `.setContent`, `Row`, `DockSettingsScreen.kt`, `LauncherFontOption`, `CalendarSettingsScreen.kt`, `FacetNavHost`, `QuickAddState`, `AppDrawerSettingsViewModel`, `AccentSwatch`, `ClockAdjustSheet.kt`, `ContactConnectionsSheet.kt`, `HomeDrawerRouteTest.kt`, `.setContent`, `SetDefaultLauncherSheetTest`, `WidgetResizeHandle.kt`, `.setContent`, `FacetCarouselScreen.kt`, `Type.kt`, `CalendarInfo`, `AppDrawerSettingsScreen.kt`, `AppearanceSettingsScreen.kt`, `DockAppPickerScreen.kt`, `FavoritesPickerScreen.kt`, `HubWidgetPickerScreen.kt`, `AppDrawerScreen.kt`, `AppInfo`, `.setContent`, `HomeScreen`, `DefaultAppRepository`, `.setContent`, `CardDivider`, `BackupRestoreContent`, `SettingsScreen.kt`, `ColorTest`, `.setContent`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `WallpaperAccentRole`, `TonalButton`, `FolderDetailScreen.kt`, `StickyHeaderLayout`, `.setContent`, `.setContent`, `OnboardingFacetsPage.kt`, `HomeScreen.kt`, `.setContent`, `AppDrawerScreen`, `LabeledDropdownRow`, `.setContent`, `DockAppRepository`, `FacetSettingsContent`, `.setContent`, `Folder`, `BackButton`, `homeAppLabelShadow`?**
+  _High betweenness centrality (0.133) - this node is a cross-community bridge._
+- **Why does `WidgetPlacementEntity` connect `WidgetPlacementEntity` to `.setContent`, `ResolveWidgetDropUseCase`, `HubViewModel`, `BackupRestoreViewModel`, `AppWidgetRepository`, `LauncherSettings`, `.setContent`, `HomeDrawerRouteTest.kt`, `ResolveWidgetResizeUseCaseTest`, `BackupMapping.kt`, `ResolveWidgetDropUseCaseTest`, `CompactWidgetsUseCaseTest`, `BackupRestoreViewModelTest`, `AppProfile`, `.setContent`, `PlaceWidgetResult`, `DockAppRepository`, `HubWidgetPickerViewModel`, `PlaceWidgetUseCaseTest`?**
+  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+- **Are the 47 inferred relationships involving `FacetLauncherTheme()` (e.g. with `.setContent()` and `.bottomPositionedSearchBarSitsInTheLowerHalfOfTheScreen()`) actually correct?**
+  _`FacetLauncherTheme()` has 47 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 16 inferred relationships involving `FacetEntity` (e.g. with `.`a non-null listContentMode round-trips through Room, not just an in-memory copy`()` and `.`every ListContentMode value round-trips`()`) actually correct?**
+  _`FacetEntity` has 16 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 142 inferred relationships involving `Row` (e.g. with `.dynamicConnections()` and `AppContextMenu()`) actually correct?**
   _`Row` has 142 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `NotConfigured`, `Locked`, `Unlocked` to the rest of the system?**
-  _500 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _502 weakly-connected nodes found - possible documentation gaps or missing edges._

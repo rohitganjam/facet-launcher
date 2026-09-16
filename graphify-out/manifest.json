@@ -36,9 +36,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1789529341.2906618,
-    "seen": 1789529575.686852,
-    "ast_hash": "a2ff8b9f9080e73a0676476b669dc917",
+    "mtime": 1789531263.9451158,
+    "seen": 1789531372.817666,
+    "ast_hash": "1a72ac2c054ed957765b1ceee32da09d",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
@@ -72,9 +72,9 @@
     "semantic_hash": "6e1cd7edbe987e276142937e38395911"
   },
   ".claude/settings.json": {
-    "mtime": 1789190111.3665826,
-    "seen": 1789191916.666665,
-    "ast_hash": "b85c58d0a7f13ae954556940db88b2d4",
+    "mtime": 1789530094.9666624,
+    "seen": 1789531372.817434,
+    "ast_hash": "b4b6e3c8698733c91405d2a9d83de6d6",
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/support.js": {
@@ -1668,8 +1668,8 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/AppRepositoryTest.kt": {
-    "mtime": 1789529341.3077428,
-    "seen": 1789529575.6867929,
+    "mtime": 1789529844.846581,
+    "seen": 1789531372.817607,
     "ast_hash": "7ffb7fbf6cd9f6679d00a186b07822ff",
     "semantic_hash": ""
   },
@@ -2034,8 +2034,8 @@
     "semantic_hash": ""
   },
   ".claude/launch.json": {
-    "mtime": 1789529563.4927335,
-    "seen": 1789529575.686611,
+    "mtime": 1789530337.750539,
+    "seen": 1789531372.8174322,
     "ast_hash": "f6a4bc4bbd251b60178ce207edf2e081",
     "semantic_hash": ""
   },
@@ -2790,8 +2790,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1789529570.9153302,
-    "seen": 1789529575.6868658,
+    "mtime": 1789530982.6994123,
+    "seen": 1789531372.8176792,
     "ast_hash": "78560b764f74f07e115946b8ba8b368d",
     "semantic_hash": ""
   }
