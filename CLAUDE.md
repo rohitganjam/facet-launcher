@@ -98,7 +98,9 @@ scripts/release.sh 0.2.0           # ship an explicit version instead of a patch
 scripts/release.sh --no-build      # only bump the version, skip the build (e.g. to review the diff first)
 ```
 
-`versionCode` always increments by exactly 1 regardless of how `versionName` changes — Play Store requires every upload to carry a strictly higher `versionCode` than the last. Current version: `0.1.0` (code `1`). The script only edits `app/build.gradle.kts`; commit that change yourself once you're happy with the build.
+`versionCode` always increments by exactly 1 regardless of how `versionName` changes — Play Store requires every upload to carry a strictly higher `versionCode` than the last. Current version: `0.1.0` (code `1`). The script only edits `app/build.gradle.kts` (plus `scripts/last-release.json`, see below); commit those changes yourself once you're happy with the build.
+
+A real build (anything other than `--no-build`) refuses to run unless the working tree is fully committed (`git status --porcelain` empty) — this guarantees the APK/AAB were built from exactly one commit, with no uncommitted edits mixed in. On success, the script records that commit id, the shipped version, and a timestamp in `scripts/last-release.json` — the start point for next time's release notes (`git log $(jq -r .commit scripts/last-release.json)..HEAD`).
 
 Output:
 ```

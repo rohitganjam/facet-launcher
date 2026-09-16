@@ -10,10 +10,21 @@
 #
 # versionCode always increments by exactly 1, regardless of how versionName changes — Play
 # Store requires every uploaded build to carry a strictly higher versionCode than the last.
+#
+# A real release build (i.e. not --no-build) refuses to run unless the working tree is fully
+# committed — `git status --porcelain` must be empty. This guarantees the APK/AAB are built from
+# exactly one commit, no uncommitted edits mixed in, so the commit id recorded afterward is an
+# honest description of what was actually built.
+#
+# On a successful build, the commit id HEAD pointed to (before this script's own version-bump
+# edit) is written to scripts/last-release.json alongside the version — the start point for next
+# time's release notes (`git log <that commit>..HEAD`). Not committed automatically; review and
+# commit it alongside the version bump, same as always.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_GRADLE="$REPO_ROOT/app/build.gradle.kts"
+LAST_RELEASE_FILE="$REPO_ROOT/scripts/last-release.json"
 
 do_build=true
 explicit_version=""
@@ -36,6 +47,15 @@ done
 if [[ -n "$explicit_version" && ! "$explicit_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "error: version must look like MAJOR.MINOR.PATCH (got '$explicit_version')" >&2
     exit 1
+fi
+
+if [[ "$do_build" == true ]]; then
+    if [[ -n "$(cd "$REPO_ROOT" && git status --porcelain)" ]]; then
+        echo "error: working tree has uncommitted changes — commit or stash everything before building a release." >&2
+        echo "       (scripts/release.sh --no-build still works if you just want to bump the version.)" >&2
+        exit 1
+    fi
+    build_commit="$(cd "$REPO_ROOT" && git rev-parse HEAD)"
 fi
 
 current_version="$(grep -m1 'versionName = "' "$BUILD_GRADLE" | sed -E 's/.*versionName = "([^"]+)".*/\1/')"
@@ -67,7 +87,24 @@ if [[ "$do_build" == true ]]; then
     echo
     echo "APK: app/build/outputs/apk/release/app-release.apk"
     echo "AAB: app/build/outputs/bundle/release/app-release.aab"
+
+    built_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    cat > "$LAST_RELEASE_FILE" <<EOF
+{
+  "version": "$new_version",
+  "versionCode": $new_code,
+  "commit": "$build_commit",
+  "builtAt": "$built_at"
+}
+EOF
+    echo
+    echo "Recorded build commit $build_commit in scripts/last-release.json — next release's notes"
+    echo "can start from there: git log $build_commit..HEAD"
 fi
 
 echo
-echo "Done — review the version bump in app/build.gradle.kts and commit when ready."
+if [[ "$do_build" == true ]]; then
+    echo "Done — review the version bump in app/build.gradle.kts and scripts/last-release.json, and commit both when ready."
+else
+    echo "Done — review the version bump in app/build.gradle.kts and commit when ready."
+fi
