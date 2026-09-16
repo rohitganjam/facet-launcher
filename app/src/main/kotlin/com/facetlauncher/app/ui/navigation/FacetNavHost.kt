@@ -24,6 +24,7 @@ import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
 import com.facetlauncher.app.ui.facets.ManageFacetsScreen
 import com.facetlauncher.app.ui.facets.FacetSettingsScreen
+import com.facetlauncher.app.ui.settings.AboutScreen
 import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
@@ -63,6 +64,7 @@ object FacetDestinations {
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
+    const val ABOUT = "about"
 
     fun facetClockStyleGallery(facetId: Long) = "facetClockStyleGallery/$facetId"
 
@@ -175,10 +177,14 @@ fun FacetNavHost(
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
+                onNavigateToAbout = { navController.navigate(FacetDestinations.ABOUT) },
             )
         }
         composable(FacetDestinations.BACKUP_RESTORE) {
             BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
+        }
+        composable(FacetDestinations.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(FacetDestinations.APPEARANCE_SETTINGS) {
             AppearanceSettingsScreen(onBack = { navController.popBackStackSafely() })
@@ -255,13 +261,19 @@ fun FacetNavHost(
             FacetDestinations.FOLDER_APP_PICKER,
             arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
         ) {
-            FolderAppPickerScreen(onDone = { navController.popBackStackSafely() })
+            FolderAppPickerScreen(
+                onDone = { navController.popBackStackSafely() },
+                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+            )
         }
         composable(
             FacetDestinations.DOCK_PICKER,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) {
-            DockAppPickerScreen(onDone = { navController.popBackStackSafely() })
+            DockAppPickerScreen(
+                onDone = { navController.popBackStackSafely() },
+                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+            )
         }
         composable(FacetDestinations.FACET_MANAGE) {
             // Settings → Facets (and the carousel's Reorder button): a normal settings screen.
@@ -291,7 +303,10 @@ fun FacetNavHost(
             FacetDestinations.FAVORITES_PICKER,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) {
-            FavoritesPickerScreen(onDone = { navController.popBackStackSafely() })
+            FavoritesPickerScreen(
+                onDone = { navController.popBackStackSafely() },
+                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+            )
         }
         composable(
             FacetDestinations.CALENDAR_SETTINGS,

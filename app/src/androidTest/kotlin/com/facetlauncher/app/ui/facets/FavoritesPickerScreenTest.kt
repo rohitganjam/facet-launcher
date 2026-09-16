@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.facets
 
+import android.app.AppOpsManager
+import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -19,12 +21,15 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
@@ -35,6 +40,7 @@ class FavoritesPickerScreenTest {
     val composeRule = createComposeRule()
 
     private var facetId = 0L
+    private lateinit var lastViewModel: FavoritesPickerViewModel
 
     /** [seed] runs against real (throwaway, in-memory) repositories before the screen renders. */
     private fun setContent(
@@ -54,16 +60,20 @@ class FavoritesPickerScreenTest {
                     facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
                     seed(appRepository, favoriteAppRepository, folderRepository)
                 }
+                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
+                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 FavoritesPickerViewModel(
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     GetInstalledAppsUseCase(appRepository),
                     favoriteAppRepository,
                     defaultFavoriteAppRepository,
                     folderRepository,
-                )
+                    SortAppsForPickerUseCase(usageStatsRepository),
+                    usageAccessRepository,
+                ).also { lastViewModel = it }
             }
             FacetLauncherTheme {
-                FavoritesPickerScreen(onDone = onDone, viewModel = viewModel)
+                FavoritesPickerScreen(onDone = onDone, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -229,10 +239,20 @@ class FavoritesPickerScreenTest {
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
                 defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
-                FavoritesPickerViewModel(SavedStateHandle(), GetInstalledAppsUseCase(appRepository), favoriteAppRepository, defaultFavoriteAppRepository, folderRepository)
+                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
+                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                FavoritesPickerViewModel(
+                    SavedStateHandle(),
+                    GetInstalledAppsUseCase(appRepository),
+                    favoriteAppRepository,
+                    defaultFavoriteAppRepository,
+                    folderRepository,
+                    SortAppsForPickerUseCase(usageStatsRepository),
+                    usageAccessRepository,
+                )
             }
             FacetLauncherTheme {
-                FavoritesPickerScreen(onDone = {}, viewModel = viewModel)
+                FavoritesPickerScreen(onDone = {}, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -274,5 +294,54 @@ class FavoritesPickerScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertIsOn() }.isSuccess
         }
+    }
+
+    @Test
+    fun sortDirectionToggleReversesAllAppsWithoutTouchingFavorites() {
+        // Given one real app already favorited, and at least one more not favorited
+        var favorite: AppInfo? = null
+        setContent { appRepository, favoriteAppRepository, _ ->
+            val installed = runBlocking { appRepository.getInstalledApps() }
+            favorite = installed.first()
+            favoriteAppRepository.addFavorite(facetId, installed.first(), 0)
+        }
+        val favoriteTag = "favorites_picker_row_${requireNotNull(favorite).packageName}"
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
+        val ascendingOrder = lastViewModel.uiState.value.otherResults.map { it.packageName }
+
+        // When tapping the direction toggle — via the real rendered control, not the ViewModel
+        // directly, so this exercises the actual click→ViewModel wiring
+        composeRule.onNodeWithTag("favorites_picker_sort_direction_toggle").performClick()
+
+        // Then "ALL APPS" reverses — read from the ViewModel's own state rather than measured
+        // pixel positions: reversing can push a long real installed-app list's top rows to the
+        // list's far (now off-screen) end, and LazyColumn only composes semantics nodes for rows
+        // near the current viewport, making a position-based assertion here unreliable. The
+        // already-favorited row is untouched by any of this — still checked, still rendered —
+        // it lives in its own frozen-order section entirely separate from "ALL APPS"'s sort.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            lastViewModel.uiState.value.otherResults.map { it.packageName } == ascendingOrder.reversed()
+        }
+        composeRule.onNodeWithTag(favoriteTag).assertIsOn()
+    }
+
+    @Test
+    fun sortMenuSelectingLastInstalledReordersAllAppsByInstallTime() {
+        // Given at least one real installed app, not favorited
+        setContent()
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
+
+        // When opening the sort dropdown (the real popup, not calling the ViewModel directly)
+        // and tapping "Installed Date"
+        composeRule.onNodeWithTag("favorites_picker_sort_menu_button").performClick()
+        composeRule.onNodeWithTag("favorites_picker_sort_option_${AppSortOption.INSTALL_DATE.name}").performClick()
+
+        // Then the ViewModel reflects the new selection...
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.sortOption == AppSortOption.INSTALL_DATE }
+        // ...the dropdown button's own label updates to match...
+        composeRule.onNodeWithText("Installed Date").assertExists()
+        // ...and "ALL APPS" is genuinely ordered oldest-installed-first, not just relabeled
+        val installTimes = lastViewModel.uiState.value.otherResults.map { it.firstInstallTime }
+        assert(installTimes == installTimes.sorted())
     }
 }

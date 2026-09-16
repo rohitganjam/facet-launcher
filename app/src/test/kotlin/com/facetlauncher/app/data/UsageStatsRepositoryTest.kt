@@ -147,6 +147,39 @@ class UsageStatsRepositoryTest {
     }
 
     @Test
+    fun `getLastUsedTimestamps returns each package's most recent lastTimeUsed`() = runTest {
+        // Given two packages used at different times
+        addUsageStats("com.example.old", lastTimeUsed = 1_000L, totalTimeInForeground = 0L)
+        addUsageStats("com.example.new", lastTimeUsed = 2_000L, totalTimeInForeground = 0L)
+        val repository = UsageStatsRepository(usageStatsManager, mock(AppRepository::class.java))
+
+        // When fetching last-used timestamps
+        val result = repository.getLastUsedTimestamps()
+
+        // Then both come back, ordered by their own timestamp
+        assertEquals(true, result.getValue("com.example.old") < result.getValue("com.example.new"))
+    }
+
+    @Test
+    fun `getLastUsedTimestamps aggregates a package reported across sub-intervals to its latest timestamp`() = runTest {
+        // Given one package reported twice within the queried range (1_000L then 2_000L), and a
+        // second package used strictly between the two (1_500L) — if aggregation incorrectly kept
+        // the first-seen sub-interval (1_000L) instead of the max, the first package would end up
+        // *behind* this baseline instead of ahead of it.
+        addUsageStats("com.example.a", lastTimeUsed = 1_000L, totalTimeInForeground = 0L)
+        addUsageStats("com.example.a", lastTimeUsed = 2_000L, totalTimeInForeground = 0L)
+        addUsageStats("com.example.baseline", lastTimeUsed = 1_500L, totalTimeInForeground = 0L)
+        val repository = UsageStatsRepository(usageStatsManager, mock(AppRepository::class.java))
+
+        // When fetching last-used timestamps
+        val result = repository.getLastUsedTimestamps()
+
+        // Then the later (2_000L) sub-interval entry won, not the earlier (1_000L) one
+        assertEquals(1, result.count { it.key == "com.example.a" })
+        assertEquals(true, result.getValue("com.example.a") > result.getValue("com.example.baseline"))
+    }
+
+    @Test
     fun `apps with zero total foreground time are excluded from Most Used`() = runTest {
         // Given one app with real foreground time and one with none (e.g. a background-only ping)
         addUsageStats("com.example.unused", lastTimeUsed = 1_000L, totalTimeInForeground = 0L)

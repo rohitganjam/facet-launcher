@@ -12,19 +12,19 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (4)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule
 │   ├── local/                     (26)  Room: FacetDatabase, 12 entities, 11 DAOs, Converters, Migrations
-│   ├── model/                     (24)  Immutable value types & enums shared by every layer
+│   ├── model/                     (25)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository
 │
-├── domain/                        (33)  30 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (34)  31 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
     ├── theme/                     (10)  Color, Type, Theme, Motion, ClockFonts/Colors, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme — design tokens; FacetLauncherTheme wrapper
-    ├── components/                (24)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
-    │                                    DragReorderState, ThemedDropdownMenu, FolderContentsSheet, …)
+    ├── components/                (26)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    │                                    DragReorderState, ThemedDropdownMenu, AppPickerScreen, FolderContentsSheet, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (21 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)
@@ -70,12 +70,12 @@ app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + 
 ├── data/          24   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     11   Converters, entities, DAO-level behaviour via in-memory Room
 │   └── widget/     1
-├── domain/        28   one test per use case (pure logic — no Android needed for most)
-└── ui/            24   ViewModel tests (drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)
+├── domain/        29   one test per use case (pure logic — no Android needed for most)
+└── ui/            26   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/            37   one *ScreenTest per screen + component/route/theme tests
+└── ui/            38   one *ScreenTest per screen + component/route/theme tests
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

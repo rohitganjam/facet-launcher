@@ -50,6 +50,7 @@ class SettingsScreenTest {
         onNavigateToFolders: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
+        onNavigateToAbout: () -> Unit = {},
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -85,6 +86,7 @@ class SettingsScreenTest {
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToPermissions = onNavigateToPermissions,
                     onNavigateToBackupRestore = onNavigateToBackupRestore,
+                    onNavigateToAbout = onNavigateToAbout,
                     viewModel = viewModel,
                 )
             }
@@ -337,6 +339,20 @@ class SettingsScreenTest {
 
         // Then the default-launcher row is genuinely interactive
         composeRule.onNodeWithTag("set_default_launcher_row").assertHasClickAction()
+    }
+
+    @Test
+    fun aboutRowIsClickable() {
+        // Given the settings screen, scrolled to the "About Facet Launcher" row under SYSTEM
+        var navigated = false
+        setContent(onNavigateToAbout = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_row"))
+
+        // When tapping it
+        composeRule.onNodeWithTag("about_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
     }
 
     @Test

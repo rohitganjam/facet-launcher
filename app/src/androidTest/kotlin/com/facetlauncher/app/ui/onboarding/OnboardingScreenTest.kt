@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.onboarding
 
+import android.app.AppOpsManager
+import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -29,9 +31,12 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -81,6 +86,8 @@ class OnboardingScreenTest {
                 )
                 runBlocking { seed(appRepository, dockAppRepository, defaultFavoriteAppRepository) }
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
+                val sortAppsForPicker = SortAppsForPickerUseCase(UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository))
+                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 Triple(
                     OnboardingViewModel(
                         defaultFavoriteAppRepository,
@@ -91,8 +98,8 @@ class OnboardingScreenTest {
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
                     // FavoritesPickerScreenTest — an empty SavedStateHandle means the launcher-wide
                     // default dock/favorites, matching onboarding's own scope.
-                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, facetDockAppRepository, folderRepository),
-                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, favoriteAppRepository, defaultFavoriteAppRepository, folderRepository),
+                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, facetDockAppRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, favoriteAppRepository, defaultFavoriteAppRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
                 )
             }
             FacetLauncherTheme {

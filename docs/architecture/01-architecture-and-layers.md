@@ -157,6 +157,6 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 - runs `RepairOrphanedProfileRowsUseCase` once (backfills `userId = -1` rows left by pre-profile schemas);
 - runs `SeedDefaultDockUseCase` on fresh installs.
 
-`FacetNavHost` owns 21 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
+`FacetNavHost` owns 22 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
 nav transition — `HomeDrawerRoute` handles it as a follow-finger gesture inside the `HOME`
 destination, while `Hub`/`Facets`/settings screens are ordinary destinations.

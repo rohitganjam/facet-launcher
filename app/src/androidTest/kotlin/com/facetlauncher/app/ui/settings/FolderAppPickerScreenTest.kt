@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
+import android.app.AppOpsManager
+import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -15,9 +17,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -32,6 +38,8 @@ class FolderAppPickerScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private lateinit var lastViewModel: FolderAppPickerViewModel
 
     /** [seed] runs against real (throwaway, in-memory) repositories before the screen renders. */
     private fun setContent(
@@ -49,14 +57,18 @@ class FolderAppPickerScreenTest {
                     seed(appRepository, folderRepository, id)
                     id
                 }
+                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
+                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 FolderAppPickerViewModel(
                     SavedStateHandle(mapOf("folderId" to folderId)),
                     GetInstalledAppsUseCase(appRepository),
                     folderRepository,
-                )
+                    SortAppsForPickerUseCase(usageStatsRepository),
+                    usageAccessRepository,
+                ).also { lastViewModel = it }
             }
             FacetLauncherTheme {
-                FolderAppPickerScreen(onDone = onDone, viewModel = viewModel)
+                FolderAppPickerScreen(onDone = onDone, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -137,5 +149,45 @@ class FolderAppPickerScreenTest {
         folderApps.forEach { app ->
             composeRule.onNodeWithTag("folder_app_picker_row_${app.packageName}").assertIsOn()
         }
+    }
+
+    @Test
+    fun sortDirectionToggleReversesTheAllAppsSectionOrder() {
+        // Given at least one real installed app, none placed in the folder
+        setContent { _, _, _ -> }
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
+        val ascendingOrder = lastViewModel.uiState.value.otherResults.map { it.packageName }
+
+        // When tapping the direction toggle — via the real rendered control, not the ViewModel
+        // directly, so this exercises the actual click→ViewModel wiring
+        composeRule.onNodeWithTag("folder_app_picker_sort_direction_toggle").performClick()
+
+        // Then "ALL APPS" reverses — read from the ViewModel's own state rather than measured
+        // pixel positions: reversing can push a long real installed-app list's top rows to the
+        // list's far (now off-screen) end, and LazyColumn only composes semantics nodes for
+        // rows near the current viewport, making a position-based assertion here unreliable.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            lastViewModel.uiState.value.otherResults.map { it.packageName } == ascendingOrder.reversed()
+        }
+    }
+
+    @Test
+    fun sortMenuSelectingLastInstalledReordersAllAppsByInstallTime() {
+        // Given at least one real installed app, none placed in the folder
+        setContent { _, _, _ -> }
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
+
+        // When opening the sort dropdown (the real popup, not calling the ViewModel directly)
+        // and tapping "Installed Date"
+        composeRule.onNodeWithTag("folder_app_picker_sort_menu_button").performClick()
+        composeRule.onNodeWithTag("folder_app_picker_sort_option_${AppSortOption.INSTALL_DATE.name}").performClick()
+
+        // Then the ViewModel reflects the new selection...
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.sortOption == AppSortOption.INSTALL_DATE }
+        // ...the dropdown button's own label updates to match...
+        composeRule.onNodeWithText("Installed Date").assertExists()
+        // ...and "ALL APPS" is genuinely ordered oldest-installed-first, not just relabeled
+        val installTimes = lastViewModel.uiState.value.otherResults.map { it.firstInstallTime }
+        assert(installTimes == installTimes.sorted())
     }
 }

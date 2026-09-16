@@ -205,6 +205,13 @@ class AppRepository @Inject constructor(
                             icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
                             profile = profileFor(handle),
                             userHandle = handle,
+                            firstInstallTime = info.firstInstallTime,
+                            // PackageManager only resolves packages belonging to this process's own
+                            // user — a Work Profile app isn't visible to it, so fall back to the
+                            // (reliably cross-profile) install time rather than leaving it at 0L.
+                            lastUpdateTime = runCatching {
+                                context.packageManager.getPackageInfo(info.applicationInfo.packageName, 0).lastUpdateTime
+                            }.getOrDefault(info.firstInstallTime),
                         )
                     }.getOrNull()
                 }

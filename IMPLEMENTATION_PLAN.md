@@ -1813,3 +1813,69 @@ the earlier "Private Space support" write-up above already documents as required
 `profileFor()`'s `else` branch (`OTHER`, post this pass's fix — previously `PERSONAL`). The
 permission was apparently never actually added when that feature was originally built, only
 documented; added now since this pass's work touches the exact same classification path.
+
+## About Facet Launcher settings screen
+New "About Facet Launcher" row under Settings → SYSTEM (after "Set as default launcher"), opening
+a dedicated screen (`ui/settings/AboutScreen.kt`) with three rows: the live app version (read from
+`BuildConfig.VERSION_NAME`/`APPLICATION_ID`, never hardcoded, so it can't drift from what
+`scripts/release.sh` bumps), "Check for updates" (opens the Play Store listing via
+`https://play.google.com/store/apps/details?id=...`), and "Join the Discord" (opens the same
+`https://discord.gg/BRjwWZ23E` invite the marketing site already uses). No ViewModel — everything
+here is either a compile-time constant or a plain `Intent` launch, same category as this screen's
+"Change wallpaper" row, so it stays a stateless composable per `AboutScreen`/`AboutContent`.
+`app/build.gradle.kts` needed `buildFeatures.buildConfig = true` added (previously off) to expose
+`BuildConfig` at all.
+
+### Tests
+`AboutScreenTest` (version row shows the real `BuildConfig.VERSION_NAME`; Play Store and Discord
+rows are interactive — launching an external app isn't itself verifiable from a Compose test, same
+category as `SettingsScreenTest`'s `changeWallpaperRowIsInteractive`; back button) +
+`SettingsScreenTest.aboutRowIsClickable`. One real bug found here: the version row is a plain,
+non-`clickable` `Row`, so unlike this screen's other rows it doesn't pick up `mergeDescendants`
+from a `clickable()` modifier — its tagged node had no text in the merged semantics tree until
+`Modifier.semantics(mergeDescendants = true) {}` was added explicitly.
+
+## App picker sort control (Favorites/Dock/Folder) + picker consolidation
+
+Added a sort control (Alphabetical / Last used / Installed Date / Last updated, with an asc/desc
+toggle) to the Favorites, Dock, and Folder "add apps" pickers, positioned directly under the search
+field and applying only to the not-yet-selected section — the already-placed section keeps its own
+frozen order untouched. Discovered `FavoritesPickerScreen.kt`/`DockAppPickerScreen.kt` were ~95%
+byte-for-byte duplicates and `FolderAppPickerScreen.kt` the same picker again minus the Folders tab,
+so consolidated the shared inner UI into one `ui/components/AppPickerScreen.kt` (+
+`ui/components/AppSortControl.kt` for the new sort row) first, rather than pasting the same sort
+logic into three files; each of the three screens is now a thin wrapper supplying its own
+title/labels/test-tag prefix and repository calls. `AppInfo` gained `firstInstallTime`/
+`lastUpdateTime` (`AppRepository` populates them — cross-profile-safe install time via
+`LauncherActivityInfo.getFirstInstallTime()`, best-effort update time via `PackageManager` with a
+fallback to install time for a Work Profile app `PackageManager` can't resolve). New
+`domain/SortAppsForPickerUseCase.kt` does the actual sorting (spans `AppInfo`'s own fields plus
+`UsageStatsRepository` for "Last used", so it's a use case, not repository logic); `UsageStatsRepository`
+gained `getLastUsedTimestamps()` (epoch-wide, unlike the existing Recents block's 7-day lookback).
+"Last used" is gated behind the existing Usage Access permission (`UsageAccessRepository`) and its
+existing `UsageAccessExplanationScreen` flow — picking it while ungranted routes there instead of
+applying, and leaves the dropdown's current selection untouched if the user doesn't grant it. UI
+went through a few direct-feedback rounds: the sort dropdown and direction arrow ended up grouped
+at the row's trailing edge (not spread across it); the direction icon is a vendored Material
+Symbols "list_arrow" (`res/drawable/list_arrow_24.xml`, not in the classic icon set this app
+otherwise draws from) that flips 180°; the closed dropdown button matches the page's own `Surface`
+background rather than `SurfaceContainer` (the open popup keeps `ThemedDropdownMenu`'s normal
+default styling — `ThemedDropdownMenu` gained an optional `containerColor` override for this, an
+otherwise-unused general capability today); "Last installed" was renamed "Installed Date" (an app
+only installs once, so "last" didn't make sense there — "Last updated" keeps "last" since repeated
+updates are a real concept).
+
+### Tests
+New `SortAppsForPickerUseCaseTest` (every option × direction, never-used-apps-sort-last, ungranted
+fallback), `FavoritesPickerViewModelTest`/`DockAppPickerViewModelTest` (neither existed before —
+this is their first unit coverage), extended `FolderAppPickerViewModelTest`, `AppRepositoryTest`,
+`UsageStatsRepositoryTest`. Instrumented: each of `FavoritesPickerScreenTest`/
+`DockAppPickerScreenTest`/`FolderAppPickerScreenTest` gained a direction-toggle test (verified via
+the ViewModel's own `otherResults` state, not measured pixel positions — reversing a long real
+installed-app list can push rows off the LazyColumn's composed window, and a single `waitForIdle()`
+isn't guaranteed to catch the ViewModel's own `StateFlow` recombination either) and a dropdown-select
+test that opens the real popup, taps "Installed Date", and confirms `otherResults` is genuinely
+ordered by `firstInstallTime`, not just relabeled; `DockAppPickerScreenTest` additionally covers the
+Usage-Access-gating flow end to end (picks "Last used" while ungranted, asserts it routes to
+`onNavigateToUsageAccessExplanation` instead of applying). `docs/architecture/` (`07-registries.md`,
+`04-package-structure.md`, `03-reactive-data-flow.md`) and `TEST_REGISTRY.md` updated to match.

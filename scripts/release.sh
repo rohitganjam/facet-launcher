@@ -26,6 +26,10 @@
 # Features / Fixes / Improvements / Internal (see scripts/gen-release-notes.py — heuristic, always
 # worth a skim before sharing externally). Printed to the terminal and written to RELEASE_NOTES.md
 # alongside the APK/AAB; not committed automatically, same as the version bump.
+#
+# Alongside the plain app-release.apk/.aab, a version-named copy (app-release-<versionName>.apk/.aab)
+# is written next to it, so successive releases in the same output directory don't overwrite each
+# other's artifacts.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -96,9 +100,17 @@ mv "$BUILD_GRADLE.tmp" "$BUILD_GRADLE"
 if [[ "$do_build" == true ]]; then
     echo "Building signed release APK + AAB..."
     (cd "$REPO_ROOT" && ./gradlew assembleRelease bundleRelease)
+
+    apk_src="$REPO_ROOT/app/build/outputs/apk/release/app-release.apk"
+    aab_src="$REPO_ROOT/app/build/outputs/bundle/release/app-release.aab"
+    apk_versioned="$REPO_ROOT/app/build/outputs/apk/release/app-release-$new_version.apk"
+    aab_versioned="$REPO_ROOT/app/build/outputs/bundle/release/app-release-$new_version.aab"
+    cp "$apk_src" "$apk_versioned"
+    cp "$aab_src" "$aab_versioned"
+
     echo
-    echo "APK: app/build/outputs/apk/release/app-release.apk"
-    echo "AAB: app/build/outputs/bundle/release/app-release.aab"
+    echo "APK: app/build/outputs/apk/release/app-release-$new_version.apk"
+    echo "AAB: app/build/outputs/bundle/release/app-release-$new_version.aab"
 
     if [[ -n "$previous_commit" ]]; then
         echo

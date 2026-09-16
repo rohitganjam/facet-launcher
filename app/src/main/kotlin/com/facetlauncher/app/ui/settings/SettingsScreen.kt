@@ -57,8 +57,8 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  * history for the reasoning behind this grouping): FACETS, APPEARANCE, CLOCK & CALENDAR,
  * HOME & APPS (Dock / Home Apps List / App Drawer / Notifications — grouped by "what shows on an
  * app icon or in the drawer", not by how narrowly each one's own settings happen to be scoped),
- * and SYSTEM (Permissions / Backup & restore / Set as default launcher — device-level, not a
- * launcher preference).
+ * and SYSTEM (Permissions / Backup & restore / Set as default launcher / About — device-level,
+ * not a launcher preference).
  */
 @Composable
 fun SettingsScreen(
@@ -74,6 +74,7 @@ fun SettingsScreen(
     onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -93,6 +94,7 @@ fun SettingsScreen(
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
+        onNavigateToAbout = onNavigateToAbout,
         onRequestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
         onRequestWorkProfileSettingsIntent = viewModel::workProfileSettingsIntent,
         modifier = modifier,
@@ -114,6 +116,7 @@ private fun SettingsContent(
     onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     onRequestDefaultLauncherIntent: () -> Intent,
     onRequestWorkProfileSettingsIntent: () -> Intent,
     modifier: Modifier = Modifier,
@@ -289,6 +292,14 @@ private fun SettingsContent(
                                 trailing = { NavigationChevron() },
                             )
                         }
+                        CardDivider()
+                        ClickableRow(
+                            title = "About Facet Launcher",
+                            subtitle = "Version, updates, and community",
+                            onClick = onNavigateToAbout,
+                            testTag = "about_row",
+                            trailing = { NavigationChevron() },
+                        )
                     }
                 }
 
@@ -431,6 +442,7 @@ private fun SettingsScreenPreview() {
             onNavigateToFolders = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
+            onNavigateToAbout = {},
             onRequestDefaultLauncherIntent = { Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS) },
             onRequestWorkProfileSettingsIntent = { Intent(Settings.ACTION_SETTINGS) },
         )

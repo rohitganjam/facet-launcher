@@ -107,7 +107,9 @@ It also regenerates `RELEASE_NOTES.md` automatically, covering every commit sinc
 Output:
 ```
 app/build/outputs/apk/release/app-release.apk
+app/build/outputs/apk/release/app-release-<versionName>.apk
 app/build/outputs/bundle/release/app-release.aab
+app/build/outputs/bundle/release/app-release-<versionName>.aab
 ```
 
 ## Living architecture docs

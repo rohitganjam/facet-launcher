@@ -22,6 +22,8 @@ data class AppInfo(
     val icon: ImageBitmap?,
     val profile: AppProfile = AppProfile.PERSONAL,
     val userHandle: UserHandle = Process.myUserHandle(),
+    val firstInstallTime: Long = 0L,
+    val lastUpdateTime: Long = 0L,
 )
 
 /**

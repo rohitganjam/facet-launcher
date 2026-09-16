@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.dock
 
+import android.app.AppOpsManager
+import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -20,9 +22,13 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -32,6 +38,8 @@ class DockAppPickerScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private lateinit var lastViewModel: DockAppPickerViewModel
 
     /**
      * [seed] runs against real (throwaway, in-memory) repositories before the screen renders.
@@ -56,16 +64,20 @@ class DockAppPickerScreenTest {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
                 seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository)
+                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
+                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 DockAppPickerViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     GetInstalledAppsUseCase(appRepository),
                     dockAppRepository,
                     facetDockAppRepository,
                     folderRepository,
-                )
+                    SortAppsForPickerUseCase(usageStatsRepository),
+                    usageAccessRepository,
+                ).also { lastViewModel = it }
             }
             FacetLauncherTheme {
-                DockAppPickerScreen(onDone = onDone, viewModel = viewModel)
+                DockAppPickerScreen(onDone = onDone, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -259,5 +271,87 @@ class DockAppPickerScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag("dock_folder_picker_row_${id}_checkbox").assertIsOff() }.isSuccess
         }
+    }
+
+    @Test
+    fun sortDirectionToggleReversesTheAllAppsSectionOrder() {
+        // Given at least one real installed app, not placed in the dock
+        setContent { _, _, _, _ -> }
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
+        val ascendingOrder = lastViewModel.uiState.value.otherResults.map { it.packageName }
+
+        // When tapping the direction toggle — via the real rendered control, not the ViewModel
+        // directly, so this exercises the actual click→ViewModel wiring
+        composeRule.onNodeWithTag("dock_picker_sort_direction_toggle").performClick()
+
+        // Then "ALL APPS" reverses — read from the ViewModel's own state rather than measured
+        // pixel positions: reversing can push a long real installed-app list's top rows to the
+        // list's far (now off-screen) end, and LazyColumn only composes semantics nodes for
+        // rows near the current viewport, making a position-based assertion here unreliable.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            lastViewModel.uiState.value.otherResults.map { it.packageName } == ascendingOrder.reversed()
+        }
+    }
+
+    @Test
+    fun sortMenuSelectingLastInstalledReordersAllAppsByInstallTime() {
+        // Given at least one real installed app, not placed in the dock
+        setContent { _, _, _, _ -> }
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
+
+        // When opening the sort dropdown (the real popup, not calling the ViewModel directly)
+        // and tapping "Installed Date"
+        composeRule.onNodeWithTag("dock_picker_sort_menu_button").performClick()
+        composeRule.onNodeWithTag("dock_picker_sort_option_${AppSortOption.INSTALL_DATE.name}").performClick()
+
+        // Then the ViewModel reflects the new selection...
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.sortOption == AppSortOption.INSTALL_DATE }
+        // ...the dropdown button's own label updates to match...
+        composeRule.onNodeWithText("Installed Date").assertExists()
+        // ...and "ALL APPS" is genuinely ordered oldest-installed-first, not just relabeled
+        val installTimes = lastViewModel.uiState.value.otherResults.map { it.firstInstallTime }
+        assert(installTimes == installTimes.sorted())
+    }
+
+    @Test
+    fun selectingLastUsedSortNavigatesToUsageAccessExplanationInsteadOfApplyingItWhenUngranted() {
+        // Given the picker with Usage Access not granted (this test environment's default)
+        var navigated = false
+        composeRule.setContent {
+            val context = LocalContext.current
+            val viewModel = remember {
+                val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
+                val launcherApps = context.getSystemService(LauncherApps::class.java)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
+                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                DockAppPickerViewModel(
+                    SavedStateHandle(),
+                    GetInstalledAppsUseCase(appRepository),
+                    dockAppRepository,
+                    facetDockAppRepository,
+                    folderRepository,
+                    SortAppsForPickerUseCase(usageStatsRepository),
+                    usageAccessRepository,
+                )
+            }
+            FacetLauncherTheme {
+                DockAppPickerScreen(onDone = {}, onNavigateToUsageAccessExplanation = { navigated = true }, viewModel = viewModel)
+            }
+        }
+        composeRule.waitForIdle()
+
+        // When picking "Last used" from the sort dropdown
+        composeRule.onNodeWithTag("dock_picker_sort_menu_button").performClick()
+        composeRule.onNodeWithTag("dock_picker_sort_option_LAST_USED").performClick()
+        composeRule.waitForIdle()
+
+        // Then it routes to the permission explanation instead of applying the sort — the
+        // dropdown still shows the previous (default) selection
+        assert(navigated)
+        composeRule.onNodeWithText("Alphabetical").assertExists()
     }
 }

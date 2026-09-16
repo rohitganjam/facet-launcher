@@ -387,6 +387,45 @@ class AppRepositoryTest {
     }
 
     @Test
+    fun `getInstalledApps carries firstInstallTime and lastUpdateTime`() = runTest {
+        // Given an activity reporting a first-install time, and PackageManager resolving that
+        // same package (Robolectric's shadow PM) to a distinct last-update time
+        val launcherApps = mock(LauncherApps::class.java)
+        val activity = fakeActivity("com.example.dated", ".Main", "Dated")
+        `when`(activity.firstInstallTime).thenReturn(1_000L)
+        val packageInfo = android.content.pm.PackageInfo().apply {
+            packageName = "com.example.dated"
+            lastUpdateTime = 2_000L
+        }
+        shadowOf(context.packageManager).installPackage(packageInfo)
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(activity))
+
+        // When fetching installed apps
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
+
+        // Then both timestamps are carried onto AppInfo
+        assertEquals(1_000L, result.single().firstInstallTime)
+        assertEquals(2_000L, result.single().lastUpdateTime)
+    }
+
+    @Test
+    fun `getInstalledApps falls lastUpdateTime back to firstInstallTime when PackageManager can't resolve the package, e g a Work Profile app`() = runTest {
+        // Given an activity PackageManager has no record of at all (unregistered in the shadow
+        // PM) — the same as a Work Profile app, which this process's own PackageManager can't see
+        val launcherApps = mock(LauncherApps::class.java)
+        val activity = fakeActivity("com.example.notresolvable", ".Main", "Cross-profile")
+        `when`(activity.firstInstallTime).thenReturn(500L)
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(activity))
+
+        // When fetching installed apps
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
+
+        // Then lastUpdateTime falls back to the (cross-profile-safe) firstInstallTime rather than staying 0L
+        assertEquals(500L, result.single().firstInstallTime)
+        assertEquals(500L, result.single().lastUpdateTime)
+    }
+
+    @Test
     fun `observeProfileRemoved emits the removed handle from EXTRA_USER`() = runTest {
         // Given a live subscription to observeProfileRemoved
         val launcherApps = mock(LauncherApps::class.java)

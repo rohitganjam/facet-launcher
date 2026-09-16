@@ -68,7 +68,7 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (30) — unscoped, constructor-injected unless noted
+## 2. Use cases (31) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -102,6 +102,7 @@ cycles; `AppRepository` is the single root.
 | `ResolveWidgetResizeUseCase` | pure grid | — | `HubViewModel` |
 | `SeedDefaultDockUseCase` | startup write (once, `defaults_seeded`) | `SettingsRepository`, `DefaultAppRepository`, `DockAppRepository`, `GetInstalledAppsUseCase` | `LauncherViewModel` |
 | `SelectPreviewAppsUseCase` | pure | — | `AppearanceSettingsViewModel`, `HomeAppsListSettingsViewModel` |
+| `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
 
 Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridConstants.kt`
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),

@@ -24,22 +24,24 @@ class UsageStatsRepository @Inject constructor(
 
     suspend fun getMostUsedApps(limit: Int): List<AppInfo> = rankedApps(limit) { _, totalForeground -> totalForeground }
 
+    /**
+     * Last-used timestamp per installed package, looking back to epoch rather than
+     * [LOOKBACK_MS] — for the app picker screens' "Last used" sort, which should reflect an
+     * app's full usage history, not just the last week. A package absent from the result has no
+     * recorded usage (including when the Usage Access permission isn't granted, in which case
+     * [usageStatsManager] simply returns no data).
+     */
+    suspend fun getLastUsedTimestamps(): Map<String, Long> = withContext(Dispatchers.Default) {
+        aggregateUsage(begin = 0L, end = System.currentTimeMillis()).mapValues { (_, usage) -> usage.first }
+    }
+
     private suspend fun rankedApps(
         limit: Int,
         rankBy: (lastTimeUsed: Long, totalTimeInForeground: Long) -> Long,
     ): List<AppInfo> = withContext(Dispatchers.Default) {
         val end = System.currentTimeMillis()
         val begin = end - LOOKBACK_MS
-        val stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST, begin, end).orEmpty()
-
-        // A package can report multiple UsageStats entries across sub-intervals within the
-        // queried range — aggregate to one (last-used, total-foreground) pair per package first.
-        val aggregatedByPackage = mutableMapOf<String, Pair<Long, Long>>()
-        for (entry in stats) {
-            val (lastUsed, totalForeground) = aggregatedByPackage[entry.packageName] ?: (0L to 0L)
-            aggregatedByPackage[entry.packageName] =
-                maxOf(lastUsed, entry.lastTimeUsed) to (totalForeground + entry.totalTimeInForeground)
-        }
+        val aggregatedByPackage = aggregateUsage(begin, end)
 
         // Facet itself is foregrounded every time the user returns to Home, so it would
         // otherwise rank near the top of both Recents and Most Used — showing your own launcher
@@ -55,6 +57,19 @@ class UsageStatsRepository @Inject constructor(
             .sortedByDescending { (_, usage) -> rankBy(usage.first, usage.second) }
             .take(limit)
             .mapNotNull { (packageName, _) -> installedByPackage[packageName] }
+    }
+
+    /** A package can report multiple `UsageStats` entries across sub-intervals within the queried
+     * range — aggregates to one (last-used, total-foreground) pair per package. */
+    private fun aggregateUsage(begin: Long, end: Long): Map<String, Pair<Long, Long>> {
+        val stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST, begin, end).orEmpty()
+        val aggregatedByPackage = mutableMapOf<String, Pair<Long, Long>>()
+        for (entry in stats) {
+            val (lastUsed, totalForeground) = aggregatedByPackage[entry.packageName] ?: (0L to 0L)
+            aggregatedByPackage[entry.packageName] =
+                maxOf(lastUsed, entry.lastTimeUsed) to (totalForeground + entry.totalTimeInForeground)
+        }
+        return aggregatedByPackage
     }
 
     private companion object {

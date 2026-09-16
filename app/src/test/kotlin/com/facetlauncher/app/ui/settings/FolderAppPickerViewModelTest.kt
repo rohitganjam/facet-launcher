@@ -4,8 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FakeFolderDao
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppSortOption
+import com.facetlauncher.app.data.model.SortDirection
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -45,9 +50,21 @@ class FolderAppPickerViewModelTest {
         folderId: Long,
         installed: List<AppInfo>,
         repository: FolderRepository,
+        usageAccessGranted: Boolean = false,
     ): FolderAppPickerViewModel {
         val getInstalledApps = GetInstalledAppsUseCase(fakeAppRepositoryReturning(installed))
-        return FolderAppPickerViewModel(SavedStateHandle(mapOf("folderId" to folderId)), getInstalledApps, repository)
+        val usageAccessRepository = mock(UsageAccessRepository::class.java)
+        `when`(usageAccessRepository.isGranted()).thenReturn(usageAccessGranted)
+        val usageStatsRepository = mock(UsageStatsRepository::class.java)
+        `when`(usageStatsRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
+        val sortAppsForPicker = SortAppsForPickerUseCase(usageStatsRepository)
+        return FolderAppPickerViewModel(
+            SavedStateHandle(mapOf("folderId" to folderId)),
+            getInstalledApps,
+            repository,
+            sortAppsForPicker,
+            usageAccessRepository,
+        )
     }
 
     private suspend fun fakeAppRepositoryReturning(installed: List<AppInfo>): AppRepository {
@@ -151,5 +168,61 @@ class FolderAppPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(a, b), viewModel.uiState.value.selectedResults)
+    }
+
+    @Test
+    fun `onSortOptionChanged reorders otherResults but never selectedResults`() = runTest {
+        val a = appInfo('a')
+        val b = appInfo('b')
+        val c = appInfo('c')
+        val repository = folderRepository(listOf(a, b, c))
+        val folderId = repository.createFolder("Games")
+        repository.addAppToFolder(folderId, b)
+        repository.addAppToFolder(folderId, a)
+        val viewModel = createViewModel(folderId, listOf(a, b, c), repository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf(b, a), viewModel.uiState.value.selectedResults)
+        assertEquals(listOf(c), viewModel.uiState.value.otherResults)
+
+        viewModel.onSortOptionChanged(AppSortOption.ALPHABETICAL)
+        viewModel.onSortDirectionToggled()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(SortDirection.DESCENDING, viewModel.uiState.value.sortDirection)
+        // Only one candidate here, so reversing is a no-op on otherResults' order — the
+        // meaningful assertion is that selectedResults' own frozen order never moved.
+        assertEquals(listOf(c), viewModel.uiState.value.otherResults)
+        assertEquals(listOf(b, a), viewModel.uiState.value.selectedResults)
+    }
+
+    @Test
+    fun `onSortOptionChanged to LAST_USED is a no-op without Usage Access granted`() = runTest {
+        val a = appInfo('a')
+        val repository = folderRepository(listOf(a))
+        val folderId = repository.createFolder("Games")
+        val viewModel = createViewModel(folderId, listOf(a), repository, usageAccessGranted = false)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onSortOptionChanged(AppSortOption.LAST_USED)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(AppSortOption.ALPHABETICAL, viewModel.uiState.value.sortOption)
+    }
+
+    @Test
+    fun `onSortOptionChanged to LAST_USED applies once Usage Access is granted`() = runTest {
+        val a = appInfo('a')
+        val repository = folderRepository(listOf(a))
+        val folderId = repository.createFolder("Games")
+        val viewModel = createViewModel(folderId, listOf(a), repository, usageAccessGranted = true)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onSortOptionChanged(AppSortOption.LAST_USED)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(AppSortOption.LAST_USED, viewModel.uiState.value.sortOption)
     }
 }
