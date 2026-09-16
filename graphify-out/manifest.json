@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1789564596.8120155,
-    "seen": 1789573168.273688,
-    "ast_hash": "d1aab37a42455386162c806fedebdd9e",
+    "mtime": 1789574006.467767,
+    "seen": 1789575532.5141811,
+    "ast_hash": "a13eabf89abf535e75a7be38fc3078dd",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -2796,9 +2796,9 @@
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1789544303.1620946,
-    "seen": 1789544450.648621,
-    "ast_hash": "21e83d0d952fbb117b61575b1ebdfb91",
+    "mtime": 1789574080.6111538,
+    "seen": 1789575532.514414,
+    "ast_hash": "e6c1fb93881fd737bfbf9c6a1b671676",
     "semantic_hash": ""
   },
   "scripts/gen-release-notes.py": {
@@ -2808,9 +2808,9 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1789544303.139154,
-    "seen": 1789544450.6486342,
-    "ast_hash": "00a7f03ddf7aa1cdbbdc25110e1537ca",
+    "mtime": 1789574080.5902824,
+    "seen": 1789575532.514428,
+    "ast_hash": "11f748bd08d637d4da16b71dbadd66e2",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {

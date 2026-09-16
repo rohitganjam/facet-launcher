@@ -41925,7 +41925,7 @@
       "label": "RELEASE_NOTES.md",
       "_origin": "ast",
       "community": 172,
-      "community_name": "Facet Launcher 0.1.7",
+      "community_name": "Facet Launcher 0.1.8",
       "file_type": "document",
       "node_kind": "page",
       "norm_label": "release_notes.md",
@@ -41933,14 +41933,14 @@
       "source_location": "L1"
     },
     {
-      "id": "release_notes_facet_launcher_0_1_7",
-      "label": "Facet Launcher 0.1.7",
+      "id": "release_notes_facet_launcher_0_1_8",
+      "label": "Facet Launcher 0.1.8",
       "_origin": "ast",
       "community": 172,
-      "community_name": "Facet Launcher 0.1.7",
+      "community_name": "Facet Launcher 0.1.8",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "facet launcher 0.1.7",
+      "norm_label": "facet launcher 0.1.8",
       "source_file": "RELEASE_NOTES.md",
       "source_location": "L1"
     },
@@ -41949,19 +41949,19 @@
       "label": "Fixes",
       "_origin": "ast",
       "community": 172,
-      "community_name": "Facet Launcher 0.1.7",
+      "community_name": "Facet Launcher 0.1.8",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "fixes",
       "source_file": "RELEASE_NOTES.md",
-      "source_location": "L6"
+      "source_location": "L7"
     },
     {
       "id": "release_notes_improvements",
       "label": "Improvements",
       "_origin": "ast",
       "community": 172,
-      "community_name": "Facet Launcher 0.1.7",
+      "community_name": "Facet Launcher 0.1.8",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "improvements",
@@ -41973,7 +41973,7 @@
       "label": "Internal",
       "_origin": "ast",
       "community": 172,
-      "community_name": "Facet Launcher 0.1.7",
+      "community_name": "Facet Launcher 0.1.8",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "internal",
@@ -41985,7 +41985,7 @@
       "label": "New Features",
       "_origin": "ast",
       "community": 172,
-      "community_name": "Facet Launcher 0.1.7",
+      "community_name": "Facet Launcher 0.1.8",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "new features",
@@ -161387,7 +161387,7 @@
     },
     {
       "source": "release_notes",
-      "target": "release_notes_facet_launcher_0_1_7",
+      "target": "release_notes_facet_launcher_0_1_8",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -161397,7 +161397,7 @@
       "weight": 1.0
     },
     {
-      "source": "release_notes_facet_launcher_0_1_7",
+      "source": "release_notes_facet_launcher_0_1_8",
       "target": "release_notes_improvements",
       "relation": "contains",
       "_origin": "ast",
@@ -161408,7 +161408,7 @@
       "weight": 1.0
     },
     {
-      "source": "release_notes_facet_launcher_0_1_7",
+      "source": "release_notes_facet_launcher_0_1_8",
       "target": "release_notes_internal",
       "relation": "contains",
       "_origin": "ast",
@@ -161419,7 +161419,7 @@
       "weight": 1.0
     },
     {
-      "source": "release_notes_facet_launcher_0_1_7",
+      "source": "release_notes_facet_launcher_0_1_8",
       "target": "release_notes_new_features",
       "relation": "contains",
       "_origin": "ast",
@@ -161430,14 +161430,14 @@
       "weight": 1.0
     },
     {
-      "source": "release_notes_facet_launcher_0_1_7",
+      "source": "release_notes_facet_launcher_0_1_8",
       "target": "release_notes_fixes",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "RELEASE_NOTES.md",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0
     },
     {
@@ -195801,5 +195801,5 @@
       "source_file": "CLAUDE.md"
     }
   ],
-  "built_at_commit": "645350192fd014b110a98d64c0364b20193aabdc"
+  "built_at_commit": "e2e819944e63d72b888de874341d685e213ea01c"
 }

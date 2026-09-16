@@ -1,7 +1,7 @@
 # Graph Report - lumen-launcher  (2026-09-16)
 
 ## Corpus Check
-- 445 files · ~885,103 words
+- 445 files · ~885,069 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `64535019`
+- Built from commit: `e2e81994`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -184,7 +184,7 @@
 - HomeDrawerRouteTest.kt
 - ResolveWidgetResizeUseCaseTest
 - FacetCarouselScreen.kt
-- Facet Launcher 0.1.7
+- Facet Launcher 0.1.8
 - AppearanceSettingsViewModel
 - FacetDatabase
 - .setContent
@@ -262,12 +262,12 @@
   CLAUDE.md → IMPLEMENTATION_PLAN.md
 - `Phase 10 — Advanced Clock Templates (F1 follow-up)` --references--> `Roboto Flex Font License (SIL OFL 1.1)`  [INFERRED]
   IMPLEMENTATION_PLAN.md → THIRD_PARTY_FONT_LICENSES/robotoflex_OFL.txt
-- `AppPickerScreen()` --calls--> `StickyHeaderLayout()`  [INFERRED]
-  app/src/main/kotlin/com/facetlauncher/app/ui/components/AppPickerScreen.kt → app/src/main/kotlin/com/facetlauncher/app/ui/components/StickyHeaderLayout.kt
-- `AppPickerAppsList()` --calls--> `AppSortControl()`  [INFERRED]
-  app/src/main/kotlin/com/facetlauncher/app/ui/components/AppPickerScreen.kt → app/src/main/kotlin/com/facetlauncher/app/ui/components/AppSortControl.kt
-- `AppPickerTabRow()` --calls--> `Row`  [INFERRED]
-  app/src/main/kotlin/com/facetlauncher/app/ui/components/AppPickerScreen.kt → app/src/test/kotlin/com/facetlauncher/app/data/ContactRepositoryTest.kt
+- `ManageFacetsViewModel` --calls--> `combine()`  [INFERRED]
+  app/src/main/kotlin/com/facetlauncher/app/ui/facets/ManageFacetsViewModel.kt → app/src/main/kotlin/com/facetlauncher/app/domain/FlowCombine.kt
+- `DockSettingsViewModel` --calls--> `combine()`  [INFERRED]
+  app/src/main/kotlin/com/facetlauncher/app/ui/settings/DockSettingsViewModel.kt → app/src/main/kotlin/com/facetlauncher/app/domain/FlowCombine.kt
+- `CalendarRepositoryTest` --calls--> `CalendarRepository`  [INFERRED]
+  app/src/test/kotlin/com/facetlauncher/app/data/CalendarRepositoryTest.kt → app/src/main/kotlin/com/facetlauncher/app/data/CalendarRepository.kt
 
 ## Import Cycles
 - None detected.
@@ -803,9 +803,9 @@ Nodes (38): any(), T, KeyboardDismissalTest, FakeNotificationAccessRepository, B
 Cohesion: 0.16
 Nodes (19): AddFacetPage(), FacetCarouselContent(), NestedScrollConnection, FacetCarouselHeader(), FacetCarouselScreen(), FacetCarouselScreenPreview(), FacetPreviewPage(), Modifier (+11 more)
 
-### Community 172 - "Facet Launcher 0.1.7"
+### Community 172 - "Facet Launcher 0.1.8"
 Cohesion: 0.33
-Nodes (5): Facet Launcher 0.1.7, Fixes, Improvements, Internal, New Features
+Nodes (5): Facet Launcher 0.1.8, Fixes, Improvements, Internal, New Features
 
 ### Community 173 - "AppearanceSettingsViewModel"
 Cohesion: 0.25
@@ -952,24 +952,24 @@ Cohesion: 0.83
 Nodes (3): Modifier, OrphanedWidgetTile(), OrphanedWidgetTilePreview()
 
 ## Knowledge Gaps
-- **509 isolated node(s):** `ALPHABETICAL`, `LAST_USED`, `INSTALL_DATE`, `LAST_UPDATED`, `ASCENDING` (+504 more)
+- **509 isolated node(s):** `New Features`, `Fixes`, `Improvements`, `Internal`, `InvalidFile` (+504 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 936 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **61 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `FacetLauncherTheme()` connect `FacetLauncherTheme` to `ClockStyleGalleryViewModelTest`, `.setContent`, `UsageAccessRepository`, `ResolveWidgetDropUseCase`, `ManageFacetsViewModel`, `.setContent`, `ClockColorOption`, `LauncherActivity.kt`, `OnboardingViewModelTest`, `StickyHeaderLayout`, `.setContent`, `.setContent`, `.setContent`, `DockSettingsScreen.kt`, `FoldersSettingsContent`, `OnboardingIntroPage.kt`, `.setContent`, `PlaceWidgetUseCase`, `LauncherFontOption`, `ThemeMode`, `ClockAdjustSheet.kt`, `ContactRepository`, `HomeDrawerRouteTest.kt`, `.setContent`, `TonalButton`, `FacetCarouselScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `PermissionsScreen.kt`, `AppDrawerSettingsScreen.kt`, `AppPickerScreen`, `GestureHintOverlay`, `DockSettingsScreenTest.kt`, `HubWidgetPickerScreen.kt`, `AppDrawerScreen.kt`, `CardDivider`, `.setContent`, `HomeScreen`, `.setContent`, `.setContent`, `.setContent`, `SettingsScreen.kt`, `IconRenderMode`, `ColorTest`, `AccentSwatch`, `SetDefaultLauncherSheetTest`, `GetInstalledAppsUseCase`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `WallpaperAccentRole`, `AboutScreen.kt`, `.setContent`, `SetDefaultLauncherSheet`, `WidgetResizeHandle.kt`, `HubEmptyState.kt`, `BackButton`, `OrphanedWidgetTile.kt`, `.setContent`, `HomeScreen.kt`, `AppDrawerScreen`, `ManageFacetsScreen.kt`, `AppearanceSettingsScreen.kt`, `SettingsRepository`, `FacetSettingsContent`, `ClockStyleGalleryScreen.kt`, `DockAppRepository`, `CalendarSettingsScreen.kt`, `.setContent`, `Folder`, `UsageAccessExplanationScreen.kt`, `dashedBorder`?**
-  _High betweenness centrality (0.155) - this node is a cross-community bridge._
 - **Why does `AppInfo` connect `AppInfo` to `.setContent`, `FacetDockAppDao`, `AppIcon`, `.homeViewModel`, `.setContent`, `DockAppEntity`, `DefaultFavoriteAppEntity`, `ClockColorOption`, `FavoriteAppRepository`, `LauncherActivity.kt`, `FakeFavoriteAppDao`, `LauncherSettings`, `GroupAppsByLetterUseCaseTest`, `OnboardingViewModelTest`, `SortAppsForPickerUseCaseTest`, `UsageStatsRepository`, `StickyHeaderLayout`, `FolderRepository`, `AppContextMenu`, `DockSettingsScreen.kt`, `FacetDockAppRepository`, `AppShortcut`, `FoldersSettingsContent`, `FacetNavHost`, `HomeViewModel`, `Fixture`, `AppRepository`, `PrivateSpaceRepository`, `ContactRepository`, `HomeDrawerRouteTest.kt`, `FacetCarouselScreen.kt`, `AppSortOption`, `AppearanceSettingsViewModel`, `AppPickerScreen`, `CardDivider`, `.createViewModel`, `AppDrawerScreen.kt`, `AppRepository.kt`, `HomeScreen`, `.setContent`, `SettingsScreen.kt`, `.setContent`, `DockAppPickerViewModelTest`, `GetInstalledAppsUseCase`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `SelectPreviewAppsUseCaseTest`, `HomeDrawerRoute.kt`, `.setContent`, `Fixture`, `FolderAppPickerViewModelTest`, `FolderDetailViewModel`, `HomeScreen.kt`, `FacetEntity`, `AppDrawerScreen`, `FacetLauncherTheme`, `AppearanceSettingsScreen.kt`, `SettingsRepository`, `DockAppRepository`, `.setContent`, `Folder`, `FolderContentsSheet`?**
-  _High betweenness centrality (0.144) - this node is a cross-community bridge._
-- **Why does `SettingsRepository` connect `SettingsRepository` to `ClockStyleGalleryViewModelTest`, `.setContent`, `UsageAccessRepository`, `AppDrawerSettingsViewModelTest`, `.homeViewModel`, `ManageFacetsViewModel`, `SettingsRepositoryTest.kt`, `ClockColorOption`, `FavoriteAppRepository`, `SettingsRepositoryTest`, `LauncherSettings`, `OnboardingViewModelTest`, `.setContent`, `ClockTemplateId`, `FacetDockAppRepository`, `.setContent`, `HomeViewModel`, `LauncherFontOption`, `ThemeMode`, `HomeDrawerRouteTest.kt`, `.setContent`, `.setContent`, `CalendarInfo`, `.createViewModel`, `DockSettingsScreenTest.kt`, `ClockStyleGalleryViewModel`, `AppDrawerScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `IconRenderMode`, `.drawerViewModel`, `GetInstalledAppsUseCase`, `WallpaperAccentRole`, `DrawerGridSize`, `ExportBackupUseCase.kt`, `CalendarSettingsViewModel`, `AppInfo`, `NotificationAccessExplanationViewModel.kt`, `ImportBackupUseCaseTest.kt`, `.createViewModel`, `FacetEntity`, `ImportBackupResult`, `DockAppRepository`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+  _High betweenness centrality (0.179) - this node is a cross-community bridge._
+- **Why does `FacetLauncherTheme()` connect `FacetLauncherTheme` to `ClockStyleGalleryViewModelTest`, `.setContent`, `UsageAccessRepository`, `ResolveWidgetDropUseCase`, `ManageFacetsViewModel`, `.setContent`, `ClockColorOption`, `LauncherActivity.kt`, `OnboardingViewModelTest`, `StickyHeaderLayout`, `.setContent`, `.setContent`, `.setContent`, `DockSettingsScreen.kt`, `FoldersSettingsContent`, `OnboardingIntroPage.kt`, `.setContent`, `PlaceWidgetUseCase`, `LauncherFontOption`, `ThemeMode`, `ClockAdjustSheet.kt`, `ContactRepository`, `HomeDrawerRouteTest.kt`, `.setContent`, `TonalButton`, `FacetCarouselScreen.kt`, `.setContent`, `.setContent`, `.setContent`, `PermissionsScreen.kt`, `AppDrawerSettingsScreen.kt`, `AppPickerScreen`, `GestureHintOverlay`, `DockSettingsScreenTest.kt`, `HubWidgetPickerScreen.kt`, `AppDrawerScreen.kt`, `CardDivider`, `.setContent`, `HomeScreen`, `.setContent`, `.setContent`, `.setContent`, `SettingsScreen.kt`, `IconRenderMode`, `ColorTest`, `AccentSwatch`, `SetDefaultLauncherSheetTest`, `GetInstalledAppsUseCase`, `.setContent`, `HomeAppsListSettingsScreen.kt`, `WallpaperAccentRole`, `AboutScreen.kt`, `.setContent`, `SetDefaultLauncherSheet`, `WidgetResizeHandle.kt`, `HubEmptyState.kt`, `BackButton`, `OrphanedWidgetTile.kt`, `.setContent`, `HomeScreen.kt`, `AppDrawerScreen`, `ManageFacetsScreen.kt`, `AppearanceSettingsScreen.kt`, `SettingsRepository`, `FacetSettingsContent`, `ClockStyleGalleryScreen.kt`, `DockAppRepository`, `CalendarSettingsScreen.kt`, `.setContent`, `Folder`, `UsageAccessExplanationScreen.kt`, `dashedBorder`?**
+  _High betweenness centrality (0.167) - this node is a cross-community bridge._
+- **Why does `AppRepository` connect `AppRepository` to `FacetDockAppDao`, `ResolveWidgetDropUseCase`, `.setContent`, `BackupRestoreViewModel`, `DefaultFavoriteAppEntity`, `DockAppEntity`, `AppWidgetRepository`, `FavoriteAppRepository`, `FakeFavoriteAppDao`, `.setContent`, `FolderRepository`, `.setContent`, `PlaceWidgetUseCase`, `ComponentName`, `HomeDrawerRouteTest.kt`, `.setContent`, `AppSortOption`, `.setContent`, `.setContent`, `DockSettingsScreenTest.kt`, `AppRepository.kt`, `Fixture`, `.setContent`, `.setContent`, `Fixture`, `GetInstalledAppsUseCase`, `AppProfile`, `.setContent`, `AppInfo`, `FolderAppPickerViewModelTest`, `UserHandle`, `SettingsRepository`, `DockAppRepository`, `.setContent`?**
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
 - **Are the 13 inferred relationships involving `FacetLauncherTheme()` (e.g. with `.selectingLastUsedSortNavigatesToUsageAccessExplanationInsteadOfApplyingItWhenUngranted()` and `.setContent()`) actually correct?**
   _`FacetLauncherTheme()` has 13 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 25 inferred relationships involving `FacetEntity` (e.g. with `.setContent()` and `.`a non-null listContentMode round-trips through Room, not just an in-memory copy`()`) actually correct?**
   _`FacetEntity` has 25 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 140 inferred relationships involving `Row` (e.g. with `.dynamicConnections()` and `AppContextMenu()`) actually correct?**
   _`Row` has 140 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `ALPHABETICAL`, `LAST_USED`, `INSTALL_DATE` to the rest of the system?**
+- **What connects `New Features`, `Fixes`, `Improvements` to the rest of the system?**
   _509 weakly-connected nodes found - possible documentation gaps or missing edges._
