@@ -697,6 +697,12 @@ fun HomeDrawerRoute(
             folderCandidates = folders,
             onCreateFolder = drawerViewModel::createFolder,
             onAddToFolder = drawerViewModel::addToFolder,
+            folderDisplayMode = drawerSettings.drawerFolderDisplayMode,
+            onRemoveFromFolder = drawerViewModel::removeFromFolder,
+            onRenameFolder = drawerViewModel::renameFolder,
+            onRequestFolderQuickAddState = { folder -> homeViewModel.quickAddStateForFolder(folder) },
+            onFolderFavoritesAction = drawerViewModel::onFolderFavoritesAction,
+            onFolderDockAction = drawerViewModel::onFolderDockAction,
             onRequestConnections = drawerViewModel::getConnections,
             showContactsPermissionPrompt = showContactsPermissionPrompt,
             onContactsPermissionPromptClick = {

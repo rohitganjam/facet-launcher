@@ -5,7 +5,7 @@
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
 | Room `FacetDatabase` | `facet.db` (schema **v20**, `exportSchema = true` → `app/schemas/.../1.json … 20.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/calendar/app-list/dock design defaults, theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 48 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/calendar/app-list/dock design defaults, theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 49 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
 | Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v3: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
@@ -389,6 +389,7 @@ erDiagram
         boolean show_drawer_icons "default true"
         boolean show_drawer_labels "default true"
         string search_bar_position "SearchBarPosition, default TOP"
+        string drawer_folder_display_mode "DrawerFolderDisplayMode, default DO_NOT_SHOW"
         boolean search_contacts_enabled "default false"
         boolean search_settings_enabled "default false"
         boolean notification_dots_enabled "default true"
@@ -439,7 +440,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
 - One `Flow<LauncherSettings>`; every consumer (`ObserveHomeScreenStateUseCase`,
   `LauncherViewModel`, 20 ViewModels, 11 use cases) `combine`s or `.first()`s it. There is no
   per-key flow.
-- Every emission is the **whole** immutable `LauncherSettings` (48 fields); DataStore emits on any
+- Every emission is the **whole** immutable `LauncherSettings` (49 fields); DataStore emits on any
   key change, so a coach-mark write re-emits theme/clock/drawer settings too — consumers rely on
   `combine`/`distinctUntilChanged` in their own graphs to avoid recomposing.
 - Defaults come from `LauncherSettings()`'s constructor defaults, which are the single source of
@@ -450,7 +451,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (50 functions)
+### 5.3 Write path — the complete writer API (51 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -498,6 +499,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setShowDrawerIcons(Boolean)` | `show_drawer_icons` | set | `AppDrawerSettingsViewModel` |
 | `setShowDrawerLabels(Boolean)` | `show_drawer_labels` | set | `AppDrawerSettingsViewModel` |
 | `setSearchBarPosition(SearchBarPosition)` | `search_bar_position` | set | `AppDrawerSettingsViewModel` |
+| `setDrawerFolderDisplayMode(DrawerFolderDisplayMode)` | `drawer_folder_display_mode` | set | `AppDrawerSettingsViewModel` |
 | `setSearchContactsEnabled(Boolean)` | `search_contacts_enabled` | set | `AppDrawerSettingsViewModel`, `DrawerViewModel` (inline prompt) |
 | `setSearchSettingsEnabled(Boolean)` | `search_settings_enabled` | set | `AppDrawerSettingsViewModel` |
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
@@ -514,7 +516,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-Same 48 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+Same 49 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock + calendar design (global; overridden per facet when `facets.overrideClock`)
@@ -590,6 +592,7 @@ each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 | `show_drawer_icons` | Boolean | `showDrawerIcons` | `true` |
 | `show_drawer_labels` | Boolean | `showDrawerLabels` | `true` |
 | `search_bar_position` | String (`SearchBarPosition`) | `searchBarPosition` | `TOP` |
+| `drawer_folder_display_mode` | String (`DrawerFolderDisplayMode`) | `drawerFolderDisplayMode` | `DO_NOT_SHOW` |
 
 #### Search
 
@@ -637,7 +640,7 @@ live from the OS on every check), the installed-app list, and notification count
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 33 of the 48 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 34 of the 49 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`, `calendar_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,

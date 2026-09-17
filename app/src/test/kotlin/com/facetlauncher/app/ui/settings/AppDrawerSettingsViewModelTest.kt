@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -133,5 +134,16 @@ class AppDrawerSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setDrawerOpacity(0.8f)
+    }
+
+    @Test
+    fun `changing drawer folder display mode calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setDrawerFolderDisplayMode(DrawerFolderDisplayMode.SHOW_FIRST)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setDrawerFolderDisplayMode(DrawerFolderDisplayMode.SHOW_FIRST)
     }
 }

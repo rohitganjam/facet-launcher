@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -63,6 +64,7 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.showDrawerIcons)
         assertEquals(true, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.TOP, settings.searchBarPosition)
+        assertEquals(DrawerFolderDisplayMode.DO_NOT_SHOW, settings.drawerFolderDisplayMode)
         assertEquals(NO_ACTIVE_FACET_ID, settings.activeFacetId)
         assertEquals(true, settings.showAllDayEvents)
         assertEquals(null, settings.selectedCalendarIds)
@@ -276,6 +278,7 @@ class SettingsRepositoryTest {
         repository.setShowDrawerIcons(false)
         repository.setShowDrawerLabels(false)
         repository.setSearchBarPosition(SearchBarPosition.BOTTOM)
+        repository.setDrawerFolderDisplayMode(DrawerFolderDisplayMode.INLINE)
         repository.setActiveFacetId(7L)
         repository.setShowAllDayEvents(false)
         repository.setSelectedCalendarIds(setOf("cal-1", "cal-2"))
@@ -303,6 +306,7 @@ class SettingsRepositoryTest {
         assertEquals(false, settings.showDrawerIcons)
         assertEquals(false, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.BOTTOM, settings.searchBarPosition)
+        assertEquals(DrawerFolderDisplayMode.INLINE, settings.drawerFolderDisplayMode)
         assertEquals(7L, settings.activeFacetId)
         assertEquals(false, settings.showAllDayEvents)
         assertEquals(setOf("cal-1", "cal-2"), settings.selectedCalendarIds)

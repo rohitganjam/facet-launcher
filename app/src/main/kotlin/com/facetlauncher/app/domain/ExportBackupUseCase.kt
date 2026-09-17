@@ -83,6 +83,7 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     showDrawerIcons = showDrawerIcons,
     showDrawerLabels = showDrawerLabels,
     searchBarPosition = searchBarPosition.name,
+    drawerFolderDisplayMode = drawerFolderDisplayMode.name,
     activeFacetIndex = activeFacetIndex,
     showAllDayEvents = showAllDayEvents,
     searchContactsEnabled = searchContactsEnabled,

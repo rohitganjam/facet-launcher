@@ -1,6 +1,8 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerItem
+import com.facetlauncher.app.data.model.Folder
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -62,5 +64,22 @@ class GroupAppsByLetterUseCaseTest {
 
         assertEquals(emptyList<String>(), result.letters)
         assertEquals(emptyMap<String, List<AppInfo>>(), result.groups)
+    }
+
+    @Test
+    fun `the generic overload buckets apps and folders together by display name, preserving input order within a bucket`() {
+        // Bucketing only groups by leading letter — it never re-sorts within a bucket (that's why
+        // AppDrawerScreen sorts a mixed apps+folders list by name *before* calling this), so the
+        // input here is pre-sorted, exactly like AppDrawerScreen's own INLINE-mode input is.
+        val alpha = DrawerItem.AppEntry(app("Alpha"))
+        val apex = DrawerItem.AppEntry(app("Apex"))
+        val archive = DrawerItem.FolderEntry(Folder(id = 1, name = "Archive", apps = emptyList()))
+        val bravo = DrawerItem.AppEntry(app("Bravo"))
+
+        val result = useCase(listOf(alpha, apex, archive, bravo), locale = Locale.US) { it.displayName }
+
+        assertEquals(listOf("A", "B"), result.letters)
+        assertEquals(listOf(alpha, apex, archive), result.groups["A"])
+        assertEquals(listOf(bravo), result.groups["B"])
     }
 }

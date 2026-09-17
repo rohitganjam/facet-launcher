@@ -19,6 +19,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -48,6 +49,7 @@ private object Keys {
     val SHOW_DRAWER_ICONS = booleanPreferencesKey("show_drawer_icons")
     val SHOW_DRAWER_LABELS = booleanPreferencesKey("show_drawer_labels")
     val SEARCH_BAR_POSITION = stringPreferencesKey("search_bar_position")
+    val DRAWER_FOLDER_DISPLAY_MODE = stringPreferencesKey("drawer_folder_display_mode")
     val ACTIVE_FACET_ID = longPreferencesKey("active_facet_id")
     val SHOW_ALL_DAY_EVENTS = booleanPreferencesKey("show_all_day_events")
     val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
@@ -114,6 +116,9 @@ class SettingsRepository @Inject constructor(
             searchBarPosition = preferences[Keys.SEARCH_BAR_POSITION]?.let {
                 runCatching { SearchBarPosition.valueOf(it) }.getOrNull()
             } ?: defaults.searchBarPosition,
+            drawerFolderDisplayMode = preferences[Keys.DRAWER_FOLDER_DISPLAY_MODE]?.let {
+                runCatching { DrawerFolderDisplayMode.valueOf(it) }.getOrNull()
+            } ?: defaults.drawerFolderDisplayMode,
             activeFacetId = preferences[Keys.ACTIVE_FACET_ID] ?: defaults.activeFacetId,
             showAllDayEvents = preferences[Keys.SHOW_ALL_DAY_EVENTS] ?: defaults.showAllDayEvents,
             selectedCalendarIds = preferences[Keys.SELECTED_CALENDAR_IDS],
@@ -199,6 +204,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setDrawerOpacity(opacity: Float) {
         dataStore.edit { it[Keys.DRAWER_OPACITY] = opacity.coerceIn(0f, 1f) }
+    }
+
+    suspend fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
+        dataStore.edit { it[Keys.DRAWER_FOLDER_DISPLAY_MODE] = mode.name }
     }
 
     suspend fun setNotificationDotsEnabled(enabled: Boolean) {

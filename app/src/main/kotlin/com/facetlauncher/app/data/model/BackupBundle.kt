@@ -75,6 +75,8 @@ data class BackupSettings(
     val showDrawerIcons: Boolean,
     val showDrawerLabels: Boolean,
     val searchBarPosition: String,
+    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before this field existed still deserializes cleanly, as `DO_NOT_SHOW` — the same original behavior that field's own default represents). */
+    val drawerFolderDisplayMode: String = DrawerFolderDisplayMode.DO_NOT_SHOW.name,
     /**
      * See this file's own doc comment — an index into [BackupBundle.facets], not a raw id. `null` if none was active.
      * `@SerialName` keeps the JSON key `"activeProfileIndex"` so backups exported before the Facet rename still import.

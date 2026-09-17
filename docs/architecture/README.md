@@ -8,7 +8,7 @@ checked against source, not against planning docs; where the code diverges from
 | Doc | What it covers |
 |---|---|
 | [01-architecture-and-layers.md](01-architecture-and-layers.md) | Layer boundaries, unidirectional data flow, Hilt components/scopes/modules, entry points |
-| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (12 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v20, the complete DataStore key registry (48 keys, read/write paths, all 50 writers), backup file format |
+| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (12 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v20, the complete DataStore key registry (49 keys, read/write paths, all 51 writers), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
 | [05-findings.md](05-findings.md) | Architect's review: 12 findings ranked by severity with concrete fixes, plus what's working well |

@@ -120,4 +120,22 @@ class AppDrawerSettingsScreenTest {
             composeRule.onAllNodesWithText("Bottom").fetchSemanticsNodes().isNotEmpty()
         }
     }
+
+    @Test
+    fun folderDisplayModeDropdownDefaultsToDoNotShowAndSwitchesToShowFirst() {
+        // Given the screen, scrolled to the new row — "Do not show" selected by default
+        setContent()
+        composeRule.onNodeWithTag("app_drawer_settings_screen").performScrollToNode(hasTestTag("drawer_folder_display_mode_row"))
+        composeRule.onNodeWithText("Do not show").assertExists()
+
+        // When opening the dropdown and choosing "Show folders first" (Popup root-registration note — see above)
+        composeRule.onNodeWithTag("drawer_folder_display_mode_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("drawer_folder_display_mode_row_option_SHOW_FIRST").performClick()
+
+        // Then the row's own current-value label reflects it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Show folders first").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
 }

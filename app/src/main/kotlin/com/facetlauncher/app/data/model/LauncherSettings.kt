@@ -37,6 +37,23 @@ enum class SearchBarPosition {
     BOTTOM,
 }
 
+/**
+ * Settings → App Drawer → "Folders in drawer" — how the App Drawer surfaces the folder library
+ * ([FolderRepository][com.facetlauncher.app.data.FolderRepository]) as browsable drawer entries,
+ * independent of whether each folder is also placed on the Dock or in Favorites. `DO_NOT_SHOW`
+ * (the default — today's original behavior, before this setting existed) omits folders from the
+ * drawer entirely; they stay reachable only via Dock/Favorites or the long-press "Add to folder"
+ * menu. `INLINE` sorts folders into the same alphabetical buckets as apps
+ * ([com.facetlauncher.app.data.model.DrawerItem]). `SHOW_FIRST`/`SHOW_LAST` instead pin every
+ * folder into its own section before or after the lettered app list, outside alphabetical order.
+ */
+enum class DrawerFolderDisplayMode {
+    DO_NOT_SHOW,
+    INLINE,
+    SHOW_FIRST,
+    SHOW_LAST,
+}
+
 /** F11 — an explicit in-app override; `SYSTEM` (the default) follows the device's own light/dark setting. */
 enum class ThemeMode {
     LIGHT,
@@ -114,6 +131,7 @@ data class LauncherSettings(
     val showDrawerIcons: Boolean = true,
     val showDrawerLabels: Boolean = true,
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
+    val drawerFolderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
     val activeFacetId: Long = NO_ACTIVE_FACET_ID,
     /** Global Calendar setting (`4l`) — whether all-day events render on the clock. */
     val showAllDayEvents: Boolean = true,

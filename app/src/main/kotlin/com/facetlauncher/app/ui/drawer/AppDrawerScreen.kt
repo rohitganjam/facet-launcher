@@ -43,10 +43,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -55,6 +57,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Folder as FolderIcon
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Settings
@@ -90,6 +93,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.data.WorkProfileInfo
@@ -98,6 +102,8 @@ import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
+import com.facetlauncher.app.data.model.DrawerItem
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
@@ -106,16 +112,20 @@ import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
-import com.facetlauncher.app.domain.GroupedApps
+import com.facetlauncher.app.domain.GroupedItems
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.FolderContentsSheet
+import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
+import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.DrawerAppTextColor
 import com.facetlauncher.app.ui.theme.DrawerHeaderTextColor
@@ -199,10 +209,21 @@ fun AppDrawerScreen(
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    /** F-Folders' "Add to folder" row — Dock-only for this phase, shared across browse and search. */
+    /**
+     * The full folder library — both the long-press "Add to folder" row's candidate list and,
+     * per [folderDisplayMode], the browse-mode content this screen renders as its own drawer
+     * entries. `null`/empty either way just means no folders exist yet.
+     */
     folderCandidates: List<Folder>? = null,
     onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
     onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+    /** Settings → App Drawer → "Folders in drawer" — browse-mode only; search results never include folders (see chat history: scoped out of this pass). */
+    folderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit = { _, _ -> },
+    onRenameFolder: (Long, String) -> Unit = { _, _ -> },
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
     onRequestConnections: suspend (ContactInfo) -> List<ContactConnection> = { emptyList() },
     /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
     showContactsPermissionPrompt: Boolean = false,
@@ -239,10 +260,46 @@ fun AppDrawerScreen(
     }
     val filteredApps = remember(tabScopedApps, query) { rankBySearchRelevance(tabScopedApps, query) { it.label } }
     val groupUseCase = remember { GroupAppsByLetterUseCase() }
-    val groupedApps = remember(filteredApps) { groupUseCase(filteredApps) }
+    // Search-mode (DrawerSearchResults) never shows folders — this whole computation only feeds
+    // the browse-mode content below, so a folder never has to be search-ranked.
+    val sortedFolders = remember(folderCandidates) { folderCandidates.orEmpty().sortedBy { it.name } }
+    val pinnedFolders = remember(sortedFolders, folderDisplayMode) {
+        if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST || folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
+            sortedFolders
+        } else {
+            emptyList()
+        }
+    }
+    // Apps are always wrapped as DrawerItem — even outside INLINE — so DrawerListContent/
+    // DrawerGridContent have a single item type to render regardless of folderDisplayMode; only
+    // INLINE actually merges folders into this same alphabetical grouping (SHOW_FIRST/SHOW_LAST
+    // keep folders out of it entirely, in their own pinned section via [pinnedFolders]).
+    val groupedItems: GroupedItems<DrawerItem> = remember(filteredApps, sortedFolders, folderDisplayMode) {
+        val appItems: List<DrawerItem> = filteredApps.map { DrawerItem.AppEntry(it) }
+        val items = if (folderDisplayMode == DrawerFolderDisplayMode.INLINE) {
+            // Grouping only buckets by leading letter — it never reorders within a bucket (see
+            // GroupAppsByLetterUseCase's own doc), so simply appending folders after every app
+            // would land every folder after every app inside their shared letter's bucket instead
+            // of truly interleaving them. A plain concatenation only happens to look sorted when
+            // the letter's own apps all alphabetically precede its folders, which isn't
+            // guaranteed — sort the merged list by name first so each bucket comes out correctly
+            // ordered once GroupAppsByLetterUseCase partitions it (apps arrive pre-sorted from
+            // AppRepository already, so this only has to fold folders into that same order).
+            (appItems + sortedFolders.map { DrawerItem.FolderEntry(it) }).sortedBy { it.displayName.lowercase() }
+        } else {
+            appItems
+        }
+        groupUseCase(items) { it.displayName }
+    }
+    val railFolderPosition = when {
+        pinnedFolders.isEmpty() -> RailFolderPosition.NONE
+        folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST -> RailFolderPosition.TOP
+        folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST -> RailFolderPosition.BOTTOM
+        else -> RailFolderPosition.NONE
+    }
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    var draggingLetter by remember { mutableStateOf<String?>(null) }
+    var draggingSelection by remember { mutableStateOf<RailSelection?>(null) }
     var railHeightPx by remember { mutableFloatStateOf(0f) }
     // Phase 9's connections sheet — hoisted here (not down in DrawerSearchResults/ContactRow) so
     // it can overlay the *whole* screen.
@@ -273,13 +330,45 @@ fun AppDrawerScreen(
         { index -> listState.scrollToItem(index) }
     }
 
-    fun onRailLetterChanged(letter: String?) {
-        draggingLetter = letter
-        // List scrolls to that letter's header row; Grid has no headers at all (a continuous
-        // grid, not grouped visually) so it scrolls to that letter's first app instead.
-        val indexMap = if (presentation == DrawerPresentation.GRID) groupedApps.firstAppIndexForLetter else groupedApps.headerIndexForLetter
-        val index = letter?.let { indexMap[it] } ?: return
-        coroutineScope.launch { scrollToIndex(index) }
+    // A SHOW_FIRST pinned folders section sits ahead of every letter group, so every letter's own
+    // index needs shifting by however many slots that section occupies — 1 header + N folders for
+    // List (which renders a header row per section, same as a letter), just N folders for Grid
+    // (headerless, same reason Grid already skips letter headers). SHOW_LAST doesn't need this:
+    // the pinned section comes after the lettered content, so letter indices are unaffected — only
+    // the section's own start index (below) needs computing.
+    val letterIndexOffset = if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
+        if (presentation == DrawerPresentation.GRID) pinnedFolders.size else 1 + pinnedFolders.size
+    } else {
+        0
+    }
+
+    fun onRailSelectionChanged(selection: RailSelection?) {
+        draggingSelection = selection
+        when (selection) {
+            is RailSelection.Letter -> {
+                // List scrolls to that letter's header row; Grid has no headers at all (a
+                // continuous grid, not grouped visually) so it scrolls to that letter's first
+                // item instead.
+                val indexMap = if (presentation == DrawerPresentation.GRID) groupedItems.firstAppIndexForLetter else groupedItems.headerIndexForLetter
+                val index = indexMap[selection.letter]?.plus(letterIndexOffset) ?: return
+                coroutineScope.launch { scrollToIndex(index) }
+            }
+            RailSelection.Folders -> {
+                val index = when (folderDisplayMode) {
+                    DrawerFolderDisplayMode.SHOW_FIRST -> 0
+                    DrawerFolderDisplayMode.SHOW_LAST -> {
+                        if (presentation == DrawerPresentation.GRID) {
+                            groupedItems.groups.values.sumOf { it.size }
+                        } else {
+                            groupedItems.groups.values.sumOf { 1 + it.size }
+                        }
+                    }
+                    else -> return
+                }
+                coroutineScope.launch { scrollToIndex(index) }
+            }
+            null -> Unit
+        }
     }
 
     // Outer Box so the connections sheet (below) can overlay the entire screen — the Column
@@ -362,7 +451,9 @@ fun AppDrawerScreen(
         ) {
             if (presentation == DrawerPresentation.GRID) {
                 DrawerGridContent(
-                    groupedApps = groupedApps,
+                    groupedItems = groupedItems,
+                    pinnedFolders = pinnedFolders,
+                    folderDisplayMode = folderDisplayMode,
                     gridState = gridState,
                     columns = gridSize.columns,
                     rows = gridSize.rows,
@@ -380,11 +471,18 @@ fun AppDrawerScreen(
                     folderCandidates = folderCandidates,
                     onCreateFolder = onCreateFolder,
                     onAddToFolder = onAddToFolder,
+                    onRemoveFromFolder = onRemoveFromFolder,
+                    onRenameFolder = onRenameFolder,
+                    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                    onFolderFavoritesAction = onFolderFavoritesAction,
+                    onFolderDockAction = onFolderDockAction,
                     modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_grid"),
                 )
             } else {
                 DrawerListContent(
-                    groupedApps = groupedApps,
+                    groupedItems = groupedItems,
+                    pinnedFolders = pinnedFolders,
+                    folderDisplayMode = folderDisplayMode,
                     listState = listState,
                     itemSize = listItemSize,
                     onAppClick = onAppClick,
@@ -401,13 +499,19 @@ fun AppDrawerScreen(
                     folderCandidates = folderCandidates,
                     onCreateFolder = onCreateFolder,
                     onAddToFolder = onAddToFolder,
+                    onRemoveFromFolder = onRemoveFromFolder,
+                    onRenameFolder = onRenameFolder,
+                    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                    onFolderFavoritesAction = onFolderFavoritesAction,
+                    onFolderDockAction = onFolderDockAction,
                     modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_list"),
                 )
             }
             LetterJumpZone(
-                letters = groupedApps.letters,
-                activeLetter = draggingLetter,
-                onLetterChanged = ::onRailLetterChanged,
+                letters = groupedItems.letters,
+                activeSelection = draggingSelection,
+                folderPosition = railFolderPosition,
+                onSelectionChanged = ::onRailSelectionChanged,
                 showRail = true,
                 railHeightPx = railHeightPx,
                 onRailHeightMeasured = { railHeightPx = it },
@@ -416,9 +520,10 @@ fun AppDrawerScreen(
         }
 
         LetterJumpZone(
-            letters = groupedApps.letters,
-            activeLetter = draggingLetter,
-            onLetterChanged = ::onRailLetterChanged,
+            letters = groupedItems.letters,
+            activeSelection = draggingSelection,
+            folderPosition = railFolderPosition,
+            onSelectionChanged = ::onRailSelectionChanged,
             showRail = false,
             railHeightPx = railHeightPx,
             onRailHeightMeasured = {},
@@ -426,17 +531,36 @@ fun AppDrawerScreen(
             requireDrag = true,
         )
 
-        draggingLetter?.let { letter ->
-            Text(
-                text = letter,
-                style = FacetType.clock.copy(fontSize = 40.sp, lineHeight = 40.sp),
-                color = Accent,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .testTag("alphabet_rail_indicator")
-                    .background(color = Surface.copy(alpha = 0.92f), shape = RoundedCornerShape(20.dp))
-                    .padding(horizontal = 28.dp, vertical = 12.dp),
-            )
+        when (val selection = draggingSelection) {
+            is RailSelection.Letter -> {
+                Text(
+                    text = selection.letter,
+                    style = FacetType.clock.copy(fontSize = 40.sp, lineHeight = 40.sp),
+                    color = Accent,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .testTag("alphabet_rail_indicator")
+                        .background(color = Surface.copy(alpha = 0.92f), shape = RoundedCornerShape(20.dp))
+                        .padding(horizontal = 28.dp, vertical = 12.dp),
+                )
+            }
+            RailSelection.Folders -> {
+                Icon(
+                    imageVector = Icons.Outlined.FolderIcon,
+                    contentDescription = "Folders",
+                    tint = Accent,
+                    // .size() last (not first, unlike a Modifier.size(x).padding(y) chain) so the
+                    // pill's background/padding wrap around the icon rather than squeezing it —
+                    // Text sizes itself from its own 40sp font instead, so it never needs this.
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .testTag("alphabet_rail_indicator")
+                        .background(color = Surface.copy(alpha = 0.92f), shape = RoundedCornerShape(20.dp))
+                        .padding(horizontal = 28.dp, vertical = 12.dp)
+                        .size(40.dp),
+                )
+            }
+            null -> Unit
         }
         }
         }
@@ -970,28 +1094,31 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
 
 /**
  * Touch zone for letter-jump, 90% of the drawer height (right edge always; left edge when F8
- * is on). A touch anywhere in the zone maps onto [letters] via [letterAt], clamped to the
+ * is on). A touch anywhere in the zone maps onto [letters] (or, when [folderPosition] isn't
+ * [RailFolderPosition.NONE], the folder glyph at that end) via [railSelectionAt], clamped to the
  * visible rail's own (content-sized, much shorter) band — computed from [railHeightPx], which
- * the right-edge zone measures from its actual rendered [AlphabetRail] and reports via
- * [onRailHeightMeasured] so the left-edge zone (gesture-only, no visible rail of its own) can
- * use the same band. Only the right-edge zone renders the visible [AlphabetRail] ([showRail]).
+ * the right-edge zone measures from its actual rendered [AlphabetRail] (folder glyph included)
+ * and reports via [onRailHeightMeasured] so the left-edge zone (gesture-only, no visible rail of
+ * its own) can use the same band. Only the right-edge zone renders the visible [AlphabetRail]
+ * ([showRail]).
  */
 @Composable
 private fun LetterJumpZone(
     letters: List<String>,
-    activeLetter: String?,
-    onLetterChanged: (String?) -> Unit,
+    activeSelection: RailSelection?,
+    onSelectionChanged: (RailSelection?) -> Unit,
     showRail: Boolean,
     railHeightPx: Float,
     onRailHeightMeasured: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    folderPosition: RailFolderPosition = RailFolderPosition.NONE,
     requireDrag: Boolean = false,
 ) {
     var zoneHeightPx by remember { mutableFloatStateOf(0f) }
 
-    fun letterFor(y: Float): String? {
+    fun selectionFor(y: Float): RailSelection? {
         val bandTop = (zoneHeightPx - railHeightPx) / 2f
-        return letterAt(y = y, bandTopPx = bandTop, bandBottomPx = bandTop + railHeightPx, letters = letters)
+        return railSelectionAt(y = y, bandTopPx = bandTop, bandBottomPx = bandTop + railHeightPx, letters = letters, folderPosition = folderPosition)
     }
 
     Box(
@@ -1003,32 +1130,32 @@ private fun LetterJumpZone(
             // (awaitFirstDown, no slop wait) — this makes it feel responsive. The left edge
             // (requireDrag=true) requires a drag past the system's touch-slop threshold before
             // activating, preventing accidental jumps from simple touches.
-            .pointerInput(letters, requireDrag) {
+            .pointerInput(letters, folderPosition, requireDrag) {
                 if (requireDrag) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            onLetterChanged(letterFor(offset.y))
+                            onSelectionChanged(selectionFor(offset.y))
                         },
                         onDrag = { change, _ ->
                             change.consume()
-                            onLetterChanged(letterFor(change.position.y))
+                            onSelectionChanged(selectionFor(change.position.y))
                         },
-                        onDragEnd = { onLetterChanged(null) },
-                        onDragCancel = { onLetterChanged(null) }
+                        onDragEnd = { onSelectionChanged(null) },
+                        onDragCancel = { onSelectionChanged(null) }
                     )
                 } else {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
-                        onLetterChanged(letterFor(down.position.y))
+                        onSelectionChanged(selectionFor(down.position.y))
                         while (true) {
                             val event = awaitPointerEvent()
                             val change = event.changes.firstOrNull { it.id == down.id } ?: break
                             if (!change.pressed) break
                             change.consume()
-                            onLetterChanged(letterFor(change.position.y))
+                            onSelectionChanged(selectionFor(change.position.y))
                         }
-                        onLetterChanged(null)
+                        onSelectionChanged(null)
                     }
                 }
             },
@@ -1036,7 +1163,9 @@ private fun LetterJumpZone(
         if (showRail) {
             AlphabetRail(
                 letters = letters,
-                activeLetter = activeLetter,
+                activeLetter = (activeSelection as? RailSelection.Letter)?.letter,
+                folderPosition = folderPosition,
+                folderActive = activeSelection is RailSelection.Folders,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .onSizeChanged { onRailHeightMeasured(it.height.toFloat()) },
@@ -1047,7 +1176,9 @@ private fun LetterJumpZone(
 
 @Composable
 private fun DrawerListContent(
-    groupedApps: GroupedApps,
+    groupedItems: GroupedItems<DrawerItem>,
+    pinnedFolders: List<Folder>,
+    folderDisplayMode: DrawerFolderDisplayMode,
     listState: LazyListState,
     itemSize: DrawerListItemSize,
     onAppClick: (AppInfo) -> Unit,
@@ -1064,6 +1195,11 @@ private fun DrawerListContent(
     folderCandidates: List<Folder>?,
     onCreateFolder: (AppInfo, String) -> Unit,
     onAddToFolder: (AppInfo, Long) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -1074,7 +1210,23 @@ private fun DrawerListContent(
         // zone; an extra end padding here just left an empty gap between the two.
         modifier = modifier.padding(start = 48.dp, top = 4.dp, bottom = 40.dp),
     ) {
-        for ((letter, appsInGroup) in groupedApps.groups) {
+        if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
+            drawerFolderSection(
+                folders = pinnedFolders,
+                onAppClick = onAppClick,
+                itemSize = itemSize,
+                labelFontWeight = labelFontWeight,
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
+                onRemoveFromFolder = onRemoveFromFolder,
+                onRenameFolder = onRenameFolder,
+                onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                onFolderFavoritesAction = onFolderFavoritesAction,
+                onFolderDockAction = onFolderDockAction,
+            )
+        }
+        for ((letter, itemsInGroup) in groupedItems.groups) {
             item(key = "header_$letter") {
                 Text(
                     text = letter,
@@ -1085,27 +1237,168 @@ private fun DrawerListContent(
                         .testTag("header_$letter"),
                 )
             }
-            items(appsInGroup, key = { it.packageName + it.activityName + it.userHandle.hashCode() }) { app ->
-                DrawerAppRow(
-                    app = app,
-                    onClick = { onAppClick(app) },
-                    showIcon = showIcons,
-                    itemSize = itemSize,
-                    labelFontWeight = labelFontWeight,
-                    badgeCount = badgeCounts[app.packageName],
-                    badgeStyle = badgeStyle,
-                    onRequestShortcuts = onRequestShortcuts,
-                    onLaunchShortcut = onLaunchShortcut,
-                    onAppInfo = onAppInfo,
-                    onRequestQuickAddState = onRequestQuickAddState,
-                    onFavoritesAction = onFavoritesAction,
-                    onDockAction = onDockAction,
-                    folderCandidates = folderCandidates,
-                    onCreateFolder = onCreateFolder,
-                    onAddToFolder = onAddToFolder,
-                )
+            items(itemsInGroup, key = { it.itemKey() }) { item ->
+                when (item) {
+                    is DrawerItem.AppEntry -> DrawerAppRow(
+                        app = item.app,
+                        onClick = { onAppClick(item.app) },
+                        showIcon = showIcons,
+                        itemSize = itemSize,
+                        labelFontWeight = labelFontWeight,
+                        badgeCount = badgeCounts[item.app.packageName],
+                        badgeStyle = badgeStyle,
+                        onRequestShortcuts = onRequestShortcuts,
+                        onLaunchShortcut = onLaunchShortcut,
+                        onAppInfo = onAppInfo,
+                        onRequestQuickAddState = onRequestQuickAddState,
+                        onFavoritesAction = onFavoritesAction,
+                        onDockAction = onDockAction,
+                        folderCandidates = folderCandidates,
+                        onCreateFolder = onCreateFolder,
+                        onAddToFolder = onAddToFolder,
+                    )
+                    is DrawerItem.FolderEntry -> DrawerFolderRow(
+                        folder = item.folder,
+                        onAppClick = onAppClick,
+                        itemSize = itemSize,
+                        labelFontWeight = labelFontWeight,
+                        onRequestShortcuts = onRequestShortcuts,
+                        onLaunchShortcut = onLaunchShortcut,
+                        onAppInfo = onAppInfo,
+                        onRemoveFromFolder = onRemoveFromFolder,
+                        onRenameFolder = onRenameFolder,
+                        onRequestQuickAddState = onRequestFolderQuickAddState,
+                        onFavoritesAction = onFolderFavoritesAction,
+                        onDockAction = onFolderDockAction,
+                    )
+                }
             }
         }
+        if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
+            drawerFolderSection(
+                folders = pinnedFolders,
+                onAppClick = onAppClick,
+                itemSize = itemSize,
+                labelFontWeight = labelFontWeight,
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
+                onRemoveFromFolder = onRemoveFromFolder,
+                onRenameFolder = onRenameFolder,
+                onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                onFolderFavoritesAction = onFolderFavoritesAction,
+                onFolderDockAction = onFolderDockAction,
+            )
+        }
+    }
+}
+
+/** Stable per-item [LazyColumn]/[LazyVerticalGrid] key, shared by browse-mode's letter-grouped and pinned-folder sections. */
+private fun DrawerItem.itemKey(): String = when (this) {
+    is DrawerItem.AppEntry -> app.packageName + app.activityName + app.userHandle.hashCode()
+    is DrawerItem.FolderEntry -> "folder_${folder.id}"
+}
+
+/** [DrawerFolderDisplayMode.SHOW_FIRST]/`SHOW_LAST`'s pinned section — its own "Folders" header (List only; Grid renders no headers at all, same as the lettered content) followed by every folder, outside alphabetical order. A no-op when [folders] is empty, so callers don't need to gate on [DrawerFolderDisplayMode] themselves beyond picking where to call it. */
+private fun LazyListScope.drawerFolderSection(
+    folders: List<Folder>,
+    onAppClick: (AppInfo) -> Unit,
+    itemSize: DrawerListItemSize,
+    labelFontWeight: FontWeight,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
+) {
+    if (folders.isEmpty()) return
+    item(key = "header_folders") {
+        Text(
+            text = "Folders",
+            style = MaterialTheme.typography.labelSmall,
+            color = DrawerHeaderTextColor,
+            modifier = Modifier
+                .padding(top = 14.dp, bottom = 4.dp)
+                .testTag("header_folders"),
+        )
+    }
+    items(folders, key = { "folder_${it.id}" }) { folder ->
+        DrawerFolderRow(
+            folder = folder,
+            onAppClick = onAppClick,
+            itemSize = itemSize,
+            labelFontWeight = labelFontWeight,
+            onRequestShortcuts = onRequestShortcuts,
+            onLaunchShortcut = onLaunchShortcut,
+            onAppInfo = onAppInfo,
+            onRemoveFromFolder = onRemoveFromFolder,
+            onRenameFolder = onRenameFolder,
+            onRequestQuickAddState = onRequestFolderQuickAddState,
+            onFavoritesAction = onFolderFavoritesAction,
+            onDockAction = onFolderDockAction,
+        )
+    }
+}
+
+/** The Drawer's own folder row — [DrawerAppRow]'s layout/styling (icon size from [itemSize], [DrawerAppTextColor]/`bodyLarge` label) with [FolderTileGlyph] standing in for [AppIcon] and [FolderContentsSheet]/[FolderTileContextMenu] standing in for [AppContextMenu], mirroring [com.facetlauncher.app.ui.home.FolderRow]'s identical relationship to [com.facetlauncher.app.ui.home.AppRow] on Home. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DrawerFolderRow(
+    folder: Folder,
+    onAppClick: (AppInfo) -> Unit,
+    itemSize: DrawerListItemSize,
+    labelFontWeight: FontWeight,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    onRequestQuickAddState: suspend (Folder) -> QuickAddState,
+    onFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
+    onDockAction: (Folder, QuickPlacementAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var sheetOpen by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.large)
+                .combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+                .testTag("drawer_folder_row_${folder.id}")
+                .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            FolderTileGlyph(folder = folder, modifier = Modifier.size(itemSize.iconSizeDp.dp))
+            Text(text = folder.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight), color = DrawerAppTextColor)
+        }
+        if (sheetOpen) {
+            FolderContentsSheet(
+                folder = folder,
+                onDismissRequest = { sheetOpen = false },
+                onAppClick = onAppClick,
+                presentation = DrawerPresentation.LIST,
+                onRemoveFromFolder = onRemoveFromFolder,
+                headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
+            )
+        }
+        FolderTileContextMenu(
+            folder = folder,
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+            onRename = onRenameFolder,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
+        )
     }
 }
 
@@ -1188,19 +1481,23 @@ private val GRID_VERTICAL_SPACING = 20.dp
  * Grid layout (`1i`): `columns` fixed columns, icons `44×44`/`13dp` corners, centered label
  * beneath. Unlike List, Grid renders no letter headers — a continuous grid of all apps in
  * alphabetical order, not visually grouped. The alphabet rail still works: dragging to a letter
- * scrolls to that letter's *first app* ([GroupedApps.firstAppIndexForLetter]) rather than a
- * header row, since there's no header to scroll to.
+ * scrolls to that letter's *first item* ([GroupedItems.firstAppIndexForLetter]) rather than a
+ * header row, since there's no header to scroll to. [pinnedFolders] follows the same no-header
+ * rule when [folderDisplayMode] pins it to either end — just N folder tiles, no "Folders" label
+ * (List's equivalent section gets one only because List already headers every letter group too).
  *
  * [rows] (from the selected [DrawerGridSize][com.facetlauncher.app.data.model.DrawerGridSize])
- * divides the *viewport* height into that many equal-height rows — each [DrawerGridTile] is
- * given exactly that height, so choosing "5 rows" always fits 5 rows of tiles in the visible
- * area regardless of how many apps there are in total, rather than "rows" being purely emergent
- * from however many happen to fit at a fixed tile size (see chat history). The grid still
- * scrolls past that computed row height when there are more apps than fit.
+ * divides the *viewport* height into that many equal-height rows — each tile is given exactly
+ * that height, so choosing "5 rows" always fits 5 rows of tiles in the visible area regardless of
+ * how many apps there are in total, rather than "rows" being purely emergent from however many
+ * happen to fit at a fixed tile size (see chat history). The grid still scrolls past that
+ * computed row height when there are more apps than fit.
  */
 @Composable
 private fun DrawerGridContent(
-    groupedApps: GroupedApps,
+    groupedItems: GroupedItems<DrawerItem>,
+    pinnedFolders: List<Folder>,
+    folderDisplayMode: DrawerFolderDisplayMode,
     gridState: LazyGridState,
     columns: Int,
     rows: Int,
@@ -1218,9 +1515,14 @@ private fun DrawerGridContent(
     folderCandidates: List<Folder>?,
     onCreateFolder: (AppInfo, String) -> Unit,
     onAddToFolder: (AppInfo, Long) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val apps = remember(groupedApps) { groupedApps.groups.values.flatten() }
+    val items = remember(groupedItems) { groupedItems.groups.values.flatten() }
     BoxWithConstraints(modifier = modifier) {
         val availableHeight = maxHeight - GRID_CONTENT_TOP_PADDING - GRID_CONTENT_BOTTOM_PADDING
         val rowHeight = ((availableHeight - GRID_VERTICAL_SPACING * (rows - 1)) / rows).coerceAtLeast(0.dp)
@@ -1235,27 +1537,85 @@ private fun DrawerGridContent(
             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(apps, key = { it.packageName + it.activityName + it.userHandle.hashCode() }) { app ->
-                DrawerGridTile(
-                    app = app,
-                    onClick = { onAppClick(app) },
-                    showLabel = showLabels,
-                    labelFontWeight = labelFontWeight,
-                    badgeCount = badgeCounts[app.packageName],
-                    badgeStyle = badgeStyle,
-                    onRequestShortcuts = onRequestShortcuts,
-                    onLaunchShortcut = onLaunchShortcut,
-                    onAppInfo = onAppInfo,
-                    onRequestQuickAddState = onRequestQuickAddState,
-                    onFavoritesAction = onFavoritesAction,
-                    onDockAction = onDockAction,
-                    folderCandidates = folderCandidates,
-                    onCreateFolder = onCreateFolder,
-                    onAddToFolder = onAddToFolder,
-                    modifier = Modifier.height(rowHeight),
-                )
+            if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
+                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, onRequestShortcuts, onLaunchShortcut, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
+            }
+            items(items, key = { it.itemKey() }) { item ->
+                when (item) {
+                    is DrawerItem.AppEntry -> DrawerGridTile(
+                        app = item.app,
+                        onClick = { onAppClick(item.app) },
+                        showLabel = showLabels,
+                        labelFontWeight = labelFontWeight,
+                        badgeCount = badgeCounts[item.app.packageName],
+                        badgeStyle = badgeStyle,
+                        onRequestShortcuts = onRequestShortcuts,
+                        onLaunchShortcut = onLaunchShortcut,
+                        onAppInfo = onAppInfo,
+                        onRequestQuickAddState = onRequestQuickAddState,
+                        onFavoritesAction = onFavoritesAction,
+                        onDockAction = onDockAction,
+                        folderCandidates = folderCandidates,
+                        onCreateFolder = onCreateFolder,
+                        onAddToFolder = onAddToFolder,
+                        modifier = Modifier.height(rowHeight),
+                    )
+                    is DrawerItem.FolderEntry -> DrawerFolderTile(
+                        folder = item.folder,
+                        onAppClick = onAppClick,
+                        showLabel = showLabels,
+                        labelFontWeight = labelFontWeight,
+                        onRequestShortcuts = onRequestShortcuts,
+                        onLaunchShortcut = onLaunchShortcut,
+                        onAppInfo = onAppInfo,
+                        onRemoveFromFolder = onRemoveFromFolder,
+                        onRenameFolder = onRenameFolder,
+                        onRequestQuickAddState = onRequestFolderQuickAddState,
+                        onFavoritesAction = onFolderFavoritesAction,
+                        onDockAction = onFolderDockAction,
+                        modifier = Modifier.height(rowHeight),
+                    )
+                }
+            }
+            if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
+                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, onRequestShortcuts, onLaunchShortcut, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
             }
         }
+    }
+}
+
+/** [DrawerGridContent]'s pinned-folder tiles — no header (see [DrawerGridContent]'s own doc), just the tiles themselves at [rowHeight]. */
+private fun LazyGridScope.drawerFolderTiles(
+    folders: List<Folder>,
+    rowHeight: Dp,
+    onAppClick: (AppInfo) -> Unit,
+    showLabels: Boolean,
+    labelFontWeight: FontWeight,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
+    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
+    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
+) {
+    items(folders, key = { "folder_${it.id}" }) { folder ->
+        DrawerFolderTile(
+            folder = folder,
+            onAppClick = onAppClick,
+            showLabel = showLabels,
+            labelFontWeight = labelFontWeight,
+            onRequestShortcuts = onRequestShortcuts,
+            onLaunchShortcut = onLaunchShortcut,
+            onAppInfo = onAppInfo,
+            onRemoveFromFolder = onRemoveFromFolder,
+            onRenameFolder = onRenameFolder,
+            onRequestQuickAddState = onRequestFolderQuickAddState,
+            onFavoritesAction = onFolderFavoritesAction,
+            onDockAction = onFolderDockAction,
+            modifier = Modifier.height(rowHeight),
+        )
     }
 }
 
@@ -1327,6 +1687,73 @@ private fun DrawerGridTile(
             onCreateFolder = onCreateFolder,
             onAddToFolder = onAddToFolder,
             drawerPresentation = DrawerPresentation.GRID,
+        )
+    }
+}
+
+/** [DrawerGridTile]'s folder counterpart — [FolderTileGlyph] instead of [AppIcon] (no badge slot, folders don't carry notification counts), [FolderContentsSheet]/[FolderTileContextMenu] instead of [AppContextMenu]. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DrawerFolderTile(
+    folder: Folder,
+    onAppClick: (AppInfo) -> Unit,
+    showLabel: Boolean,
+    labelFontWeight: FontWeight = FontWeight.Normal,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit = {},
+    onRemoveFromFolder: (Long, AppInfo) -> Unit,
+    onRenameFolder: (Long, String) -> Unit,
+    onRequestQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
+    onFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
+    modifier: Modifier = Modifier,
+) {
+    var sheetOpen by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    Box {
+        Column(
+            modifier = modifier
+                .combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+                .testTag("drawer_grid_folder_tile_${folder.id}"),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            FolderTileGlyph(folder = folder, modifier = Modifier.size(AppIconSize.TILE))
+            if (showLabel) {
+                Spacer(modifier = Modifier.height(7.dp))
+                Text(
+                    text = folder.name,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
+                    color = DrawerAppTextColor,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 56.dp),
+                )
+            }
+        }
+        if (sheetOpen) {
+            FolderContentsSheet(
+                folder = folder,
+                onDismissRequest = { sheetOpen = false },
+                onAppClick = onAppClick,
+                presentation = DrawerPresentation.GRID,
+                onRemoveFromFolder = onRemoveFromFolder,
+                headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
+            )
+        }
+        FolderTileContextMenu(
+            folder = folder,
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+            onRename = onRenameFolder,
+            onRequestQuickAddState = onRequestQuickAddState,
+            onFavoritesAction = onFavoritesAction,
+            onDockAction = onDockAction,
         )
     }
 }

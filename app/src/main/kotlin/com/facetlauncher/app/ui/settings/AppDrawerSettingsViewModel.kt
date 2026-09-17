@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -59,5 +60,9 @@ class AppDrawerSettingsViewModel @Inject constructor(
 
     fun setDrawerOpacity(opacity: Float) {
         viewModelScope.launch { settingsRepository.setDrawerOpacity(opacity) }
+    }
+
+    fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
+        viewModelScope.launch { settingsRepository.setDrawerFolderDisplayMode(mode) }
     }
 }

@@ -18,6 +18,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.CURRENT_BACKUP_VERSION
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -142,6 +143,7 @@ class ImportBackupUseCase @Inject constructor(
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))
+            setDrawerFolderDisplayMode(settings.drawerFolderDisplayMode.toEnumOrDefault(DrawerFolderDisplayMode.DO_NOT_SHOW))
             setShowAllDayEvents(settings.showAllDayEvents)
             setSearchContactsEnabled(settings.searchContactsEnabled)
             setThemeMode(settings.themeMode.toEnumOrDefault(ThemeMode.SYSTEM))

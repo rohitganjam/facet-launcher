@@ -34,9 +34,11 @@ import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactConnectionType
 import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -871,5 +873,86 @@ class AppDrawerScreenTest {
         // Then both the personal and Work Profile copies show up as separate result rows — search
         // isn't scoped to the tab. 3, not 2: the search field's own typed value also matches "Chat".
         composeRule.onAllNodesWithText("Chat").assertCountEquals(3)
+    }
+
+    @Test
+    fun folderDisplayModeDoNotShowKeepsFoldersOutOfTheDrawerEntirely() {
+        // Given a real folder exists but the setting defaults to DO_NOT_SHOW
+        val folder = Folder(id = 1, name = "Zeta Folder", apps = emptyList())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {}, folderCandidates = listOf(folder))
+            }
+        }
+
+        // Then it never renders as a drawer entry
+        composeRule.onNodeWithText("Zeta Folder").assertDoesNotExist()
+        composeRule.onNodeWithTag("header_folders").assertDoesNotExist()
+    }
+
+    @Test
+    fun folderDisplayModeShowFirstPinsAFoldersSectionAheadOfTheLetteredList() {
+        // Given SHOW_FIRST with one folder
+        val folder = Folder(id = 1, name = "Zeta Folder", apps = emptyList())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    folderCandidates = listOf(folder),
+                    folderDisplayMode = DrawerFolderDisplayMode.SHOW_FIRST,
+                )
+            }
+        }
+
+        // Then a dedicated "Folders" header and the folder row both exist, ahead of "A"'s header
+        composeRule.onNodeWithTag("header_folders").assertExists()
+        composeRule.onNodeWithText("Zeta Folder").assertExists()
+        composeRule.onNodeWithTag("header_A").assertExists()
+    }
+
+    @Test
+    fun folderDisplayModeShowLastPinsAFoldersSectionAfterTheLetteredList() {
+        // Given SHOW_LAST with one folder
+        val folder = Folder(id = 1, name = "Zeta Folder", apps = emptyList())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    folderCandidates = listOf(folder),
+                    folderDisplayMode = DrawerFolderDisplayMode.SHOW_LAST,
+                )
+            }
+        }
+
+        // Then the folder still renders, in its own pinned section after all 26 letter groups —
+        // scrolled to first, since a LazyColumn only composes what's near the viewport and this
+        // section sits well past the initially-visible "A"/"B" rows.
+        composeRule.onNodeWithTag("drawer_list").performScrollToNode(hasTestTag("header_folders"))
+        composeRule.onNodeWithTag("header_folders").assertExists()
+        composeRule.onNodeWithText("Zeta Folder").assertExists()
+    }
+
+    @Test
+    fun folderDisplayModeInlineSortsTheFolderIntoItsOwnLetterAmongTheApps() {
+        // Given INLINE mode with a folder named to sort under "A", alongside the "A App"
+        val folder = Folder(id = 1, name = "Ace Folder", apps = emptyList())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    folderCandidates = listOf(folder),
+                    folderDisplayMode = DrawerFolderDisplayMode.INLINE,
+                )
+            }
+        }
+
+        // Then the folder renders under the shared "A" header — no separate "Folders" section
+        composeRule.onNodeWithTag("header_folders").assertDoesNotExist()
+        composeRule.onNodeWithTag("header_A").assertExists()
+        composeRule.onNodeWithText("Ace Folder").assertExists()
+        composeRule.onNodeWithText("A App").assertExists()
     }
 }

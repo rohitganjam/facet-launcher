@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -80,6 +81,7 @@ fun AppDrawerSettingsScreen(
         onSearchSettingsToggled = viewModel::setSearchSettingsEnabled,
         onSearchBarPositionChanged = viewModel::setSearchBarPosition,
         onDrawerOpacityChanged = viewModel::setDrawerOpacity,
+        onDrawerFolderDisplayModeChanged = viewModel::setDrawerFolderDisplayMode,
         modifier = modifier,
     )
 }
@@ -97,6 +99,7 @@ private fun AppDrawerSettingsContent(
     onSearchSettingsToggled: (Boolean) -> Unit,
     onSearchBarPositionChanged: (SearchBarPosition) -> Unit,
     onDrawerOpacityChanged: (Float) -> Unit,
+    onDrawerFolderDisplayModeChanged: (DrawerFolderDisplayMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val presentation = settings.drawerPresentation
@@ -190,6 +193,15 @@ private fun AppDrawerSettingsContent(
                             testTag = "search_bar_position_row",
                         )
                         CardDivider()
+                        LabeledDropdownRow(
+                            title = "Folders in drawer",
+                            options = DrawerFolderDisplayMode.entries,
+                            selected = settings.drawerFolderDisplayMode,
+                            label = { it.appDrawerDisplayLabel() },
+                            onSelect = onDrawerFolderDisplayModeChanged,
+                            testTag = "drawer_folder_display_mode_row",
+                        )
+                        CardDivider()
                         DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChanged)
                     }
                 }
@@ -231,6 +243,13 @@ private fun DrawerListItemSize.appDrawerDisplayLabel(): String = when (this) {
 private fun SearchBarPosition.appDrawerDisplayLabel(): String = when (this) {
     SearchBarPosition.TOP -> "Top"
     SearchBarPosition.BOTTOM -> "Bottom"
+}
+
+private fun DrawerFolderDisplayMode.appDrawerDisplayLabel(): String = when (this) {
+    DrawerFolderDisplayMode.DO_NOT_SHOW -> "Do not show"
+    DrawerFolderDisplayMode.INLINE -> "Show folders inline"
+    DrawerFolderDisplayMode.SHOW_FIRST -> "Show folders first"
+    DrawerFolderDisplayMode.SHOW_LAST -> "Show folders last"
 }
 
 @Composable
@@ -297,6 +316,7 @@ private fun AppDrawerSettingsScreenPreview() {
             onSearchSettingsToggled = {},
             onSearchBarPositionChanged = {},
             onDrawerOpacityChanged = {},
+            onDrawerFolderDisplayModeChanged = {},
         )
     }
 }

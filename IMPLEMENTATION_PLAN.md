@@ -1882,3 +1882,71 @@ ordered by `firstInstallTime`, not just relabeled; `DockAppPickerScreenTest` add
 Usage-Access-gating flow end to end (picks "Last used" while ungranted, asserts it routes to
 `onNavigateToUsageAccessExplanation` instead of applying). `docs/architecture/` (`07-registries.md`,
 `04-package-structure.md`, `03-reactive-data-flow.md`) and `TEST_REGISTRY.md` updated to match.
+
+## Folders in the App Drawer (`DrawerFolderDisplayMode`)
+
+New Settings → App Drawer → "Folders in drawer" row (`AppDrawerSettingsScreen`, between "Search
+bar position" and the opacity slider), four options backed by a new `DrawerFolderDisplayMode` enum/
+DataStore key: `DO_NOT_SHOW` (default — the original, unchanged behavior; folders stay reachable
+only via Dock/Favorites or `AppContextMenu`'s "Add to folder" row), `INLINE` (folders sort into the
+drawer's existing alphabetical letter groups, indistinguishable in position from an app), and
+`SHOW_FIRST`/`SHOW_LAST` (every folder instead renders in its own pinned section before/after the
+lettered content, with its own "Folders" header in List — Grid gets no header, same as the lettered
+content it already renders header-less).
+
+`GroupAppsByLetterUseCase`/`GroupedApps` were generalized to `GroupedItems<T>` (a `typealias
+GroupedApps = GroupedItems<AppInfo>` keeps every existing call site and test untouched) plus a new
+generic `invoke(items, locale, nameOf)` overload, so the same `AlphabeticIndex` bucketing now also
+groups the new `data/model/DrawerItem` sealed type (`AppEntry`/`FolderEntry`) for `INLINE` mode.
+`AppDrawerScreen` wraps every app as `DrawerItem.AppEntry` regardless of mode — even outside
+`INLINE` — so `DrawerListContent`/`DrawerGridContent` render one item type throughout rather than
+branching per mode; new `DrawerFolderRow`/`DrawerFolderTile` mirror `DrawerAppRow`/`DrawerGridTile`'s
+exact layout/styling with `FolderTileGlyph`/`FolderContentsSheet`/`FolderTileContextMenu` standing in
+for `AppIcon`/`AppContextMenu` (rename + Add to Favorites/Dock), the same relationship
+`ui/home/HomeScreen.kt`'s `FolderRow`/`FolderDockIcon` already has to `AppRow`/`DockIcon` — reusing
+that screen's own components directly (`FolderTileGlyph`/`FolderRow` are `internal`) rather than
+duplicating them. Real bug caught while building the `INLINE` merge: `GroupAppsByLetterUseCase`
+only buckets by leading letter, it never re-sorts *within* a bucket (relying on its input already
+being alphabetical) — so naively concatenating `apps + folders` before grouping put every folder
+after every app inside a shared letter's bucket instead of truly interleaving them; fixed by sorting
+the merged list by name before grouping.
+
+`AlphabetRail` gained a `RailFolderPosition` (`NONE`/`TOP`/`BOTTOM`) and `RailFolderGlyph` — a
+folder icon sized off `MaterialTheme.typography.labelSmall`'s own font size (via `LocalDensity`, the
+same way `sp` already scales with the system font-scale setting for the letters), so it grows/shrinks
+in lockstep with them at any accessibility text size rather than sitting fixed-size among them. Its
+own custom `Layout` treats the glyph as one more measured child, so the existing fit-to-height
+spacing math (shrinking `RAIL_LETTER_SPACING` down to `0` when a long letter list or a large font
+scale would otherwise overflow — see that file's own doc) covers it for free. Drag/touch hit-testing
+(`letterAt`) was generalized to `railSelectionAt`, returning a `RailSelection` (`Letter`/`Folders`)
+instead of a bare `String?` — `letterAt` itself is kept as a thin wrapper delegating to
+`railSelectionAt(..., folderPosition = NONE)` so its own existing tests needed no changes. The folder
+glyph gets its own equal slot in the same proportional band-clamping split (not a pixel-accurate
+measurement of its real rendered height — a reasonable approximation given it's sized to match a
+letter). `INLINE`/`DO_NOT_SHOW` never show the glyph (`RailFolderPosition.NONE`) since a folder is
+reachable by its own letter (or not shown at all) either way; only `SHOW_FIRST`/`SHOW_LAST` render
+it, at whichever end the pinned section sits, and dragging onto it scrolls to that section's start
+index instead of a letter's.
+
+Search results never include folders — scoped out of this pass; browse-mode only.
+
+Also added `drawerFolderDisplayMode` to `BackupBundle`'s `BackupSettings` (defaulted for
+tolerant-reader discipline, no `CURRENT_BACKUP_VERSION` bump needed) and wired it through
+`ExportBackupUseCase`/`ImportBackupUseCase`, so this setting round-trips through backup/restore like
+every sibling App Drawer setting already does.
+
+### Tests
+New `GroupAppsByLetterUseCaseTest` case for the generic overload; `AlphabetRailMappingTest` gained
+four `railSelectionAt` cases (`NONE` parity with `letterAt`, `TOP`/`BOTTOM` folder-slot resolution,
+folder-only with no letters); `SettingsRepositoryTest` (default + round-trip) and
+`AppDrawerSettingsViewModelTest` (setter call) extended for the new key. Instrumented:
+`AppDrawerScreenTest` gained four cases covering all three non-default modes plus the do-not-show
+default (`DO_NOT_SHOW` renders nothing, `SHOW_FIRST`/`SHOW_LAST` show a pinned "Folders" header —
+`SHOW_LAST`'s needed `performScrollToNode` first, since the LazyColumn doesn't compose an
+off-screen 27th section by default — and `INLINE` renders the folder under its shared letter header
+with no separate "Folders" section); `AppDrawerSettingsScreenTest` gained a dropdown-switch case for
+the new row. Ran the full existing unit suite plus the full instrumented suite on
+`Medium_Phone_API_36.1` to confirm no regressions from generalizing `GroupedApps`/`AlphabetRail`.
+`docs/architecture/` (`02-persistence-room.md`'s DataStore key diagram/writer table/section table
+and key counts, `12-flow-drawer-search-and-app-actions.md`'s data-in diagram + new §1a) and
+`TEST_REGISTRY.md` updated to match.

@@ -11,10 +11,20 @@ flowchart TB
     LVM["LauncherViewModel.uiState.apps\n(GetInstalledAppsUseCase.observe(): live, minus PRIVATE and Facet itself)"] --> NAV[FacetNavHost] --> R[HomeDrawerRoute] --> S[AppDrawerScreen]
     LVM -- workProfiles --> S
     S --> TAB["DrawerTab.Personal → profile ∈ {PERSONAL, OTHER}\nDrawerTab.Work(handle) → userHandle == handle"]
-    TAB --> GRP["GroupAppsByLetterUseCase(apps, locale)\nICU AlphabeticIndex buckets → GroupedApps\n(headers + AlphabetRail index maps)"]
+    TAB --> GRP["GroupAppsByLetterUseCase(items, locale) { displayName }\nICU AlphabeticIndex buckets → GroupedItems&lt;DrawerItem&gt;\n(headers + AlphabetRail index maps)\nitems = apps only, or apps+folders merged when INLINE"]
     DVM[DrawerViewModel] -- "badgeCounts, contactResults, settingsResults,\nshowContactsPermissionPrompt, showContactsSettingPrompt,\nprivateSpaceState, secureFolderIntent, folders" --> S
-    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridSize,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle" --> S
+    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridSize,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode" --> S
 ```
+
+### 1a. Folders in the drawer (`DrawerFolderDisplayMode`)
+
+`AppDrawerScreen` wraps every app as `DrawerItem.AppEntry` regardless of mode, so `DrawerListContent`/`DrawerGridContent` render one item type throughout; only `groupedItems`' construction and an optional pinned section vary by mode:
+
+- `DO_NOT_SHOW` (default): folders never render as drawer entries — `groupedItems` is apps-only, exactly the original behavior. Folders stay reachable via Dock/Favorites or `AppContextMenu`'s "Add to folder" row (`folderCandidates`, unaffected by this setting).
+- `INLINE`: apps and `folderCandidates` are merged into one list, sorted by name (folders don't arrive pre-sorted the way `apps` does — see chat history for why a naive concatenation before grouping silently breaks interleaving), then grouped together — a folder tile/row sorts under its own leading letter, indistinguishable in position from an app.
+- `SHOW_FIRST`/`SHOW_LAST`: `groupedItems` stays apps-only; every folder instead renders in its own pinned section (`drawerFolderSection`/`drawerFolderTiles`) before or after the lettered content — its own "Folders" header in List (Grid renders no headers at all, same as the lettered content).
+
+The alphabet rail (`AlphabetRail`, `LetterJumpZone`) mirrors this: `RailFolderPosition.NONE` for `DO_NOT_SHOW`/`INLINE` (a folder is reachable by its own letter in `INLINE`, same as any app), `TOP`/`BOTTOM` for `SHOW_FIRST`/`SHOW_LAST` — which renders `RailFolderGlyph` as one more rail entry and makes `railSelectionAt` resolve a drag/touch there to `RailSelection.Folders` instead of a letter, scrolling to that section's own start index. `DrawerFolderRow`/`DrawerFolderTile` reuse `FolderTileGlyph`/`FolderContentsSheet`/`FolderTileContextMenu` (rename + Add to Favorites/Dock), mirroring `ui/home/HomeScreen.kt`'s `FolderRow`/`FolderDockIcon`. Search results never include folders — this is browse-mode only.
 
 ## 2. Search pipeline
 
