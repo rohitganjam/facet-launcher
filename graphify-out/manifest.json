@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1789574006.467767,
-    "seen": 1789575532.5141811,
-    "ast_hash": "a13eabf89abf535e75a7be38fc3078dd",
+    "mtime": 1789660155.7598348,
+    "seen": 1789661048.8013408,
+    "ast_hash": "be12e0f18a9e9566a26d223b01d83113",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppRepository.kt": {
-    "mtime": 1789565812.703913,
-    "seen": 1789573168.273727,
-    "ast_hash": "9ab61012f991999da9e26dcae419a2c7",
+    "mtime": 1789660155.7603743,
+    "seen": 1789661048.801378,
+    "ast_hash": "b206d9ee3975be7d56c3569340d8d22a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppShortcutRepository.kt": {
@@ -1668,9 +1668,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/AppRepositoryTest.kt": {
-    "mtime": 1789566868.841133,
-    "seen": 1789573168.27387,
-    "ast_hash": "17a048eb0b26e8aae6643f16c6615df3",
+    "mtime": 1789660789.2613654,
+    "seen": 1789661048.801512,
+    "ast_hash": "67a48fa7e2ee7afa10c69d8f46d79809",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/AppShortcutRepositoryTest.kt": {
@@ -2688,9 +2688,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/PrivateSpaceRepositoryTest.kt": {
-    "mtime": 1789531919.9173334,
-    "seen": 1789532716.027776,
-    "ast_hash": "4e68746ed7352e25f34d04eff30912cc",
+    "mtime": 1789660801.4020941,
+    "seen": 1789661048.801522,
+    "ast_hash": "55faeaec80011e2dd4f77e42e5e63c4f",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/RepairOrphanedProfileRowsUseCaseTest.kt": {
@@ -2730,9 +2730,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/README.md": {
-    "mtime": 1789619081.39875,
-    "seen": 1789619295.817021,
-    "ast_hash": "be24a7b2413171edeb7e8ea1b8520023",
+    "mtime": 1789661012.6820672,
+    "seen": 1789661048.80159,
+    "ast_hash": "ad5f300e60d328d741376d0f7225a096",
     "semantic_hash": ""
   },
   "scripts/gen-test-registry.py": {
@@ -2742,9 +2742,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/06-testing.md": {
-    "mtime": 1789531919.9215305,
-    "seen": 1789532716.027843,
-    "ast_hash": "8e434406a185f1191824642c7e159757",
+    "mtime": 1789661019.381565,
+    "seen": 1789661048.801586,
+    "ast_hash": "b0073a3d4ffe708ec17e9203d4d20e05",
     "semantic_hash": ""
   },
   "docs/architecture/07-registries.md": {
@@ -2790,8 +2790,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1789620827.2506492,
-    "seen": 1789620962.2967381,
+    "mtime": 1789660968.5700903,
+    "seen": 1789661048.8015912,
     "ast_hash": "68ad635b3d79a6380d405fef32635f31",
     "semantic_hash": ""
   },
