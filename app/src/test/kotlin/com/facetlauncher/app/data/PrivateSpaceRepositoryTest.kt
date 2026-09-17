@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import android.app.Application
 import android.content.Context
 import android.os.UserHandle
 import android.os.UserManager
@@ -15,11 +16,21 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 
 @RunWith(RobolectricTestRunner::class)
 class PrivateSpaceRepositoryTest {
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
+    /**
+     * Robolectric enforces `ContextCompat.RECEIVER_NOT_EXPORTED` pre-33 registrations via a
+     * synthetic permission of its own (not a real Android permission) rather than the platform's
+     * native exported/not-exported handling — [PrivateSpaceRepository]'s `registerReceiver` call
+     * needs this granted or it throws in the shadow, even though a real API 31/32 device needs no
+     * such grant.
+     */
+    private val context: Context = ApplicationProvider.getApplicationContext<Application>().also {
+        shadowOf(it).grantPermissions("org.robolectric.default.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION")
+    }
 
     @Test
     fun `state is NotConfigured when no Private Space handle exists`() = runTest {

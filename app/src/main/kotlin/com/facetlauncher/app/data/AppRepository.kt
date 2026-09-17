@@ -328,7 +328,13 @@ class AppRepository @Inject constructor(
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 if (intent?.action != Intent.ACTION_MANAGED_PROFILE_REMOVED) return
-                intent.getParcelableExtra(Intent.EXTRA_USER, UserHandle::class.java)?.let { trySend(it) }
+                val user = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Intent.EXTRA_USER, UserHandle::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(Intent.EXTRA_USER) as? UserHandle
+                }
+                user?.let { trySend(it) }
             }
         }
         val filter = IntentFilter(Intent.ACTION_MANAGED_PROFILE_REMOVED)

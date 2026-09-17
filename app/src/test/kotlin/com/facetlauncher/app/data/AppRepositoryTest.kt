@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
@@ -35,7 +36,16 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 class AppRepositoryTest {
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
+    /**
+     * Robolectric enforces `ContextCompat.RECEIVER_NOT_EXPORTED` pre-33 registrations via a
+     * synthetic permission of its own (not a real Android permission) rather than the platform's
+     * native exported/not-exported handling — every `registerReceiver` call in production code
+     * needs this granted or it throws in the shadow, even though a real API 31/32 device needs no
+     * such grant.
+     */
+    private val context: Context = ApplicationProvider.getApplicationContext<Application>().also {
+        shadowOf(it).grantPermissions("org.robolectric.default.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION")
+    }
 
     /** Robolectric's broadcast delivery is queued on the main looper, not synchronous — pump both the virtual test-dispatcher queue and the looper. */
     private fun TestScope.idle() {

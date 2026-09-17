@@ -27,7 +27,7 @@ checked against source, not against planning docs; where the code diverges from
 | Concern | Choice (verified in `app/build.gradle.kts`) |
 |---|---|
 | Language / UI | Kotlin only, Jetpack Compose (BOM `2026.01.01`, Material3), no XML layouts |
-| Module layout | Single `:app` module, `minSdk 33`, `targetSdk/compileSdk 36` |
+| Module layout | Single `:app` module, `minSdk 31`, `targetSdk/compileSdk 36` |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.9.6` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
 | Persistence | Room `2.8.4` (`facet.db`, v20, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |

@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.facetlauncher.app"
-        minSdk = 33
+        minSdk = 31
         targetSdk = 36
         versionCode = 9
         versionName = "0.1.8"
