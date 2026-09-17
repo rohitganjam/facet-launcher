@@ -1301,13 +1301,16 @@ green on `Medium_Phone_API_36.1`.
   folder" entry (and rendering an existing folder as its own row instead of a checkbox) discussed
   in this feature's design pass was **not** built this phase. Folder creation/membership is
   reachable only via the long-press "Add to folder" flow for now.
-- **`DockSettingsScreen`'s reorder row** doesn't yet render folders (still
-  `DragReorderState<AppInfo>`) — a folder placed via long-press won't show up in that Settings
-  screen's reorder list yet, only in the live Dock itself. Its own "Preview" card
-  (`HomeSurfacePreview`) and "Select Dock Apps" checklist are similarly still `AppInfo`-only, so a
-  folder's members don't render there either — this was caught during on-device verification (see
-  below) as a real bug (a folder's app looked like it had silently vanished from Settings), not
-  merely a missing enhancement; it's called out here as the next thing to fix in this area.
+- **`DockSettingsScreen`'s "Select Dock Apps" checklist** still only toggles installed apps — an
+  existing folder can't be added/removed from there (only via the long-press "Add to folder" flow).
+  [Fixed since] the reorder row now renders folders (`PlacedItem`-based `DockAppsRow`), and so does
+  `HomeSurfacePreview` (both its Dock and Favorites rendering, shared by `DockSettingsScreen`,
+  `HomeAppsListSettingsScreen`/`FavoritesReorderList`, and `AppearanceSettingsScreen`) — a folder
+  placed in the Dock or in Favorites used to render as its member apps flattened out (Dock preview)
+  or silently vanish from the count/preview/reorder list entirely (Favorites, which only queried
+  the app-only `observeFavoritesForFacet`/`observeDefaultFavorites` methods, never the
+  folder-aware `observeFavoriteItems`/`observeDefaultItems`) — both were reported as real bugs and
+  fixed by switching those screens onto the `PlacedItem`-based repository methods end to end.
 
 ### On-device verification pass (found and fixed two real gaps)
 

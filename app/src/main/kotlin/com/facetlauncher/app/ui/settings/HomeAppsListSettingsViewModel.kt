@@ -9,7 +9,6 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -24,6 +23,7 @@ import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,10 +42,10 @@ data class HomeAppsListUiState(
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
-    /** This scope's favorites — the facet's own when scoped, the launcher-wide default list otherwise. */
-    val favorites: List<AppInfo> = emptyList(),
-    /** The real apps the preview renders — [favorites] in Favorites mode, a recognizable sample otherwise. */
-    val previewApps: List<AppInfo> = emptyList(),
+    /** This scope's favorites — the facet's own when scoped, the launcher-wide default list otherwise. Apps and folders interleaved, same as Home's own list. */
+    val favorites: List<PlacedItem> = emptyList(),
+    /** What the preview renders — [favorites] in Favorites mode, a recognizable app sample otherwise. */
+    val previewApps: List<PlacedItem> = emptyList(),
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     /** Home's app label color/weight — global only, no per-facet override; drives the preview's label rendering. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -80,8 +80,8 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
-    private val favoritesFlow =
-        facetId?.let { favoriteAppRepository.observeFavoritesForFacet(it) } ?: defaultFavoriteAppRepository.observeDefaultFavorites()
+    private val favoritesFlow: Flow<List<PlacedItem>> =
+        facetId?.let { favoriteAppRepository.observeFavoriteItems(it) } ?: defaultFavoriteAppRepository.observeDefaultItems()
 
     val uiState: StateFlow<HomeAppsListUiState> = combine(
         settingsRepository.settings,
@@ -107,7 +107,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
             previewApps = if (mode == ListContentMode.FAVORITES) {
                 favorites
             } else {
-                selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT)
+                selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT).map { PlacedItem.SingleApp(it) }
             },
             homeWallpaper = wallpaper,
             appLabelColorOption = settings.appLabelColorOption,
@@ -155,8 +155,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         }
     }
 
-    fun reorderFavorites(orderedApps: List<AppInfo>) {
-        val orderedItems = orderedApps.map { PlacedItem.SingleApp(it) }
+    fun reorderFavorites(orderedItems: List<PlacedItem>) {
         viewModelScope.launch {
             facetId?.let { favoriteAppRepository.reorderFavoriteItems(it, orderedItems) }
                 ?: defaultFavoriteAppRepository.reorderItems(orderedItems)

@@ -41,12 +41,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
@@ -57,6 +57,7 @@ import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.rememberDragReorderState
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -98,7 +99,7 @@ private fun HomeAppsListSettingsContent(
     onListContentModeChanged: (ListContentMode) -> Unit,
     onAppsToShowCountChanged: (Int) -> Unit,
     onAppListVerticalAlignmentChanged: (AppListVerticalAlignment) -> Unit,
-    onReorderFavorites: (List<AppInfo>) -> Unit,
+    onReorderFavorites: (List<PlacedItem>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -255,22 +256,29 @@ private fun HomeAppsListClickableRow(title: String, subtitle: String?, onClick: 
 
 private val DEFAULT_FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
 
+/** A [PlacedItem]'s stable identity for keying/reordering — a folder's own id, or its app's component. */
+private fun PlacedItem.reorderKey(): Any = when (this) {
+    is PlacedItem.SingleApp -> app.packageName to app.activityName
+    is PlacedItem.FolderItem -> "folder_${folder.id}"
+}
+
 /**
- * Drag-to-reorder for this screen's favorites list. `remember` is keyed on stable component
- * identity (packageName+activityName), not the raw [favorites] list — that list's own `AppInfo.icon`
- * is a freshly-decoded bitmap on every `LauncherApps` re-emission, so it's structurally "new" far
- * more often than the membership/order actually changes, and keying on it would reset drag state
+ * Drag-to-reorder for this screen's favorites list — apps and folders interleaved, same as
+ * Home's own favorites list. `remember` is keyed on stable component identity
+ * ([PlacedItem.reorderKey]), not the raw [favorites] list — an app's `AppInfo.icon` is a
+ * freshly-decoded bitmap on every `LauncherApps` re-emission, so it's structurally "new" far more
+ * often than the membership/order actually changes, and keying on it would reset drag state
  * mid-drag. Adding/removing a favorite happens on the picker screen reached via the "Favorites"
  * row above this list, never here.
  */
 @Composable
-private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
-    val componentsKey = favorites.map { it.packageName to it.activityName }
+private fun DefaultFavoritesReorderList(favorites: List<PlacedItem>, onReorder: (List<PlacedItem>) -> Unit, modifier: Modifier = Modifier) {
+    val componentsKey = favorites.map { it.reorderKey() }
     var order by remember(componentsKey) { mutableStateOf(favorites) }
     val rowHeightPx = with(LocalDensity.current) { ReorderRowDefaults.FAVORITE_ROW_HEIGHT.toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
-        key = { it.packageName to it.activityName },
+        key = { it.reorderKey() },
         axis = Orientation.Vertical,
         slotSizePx = rowHeightPx,
         onOrderChanged = { order = it },
@@ -281,13 +289,17 @@ private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (Li
         modifier = modifier.fillMaxWidth().height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT * order.size),
         userScrollEnabled = false,
     ) {
-        items(order, key = { it.packageName + it.activityName }) { app ->
-            val isDragging = reorderState.isDragging(app)
+        items(order, key = { it.reorderKey() }) { item ->
+            val isDragging = reorderState.isDragging(item)
+            val testTagSuffix = when (item) {
+                is PlacedItem.SingleApp -> item.app.packageName
+                is PlacedItem.FolderItem -> "folder_${item.folder.id}"
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT)
-                    .testTag("default_favorite_reorder_row_${app.packageName}")
+                    .testTag("default_favorite_reorder_row_$testTagSuffix")
                     .zIndex(if (isDragging) 1f else 0f)
                     .graphicsLayer {
                         translationY = if (isDragging) reorderState.dragOffset else 0f
@@ -308,11 +320,19 @@ private fun DefaultFavoritesReorderList(favorites: List<AppInfo>, onReorder: (Li
                     contentDescription = "Drag to reorder",
                     tint = Faint,
                     modifier = Modifier
-                        .testTag("default_favorite_reorder_handle_${app.packageName}")
-                        .then(reorderState.dragModifier(app)),
+                        .testTag("default_favorite_reorder_handle_$testTagSuffix")
+                        .then(reorderState.dragModifier(item)),
                 )
-                AppIcon(icon = app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
-                Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+                when (item) {
+                    is PlacedItem.SingleApp -> {
+                        AppIcon(icon = item.app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                        Text(text = item.app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+                    }
+                    is PlacedItem.FolderItem -> {
+                        FolderTileGlyph(folder = item.folder)
+                        Text(text = item.folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }

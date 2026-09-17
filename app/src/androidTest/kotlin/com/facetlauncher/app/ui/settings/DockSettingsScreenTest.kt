@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -40,7 +41,7 @@ class DockSettingsScreenTest {
         onBack: () -> Unit = {},
         onAddDockApp: () -> Unit = {},
         facetId: Long? = null,
-        seed: suspend (AppRepository, DockAppRepository, FacetDockAppRepository) -> Unit = { _, _, _ -> },
+        seed: suspend (AppRepository, DockAppRepository, FacetDockAppRepository, FolderRepository) -> Unit = { _, _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -53,12 +54,13 @@ class DockSettingsScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val facetRepository = FacetRepository(database.facetDao())
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                runBlocking { seed(appRepository, dockAppRepository, facetDockAppRepository) }
+                runBlocking { seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository) }
                 DockSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
@@ -111,6 +113,44 @@ class DockSettingsScreenTest {
         setContent(onAddDockApp = { navigated = true })
         composeRule.onNodeWithTag("add_dock_app_row").performClick()
         assertEquals(true, navigated)
+    }
+
+    @Test
+    fun aFolderInTheDefaultDock_rendersAsAFolderTileInThePreview_notItsAppsFlattened() {
+        var folderId = 0L
+        setContent(
+            seed = { _, dockAppRepository, _, folderRepository ->
+                folderId = folderRepository.createFolder("Games")
+                dockAppRepository.placeFolderInDock(folderId, position = 0)
+            },
+        )
+
+        composeRule.onNodeWithTag("dock_settings_preview_card").assertExists()
+        // The real installed-apps query backing the preview resolves asynchronously — wait for it
+        // rather than assuming setContent's own waitForIdle already caught it.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("dock_folder_tile_$folderId").fetchSemanticsNodes().isNotEmpty()
+        }
+        // Renders as a real folder tile (FolderDockIcon) inside the preview, not the folder's
+        // member apps spilling out as standalone icons — the reorder row below already rendered
+        // folders correctly; this bug was specific to the preview card.
+    }
+
+    @Test
+    fun aFolderInAFacetsOwnDock_rendersAsAFolderTileInThePreview() {
+        var folderId = 0L
+        setContent(
+            facetId = 42L,
+            seed = { _, _, facetDockAppRepository, folderRepository ->
+                folderId = folderRepository.createFolder("Games")
+                facetDockAppRepository.placeFolder(42L, folderId, position = 0)
+            },
+        )
+
+        composeRule.onNodeWithTag("dock_settings_preview_card").assertExists()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("dock_folder_tile_$folderId").fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test

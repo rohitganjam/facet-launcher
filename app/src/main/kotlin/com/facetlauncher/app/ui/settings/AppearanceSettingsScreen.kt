@@ -55,6 +55,7 @@ import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.ui.components.BackButton
@@ -140,8 +141,8 @@ private fun AppearanceSettingsContent(
             ) {
                 item {
                     HomeSurfacePreview(
-                        appList = previewApps.take(PREVIEW_HOME_APP_COUNT),
-                        dockApps = previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT),
+                        appList = previewApps.take(PREVIEW_HOME_APP_COUNT).map { PlacedItem.SingleApp(it) },
+                        dockApps = previewApps.drop(PREVIEW_HOME_APP_COUNT).take(PREVIEW_DOCK_APP_COUNT).map { PlacedItem.SingleApp(it) },
                         appRowPosition = settings.appRowPosition,
                         appRowPresentation = settings.appRowPresentation,
                         dockDisplayMode = settings.dockDisplayMode,

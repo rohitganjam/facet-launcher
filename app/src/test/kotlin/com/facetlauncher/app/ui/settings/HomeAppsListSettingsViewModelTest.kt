@@ -62,7 +62,7 @@ class HomeAppsListSettingsViewModelTest {
 
     private suspend fun createViewModel(
         facetId: Long? = null,
-        favorites: List<AppInfo> = emptyList(),
+        favorites: List<PlacedItem> = emptyList(),
         facets: List<FacetEntity> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
@@ -73,8 +73,8 @@ class HomeAppsListSettingsViewModelTest {
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(favoriteAppRepository.observeFavoritesForFacet(anyLong())).thenReturn(flowOf(favorites))
-        `when`(defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(flowOf(favorites))
+        `when`(favoriteAppRepository.observeFavoriteItems(anyLong())).thenReturn(flowOf(favorites))
+        `when`(defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(favorites))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
         return HomeAppsListSettingsViewModel(
@@ -92,12 +92,25 @@ class HomeAppsListSettingsViewModelTest {
 
     @Test
     fun `favorites flow through to uiState`() = runTest {
-        val twoFavorites = (1..2).map(::appInfo)
+        val twoFavorites = (1..2).map(::appInfo).map { PlacedItem.SingleApp(it) }
         val viewModel = createViewModel(favorites = twoFavorites)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(2, viewModel.uiState.value.favorites.size)
+    }
+
+    @Test
+    fun `a favorited folder is counted and shows up in uiState, not just apps`() = runTest {
+        val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
+        val favorites = listOf(PlacedItem.SingleApp(appInfo(1)), PlacedItem.FolderItem(folder))
+        val viewModel = createViewModel(favorites = favorites)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.favorites.size)
+        assertEquals("2 of ${DefaultFavoriteAppRepository.MAX_FAVORITES}", viewModel.uiState.value.favoritesLabel)
+        assertEquals(favorites, viewModel.uiState.value.previewApps)
     }
 
     @Test
@@ -140,26 +153,28 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `global reorderFavorites hits the default list`() = runTest {
+    fun `global reorderFavorites hits the default list, folders included`() = runTest {
         val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
         val viewModel = createViewModel(defaultFavoriteAppRepository = defaultFavoriteAppRepository)
-        val reordered = listOf(appInfo(2), appInfo(1))
+        val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
+        val reordered = listOf(PlacedItem.FolderItem(folder), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(defaultFavoriteAppRepository).reorderItems(reordered.map { PlacedItem.SingleApp(it) })
+        verify(defaultFavoriteAppRepository).reorderItems(reordered)
     }
 
     @Test
-    fun `facet-scoped reorderFavorites hits that facet's list`() = runTest {
+    fun `facet-scoped reorderFavorites hits that facet's list, folders included`() = runTest {
         val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
         val viewModel = createViewModel(facetId = 7L, favoriteAppRepository = favoriteAppRepository)
-        val reordered = listOf(appInfo(2), appInfo(1))
+        val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
+        val reordered = listOf(PlacedItem.FolderItem(folder), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(favoriteAppRepository).reorderFavoriteItems(7L, reordered.map { PlacedItem.SingleApp(it) })
+        verify(favoriteAppRepository).reorderFavoriteItems(7L, reordered)
     }
 }

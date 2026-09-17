@@ -105,15 +105,7 @@ private fun DockSettingsContent(
                 item {
                     HomeSurfacePreview(
                         appList = emptyList(),
-                        // Flattened, ungrouped — HomeSurfacePreview doesn't render folder tiles
-                        // (see IMPLEMENTATION_PLAN.md's own note on this gap); at minimum every
-                        // app remains visible here rather than a folder's members vanishing.
-                        dockApps = uiState.dockItems.flatMap {
-                            when (it) {
-                                is PlacedItem.SingleApp -> listOf(it.app)
-                                is PlacedItem.FolderItem -> it.folder.apps
-                            }
-                        },
+                        dockApps = uiState.dockItems,
                         dockDisplayMode = uiState.dockDisplayMode,
                         labelColor = uiState.appLabelColorOption.resolve(),
                         labelFontWeight = uiState.homeAppsFontWeight.resolve(),

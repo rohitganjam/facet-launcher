@@ -20,23 +20,26 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.DockIcon
+import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Muted
 
 /**
  * "This is how Home looks" preview card, shared by Settings → Appearance / Home Apps List / Dock
- * and by a facet's own Apps-list / Dock sub-screens. Uses the real production [AppRow] and
- * [DockIcon] over the device's actual wallpaper ([WallpaperBackground]) rather than a mockup, so
- * the position/presentation/display-style/label choices render exactly as they would on Home.
+ * and by a facet's own Apps-list / Dock sub-screens. Uses the real production [AppRow]/[FolderRow]
+ * and [DockIcon] over the device's actual wallpaper ([WallpaperBackground]) rather than a mockup,
+ * so the position/presentation/display-style/label choices render exactly as they would on Home —
+ * including a folder rendering as a folder tile/row rather than its member apps spilling out
+ * flattened (see chat history — a folder placed in the dock or favorites used to render this way).
  *
  * Pass an empty [appList] to omit the app rows, an empty [dockApps] to omit the dock — callers
  * that only govern one of the two surfaces show only that one. Both empty renders a short
@@ -44,8 +47,8 @@ import com.facetlauncher.app.ui.theme.Muted
  */
 @Composable
 fun HomeSurfacePreview(
-    appList: List<AppInfo>,
-    dockApps: List<AppInfo>,
+    appList: List<PlacedItem>,
+    dockApps: List<PlacedItem>,
     labelColor: Color,
     labelFontWeight: FontWeight,
     homeWallpaper: HomeWallpaper,
@@ -83,32 +86,51 @@ fun HomeSurfacePreview(
                     color = Muted,
                 )
             }
-            rows.forEach { app ->
-                AppRow(
-                    app = app,
-                    onClick = {},
-                    badgeCount = null,
-                    badgeStyle = NotificationBadgeStyle.DOT,
-                    onRequestShortcuts = { emptyList() },
-                    onLaunchShortcut = {},
-                    onAppInfo = {},
-                    position = appRowPosition,
-                    presentation = appRowPresentation,
-                    labelColor = labelColor,
-                    labelFontWeight = labelFontWeight,
-                    enableLongPressMenu = false,
-                    verticalPadding = 6.dp,
-                    // Distinguishes this preview card's rows from Home's own real AppRow for the
-                    // same app, in case both are ever present in one semantics tree.
-                    testTagPrefix = "home_surface_preview_",
-                )
+            rows.forEach { item ->
+                when (item) {
+                    is PlacedItem.SingleApp -> AppRow(
+                        app = item.app,
+                        onClick = {},
+                        badgeCount = null,
+                        badgeStyle = NotificationBadgeStyle.DOT,
+                        onRequestShortcuts = { emptyList() },
+                        onLaunchShortcut = {},
+                        onAppInfo = {},
+                        position = appRowPosition,
+                        presentation = appRowPresentation,
+                        labelColor = labelColor,
+                        labelFontWeight = labelFontWeight,
+                        enableLongPressMenu = false,
+                        verticalPadding = 6.dp,
+                        // Distinguishes this preview card's rows from Home's own real AppRow for
+                        // the same app, in case both are ever present in one semantics tree.
+                        testTagPrefix = "home_surface_preview_",
+                    )
+                    is PlacedItem.FolderItem -> FolderRow(
+                        folder = item.folder,
+                        onAppClick = {},
+                        onRequestShortcuts = { emptyList() },
+                        onLaunchShortcut = {},
+                        onAppInfo = {},
+                        onRemoveFromFolder = { _, _ -> },
+                        onRenameFolder = { _, _ -> },
+                        drawerPresentation = DrawerPresentation.LIST,
+                        position = appRowPosition,
+                        presentation = appRowPresentation,
+                        labelColor = labelColor,
+                        labelFontWeight = labelFontWeight,
+                        enableLongPressMenu = false,
+                        onClick = {},
+                        testTagPrefix = "home_surface_preview_",
+                    )
+                }
             }
             if (dockApps.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    dockApps.forEach { app ->
+                    dockApps.forEach { item ->
                         DockIcon(
-                            item = PlacedItem.SingleApp(app),
+                            item = item,
                             displayMode = dockDisplayMode,
                             onClick = {},
                             labelColor = labelColor,
