@@ -19,7 +19,7 @@ import com.facetlauncher.app.data.model.WallpaperAccentRole
 // LocalIsDarkTheme itself is resolved once by FacetLauncherTheme from ThemeMode (an explicit
 // Light/Dark override, or System following isSystemInDarkTheme()) — see Theme.kt.
 
-private val WallpaperLight = Color(0xFFE9ECF2)
+private val WallpaperLight = Color(0xFFFFFFFF)
 private val WallpaperDark = Color(0xFF14171D)
 private val CarouselBackdropLight = Color(0xFFDFE3EA)
 private val CarouselBackdropDark = Color(0xFF101319)
@@ -96,6 +96,9 @@ val Muted: Color @Composable get() = if (LocalIsDarkTheme.current) MutedDark els
 val Faint: Color @Composable get() = if (LocalIsDarkTheme.current) FaintDark else FaintLight
 val Hairline: Color @Composable get() = if (LocalIsDarkTheme.current) HairlineDark else HairlineLight
 val IconTile: Color @Composable get() = if (LocalIsDarkTheme.current) IconTileDark else IconTileLight
+
+/** [FolderTileGlyph][com.facetlauncher.app.ui.home.FolderTileGlyph]'s tile background — deliberately theme-invariant, unlike [IconTile], so the folder plate reads the same over the wallpaper in light or dark mode. */
+val FolderGlyphBackground: Color = IconTileDark
 
 /**
  * Maps a [WallpaperAccentRole] to its actual M3 tonal role on a wallpaper-derived [scheme] —

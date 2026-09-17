@@ -52,8 +52,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -101,8 +103,8 @@ import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.theme.FolderGlyphBackground
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
-import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -1263,15 +1265,25 @@ private fun FolderDockIcon(
     }
 }
 
-/** A [AppIconSize.TILE]-sized, `medium`/12dp-shaped tile showing up to 4 of the folder's app icons in a 2x2 grid — CLAUDE.md's M3 shape table, tile scale. A 0-app folder (valid, persistent — never auto-deleted) renders a single centered muted folder glyph instead of 4 blank boxes. */
+/** A [AppIconSize.TILE]-sized, `medium`/12dp-shaped tile showing up to 4 of the folder's app icons — a 1x2 row for 1-2 apps, a 2x2 grid for 3-4 — CLAUDE.md's M3 shape table, tile scale. No inner padding: icons run to the tile's own edge so the outer rounded-corner clip crops their corners slightly, the same way a real folder preview reads as "full" rather than an icon floating in a frame. A 0-app folder (valid, persistent — never auto-deleted) renders a single centered muted folder glyph instead. */
 @Composable
 internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(AppIconSize.TILE)
             .clip(RoundedCornerShape(12.dp))
-            .background(IconTile)
-            .padding(3.dp),
+            .background(FolderGlyphBackground)
+            .drawWithContent {
+                drawContent()
+                // Slight vignette for inset depth, rather than a flat plate.
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.18f)),
+                        center = center,
+                        radius = size.maxDimension * 0.75f,
+                    ),
+                )
+            },
     ) {
         if (folder.apps.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1284,26 +1296,42 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
             }
         } else {
             val previewApps = folder.apps.take(4)
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
-                for (rowIndex in 0..1) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        for (colIndex in 0..1) {
-                            val app = previewApps.getOrNull(rowIndex * 2 + colIndex)
-                            if (app != null) {
-                                AppIcon(
-                                    icon = app.icon,
-                                    size = AppIconSize.SHORTCUT,
-                                    contentDescription = null,
-                                    cornerRadius = 3.dp,
-                                )
-                            } else {
-                                Box(modifier = Modifier.size(AppIconSize.SHORTCUT))
+            if (previewApps.size <= 2) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    for (colIndex in 0..1) {
+                        FolderTileGlyphSlot(app = previewApps.getOrNull(colIndex))
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    for (rowIndex in 0..1) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally)) {
+                            for (colIndex in 0..1) {
+                                FolderTileGlyphSlot(app = previewApps.getOrNull(rowIndex * 2 + colIndex))
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/** One cell of [FolderTileGlyph]'s grid/row — an app icon, or a blank spacer when the folder has fewer apps than slots. */
+@Composable
+private fun FolderTileGlyphSlot(app: AppInfo?) {
+    if (app != null) {
+        AppIcon(icon = app.icon, size = AppIconSize.SHORTCUT, contentDescription = null, cornerRadius = 3.dp)
+    } else {
+        Box(modifier = Modifier.size(AppIconSize.SHORTCUT))
     }
 }
 
@@ -1406,6 +1434,23 @@ internal fun FolderRow(
             onFavoritesAction = onFavoritesAction,
             onDockAction = onDockAction,
         )
+    }
+}
+
+/** Every [FolderTileGlyph] slot count side by side: 0 (muted glyph fallback), 1-2 (1x2 row), 3-4 (2x2 grid). */
+@Preview(name = "Folder glyph", showBackground = true)
+@Preview(name = "Folder glyph - Dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun FolderTileGlyphPreview() {
+    FacetLauncherTheme {
+        val apps = (1..4).map {
+            AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(16.dp)) {
+            for (count in 0..4) {
+                FolderTileGlyph(folder = Folder(id = count.toLong(), name = "Folder", apps = apps.take(count)))
+            }
+        }
     }
 }
 

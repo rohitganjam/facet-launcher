@@ -244,7 +244,7 @@ private fun ConceptLine(glyph: String, label: String, entranceDelayMillis: Int, 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Text(text = glyph, style = MaterialTheme.typography.titleLarge, color = Faint)
+        Text(text = glyph, style = MaterialTheme.typography.titleLarge, color = Ink)
         Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink)
     }
 }
