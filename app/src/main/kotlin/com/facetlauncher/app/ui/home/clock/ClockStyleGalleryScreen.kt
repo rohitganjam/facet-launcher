@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -204,7 +205,7 @@ private fun ClockStyleGalleryScreen(
                     title = "Font",
                     options = ClockFontOption.entries,
                     selected = calendarFontOption,
-                    label = { it.displayName },
+                    label = { stringResource(it.displayNameRes) },
                     onSelect = onCalendarFontOptionChanged,
                     testTag = "calendar_style_font_row",
                 )
@@ -213,7 +214,7 @@ private fun ClockStyleGalleryScreen(
                     title = "Color",
                     options = ClockColorOption.entries,
                     selected = calendarColorOption,
-                    label = { it.displayName },
+                    label = { stringResource(it.displayNameRes) },
                     onSelect = onCalendarColorOptionChanged,
                     testTag = "calendar_style_color_row",
                 )
@@ -267,7 +268,7 @@ private fun ClockStyleGalleryScreen(
                     title = "Font",
                     options = ClockFontOption.entries,
                     selected = fontOption,
-                    label = { it.displayName },
+                    label = { stringResource(it.displayNameRes) },
                     onSelect = onFontOptionChanged,
                     testTag = "clock_font_row",
                 )
@@ -276,7 +277,7 @@ private fun ClockStyleGalleryScreen(
                     title = "Primary font color",
                     options = ClockColorOption.entries,
                     selected = colorOption,
-                    label = { it.displayName },
+                    label = { stringResource(it.displayNameRes) },
                     onSelect = onColorOptionChanged,
                     testTag = "clock_color_row",
                 )
@@ -290,7 +291,7 @@ private fun ClockStyleGalleryScreen(
                     title = "Accent color",
                     options = ClockColorOption.entries,
                     selected = accentColorOption,
-                    label = { it.displayName },
+                    label = { stringResource(it.displayNameRes) },
                     onSelect = onAccentColorOptionChanged,
                     testTag = "clock_accent_color_row",
                 )
@@ -325,7 +326,7 @@ private fun ClockStyleGalleryScreen(
                     title = "Date style",
                     options = ClockDateStyle.entries,
                     selected = dateStyle,
-                    label = { it.displayName },
+                    label = { stringResource(it.displayNameRes) },
                     onSelect = onDateStyleChanged,
                     testTag = "clock_date_style_row",
                 )
@@ -388,7 +389,7 @@ private fun ClockStyleGalleryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(text = id.displayName, style = MaterialTheme.typography.titleSmall, color = Ink)
+                    Text(text = stringResource(id.displayNameRes), style = MaterialTheme.typography.titleSmall, color = Ink)
                     if (selected) Icon(Icons.Default.Check, contentDescription = "Applied", tint = Accent)
                 }
                 ClockDisplay(

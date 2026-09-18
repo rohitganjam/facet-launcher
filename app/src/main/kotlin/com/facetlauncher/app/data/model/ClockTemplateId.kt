@@ -1,52 +1,55 @@
 package com.facetlauncher.app.data.model
 
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
+
 /**
  * Named clock layouts — see `ui/home/clock/ClockTemplates.kt` for the actual rendering. Lives in
  * `data/model` (not `ui/`) purely so it can be a real typed field on [LauncherSettings]/persisted
  * by `SettingsRepository`, matching [DockDisplayMode]/[NotificationBadgeStyle]'s own pattern —
  * this enum carries no Compose/Android-framework dependency itself, only a display label.
  */
-enum class ClockTemplateId(val displayName: String) {
-    LIGHT_STACK("Light stack"),
-    RULE_MERIDIEM("Ruler"),
-    DATE_FORWARD("Date forward"),
-    WEIGHT_CONTRAST("Weight contrast"),
-    ITALIC_ACCENT("Italics"),
-    SPELLED_OUT("Spelled out"),
-    VERTICAL_STACK("Vertical stack"),
-    VERTICAL_STACK_BOLD_HOUR("Vertical stack (bold hour)"),
-    ROBOTO_FLEX_WIDE("Flex Wide"),
-    ROBOTO_FLEX_NARROW("Flex Narrow"),
-    TECH_DISTORTED("Tech Distorted"),
-    VARIABLE_DIVIDER("Variable Divider"),
-    FLUID_STACK("Fluid Stack"),
-    FLUID_STACK_INVERTED("Fluid Stack Inverted"),
-    BRACKET_MINIMAL("Bracket Minimal"),
-    TWO_LINE_DIVIDER("Two-Line Divider"),
-    BOLD_COLON("Bold Colon"),
-    ACCENTED_FLUID_STACK("Accented Fluid Stack"),
-    ACCENTED_FLUID_STACK_INVERTED("Accented Fluid Stack Inverted"),
-    ACCENT_CONTRAST("Accent Contrast"),
+enum class ClockTemplateId(@param:StringRes val displayNameRes: Int) {
+    LIGHT_STACK(R.string.clock_template_light_stack),
+    RULE_MERIDIEM(R.string.clock_template_rule_meridiem),
+    DATE_FORWARD(R.string.clock_template_date_forward),
+    WEIGHT_CONTRAST(R.string.clock_template_weight_contrast),
+    ITALIC_ACCENT(R.string.clock_template_italic_accent),
+    SPELLED_OUT(R.string.clock_template_spelled_out),
+    VERTICAL_STACK(R.string.clock_template_vertical_stack),
+    VERTICAL_STACK_BOLD_HOUR(R.string.clock_template_vertical_stack_bold_hour),
+    ROBOTO_FLEX_WIDE(R.string.clock_template_roboto_flex_wide),
+    ROBOTO_FLEX_NARROW(R.string.clock_template_roboto_flex_narrow),
+    TECH_DISTORTED(R.string.clock_template_tech_distorted),
+    VARIABLE_DIVIDER(R.string.clock_template_variable_divider),
+    FLUID_STACK(R.string.clock_template_fluid_stack),
+    FLUID_STACK_INVERTED(R.string.clock_template_fluid_stack_inverted),
+    BRACKET_MINIMAL(R.string.clock_template_bracket_minimal),
+    TWO_LINE_DIVIDER(R.string.clock_template_two_line_divider),
+    BOLD_COLON(R.string.clock_template_bold_colon),
+    ACCENTED_FLUID_STACK(R.string.clock_template_accented_fluid_stack),
+    ACCENTED_FLUID_STACK_INVERTED(R.string.clock_template_accented_fluid_stack_inverted),
+    ACCENT_CONTRAST(R.string.clock_template_accent_contrast),
 
     // Shape-based templates (filled tiles, pills, borders, circles) — the first templates in this
     // enum that aren't purely typographic; see ClockTemplates.kt for the actual rendering and its
     // shared HourText/MinuteText/SeparatorText/TemplateDateText part composables.
-    ACCENT_FIELD("Accent Field"),
-    HOUR_TILE("Hour Tile"),
-    CHIP("Chip"),
-    DUOTONE_OVERLAP("Duotone Overlap"),
-    CORNER_FRAME("Corner Frame"),
-    STUB("Stub"),
-    HALO("Halo"),
-    DIGIT_CELLS("Digit Cells"),
-    NEGATIVE_PANEL("Negative Panel"),
-    HOLLOW_HOUR("Hollow Hour"),
-    HIGHLIGHTER("Highlighter"),
-    COLUMN_RULE("Column Rule"),
-    COLON_MARK("Colon Mark"),
-    PILL_PAIR("Pill Pair"),
-    SHELF("Shelf"),
-    HALF_IMMERSED("Half Immersed"),
+    ACCENT_FIELD(R.string.clock_template_accent_field),
+    HOUR_TILE(R.string.clock_template_hour_tile),
+    CHIP(R.string.clock_template_chip),
+    DUOTONE_OVERLAP(R.string.clock_template_duotone_overlap),
+    CORNER_FRAME(R.string.clock_template_corner_frame),
+    STUB(R.string.clock_template_stub),
+    HALO(R.string.clock_template_halo),
+    DIGIT_CELLS(R.string.clock_template_digit_cells),
+    NEGATIVE_PANEL(R.string.clock_template_negative_panel),
+    HOLLOW_HOUR(R.string.clock_template_hollow_hour),
+    HIGHLIGHTER(R.string.clock_template_highlighter),
+    COLUMN_RULE(R.string.clock_template_column_rule),
+    COLON_MARK(R.string.clock_template_colon_mark),
+    PILL_PAIR(R.string.clock_template_pill_pair),
+    SHELF(R.string.clock_template_shelf),
+    HALF_IMMERSED(R.string.clock_template_half_immersed),
 }
 
 /**

@@ -117,13 +117,28 @@ class DefaultLauncherRepositoryTest {
 
     @Test
     fun `isDefaultLauncher falls back to the HOME-intent check when the role isn't available`() = runTest {
-        // Given the role API reports it unavailable (older API level / OEM without it), and
-        // nothing registered to resolve the HOME intent in Robolectric's fake PackageManager
+        // Given the role API reports it unavailable (older API level / OEM without it), and some
+        // other launcher — not Facet — is the one that currently resolves the HOME intent. (Now
+        // that Robolectric loads the real AndroidManifest.xml — see testOptions.unitTests in
+        // app/build.gradle.kts — Facet's own HOME intent-filter is registered too, so leaving
+        // nothing else registered would make it the sole, unambiguous match and this test would
+        // assert the wrong thing.)
+        val otherLauncherResolveInfo = ResolveInfo().apply {
+            activityInfo = ActivityInfo().apply {
+                packageName = "com.other.launcher"
+                name = ".OtherLauncherActivity"
+            }
+        }
+        shadowOf(context.packageManager).addResolveInfoForIntent(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
+            otherLauncherResolveInfo,
+        )
 
         // When checking default-launcher status
         val result = repository().isDefaultLauncher()
 
-        // Then it falls back to the plain resolveActivity check, which finds no match
+        // Then it falls back to the plain resolveActivity check, which resolves to the other
+        // launcher, not Facet
         assertEquals(false, result)
     }
 }

@@ -41,10 +41,14 @@ class AppRepositoryTest {
      * synthetic permission of its own (not a real Android permission) rather than the platform's
      * native exported/not-exported handling — every `registerReceiver` call in production code
      * needs this granted or it throws in the shadow, even though a real API 31/32 device needs no
-     * such grant.
+     * such grant. The permission name is package-qualified — `org.robolectric.default.*` only
+     * when Robolectric falls back to its own synthetic manifest; once `testOptions.unitTests
+     * .isIncludeAndroidResources` (app/build.gradle.kts) makes it load this app's real
+     * AndroidManifest.xml instead, ContextCompat synthesizes the name from the *real* package
+     * instead, so the grant has to match that.
      */
     private val context: Context = ApplicationProvider.getApplicationContext<Application>().also {
-        shadowOf(it).grantPermissions("org.robolectric.default.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION")
+        shadowOf(it).grantPermissions("${it.packageName}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION")
     }
 
     /** Robolectric's broadcast delivery is queued on the main looper, not synchronous — pump both the virtual test-dispatcher queue and the looper. */

@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.state.ToggleableState
@@ -252,12 +253,13 @@ private fun CalendarPickerRow(calendar: CalendarInfo, swatch: AccentSwatch?, che
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         if (swatch != null) {
+            val swatchLabel = stringResource(swatch.labelRes)
             Box(
                 modifier = Modifier
                     .size(12.dp)
                     .clip(CircleShape)
                     .background(swatch.resolvedColor())
-                    .semantics { contentDescription = swatch.label },
+                    .semantics { contentDescription = swatchLabel },
             )
         }
         Column(modifier = Modifier.weight(1f)) {

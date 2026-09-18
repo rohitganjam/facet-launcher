@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("dev.detekt")
 }
 
 // Release signing — kept out of git entirely (see .gitignore). `keystore.properties` holds the
@@ -75,6 +76,14 @@ android {
 
     testOptions {
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        unitTests {
+            // Robolectric JVM unit tests need this to resolve real compiled resources (e.g.
+            // context.getString(R.string.x)) — without it, any resource lookup throws
+            // Resources$NotFoundException at runtime even though the resource genuinely exists
+            // and the code compiles fine. Never needed until SystemSettingsRepositoryTest became
+            // the first test to call context.getString() on an app string resource.
+            isIncludeAndroidResources = true
+        }
     }
 
     sourceSets {
@@ -97,6 +106,13 @@ android {
 }
 
 dependencies {
+    detektPlugins(project(":detekt-rules"))
+    // Third-party Compose best-practice rules (Modifier placement/ordering, state hoisting,
+    // remember misuse, etc.) — mechanizes several conventions CLAUDE.md already asks for by hand.
+    // Pinned to the exact version built against this project's detekt-core (2.0.0-alpha.6, see
+    // its POM) rather than "latest", since compose-rules tracks detekt's API closely.
+    detektPlugins("io.nlopez.compose.rules:detekt:0.6.6")
+
     implementation(platform("androidx.compose:compose-bom:2026.01.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -164,4 +180,25 @@ dependencies {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+detekt {
+    // Only our own :detekt-rules "facet" rule set runs — detekt's bundled default rule sets
+    // (style/complexity/etc.) were never opted into and would otherwise flood the build with
+    // ~1900 pre-existing, unrelated findings (MaxLineLength, ReturnCount, ...) that have nothing
+    // to do with the language-translation migration this module exists to gate.
+    disableDefaultRuleSets = true
+    baseline = file("detekt-baseline.xml")
+    source.setFrom(files("src/main/kotlin"))
+    config.setFrom(files("detekt.yml"))
+}
+
+// detekt's bundled Kotlin-compiler-adjacent code predates this machine's JDK default and doesn't
+// recognize its version string as a --jvm-target value — pin explicitly to match the rest of the
+// project.
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    jvmTarget = "17"
+}
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+    jvmTarget = "17"
 }

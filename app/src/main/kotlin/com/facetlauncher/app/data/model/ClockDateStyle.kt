@@ -1,5 +1,8 @@
 package com.facetlauncher.app.data.model
 
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
+
 /**
  * How verbose the clock's date line reads — [FULL] ("Thursday, 27 August", every template's only
  * behavior before this existed) or [CONDENSED] ("Thu, 27 Aug"). One global setting applied to
@@ -10,7 +13,7 @@ package com.facetlauncher.app.data.model
  * typed field on [LauncherSettings]/persisted by `SettingsRepository`, matching every other clock
  * option enum's own pattern (see [ClockColorOption]/[ClockAlignment]).
  */
-enum class ClockDateStyle(val displayName: String) {
-    FULL("Full"),
-    CONDENSED("Condensed"),
+enum class ClockDateStyle(@param:StringRes val displayNameRes: Int) {
+    FULL(R.string.clock_date_style_full),
+    CONDENSED(R.string.clock_date_style_condensed),
 }

@@ -1950,3 +1950,243 @@ the new row. Ran the full existing unit suite plus the full instrumented suite o
 `docs/architecture/` (`02-persistence-room.md`'s DataStore key diagram/writer table/section table
 and key counts, `12-flow-drawer-search-and-app-actions.md`'s data-in diagram + new §1a) and
 `TEST_REGISTRY.md` updated to match.
+
+## Language translation (i18n) — Pass 1: string-resource migration
+
+Every UI string in the app today is hardcoded inline in Compose/Kotlin — `res/values/strings.xml`
+is essentially empty and there are zero `stringResource()` call sites. Before any actual
+translation can happen, every user-facing literal needs to move into `strings.xml` (default
+`values/`, no other locales yet) behind `stringResource(R.string.x)` in composables /
+`context.getString()` elsewhere. Scoped by grepping every literal string in `ui/` — counts below
+are from that scan and are approximate (the grep also catches some non-UI text like format
+patterns/comments, filtered out where obviously not real copy).
+
+### 0. Infrastructure
+- [x] ~~Enable AGP's built-in `HardcodedText` lint rule~~ — **tried and reverted.** That check
+  (`HardcodedValuesDetector`) only inspects `android:text="..."` in XML layouts; it does not
+  analyze Kotlin/Compose `Text(...)` calls at all, so on this Compose-only app it silently found
+  zero hits and enforced nothing (confirmed: generating a baseline produced only unrelated
+  pre-existing findings — `MissingPermission`, `InlinedApi`, `ModifierParameter`, etc. — never one
+  `HardcodedText` entry). Reverted rather than leave a config that looks like enforcement but isn't.
+- [x] Built a real check instead, in a new `:detekt-rules` Gradle module (plain JVM,
+  `kotlin("jvm")` — not an Android module, since a custom static-analysis rule has to be compiled
+  before the module it checks runs, so it can't live inside `:app` itself; documented as an
+  exception to "single `:app` module" in `CLAUDE.md`). Went through two implementations:
+  - **First cut was a custom Android Lint check** (UAST/PSI-based, `lint-api 32.4.0` paired to
+    AGP 9.4.0), and it worked — verified 289 real hits, zero false positives, a real regression
+    test (new hardcoded string fails, existing ones don't). **Replaced with Detekt anyway per
+    explicit user preference** ("i still think detekt is the better option") after discussing the
+    tradeoff (Lint's custom-detector API is more version-fragile; Detekt's is more ergonomic for
+    pure-syntax checks but means introducing a whole new tool). Not a case of the Lint version
+    being broken — it was reverted while working, so if Detekt ever becomes unworkable here, that
+    approach is a known-good fallback to reach for again.
+  - **Landed on Detekt 2.0.0-alpha.6** (group `dev.detekt`, plugin id `dev.detekt` — not the
+    1.23.x stable line's `io.gitlab.arturbosch.detekt`/`io.gitlab.arturbosch.detekt`). 1.23.8
+    (latest stable at the time) crashed outright on this machine's JDK 25
+    (`IllegalArgumentException: 25.0.3` deep in a bundled JetBrains platform utility trying to
+    parse the JDK version string) — a real, reproducible incompatibility, not a config mistake
+    (confirmed via full stacktrace). The user pointed at 2.0.0-alpha.6 specifically as a version
+    that supports Java 25; confirmed empirically after fixing it up for that version's
+    substantially-reshaped API (package renamed `io.gitlab.arturbosch.detekt.api` →
+    `dev.detekt.api`; `Rule` construction, `RuleSetProvider.instance()`, and reporting
+    (`CodeSmell`/`Issue`/`Debt` → plain `Finding(entity, message)`) all changed shape — decompiled
+    the actual 2.0.0-alpha.6 jars with `javap` to get the real API surface rather than guessing).
+  - `ComposeHardcodedTextRule` (`detekt-rules/src/main/kotlin/com/facetlauncher/detekt/`): same
+    detection logic as the Lint version — (1) a named argument to a known text-carrying parameter
+    (`text`, `title`, `label`, `contentDescription`, `message`, `hint`, `placeholder`,
+    `description`) bound to a string-literal template, or (2) `Text(...)`/`BasicText(...)`'s first
+    *positional* argument being a string literal — registered as rule `ComposeHardcodedText` in a
+    `facet` rule set via `FacetRuleSetProvider`
+    (`META-INF/services/dev.detekt.api.RuleSetProvider`), wired into `:app` via
+    `detektPlugins(project(":detekt-rules"))`. `app/detekt.yml` explicitly marks
+    `facet.ComposeHardcodedText.active: true` — **custom Detekt rules are inactive by default**
+    even when correctly discovered (confirmed via `debug = true` logging: the provider was
+    registered but produced 0 findings until this config existed — don't assume "no findings"
+    means "nothing to find" the way it does for Lint). `disableDefaultRuleSets = true` in the
+    `detekt {}` block keeps detekt's own bundled rule sets (style/complexity/etc., ~1900
+    unrelated findings) out of scope entirely, rather than baselining that noise.
+  - **Two real false positives found and fixed during verification, both from the same root
+    cause**: Kotlin can't syntactically distinguish a `@Composable` call from a data class
+    constructor call (both are just `Capitalized(...)`) without full-classpath type resolution,
+    which this rule deliberately avoids. `AnimatedContent(label = "app_context_menu_page")` — a
+    non-visual animation debug tag, not UI text — was excluded via an
+    `ANIMATION_LABEL_CALLS` allowlist scoped to just the `label` param. `AppInfo(...)`/
+    `CalendarEvent(...)` — real domain model constructors used in `@Preview` fixture data, whose
+    `label`/`title` fields collided with the same param-name heuristic — were excluded via a
+    `NON_COMPOSABLE_CONSTRUCTORS` set. Both are documented as a known, open-ended category in the
+    rule's own code comments (not closable without type resolution) — add more names to that set
+    if another domain model trips it during sections 1–7.
+  - **Environment quirk worth not rediscovering**: the Gradle daemon appears to cache the
+    `:detekt-rules` plugin jar's *behavior* across invocations even after it's rebuilt — a plain
+    `./gradlew :app:detekt` after editing the rule can silently keep running the old version.
+    `./gradlew --stop` before re-testing a rule change is required, not optional.
+  - **Verified working end to end**: 292 real hits after both false-positive fixes (all inside
+    `ui/`, zero outside it — spot-checked). Baselined via `./gradlew :app:detektBaseline`
+    (`app/detekt-baseline.xml`, 281 deduped entries — same shrink-as-you-migrate discipline as any
+    baseline). Then the actual regression test: added a scratch composable with a brand-new
+    `Text("...")` literal, confirmed `./gradlew detekt` failed on exactly that line and nothing
+    else, removed it, confirmed green again — repeated this full check twice, once under a
+    temporarily-downgraded JDK 21 daemon (see below) and again after restoring JDK 25, so the
+    passing state is the one actually verified, not just assumed to still hold.
+  - **JDK daemon**: temporarily changed `gradle/gradle-daemon-jvm.properties` to JDK 21 to get
+    unblocked while diagnosing the 1.23.8 crash (via `./gradlew updateDaemonJvm --jvm-version=21`
+    — needed adding the `org.gradle.toolchains.foojay-resolver-convention` settings plugin, since
+    that task can't resolve toolchain download URLs without it; kept the plugin afterward since
+    it's harmless and also lets Gradle auto-provision `:detekt-rules`' `jvmToolchain(17)` if ever
+    needed). **Reverted back to JDK 25** (`updateDaemonJvm --jvm-version=25`) once 2.0.0-alpha.6
+    was confirmed working there — full re-verification (`assembleDebug`, `test`, the detekt
+    regression test above) all green on the restored JDK 25 daemon, so the project's daemon JVM
+    ends this section unchanged from where it started.
+  - **Also added mrmans0n/compose-rules** (`io.nlopez.compose.rules:detekt:0.6.6`, pinned to the
+    exact version its own POM declares against `dev.detekt-core:2.0.0-alpha.6` — the same version
+    this project already pins, avoiding another API-mismatch hunt) per user request — a
+    third-party Compose best-practice ruleset (Modifier placement/ordering, state hoisting,
+    `remember` misuse, parameter naming, unstable-collection params, etc.) that mechanizes several
+    conventions `CLAUDE.md` already documents by hand. Unrelated to the string migration (no
+    overlap with `ComposeHardcodedText`), but wired in alongside it since it was already mid-setup.
+    All 44 of its rules explicitly enabled in `app/detekt.yml` under a `Compose:` block (same
+    "custom rule sets need explicit `active: true`" requirement as our own `facet` set). Produced
+    249 new findings, all genuine (spot-checked `ParameterNaming` — `onQueryChanged` should be
+    `onQueryChange`, present tense — and `UnstableCollections` — a raw `List<Folder>?` composable
+    param that should be an `ImmutableList`; neither is a false positive, both are real pre-existing
+    debt this codebase hasn't addressed yet). Baselined together with the string-migration backlog
+    (`app/detekt-baseline.xml` now 461 entries: 281 `ComposeHardcodedText` + 180 across the 11
+    `Compose.*` rules that fired) rather than fixed now — fixing 249 pre-existing style findings is
+    its own separate pass, out of scope here. Re-ran the full new-string-fails/existing-strings-pass
+    regression test after this addition to confirm the two rule sets don't interfere with each other.
+  - **Deliverable:** `detekt-rules/` module; `app/detekt.yml`; `detektPlugins(project(":detekt-rules"))`
+    and `detekt {}` config in `app/build.gradle.kts`; `app/detekt-baseline.xml` committed;
+    `./gradlew detekt` green on JDK 25. Regenerate the baseline (delete it, `./gradlew --stop`,
+    rerun `./gradlew :app:detektBaseline`, commit the smaller file) as each section below lands.
+- [x] Decide plural/format-arg conventions up front — Android `plurals` resources for counts
+  ("3 apps"), `%1$s`/`%1$d` positional placeholders for interpolated values — documented as a
+  comment at the top of `res/values/strings.xml` so every task below follows the same pattern.
+- [x] Confirm target locales with the user — **Spanish, French, German, Portuguese**
+  (`values-es/`, `values-fr/`, `values-de/`, `values-pt/`), decided 2026-09-18. Actual translation
+  is pass 2, out of scope here.
+
+### 1. Centralized model/enum labels (`data/model/`) — do before the screens below — ✅ complete
+High-leverage: these are option labels rendered by dropdowns/pickers across many screens, so
+converting them once fixes every consuming screen.
+- [x] `AppSortOption.kt`, `ClockDateStyle.kt`, `ClockFontOption.kt`, `ClockColorOption.kt`,
+  `FontWeightOption.kt`, `IconRenderMode.kt`, `LauncherFontOption.kt`, `ClockTemplateId.kt`,
+  `ui/theme/AccentSwatch.kt` — every enum's `label`/`displayName: String` field became a
+  `@param:StringRes val labelRes/displayNameRes: Int`, with call sites resolving it via
+  `stringResource(...)` (added `res/values/strings.xml` entries per enum; `ClockFontOption`/
+  `LauncherFontOption` share `font_name_*` entries for the fonts both offer, so a translator only
+  translates "Roboto Flex" etc. once). `SettingsSearchEntry.kt` itself needed no change (its
+  `label: String` field is fine as-is) — its actual source, `SystemSettingsRepository`'s private
+  `SETTINGS_CATALOG` (data-layer, not `data/model/`, but the only place these labels originate),
+  got the equivalent treatment: `CatalogEntry.label: String` → `@StringRes labelRes: Int`,
+  resolved via `context.getString(...)` directly in `search()` — since this is a real
+  `Repository` with `Context` already injected, unlike the pure-Kotlin model enums, which have no
+  `Context` and so resolve their label at render time via `stringResource()` in Compose instead.
+  - **`LabeledDropdownRow.kt`'s `label` parameter changed from `(T) -> String` to
+    `@Composable (T) -> String`** — a necessary, deliberate signature change (not a leftover from
+    section 2) so call sites can call `stringResource()` inside the lambda they pass in. Every
+    call site updated: `ClockStyleGalleryScreen.kt` (7 dropdown/label sites — Clock and Calendar
+    style's font/color/date-style pickers), `AppearanceSettingsScreen.kt` (3 — Icons/Launcher
+    Font/App label color pickers, plus one direct `AccentSwatchCircle` content-description),
+    `CalendarSettingsScreen.kt` (one `AccentSwatch` content-description inside a
+    `Modifier.semantics {}` block — that lambda isn't `@Composable`, so the string had to be
+    resolved to a local `val` *before* entering the modifier chain, not inline inside `semantics {}`),
+    `FontWeightSlider.kt`, `AppSortControl.kt` (its own hand-rolled dropdown, not
+    `LabeledDropdownRow`), `SettingsScreen.kt` (the Clock & Calendar Style row's subtitle).
+  - **Real accidental content loss, caught and fixed**: an early `Edit` on `AccentSwatch.kt`
+    silently dropped an unrelated 4-line comment (the AMBER color's contrast-ratio rationale) that
+    happened to sit between the edited regions — not something `old_string`/`new_string` should
+    have touched. Restored it before continuing; a reminder to re-read a file's actual diff after
+    an edit that touches a large block, not just trust the edit summary.
+  - **Detekt's `ComposeHardcodedText` baseline count (461) is unaffected by this whole section —
+    confirmed, not a bug.** Traced why: enum-entry constructor arguments (`ALPHABETICAL("Alphabetical")`)
+    aren't `KtCallExpression` nodes in Kotlin's PSI, so the rule's `visitCallExpression` override
+    never saw them; `SystemSettingsRepository`'s `CatalogEntry("wifi", "Wi-Fi", ...)` calls use
+    *positional* (not named) arguments for a type that isn't `Text`/`BasicText`, which is exactly
+    the rule's own documented "doesn't catch positional args outside Text/BasicText's first one"
+    gap from section 0. Both are real, now-confirmed-with-concrete-examples instances of that gap,
+    not new ones — these strings were only found via this section's deliberate scan, never via
+    the automated gate. Worth remembering for sections 2–7: the detekt count going quiet doesn't
+    mean a screen has no hardcoded strings left if those strings are one property-hop away from
+    the actual `Text(...)`/`Icon(...)` call site.
+  - **Unplanned but necessary infra fix, found via `./gradlew test` regressing**: Robolectric
+    JVM unit tests had never had `testOptions.unitTests.isIncludeAndroidResources = true` set
+    (`app/build.gradle.kts`) — `SystemSettingsRepositoryTest` became the first test in the whole
+    suite to call `context.getString()` on an app-defined resource, and without that flag it threw
+    `Resources$NotFoundException` even though the resource genuinely exists and the code compiles
+    fine. Enabling it was necessary, but it also makes Robolectric load the app's *real*
+    `AndroidManifest.xml` instead of a synthetic default one — which surfaced two more real gaps
+    that were only ever hidden by the previous incomplete config, not introduced by this change:
+    - `AppRepositoryTest`/`PrivateSpaceRepositoryTest` both already had a documented workaround for
+      Robolectric's `ContextCompat.registerReceiver` permission quirk
+      (`shadowOf(it).grantPermissions("org.robolectric.default.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION")`)
+      — that hardcoded `org.robolectric.default` prefix was Robolectric's *synthetic* package name;
+      with the real manifest loaded, `ContextCompat` synthesizes the permission from this app's
+      *real* package instead, so the grant silently stopped matching. Fixed by building the
+      permission name from `context.packageName` instead of hardcoding the placeholder.
+      (Briefly suspected this needed a manifest-level `<permission>` declaration instead — added
+      one, confirmed via the merged-manifest output that it was real but didn't fix anything, and
+      reverted it once the actual mechanism was found: this is purely a Robolectric shadow-side
+      grant, unrelated to what the manifest declares.)
+    - `DefaultLauncherRepositoryTest`'s `` `isDefaultLauncher falls back to the HOME-intent check
+      when the role isn't available` `` asserted `false` on the assumption that "nothing resolves
+      the HOME intent in Robolectric's fake PackageManager" — true only because the old config
+      never loaded the real manifest; Facet's own `LauncherActivity` genuinely declares a HOME
+      intent-filter, so once the real manifest loads, `resolveActivity` legitimately resolves to
+      *this app itself* (correctly matching real single-launcher-installed device behavior) and
+      the old assertion no longer held. Fixed by explicitly registering a *different* package as
+      the HOME resolver, so the test now actually exercises "some other launcher is currently
+      default" rather than accidentally relying on nothing being registered at all.
+  - **Verification**: `./gradlew assembleDebug test` and `./gradlew :app:detekt` all green (585
+    unit tests, including the 2 fixed Robolectric ones and the rewritten `DefaultLauncherRepositoryTest`
+    case).
+
+### 2. Shared components (`ui/components/`)
+- [ ] `AppContextMenu.kt` (~24 strings — long-press menu actions)
+- [ ] `FolderContentsSheet.kt`, `FolderTileContextMenu.kt`, `AppPickerScreen.kt`,
+  `InheritOverrideCard.kt`, `GestureHintOverlay.kt`, `FontWeightSlider.kt`, `ScreenHeader.kt`,
+  `FacetScopeBadge.kt`, `RenameDialog.kt`, `HomeSurfacePreview.kt`, `ConfirmDialog.kt`,
+  `BackButton.kt`, `LabeledDropdownRow.kt`, `AppSortControl.kt`
+
+### 3. Settings screens (~218 strings across ~20 files — the largest surface)
+- [ ] `SettingsScreen.kt` (~43 — top-level list, do first in this group as the nav hub)
+- [ ] `AppDrawerSettingsScreen.kt` (~27), `HomeAppsListSettingsScreen.kt` (~22),
+  `AppearanceSettingsScreen.kt` (~18), `backup/BackupRestoreScreen.kt` (~16),
+  `PermissionsScreen.kt` (~11) + `PermissionsViewModel.kt` (~8), `FoldersSettingsScreen.kt` (~11),
+  `CalendarSettingsScreen.kt` (~10), `FolderDetailScreen.kt` (~9), `DockSettingsScreen.kt` (~7),
+  `AboutScreen.kt` (~7), `NotificationSettingsScreen.kt` (~6), remaining small screens
+  (`UsageAccessExplanationScreen.kt`, `NotificationAccessExplanationScreen.kt`,
+  `FolderAppPickerScreen.kt`, ViewModels holding user-facing copy)
+
+### 4. Onboarding (~65 strings — self-contained, isolable as one PR)
+- [ ] `OnboardingHomeSetupPage.kt` (~28), `OnboardingFacetsPage.kt` (~20),
+  `OnboardingIntroPage.kt` (~11), `SetDefaultLauncherSheet.kt` (~15), `OnboardingScreen.kt` (~5)
+
+### 5. Drawer, Facets, Home, Hub
+- [ ] `drawer/AppDrawerScreen.kt` (~29), `drawer/ContactConnectionsSheet.kt` (~13),
+  `drawer/DrawerViewModel.kt` (~11), `drawer/AlphabetRail.kt` (~7), `drawer/PrivateSpaceScreen.kt`
+  (~4)
+- [ ] `facets/FacetCarouselScreen.kt` (~19), `facets/ManageFacetsScreen.kt` (~15),
+  `facets/FacetSettingsScreen.kt` (~13), `facets/FacetSettingsComponents.kt` (~5),
+  `facets/FavoritesPickerScreen.kt` (~6)
+- [ ] `home/HomeScreen.kt` (~20), `home/clock/ClockStyleGalleryScreen.kt` (~25),
+  `home/ClockAdjustSheet.kt` (~9), `home/ClockBlock.kt` (~6)
+- [ ] `hub/picker/HubWidgetPickerScreen.kt` (~10), `hub/OrphanedWidgetTile.kt` (~8),
+  `hub/HubHeader.kt`, `HubGrid.kt`, `HubEmptyState.kt`, `HubAtCapacityStrip.kt` (small)
+
+### 6. Special case — not a simple resource swap
+- [ ] `home/clock/TimeInWords.kt` spells time as words ("Eleven Twenty Two") via number-to-words
+  generation logic, not static copy — a resource file can't express this directly. Needs either
+  per-locale grammar rules or scoping this clock style as English-only for v1; flag the decision
+  back to the user rather than guessing when this task comes up.
+
+### 7. Non-Compose user-visible text
+- [ ] Check `data/`/`domain/` for Toast, notification, or widget-host text shown outside Compose
+  (initial scan found no clear hits; worth a manual check of `AppWidgetRepository.kt` and anything
+  posting notifications).
+
+### 8. Wrap-up
+- [ ] Delete now-unused string literals; `./gradlew lint` shows zero `HardcodedText` findings.
+- [ ] Update `docs/architecture/README.md` per its own table if this introduces a pattern worth
+  documenting (e.g. how `SettingsSearchEntry` labels resolve via resources).
+
+Actual translation into other locales (`values-<lang>/strings.xml`) is pass 2, out of scope here.

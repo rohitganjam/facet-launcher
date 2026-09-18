@@ -1,5 +1,8 @@
 package com.facetlauncher.app.data.model
 
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
+
 /**
  * F11 — global (not per-app) app-icon rendering mode. [SYSTEM_DEFAULT] renders each app's own
  * icon unchanged. The two monochrome modes recolor every app's regular icon (a `BlendMode.Color`
@@ -11,8 +14,8 @@ package com.facetlauncher.app.data.model
  * glyph with no internal shading, so using it looked flat and out of place next to every other
  * (detailed, recolored) icon; tried and reverted (see chat history).
  */
-enum class IconRenderMode(val displayName: String) {
-    SYSTEM_DEFAULT("System default"),
-    MONOCHROME_BLACK_WHITE("Monochrome (Black & white)"),
-    MONOCHROME_ACCENT("Monochrome (Accent)"),
+enum class IconRenderMode(@param:StringRes val displayNameRes: Int) {
+    SYSTEM_DEFAULT(R.string.icon_render_system_default),
+    MONOCHROME_BLACK_WHITE(R.string.icon_render_monochrome_black_white),
+    MONOCHROME_ACCENT(R.string.icon_render_monochrome_accent),
 }

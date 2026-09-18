@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -182,7 +183,7 @@ private fun SettingsContent(
                     SettingsCard {
                         ClickableRow(
                             title = "Clock & Calendar Style",
-                            subtitle = uiState.settings.clockTemplateId.displayName + " · " +
+                            subtitle = stringResource(uiState.settings.clockTemplateId.displayNameRes) + " · " +
                                 if (uiState.settings.use24HourTime) "24-hour time" else "12-hour time",
                             onClick = onNavigateToClockStyleGallery,
                             testTag = "clock_style_gallery_row",

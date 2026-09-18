@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.FontWeightOption
@@ -48,7 +49,7 @@ fun FontWeightSlider(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(text = "Weight", style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = selected.displayName, style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Text(text = stringResource(selected.displayNameRes), style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         Slider(
             value = selectedIndex.toFloat(),

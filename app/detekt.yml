@@ -1,0 +1,55 @@
+# Custom rule sets aren't active by default in detekt — must be explicitly opted in here.
+# See IMPLEMENTATION_PLAN.md's "Language translation" section for what this gates.
+facet:
+  active: true
+  ComposeHardcodedText:
+    active: true
+
+# mrmans0n/compose-rules (io.nlopez.compose.rules:detekt) — Compose best-practice rules
+# (Modifier placement/ordering, state hoisting, remember misuse, etc.) that mechanize several
+# conventions CLAUDE.md already documents by hand. Every rule listed explicitly, same as `facet`
+# above — third-party rule sets aren't active by default here either.
+Compose:
+  active: true
+  ComposableAnnotationNaming: { active: true }
+  ComposableNaming: { active: true }
+  ComposableNestingDepth: { active: true }
+  ComposableParamOrder: { active: true }
+  CompositionLocalAllowlist: { active: true }
+  CompositionLocalNaming: { active: true }
+  ConditionHoist: { active: true }
+  ContentEmitterReturningValues: { active: true }
+  ContentSlotReused: { active: true }
+  ContentTrailingLambda: { active: true }
+  DefaultsVisibility: { active: true }
+  InvalidReadOnlyComposable: { active: true }
+  LambdaParameterEventTrailing: { active: true }
+  LambdaParameterInRestartableEffect: { active: true }
+  Material2: { active: true }
+  MissingNonRestartableComposable: { active: true }
+  MissingReadOnlyComposable: { active: true }
+  ModifierClickableOrder: { active: true }
+  ModifierComposed: { active: true }
+  ModifierMissing: { active: true }
+  ModifierNaming: { active: true }
+  ModifierNotUsedAtRoot: { active: true }
+  ModifierReused: { active: true }
+  ModifierWithoutDefault: { active: true }
+  MultipleEmitters: { active: true }
+  MutableParams: { active: true }
+  MutableStateAutoboxing: { active: true }
+  MutableStateParam: { active: true }
+  ParameterNaming: { active: true }
+  PreviewAnnotationNaming: { active: true }
+  PreviewNaming: { active: true }
+  PreviewPublic: { active: true }
+  RememberContentMissing: { active: true }
+  RememberMissing: { active: true }
+  StaleRememberUpdatedStateInRemember: { active: true }
+  StateParam: { active: true }
+  UnnecessaryComposable: { active: true }
+  UnnecessaryLaunchedEffect: { active: true }
+  UnstableCollections: { active: true }
+  VarsWithoutStateBacking: { active: true }
+  ViewModelForwarding: { active: true }
+  ViewModelInjection: { active: true }

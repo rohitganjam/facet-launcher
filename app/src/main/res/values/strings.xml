@@ -1,3 +1,115 @@
 <resources>
+    <!-- i18n conventions (see IMPLEMENTATION_PLAN.md "Language translation" section):
+         - Counts that vary by quantity (e.g. "3 apps") use a <plurals> resource, not string
+           concatenation — other locales have more than English's one/other split.
+         - Interpolated values use positional %1$s/%1$d placeholders (never raw string
+           concatenation), so translated strings can reorder them per locale grammar. -->
     <string name="app_name">Facet Launcher</string>
+
+    <!-- Shared font names — referenced by both ClockFontOption and LauncherFontOption, which
+         offer the identical set of bundled fonts, so a translator only translates each once. -->
+    <string name="font_name_system">System</string>
+    <string name="font_name_roboto_flex">Roboto Flex</string>
+    <string name="font_name_noto_sans">Noto Sans</string>
+    <string name="font_name_manrope">Manrope</string>
+    <string name="font_name_poppins">Poppins</string>
+
+    <!-- AppSortOption -->
+    <string name="app_sort_alphabetical">Alphabetical</string>
+    <string name="app_sort_last_used">Last used</string>
+    <string name="app_sort_installed_date">Installed Date</string>
+    <string name="app_sort_last_updated">Last updated</string>
+
+    <!-- ClockDateStyle -->
+    <string name="clock_date_style_full">Full</string>
+    <string name="clock_date_style_condensed">Condensed</string>
+
+    <!-- ClockFontOption (font_name_* above cover everything but LAUNCHER_DEFAULT) -->
+    <string name="clock_font_launcher_default">Default launcher font</string>
+
+    <!-- ClockColorOption -->
+    <string name="clock_color_theme">Theme</string>
+    <string name="clock_color_theme_inverted">Theme Inverted</string>
+    <string name="clock_color_accent_primary">Accent primary</string>
+    <string name="clock_color_accent_secondary">Accent secondary</string>
+
+    <!-- FontWeightOption -->
+    <string name="font_weight_thin">Thin</string>
+    <string name="font_weight_extra_light">Extra Light</string>
+    <string name="font_weight_light">Light</string>
+    <string name="font_weight_regular">Regular</string>
+    <string name="font_weight_medium">Medium</string>
+    <string name="font_weight_semi_bold">Semi Bold</string>
+
+    <!-- IconRenderMode -->
+    <string name="icon_render_system_default">System default</string>
+    <string name="icon_render_monochrome_black_white">Monochrome (Black &amp; white)</string>
+    <string name="icon_render_monochrome_accent">Monochrome (Accent)</string>
+
+    <!-- ClockTemplateId -->
+    <string name="clock_template_light_stack">Light stack</string>
+    <string name="clock_template_rule_meridiem">Ruler</string>
+    <string name="clock_template_date_forward">Date forward</string>
+    <string name="clock_template_weight_contrast">Weight contrast</string>
+    <string name="clock_template_italic_accent">Italics</string>
+    <string name="clock_template_spelled_out">Spelled out</string>
+    <string name="clock_template_vertical_stack">Vertical stack</string>
+    <string name="clock_template_vertical_stack_bold_hour">Vertical stack (bold hour)</string>
+    <string name="clock_template_roboto_flex_wide">Flex Wide</string>
+    <string name="clock_template_roboto_flex_narrow">Flex Narrow</string>
+    <string name="clock_template_tech_distorted">Tech Distorted</string>
+    <string name="clock_template_variable_divider">Variable Divider</string>
+    <string name="clock_template_fluid_stack">Fluid Stack</string>
+    <string name="clock_template_fluid_stack_inverted">Fluid Stack Inverted</string>
+    <string name="clock_template_bracket_minimal">Bracket Minimal</string>
+    <string name="clock_template_two_line_divider">Two-Line Divider</string>
+    <string name="clock_template_bold_colon">Bold Colon</string>
+    <string name="clock_template_accented_fluid_stack">Accented Fluid Stack</string>
+    <string name="clock_template_accented_fluid_stack_inverted">Accented Fluid Stack Inverted</string>
+    <string name="clock_template_accent_contrast">Accent Contrast</string>
+    <string name="clock_template_accent_field">Accent Field</string>
+    <string name="clock_template_hour_tile">Hour Tile</string>
+    <string name="clock_template_chip">Chip</string>
+    <string name="clock_template_duotone_overlap">Duotone Overlap</string>
+    <string name="clock_template_corner_frame">Corner Frame</string>
+    <string name="clock_template_stub">Stub</string>
+    <string name="clock_template_halo">Halo</string>
+    <string name="clock_template_digit_cells">Digit Cells</string>
+    <string name="clock_template_negative_panel">Negative Panel</string>
+    <string name="clock_template_hollow_hour">Hollow Hour</string>
+    <string name="clock_template_highlighter">Highlighter</string>
+    <string name="clock_template_column_rule">Column Rule</string>
+    <string name="clock_template_colon_mark">Colon Mark</string>
+    <string name="clock_template_pill_pair">Pill Pair</string>
+    <string name="clock_template_shelf">Shelf</string>
+    <string name="clock_template_half_immersed">Half Immersed</string>
+
+    <!-- AccentSwatch -->
+    <string name="accent_swatch_blue">Blue</string>
+    <string name="accent_swatch_indigo">Indigo</string>
+    <string name="accent_swatch_purple">Purple</string>
+    <string name="accent_swatch_pink">Pink</string>
+    <string name="accent_swatch_red">Red</string>
+    <string name="accent_swatch_orange">Orange</string>
+    <string name="accent_swatch_amber">Amber</string>
+    <string name="accent_swatch_green">Green</string>
+    <string name="accent_swatch_teal">Teal</string>
+    <string name="accent_swatch_cyan">Cyan</string>
+
+    <!-- SystemSettingsRepository's SETTINGS_CATALOG — deep-link labels shown in Drawer search results -->
+    <string name="settings_catalog_wifi">Wi-Fi</string>
+    <string name="settings_catalog_bluetooth">Bluetooth</string>
+    <string name="settings_catalog_airplane_mode">Airplane mode</string>
+    <string name="settings_catalog_display">Display</string>
+    <string name="settings_catalog_sound">Sound &amp; vibration</string>
+    <string name="settings_catalog_battery_saver">Battery saver</string>
+    <string name="settings_catalog_storage">Storage</string>
+    <string name="settings_catalog_apps">Apps</string>
+    <string name="settings_catalog_location">Location</string>
+    <string name="settings_catalog_security">Security</string>
+    <string name="settings_catalog_accessibility">Accessibility</string>
+    <string name="settings_catalog_date_time">Date &amp; time</string>
+    <string name="settings_catalog_language">Languages &amp; input</string>
+    <string name="settings_catalog_accounts">Accounts</string>
+    <string name="settings_catalog_nfc">NFC</string>
 </resources>

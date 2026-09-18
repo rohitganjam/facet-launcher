@@ -1,5 +1,8 @@
 package com.facetlauncher.app.data.model
 
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
+
 /**
  * A clock/calendar font choice. Lives in `data/model` so it can be a real typed field on
  * [LauncherSettings] — the actual bundled [androidx.compose.ui.text.font.FontFamily] each option
@@ -13,11 +16,11 @@ package com.facetlauncher.app.data.model
  * that's what the launcher font itself is), so a fresh install's clock/calendar follow the
  * launcher-wide font choice rather than being pinned to the system font independently of it.
  */
-enum class ClockFontOption(val displayName: String) {
-    LAUNCHER_DEFAULT("Default launcher font"),
-    SYSTEM("System"),
-    ROBOTO_FLEX("Roboto Flex"),
-    NOTO_SANS("Noto Sans"),
-    MANROPE("Manrope"),
-    POPPINS("Poppins"),
+enum class ClockFontOption(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.clock_font_launcher_default),
+    SYSTEM(R.string.font_name_system),
+    ROBOTO_FLEX(R.string.font_name_roboto_flex),
+    NOTO_SANS(R.string.font_name_noto_sans),
+    MANROPE(R.string.font_name_manrope),
+    POPPINS(R.string.font_name_poppins),
 }

@@ -1,5 +1,8 @@
 package com.facetlauncher.app.data.model
 
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
+
 /**
  * A text color choice shared by the clock, calendar, and app-list/dock labels
  * ([LauncherSettings.appLabelColorOption]), independently pickable per surface. Lives in
@@ -27,9 +30,9 @@ package com.facetlauncher.app.data.model
  * automatically shadows it with the tone that contrasts correctly, since that's resolved from the
  * text color's own luminance.
  */
-enum class ClockColorOption(val displayName: String) {
-    THEME("Theme"),
-    THEME_INVERTED("Theme Inverted"),
-    ACCENT_PRIMARY("Accent primary"),
-    ACCENT_SECONDARY("Accent secondary"),
+enum class ClockColorOption(@param:StringRes val displayNameRes: Int) {
+    THEME(R.string.clock_color_theme),
+    THEME_INVERTED(R.string.clock_color_theme_inverted),
+    ACCENT_PRIMARY(R.string.clock_color_accent_primary),
+    ACCENT_SECONDARY(R.string.clock_color_accent_secondary),
 }

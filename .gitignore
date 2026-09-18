@@ -5,6 +5,7 @@
 .DS_Store
 /build
 /app/build
+/detekt-rules/build
 /captures
 .externalNativeBuild
 .cxx

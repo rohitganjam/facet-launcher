@@ -1,0 +1,467 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComposableNestingDepth:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
+    <ID>ComposableNestingDepth:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
+    <ID>ComposableNestingDepth:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
+    <ID>ComposableNestingDepth:ClockTemplates.kt:@Composable private fun ColumnRuleTemplate</ID>
+    <ID>ComposableNestingDepth:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
+    <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun AddFacetPage</ID>
+    <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
+    <ID>ComposableNestingDepth:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
+    <ID>ComposableNestingDepth:HomeScreen.kt:@Composable fun HomeScreen</ID>
+    <ID>ComposableNestingDepth:HubGrid.kt:@Composable fun HubGrid</ID>
+    <ID>ComposableNestingDepth:HubWidgetPickerScreen.kt:@Composable internal fun HubWidgetPickerContent</ID>
+    <ID>ComposableParamOrder:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
+    <ID>ComposableParamOrder:AppDrawerSettingsScreen.kt:@Composable private fun AppDrawerToggleRow</ID>
+    <ID>ComposableParamOrder:ClockAccessoryIcons.kt:@Composable fun BatteryIcon</ID>
+    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
+    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun ClockGlyphText</ID>
+    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun HourText</ID>
+    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun MinuteText</ID>
+    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun SeparatorText</ID>
+    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun TemplateDateText</ID>
+    <ID>ComposableParamOrder:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
+    <ID>ComposableParamOrder:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
+    <ID>ComposableParamOrder:HomeScreen.kt:@Composable internal fun FolderRow</ID>
+    <ID>ComposableParamOrder:HomeScreen.kt:@OptIn(ExperimentalFoundationApi::class) @Composable internal fun AppRow</ID>
+    <ID>ComposableParamOrder:StickyHeaderLayout.kt:@Composable fun StickyHeaderLayout</ID>
+    <ID>ComposeHardcodedText:AboutScreen.kt:"About"</ID>
+    <ID>ComposeHardcodedText:AboutScreen.kt:"Check for updates"</ID>
+    <ID>ComposeHardcodedText:AboutScreen.kt:"Join the Discord"</ID>
+    <ID>ComposeHardcodedText:AboutScreen.kt:"Version"</ID>
+    <ID>ComposeHardcodedText:AlphabetRail.kt:"Folders"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"${folder.apps.size} apps"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"Add to folder"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"App info"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"Back"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"Create new folder"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"New folder"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"Remove from folder"</ID>
+    <ID>ComposeHardcodedText:AppContextMenu.kt:"Uninstall"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"APPS"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"CONTACTS"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Clear search"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Contact search is off in App Drawer settings."</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Contact search needs access from system settings."</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Folders"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Launcher settings"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"More options"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"No matches found for “$query”"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Open Secure Folder"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Open settings"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Private Space"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"SETTINGS"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Search apps"</ID>
+    <ID>ComposeHardcodedText:AppDrawerScreen.kt:"Turn on"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"${(opacity * 100).roundToInt()}%"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"App Drawer"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Drawer opacity"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Folders in drawer"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Grid size"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"List item size"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Search bar position"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Search contacts"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Search settings"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Show apps as"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Show icons"</ID>
+    <ID>ComposeHardcodedText:AppDrawerSettingsScreen.kt:"Show labels"</ID>
+    <ID>ComposeHardcodedText:AppPickerScreen.kt:"${folder.apps.size} apps"</ID>
+    <ID>ComposeHardcodedText:AppPickerScreen.kt:"Done"</ID>
+    <ID>ComposeHardcodedText:AppPickerScreen.kt:"Favorites"</ID>
+    <ID>ComposeHardcodedText:AppPickerScreen.kt:"No folders yet. Long-press an app and choose \"Add to folder\" to create one."</ID>
+    <ID>ComposeHardcodedText:AppPickerScreen.kt:"Search apps"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Accent color"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"App label color"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Appearance"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Basic colors"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Icons"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Launcher Font"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Launcher theme"</ID>
+    <ID>ComposeHardcodedText:AppearanceSettingsScreen.kt:"Wallpaper colors"</ID>
+    <ID>ComposeHardcodedText:BackButton.kt:"Back"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Backup &amp; restore"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Export backup"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Import backup"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Importing replaces every facet, the dock, and default favorites with what's in the backup file. This can't be undone."</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Re-add"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Replace everything on this device?"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"Skip"</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"These widgets couldn't be restored automatically — tap each one to add it back where it was."</ID>
+    <ID>ComposeHardcodedText:BackupRestoreScreen.kt:"WIDGETS TO RE-ADD"</ID>
+    <ID>ComposeHardcodedText:CalendarSettingsScreen.kt:"Calendar access off — events hidden."</ID>
+    <ID>ComposeHardcodedText:CalendarSettingsScreen.kt:"Calendar settings"</ID>
+    <ID>ComposeHardcodedText:CalendarSettingsScreen.kt:"Calendars to display"</ID>
+    <ID>ComposeHardcodedText:CalendarSettingsScreen.kt:"No calendars found on this device."</ID>
+    <ID>ComposeHardcodedText:CalendarSettingsScreen.kt:"Show all-day events"</ID>
+    <ID>ComposeHardcodedText:ClockAccessoryRow.kt:"$percent%"</ID>
+    <ID>ComposeHardcodedText:ClockAccessoryRow.kt:"·"</ID>
+    <ID>ComposeHardcodedText:ClockAdjustSheet.kt:"Adjust clock size &amp; position"</ID>
+    <ID>ComposeHardcodedText:ClockAdjustSheet.kt:"Edit clock &amp; calendar styles"</ID>
+    <ID>ComposeHardcodedText:ClockAdjustSheet.kt:"Facet settings"</ID>
+    <ID>ComposeHardcodedText:ClockAdjustSheet.kt:"Launcher settings"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"24-hour time"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Accent color"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Applied"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"CALENDAR"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"CLOCK STYLES — TAP TO SELECT"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"CLOCK"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Calendar alignment"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Clock &amp; Calendar Style"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Clock alignment"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Color"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Date style"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Font"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Long-press clock on home screen to adjust size and vertical position."</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"POSITION"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Primary font color"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Reset clock widget position"</ID>
+    <ID>ComposeHardcodedText:ClockStyleGalleryScreen.kt:"Show meridiem (AM/PM)"</ID>
+    <ID>ComposeHardcodedText:ClockTemplates.kt:" ]"</ID>
+    <ID>ComposeHardcodedText:ClockTemplates.kt:":"</ID>
+    <ID>ComposeHardcodedText:ClockTemplates.kt:"[ "</ID>
+    <ID>ComposeHardcodedText:ClockTemplates.kt:"·"</ID>
+    <ID>ComposeHardcodedText:ClockZoneHandle.kt:"Drag to resize"</ID>
+    <ID>ComposeHardcodedText:ConfirmDialog.kt:"Cancel"</ID>
+    <ID>ComposeHardcodedText:ContactConnectionsSheet.kt:"Back"</ID>
+    <ID>ComposeHardcodedText:ContactConnectionsSheet.kt:"View contact"</ID>
+    <ID>ComposeHardcodedText:DockSettingsScreen.kt:"Display style"</ID>
+    <ID>ComposeHardcodedText:DockSettingsScreen.kt:"Dock"</ID>
+    <ID>ComposeHardcodedText:DockSettingsScreen.kt:"Drag to reorder"</ID>
+    <ID>ComposeHardcodedText:DockSettingsScreen.kt:"Select Dock Apps"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:""</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"+"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Active"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Add facet"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Appearance, Default clock, favorites, drawer and more"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Delete ${facet.name}?"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Delete facet"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Facet settings"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Launcher settings"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"No favorites yet"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Reorder"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Starts with your launcher's default clock, calendar, favorite apps, and settings. Customize them per facet."</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"Switch Facets"</ID>
+    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:"This can't be undone. Its favorites also be removed."</ID>
+    <ID>ComposeHardcodedText:FacetScopeBadge.kt:"Other profile"</ID>
+    <ID>ComposeHardcodedText:FacetScopeBadge.kt:"Work"</ID>
+    <ID>ComposeHardcodedText:FacetSettingsScreen.kt:"Apps list settings"</ID>
+    <ID>ComposeHardcodedText:FacetSettingsScreen.kt:"Calendars to display"</ID>
+    <ID>ComposeHardcodedText:FacetSettingsScreen.kt:"Clock &amp; Calendar Style"</ID>
+    <ID>ComposeHardcodedText:FacetSettingsScreen.kt:"Dock settings"</ID>
+    <ID>ComposeHardcodedText:FacetSettingsScreen.kt:"Rename facet"</ID>
+    <ID>ComposeHardcodedText:FolderContentsSheet.kt:"Add to folder"</ID>
+    <ID>ComposeHardcodedText:FolderContentsSheet.kt:"Back"</ID>
+    <ID>ComposeHardcodedText:FolderContentsSheet.kt:"No apps in this folder yet"</ID>
+    <ID>ComposeHardcodedText:FolderContentsSheet.kt:"Rename folder"</ID>
+    <ID>ComposeHardcodedText:FolderContentsSheet.kt:"Rename"</ID>
+    <ID>ComposeHardcodedText:FolderDetailScreen.kt:"Add to folder"</ID>
+    <ID>ComposeHardcodedText:FolderDetailScreen.kt:"Drag to reorder"</ID>
+    <ID>ComposeHardcodedText:FolderDetailScreen.kt:"No apps in this folder yet. Tap \"Add to folder\" to add some."</ID>
+    <ID>ComposeHardcodedText:FolderDetailScreen.kt:"Remove from folder"</ID>
+    <ID>ComposeHardcodedText:FolderDetailScreen.kt:"Rename folder"</ID>
+    <ID>ComposeHardcodedText:FolderDetailScreen.kt:"Rename"</ID>
+    <ID>ComposeHardcodedText:FolderTileContextMenu.kt:"Rename folder"</ID>
+    <ID>ComposeHardcodedText:FolderTileContextMenu.kt:"Rename"</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"${folder.apps.size} apps"</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"Delete folder"</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"Folder"</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"Folders"</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"New folder"</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"No folders yet. Long-press an app and choose \"Add to folder\" to create one."</ID>
+    <ID>ComposeHardcodedText:FoldersSettingsScreen.kt:"This permanently deletes \"${folder.name}\" and removes it from every Dock and Favorites list it's placed in."</ID>
+    <ID>ComposeHardcodedText:FontWeightSlider.kt:"Weight"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"All your apps"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"Got it"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"Switch facets"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"Widgets"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"←"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"↑"</ID>
+    <ID>ComposeHardcodedText:GestureHintOverlay.kt:"→"</ID>
+    <ID>ComposeHardcodedText:HomeAppsListSettingsScreen.kt:"Apps to show"</ID>
+    <ID>ComposeHardcodedText:HomeAppsListSettingsScreen.kt:"Drag to reorder"</ID>
+    <ID>ComposeHardcodedText:HomeAppsListSettingsScreen.kt:"Home Apps List"</ID>
+    <ID>ComposeHardcodedText:HomeAppsListSettingsScreen.kt:"List position"</ID>
+    <ID>ComposeHardcodedText:HomeAppsListSettingsScreen.kt:"Position"</ID>
+    <ID>ComposeHardcodedText:HomeAppsListSettingsScreen.kt:"Presentation"</ID>
+    <ID>ComposeHardcodedText:HomeScreen.kt:"Most used needs usage access from system settings."</ID>
+    <ID>ComposeHardcodedText:HomeScreen.kt:"Open settings"</ID>
+    <ID>ComposeHardcodedText:HomeSurfacePreview.kt:"Nothing to preview yet"</ID>
+    <ID>ComposeHardcodedText:HomeSurfacePreview.kt:"PREVIEW"</ID>
+    <ID>ComposeHardcodedText:HubAtCapacityStrip.kt:"Full at 20 widgets — remove one to add another."</ID>
+    <ID>ComposeHardcodedText:HubAtCapacityStrip.kt:"Manage"</ID>
+    <ID>ComposeHardcodedText:HubEmptyState.kt:"+"</ID>
+    <ID>ComposeHardcodedText:HubEmptyState.kt:"Add a widget to get started."</ID>
+    <ID>ComposeHardcodedText:HubEmptyState.kt:"Add widget"</ID>
+    <ID>ComposeHardcodedText:HubEmptyState.kt:"No widgets yet"</ID>
+    <ID>ComposeHardcodedText:HubGrid.kt:"Remove widget"</ID>
+    <ID>ComposeHardcodedText:HubGrid.kt:"Resize widget"</ID>
+    <ID>ComposeHardcodedText:HubHeader.kt:"Add"</ID>
+    <ID>ComposeHardcodedText:HubHeader.kt:"Widgets"</ID>
+    <ID>ComposeHardcodedText:HubWidgetPickerScreen.kt:"$remaining left"</ID>
+    <ID>ComposeHardcodedText:HubWidgetPickerScreen.kt:"${option.columns}×${option.rows}"</ID>
+    <ID>ComposeHardcodedText:HubWidgetPickerScreen.kt:"${option.widgetLabel} ${option.columns}×${option.rows}"</ID>
+    <ID>ComposeHardcodedText:HubWidgetPickerScreen.kt:"Add widget"</ID>
+    <ID>ComposeHardcodedText:HubWidgetPickerScreen.kt:"No widgets found"</ID>
+    <ID>ComposeHardcodedText:HubWidgetPickerScreen.kt:"Search widgets"</ID>
+    <ID>ComposeHardcodedText:InheritOverrideCard.kt:"Inherit default"</ID>
+    <ID>ComposeHardcodedText:InheritOverrideCard.kt:"Override for this facet"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Add facet"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Apply facet"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Delete ${facet.name}?"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Delete"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Drag to re-order facets"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Drag to reorder"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Facet options"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Facet settings"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"Manage Facets"</ID>
+    <ID>ComposeHardcodedText:ManageFacetsScreen.kt:"This can't be undone. Its favorites will be removed too."</ID>
+    <ID>ComposeHardcodedText:NotificationAccessExplanationScreen.kt:"Notification access"</ID>
+    <ID>ComposeHardcodedText:NotificationAccessExplanationScreen.kt:"Notification badges show a dot or count on apps with something waiting for you."</ID>
+    <ID>ComposeHardcodedText:NotificationAccessExplanationScreen.kt:"Open settings"</ID>
+    <ID>ComposeHardcodedText:NotificationSettingsScreen.kt:"Badge style"</ID>
+    <ID>ComposeHardcodedText:NotificationSettingsScreen.kt:"Notification badges"</ID>
+    <ID>ComposeHardcodedText:NotificationSettingsScreen.kt:"Notifications"</ID>
+    <ID>ComposeHardcodedText:OnboardingFacetsPage.kt:"Back"</ID>
+    <ID>ComposeHardcodedText:OnboardingFacetsPage.kt:"Continue"</ID>
+    <ID>ComposeHardcodedText:OnboardingFacetsPage.kt:"FAVORITES"</ID>
+    <ID>ComposeHardcodedText:OnboardingFacetsPage.kt:"More than one home screen"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"APP DRAWER"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Apps to show"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Back"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Clear all"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Clear favorites?"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Clear the dock?"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"DOCK"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Drag to reorder"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Favorites"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"HOME APPS"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Manage dock apps"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Next"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Pick the apps you want on Home. You can change all of this later."</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Removes every app from the default dock. You can add apps back anytime."</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Removes every app from your default favorites. You can add apps back anytime."</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Set up your home screen"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Show apps as"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"Show"</ID>
+    <ID>ComposeHardcodedText:OnboardingHomeSetupPage.kt:"The default dock — each facet can customize its own later. Drag to reorder."</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"9:41"</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"A home screen that focuses on you."</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Clock"</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Dock"</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Facet Launcher"</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Next"</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"No icon grid. Just your clock, what's next, and a few apps you actually open."</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Swipe left to switch facets."</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Swipe right for your widgets."</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Swipe up any time for all your apps."</ID>
+    <ID>ComposeHardcodedText:OnboardingIntroPage.kt:"Your apps"</ID>
+    <ID>ComposeHardcodedText:OnboardingScreen.kt:"Skip"</ID>
+    <ID>ComposeHardcodedText:OrphanedWidgetTile.kt:"${providerLabel ?: "This"} widget unavailable"</ID>
+    <ID>ComposeHardcodedText:OrphanedWidgetTile.kt:"Keep space"</ID>
+    <ID>ComposeHardcodedText:OrphanedWidgetTile.kt:"Remove"</ID>
+    <ID>ComposeHardcodedText:OrphanedWidgetTile.kt:"The app was uninstalled"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Calendar"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Contacts"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Notification access"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"On"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Permissions"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Turn on"</ID>
+    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Usage access"</ID>
+    <ID>ComposeHardcodedText:PermissionsViewModel.kt:PermissionsViewModel$"Calendar"</ID>
+    <ID>ComposeHardcodedText:PermissionsViewModel.kt:PermissionsViewModel$"Contacts"</ID>
+    <ID>ComposeHardcodedText:PermissionsViewModel.kt:PermissionsViewModel$"Notification access"</ID>
+    <ID>ComposeHardcodedText:PermissionsViewModel.kt:PermissionsViewModel$"Usage access"</ID>
+    <ID>ComposeHardcodedText:PrivateSpaceScreen.kt:"Private Space is locked"</ID>
+    <ID>ComposeHardcodedText:PrivateSpaceScreen.kt:"Search Private Space"</ID>
+    <ID>ComposeHardcodedText:RenameDialog.kt:"Cancel"</ID>
+    <ID>ComposeHardcodedText:RenameDialog.kt:"Reset"</ID>
+    <ID>ComposeHardcodedText:RenameDialog.kt:"Save"</ID>
+    <ID>ComposeHardcodedText:ScreenHeader.kt:"Action"</ID>
+    <ID>ComposeHardcodedText:ScreenHeader.kt:"Screen title"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Android will ask you to confirm. You can switch back to your old launcher any time from Settings."</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Done"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Facet Launcher"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Facet is already your home screen"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Home app"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Later"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Make Facet your home screen"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Permissions come later, one at a time, only when a feature needs them."</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"Set as default"</ID>
+    <ID>ComposeHardcodedText:SetDefaultLauncherSheet.kt:"✓"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"About Facet Launcher"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"App Drawer"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Backup &amp; restore"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Calendars to display"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Change wallpaper"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Clock &amp; Calendar Style"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Dock"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Facets"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Folders"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Home Apps List"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Launcher Appearance"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Notifications"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Permissions"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Set as default launcher"</ID>
+    <ID>ComposeHardcodedText:SettingsScreen.kt:"Settings"</ID>
+    <ID>ComposeHardcodedText:UsageAccessExplanationScreen.kt:"Open settings"</ID>
+    <ID>ComposeHardcodedText:UsageAccessExplanationScreen.kt:"Recents and Most used show apps based on how you actually use your phone."</ID>
+    <ID>ComposeHardcodedText:UsageAccessExplanationScreen.kt:"Usage access"</ID>
+    <ID>CompositionLocalAllowlist:LauncherLocals.kt:/** * [LauncherViewModel.homePressedEvent], threaded down from [com.facetlauncher.app.LauncherActivity]'s * top-level `CompositionLocalProvider` so any transient UI state that should close when the user * returns Home — not just [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own Drawer/Hub/Facet * axes, but e.g. [com.facetlauncher.app.ui.components.AppContextMenu]'s bottom sheet — can subscribe * directly without every intermediate composable threading it through as a parameter. Same shape as * `ui/theme/ThemeLocals.kt`'s own locals. `null` wherever [com.facetlauncher.app.LauncherActivity] * hasn't provided it (`@Preview`s, unit tests), where nothing should close rather than crash. */ val LocalHomePressedEvent = staticCompositionLocalOf&lt;SharedFlow&lt;Unit&gt;?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Bumped by [FacetLauncherTheme] on every `ON_RESUME` so [Accent]'s dynamic-color lookup re-reads * the OS's current wallpaper-derived palette instead of trusting a value cached from whenever the * Activity was first composed. Needed because Facet, as the Home app, is almost always *resumed* * rather than freshly launched — without this, a wallpaper/theme-palette change made in system * Settings would only show up in Facet after a full force-stop, not just returning to Home (see * chat history). */ val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * F11's accent-source settings, provided once at the root by [FacetLauncherTheme] so [Accent] * (a plain top-level color, not a composable parameter) can read them without every call site * threading them through. Defaults here (Material You on, no custom pick) only apply to * previews/tests that render without going through [FacetLauncherTheme] explicitly. */ val LocalAccentFromSystem = staticCompositionLocalOf { true }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * F11's global icon-rendering mode, provided once at the root by [FacetLauncherTheme] so * [com.facetlauncher.app.ui.components.AppIcon] — called from a dozen+ surfaces (Home, Drawer, * Dock, context menu, pickers) — can read it without every call site threading it through. */ val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAULT }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Whether the app is currently rendering dark — resolved once by [FacetLauncherTheme] from * [com.facetlauncher.app.data.model.ThemeMode] (an explicit Light/Dark override, or System * following [androidx.compose.foundation.isSystemInDarkTheme]) and read from here by every * color in `Color.kt` instead of each calling `isSystemInDarkTheme()` itself, so the in-app * override actually takes effect everywhere a color is used. */ val LocalIsDarkTheme = staticCompositionLocalOf { false }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** Which wallpaper-derived tonal role [Accent] resolves to when [LocalAccentFromSystem] is `true` — see [WallpaperAccentRole]. */ val LocalWallpaperAccentRole = staticCompositionLocalOf { WallpaperAccentRole.PRIMARY }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:val LocalCustomAccentSwatch = compositionLocalOf&lt;AccentSwatch?&gt; { null }</ID>
+    <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onDismissRequest: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestQuickAddState: suspend (AppInfo) -&gt; QuickAddState = { QuickAddState() }</ID>
+    <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestShortcuts: suspend (AppInfo) -&gt; List&lt;AppShortcut&gt;</ID>
+    <ID>LambdaParameterInRestartableEffect:AppDrawerScreen.kt:onRequestConnections: suspend (ContactInfo) -&gt; List&lt;ContactConnection&gt; = { emptyList() }</ID>
+    <ID>LambdaParameterInRestartableEffect:AppPickerScreen.kt:onResume: () -&gt; Unit = {}</ID>
+    <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onDismissRequest: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onRequestQuickAddState: suspend (Folder) -&gt; QuickAddState = { QuickAddState() }</ID>
+    <ID>LambdaParameterInRestartableEffect:HomeScreen.kt:/** Fired once, on release, by the clock's resize handles. */ onClockScaleCommit: (Float) -&gt; Unit = { _ -&gt; }</ID>
+    <ID>LambdaParameterInRestartableEffect:HubWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:NotificationAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:UsageAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
+    <ID>Material2:Theme.kt:import androidx.compose.material.ripple.RippleAlpha</ID>
+    <ID>ModifierClickableOrder:ContactConnectionsSheet.kt:clickable(enabled = false, onClick = {})</ID>
+    <ID>ModifierClickableOrder:FolderContentsSheet.kt:clickable(enabled = false, onClick = {})</ID>
+    <ID>ModifierClickableOrder:SetDefaultLauncherSheet.kt:clickable(enabled = false, onClick = {})</ID>
+    <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }) .testTag("drawer_grid_tile_${app.packageName}")</ID>
+    <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true }) .testTag("drawer_grid_folder_tile_${folder.id}")</ID>
+    <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .fillMaxWidth() .clip(MaterialTheme.shapes.large) .combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true }) .testTag("drawer_folder_row_${folder.id}") .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .fillMaxWidth() // Large/16dp (MaterialTheme.shapes.large — see CLAUDE.md's shape table, which // names this the "navigation drawers" token) clips the ripple/press state to a // rounded rect instead of a full-bleed rectangle (see chat history). .clip(MaterialTheme.shapes.large) .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }) .testTag("drawer_app_row_${app.packageName}") // Base 6dp vertical padding plus the selected size tier's extra (0/8/16dp) — see // DrawerListItemSize's own doc (see chat history). .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:FolderContentsSheet.kt:modifier = modifier .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }) .testTag("folder_contents_grid_tile_${app.packageName}")</ID>
+    <ID>ModifierNotUsedAtRoot:FolderContentsSheet.kt:modifier = modifier .fillMaxWidth() .testTag("folder_contents_app_${app.packageName}") .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }) .padding(horizontal = 24.dp, vertical = 13.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:FolderContentsSheet.kt:modifier = modifier.fillMaxWidth().align(Alignment.BottomCenter)</ID>
+    <ID>ModifierNotUsedAtRoot:HomeScreen.kt:modifier = modifier .fillMaxWidth() // Large/16dp (MaterialTheme.shapes.large — see CLAUDE.md's shape table, which // names this the "navigation drawers" token) clips the ripple/press state to a // rounded rect instead of a full-bleed rectangle (see chat history). .clip(MaterialTheme.shapes.large) .then( if (enableLongPressMenu) { Modifier.combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }) } else { Modifier.clickable(onClick = onClick) } ) .padding(horizontal = 8.dp, vertical = verticalPadding)</ID>
+    <ID>ModifierNotUsedAtRoot:HomeScreen.kt:modifier = modifier .then(clickModifier) .padding(vertical = 14.dp, horizontal = 4.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:HomeScreen.kt:modifier = modifier.then(clickModifier)</ID>
+    <ID>ModifierWithoutDefault:ClockTemplates.kt:modifier: Modifier</ID>
+    <ID>ModifierWithoutDefault:HomeScreen.kt:modifier: Modifier</ID>
+    <ID>ModifierWithoutDefault:ManageFacetsScreen.kt:dragHandleModifier: Modifier</ID>
+    <ID>ParameterNaming:AppDrawerScreen.kt:onQueryChanged: (String) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerScreen.kt:onQueryChanged: (String) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:AppDrawerScreen.kt:onRailHeightMeasured: (Float) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerScreen.kt:onSelectionChanged: (RailSelection?) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onDrawerFolderDisplayModeChanged: (DrawerFolderDisplayMode) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onDrawerGridSizeChanged: (DrawerGridSize) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onDrawerListItemSizeChanged: (DrawerListItemSize) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onDrawerOpacityChanged: (Float) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onDrawerPresentationChanged: (DrawerPresentation) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onSearchBarPositionChanged: (SearchBarPosition) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onSearchContactsToggled: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onSearchSettingsToggled: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onShowDrawerIconsChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppDrawerSettingsScreen.kt:onShowDrawerLabelsChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppPickerScreen.kt:onQueryChanged: (String) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppPickerScreen.kt:onSortDirectionToggled: () -&gt; Unit</ID>
+    <ID>ParameterNaming:AppPickerScreen.kt:onSortOptionChanged: (AppSortOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppSortControl.kt:onSortDirectionToggled: () -&gt; Unit</ID>
+    <ID>ParameterNaming:AppSortControl.kt:onSortOptionChanged: (AppSortOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onAccentFromSystemChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onAppLabelColorOptionChanged: (ClockColorOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onCustomAccentSwatchChanged: (AccentSwatch) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onHomeAppsFontWeightChanged: (FontWeightOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onIconRenderModeChanged: (IconRenderMode) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onLauncherFontOptionChanged: (LauncherFontOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onThemeModeChanged: (ThemeMode) -&gt; Unit</ID>
+    <ID>ParameterNaming:AppearanceSettingsScreen.kt:onWallpaperAccentRoleChanged: (WallpaperAccentRole) -&gt; Unit</ID>
+    <ID>ParameterNaming:CalendarSettingsScreen.kt:onCalendarToggled: (String, Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:CalendarSettingsScreen.kt:onOverridingChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:CalendarSettingsScreen.kt:onSelectAllCalendarsChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:CalendarSettingsScreen.kt:onShowAllDayEventsChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onAccentColorOptionChanged: (ClockColorOption) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onCalendarAlignmentChanged: (ClockAlignment) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onCalendarColorOptionChanged: (ClockColorOption) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onCalendarFontOptionChanged: (ClockFontOption) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onCalendarFontWeightChanged: (FontWeightOption) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onClockAlignmentChanged: (ClockAlignment) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onColorOptionChanged: (ClockColorOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onDateStyleChanged: (ClockDateStyle) -&gt; Unit = {}</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onFontOptionChanged: (ClockFontOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onShowMeridiemChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onTemplateSelected: (ClockTemplateId) -&gt; Unit</ID>
+    <ID>ParameterNaming:ClockStyleGalleryScreen.kt:onUse24HourTimeChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:DockSettingsScreen.kt:onDockDisplayModeChanged: (DockDisplayMode) -&gt; Unit</ID>
+    <ID>ParameterNaming:DragReorderState.kt:onOrderChanged: (List&lt;T&gt;) -&gt; Unit</ID>
+    <ID>ParameterNaming:FacetCarouselScreen.kt:onFacetApplied: () -&gt; Unit</ID>
+    <ID>ParameterNaming:FacetSettingsScreen.kt:onOverridingAppsChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:FacetSettingsScreen.kt:onOverridingClockChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:FacetSettingsScreen.kt:onOverridingDockChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:HomeAppsListSettingsScreen.kt:onAppListVerticalAlignmentChanged: (AppListVerticalAlignment) -&gt; Unit</ID>
+    <ID>ParameterNaming:HomeAppsListSettingsScreen.kt:onAppRowPositionChanged: (AppRowPosition) -&gt; Unit</ID>
+    <ID>ParameterNaming:HomeAppsListSettingsScreen.kt:onAppRowPresentationChanged: (AppRowPresentation) -&gt; Unit</ID>
+    <ID>ParameterNaming:HomeAppsListSettingsScreen.kt:onAppsToShowCountChanged: (Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HomeAppsListSettingsScreen.kt:onListContentModeChanged: (ListContentMode) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubGrid.kt:onWidgetDropped: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubGrid.kt:onWidgetResized: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubGrid.kt:onWidgetSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubScreen.kt:onWidgetDropped: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubScreen.kt:onWidgetResized: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubScreen.kt:onWidgetSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubWidgetPickerScreen.kt:onProviderSelected: (WidgetProviderOption) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubWidgetPickerScreen.kt:onQueryChanged: (String) -&gt; Unit</ID>
+    <ID>ParameterNaming:HubWidgetTile.kt:onSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:InheritOverrideCard.kt:onOverridingChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:ManageFacetsScreen.kt:onFacetApplied: () -&gt; Unit</ID>
+    <ID>ParameterNaming:ManageFacetsScreen.kt:onOrderChanged: (List&lt;FacetEntity&gt;) -&gt; Unit</ID>
+    <ID>ParameterNaming:NotificationSettingsScreen.kt:onBadgeStyleChanged: (NotificationBadgeStyle) -&gt; Unit</ID>
+    <ID>ParameterNaming:NotificationSettingsScreen.kt:onEnabledChanged: (Boolean) -&gt; Unit</ID>
+    <ID>ParameterNaming:OnboardingHomeSetupPage.kt:onAppsToShowCountChanged: (Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:OnboardingHomeSetupPage.kt:onDrawerPresentationChanged: (DrawerPresentation) -&gt; Unit</ID>
+    <ID>ParameterNaming:OnboardingHomeSetupPage.kt:onListContentModeChanged: (ListContentMode) -&gt; Unit</ID>
+    <ID>ParameterNaming:OnboardingHomeSetupPage.kt:onPresentationChanged: (DrawerPresentation) -&gt; Unit</ID>
+    <ID>ParameterNaming:PrivateSpaceScreen.kt:onQueryChanged: (String) -&gt; Unit</ID>
+    <ID>UnstableCollections:AlphabetRail.kt:List&lt;String&gt;</ID>
+    <ID>UnstableCollections:AppContextMenu.kt:List&lt;Folder&gt;?</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;ContactInfo&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;DrawerTab&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;Folder&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;Folder&gt;?</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;SettingsSearchEntry&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;String&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;WorkProfileInfo&gt;</ID>
+    <ID>UnstableCollections:AppDrawerScreen.kt:Map&lt;String, Int&gt;</ID>
+    <ID>UnstableCollections:AppPickerScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:AppPickerScreen.kt:List&lt;Folder&gt;</ID>
+    <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Long&gt;</ID>
+    <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Pair&lt;String, String&gt;&gt;</ID>
+    <ID>UnstableCollections:AppearanceSettingsScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:CalendarEventsBlock.kt:List&lt;CalendarEvent&gt;</ID>
+    <ID>UnstableCollections:CalendarEventsBlock.kt:Map&lt;String, String&gt;</ID>
+    <ID>UnstableCollections:ClockBlock.kt:List&lt;CalendarEvent&gt;</ID>
+    <ID>UnstableCollections:ClockBlock.kt:Map&lt;String, String&gt;</ID>
+    <ID>UnstableCollections:ContactConnectionsSheet.kt:List&lt;ContactConnection&gt;</ID>
+    <ID>UnstableCollections:DockSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
+    <ID>UnstableCollections:DragReorderState.kt:List&lt;T&gt;</ID>
+    <ID>UnstableCollections:FacetCarouselScreen.kt:List&lt;CalendarEvent&gt;</ID>
+    <ID>UnstableCollections:FacetCarouselScreen.kt:List&lt;PlacedItem&gt;</ID>
+    <ID>UnstableCollections:FacetCarouselScreen.kt:Map&lt;String, String&gt;</ID>
+    <ID>UnstableCollections:FacetNavHost.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:FolderDetailScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:HomeAppsListSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
+    <ID>UnstableCollections:HomeDrawerRoute.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:HomeScreen.kt:List&lt;CalendarEvent&gt;</ID>
+    <ID>UnstableCollections:HomeScreen.kt:List&lt;Folder&gt;?</ID>
+    <ID>UnstableCollections:HomeScreen.kt:List&lt;PlacedItem&gt;</ID>
+    <ID>UnstableCollections:HomeScreen.kt:Map&lt;String, Int&gt;</ID>
+    <ID>UnstableCollections:HomeScreen.kt:Map&lt;String, String&gt;</ID>
+    <ID>UnstableCollections:HomeSurfacePreview.kt:List&lt;PlacedItem&gt;</ID>
+    <ID>UnstableCollections:HubGrid.kt:List&lt;HubWidgetUi&gt;</ID>
+    <ID>UnstableCollections:LabeledDropdownRow.kt:List&lt;T&gt;</ID>
+    <ID>UnstableCollections:ManageFacetsScreen.kt:List&lt;FacetEntity&gt;</ID>
+    <ID>UnstableCollections:OnboardingHomeSetupPage.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:PermissionsScreen.kt:List&lt;PermissionRowState&gt;</ID>
+    <ID>UnstableCollections:PrivateSpaceScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>ViewModelForwarding:ClockStyleGalleryScreen.kt:ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)</ID>
+    <ID>ViewModelForwarding:FacetNavHost.kt:HomeDrawerRoute( apps = apps, onAppClick = onAppClick, onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) }, onNavigateToFacetSettings = { facetId -&gt; navController.navigate(FacetDestinations.facetSettings(facetId)) }, onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) }, onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) }, onNavigateToClockStyleGallery = { facetId -&gt; val dest = if (facetId != null) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY navController.navigate(dest) }, launcherViewModel = launcherViewModel, )</ID>
+    <ID>ViewModelForwarding:HomeDrawerRoute.kt:FacetCarouselScreen( onFacetApplied = { coroutineScope.launch { facetAxis.close() } }, onEditFacet = onNavigateToFacetSettings, onReorderFacets = onNavigateToManageFacets, onNavigateToSettings = onNavigateToSettings, onDismissDrag = { deltaPx -&gt; facetAxis.dragBy(-deltaPx) }, onDismissDragEnd = { facetAxis.settle() }, modifier = Modifier.fillMaxSize(), viewModel = facetViewModel, )</ID>
+    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubScreen( onAddClick = { showWidgetPicker = true }, onManageClick = {}, // wired once there's a dedicated manage flow modifier = Modifier.fillMaxSize().testTag("hub_screen"), viewModel = hubViewModel, )</ID>
+    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubWidgetPickerScreen( onDone = { showWidgetPicker = false }, viewModel = widgetPickerViewModel, )</ID>
+  </CurrentIssues>
+</SmellBaseline>

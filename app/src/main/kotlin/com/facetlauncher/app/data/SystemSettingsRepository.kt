@@ -3,6 +3,8 @@ package com.facetlauncher.app.data
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -10,25 +12,30 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private data class CatalogEntry(val id: String, val label: String, val action: String, val keywords: List<String>)
+private data class CatalogEntry(
+    val id: String,
+    @param:StringRes val labelRes: Int,
+    val action: String,
+    val keywords: List<String>,
+)
 
 /** Curated system Settings deep links for the Drawer's "Search settings" section — every [CatalogEntry.action] is a stable AOSP `Settings.ACTION_*` constant, not an OEM-specific one. */
 private val SETTINGS_CATALOG = listOf(
-    CatalogEntry("wifi", "Wi-Fi", Settings.ACTION_WIFI_SETTINGS, listOf("wifi", "wi-fi", "wireless", "internet", "network")),
-    CatalogEntry("bluetooth", "Bluetooth", Settings.ACTION_BLUETOOTH_SETTINGS, listOf("bluetooth", "pair", "pairing")),
-    CatalogEntry("airplane_mode", "Airplane mode", Settings.ACTION_AIRPLANE_MODE_SETTINGS, listOf("airplane", "flight mode")),
-    CatalogEntry("display", "Display", Settings.ACTION_DISPLAY_SETTINGS, listOf("display", "brightness", "screen", "font size", "dark theme")),
-    CatalogEntry("sound", "Sound & vibration", Settings.ACTION_SOUND_SETTINGS, listOf("sound", "volume", "vibration", "ringtone", "media")),
-    CatalogEntry("battery_saver", "Battery saver", Settings.ACTION_BATTERY_SAVER_SETTINGS, listOf("battery", "power saver", "power")),
-    CatalogEntry("storage", "Storage", Settings.ACTION_INTERNAL_STORAGE_SETTINGS, listOf("storage", "space")),
-    CatalogEntry("apps", "Apps", Settings.ACTION_APPLICATION_SETTINGS, listOf("apps", "applications", "app info", "manage apps")),
-    CatalogEntry("location", "Location", Settings.ACTION_LOCATION_SOURCE_SETTINGS, listOf("location", "gps")),
-    CatalogEntry("security", "Security", Settings.ACTION_SECURITY_SETTINGS, listOf("security", "lock screen", "fingerprint", "password", "pin")),
-    CatalogEntry("accessibility", "Accessibility", Settings.ACTION_ACCESSIBILITY_SETTINGS, listOf("accessibility", "talkback", "magnification")),
-    CatalogEntry("date_time", "Date & time", Settings.ACTION_DATE_SETTINGS, listOf("date", "time", "timezone", "clock")),
-    CatalogEntry("language", "Languages & input", Settings.ACTION_LOCALE_SETTINGS, listOf("language", "languages", "keyboard", "input")),
-    CatalogEntry("accounts", "Accounts", Settings.ACTION_SYNC_SETTINGS, listOf("accounts", "sync", "account")),
-    CatalogEntry("nfc", "NFC", Settings.ACTION_NFC_SETTINGS, listOf("nfc", "tap and pay")),
+    CatalogEntry("wifi", R.string.settings_catalog_wifi, Settings.ACTION_WIFI_SETTINGS, listOf("wifi", "wi-fi", "wireless", "internet", "network")),
+    CatalogEntry("bluetooth", R.string.settings_catalog_bluetooth, Settings.ACTION_BLUETOOTH_SETTINGS, listOf("bluetooth", "pair", "pairing")),
+    CatalogEntry("airplane_mode", R.string.settings_catalog_airplane_mode, Settings.ACTION_AIRPLANE_MODE_SETTINGS, listOf("airplane", "flight mode")),
+    CatalogEntry("display", R.string.settings_catalog_display, Settings.ACTION_DISPLAY_SETTINGS, listOf("display", "brightness", "screen", "font size", "dark theme")),
+    CatalogEntry("sound", R.string.settings_catalog_sound, Settings.ACTION_SOUND_SETTINGS, listOf("sound", "volume", "vibration", "ringtone", "media")),
+    CatalogEntry("battery_saver", R.string.settings_catalog_battery_saver, Settings.ACTION_BATTERY_SAVER_SETTINGS, listOf("battery", "power saver", "power")),
+    CatalogEntry("storage", R.string.settings_catalog_storage, Settings.ACTION_INTERNAL_STORAGE_SETTINGS, listOf("storage", "space")),
+    CatalogEntry("apps", R.string.settings_catalog_apps, Settings.ACTION_APPLICATION_SETTINGS, listOf("apps", "applications", "app info", "manage apps")),
+    CatalogEntry("location", R.string.settings_catalog_location, Settings.ACTION_LOCATION_SOURCE_SETTINGS, listOf("location", "gps")),
+    CatalogEntry("security", R.string.settings_catalog_security, Settings.ACTION_SECURITY_SETTINGS, listOf("security", "lock screen", "fingerprint", "password", "pin")),
+    CatalogEntry("accessibility", R.string.settings_catalog_accessibility, Settings.ACTION_ACCESSIBILITY_SETTINGS, listOf("accessibility", "talkback", "magnification")),
+    CatalogEntry("date_time", R.string.settings_catalog_date_time, Settings.ACTION_DATE_SETTINGS, listOf("date", "time", "timezone", "clock")),
+    CatalogEntry("language", R.string.settings_catalog_language, Settings.ACTION_LOCALE_SETTINGS, listOf("language", "languages", "keyboard", "input")),
+    CatalogEntry("accounts", R.string.settings_catalog_accounts, Settings.ACTION_SYNC_SETTINGS, listOf("accounts", "sync", "account")),
+    CatalogEntry("nfc", R.string.settings_catalog_nfc, Settings.ACTION_NFC_SETTINGS, listOf("nfc", "tap and pay")),
 )
 
 /**
@@ -50,6 +57,6 @@ class SystemSettingsRepository @Inject constructor(
         SETTINGS_CATALOG
             .filter { entry -> entry.keywords.any { it.contains(query, ignoreCase = true) } }
             .filter { entry -> packageManager.resolveActivity(Intent(entry.action), 0) != null }
-            .map { entry -> SettingsSearchEntry(id = entry.id, label = entry.label, action = entry.action) }
+            .map { entry -> SettingsSearchEntry(id = entry.id, label = context.getString(entry.labelRes), action = entry.action) }
     }
 }

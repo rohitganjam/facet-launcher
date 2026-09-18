@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -177,7 +178,7 @@ private fun AppearanceSettingsContent(
                             title = "Icons",
                             options = IconRenderMode.entries,
                             selected = settings.iconRenderMode,
-                            label = { it.displayName },
+                            label = { stringResource(it.displayNameRes) },
                             onSelect = onIconRenderModeChanged,
                             testTag = "appearance_icons_row",
                         )
@@ -186,7 +187,7 @@ private fun AppearanceSettingsContent(
                             title = "Launcher Font",
                             options = LauncherFontOption.entries,
                             selected = settings.launcherFontOption,
-                            label = { it.displayName },
+                            label = { stringResource(it.displayNameRes) },
                             onSelect = onLauncherFontOptionChanged,
                             testTag = "appearance_font_row",
                         )
@@ -205,7 +206,7 @@ private fun AppearanceSettingsContent(
                             title = "App label color",
                             options = ClockColorOption.entries,
                             selected = settings.appLabelColorOption,
-                            label = { it.displayName },
+                            label = { stringResource(it.displayNameRes) },
                             onSelect = onAppLabelColorOptionChanged,
                             testTag = "appearance_app_label_color_row",
                         )
@@ -346,7 +347,7 @@ private fun AccentSwatchCircle(swatch: AccentSwatch, selected: Boolean, onClick:
         light = swatch.light,
         dark = swatch.dark,
         selected = selected,
-        checkedContentDescription = swatch.label,
+        checkedContentDescription = stringResource(swatch.labelRes),
         testTag = "accent_swatch_${swatch.name}",
         onClick = onClick,
         modifier = modifier,

@@ -29,6 +29,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
@@ -84,7 +85,7 @@ fun AppSortControl(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(text = sortOption.label, style = MaterialTheme.typography.bodyMedium, color = Ink)
+                Text(text = stringResource(sortOption.labelRes), style = MaterialTheme.typography.bodyMedium, color = Ink)
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Muted)
             }
             ThemedDropdownMenu(
@@ -95,7 +96,7 @@ fun AppSortControl(
             ) {
                 AppSortOption.entries.forEach { option ->
                     ThemedDropdownMenuItem(
-                        label = option.label,
+                        label = stringResource(option.labelRes),
                         onClick = {
                             expanded = false
                             onSortOptionChanged(option)
