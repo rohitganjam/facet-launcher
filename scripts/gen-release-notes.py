@@ -7,7 +7,7 @@ scripts/last-release.json as the start point. Can also be run manually for an ar
   python3 scripts/gen-release-notes.py --since <commit> --to <commit> --version 0.1.7
 
 Writes two copies: RELEASE_NOTES.md (always the latest release, overwritten each run) and
-RELEASE_NOTES_<version>.md (a permanent, versioned copy — one file per release, never
+release_notes/<version>.md (a permanent, versioned copy — one file per release, never
 overwritten), the same pattern scripts/release.sh already uses for the APK/AAB
 (app-release.apk alongside app-release-<version>.apk).
 
@@ -32,6 +32,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "RELEASE_NOTES.md"
+VERSIONED_DIR = ROOT / "release_notes"
 
 COMMIT_SEPARATOR = "----COMMIT-END----"
 
@@ -101,7 +102,8 @@ def main() -> None:
 
     OUT.write_text(notes)
 
-    versioned_out = ROOT / f"RELEASE_NOTES_{args.version}.md"
+    VERSIONED_DIR.mkdir(exist_ok=True)
+    versioned_out = VERSIONED_DIR / f"{args.version}.md"
     versioned_out.write_text(notes)
     print(f"(also wrote {versioned_out.relative_to(ROOT)})", file=sys.stderr)
 

@@ -25,7 +25,7 @@
 # commit since the *previous* build recorded in scripts/last-release.json, categorized into New
 # Features / Fixes / Improvements / Internal (see scripts/gen-release-notes.py — heuristic, always
 # worth a skim before sharing externally). Printed to the terminal and written to RELEASE_NOTES.md
-# (always the latest release) AND RELEASE_NOTES_<version>.md (a permanent per-release copy, never
+# (always the latest release) AND release_notes/<version>.md (a permanent per-release copy, never
 # overwritten — the history RELEASE_NOTES.md alone can't keep since it's replaced every run); not
 # committed automatically, same as the version bump.
 #
@@ -121,7 +121,7 @@ if [[ "$do_build" == true ]]; then
         # Best-effort — a hiccup here (claude CLI missing/not logged in/timed out) shouldn't fail
         # the whole script after a successful build; the APK/AAB already exist regardless.
         if (cd "$REPO_ROOT" && python3 scripts/gen-release-notes.py --since "$previous_commit" --to "$build_commit" --version "$new_version"); then
-            echo "Written to RELEASE_NOTES.md and RELEASE_NOTES_$new_version.md."
+            echo "Written to RELEASE_NOTES.md and release_notes/$new_version.md."
         else
             echo "warning: release notes generation failed — see error above. Build artifacts are unaffected." >&2
         fi
@@ -147,7 +147,7 @@ fi
 
 echo
 if [[ "$do_build" == true ]]; then
-    echo "Done — review the version bump in app/build.gradle.kts, scripts/last-release.json, RELEASE_NOTES.md, and RELEASE_NOTES_$new_version.md, and commit them when ready."
+    echo "Done — review the version bump in app/build.gradle.kts, scripts/last-release.json, RELEASE_NOTES.md, and release_notes/$new_version.md, and commit them when ready."
 else
     echo "Done — review the version bump in app/build.gradle.kts and commit when ready."
 fi
