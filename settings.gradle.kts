@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "Facet Launcher"
 include(":app")
 include(":detekt-rules")
+include(":benchmark")

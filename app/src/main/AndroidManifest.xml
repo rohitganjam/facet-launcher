@@ -52,6 +52,10 @@
         android:theme="@style/Theme.FacetLauncher"
         android:supportsRtl="true">
 
+        <!-- Lets the :benchmark module's MacrobenchmarkRule trace this app's `benchmark` build
+             type without a full release signature — see benchmark/build.gradle.kts. -->
+        <profileable android:shell="true" />
+
         <activity
             android:name=".LauncherActivity"
             android:exported="true"
