@@ -1,0 +1,624 @@
+<resources>
+    <string name="app_name">Facet Launcher</string>
+
+    <!-- Font names -->
+    <string name="font_name_system">Sistema</string>
+    <string name="font_name_roboto_flex">Roboto Flex</string>
+    <string name="font_name_noto_sans">Noto Sans</string>
+    <string name="font_name_manrope">Manrope</string>
+    <string name="font_name_poppins">Poppins</string>
+
+    <!-- AppSortOption -->
+    <string name="app_sort_alphabetical">Alfabético</string>
+    <string name="app_sort_last_used">Usado recientemente</string>
+    <string name="app_sort_installed_date">Fecha de instalación</string>
+    <string name="app_sort_last_updated">Actualizado recientemente</string>
+
+    <!-- ClockDateStyle -->
+    <string name="clock_date_style_full">Completo</string>
+    <string name="clock_date_style_condensed">Condensado</string>
+
+    <!-- ClockFontOption -->
+    <string name="clock_font_launcher_default">Fuente predeterminada del launcher</string>
+
+    <!-- ClockColorOption -->
+    <string name="clock_color_theme">Tema</string>
+    <string name="clock_color_theme_inverted">Tema invertido</string>
+    <string name="clock_color_accent_primary">Acento primario</string>
+    <string name="clock_color_accent_secondary">Acento secundario</string>
+
+    <!-- FontWeightOption -->
+    <string name="font_weight_thin">Delgado</string>
+    <string name="font_weight_extra_light">Extra ligero</string>
+    <string name="font_weight_light">Ligero</string>
+    <string name="font_weight_regular">Regular</string>
+    <string name="font_weight_medium">Medio</string>
+    <string name="font_weight_semi_bold">Seminegrita</string>
+
+    <!-- FontScaleOption -->
+    <string name="font_scale_small">Pequeño</string>
+    <string name="font_scale_default">Predeterminado</string>
+    <string name="font_scale_large">Grande</string>
+    <string name="font_scale_extra_large">Extra grande</string>
+    <string name="font_scale_huge">Enorme</string>
+
+    <!-- IconRenderMode -->
+    <string name="icon_render_system_default">Predeterminado del sistema</string>
+    <string name="icon_render_monochrome_black_white">Monocromo (blanco y negro)</string>
+    <string name="icon_render_monochrome_accent">Monocromo (acento)</string>
+
+    <!-- ClockTemplateId -->
+    <string name="clock_template_light_stack">Pila ligera</string>
+    <string name="clock_template_rule_meridiem">Regla</string>
+    <string name="clock_template_date_forward">Fecha adelante</string>
+    <string name="clock_template_weight_contrast">Contraste de peso</string>
+    <string name="clock_template_italic_accent">Cursiva</string>
+    <string name="clock_template_spelled_out">Deletreado</string>
+    <string name="clock_template_vertical_stack">Pila vertical</string>
+    <string name="clock_template_vertical_stack_bold_hour">Pila vertical (hora en negrita)</string>
+    <string name="clock_template_roboto_flex_wide">Flex ancho</string>
+    <string name="clock_template_roboto_flex_narrow">Flex estrecho</string>
+    <string name="clock_template_tech_distorted">Tecnológico distorsionado</string>
+    <string name="clock_template_variable_divider">Divisor variable</string>
+    <string name="clock_template_fluid_stack">Pila fluida</string>
+    <string name="clock_template_fluid_stack_inverted">Pila fluida invertida</string>
+    <string name="clock_template_bracket_minimal">Corchete minimalista</string>
+    <string name="clock_template_two_line_divider">Divisor de dos líneas</string>
+    <string name="clock_template_bold_colon">Dos puntos en negrita</string>
+    <string name="clock_template_accented_fluid_stack">Pila fluida acentuada</string>
+    <string name="clock_template_accented_fluid_stack_inverted">Pila fluida acentuada invertida</string>
+    <string name="clock_template_accent_contrast">Contraste de acento</string>
+    <string name="clock_template_accent_field">Campo de acento</string>
+    <string name="clock_template_hour_tile">Mosaico de hora</string>
+    <string name="clock_template_chip">Chip</string>
+    <string name="clock_template_duotone_overlap">Superposición duotono</string>
+    <string name="clock_template_corner_frame">Marco de esquina</string>
+    <string name="clock_template_stub">Base</string>
+    <string name="clock_template_halo">Halo</string>
+    <string name="clock_template_digit_cells">Celdas de dígitos</string>
+    <string name="clock_template_negative_panel">Panel negativo</string>
+    <string name="clock_template_hollow_hour">Hora hueca</string>
+    <string name="clock_template_highlighter">Resaltador</string>
+    <string name="clock_template_column_rule">Regla de columna</string>
+    <string name="clock_template_colon_mark">Marca de dos puntos</string>
+    <string name="clock_template_pill_pair">Par de píldoras</string>
+    <string name="clock_template_shelf">Estante</string>
+    <string name="clock_template_half_immersed">Semi-inmerso</string>
+
+    <!-- AccentSwatch -->
+    <string name="accent_swatch_blue">Azul</string>
+    <string name="accent_swatch_indigo">Índigo</string>
+    <string name="accent_swatch_purple">Morado</string>
+    <string name="accent_swatch_pink">Rosa</string>
+    <string name="accent_swatch_red">Rojo</string>
+    <string name="accent_swatch_orange">Naranja</string>
+    <string name="accent_swatch_amber">Ámbar</string>
+    <string name="accent_swatch_green">Verde</string>
+    <string name="accent_swatch_teal">Verde azulado</string>
+    <string name="accent_swatch_cyan">Cian</string>
+
+    <!-- SystemSettingsRepository catalog -->
+    <string name="settings_catalog_wifi">Wi-Fi</string>
+    <string name="settings_catalog_bluetooth">Bluetooth</string>
+    <string name="settings_catalog_airplane_mode">Modo avión</string>
+    <string name="settings_catalog_display">Pantalla</string>
+    <string name="settings_catalog_sound">Sonido y vibración</string>
+    <string name="settings_catalog_battery_saver">Ahorro de batería</string>
+    <string name="settings_catalog_storage">Almacenamiento</string>
+    <string name="settings_catalog_apps">Aplicaciones</string>
+    <string name="settings_catalog_location">Ubicación</string>
+    <string name="settings_catalog_security">Seguridad</string>
+    <string name="settings_catalog_accessibility">Accesibilidad</string>
+    <string name="settings_catalog_date_time">Fecha y hora</string>
+    <string name="settings_catalog_language">Idiomas y entrada</string>
+    <string name="settings_catalog_accounts">Cuentas</string>
+    <string name="settings_catalog_nfc">NFC</string>
+
+    <!-- ui/components/ -->
+    <string name="content_description_back">Atrás</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_reset">Restablecer</string>
+    <string name="action_rename">Renombrar</string>
+    <string name="action_done">Listo</string>
+    <string name="folder_add_to_folder">Añadir a carpeta</string>
+    <string name="folder_remove_from_folder">Quitar de carpeta</string>
+    <string name="folder_create_new_folder">Crear nueva carpeta</string>
+    <string name="folder_new_folder_title">Nueva carpeta</string>
+    <string name="folder_name_this_folder">Nombra esta carpeta.</string>
+    <string name="folder_rename_title">Renombrar carpeta</string>
+    <string name="folder_rename_explanation">Elige un nuevo nombre para esta carpeta.</string>
+    <string name="folder_no_apps_yet">Aún no hay apps en esta carpeta</string>
+    <string name="quick_placement_add_to">Añadir a %1$s</string>
+    <string name="quick_placement_remove_from">Quitar de %1$s</string>
+    <string name="quick_placement_favorites">Favoritos</string>
+    <string name="quick_placement_dock">Dock</string>
+    <plurals name="folder_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+
+    <!-- AppContextMenu -->
+    <string name="app_context_menu_app_info">Información de la app</string>
+    <string name="app_context_menu_uninstall">Desinstalar</string>
+
+    <!-- AppPickerScreen -->
+    <string name="app_picker_search_apps">Buscar apps</string>
+    <string name="app_picker_all_apps">TODAS LAS APPS</string>
+    <string name="app_picker_no_folders_yet">Aún no hay carpetas. Mantén pulsada una app y elige \"Añadir a carpeta\" para crear una.</string>
+    <string name="app_picker_tab_apps">Apps</string>
+    <string name="app_picker_tab_folders">Carpetas</string>
+
+    <!-- InheritOverrideCard -->
+    <string name="inherit_override_follows_default">Sigue el valor predeterminado del launcher</string>
+    <string name="inherit_override_inherit_default">Heredar predeterminado</string>
+    <string name="inherit_override_override_for_facet">Anular para esta faceta</string>
+    <string name="inherit_override_changes_dont_affect_others">Los cambios aquí no afectan a otras facetas</string>
+
+    <!-- GestureHintOverlay -->
+    <string name="gesture_hint_switch_facets">Cambiar de faceta</string>
+    <string name="gesture_hint_arrow_left">←</string>
+    <string name="gesture_hint_arrow_right">→</string>
+    <string name="gesture_hint_widgets">Widgets</string>
+    <string name="gesture_hint_all_your_apps">Todas tus apps</string>
+    <string name="gesture_hint_arrow_up">↑</string>
+    <string name="gesture_hint_got_it">Entendido</string>
+
+    <!-- FacetScopeBadge -->
+    <string name="facet_scope_global">Global</string>
+    <string name="facet_scope_work">Trabajo</string>
+    <string name="facet_scope_other_profile">Otro perfil</string>
+
+    <!-- HomeSurfacePreview -->
+    <string name="home_surface_preview_label">VISTA PREVIA</string>
+    <string name="home_surface_preview_nothing_yet">Aún no hay nada que previsualizar</string>
+
+    <!-- AppSortControl -->
+    <string name="app_sort_ascending">Ordenar ascendente</string>
+    <string name="app_sort_descending">Ordenar descendente</string>
+
+    <!-- NotificationBadgeStyle -->
+    <string name="notification_badge_style_dot">Punto</string>
+    <string name="notification_badge_style_count">Número</string>
+
+    <!-- Generic join templates -->
+    <string name="dot_join_2">%1$s · %2$s</string>
+    <string name="dot_join_3">%1$s · %2$s · %3$s</string>
+    <string name="comma_join_2">%1$s, %2$s</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_header_title">Ajustes</string>
+    <string name="settings_section_facets">FACETAS</string>
+    <string name="settings_section_appearance">APARIENCIA</string>
+    <string name="settings_section_clock_calendar">RELOJ Y CALENDARIO</string>
+    <string name="settings_section_home_apps">INICIO Y APPS</string>
+    <string name="settings_section_system">SISTEMA</string>
+    <string name="settings_facets_title">Facetas</string>
+    <string name="settings_facets_subtitle">Crea y gestiona ajustes específicos de cada faceta</string>
+    <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>
+    <string name="settings_change_wallpaper_subtitle">Cambia el fondo de pantalla del sistema</string>
+    <string name="settings_appearance_title">Apariencia del launcher</string>
+    <string name="settings_appearance_subtitle">Tema, acento, iconos, fuentes</string>
+    <string name="settings_clock_calendar_title">Estilo de reloj y calendario</string>
+    <string name="settings_time_format_24h">Formato de 24 horas</string>
+    <string name="settings_time_format_12h">Formato de 12 horas</string>
+    <string name="settings_calendars_title">Calendarios a mostrar</string>
+    <plurals name="settings_calendars_selected">
+        <item quantity="one">%1$d calendario seleccionado</item>
+        <item quantity="other">%1$d calendarios seleccionados</item>
+    </plurals>
+    <string name="settings_all_day_events_visible">Eventos de todo el día visibles</string>
+    <string name="settings_all_day_events_hidden">Eventos de todo el día ocultos</string>
+    <string name="settings_dock_title">Dock</string>
+    <plurals name="settings_dock_apps_count">
+        <item quantity="one">%d app del Dock</item>
+        <item quantity="other">%d apps del Dock</item>
+    </plurals>
+    <plurals name="settings_dock_folders_count">
+        <item quantity="one">%d carpeta</item>
+        <item quantity="other">%d carpetas</item>
+    </plurals>
+    <string name="settings_home_apps_list_title">Lista de apps de inicio</string>
+    <plurals name="settings_favorites_count">
+        <item quantity="one">%1$d favorito</item>
+        <item quantity="other">%1$d favoritos</item>
+    </plurals>
+    <plurals name="settings_recents_count">
+        <item quantity="one">%1$d reciente</item>
+        <item quantity="other">%1$d recientes</item>
+    </plurals>
+    <string name="settings_most_used_count">%1$d más usadas</string>
+    <string name="settings_app_drawer_title">Cajón de apps</string>
+    <string name="settings_show_as">Mostrar como %1$s</string>
+    <string name="settings_search_on">Activado</string>
+    <string name="settings_search_off">Desactivado</string>
+    <string name="settings_contact_search">Búsqueda de contactos %1$s</string>
+    <string name="settings_settings_search">Búsqueda de ajustes %1$s</string>
+    <string name="settings_notifications_title">Notificaciones</string>
+    <string name="settings_notification_badge_dots">Puntos</string>
+    <string name="settings_notification_badge_counts">Números</string>
+    <string name="settings_notifications_enabled_subtitle">Activado · %1$s en Dock, Inicio y Cajón</string>
+    <string name="settings_notifications_disabled_subtitle">Desactivado</string>
+    <string name="settings_folders_title">Carpetas</string>
+    <string name="settings_folders_none">Aún no hay carpetas</string>
+    <plurals name="settings_folders_count">
+        <item quantity="one">%d carpeta</item>
+        <item quantity="other">%d carpetas</item>
+    </plurals>
+    <string name="settings_permissions_title">Permisos</string>
+    <string name="settings_permissions_subtitle">Consulta a qué puede acceder Facet Launcher y por qué</string>
+    <string name="settings_backup_restore_title">Copia de seguridad y restauración</string>
+    <string name="settings_backup_restore_subtitle">Exporta los ajustes como archivo · los widgets deben añadirse de nuevo al importar</string>
+    <string name="settings_set_default_launcher_title">Establecer como launcher predeterminado</string>
+    <string name="settings_status_active">Activo</string>
+    <string name="settings_status_not_set">No establecido</string>
+    <string name="settings_status_paused">Pausado</string>
+    <string name="settings_about_title">Acerca de Facet Launcher</string>
+    <string name="settings_about_subtitle">Versión, actualizaciones y comunidad</string>
+
+    <!-- NotificationSettingsScreen -->
+    <string name="notification_badges_row_title">Insignias de notificación</string>
+    <string name="notification_badge_style_row_title">Estilo de insignia</string>
+
+    <!-- Drawer enums -->
+    <string name="drawer_presentation_list">Lista</string>
+    <string name="drawer_presentation_grid">Cuadrícula</string>
+    <string name="drawer_grid_size_label">%1$d columnas × %2$d filas</string>
+    <string name="drawer_list_item_size_compact">Compacto</string>
+    <string name="drawer_list_item_size_regular">Regular</string>
+    <string name="drawer_list_item_size_spacious">Espacioso</string>
+    <string name="search_bar_position_top">Arriba</string>
+    <string name="search_bar_position_bottom">Abajo</string>
+    <string name="drawer_folder_display_mode_do_not_show">No mostrar</string>
+    <string name="drawer_folder_display_mode_inline">Mostrar carpetas en línea</string>
+    <string name="drawer_folder_display_mode_show_first">Mostrar carpetas primero</string>
+    <string name="drawer_folder_display_mode_show_last">Mostrar carpetas al final</string>
+
+    <!-- AppRow/ListContentMode/DockDisplayMode enums -->
+    <string name="app_row_position_left">Izquierda</string>
+    <string name="app_row_position_center">Centro</string>
+    <string name="app_row_position_right">Derecha</string>
+    <string name="app_row_presentation_icon_only">Solo icono</string>
+    <string name="app_row_presentation_icon_and_text">Icono y texto</string>
+    <string name="app_row_presentation_text_only">Solo texto</string>
+    <string name="app_list_vertical_alignment_top">Arriba</string>
+    <string name="app_list_vertical_alignment_bottom">Abajo</string>
+    <string name="list_content_mode_favorites">Favoritos</string>
+    <string name="list_content_mode_recents">Recientes</string>
+    <string name="list_content_mode_most_used">Más usadas</string>
+    <string name="dock_display_mode_icons">Iconos</string>
+    <string name="dock_display_mode_text">Texto</string>
+
+    <!-- HomeAppsListSettingsScreen -->
+    <string name="home_apps_list_header_title">Lista de apps de inicio</string>
+    <string name="home_apps_list_position">Posición</string>
+    <string name="home_apps_list_list_position">Posición de la lista</string>
+    <string name="home_apps_list_presentation">Presentación</string>
+    <string name="home_apps_list_content_facet">Contenido de la lista de apps</string>
+    <string name="home_apps_list_content_default">Contenido predeterminado de la lista de apps</string>
+    <string name="home_apps_list_apps_to_show">Apps a mostrar</string>
+    <string name="home_apps_list_favorites_facet">Favoritos</string>
+    <string name="home_apps_list_favorites_default">Favoritos predeterminados</string>
+    <string name="drag_to_reorder_content_description">Arrastra para reordenar</string>
+
+    <!-- AppDrawerSettingsScreen -->
+    <string name="app_drawer_settings_header_title">Cajón de apps</string>
+    <string name="app_drawer_show_apps_as">Mostrar apps como</string>
+    <string name="app_drawer_grid_size">Tamaño de cuadrícula</string>
+    <string name="app_drawer_list_item_size">Tamaño de elemento de lista</string>
+    <string name="app_drawer_show_icons_title">Mostrar iconos</string>
+    <string name="app_drawer_show_icons_subtitle">Muestra iconos con el nombre de la aplicación</string>
+    <string name="app_drawer_show_labels_title">Mostrar etiquetas</string>
+    <string name="app_drawer_show_labels_subtitle">Muestra el nombre de la aplicación debajo del icono</string>
+    <string name="app_drawer_search_contacts_title">Buscar contactos</string>
+    <string name="app_drawer_search_contacts_subtitle">Llama, envía mensajes o WhatsApp desde los resultados</string>
+    <string name="app_drawer_search_settings_title">Buscar en ajustes</string>
+    <string name="app_drawer_search_settings_subtitle">Accede a ajustes del sistema como Wi-Fi o Bluetooth</string>
+    <string name="app_drawer_search_bar_position">Posición de la barra de búsqueda</string>
+    <string name="app_drawer_folders_in_drawer">Carpetas en el cajón</string>
+    <string name="app_drawer_opacity_label">Opacidad del cajón</string>
+
+    <!-- ThemeMode -->
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_dark">Oscuro</string>
+    <string name="theme_mode_system">Sistema</string>
+
+    <!-- AppearanceSettingsScreen -->
+    <string name="appearance_header_title">Apariencia</string>
+    <string name="appearance_launcher_theme">Tema del launcher</string>
+    <string name="appearance_icon_style">Estilo de icono</string>
+    <string name="appearance_launcher_font">Fuente del launcher</string>
+    <string name="appearance_font_color">Color de fuente</string>
+    <string name="appearance_font_size">Tamaño de fuente</string>
+    <string name="appearance_font_weight">Grosor de fuente</string>
+    <string name="appearance_accent_color">Color de acento</string>
+    <string name="appearance_wallpaper_colors">Colores del fondo de pantalla</string>
+    <string name="appearance_basic_colors">Colores básicos</string>
+
+    <!-- BackupRestoreScreen -->
+    <string name="backup_restore_confirm_title">¿Reemplazar todo en este dispositivo?</string>
+    <string name="backup_restore_confirm_message">Importar reemplaza todas las facetas, el dock y los favoritos predeterminados con lo que hay en el archivo de copia de seguridad. Esto no se puede deshacer.</string>
+    <string name="backup_restore_confirm_replace">Reemplazar</string>
+    <string name="backup_restore_export_title">Exportar copia de seguridad</string>
+    <string name="backup_restore_export_subtitle">Guarda todas las facetas, el dock, los favoritos y los ajustes como archivo</string>
+    <string name="backup_restore_import_title">Importar copia de seguridad</string>
+    <string name="backup_restore_import_subtitle">Reemplaza todo en este dispositivo desde un archivo de copia de seguridad</string>
+    <string name="backup_restore_widgets_to_readd_header">WIDGETS PARA VOLVER A AÑADIR</string>
+    <string name="backup_restore_widgets_to_readd_explanation">Estos widgets no se pudieron restaurar automáticamente. Toca cada uno para añadirlo de nuevo donde estaba.</string>
+    <string name="backup_restore_export_succeeded">Copia de seguridad guardada</string>
+    <string name="backup_restore_export_failed">No se pudo guardar la copia de seguridad</string>
+    <plurals name="backup_restored_facets_count">
+        <item quantity="one">Se restauró %d faceta</item>
+        <item quantity="other">Se restauraron %d facetas</item>
+    </plurals>
+    <plurals name="backup_widgets_need_readding_count">
+        <item quantity="one">%d widget necesita añadirse de nuevo abajo</item>
+        <item quantity="other">%d widgets necesitan añadirse de nuevo abajo</item>
+    </plurals>
+    <string name="backup_restore_import_failed_invalid_file">Ese archivo no es una copia de seguridad válida de Facet</string>
+    <string name="backup_restore_import_failed_unsupported_version">Esa copia de seguridad se creó con una versión más reciente de Facet</string>
+    <string name="backup_restore_app_not_installed">App no instalada</string>
+    <string name="backup_restore_readd">Añadir de nuevo</string>
+    <string name="backup_restore_skip">Omitir</string>
+
+    <!-- PermissionsScreen -->
+    <string name="permissions_header_title">Permisos</string>
+    <string name="permission_status_on">Activado</string>
+    <string name="permission_turn_on">Activar</string>
+
+    <!-- PermissionsViewModel -->
+    <string name="permission_calendar_title">Calendario</string>
+    <string name="permission_calendar_subtitle">Muestra los eventos de hoy en el reloj.</string>
+    <string name="permission_contacts_title">Contactos</string>
+    <string name="permission_contacts_subtitle">Permite que la búsqueda del cajón muestre contactos coincidentes con acciones rápidas de llamada, mensaje o WhatsApp.</string>
+    <string name="permission_usage_access_title">Acceso de uso</string>
+    <string name="permission_usage_access_subtitle">Habilita las listas de apps Recientes y Más usadas.</string>
+    <string name="permission_notification_access_title">Acceso a notificaciones</string>
+    <string name="permission_notification_access_subtitle">Muestra un punto o número en apps con notificaciones activas.</string>
+
+    <!-- DockSettingsScreen -->
+    <string name="dock_display_style">Estilo de visualización</string>
+    <string name="dock_select_apps">Seleccionar apps del Dock</string>
+    <string name="format_count_of_max">%1$d de %2$d</string>
+
+    <!-- FoldersSettingsScreen -->
+    <string name="folders_settings_create_folder">Carpeta</string>
+    <string name="folders_settings_delete_folder">Eliminar carpeta</string>
+    <string name="folders_settings_delete_message">Esto elimina permanentemente \"%1$s\" y la quita de todas las listas de Dock y Favoritos en las que está.</string>
+    <string name="action_delete">Eliminar</string>
+
+    <!-- CalendarSettingsScreen -->
+    <string name="calendar_settings_header_title">Ajustes de calendario</string>
+    <string name="calendar_settings_follows_launcher_wide">Sigue el ajuste de calendario general del launcher</string>
+    <string name="calendar_settings_show_all_day_events">Mostrar eventos de todo el día</string>
+    <string name="calendar_settings_no_calendars_found">No se encontraron calendarios en este dispositivo.</string>
+    <string name="calendar_settings_access_off">Acceso al calendario desactivado — eventos ocultos.</string>
+
+    <!-- FolderDetailScreen -->
+    <string name="folder_detail_no_apps_yet">Aún no hay apps en esta carpeta. Toca \"Añadir a carpeta\" para añadir algunas.</string>
+
+    <!-- AboutScreen -->
+    <string name="about_header_title">Acerca de</string>
+    <string name="about_version">Versión</string>
+    <string name="about_check_for_updates">Buscar actualizaciones</string>
+    <string name="about_check_for_updates_subtitle">Abrir Facet Launcher en Google Play</string>
+    <string name="about_join_discord">Únete al Discord</string>
+    <string name="about_join_discord_subtitle">Chatea con la comunidad, comparte comentarios y mantente al día</string>
+
+    <!-- Shared -->
+    <string name="open_settings">Abrir ajustes</string>
+
+    <!-- UsageAccessExplanationScreen -->
+    <string name="usage_access_explanation_headline">Recientes y Más usadas muestran apps según cómo usas realmente tu teléfono.</string>
+    <string name="usage_access_explanation_body">Esto necesita acceso de uso, un permiso especial que se concede desde los Ajustes del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps abres y por cuánto tiempo; nada sale de tu dispositivo.</string>
+
+    <!-- NotificationAccessExplanationScreen -->
+    <string name="notification_access_explanation_headline">Las insignias de notificación muestran un punto o número en apps con algo esperándote.</string>
+    <string name="notification_access_explanation_body">Esto necesita acceso a notificaciones, un permiso especial que se concede desde los Ajustes del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps tienen notificaciones activas y si son silenciosas; nada sale de tu dispositivo.</string>
+
+    <!-- FolderAppPickerScreen -->
+    <string name="folder_app_picker_in_folder">EN LA CARPETA</string>
+
+    <string name="percent_format">%1$d%%</string>
+
+    <!-- Onboarding shared -->
+    <string name="action_next">Siguiente</string>
+    <string name="action_back">Atrás</string>
+    <string name="action_continue">Continuar</string>
+
+    <!-- OnboardingScreen -->
+    <string name="onboarding_skip">Omitir</string>
+
+    <!-- OnboardingIntroPage -->
+    <string name="onboarding_intro_headline">Una pantalla de inicio centrada en ti.</string>
+    <string name="onboarding_intro_subhead">Sin cuadrícula de iconos. Solo tu reloj, lo que sigue y algunas apps que realmente usas.</string>
+    <string name="onboarding_intro_diagram_clock_time">9:41</string>
+    <string name="onboarding_intro_diagram_clock_label">Reloj</string>
+    <string name="onboarding_intro_diagram_apps_label">Tus apps</string>
+    <string name="onboarding_intro_gesture_drawer">Desliza hacia arriba en cualquier momento para ver todas tus apps.</string>
+    <string name="onboarding_intro_gesture_widgets">Desliza a la derecha para tus widgets.</string>
+    <string name="onboarding_intro_gesture_facets">Desliza a la izquierda para cambiar de faceta.</string>
+
+    <!-- OnboardingHomeSetupPage -->
+    <string name="onboarding_home_setup_headline">Configura tu pantalla de inicio</string>
+    <string name="onboarding_home_setup_subhead">Elige las apps que quieres en Inicio. Puedes cambiar todo esto más tarde.</string>
+    <string name="onboarding_dock_section_header">DOCK</string>
+    <string name="action_clear_all">Borrar todo</string>
+    <string name="onboarding_dock_section_subhead">El dock predeterminado; cada faceta puede personalizar el suyo más tarde. Arrastra para reordenar.</string>
+    <string name="onboarding_clear_dock_title">¿Vaciar el dock?</string>
+    <string name="onboarding_clear_dock_message">Quita todas las apps del dock predeterminado. Puedes volver a añadirlas en cualquier momento.</string>
+    <string name="onboarding_manage_dock_apps">Gestionar apps del dock</string>
+    <string name="onboarding_app_drawer_section_header">CAJÓN DE APPS</string>
+    <string name="onboarding_home_apps_section_header">APPS DE INICIO</string>
+    <string name="onboarding_show_label">Mostrar</string>
+    <string name="onboarding_list_content_favorites">Favoritos</string>
+    <string name="onboarding_list_content_recently_used">Usadas recientemente</string>
+    <string name="onboarding_list_content_most_used">Más usadas</string>
+    <string name="onboarding_clear_favorites_title">¿Borrar favoritos?</string>
+    <string name="onboarding_clear_favorites_message">Quita todas las apps de tus favoritos predeterminados. Puedes volver a añadirlas en cualquier momento.</string>
+
+    <!-- OnboardingFacetsPage -->
+    <string name="onboarding_facets_headline">Más de una pantalla de inicio</string>
+    <string name="onboarding_facets_body">\nLas facetas son diseños de inicio independientes, cada una con su propio estilo de reloj, calendarios, lista de apps, favoritos y dock si es necesario. \n\nDesliza a la izquierda desde inicio para cambiar de faceta.\n\nCrea varias facetas para distintas ocasiones, como trabajo, concentración, personal, etc.</string>
+    <string name="onboarding_facets_mock_favorites_label">FAVORITOS</string>
+
+    <!-- SetDefaultLauncherSheet -->
+    <string name="onboarding_later">Más tarde</string>
+    <string name="set_default_launcher_headline">Convierte a Facet en tu pantalla de inicio</string>
+    <string name="set_default_launcher_body">Android te pedirá que confirmes. Puedes volver a tu launcher anterior en cualquier momento desde Ajustes.</string>
+    <string name="set_default_launcher_home_app_badge">App de inicio</string>
+    <string name="set_default_launcher_cta">Establecer como predeterminado</string>
+    <string name="set_default_launcher_permissions_note">Los permisos llegan después, uno a la vez, solo cuando una función los necesita.</string>
+    <string name="set_default_launcher_checkmark">✓</string>
+    <string name="set_default_launcher_already_default">Facet ya es tu pantalla de inicio</string>
+
+    <!-- OnboardingDots -->
+    <string name="onboarding_dots_step_content_description">Paso %1$d de %2$d</string>
+
+    <!-- AppDrawerScreen -->
+    <string name="drawer_tab_personal">Personal</string>
+    <string name="drawer_search_more_options">Más opciones</string>
+    <string name="drawer_search_launcher_settings">Ajustes del launcher</string>
+    <string name="drawer_search_open_secure_folder">Abrir carpeta segura</string>
+    <string name="drawer_search_private_space">Espacio privado</string>
+    <string name="drawer_search_section_apps">APPS</string>
+    <string name="drawer_search_section_contacts">CONTACTOS</string>
+    <string name="drawer_search_section_settings">AJUSTES</string>
+    <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde los ajustes del sistema.</string>
+    <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en los ajustes del cajón de apps.</string>
+    <string name="drawer_search_no_matches">No se encontraron resultados para «%1$s»</string>
+    <string name="drawer_search_clear">Borrar búsqueda</string>
+
+    <!-- ContactConnectionsSheet -->
+    <string name="contact_connections_view_contact">Ver contacto</string>
+    <string name="contact_connections_multiple_options">Varias opciones disponibles</string>
+    <string name="contact_connections_other">Otro</string>
+
+    <!-- PrivateSpaceScreen -->
+    <string name="private_space_locked">El espacio privado está bloqueado</string>
+    <string name="private_space_no_apps">No hay apps en el espacio privado</string>
+    <string name="private_space_no_matches">Sin resultados</string>
+    <string name="private_space_search">Buscar en el espacio privado</string>
+
+    <!-- Shared home list headers -->
+    <string name="home_list_header_favorites">FAVORITOS</string>
+    <string name="home_list_header_recents">RECIENTES</string>
+    <string name="home_list_header_most_used">MÁS USADAS</string>
+
+    <!-- FacetCarouselScreen -->
+    <string name="facet_carousel_delete_title">¿Eliminar %1$s?</string>
+    <string name="facet_carousel_delete_message">Esto no se puede deshacer. Sus favoritos también se eliminarán.</string>
+    <string name="facet_carousel_header_title">Cambiar de faceta</string>
+    <plurals name="facet_carousel_count">
+        <item quantity="one">%d faceta disponible</item>
+        <item quantity="other">%d facetas disponibles</item>
+    </plurals>
+    <string name="facet_carousel_reorder">Reordenar</string>
+    <string name="facet_carousel_launcher_settings">Ajustes del launcher</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Apariencia, reloj predeterminado, favoritos, cajón y más</string>
+    <string name="facet_carousel_active">Activa</string>
+    <string name="facet_carousel_no_favorites">Aún no hay favoritos</string>
+    <string name="facet_carousel_facet_settings">Ajustes de faceta</string>
+    <string name="facet_carousel_delete_facet">Eliminar faceta</string>
+    <string name="facet_carousel_add_facet">Añadir faceta</string>
+    <string name="facet_carousel_add_facet_subtitle">Comienza con el reloj, calendario, apps favoritas y ajustes predeterminados de tu launcher. Personalízalos por faceta.</string>
+    <string name="facet_carousel_add_glyph">+</string>
+
+    <!-- ManageFacetsScreen -->
+    <string name="manage_facets_delete_message">Esto no se puede deshacer. Sus favoritos también se eliminarán.</string>
+    <string name="manage_facets_header_title">Gestionar facetas</string>
+    <string name="manage_facets_drag_hint">Arrastra para reordenar facetas</string>
+    <string name="manage_facets_options">Opciones de faceta</string>
+    <string name="manage_facets_apply_facet">Aplicar faceta</string>
+
+    <!-- FacetSettingsScreen -->
+    <string name="facet_settings_default_name">Faceta</string>
+    <string name="facet_settings_rename_facet">Renombrar faceta</string>
+    <string name="facet_settings_section_apps_list">LISTA DE APPS</string>
+    <plurals name="format_count_apps">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="facet_settings_dock_settings_title">Ajustes del Dock</string>
+    <string name="facet_settings_clock_overriding">Anulando los valores predeterminados · toca para editar</string>
+    <string name="facet_settings_clock_inherits">Hereda el predeterminado · Pila ligera · toca para previsualizar</string>
+    <string name="facet_settings_rename_explanation">Renombra esta faceta.</string>
+
+    <!-- HomeScreen -->
+    <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde los ajustes del sistema.</string>
+
+    <!-- ClockStyleGalleryScreen -->
+    <string name="clock_style_calendar_section">CALENDARIO</string>
+    <string name="clock_style_font_label">Fuente</string>
+    <string name="clock_style_color_label">Color</string>
+    <string name="clock_style_calendar_alignment">Alineación del calendario</string>
+    <string name="clock_style_clock_section">RELOJ</string>
+    <string name="clock_style_primary_font_color">Color de fuente principal</string>
+    <string name="clock_style_show_meridiem">Mostrar meridiano (AM/PM)</string>
+    <string name="clock_style_date_style">Estilo de fecha</string>
+    <string name="clock_style_clock_alignment">Alineación del reloj</string>
+    <string name="clock_style_position_section">POSICIÓN</string>
+    <string name="clock_style_tap_to_select">ESTILOS DE RELOJ — TOCA PARA SELECCIONAR</string>
+    <string name="clock_style_long_press_hint">Mantén pulsado el reloj en la pantalla de inicio para ajustar el tamaño y la posición vertical.</string>
+    <string name="clock_style_applied">Aplicado</string>
+    <string name="clock_style_reset_position">Restablecer posición del widget de reloj</string>
+
+    <!-- ClockAdjustSheet -->
+    <string name="clock_adjust_adjust_size_position">Ajustar tamaño y posición del reloj</string>
+    <string name="clock_adjust_size_position_subtitle">Cambia el tamaño o la posición del reloj</string>
+    <string name="clock_adjust_edit_styles">Editar estilos de reloj y calendario</string>
+    <string name="clock_adjust_edit_styles_subtitle">Plantillas, fuentes, colores y alineación</string>
+    <string name="clock_adjust_facet_settings_subtitle">Ajustes específicos de la faceta: lista de apps, dock, reloj y calendario</string>
+
+    <!-- HubWidgetPickerScreen -->
+    <string name="hub_widget_picker_full">Lleno — quita un widget primero</string>
+    <string name="hub_widget_picker_setup_cancelled">La configuración no terminó, así que ese widget no se añadió</string>
+    <string name="hub_widget_picker_search">Buscar widgets</string>
+    <string name="hub_widget_picker_none_found">No se encontraron widgets</string>
+    <string name="hub_widget_picker_title">Añadir widget</string>
+    <string name="hub_widget_picker_remaining">%d restantes</string>
+    <plurals name="hub_widget_picker_option_count">
+        <item quantity="one">%d widget</item>
+        <item quantity="other">%d widgets</item>
+    </plurals>
+    <string name="hub_widget_dimensions">%1$d×%2$d</string>
+    <string name="hub_widget_label_with_dimensions">%1$s %2$d×%3$d</string>
+
+    <!-- OrphanedWidgetTile -->
+    <string name="hub_orphaned_fallback_label">Este</string>
+    <string name="hub_orphaned_widget_unavailable">%1$s: widget no disponible</string>
+    <string name="hub_orphaned_app_uninstalled">La app fue desinstalada</string>
+    <string name="hub_orphaned_remove">Quitar</string>
+    <string name="hub_orphaned_keep_space">Mantener espacio</string>
+
+    <!-- HubHeader -->
+    <string name="hub_header_title">Widgets</string>
+    <string name="hub_header_subtitle">%1$d de %2$d widgets</string>
+    <string name="hub_header_add">Añadir</string>
+
+    <!-- HubGrid -->
+    <string name="hub_grid_resize_widget">Cambiar tamaño del widget</string>
+    <string name="hub_grid_remove_widget">Quitar widget</string>
+
+    <!-- HubEmptyState -->
+    <string name="hub_empty_state_title">Aún no hay widgets</string>
+    <string name="hub_empty_state_subtitle">Añade un widget para empezar.</string>
+
+    <!-- HubAtCapacityStrip -->
+    <string name="hub_at_capacity_message">Lleno con 20 widgets — quita uno para añadir otro.</string>
+    <string name="hub_at_capacity_manage">Gestionar</string>
+
+    <!-- FacetSettingsScreen leftover -->
+    <string name="facet_settings_apps_list_settings_title">Ajustes de la lista de apps</string>
+
+    <!-- ClockAccessoryRow -->
+    <string name="clock_accessory_separator_dot">·</string>
+
+    <!-- ClockTemplates decorative glyphs -->
+    <string name="clock_template_bracket_open">"[ "</string>
+    <string name="clock_template_bracket_close">" ]"</string>
+    <string name="clock_template_colon">:</string>
+
+    <!-- ClockZoneHandle -->
+    <string name="clock_zone_handle_drag_to_resize">Arrastra para cambiar el tamaño</string>
+</resources>
