@@ -62,6 +62,12 @@ android {
                 debugSymbolLevel = "FULL"
             }
         }
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
 
     compileOptions {
@@ -112,6 +118,14 @@ dependencies {
     // Pinned to the exact version built against this project's detekt-core (2.0.0-alpha.6, see
     // its POM) rather than "latest", since compose-rules tracks detekt's API closely.
     detektPlugins("io.nlopez.compose.rules:detekt:0.6.6")
+    // detekt's own standard rule sets — only the 5 that back detekt.yml's small, explicit
+    // allowlist (see its own comment there for which specific rules and why). Same version as
+    // detekt-core (2.0.0-alpha.6) for the same API-compatibility reason as compose-rules above.
+    detektPlugins("dev.detekt:detekt-rules-potential-bugs:2.0.0-alpha.6")
+    detektPlugins("dev.detekt:detekt-rules-complexity:2.0.0-alpha.6")
+    detektPlugins("dev.detekt:detekt-rules-style:2.0.0-alpha.6")
+    detektPlugins("dev.detekt:detekt-rules-naming:2.0.0-alpha.6")
+    detektPlugins("dev.detekt:detekt-rules-exceptions:2.0.0-alpha.6")
 
     implementation(platform("androidx.compose:compose-bom:2026.01.01"))
     implementation("androidx.compose.ui:ui")
@@ -183,11 +197,18 @@ ksp {
 }
 
 detekt {
-    // Only our own :detekt-rules "facet" rule set runs — detekt's bundled default rule sets
-    // (style/complexity/etc.) were never opted into and would otherwise flood the build with
-    // ~1900 pre-existing, unrelated findings (MaxLineLength, ReturnCount, ...) that have nothing
-    // to do with the language-translation migration this module exists to gate.
-    disableDefaultRuleSets = true
+    // Our own :detekt-rules "facet" rule set and compose-rules' "Compose" rule set are always
+    // explicitly opted in per-rule (see detekt.yml), regardless of these two flags. Detekt's own
+    // standard rule sets (style/complexity/naming/potential-bugs/exceptions/...) are a different
+    // story: both `disableDefaultRuleSets = false` AND `buildUponDefaultConfig = true` are
+    // required together for ANY of their rules to run at all — confirmed empirically, either flag
+    // alone produces zero findings even with the rule-set jars on the `detektPlugins` classpath.
+    // `buildUponDefaultConfig` means an unlisted standard rule keeps whatever active/inactive
+    // state detekt's own bundled default.yml gives it — which is why detekt.yml explicitly turns
+    // off the noisy ones (MaxLineLength, MagicNumber) that are default-active there but don't fit
+    // this codebase's style, rather than leaving them to flood the build unannounced.
+    disableDefaultRuleSets = false
+    buildUponDefaultConfig = true
     baseline = file("detekt-baseline.xml")
     source.setFrom(files("src/main/kotlin"))
     config.setFrom(files("detekt.yml"))

@@ -53,3 +53,46 @@ Compose:
   VarsWithoutStateBacking: { active: true }
   ViewModelForwarding: { active: true }
   ViewModelInjection: { active: true }
+
+# A deliberately small, low-noise allowlist from detekt's own standard rule sets (potential-bugs/
+# complexity/style/naming/exceptions) — same "explicitly opt in, nothing active by default"
+# discipline as `facet`/`Compose` above. Chosen by running every rule in all 9 standard rule sets
+# once (via a scratch build.gradle.kts + detekt.yml edit, reverted after) and keeping only the
+# ones that fired real, actionable findings in modest volume: 97 total across the 10 rules below.
+# Left out as pure noise for this codebase's style: MaxLineLength (1040 hits — this project
+# deliberately writes long single-line composable calls with many named args), MagicNumber (167
+# hits — every dp/sp/literal in Compose UI code counts), FunctionNaming without the
+# ignoreAnnotated below (329 hits — Compose's own PascalCase convention for @Composable functions
+# isn't opted out of by detekt by default), ExplicitItLambdaMultipleParameters (1 hit, a minor
+# style nit not part of this pass). `disableDefaultRuleSets = false` +
+# `buildUponDefaultConfig = true` in build.gradle.kts are both required for any of these to run at
+# all — confirmed empirically: `disableDefaultRuleSets` alone, or `buildUponDefaultConfig` alone,
+# each independently produced zero findings even with the rule-set jars on the `detektPlugins`
+# classpath and this exact config.
+potential-bugs:
+  active: true
+  UnsafeCallOnNullableType: { active: true }
+complexity:
+  active: true
+  LongMethod: { active: true }
+  TooManyFunctions: { active: true }
+  CyclomaticComplexMethod: { active: true }
+  ComplexCondition: { active: true }
+style:
+  active: true
+  ReturnCount: { active: true }
+  LoopWithTooManyJumpStatements: { active: true }
+  UnusedParameter: { active: true }
+  MaxLineLength: { active: false }
+  MagicNumber: { active: false }
+  ExplicitItLambdaMultipleParameters: { active: false }
+naming:
+  active: true
+  MatchingDeclarationName: { active: true }
+  FunctionNaming:
+    active: true
+    ignoreAnnotated: ['Composable', 'Preview']
+exceptions:
+  active: true
+  SwallowedException: { active: true }
+  TooGenericExceptionCaught: { active: true }

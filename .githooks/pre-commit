@@ -1,0 +1,32 @@
+#!/bin/sh
+# Runs Detekt on staged Kotlin changes before allowing a commit.
+#
+# This is the tracked source of truth — the root build.gradle.kts self-installs it into the real
+# git hooks directory on every Gradle configuration pass, so it takes effect for every contributor
+# automatically, with no manual `git config core.hooksPath` opt-in step to forget.
+#
+# app/build.gradle.kts's detekt {} block only wires the `detekt` task into Gradle's `check`/
+# `build` lifecycle tasks (the Detekt Gradle plugin does this itself, matching any task literally
+# named "check") — it never runs as part of `assembleDebug`, which is the documented day-to-day
+# dev workflow in CLAUDE.md. This hook is what actually enforces it on local commits.
+
+# Only run when a staged change touches app/src/main/kotlin — detekt.yml scopes its `source` to
+# that directory alone (see app/build.gradle.kts's detekt {} block), so nothing else can trip it.
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -q '^app/src/main/kotlin/.*\.kt$'; then
+    exit 0
+fi
+
+echo "Running Detekt on staged Kotlin changes..."
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
+cd "$REPO_ROOT" || exit 1
+
+./gradlew :app:detekt -q
+status=$?
+
+if [ $status -ne 0 ]; then
+    echo ""
+    echo "Detekt found issues — commit blocked."
+    echo "Run './gradlew :app:detekt' for the full report, or 'git commit --no-verify' to skip (not recommended)."
+fi
+
+exit $status
