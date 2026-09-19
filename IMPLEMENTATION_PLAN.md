@@ -2140,53 +2140,456 @@ converting them once fixes every consuming screen.
     unit tests, including the 2 fixed Robolectric ones and the rewritten `DefaultLauncherRepositoryTest`
     case).
 
-### 2. Shared components (`ui/components/`)
-- [ ] `AppContextMenu.kt` (~24 strings — long-press menu actions)
-- [ ] `FolderContentsSheet.kt`, `FolderTileContextMenu.kt`, `AppPickerScreen.kt`,
-  `InheritOverrideCard.kt`, `GestureHintOverlay.kt`, `FontWeightSlider.kt`, `ScreenHeader.kt`,
-  `FacetScopeBadge.kt`, `RenameDialog.kt`, `HomeSurfacePreview.kt`, `ConfirmDialog.kt`,
-  `BackButton.kt`, `LabeledDropdownRow.kt`, `AppSortControl.kt`
+### 2. Shared components (`ui/components/`) — ✅ complete
+- [x] `AppContextMenu.kt`, `FolderContentsSheet.kt`, `FolderTileContextMenu.kt`,
+  `AppPickerScreen.kt`, `InheritOverrideCard.kt`, `GestureHintOverlay.kt`, `FacetScopeBadge.kt`,
+  `RenameDialog.kt`, `HomeSurfacePreview.kt`, `ConfirmDialog.kt`, `BackButton.kt`,
+  `AppSortControl.kt` — 37 new `strings.xml` entries + 1 `<plurals>`. `FontWeightSlider.kt`/
+  `LabeledDropdownRow.kt` needed no further changes: section 1 already converted their own literals
+  when it changed `LabeledDropdownRow`'s `label` param to `@Composable`. `ScreenHeader.kt` had none
+  to begin with — its `title`/`subtitle` are caller-supplied params; only its own `@Preview` fixture
+  data is literal, excluded per section 1's established precedent (`AppInfo`/`CalendarEvent` preview
+  fixtures aren't real user-facing text).
+  - **Heavy reuse across files**, grouped as shared entries at the top of the new `strings.xml`
+    section rather than duplicated per file (same font_name_* precedent as section 1):
+    `content_description_back` (`BackButton`, `AppContextMenu`'s folder-page chevron,
+    `FolderContentsSheet`'s `AddHere` chevron — a real, previously-unnoticed duplicate: `BackButton.kt`
+    had its own separate hardcoded `"Back"` this whole time, caught by re-scanning after the first
+    pass showed a leftover hit), `action_cancel`/`action_save`/`action_reset`/`action_rename`/
+    `action_done`, `folder_add_to_folder`/`folder_remove_from_folder`/`folder_create_new_folder`/
+    `folder_new_folder_title`/`folder_name_this_folder`/`folder_rename_title`/
+    `folder_rename_explanation`/`folder_no_apps_yet`, and a `quick_placement_add_to`/
+    `quick_placement_remove_from` %1$s-templated pair (+ `quick_placement_favorites`/
+    `quick_placement_dock` for the %1$s itself) backing `AppContextMenu.kt`'s
+    `quickPlacementLabel()` — changed from a plain `fun` to `@Composable fun` so it can call
+    `stringResource()` internally (all 4 call sites already ran inside composable context, so this
+    was a safe, non-breaking signature change).
+  - **New shared `<plurals name="folder_app_count">`** ("%d app"/"%d apps") replacing an *identical*
+    `"${folder.apps.size} apps"` literal found independently duplicated in three files —
+    `AppContextMenu.kt`, `AppPickerScreen.kt` (both in this section's scope) and
+    `ui/settings/FoldersSettingsScreen.kt` (technically section 3's file, but fixed here too rather
+    than leave one of three identical copies stale — see the i18n conventions comment at the top of
+    `strings.xml` re: plurals for counts). Read via `pluralStringResource(id, count, count)`.
+  - Two hardcoded directional glyphs in `GestureHintOverlay.kt` (`"←"`/`"→"`/`"↑"`) were moved to
+    resources too, for mechanical consistency with everything else `Text(...)` renders there — not
+    because they need translation, just because they're still literal `text =` arguments the same
+    rule flags.
+  - `app/detekt-baseline.xml` regenerated (`./gradlew --stop && ./gradlew :app:detektBaseline`):
+    461 → 425 entries (`ComposeHardcodedText` 281 → 244). `./gradlew :app:detekt` green;
+    `./gradlew test` full suite green.
 
-### 3. Settings screens (~218 strings across ~20 files — the largest surface)
-- [ ] `SettingsScreen.kt` (~43 — top-level list, do first in this group as the nav hub)
-- [ ] `AppDrawerSettingsScreen.kt` (~27), `HomeAppsListSettingsScreen.kt` (~22),
-  `AppearanceSettingsScreen.kt` (~18), `backup/BackupRestoreScreen.kt` (~16),
-  `PermissionsScreen.kt` (~11) + `PermissionsViewModel.kt` (~8), `FoldersSettingsScreen.kt` (~11),
-  `CalendarSettingsScreen.kt` (~10), `FolderDetailScreen.kt` (~9), `DockSettingsScreen.kt` (~7),
-  `AboutScreen.kt` (~7), `NotificationSettingsScreen.kt` (~6), remaining small screens
-  (`UsageAccessExplanationScreen.kt`, `NotificationAccessExplanationScreen.kt`,
-  `FolderAppPickerScreen.kt`, ViewModels holding user-facing copy)
+### Real bug found and fixed via the plurals migration
+The old `"${folder.apps.size} apps"` concatenation always said "apps" regardless of count — a
+1-app folder read "1 apps". `pluralStringResource(R.plurals.folder_app_count, ...)` fixed this for
+real (correctly renders "1 app" singular), which broke two *existing* instrumented tests that had
+been asserting on the ungrammatical string: `AppContextMenuTest.tappingAddToFolderSlidesToTheFolderPageListingExistingFolders`
+(`composeRule.onNodeWithText("1 apps")`) and `FoldersSettingsScreenTest.folderRowRendersNameAndAppCount`
+(same). Both updated to assert `"1 app"` instead — caught only because
+`ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest` was run on-device for this
+section (per this file's device-safety rule: `adb devices -l` confirmed only the emulator was
+attached before running). Ran the full `ui.components` package (28 + 12 tests) plus
+`AppearanceSettingsScreenTest` (14 tests) and `FoldersSettingsScreenTest` (6 tests) on
+`Medium_Phone_API_36.1` — all green after the two fixes.
 
-### 4. Onboarding (~65 strings — self-contained, isolable as one PR)
-- [ ] `OnboardingHomeSetupPage.kt` (~28), `OnboardingFacetsPage.kt` (~20),
-  `OnboardingIntroPage.kt` (~11), `SetDefaultLauncherSheet.kt` (~15), `OnboardingScreen.kt` (~5)
+### 3. Settings screens (~218 strings across ~20 files — the largest surface) — ✅ complete
+- [x] `SettingsScreen.kt` — nav hub, done first. Compound subtitles (clock style · time format,
+  calendar count · all-day visibility, App Drawer's 3-part layout/contact-search/settings-search,
+  notifications enabled/disabled) rebuilt as format-string templates
+  (`dot_join_2`/`dot_join_3`/`comma_join_2`, reusable across this whole phase) instead of raw `+`
+  concatenation. `dockSummary`/`folderCountSummary` switched to real `<plurals>` — both already had
+  an explicit `if (count == 1) singular else plural` branch in the original code, so this was a
+  correctness-neutral resourcing, not a new grammar decision (contrast `appsListSummary`'s
+  "N Favorites"/"N Recents"/"N Most used", which never had such a branch — left as flat format
+  strings, unchanged behavior, no new pluralization invented).
+- [x] `NotificationBadgeStyle` centralized to `@StringRes displayNameRes` (`Dot`/`Count`) — fixed a
+  real duplicate: `NotificationSettingsScreen.kt` had its own separate hardcoded `"Dot"/"Count"`
+  mapping for the exact same enum. `NotificationSettingsScreen.kt` migrated alongside it (header,
+  toggle row, dropdown title).
+- [x] `AppDrawerSettingsScreen.kt` — `DrawerPresentation`/`DrawerListItemSize`/`SearchBarPosition`/
+  `DrawerFolderDisplayMode` all centralized to `displayNameRes` (same pattern); `DrawerGridSize`
+  stays a `@Composable` format-template function (`"%1$d cols × %2$d rows"`) since its label is
+  computed from the enum's own numeric fields, not a fixed per-value string. Found and fixed a
+  third-party duplicate while at it: `OnboardingHomeSetupPage.kt` (phase 4's own file) had its own
+  separate `DrawerPresentation` "List"/"Grid" mapping — fixed in place rather than left stale, same
+  reasoning as phase 2's `folder_app_count` cross-phase fix.
+- [x] `HomeAppsListSettingsScreen.kt` — `AppRowPosition`/`AppRowPresentation`/
+  `AppListVerticalAlignment`/`ListContentMode`/`DockDisplayMode` all centralized to `displayNameRes`.
+  `ListContentMode`/`DockDisplayMode` each replaced an *independent* duplicate hand-rolled mapping in
+  `ui/facets/FacetSettingsComponents.kt` (phase 5's file) — fixed there too (`internal fun
+  ListContentMode.displayLabel()`/`DockDisplayMode.displayLabel()` now delegate to
+  `stringResource(displayNameRes)`), which required marking `FacetSettingsScreen.kt`'s private
+  `appsSubtitle()` helper `@Composable` too (its only caller was already in composable context).
+- [x] `AppearanceSettingsScreen.kt` — the raw-string rows added earlier this session (font-size
+  feature: Icon Style/Launcher Font/Font Color/Font Size/Font Weight) now resource-backed; `ThemeMode`
+  centralized to `displayNameRes` (`Light`/`Dark`/`System`, its only consumer).
+- [x] `backup/BackupRestoreScreen.kt` — header reuses `settings_backup_restore_title` (identical text
+  to the Settings row that navigates here, no separate resource). "Restored N facet(s)"/"N widget(s)
+  need re-adding" converted to real `<plurals>` — a fresh, correct plural form (`"...needs..."` singular
+  verb vs `"...need..."` plural), not present in the original crude `"(s)"` notation, but a natural
+  byproduct of writing genuine plurals rather than a deliberate grammar-fixing pass.
+- [x] `PermissionsScreen.kt` + `PermissionsViewModel.kt` — the ViewModel builds `PermissionRowState`
+  outside Composable context, so it needed `@ApplicationContext Context` injected (Hilt) and
+  `context.getString(...)`, same as section 1's `SystemSettingsRepository` precedent. Broke both
+  `PermissionsViewModelTest` (needed a `Context` constructor arg — fixed by stubbing
+  `context.getString(anyInt())` to return `""`, since a bare Mockito mock returns `null` there, which
+  crashes the non-null `PermissionRowState.title`/`subtitle` assignment and gets silently swallowed by
+  `combine{}`, leaving `uiState` stuck at its empty default — a real "why is this 0 not 4" debugging
+  dead-end worth remembering) and `PermissionsScreenTest` (needed the already-available real
+  `LocalContext.current` passed as the new first constructor arg, at both its call sites).
+- Verified: full `./gradlew test` green; on-device (`emulator-5554`) —
+  `SettingsScreenTest` (19), `NotificationSettingsScreenTest` (6), `AppDrawerSettingsScreenTest` (6),
+  `HomeAppsListSettingsScreenTest` (8), `FacetSettingsScreenTest` (12), `OnboardingScreenTest` (19),
+  `AppearanceSettingsScreenTest` (14), `BackupRestoreScreenTest` (4), `PermissionsScreenTest` (4) —
+  all green. `app/detekt-baseline.xml` regenerated across this whole batch: 425 → 365 entries
+  (`ComposeHardcodedText` 244 → 183).
+- [x] `DockSettingsScreen.kt` — used the just-centralized `DockDisplayMode.displayNameRes` directly
+  (its own separate "Icons"/"Text" mapping was the third independent copy of that enum's labels
+  found this phase, after `FacetSettingsComponents.kt`); header/"Drag to reorder" reuse
+  `settings_dock_title`/`drag_to_reorder_content_description` (renamed from
+  `home_apps_list_drag_to_reorder` once a second consumer showed up); "N of MAX" dock-count
+  subtitle became a `%1$d of %2$d` format string.
+- [x] `FoldersSettingsScreen.kt` — header/empty-state/create-dialog reuse `settings_folders_title`/
+  `app_picker_no_folders_yet`/`folder_new_folder_title`/`folder_name_this_folder` (all already
+  centralized this phase or in phase 2); "Delete folder" shared between the `ConfirmDialog` title
+  and the row's own delete-icon `contentDescription` (identical text, one resource).
+- [x] `CalendarSettingsScreen.kt` — "Calendars to display" reuses `settings_calendars_title`;
+  "Turn on" reuses `permission_turn_on`.
+- [x] `FolderDetailScreen.kt` — almost entirely reuse: `folder_add_to_folder`, `action_rename`,
+  `folder_rename_title`/`folder_rename_explanation`, `drag_to_reorder_content_description`,
+  `folder_remove_from_folder` — only its own empty-state sentence needed a new resource.
+- [x] `AboutScreen.kt` — Version/Check for updates/Join the Discord rows + header, all new
+  (no cross-file overlap).
+- [x] `UsageAccessExplanationScreen.kt`/`NotificationAccessExplanationScreen.kt` — near-identical
+  shape (headline + body + "Open settings" CTA); headers reuse
+  `permission_usage_access_title`/`permission_notification_access_title`, the CTA text shares one
+  `open_settings` resource between both screens. Two-part `"..." + "..."` string concatenation for
+  each body paragraph collapsed into one resource string apiece.
+- [x] `FolderAppPickerScreen.kt` — its one string (`"IN FOLDER"` section label) resourced; no
+  ViewModel in this package needed changes beyond `PermissionsViewModel` (already done above).
+- [x] Bonus: `AppDrawerSettingsScreen.kt`'s opacity-percentage display (`"${...}%"`) converted to a
+  `percent_format` (`"%1$d%%"`) resource — caught in a final full-package hardcoded-string sweep,
+  the only real hit remaining after excluding `@Preview` fixture data.
+- Final verification: `./gradlew compileDebugKotlin/compileDebugAndroidTestKotlin/testDebugUnitTest`
+  all green; on-device (`emulator-5554`), the entire `ui.settings` instrumented package —
+  15 test suites, 99 tests, 0 failures (`AboutScreenTest`, `AppDrawerSettingsScreenTest`,
+  `AppearanceSettingsScreenTest`, `CalendarSettingsScreenTest`/`...GrantedTest`,
+  `DockSettingsScreenTest`, `FolderAppPickerScreenTest`, `FolderDetailScreenTest`,
+  `FoldersSettingsScreenTest`, `HomeAppsListSettingsScreenTest`, `NotificationSettingsScreenTest`,
+  `PermissionsScreenTest`/`...GrantedTest`, `SettingsScreenTest`, `backup/BackupRestoreScreenTest`).
+  `app/detekt-baseline.xml` regenerated one final time for the phase: 365 → 333 entries
+  (`ComposeHardcodedText` 183 → 151). Phase totals since the start of section 2:
+  `ComposeHardcodedText` 281 → 151 (baseline 461 → 333 overall).
 
-### 5. Drawer, Facets, Home, Hub
-- [ ] `drawer/AppDrawerScreen.kt` (~29), `drawer/ContactConnectionsSheet.kt` (~13),
-  `drawer/DrawerViewModel.kt` (~11), `drawer/AlphabetRail.kt` (~7), `drawer/PrivateSpaceScreen.kt`
-  (~4)
-- [ ] `facets/FacetCarouselScreen.kt` (~19), `facets/ManageFacetsScreen.kt` (~15),
-  `facets/FacetSettingsScreen.kt` (~13), `facets/FacetSettingsComponents.kt` (~5),
-  `facets/FavoritesPickerScreen.kt` (~6)
-- [ ] `home/HomeScreen.kt` (~20), `home/clock/ClockStyleGalleryScreen.kt` (~25),
-  `home/ClockAdjustSheet.kt` (~9), `home/ClockBlock.kt` (~6)
-- [ ] `hub/picker/HubWidgetPickerScreen.kt` (~10), `hub/OrphanedWidgetTile.kt` (~8),
-  `hub/HubHeader.kt`, `HubGrid.kt`, `HubEmptyState.kt`, `HubAtCapacityStrip.kt` (small)
+### 4. Onboarding (~65 strings — self-contained, isolable as one PR) — ✅ complete
+- [x] `OnboardingScreen.kt` — one string ("Skip"). Its `DrawerPresentation` duplicate had already
+  been fixed in phase 3 once `DrawerPresentation.displayNameRes` existed.
+- [x] `OnboardingIntroPage.kt` — app title reuses `app_name`; the three gesture lines reuse
+  `gesture_hint_arrow_up`/`right`/`left` (phase 2) for their glyphs; the diagram's "Dock" leader
+  label reuses `settings_dock_title` (phase 3) — everything else new.
+- [x] `OnboardingHomeSetupPage.kt` — "Show apps as"/"Apps to show"/"Drag to reorder" reuse phase-3
+  resources; `ListContentMode`'s onboarding labels ("Recently used" for `RECENTS`) deliberately kept
+  *separate* from `ListContentMode.displayNameRes` ("Recents") — friendlier first-run copy is a real,
+  intentional wording difference from Settings, not a duplicate to collapse.
+- [x] `OnboardingFacetsPage.kt` — "Back" reuses `action_back`; the three-part concatenated body
+  string (`"\n..." + "..." + "\n\n..."`) collapsed into one resource, newlines preserved via `\n`
+  escapes. `MOCK_FACETS`' invented app names/dates ("Bloom", "Wednesday, 26 August", etc.) left as
+  plain `String` fields, not resourced — genuinely fictional illustrative content, not real
+  detekt-flagged `Text(...)` call sites (positional args on a private data class, not a named
+  text-carrying param), same category as section 1's documented detector gap.
+- [x] `SetDefaultLauncherSheet.kt` — app-row label reuses `app_name`, "Done" reuses `action_done`
+  (identical text to `AppPickerScreen`'s own "Done").
+- [x] Bonus: `OnboardingDots.kt` (not in the original file list) — its `"Step %d of %d"`
+  `contentDescription` caught in the final package sweep, converted to a `%1$d`/`%2$d` format string
+  (moved out of the non-composable `semantics {}` lambda, same pattern as
+  `CalendarSettingsScreen.kt`'s swatch content description in section 1).
+- Verified: `./gradlew compileDebugKotlin`/`compileDebugAndroidTestKotlin`/`testDebugUnitTest` all
+  green; on-device (`emulator-5554`) — `OnboardingScreenTest` (19) + `SetDefaultLauncherSheetTest`
+  (6), 25/25, 0 failures. `app/detekt-baseline.xml`: 333 → 288 entries (`ComposeHardcodedText`
+  151 → 106).
 
-### 6. Special case — not a simple resource swap
-- [ ] `home/clock/TimeInWords.kt` spells time as words ("Eleven Twenty Two") via number-to-words
-  generation logic, not static copy — a resource file can't express this directly. Needs either
-  per-locale grammar rules or scoping this clock style as English-only for v1; flag the decision
-  back to the user rather than guessing when this task comes up.
+### 5. Drawer, Facets, Home, Hub — ✅ complete
+- [x] `drawer/AppDrawerScreen.kt` (~29), `drawer/ContactConnectionsSheet.kt` (~13),
+  `drawer/DrawerViewModel.kt` (0 — no UI-facing string literals, nothing to migrate),
+  `drawer/AlphabetRail.kt` (~7), `drawer/PrivateSpaceScreen.kt` (~4)
+- [x] `facets/FacetCarouselScreen.kt` (~19), `facets/ManageFacetsScreen.kt` (~15),
+  `facets/FacetSettingsScreen.kt` (~13), `facets/FacetSettingsComponents.kt` (already 0, fixed in
+  phase 3), `facets/FavoritesPickerScreen.kt` (already 0, fixed in phase 3)
+- [x] `home/HomeScreen.kt` (~20), `home/clock/ClockStyleGalleryScreen.kt` (~25),
+  `home/ClockAdjustSheet.kt` (~9), `home/ClockBlock.kt` (0 — only `@Preview` fixture data via the
+  already-excluded `CalendarEvent` constructor, section 1's documented detector gap)
+- [x] `hub/picker/HubWidgetPickerScreen.kt` (~10), `hub/OrphanedWidgetTile.kt` (~8),
+  `hub/HubHeader.kt`, `HubGrid.kt`, `HubEmptyState.kt`, `HubAtCapacityStrip.kt` (small) — plus the
+  rest of `ui/hub/` swept for completeness (`HubScreen.kt`, `HubWidgetTile.kt`,
+  `WidgetGrabGesture.kt`, `WidgetResizeHandle.kt`, `HubUiState.kt`, `HubViewModel.kt`): all clean,
+  the only string-shaped literals in them are `Log.d(TAG, "...")` debug calls, which the rule
+  correctly ignores (lowercase `d` callee, not a Composable).
+  - **Heavy reuse across files**: new shared `home_list_header_favorites`/`_recents`/`_most_used`
+    (used by both `HomeScreen.kt` and `FacetCarouselScreen.kt`'s preview, which previously had its
+    own separate, driftable copy of the same three labels); `dot_join_2`/`dot_join_3`/
+    `comma_join_2` (phase 3) threaded through `FacetSettingsScreen.kt`'s inherit/override
+    subtitles; `ClockAdjustSheet.kt`'s "Launcher settings"/"Facet settings" rows reuse
+    `facet_carousel_launcher_settings`/`_subtitle`/`facet_carousel_facet_settings` outright rather
+    than duplicating near-identical copy (this also **fixed a real casing inconsistency** —
+    `ClockAdjustSheet`'s subtitle read "Appearance, default clock..." (lowercase `default`) against
+    `FacetCarouselScreen`'s already-shipped "Appearance, Default clock..." (capitalized); both now
+    render the one canonical string). `HubEmptyState.kt`'s "+" reuses `facet_carousel_add_glyph`;
+    its "Add widget" button reuses `HubWidgetPickerScreen`'s own `hub_widget_picker_title`.
+  - **New `<plurals name="hub_widget_picker_option_count">`** ("%d widget"/"%d widgets") replacing
+    an existing `if (size == 1) "1 widget" else "$size widgets"` branch in
+    `HubWidgetPickerScreen.kt` — already correctly singular/plural in the original code, just
+    converted to a real resource per this migration's plurals policy.
+  - **New pattern, first occurrence this migration**: `HubWidgetPickerScreen.kt`'s
+    `AddFailureReason`-to-message mapping runs inside a `LaunchedEffect` — a suspend lambda, where
+    `stringResource()` (a `@Composable` function) can't be called directly. Resolved both failure
+    strings (`hub_widget_picker_full`/`_setup_cancelled`) to local `val`s in the composable body
+    *before* the `LaunchedEffect` block, then referenced those captured strings from inside the
+    coroutine closure — worth reusing this shape if another async event-handling callback needs a
+    string resource.
+  - `ClockStyleGalleryScreen.kt`'s own private `ClockAlignment.clockStyleGalleryDisplayLabel()`
+    extension function (a `when` returning `"Left"`/`"Center"`/`"Right"`) was deleted entirely —
+    `ClockAlignment` (`data/model/LauncherSettings.kt`) got a real `@param:StringRes
+    displayNameRes` field instead, reusing `AppRowPosition`'s already-existing
+    `app_row_position_left`/`_center`/`_right` strings (identical wording, same left/center/right
+    concept) rather than adding three duplicate new ones — same centralization pattern as section 1.
+  - `dashedBorder`, format args and `%1$d×%2$d`-style dimension strings
+    (`hub_widget_dimensions`/`hub_widget_label_with_dimensions`) were used for `HubWidgetPickerScreen.kt`'s
+    "4×2"-style grid-size labels rather than leaving them as raw string-template literals.
+  - `CalendarEvent`'s "Team standup"/"Design review" sample preview data
+    (`ClockStyleGalleryScreen.kt`'s calendar preview, `ClockBlock.kt`'s own `@Preview`) is real,
+    on-screen content in the shipped app (not just an IDE `@Preview`) but deliberately excluded —
+    confirmed by reading `ComposeHardcodedTextRule.kt`'s own `NON_COMPOSABLE_CONSTRUCTORS` doc
+    comment, which names this exact fixture data as the reason `CalendarEvent` is on that allowlist.
+- Verified: `./gradlew compileDebugKotlin`/`compileDebugAndroidTestKotlin`/`testDebugUnitTest` all
+  green; on-device (`emulator-5554`, confirmed via `adb devices -l` before each run, package-scoped
+  runs since a comma-separated multi-class `-Pandroid.testInstrumentationRunnerArguments.class`
+  filter turned out to silently run only the *first* listed class — a real gap caught only because
+  a re-check of the result XML showed 1 test instead of the expected ~200, not because the build
+  reported anything wrong) — `ui.drawer` (42), `ui.facets` (49), `ui.home` incl. `ui.home.clock`
+  (99), `ui.hub` incl. `ui.hub.picker` (24): 214/214 green. `app/detekt-baseline.xml`: 461 → 197
+  entries (`ComposeHardcodedText` 106 → 15, all now outside this phase's own file list —
+  `AppPickerScreen.kt`/`ScreenHeader.kt` from phase 2, `PermissionsScreen.kt` from phase 3,
+  `ClockAccessoryRow.kt`/`ClockTemplates.kt`/`ClockZoneHandle.kt` in `ui/home/clock/` but never
+  actually listed in this section's own file scope, and `FacetCarouselScreen.kt`'s one remaining
+  hit is a legitimate invisible `alpha(0f)` spacer, not real text — left as known, pre-existing gaps
+  rather than pulled into this phase's scope unannounced).
 
-### 7. Non-Compose user-visible text
-- [ ] Check `data/`/`domain/` for Toast, notification, or widget-host text shown outside Compose
-  (initial scan found no clear hits; worth a manual check of `AppWidgetRepository.kt` and anything
-  posting notifications).
+### Real bugs found and fixed this phase
+1. **`FacetSettingsScreen.kt`**: `uiState.globalClockTemplateId.name.replace("_", " ")` rendered
+   the enum's raw Kotlin name (e.g. "LIGHT STACK", wrong casing, untranslatable) instead of
+   `ClockTemplateId.displayNameRes` (already centralized in section 1, just never wired up here).
+   Fixed to `stringResource(uiState.globalClockTemplateId.displayNameRes)`.
+2. **`FacetSettingsScreen.kt`**, found late via the post-migration `detektBaseline` diff (not the
+   initial per-file catalog): `title = "Apps list settings"` at its Apps-list-settings row was
+   missed on the first pass — the file's diff looked complete but the baseline regeneration still
+   showed one `ComposeHardcodedText` hit here. New `facet_settings_apps_list_settings_title`
+   resource; re-verified `FacetSettingsScreenTest` (12/12) green on-device after the fix. Kept as a
+   reminder that "the file compiles and its own tests pass" isn't sufficient proof of full
+   migration — the baseline diff is the actual completeness check.
+3. **`HomeScreen.kt`**: its `ListContentMode` section header (FAVORITES/RECENTS/MOST USED) had its
+   own separate string literals instead of the shared `home_list_header_*` resources — collapsed
+   into the same three shared strings `FacetCarouselScreen.kt`'s preview now also uses (see reuse
+   note above).
 
-### 8. Wrap-up
-- [ ] Delete now-unused string literals; `./gradlew lint` shows zero `HardcodedText` findings.
-- [ ] Update `docs/architecture/README.md` per its own table if this introduces a pattern worth
-  documenting (e.g. how `SettingsSearchEntry` labels resolve via resources).
+### 6. Special case — not a simple resource swap — ✅ complete
+- [x] `home/clock/TimeInWords.kt` — user decided against English-only scoping: real per-locale
+  grammar for Spanish, French, German, and Portuguese, not a vocabulary swap of the English
+  construction. English fixed a real, undocumented bug along the way — `"Nine Five"` for `9:05`
+  instead of the doc comment's own claimed `"Nine Oh Five"` (the `< 10` branch never actually
+  prepended `"Oh"`). Per-language number-word tables (0–59) plus each language's own hour/minute
+  connector and grammar: Spanish `"Once y Veintidós"` / `"Doce En Punto"` (hour 1 → feminine
+  `"Una"`, minutes stay masculine `"Uno"` — `hora` is feminine, `minuto` isn't); French `"Onze
+  Heures Vingt-Deux"` / `"Douze Heures"` (both hour *and* a units-digit-1 minute → `"Une"` — both
+  `heure`/`minute` are feminine; hyphenated tens-compounds except `"et Une"` for ×1); German `"Elf
+  Uhr Zweiundzwanzig"` / `"Zwölf Uhr"` (units-before-tens compounds, `"einundzwanzig"`; hour 1
+  contracts to `"Ein Uhr"`, minute 1 stays uncontracted `"Eins"`); Portuguese `"Onze e Vinte e
+  Dois"` / `"Doze Em Ponto"` (same feminine-hour-only pattern as Spanish). `timeInWords()` now
+  takes a `locale: Locale` param (`ClockTemplates.kt`'s `SpelledOutTemplate` threads its own
+  already-available `locale` through, previously unused for this call). New
+  `TimeInWordsTest.kt` (26 cases) — a testing gap identified and filled per direct request: hour
+  wrap-around, minute edge cases (0/1–9/10–19/tens), every language's own gender-agreement rule,
+  and the locale-fallback path, one test per behavior.
 
-Actual translation into other locales (`values-<lang>/strings.xml`) is pass 2, out of scope here.
+### 7. Non-Compose user-visible text — ✅ complete
+- [x] Checked `data/`/`domain/` for Toast, notification, or widget-host text shown outside Compose:
+  no hits. `FacetNotificationListenerService` only *reads* notifications (for badge counts), never
+  posts its own; the app hosts other apps' `AppWidgetHostView`s (`AppWidgetRepository.kt`,
+  `LauncherAppWidgetHost.kt`) rather than rendering its own `RemoteViews` text. A broader sweep of
+  every `"[A-Z][a-z]+ [a-z]` string literal across `data/`/`domain/` turned up only KDoc comments
+  referencing real UI copy by name for documentation (e.g. `"Search contacts" toggle`), not actual
+  hardcoded user-visible literals.
+
+### 8. Wrap-up — ✅ complete
+- [x] `./gradlew lint` confirms zero `HardcodedText` findings (expected and unchanged from section
+  0's own finding — that check only inspects XML `android:text`, useless on this Compose-only app)
+  and, more usefully, **zero `UnusedResources` findings** — no orphaned `strings.xml` entries from
+  the whole migration's reuse-first discipline.
+  - Lint's `PluralsCandidate` check (unrelated to `HardcodedText`, found incidentally) flagged 8
+    `%d`-plus-word strings as possible missing plurals. Fixed the 4 that are real, reachable
+    grammar bugs — `format_count_apps` ("1 apps"), `settings_calendars_selected` ("1 calendars
+    selected"), `settings_favorites_count` ("1 Favorites"), `settings_recents_count` ("1
+    Recents") — converted to `<plurals>` + `pluralStringResource()` at their 8 call sites across
+    `FacetSettingsScreen.kt`/`SettingsScreen.kt`. Left the other 4 alone: `settings_most_used_count`
+    and `hub_widget_picker_remaining` ("%d left") don't actually change wording between singular
+    and plural in English (false positives); `drawer_grid_size_label` (`DrawerGridSize` columns/
+    rows are fixed enum constants, never 1) and `hub_header_subtitle` (`HUB_MAX_WIDGETS = 20`,
+    never 1) can't structurally reach the singular case with current code — matches this
+    migration's standing conservative-pluralization policy (section 2's real-bug note) rather than
+    introducing unreachable grammar branches.
+- [x] `docs/architecture/README.md`'s table has no row for "add a `strings.xml` entry" — string
+  resources aren't part of that doc's architecture-boundary/component-registry scope (it tracks
+  Hilt modules, repositories, DB schema, nav destinations, etc., not UI copy), so no update needed.
+
+## Language translation (i18n) — Pass 2: Spanish, French, German, Portuguese — ✅ complete
+
+Real translation into `values-es/strings.xml`, `values-fr/strings.xml`, `values-de/strings.xml`,
+and `values-pt/strings.xml` — every one of Pass 1's 437 `<string>` entries and 12 `<plurals>`
+translated, not machine-generated, for all four locales. `values-pt` uses Brazilian Portuguese
+vocabulary (`aplicativo`/`app`, `salvar`, `tela`) rather than European Portuguese, matching where
+the larger Android-using population sits; German keeps `App`/`Apps`/`App-Drawer` as established
+loanwords the same way Spanish/French kept `app`.
+
+- [x] Verified programmatically before any on-device check: a resource-name diff between
+  `values/strings.xml` and each new file (zero missing, zero extra in both directions) and a
+  per-resource format-specifier diff (`%1$s`/`%1$d`/etc., positions and types) — a mismatch here
+  would crash at runtime rather than just look wrong, so this ran before `./gradlew
+  processDebugResources` rather than relying on that catching it. All four locales matched exactly
+  on the first pass. `./gradlew processDebugResources` (real AAPT compilation, not just XML
+  well-formedness) green for all four.
+- [x] Verified for real on an emulator — not just "it compiles." Android's per-app `LocaleManager`
+  override (`adb shell cmd locale set-app-locales com.facetlauncher.app --user 0 --locales <lang>`)
+  rather than changing the emulator's system-wide locale, since the latter would've disrupted any
+  other test run sharing this device. Screenshotted the onboarding flow in all four languages —
+  confirmed real, correct rendering, not just "some text changed."
+  - **Caught and fixed a real bug this way that the whole Pass 1 migration missed**:
+    `OnboardingUiState.kt`'s `dockCountLabel`/`favoriteCountLabel` were plain Kotlin computed
+    properties doing raw string interpolation (`"${dockApps.size} of
+    ${DockAppRepository.MAX_APPS}"}`) — outside any Composable, so `ComposeHardcodedText` could
+    never see it (it only scans Compose UI call arguments). Confirmed on-device: the onboarding
+    "Favorites"/"Manage dock apps" rows showed "0 of 6"/"5 of 5" in literal English even with the
+    default locale active, while every other string on the same screen was correctly translated.
+    Fixed by deleting both computed properties and resolving `stringResource()` at the two call
+    sites in `OnboardingHomeSetupPage.kt` instead (both already inside `LazyColumn`'s `item {}`,
+    a real Composable context) — reusing `DockSettingsScreen.kt`'s existing identical `"%1$d of
+    %2$d"` string, renamed from the dock-specific-sounding `dock_apps_count_of_max` to the
+    honestly-generic `format_count_of_max` since it's now shared across two unrelated screens (all
+    3 call sites + all 4 locale files updated together). This is exactly the kind of gap manual
+    on-device verification catches that a static rule structurally cannot — the German and
+    Portuguese passes re-checked this exact spot ("0 von 6"/"5 von 5" and "0 de 6"/"5 de 5") and
+    confirmed the fix holds across all four locales.
+  - Caught the same locale-override tooling causing 3 *false* on-device test failures
+    (`OnboardingScreenTest`/`SetDefaultLauncherSheetTest` expecting exact English text) — the
+    per-app locale override persists across `adb install -r` reinstalls of the same package, so
+    manually testing a non-English locale on the emulator and then immediately running the
+    instrumented suite on that same still-installed package leaked the override into the test run.
+    Fixed by resetting the override (`--locales ""`) before rerunning. Applied this discipline for
+    every locale across both the Spanish/French and German/Portuguese passes: reset the override
+    immediately after each on-device screenshot check, before the next instrumented run.
+- [x] Full unit suite green (615/615) after all four locales; `OnboardingScreenTest` (19),
+  `SetDefaultLauncherSheetTest` (6), and `DockSettingsScreenTest` (7) all re-verified clean on the
+  emulator with the locale override reset each time. `app/detekt-baseline.xml` unchanged (213
+  entries) — this pass touched only resource files and a computed-property removal, no new
+  hardcoded-string surface.
+
+Play Store listing translation remains open — every in-app string across all four locales
+(Spanish, French, German, Portuguese) is now translated and verified.
+
+## App-wide font size control (`FontScaleOption`) — ✅ complete
+
+A global, user-adjustable text-size scale for every text role in the app except the clock
+(`FacetType.clock` — already exempt, since it has its own widget-size adjustment via
+`clockScale`/`ClockBlock`). Modeled on `LauncherFontOption`: one global setting, not facet-overridable
+and not split per-surface — readability preference is closer in kind to `launcherFontOption`/
+`homeAppsFontWeight` than to the clock/calendar's per-facet decorative styling, so it stays a single
+shared knob (see chat history for the calendar-vs-launcher styling discussion this fell out of).
+
+Along the way, two related gaps got fixed in the same pass (direct request):
+1. **Calendar event text** (`CalendarEventsBlock.kt`) was reading a hardcoded `fontSize = 16.sp`,
+   independent of the app's type scale — switched to `MaterialTheme.typography.bodyLarge.fontSize`
+   (over `titleMedium`, same 16sp M3 default, but `bodyLarge`'s wider 0.5sp letter-spacing read
+   better — direct request) so it inherits the new scale for free, no new param needed.
+2. **`homeAppsFontWeight` didn't reach Settings.** It was only ever applied via explicit
+   `.copy(fontWeight = ...)` at Home's own app-list/Dock/Drawer labels — Settings' own rows
+   (`LabeledDropdownRow`, `SettingsScreen`'s list rows, all `bodyLarge`/`bodyMedium`) never read it.
+   Fixed by also feeding it into `facetTypography()` as the global `bodyLarge`/`bodyMedium`/
+   `bodySmall` weight — deliberately **not** `title*`/`label*`/`headline*`/`display*`: a scan of
+   every `titleMedium`/`titleLarge`/`titleSmall` consumer (`ConfirmDialog`, `RenameDialog`,
+   `AppContextMenu`, `FolderTileContextMenu`, onboarding sheets, `FacetCarouselScreen`) found they
+   all rely on Material's own Medium weight for dialog/menu titles; blanket-overriding those by
+   default would have flattened every dialog title app-wide the moment this shipped, not just where
+   a user actually touches the new slider. Restricting to body roles matches `FontWeightOption`'s
+   own documented scope ("regular text... never headlines") and is a no-op at the default `REGULAR`
+   value (M3's own `bodyLarge`/`bodyMedium`/`bodySmall` are already `FontWeight.Normal`), so nothing
+   visually changes until a user picks something else. Home's own labels keep their existing
+   explicit `.copy(fontWeight = ...)` unchanged — redundant with the new global value there, but
+   harmless, and still needed since `titleMedium` itself isn't covered by the global override.
+
+### 1. `FontScaleOption` enum — `data/model/FontScaleOption.kt`
+Five named stops: `SMALL(0.85f)`, `DEFAULT(1.0f)`, `LARGE(1.15f)`, `EXTRA_LARGE(1.3f)`, `HUGE(1.45f)`,
+each with `@param:StringRes val displayNameRes: Int` and `val scale: Float` — same shape as
+`FontWeightOption`, a stepped `Slider` walking `entries` by index.
+
+### 2. `Type.kt` — scale every Material role except the clock
+`facetTypography(fontFamily, fontWeight: FontWeight = FontWeight.Normal, fontScale: Float = 1f)`.
+A private `TextStyle.scaledBy(fontFamily, fontScale, fontWeight?)` extension replaces the old
+per-role `.copy(fontFamily = ...)` repetition — `fontScale` multiplies every role's real
+`fontSize`/`lineHeight`; `fontWeight` (non-null) only passed for `bodyLarge`/`bodyMedium`/
+`bodySmall`, every other role keeps its own default weight (see rationale above). `FacetType.clock`
+stays its own untouched `object` — exempt by construction.
+
+### 3. Hardcoded-size audit — no action needed
+Full-codebase scan (`.sp`/`fontSize`/`TextUnit(`/`.em`/`dimensionResource`) confirmed every hardcoded
+font size lives in `ClockTemplates.kt`/`ClockAccessoryRow.kt` (the clock template gallery) plus
+`Type.kt`'s own `FacetType.clock` — all correctly exempt. The only hits outside those files are
+`AppDrawerScreen.kt:538`/`FacetCarouselScreen.kt:734` (`FacetType.clock.copy(fontSize = ...)`, an
+empty-state glyph and a "+" overflow tile) and `AlphabetRail.kt:162`'s folder-rail glyph, which
+already derives its size from `MaterialTheme.typography.labelSmall.fontSize.toDp()` — picks up the
+new scale for free. Confirmed step 2 alone is sufficient; no other call site needed touching.
+
+### 4. Persistence — `SettingsRepository`/`LauncherSettings`
+`LauncherSettings.fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT` (global only, same
+tier as `launcherFontOption`); `Keys.FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")`,
+decode/fallback in the `settings` flow, `suspend fun setFontScaleOption(option: FontScaleOption)`.
+
+### 5. Theme wiring
+`FacetLauncherTheme` gains `homeAppsFontWeight: FontWeightOption` and
+`fontScaleOption: FontScaleOption` params, both passed into `facetTypography(...)`.
+`LauncherUiState`/`LauncherViewModel`'s `combine(...)` block carry both through from `settings`
+(mirroring `launcherFontOption`); `LauncherActivity.kt` passes both to `FacetLauncherTheme`.
+
+### 6. UI — `FontSizeSlider` + `FontWeightSlider` gains `showPreview`/`label`
+New `ui/components/FontSizeSlider.kt`, same shape as `FontWeightSlider.kt` (stepped `Slider` over
+`FontScaleOption.entries`, `@Preview`s incl. all-stops/dark). `FontWeightSlider` gained
+`label: String = "Weight"` and `showPreview: Boolean = true` params — both sliders in
+`AppearanceSettingsScreen` now pass `showPreview = false` (the screen's own `HomeSurfacePreview` card
+already shows live text above them, so each slider's own sample-text row was redundant, direct
+request); the calendar style gallery's own `FontWeightSlider` also passes `showPreview = false` (its
+`CalendarEventsBlock` preview renders right below), keeping its default `"Weight"` label unchanged.
+Appearance's Font block final order/labels, all direct request: **Launcher Font → Font Color → Font
+Size → Font Weight** — "Icons" renamed to **"Icon Style"**, "App label color" moved and renamed to
+**"Font Color"** (right after Launcher Font, ahead of the two sliders), the two sliders relabeled
+from "Text Size"/"Text Weight" to **"Font Size"**/**"Font Weight"**. `testTag`s left unchanged
+throughout (`appearance_icons_row`, `appearance_app_label_color_row`, etc.) since they're not
+user-visible.
+
+### 7. Backup/restore
+`BackupBundle.kt`: `val fontScaleOption: String = FontScaleOption.DEFAULT.name` on `BackupSettings` —
+defaulted, tolerant-reader discipline, no `CURRENT_BACKUP_VERSION` bump (same as
+`calendarFontWeight`/`homeAppsFontWeight`). Wired through `ExportBackupUseCase`/`ImportBackupUseCase`
+the same way as `homeAppsFontWeight`.
+
+### Tests
+Unit: `TypeTest` gained three `facetTypography` cases (scales every role's `fontSize`/`lineHeight`
+at 1.3x; leaves `fontSize` untouched at the default 1x; applies `fontWeight` only to
+`bodyLarge`/`bodyMedium`/`bodySmall`, never `titleMedium`/`labelLarge`/`headlineSmall`).
+`SettingsRepositoryTest` gained a default-value assertion plus a round-trip case (folded into the
+existing bulk round-trip test alongside `launcherFontOption`). `AppearanceSettingsViewModelTest`
+gained a setter-call case. Instrumented: `AppearanceSettingsScreenTest` gained
+`fontSizeSliderChangesTheSetting`, mirroring the existing `homeAppsFontWeightSliderChangesTheSetting`
+(drags `appearance_font_size_slider_control` to its last stop, asserts the repository settles on
+`FontScaleOption.HUGE`) — not yet run on-device: no emulator was booted in this session (`adb
+devices -l` was empty); run `./gradlew connectedDebugAndroidTest` on `Medium_Phone_API_36.1` before
+considering this fully verified. Full unit suite (`./gradlew test`) passes.
+`docs/architecture/02-persistence-room.md` (key diagram/writer table/section table, key/writer/field
+counts 49→50/51→52/49→50, backup key count 34→35) and
+`13-flow-facets-theme-notifications-onboarding.md` (theme resolution diagram + the
+weight-scope-restriction rationale) updated; `TEST_REGISTRY.md` regenerated.

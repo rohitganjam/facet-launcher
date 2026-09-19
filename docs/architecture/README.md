@@ -8,7 +8,7 @@ checked against source, not against planning docs; where the code diverges from
 | Doc | What it covers |
 |---|---|
 | [01-architecture-and-layers.md](01-architecture-and-layers.md) | Layer boundaries, unidirectional data flow, Hilt components/scopes/modules, entry points |
-| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (12 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v20, the complete DataStore key registry (49 keys, read/write paths, all 51 writers), backup file format |
+| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (12 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v20, the complete DataStore key registry (50 keys, read/write paths, all 52 writers), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
 | [05-findings.md](05-findings.md) | Architect's review: 12 findings ranked by severity with concrete fixes, plus what's working well |
@@ -27,7 +27,7 @@ checked against source, not against planning docs; where the code diverges from
 | Concern | Choice (verified in `app/build.gradle.kts`) |
 |---|---|
 | Language / UI | Kotlin only, Jetpack Compose (BOM `2026.01.01`, Material3), no XML layouts |
-| Module layout | Single `:app` module, `minSdk 31`, `targetSdk/compileSdk 36` |
+| Module layout | `:app` (`minSdk 31`, `targetSdk/compileSdk 36`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.9.6` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
 | Persistence | Room `2.8.4` (`facet.db`, v20, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
