@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.FACET_LAUNCHER_PACKAGE_NAME
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
@@ -216,7 +217,7 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun appLabelColorRowChangesTheSetting() {
-        // Given the screen, "App label color" row, Theme selected by default — scoped to this
+        // Given the screen, "Font Color" row, Theme selected by default — scoped to this
         // row's own tag, consistent with the Font row above
         setContent()
         composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("Theme")
@@ -244,6 +245,21 @@ class AppearanceSettingsScreenTest {
         // Then it's persisted to the real repository
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { settingsRepository.settings.first().homeAppsFontWeight == FontWeightOption.SEMI_BOLD }
+        }
+    }
+
+    @Test
+    fun fontSizeSliderChangesTheSetting() {
+        // Given the screen, Default text size by default
+        val settingsRepository = setContent()
+
+        // When dragging the Text Size slider to its last stop (Huge)
+        composeRule.onNodeWithTag("appearance_font_size_slider_control")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontScaleOption.entries.size - 1).toFloat()) }
+
+        // Then it's persisted to the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().fontScaleOption == FontScaleOption.HUGE }
         }
     }
 

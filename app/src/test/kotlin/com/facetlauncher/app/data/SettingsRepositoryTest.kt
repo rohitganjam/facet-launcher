@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
+import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
@@ -82,6 +83,7 @@ class SettingsRepositoryTest {
         assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.calendarFontOption)
         assertEquals(ClockColorOption.THEME, settings.calendarColorOption)
         assertEquals(LauncherFontOption.SYSTEM, settings.launcherFontOption)
+        assertEquals(FontScaleOption.DEFAULT, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME, settings.appLabelColorOption)
         assertEquals(FontWeightOption.REGULAR, settings.calendarFontWeight)
         assertEquals(FontWeightOption.REGULAR, settings.homeAppsFontWeight)
@@ -271,6 +273,7 @@ class SettingsRepositoryTest {
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
         repository.setLauncherFontOption(LauncherFontOption.MANROPE)
+        repository.setFontScaleOption(FontScaleOption.LARGE)
         repository.setAppLabelColorOption(ClockColorOption.THEME_INVERTED)
         repository.setDrawerOpacity(0.5f)
         repository.setNotificationDotsEnabled(false)
@@ -299,6 +302,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
         assertEquals(LauncherFontOption.MANROPE, settings.launcherFontOption)
+        assertEquals(FontScaleOption.LARGE, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME_INVERTED, settings.appLabelColorOption)
         assertEquals(0.5f, settings.drawerOpacity, 0.0001f)
         assertEquals(false, settings.notificationDotsEnabled)

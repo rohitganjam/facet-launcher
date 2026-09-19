@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -61,6 +62,7 @@ private object Keys {
     val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
+    val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val CALENDAR_PERMISSION_REQUESTED = booleanPreferencesKey("calendar_permission_requested")
@@ -136,6 +138,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.iconRenderMode,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.launcherFontOption,
+            fontScaleOption = preferences[Keys.FONT_SCALE_OPTION]?.let { runCatching { FontScaleOption.valueOf(it) }.getOrNull() }
+                ?: defaults.fontScaleOption,
             appLabelColorOption = preferences[Keys.APP_LABEL_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
                 ?: defaults.appLabelColorOption,
             themeMode = preferences[Keys.THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
@@ -274,6 +278,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setLauncherFontOption(option: LauncherFontOption) {
         dataStore.edit { it[Keys.LAUNCHER_FONT_OPTION] = option.name }
+    }
+
+    suspend fun setFontScaleOption(option: FontScaleOption) {
+        dataStore.edit { it[Keys.FONT_SCALE_OPTION] = option.name }
     }
 
     suspend fun setAppLabelColorOption(option: ClockColorOption) {

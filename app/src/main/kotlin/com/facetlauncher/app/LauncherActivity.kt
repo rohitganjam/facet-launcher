@@ -45,6 +45,8 @@ class LauncherActivity : ComponentActivity() {
                     wallpaperAccentRole = uiState.wallpaperAccentRole,
                     iconRenderMode = uiState.iconRenderMode,
                     launcherFontOption = uiState.launcherFontOption,
+                    homeAppsFontWeight = uiState.homeAppsFontWeight,
+                    fontScaleOption = uiState.fontScaleOption,
                 ) {
                     when {
                         uiState.isLoading -> {

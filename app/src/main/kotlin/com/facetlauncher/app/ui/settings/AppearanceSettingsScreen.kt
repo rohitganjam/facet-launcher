@@ -45,11 +45,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.IconRenderMode
@@ -61,6 +63,7 @@ import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.FontSizeSlider
 import com.facetlauncher.app.ui.components.FontWeightSlider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
@@ -99,14 +102,15 @@ fun AppearanceSettingsScreen(
         previewApps = previewApps,
         homeWallpaper = homeWallpaper,
         onBack = onBack,
-        onThemeModeChanged = viewModel::setThemeMode,
-        onAccentFromSystemChanged = viewModel::setAccentFromSystem,
-        onCustomAccentSwatchChanged = viewModel::setCustomAccentSwatch,
-        onWallpaperAccentRoleChanged = viewModel::setWallpaperAccentRole,
-        onIconRenderModeChanged = viewModel::setIconRenderMode,
-        onLauncherFontOptionChanged = viewModel::setLauncherFontOption,
-        onAppLabelColorOptionChanged = viewModel::setAppLabelColorOption,
-        onHomeAppsFontWeightChanged = viewModel::setHomeAppsFontWeight,
+        onThemeModeChange = viewModel::setThemeMode,
+        onAccentFromSystemChange = viewModel::setAccentFromSystem,
+        onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
+        onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
+        onIconRenderModeChange = viewModel::setIconRenderMode,
+        onLauncherFontOptionChange = viewModel::setLauncherFontOption,
+        onAppLabelColorOptionChange = viewModel::setAppLabelColorOption,
+        onHomeAppsFontWeightChange = viewModel::setHomeAppsFontWeight,
+        onFontScaleOptionChange = viewModel::setFontScaleOption,
         modifier = modifier,
     )
 }
@@ -117,14 +121,15 @@ private fun AppearanceSettingsContent(
     previewApps: List<AppInfo>,
     homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
-    onThemeModeChanged: (ThemeMode) -> Unit,
-    onAccentFromSystemChanged: (Boolean) -> Unit,
-    onCustomAccentSwatchChanged: (AccentSwatch) -> Unit,
-    onWallpaperAccentRoleChanged: (WallpaperAccentRole) -> Unit,
-    onIconRenderModeChanged: (IconRenderMode) -> Unit,
-    onLauncherFontOptionChanged: (LauncherFontOption) -> Unit,
-    onAppLabelColorOptionChanged: (ClockColorOption) -> Unit,
-    onHomeAppsFontWeightChanged: (FontWeightOption) -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onAccentFromSystemChange: (Boolean) -> Unit,
+    onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
+    onIconRenderModeChange: (IconRenderMode) -> Unit,
+    onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
+    onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
+    onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
+    onFontScaleOptionChange: (FontScaleOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -157,11 +162,11 @@ private fun AppearanceSettingsContent(
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
-                            title = "Launcher theme",
+                            title = stringResource(R.string.appearance_launcher_theme),
                             options = ThemeMode.entries,
                             selected = settings.themeMode,
-                            label = { it.appearanceDisplayLabel() },
-                            onSelect = onThemeModeChanged,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onThemeModeChange,
                             testTag = "theme_mode_dropdown",
                         )
                         CardDivider()
@@ -169,46 +174,60 @@ private fun AppearanceSettingsContent(
                             accentFromSystem = settings.accentFromSystem,
                             customAccentSwatch = settings.customAccentSwatch,
                             wallpaperAccentRole = settings.wallpaperAccentRole,
-                            onAccentFromSystemChanged = onAccentFromSystemChanged,
-                            onCustomAccentSwatchChanged = onCustomAccentSwatchChanged,
-                            onWallpaperAccentRoleChanged = onWallpaperAccentRoleChanged,
+                            onAccentFromSystemChange = onAccentFromSystemChange,
+                            onCustomAccentSwatchChange = onCustomAccentSwatchChange,
+                            onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
                         )
                         CardDivider()
                         LabeledDropdownRow(
-                            title = "Icons",
+                            title = stringResource(R.string.appearance_icon_style),
                             options = IconRenderMode.entries,
                             selected = settings.iconRenderMode,
                             label = { stringResource(it.displayNameRes) },
-                            onSelect = onIconRenderModeChanged,
+                            onSelect = onIconRenderModeChange,
                             testTag = "appearance_icons_row",
                         )
                         CardDivider()
                         LabeledDropdownRow(
-                            title = "Launcher Font",
+                            title = stringResource(R.string.appearance_launcher_font),
                             options = LauncherFontOption.entries,
                             selected = settings.launcherFontOption,
                             label = { stringResource(it.displayNameRes) },
-                            onSelect = onLauncherFontOptionChanged,
+                            onSelect = onLauncherFontOptionChange,
                             testTag = "appearance_font_row",
+                        )
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.appearance_font_color),
+                            options = ClockColorOption.entries,
+                            selected = settings.appLabelColorOption,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onAppLabelColorOptionChange,
+                            testTag = "appearance_app_label_color_row",
+                        )
+                        CardDivider()
+                        FontSizeSlider(
+                            selected = settings.fontScaleOption,
+                            onSelectedChange = onFontScaleOptionChange,
+                            label = stringResource(R.string.appearance_font_size),
+                            showPreview = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 13.dp)
+                                .testTag("appearance_font_size_slider"),
+                            sliderTestTag = "appearance_font_size_slider_control",
                         )
                         CardDivider()
                         FontWeightSlider(
                             selected = settings.homeAppsFontWeight,
-                            onSelectedChange = onHomeAppsFontWeightChanged,
+                            onSelectedChange = onHomeAppsFontWeightChange,
+                            label = stringResource(R.string.appearance_font_weight),
+                            showPreview = false,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 13.dp)
                                 .testTag("appearance_font_weight_slider"),
                             sliderTestTag = "appearance_font_weight_slider_control",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = "App label color",
-                            options = ClockColorOption.entries,
-                            selected = settings.appLabelColorOption,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppLabelColorOptionChanged,
-                            testTag = "appearance_app_label_color_row",
                         )
                     }
                 }
@@ -244,14 +263,8 @@ private fun AppearanceSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mo
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Appearance", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.appearance_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
-}
-
-private fun ThemeMode.appearanceDisplayLabel(): String = when (this) {
-    ThemeMode.LIGHT -> "Light"
-    ThemeMode.DARK -> "Dark"
-    ThemeMode.SYSTEM -> "System"
 }
 
 /**
@@ -268,34 +281,34 @@ private fun AccentColorSection(
     accentFromSystem: Boolean,
     customAccentSwatch: String?,
     wallpaperAccentRole: WallpaperAccentRole,
-    onAccentFromSystemChanged: (Boolean) -> Unit,
-    onCustomAccentSwatchChanged: (AccentSwatch) -> Unit,
-    onWallpaperAccentRoleChanged: (WallpaperAccentRole) -> Unit,
+    onAccentFromSystemChange: (Boolean) -> Unit,
+    onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
-        Text(text = "Accent color", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(bottom = 10.dp))
+        Text(text = stringResource(R.string.appearance_accent_color), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(bottom = 10.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             PillOption(
-                label = "Wallpaper colors",
+                label = stringResource(R.string.appearance_wallpaper_colors),
                 selected = accentFromSystem,
-                onClick = { onAccentFromSystemChanged(true) },
+                onClick = { onAccentFromSystemChange(true) },
                 testTag = "accent_source_wallpaper",
                 modifier = Modifier.weight(1f),
             )
             PillOption(
-                label = "Basic colors",
+                label = stringResource(R.string.appearance_basic_colors),
                 selected = !accentFromSystem,
-                onClick = { onAccentFromSystemChanged(false) },
+                onClick = { onAccentFromSystemChange(false) },
                 testTag = "accent_source_basic",
                 modifier = Modifier.weight(1f),
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
         if (accentFromSystem) {
-            WallpaperAccentRoleGrid(selected = wallpaperAccentRole, onSelect = onWallpaperAccentRoleChanged)
+            WallpaperAccentRoleGrid(selected = wallpaperAccentRole, onSelect = onWallpaperAccentRoleChange)
         } else {
-            AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChanged)
+            AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChange)
         }
     }
 }
@@ -441,14 +454,15 @@ private fun AppearanceSettingsScreenPreview() {
             previewApps = DesignTimePreviewApps,
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
-            onThemeModeChanged = {},
-            onAccentFromSystemChanged = {},
-            onCustomAccentSwatchChanged = {},
-            onWallpaperAccentRoleChanged = {},
-            onIconRenderModeChanged = {},
-            onLauncherFontOptionChanged = {},
-            onAppLabelColorOptionChanged = {},
-            onHomeAppsFontWeightChanged = {},
+            onThemeModeChange = {},
+            onAccentFromSystemChange = {},
+            onCustomAccentSwatchChange = {},
+            onWallpaperAccentRoleChange = {},
+            onIconRenderModeChange = {},
+            onLauncherFontOptionChange = {},
+            onAppLabelColorOptionChange = {},
+            onHomeAppsFontWeightChange = {},
+            onFontScaleOptionChange = {},
         )
     }
 }

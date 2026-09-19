@@ -46,9 +46,9 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, launcher_font_option"] --> LVM["LauncherViewModel → LauncherUiState"]
+    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, launcher_font_option,\nhome_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState"]
     LVM --> ACT["LauncherActivity.setContent"]
-    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, launcherFontOption)"]
+    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
     T --> DARK{"themeMode"}
     DARK -- LIGHT --> L[light]
     DARK -- DARK --> D[dark]
@@ -58,7 +58,7 @@ flowchart LR
     ACC -- "false" --> SW["AccentSwatch.valueOf(customAccentSwatch)\nfixed palette"]
     DYN --> CS["FacetLight/DarkColorScheme(accent)"]
     SW --> CS
-    T --> TYPO["facetTypography(launcherFontOption.fontFamily)"]
+    T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
     CS --> MT["MaterialTheme(colorScheme, typography, shapes = M3 defaults)"]
     T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode"]
     MT --> APP[every screen]
@@ -73,6 +73,14 @@ flowchart LR
   (`THEME` / `ACCENT_PRIMARY` / …) resolves through `ui/theme/ClockColors.kt` against the current
   scheme, per facet.
 - Per-facet Private Space screens use `PrivateSpaceTheme`, a fixed override of the scheme.
+- `facetTypography`'s `fontScale` multiplies every role's `fontSize`/`lineHeight` app-wide except
+  the clock (`FacetType.clock`, defined outside `facetTypography`); `fontWeight` only overrides
+  `bodyLarge`/`bodyMedium`/`bodySmall` — not `title*`/`label*`/`headline*`/`display*`, so dialog
+  titles (`ConfirmDialog`/`RenameDialog`), context menus, and onboarding copy keep Material's own
+  per-role weight rather than flattening app-wide. Home's own app-list/Dock labels apply
+  `homeAppsFontWeight` a second time via their own explicit `.copy(fontWeight = ...)` (unchanged
+  from before this reached `facetTypography`) — redundant with the global value but harmless, and
+  what lets a `titleMedium`-styled label pick up the weight that body-only roles don't reach.
 
 ## 3. Notification badges
 

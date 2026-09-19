@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -144,6 +145,17 @@ class AppearanceSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setHomeAppsFontWeight(FontWeightOption.SEMI_BOLD)
+    }
+
+    @Test
+    fun `changing font scale option calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setFontScaleOption(FontScaleOption.LARGE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setFontScaleOption(FontScaleOption.LARGE)
     }
 
     @Test

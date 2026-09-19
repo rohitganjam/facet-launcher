@@ -1,13 +1,16 @@
 package com.facetlauncher.app.data.model
 
-enum class DockDisplayMode {
-    ICONS,
-    TEXT,
+import androidx.annotation.StringRes
+import com.facetlauncher.app.R
+
+enum class DockDisplayMode(@param:StringRes val displayNameRes: Int) {
+    ICONS(R.string.dock_display_mode_icons),
+    TEXT(R.string.dock_display_mode_text),
 }
 
-enum class DrawerPresentation {
-    LIST,
-    GRID,
+enum class DrawerPresentation(@param:StringRes val displayNameRes: Int) {
+    LIST(R.string.drawer_presentation_list),
+    GRID(R.string.drawer_presentation_grid),
 }
 
 enum class DrawerGridSize(val columns: Int, val rows: Int) {
@@ -26,15 +29,15 @@ enum class DrawerGridSize(val columns: Int, val rows: Int) {
  * alongside it for `REGULAR`/`SPACIOUS` (also per direct request) — `COMPACT` keeps the row's
  * existing 32dp icon unchanged, so this option's own default look doesn't shift.
  */
-enum class DrawerListItemSize(val extraRowPaddingDp: Int, val iconSizeDp: Int) {
-    COMPACT(0, 32),
-    REGULAR(8, 36),
-    SPACIOUS(16, 40),
+enum class DrawerListItemSize(val extraRowPaddingDp: Int, val iconSizeDp: Int, @param:StringRes val displayNameRes: Int) {
+    COMPACT(0, 32, R.string.drawer_list_item_size_compact),
+    REGULAR(8, 36, R.string.drawer_list_item_size_regular),
+    SPACIOUS(16, 40, R.string.drawer_list_item_size_spacious),
 }
 
-enum class SearchBarPosition {
-    TOP,
-    BOTTOM,
+enum class SearchBarPosition(@param:StringRes val displayNameRes: Int) {
+    TOP(R.string.search_bar_position_top),
+    BOTTOM(R.string.search_bar_position_bottom),
 }
 
 /**
@@ -47,24 +50,24 @@ enum class SearchBarPosition {
  * ([com.facetlauncher.app.data.model.DrawerItem]). `SHOW_FIRST`/`SHOW_LAST` instead pin every
  * folder into its own section before or after the lettered app list, outside alphabetical order.
  */
-enum class DrawerFolderDisplayMode {
-    DO_NOT_SHOW,
-    INLINE,
-    SHOW_FIRST,
-    SHOW_LAST,
+enum class DrawerFolderDisplayMode(@param:StringRes val displayNameRes: Int) {
+    DO_NOT_SHOW(R.string.drawer_folder_display_mode_do_not_show),
+    INLINE(R.string.drawer_folder_display_mode_inline),
+    SHOW_FIRST(R.string.drawer_folder_display_mode_show_first),
+    SHOW_LAST(R.string.drawer_folder_display_mode_show_last),
 }
 
 /** F11 — an explicit in-app override; `SYSTEM` (the default) follows the device's own light/dark setting. */
-enum class ThemeMode {
-    LIGHT,
-    DARK,
-    SYSTEM,
+enum class ThemeMode(@param:StringRes val displayNameRes: Int) {
+    LIGHT(R.string.theme_mode_light),
+    DARK(R.string.theme_mode_dark),
+    SYSTEM(R.string.theme_mode_system),
 }
 
 /** F13 — README specs a dot-only badge; `COUNT` is a deliberate departure from that, offered as a user choice rather than replacing the spec's default outright. */
-enum class NotificationBadgeStyle {
-    DOT,
-    COUNT,
+enum class NotificationBadgeStyle(@param:StringRes val displayNameRes: Int) {
+    DOT(R.string.notification_badge_style_dot),
+    COUNT(R.string.notification_badge_style_count),
 }
 
 /**
@@ -76,30 +79,30 @@ enum class NotificationBadgeStyle {
  * `LEFT`'s normal reading order (icon then label) but centers that group within the row's full
  * width instead of packing it to either edge.
  */
-enum class AppRowPosition {
-    LEFT,
-    CENTER,
-    RIGHT,
+enum class AppRowPosition(@param:StringRes val displayNameRes: Int) {
+    LEFT(R.string.app_row_position_left),
+    CENTER(R.string.app_row_position_center),
+    RIGHT(R.string.app_row_position_right),
 }
 
 /** What renders per app-list row — independent of [AppRowPosition]. `ICON_AND_TEXT` is the default, unchanged look. */
-enum class AppRowPresentation {
-    ICON_ONLY,
-    ICON_AND_TEXT,
-    TEXT_ONLY,
+enum class AppRowPresentation(@param:StringRes val displayNameRes: Int) {
+    ICON_ONLY(R.string.app_row_presentation_icon_only),
+    ICON_AND_TEXT(R.string.app_row_presentation_icon_and_text),
+    TEXT_ONLY(R.string.app_row_presentation_text_only),
 }
 
 /** Home clock's horizontal placement within its zone. `LEFT` is today's unchanged default — the clock's containing Column has never applied any centering. */
-enum class ClockAlignment {
-    LEFT,
-    CENTER,
-    RIGHT,
+enum class ClockAlignment(@param:StringRes val displayNameRes: Int) {
+    LEFT(R.string.app_row_position_left),
+    CENTER(R.string.app_row_position_center),
+    RIGHT(R.string.app_row_position_right),
 }
 
 /** Home app list's vertical anchor. `BOTTOM` is today's unchanged behavior (list sits right above the dock). `TOP` anchors it immediately below the clock's grab handle instead. */
-enum class AppListVerticalAlignment {
-    TOP,
-    BOTTOM,
+enum class AppListVerticalAlignment(@param:StringRes val displayNameRes: Int) {
+    TOP(R.string.app_list_vertical_alignment_top),
+    BOTTOM(R.string.app_list_vertical_alignment_bottom),
 }
 
 /**
@@ -166,7 +169,12 @@ data class LauncherSettings(
      */
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /**
-     * Settings → Appearance → "App label color" — the app-list row and dock text color, reusing
+     * Settings → Appearance → "Text size" — see [FontScaleOption]'s own doc. Global only, same tier
+     * as [launcherFontOption]/[homeAppsFontWeight] — not facet-overridable.
+     */
+    val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
+    /**
+     * Settings → Appearance → "Font Color" — the app-list row and dock text color, reusing
      * [ClockFontOption]'s sibling color enum ([ClockColorOption]) since it's the same "text over
      * the home/wallpaper surface" choice the clock/calendar already offer. Global only, same as
      * [launcherFontOption] — the dock itself isn't per-facet, so this can't be either.
@@ -209,10 +217,14 @@ data class LauncherSettings(
     /** Calendar events block's own font weight — part of the same Clock+Calendar design bundle as [calendarFontOption]/[calendarColorOption] above, facet-overridable alongside them. */
     val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**
-     * Settings → Appearance → "Font weight" — pairs with [launcherFontOption] but scopes narrower:
-     * only Home's app list, Dock, and App Drawer labels (see `ui/home/HomeScreen.kt`'s `AppRow`/
-     * `DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s app-label `Text`s), not every text role
-     * [launcherFontOption] itself reaches. Global only, same as [launcherFontOption].
+     * Settings → Appearance → "Text weight" — Home's app list/Dock/App Drawer labels apply it
+     * directly (see `ui/home/HomeScreen.kt`'s `AppRow`/`DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s
+     * app-label `Text`s), and it also feeds `ui/theme/Type.kt`'s `facetTypography` as the app-wide
+     * `bodyLarge`/`bodyMedium`/`bodySmall` weight — which is what reaches Settings' own row text
+     * (`LabeledDropdownRow`, `SettingsScreen`'s list rows) without those screens threading it through
+     * individually. Deliberately doesn't reach `title*`/`label*`/`headline*`/`display*` roles (dialog
+     * titles, context menus, onboarding copy) — see `facetTypography`'s own doc for why. Global only,
+     * same as [launcherFontOption].
      */
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**

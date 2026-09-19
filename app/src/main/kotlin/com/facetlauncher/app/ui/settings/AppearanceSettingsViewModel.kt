@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ClockColorOption
+import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -92,6 +93,10 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     fun setLauncherFontOption(option: LauncherFontOption) {
         viewModelScope.launch { settingsRepository.setLauncherFontOption(option) }
+    }
+
+    fun setFontScaleOption(option: FontScaleOption) {
+        viewModelScope.launch { settingsRepository.setFontScaleOption(option) }
     }
 
     fun setAppLabelColorOption(option: ClockColorOption) {

@@ -6,6 +6,8 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.FontScaleOption
+import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ThemeMode
@@ -51,6 +53,8 @@ data class LauncherUiState(
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
     /** Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted]. */
     val onboardingCompleted: Boolean = false,
     /**
@@ -103,6 +107,8 @@ class LauncherViewModel @Inject constructor(
                 wallpaperAccentRole = settings.wallpaperAccentRole,
                 iconRenderMode = settings.iconRenderMode,
                 launcherFontOption = settings.launcherFontOption,
+                homeAppsFontWeight = settings.homeAppsFontWeight,
+                fontScaleOption = settings.fontScaleOption,
                 onboardingCompleted = settings.onboardingCompleted,
                 workProfiles = workProfiles,
             )

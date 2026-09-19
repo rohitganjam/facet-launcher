@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.facetlauncher.app.data.model.FontScaleOption
+import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ThemeMode
@@ -72,6 +74,9 @@ private fun facetColorScheme(isDark: Boolean) = if (isDark) {
  * @param launcherFontOption Settings → Appearance → "Font" — the base font for every text role
  * app-wide (via [facetTypography]) except the clock/calendar, which resolve their own font
  * independently (see `ClockFontOption.resolveFontFamily`).
+ * @param homeAppsFontWeight Settings → Appearance → "Text weight" — see [LauncherSettings.homeAppsFontWeight][com.facetlauncher.app.data.model.LauncherSettings.homeAppsFontWeight]'s
+ * own doc for exactly which roles this reaches via [facetTypography].
+ * @param fontScaleOption Settings → Appearance → "Text size" — see [FontScaleOption]'s own doc.
  */
 @Composable
 fun FacetLauncherTheme(
@@ -81,6 +86,8 @@ fun FacetLauncherTheme(
     wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
+    homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
     content: @Composable () -> Unit,
 ) {
     val isDark = when (themeMode) {
@@ -105,7 +112,7 @@ fun FacetLauncherTheme(
     ) {
         MaterialTheme(
             colorScheme = facetColorScheme(isDark),
-            typography = facetTypography(launcherFontOption.fontFamily),
+            typography = facetTypography(launcherFontOption.fontFamily, homeAppsFontWeight.resolve(), fontScaleOption.scale),
         ) {
             CompositionLocalProvider(
                 LocalRippleConfiguration provides RippleConfiguration(color = Ink, rippleAlpha = FacetRippleAlpha),

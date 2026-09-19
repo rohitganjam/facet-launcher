@@ -91,6 +91,8 @@ data class BackupSettings(
     val wallpaperAccentRole: String,
     val iconRenderMode: String,
     val launcherFontOption: String,
+    /** Defaulted — tolerant-reader discipline, see this file's own doc comment. */
+    val fontScaleOption: String = FontScaleOption.DEFAULT.name,
     val appLabelColorOption: String,
     val appRowPosition: String,
     val appRowPresentation: String,

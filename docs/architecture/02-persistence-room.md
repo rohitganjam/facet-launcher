@@ -5,7 +5,7 @@
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
 | Room `FacetDatabase` | `facet.db` (schema **v20**, `exportSchema = true` → `app/schemas/.../1.json … 20.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/calendar/app-list/dock design defaults, theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 49 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/calendar/app-list/dock design defaults, theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 50 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
 | Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v3: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
@@ -382,6 +382,7 @@ erDiagram
         string wallpaper_accent_role "WallpaperAccentRole, default PRIMARY"
         string icon_render_mode "IconRenderMode, default SYSTEM_DEFAULT"
         string launcher_font_option "LauncherFontOption, default SYSTEM"
+        string font_scale_option "FontScaleOption, default DEFAULT"
         string drawer_presentation "DrawerPresentation, default LIST"
         string drawer_grid_size "DrawerGridSize, default FIVE_BY_SIX"
         string drawer_list_item_size "DrawerListItemSize, default REGULAR"
@@ -440,7 +441,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
 - One `Flow<LauncherSettings>`; every consumer (`ObserveHomeScreenStateUseCase`,
   `LauncherViewModel`, 20 ViewModels, 11 use cases) `combine`s or `.first()`s it. There is no
   per-key flow.
-- Every emission is the **whole** immutable `LauncherSettings` (49 fields); DataStore emits on any
+- Every emission is the **whole** immutable `LauncherSettings` (50 fields); DataStore emits on any
   key change, so a coach-mark write re-emits theme/clock/drawer settings too — consumers rely on
   `combine`/`distinctUntilChanged` in their own graphs to avoid recomposing.
 - Defaults come from `LauncherSettings()`'s constructor defaults, which are the single source of
@@ -451,7 +452,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (51 functions)
+### 5.3 Write path — the complete writer API (52 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -492,6 +493,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setWallpaperAccentRole(WallpaperAccentRole)` | `wallpaper_accent_role` | set | `AppearanceSettingsViewModel` |
 | `setIconRenderMode(IconRenderMode)` | `icon_render_mode` | set | `AppearanceSettingsViewModel` |
 | `setLauncherFontOption(LauncherFontOption)` | `launcher_font_option` | set | `AppearanceSettingsViewModel` |
+| `setFontScaleOption(FontScaleOption)` | `font_scale_option` | set | `AppearanceSettingsViewModel` |
 | `setDrawerPresentation(DrawerPresentation)` | `drawer_presentation` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel` |
 | `setDrawerGridSize(DrawerGridSize)` | `drawer_grid_size` | set | `AppDrawerSettingsViewModel` |
 | `setDrawerListItemSize(DrawerListItemSize)` | `drawer_list_item_size` | set | `AppDrawerSettingsViewModel` |
@@ -516,7 +518,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-Same 49 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+Same 50 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock + calendar design (global; overridden per facet when `facets.overrideClock`)
@@ -580,6 +582,7 @@ each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 | `wallpaper_accent_role` | String (`WallpaperAccentRole`) | `wallpaperAccentRole` | `PRIMARY` | only meaningful when `accent_from_system` |
 | `icon_render_mode` | String (`IconRenderMode`) | `iconRenderMode` | `SYSTEM_DEFAULT` | |
 | `launcher_font_option` | String (`LauncherFontOption`) | `launcherFontOption` | `SYSTEM` | |
+| `font_scale_option` | String (`FontScaleOption`) | `fontScaleOption` | `DEFAULT` | multiplies every `MaterialTheme.typography` role's `fontSize`/`lineHeight` app-wide except the clock |
 
 #### App drawer
 
@@ -640,7 +643,7 @@ live from the OS on every check), the installed-app list, and notification count
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 34 of the 49 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 35 of the 50 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`, `calendar_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,
