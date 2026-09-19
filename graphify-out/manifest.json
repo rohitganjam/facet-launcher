@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1789802522.072954,
-    "seen": 1789804989.0756638,
-    "ast_hash": "bd833e3a7aa186610a0d934f37ab9139",
+    "mtime": 1789821520.1633692,
+    "seen": 1789822478.6508071,
+    "ast_hash": "48eabd9241b0c7ca24f9f36358a07628",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -2304,9 +2304,9 @@
     "semantic_hash": ""
   },
   "scripts/release.sh": {
-    "mtime": 1789564016.4507022,
-    "seen": 1789573168.27393,
-    "ast_hash": "fbf4b262fd5b5727903685e868f47c93",
+    "mtime": 1789822647.2000139,
+    "seen": 1789822661.774716,
+    "ast_hash": "fa081558320029bd6e73f5fefedc0faf",
     "semantic_hash": ""
   },
   "play-store-assets/build_screenshot.py": {
@@ -2796,21 +2796,21 @@
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1789663585.7230315,
-    "seen": 1789663600.287082,
-    "ast_hash": "6eeafee209ee865851933742a543ab51",
+    "mtime": 1789821609.5362344,
+    "seen": 1789822478.651049,
+    "ast_hash": "5eb60d1246a38ca2a1cc16df389d15ce",
     "semantic_hash": ""
   },
   "scripts/gen-release-notes.py": {
-    "mtime": 1789534577.81544,
-    "seen": 1789537920.903815,
-    "ast_hash": "06f0be3894fda229f935810a1f0b4799",
+    "mtime": 1789822636.7004824,
+    "seen": 1789822661.774714,
+    "ast_hash": "5f07e28e9f7e4451f2686fc180e20ec9",
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1789663585.705991,
-    "seen": 1789663600.287094,
-    "ast_hash": "ed9b94ccab316a62ad01e1d1f250fbf1",
+    "mtime": 1789821609.5148559,
+    "seen": 1789822478.651061,
+    "ast_hash": "4c3030e1555a276585fefa6b83d126c7",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {
@@ -2931,6 +2931,12 @@
     "mtime": 1789820263.8447406,
     "seen": 1789820648.787591,
     "ast_hash": "0e8998fb3722e3db8c0f77e2030d6cdf",
+    "semantic_hash": ""
+  },
+  "release_notes/0.1.10.md": {
+    "mtime": 1789822582.9060638,
+    "seen": 1789822661.774741,
+    "ast_hash": "4c3030e1555a276585fefa6b83d126c7",
     "semantic_hash": ""
   }
 }
