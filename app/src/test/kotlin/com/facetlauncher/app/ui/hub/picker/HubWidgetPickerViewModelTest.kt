@@ -71,12 +71,12 @@ class HubWidgetPickerViewModelTest {
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
-        // uiState is WhileSubscribed(5_000) — onProviderSelected reads its .value, so it must
+        // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
         // actually be subscribed here or that value never advances past the empty default.
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onProviderSelected(option)
+        viewModel.onProviderSelect(option)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
@@ -113,7 +113,7 @@ class HubWidgetPickerViewModelTest {
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onProviderSelected(workOption)
+        viewModel.onProviderSelect(workOption)
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(widgetPlacementRepository).upsert(
@@ -136,12 +136,12 @@ class HubWidgetPickerViewModelTest {
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
-        // uiState is WhileSubscribed(5_000) — onProviderSelected reads its .value, so it must
+        // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
         // actually be subscribed here or that value never advances past the empty default.
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onProviderSelected(option)
+        viewModel.onProviderSelect(option)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(HubAddWidgetEvent.LaunchBindPermission(bindIntent)), events)
@@ -163,11 +163,11 @@ class HubWidgetPickerViewModelTest {
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
-        // uiState is WhileSubscribed(5_000) — onProviderSelected reads its .value, so it must
+        // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
         // actually be subscribed here or that value never advances past the empty default.
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.onProviderSelected(option)
+        viewModel.onProviderSelect(option)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // When the system bind-permission dialog comes back denied
@@ -199,12 +199,12 @@ class HubWidgetPickerViewModelTest {
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
-        // uiState is WhileSubscribed(5_000) — onProviderSelected reads its .value, so it must
+        // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
         // actually be subscribed here or that value never advances past the empty default.
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onProviderSelected(option)
+        viewModel.onProviderSelect(option)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(HubAddWidgetEvent.LaunchConfigure(configureIntentSender)), events)
@@ -225,12 +225,12 @@ class HubWidgetPickerViewModelTest {
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
-        // uiState is WhileSubscribed(5_000) — onProviderSelected reads its .value, so it must
+        // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
         // actually be subscribed here or that value never advances past the empty default.
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onProviderSelected(option)
+        viewModel.onProviderSelect(option)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL)), events)
@@ -260,7 +260,7 @@ class HubWidgetPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Search for "One"
-        viewModel.onQueryChanged("One")
+        viewModel.onQueryChange("One")
         testDispatcher.scheduler.advanceUntilIdle()
 
         val lastState = uiStateItems.last()
@@ -284,7 +284,7 @@ class HubWidgetPickerViewModelTest {
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onQueryChanged("test")
+        viewModel.onQueryChange("test")
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals("test", viewModel.uiState.value.query)
 
@@ -310,9 +310,9 @@ class HubWidgetPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Trigger multiple emissions
-        viewModel.onQueryChanged("a")
+        viewModel.onQueryChange("a")
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.onQueryChanged("ab")
+        viewModel.onQueryChange("ab")
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Should have called repository only once
@@ -323,7 +323,7 @@ class HubWidgetPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Call again
-        viewModel.onQueryChanged("c")
+        viewModel.onQueryChange("c")
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Should have called repository twice now

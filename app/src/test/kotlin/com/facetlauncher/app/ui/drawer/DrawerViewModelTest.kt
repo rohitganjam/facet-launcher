@@ -132,7 +132,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = false)
         backgroundScope.launch { viewModel.showContactsPermissionPrompt.collect {} }
 
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(false, viewModel.showContactsPermissionPrompt.value)
@@ -143,7 +143,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = true)
         backgroundScope.launch { viewModel.showContactsPermissionPrompt.collect {} }
 
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(false, viewModel.showContactsPermissionPrompt.value)
@@ -154,7 +154,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = false)
         backgroundScope.launch { viewModel.showContactsPermissionPrompt.collect {} }
 
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(true, viewModel.showContactsPermissionPrompt.value)
@@ -164,7 +164,7 @@ class DrawerViewModelTest {
     fun `contacts permission prompt stays hidden once dismissed even though access still isn't granted`() = runTest {
         val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = false)
         backgroundScope.launch { viewModel.showContactsPermissionPrompt.collect {} }
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(true, viewModel.showContactsPermissionPrompt.value)
 
@@ -190,7 +190,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = true)
         backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
 
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(false, viewModel.showContactsSettingPrompt.value)
@@ -201,7 +201,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = false)
         backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
 
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(false, viewModel.showContactsSettingPrompt.value)
@@ -212,7 +212,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = true)
         backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
 
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(true, viewModel.showContactsSettingPrompt.value)
@@ -222,7 +222,7 @@ class DrawerViewModelTest {
     fun `contacts setting prompt stays hidden once enableContactSearch is called`() = runTest {
         val viewModel = drawerViewModel(searchContactsEnabled = false, contactsPermissionGranted = true)
         backgroundScope.launch { viewModel.showContactsSettingPrompt.collect {} }
-        viewModel.onQueryChanged("Ann")
+        viewModel.onQueryChange("Ann")
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(true, viewModel.showContactsSettingPrompt.value)
 
@@ -262,7 +262,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchSettingsEnabled = false, systemSettingsRepository = systemSettingsRepository)
         backgroundScope.launch { viewModel.settingsResults.collect {} }
 
-        viewModel.onQueryChanged("wifi")
+        viewModel.onQueryChange("wifi")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(emptyList<Any>(), viewModel.settingsResults.value)
@@ -276,7 +276,7 @@ class DrawerViewModelTest {
         val viewModel = drawerViewModel(searchSettingsEnabled = true, systemSettingsRepository = systemSettingsRepository)
         backgroundScope.launch { viewModel.settingsResults.collect {} }
 
-        viewModel.onQueryChanged("wifi")
+        viewModel.onQueryChange("wifi")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(entry), viewModel.settingsResults.value)

@@ -38,12 +38,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.components.AppIcon
@@ -132,7 +134,7 @@ internal fun FolderDetailContent(
                 if (folder == null) return@LazyColumn
                 item {
                     TonalButton(
-                        text = "Add to folder",
+                        text = stringResource(R.string.folder_add_to_folder),
                         leadingIcon = Icons.Filled.Add,
                         onClick = onAddToFolder,
                         modifier = Modifier
@@ -144,7 +146,7 @@ internal fun FolderDetailContent(
                 if (folder.apps.isEmpty()) {
                     item {
                         Text(
-                            text = "No apps in this folder yet. Tap \"Add to folder\" to add some.",
+                            text = stringResource(R.string.folder_detail_no_apps_yet),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Muted,
                         )
@@ -197,14 +199,14 @@ private fun FolderDetailHeader(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(imageVector = Icons.Outlined.DriveFileRenameOutline, contentDescription = null, tint = Accent)
-            Text(text = "Rename", style = MaterialTheme.typography.bodyLarge, color = Accent)
+            Text(text = stringResource(R.string.action_rename), style = MaterialTheme.typography.bodyLarge, color = Accent)
         }
     }
 
     if (showRenameDialog) {
         RenameDialog(
-            title = "Rename folder",
-            explanation = "Choose a new name for this folder.",
+            title = stringResource(R.string.folder_rename_title),
+            explanation = stringResource(R.string.folder_rename_explanation),
             initialValue = name,
             onSave = { newName ->
                 showRenameDialog = false
@@ -238,7 +240,7 @@ private fun FolderAppsReorderList(
         key = { it.packageName to it.activityName },
         axis = Orientation.Vertical,
         slotSizePx = rowHeightPx,
-        onOrderChanged = { order = it },
+        onOrderChange = { order = it },
         onDragCommit = { onReorder(it) },
     )
 
@@ -270,7 +272,7 @@ private fun FolderAppsReorderList(
             ) {
                 Icon(
                     Icons.Default.DragHandle,
-                    contentDescription = "Drag to reorder",
+                    contentDescription = stringResource(R.string.drag_to_reorder_content_description),
                     tint = Faint,
                     modifier = Modifier
                         .testTag("folder_detail_reorder_handle_${app.packageName}")
@@ -282,7 +284,7 @@ private fun FolderAppsReorderList(
                     onClick = { onRemoveApp(app) },
                     modifier = Modifier.testTag("folder_detail_remove_${app.packageName}"),
                 ) {
-                    Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = "Remove from folder", tint = ErrorColor)
+                    Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.folder_remove_from_folder), tint = ErrorColor)
                 }
             }
         }

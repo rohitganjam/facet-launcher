@@ -110,7 +110,7 @@ class DrawerViewModel @Inject constructor(
     private val searchQuery = MutableStateFlow("")
 
     /** Called alongside the Drawer's own (locally-owned) query state — see `HomeDrawerRoute.kt`. */
-    fun onQueryChanged(query: String) {
+    fun onQueryChange(query: String) {
         searchQuery.value = query
     }
 

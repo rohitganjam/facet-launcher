@@ -1,13 +1,16 @@
 package com.facetlauncher.app.ui.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +28,7 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class PermissionsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val contactPermissionRepository: ContactPermissionRepository,
@@ -39,28 +43,28 @@ class PermissionsViewModel @Inject constructor(
             permissions = listOf(
                 PermissionRowState(
                     kind = PermissionKind.CALENDAR,
-                    title = "Calendar",
-                    subtitle = "Shows today's events on the clock.",
+                    title = context.getString(R.string.permission_calendar_title),
+                    subtitle = context.getString(R.string.permission_calendar_subtitle),
                     isGranted = calendarPermissionRepository.isGranted(),
                     hasRequestedBefore = settings.calendarPermissionRequested,
                 ),
                 PermissionRowState(
                     kind = PermissionKind.CONTACTS,
-                    title = "Contacts",
-                    subtitle = "Lets Drawer search show matching contacts with quick call/message/WhatsApp actions.",
+                    title = context.getString(R.string.permission_contacts_title),
+                    subtitle = context.getString(R.string.permission_contacts_subtitle),
                     isGranted = contactPermissionRepository.isGranted(),
                     hasRequestedBefore = settings.contactsPermissionRequested,
                 ),
                 PermissionRowState(
                     kind = PermissionKind.USAGE_ACCESS,
-                    title = "Usage access",
-                    subtitle = "Powers the Recents and Most used app lists.",
+                    title = context.getString(R.string.permission_usage_access_title),
+                    subtitle = context.getString(R.string.permission_usage_access_subtitle),
                     isGranted = usageAccessRepository.isGranted(),
                 ),
                 PermissionRowState(
                     kind = PermissionKind.NOTIFICATION_ACCESS,
-                    title = "Notification access",
-                    subtitle = "Shows a dot or count badge on apps with active notifications.",
+                    title = context.getString(R.string.permission_notification_access_title),
+                    subtitle = context.getString(R.string.permission_notification_access_subtitle),
                     isGranted = notificationAccessRepository.isGranted(),
                 ),
             ),

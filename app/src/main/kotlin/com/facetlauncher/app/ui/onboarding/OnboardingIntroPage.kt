@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -72,20 +73,20 @@ fun OnboardingIntroPage(onNext: () -> Unit, modifier: Modifier = Modifier) {
                     modifier = Modifier.size(72.dp).testTag("onboarding_logo"),
                 )
                 Text(
-                    text = "Facet Launcher",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = Ink,
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "A home screen that focuses on you.",
+                text = stringResource(R.string.onboarding_intro_headline),
                 style = MaterialTheme.typography.headlineLarge,
                 color = Ink,
             )
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "No icon grid. Just your clock, what's next, and a few apps you actually open.",
+                text = stringResource(R.string.onboarding_intro_subhead),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Muted,
             )
@@ -94,11 +95,11 @@ fun OnboardingIntroPage(onNext: () -> Unit, modifier: Modifier = Modifier) {
             HomeDiagram()
 
             Spacer(modifier = Modifier.height(32.dp))
-            ConceptLine(glyph = "↑", label = "Swipe up any time for all your apps.", entranceDelayMillis = 0)
+            ConceptLine(glyph = stringResource(R.string.gesture_hint_arrow_up), label = stringResource(R.string.onboarding_intro_gesture_drawer), entranceDelayMillis = 0)
             Spacer(modifier = Modifier.height(20.dp))
-            ConceptLine(glyph = "→", label = "Swipe right for your widgets.", entranceDelayMillis = GESTURE_ENTRANCE_STAGGER_MS)
+            ConceptLine(glyph = stringResource(R.string.gesture_hint_arrow_right), label = stringResource(R.string.onboarding_intro_gesture_widgets), entranceDelayMillis = GESTURE_ENTRANCE_STAGGER_MS)
             Spacer(modifier = Modifier.height(20.dp))
-            ConceptLine(glyph = "←", label = "Swipe left to switch facets.", entranceDelayMillis = GESTURE_ENTRANCE_STAGGER_MS * 2)
+            ConceptLine(glyph = stringResource(R.string.gesture_hint_arrow_left), label = stringResource(R.string.onboarding_intro_gesture_facets), entranceDelayMillis = GESTURE_ENTRANCE_STAGGER_MS * 2)
         }
 
         Row(
@@ -108,7 +109,7 @@ fun OnboardingIntroPage(onNext: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             OnboardingDots(step = 0, totalSteps = ONBOARDING_STEP_COUNT)
             Text(
-                text = "Next",
+                text = stringResource(R.string.action_next),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Accent,
                 // 48dp minimum touch target (M3 guideline) — defaultMinSize before
@@ -143,7 +144,7 @@ private fun HomeDiagram(modifier: Modifier = Modifier) {
                 .padding(20.dp),
         ) {
             Text(
-                text = "9:41",
+                text = stringResource(R.string.onboarding_intro_diagram_clock_time),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Ink,
             )
@@ -163,11 +164,11 @@ private fun HomeDiagram(modifier: Modifier = Modifier) {
             }
         }
         Column(modifier = Modifier.padding(top = 20.dp)) {
-            LeaderRow(label = "Clock", height = CLOCK_SECTION_HEIGHT, entranceDelayMillis = 0)
+            LeaderRow(label = stringResource(R.string.onboarding_intro_diagram_clock_label), height = CLOCK_SECTION_HEIGHT, entranceDelayMillis = 0)
             Spacer(modifier = Modifier.height(SECTION_GAP))
-            LeaderRow(label = "Your apps", height = APPS_SECTION_HEIGHT, entranceDelayMillis = LEADER_ENTRANCE_STAGGER_MS)
+            LeaderRow(label = stringResource(R.string.onboarding_intro_diagram_apps_label), height = APPS_SECTION_HEIGHT, entranceDelayMillis = LEADER_ENTRANCE_STAGGER_MS)
             Spacer(modifier = Modifier.height(SECTION_GAP))
-            LeaderRow(label = "Dock", height = DOCK_TILE_SIZE, entranceDelayMillis = LEADER_ENTRANCE_STAGGER_MS * 2)
+            LeaderRow(label = stringResource(R.string.settings_dock_title), height = DOCK_TILE_SIZE, entranceDelayMillis = LEADER_ENTRANCE_STAGGER_MS * 2)
         }
     }
 }

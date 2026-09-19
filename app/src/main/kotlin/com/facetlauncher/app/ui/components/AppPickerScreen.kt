@@ -46,11 +46,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.Folder
@@ -92,9 +95,9 @@ fun AppPickerScreen(
     selectedSectionLabel: String,
     screenTestTag: String,
     tagPrefix: String,
-    onQueryChanged: (String) -> Unit,
-    onSortOptionChanged: (AppSortOption) -> Unit,
-    onSortDirectionToggled: () -> Unit,
+    onQueryChange: (String) -> Unit,
+    onSortOptionChange: (AppSortOption) -> Unit,
+    onSortDirectionToggle: () -> Unit,
     onToggleApp: (AppInfo) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
@@ -167,9 +170,9 @@ fun AppPickerScreen(
                                 sortDirection = sortDirection,
                                 selectedSectionLabel = selectedSectionLabel,
                                 tagPrefix = tagPrefix,
-                                onQueryChanged = onQueryChanged,
-                                onSortOptionChanged = onSortOptionChanged,
-                                onSortDirectionToggled = onSortDirectionToggled,
+                                onQueryChange = onQueryChange,
+                                onSortOptionChange = onSortOptionChange,
+                                onSortDirectionToggle = onSortDirectionToggle,
                                 onToggleApp = onToggleApp,
                             )
                         } else {
@@ -195,9 +198,9 @@ fun AppPickerScreen(
                         sortDirection = sortDirection,
                         selectedSectionLabel = selectedSectionLabel,
                         tagPrefix = tagPrefix,
-                        onQueryChanged = onQueryChanged,
-                        onSortOptionChanged = onSortOptionChanged,
-                        onSortDirectionToggled = onSortDirectionToggled,
+                        onQueryChange = onQueryChange,
+                        onSortOptionChange = onSortOptionChange,
+                        onSortDirectionToggle = onSortDirectionToggle,
                         onToggleApp = onToggleApp,
                         modifier = Modifier.weight(1f),
                     )
@@ -219,9 +222,9 @@ private fun AppPickerAppsList(
     sortDirection: SortDirection,
     selectedSectionLabel: String,
     tagPrefix: String,
-    onQueryChanged: (String) -> Unit,
-    onSortOptionChanged: (AppSortOption) -> Unit,
-    onSortDirectionToggled: () -> Unit,
+    onQueryChange: (String) -> Unit,
+    onSortOptionChange: (AppSortOption) -> Unit,
+    onSortDirectionToggle: () -> Unit,
     onToggleApp: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -229,8 +232,8 @@ private fun AppPickerAppsList(
         item {
             OutlinedTextField(
                 value = query,
-                onValueChange = onQueryChanged,
-                placeholder = { Text("Search apps") },
+                onValueChange = onQueryChange,
+                placeholder = { Text(stringResource(R.string.app_picker_search_apps)) },
                 modifier = Modifier.fillMaxWidth().testTag("${tagPrefix}_search").padding(bottom = 12.dp),
                 singleLine = true,
             )
@@ -239,8 +242,8 @@ private fun AppPickerAppsList(
             AppSortControl(
                 sortOption = sortOption,
                 sortDirection = sortDirection,
-                onSortOptionChanged = onSortOptionChanged,
-                onSortDirectionToggled = onSortDirectionToggled,
+                onSortOptionChange = onSortOptionChange,
+                onSortDirectionToggle = onSortDirectionToggle,
                 tagPrefix = tagPrefix,
                 modifier = Modifier.padding(bottom = 12.dp),
             )
@@ -260,7 +263,7 @@ private fun AppPickerAppsList(
             }
         }
         if (otherResults.isNotEmpty()) {
-            item { AppPickerSectionHeader("ALL APPS") }
+            item { AppPickerSectionHeader(stringResource(R.string.app_picker_all_apps)) }
             items(otherResults, key = { it.packageName + it.activityName }) { app ->
                 val isSelected = (app.packageName to app.activityName) in selectedComponents
                 AppPickerRow(
@@ -287,7 +290,7 @@ private fun AppPickerFoldersList(
 ) {
     if (folders.isEmpty()) {
         Text(
-            text = "No folders yet. Long-press an app and choose \"Add to folder\" to create one.",
+            text = stringResource(R.string.app_picker_no_folders_yet),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             modifier = modifier.fillMaxSize().padding(top = 8.dp),
@@ -351,7 +354,7 @@ private fun AppPickerTabRow(selected: AppPickerTab, onSelect: (AppPickerTab) -> 
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = if (tab == AppPickerTab.APPS) "Apps" else "Folders",
+                        text = stringResource(if (tab == AppPickerTab.APPS) R.string.app_picker_tab_apps else R.string.app_picker_tab_folders),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) Surface else Ink,
                     )
@@ -379,7 +382,11 @@ private fun AppPickerFolderRow(folder: Folder, checked: Boolean, enabled: Boolea
         FolderTileGlyph(folder = folder)
         Column(modifier = Modifier.weight(1f)) {
             Text(text = folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = "${folder.apps.size} apps", style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Text(
+                text = pluralStringResource(R.plurals.folder_app_count, folder.apps.size, folder.apps.size),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+            )
         }
         Checkbox(
             checked = checked,
@@ -407,7 +414,7 @@ private fun AppPickerHeader(title: String, onDone: () -> Unit, tagPrefix: String
             Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
         Text(
-            text = "Done",
+            text = stringResource(R.string.action_done),
             style = MaterialTheme.typography.bodyLarge,
             color = Ink,
             modifier = Modifier.testTag("${tagPrefix}_done").clickable(onClick = onDone),
@@ -465,9 +472,9 @@ private fun AppPickerScreenPreview() {
             selectedSectionLabel = "FAVORITES",
             screenTestTag = "app_picker_screen_preview",
             tagPrefix = "preview_picker",
-            onQueryChanged = {},
-            onSortOptionChanged = {},
-            onSortDirectionToggled = {},
+            onQueryChange = {},
+            onSortOptionChange = {},
+            onSortDirectionToggle = {},
             onToggleApp = {},
             onDone = {},
             showFoldersTab = true,

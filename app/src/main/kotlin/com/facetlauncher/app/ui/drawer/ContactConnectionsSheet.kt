@@ -51,8 +51,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ConnectionOption
 import com.facetlauncher.app.data.model.ContactConnection
@@ -141,7 +143,7 @@ fun ContactConnectionsSheet(
                             ConnectionRow(
                                 icon = Icons.Default.Person,
                                 iconBitmap = null,
-                                label = "View contact",
+                                label = stringResource(R.string.contact_connections_view_contact),
                                 subtitle = null,
                                 onClick = onViewContactClick,
                                 testTag = "contact_connection_view_contact",
@@ -154,7 +156,7 @@ fun ContactConnectionsSheet(
                                     label = connection.label,
                                     subtitle = when (val detail = connection.detail) {
                                         is ConnectionDetail.Single -> detail.subtitle()
-                                        is ConnectionDetail.Multiple -> "Multiple options available"
+                                        is ConnectionDetail.Multiple -> stringResource(R.string.contact_connections_multiple_options)
                                     },
                                     onClick = {
                                         when (val detail = connection.detail) {
@@ -177,7 +179,7 @@ fun ContactConnectionsSheet(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.content_description_back),
                                 tint = Ink,
                                 modifier = Modifier
                                     .testTag("contact_connections_back")
@@ -200,7 +202,7 @@ fun ContactConnectionsSheet(
                                     // The type (Mobile/Home/Work/...) is what actually tells two
                                     // options apart at a glance — the raw number/address is the
                                     // subtitle, same relationship as the main list's rows.
-                                    label = option.typeLabel ?: "Other",
+                                    label = option.typeLabel ?: stringResource(R.string.contact_connections_other),
                                     subtitle = option.value,
                                     onClick = { onConnectionClick(option.intent) },
                                     testTag = "contact_connection_option_${index}",
@@ -260,10 +262,11 @@ private fun ConnectionRow(
 }
 
 /** "555-1234 · Mobile" when the Provider declares a type, else just the bare value; blank value (no data at all) renders no subtitle. */
+@Composable
 private fun ConnectionDetail.Single.subtitle(): String? = when {
     value.isBlank() -> null
     typeLabel.isNullOrBlank() -> value
-    else -> "$value · $typeLabel"
+    else -> stringResource(R.string.dot_join_2, value, typeLabel)
 }
 
 /** Only [ContactConnectionType.CALL]/[MESSAGE]/[EMAIL] ever render without a resolved app icon — [WHATSAPP]/[OTHER] always carry one from their owning app. */

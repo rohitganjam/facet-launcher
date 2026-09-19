@@ -31,8 +31,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.Folder
@@ -104,7 +107,7 @@ internal fun FoldersSettingsContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             BackButton(onClick = onBack)
-            Text(text = "Folders", style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
+            Text(text = stringResource(R.string.settings_folders_title), style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier
                     .clickable(onClick = { showCreateDialog = true })
@@ -114,13 +117,13 @@ internal fun FoldersSettingsContent(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Accent)
-                Text(text = "Folder", style = MaterialTheme.typography.bodyLarge, color = Accent)
+                Text(text = stringResource(R.string.folders_settings_create_folder), style = MaterialTheme.typography.bodyLarge, color = Accent)
             }
         }
 
         if (uiState.folders.isEmpty()) {
             Text(
-                text = "No folders yet. Long-press an app and choose \"Add to folder\" to create one.",
+                text = stringResource(R.string.app_picker_no_folders_yet),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Muted,
                 modifier = Modifier.padding(top = 8.dp),
@@ -141,9 +144,9 @@ internal fun FoldersSettingsContent(
 
     pendingDeleteFolder?.let { folder ->
         ConfirmDialog(
-            title = "Delete folder",
-            message = "This permanently deletes \"${folder.name}\" and removes it from every Dock and Favorites list it's placed in.",
-            confirmLabel = "Delete",
+            title = stringResource(R.string.folders_settings_delete_folder),
+            message = stringResource(R.string.folders_settings_delete_message, folder.name),
+            confirmLabel = stringResource(R.string.action_delete),
             onConfirm = {
                 pendingDeleteFolder = null
                 onDelete(folder.id)
@@ -156,8 +159,8 @@ internal fun FoldersSettingsContent(
         // Genuinely empty on creation — no app is required, unlike the Drawer/Dock's own "Add
         // to folder" flow, which always names a folder alongside adding its first member.
         RenameDialog(
-            title = "New folder",
-            explanation = "Name this folder.",
+            title = stringResource(R.string.folder_new_folder_title),
+            explanation = stringResource(R.string.folder_name_this_folder),
             initialValue = "",
             onSave = { name ->
                 showCreateDialog = false
@@ -188,11 +191,15 @@ private fun FolderRow(folder: Folder, onClick: () -> Unit, onDelete: () -> Unit,
             }
             Column {
                 Text(text = folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink)
-                Text(text = "${folder.apps.size} apps", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                Text(
+                    text = pluralStringResource(R.plurals.folder_app_count, folder.apps.size, folder.apps.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted,
+                )
             }
         }
         IconButton(onClick = onDelete, modifier = Modifier.testTag("folder_row_${folder.id}_delete")) {
-            Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = "Delete folder", tint = ErrorColor)
+            Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.folders_settings_delete_folder), tint = ErrorColor)
         }
     }
 }

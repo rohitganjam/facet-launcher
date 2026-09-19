@@ -135,7 +135,7 @@ class FolderAppPickerViewModelTest {
     }
 
     @Test
-    fun `onQueryChanged filters both result lists by label`() = runTest {
+    fun `onQueryChange filters both result lists by label`() = runTest {
         val a = appInfo('a')
         val b = appInfo('b')
         val repository = folderRepository(listOf(a, b))
@@ -144,7 +144,7 @@ class FolderAppPickerViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onQueryChanged("a App")
+        viewModel.onQueryChange("a App")
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(a), viewModel.uiState.value.otherResults)
@@ -171,7 +171,7 @@ class FolderAppPickerViewModelTest {
     }
 
     @Test
-    fun `onSortOptionChanged reorders otherResults but never selectedResults`() = runTest {
+    fun `onSortOptionChange reorders otherResults but never selectedResults`() = runTest {
         val a = appInfo('a')
         val b = appInfo('b')
         val c = appInfo('c')
@@ -185,8 +185,8 @@ class FolderAppPickerViewModelTest {
         assertEquals(listOf(b, a), viewModel.uiState.value.selectedResults)
         assertEquals(listOf(c), viewModel.uiState.value.otherResults)
 
-        viewModel.onSortOptionChanged(AppSortOption.ALPHABETICAL)
-        viewModel.onSortDirectionToggled()
+        viewModel.onSortOptionChange(AppSortOption.ALPHABETICAL)
+        viewModel.onSortDirectionToggle()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(SortDirection.DESCENDING, viewModel.uiState.value.sortDirection)
@@ -197,7 +197,7 @@ class FolderAppPickerViewModelTest {
     }
 
     @Test
-    fun `onSortOptionChanged to LAST_USED is a no-op without Usage Access granted`() = runTest {
+    fun `onSortOptionChange to LAST_USED is a no-op without Usage Access granted`() = runTest {
         val a = appInfo('a')
         val repository = folderRepository(listOf(a))
         val folderId = repository.createFolder("Games")
@@ -205,14 +205,14 @@ class FolderAppPickerViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onSortOptionChanged(AppSortOption.LAST_USED)
+        viewModel.onSortOptionChange(AppSortOption.LAST_USED)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(AppSortOption.ALPHABETICAL, viewModel.uiState.value.sortOption)
     }
 
     @Test
-    fun `onSortOptionChanged to LAST_USED applies once Usage Access is granted`() = runTest {
+    fun `onSortOptionChange to LAST_USED applies once Usage Access is granted`() = runTest {
         val a = appInfo('a')
         val repository = folderRepository(listOf(a))
         val folderId = repository.createFolder("Games")
@@ -220,7 +220,7 @@ class FolderAppPickerViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onSortOptionChanged(AppSortOption.LAST_USED)
+        viewModel.onSortOptionChange(AppSortOption.LAST_USED)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(AppSortOption.LAST_USED, viewModel.uiState.value.sortOption)

@@ -12,9 +12,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
@@ -48,14 +50,14 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
         // orphaned widget the user can never get rid of.
         Column(modifier = Modifier.weight(1f, fill = false)) {
             Text(
-                text = "${providerLabel ?: "This"} widget unavailable",
+                text = stringResource(R.string.hub_orphaned_widget_unavailable, providerLabel ?: stringResource(R.string.hub_orphaned_fallback_label)),
                 style = MaterialTheme.typography.labelMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),
                 color = HomeAppTextColor,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = "The app was uninstalled",
+                text = stringResource(R.string.hub_orphaned_app_uninstalled),
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
                 color = HomeAppTextColorFaint,
                 modifier = Modifier.padding(top = 2.dp),
@@ -63,13 +65,13 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "Remove",
+                text = stringResource(R.string.hub_orphaned_remove),
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(ErrorColor)),
                 color = ErrorColor,
                 modifier = Modifier.testTag("hub_orphaned_remove").clickable(onClick = onRemove),
             )
             Text(
-                text = "Keep space",
+                text = stringResource(R.string.hub_orphaned_keep_space),
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
                 color = HomeAppTextColorFaint,
                 modifier = Modifier.testTag("hub_orphaned_keep_space").clickable(onClick = onKeepSpace),

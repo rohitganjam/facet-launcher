@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
@@ -81,16 +82,16 @@ fun ClockAdjustSheet(
 
         AdjustRow(
             icon = { Icon(painter = painterResource(R.drawable.open_in_full), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = "Adjust clock size & position",
-            subtitle = "Resize or reposition the clock",
+            label = stringResource(R.string.clock_adjust_adjust_size_position),
+            subtitle = stringResource(R.string.clock_adjust_size_position_subtitle),
             onClick = onAdjustClick,
             testTag = "clock_adjust_open",
         )
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(painter = painterResource(R.drawable.ic_palette_24), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = "Edit clock & calendar styles",
-            subtitle = "Templates, fonts, colors, and alignment",
+            label = stringResource(R.string.clock_adjust_edit_styles),
+            subtitle = stringResource(R.string.clock_adjust_edit_styles_subtitle),
             onClick = onEditStylesClick,
             testTag = "clock_adjust_edit_styles",
             trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
@@ -98,16 +99,16 @@ fun ClockAdjustSheet(
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = "Facet settings",
-            subtitle = "Facet-specific apps list, dock, clock & calendar settings",
+            label = stringResource(R.string.facet_carousel_facet_settings),
+            subtitle = stringResource(R.string.clock_adjust_facet_settings_subtitle),
             onClick = onFacetSettingsClick,
             testTag = "clock_adjust_facet_settings",
         )
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(imageVector = Icons.Default.Tune, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = "Launcher settings",
-            subtitle = "Appearance, default clock, favorites, drawer and more",
+            label = stringResource(R.string.facet_carousel_launcher_settings),
+            subtitle = stringResource(R.string.facet_carousel_launcher_settings_subtitle),
             onClick = onLauncherSettingsClick,
             testTag = "clock_adjust_launcher_settings",
         )

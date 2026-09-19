@@ -18,10 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.InheritOverrideCard
@@ -52,9 +55,9 @@ fun FacetSettingsScreen(
         onCalendarClick = { onNavigateToCalendarSettings(viewModel.facetId) },
         onClockStyleClick = { onNavigateToClockStyleGallery(viewModel.facetId) },
         onRename = viewModel::renameFacet,
-        onOverridingAppsChanged = viewModel::setOverridingApps,
-        onOverridingDockChanged = viewModel::setOverridingDock,
-        onOverridingClockChanged = viewModel::setOverridingClock,
+        onOverridingAppsChange = viewModel::setOverridingApps,
+        onOverridingDockChange = viewModel::setOverridingDock,
+        onOverridingClockChange = viewModel::setOverridingClock,
         modifier = modifier,
     )
 }
@@ -68,9 +71,9 @@ private fun FacetSettingsContent(
     onCalendarClick: () -> Unit,
     onClockStyleClick: () -> Unit,
     onRename: (String) -> Unit,
-    onOverridingAppsChanged: (Boolean) -> Unit,
-    onOverridingDockChanged: (Boolean) -> Unit,
-    onOverridingClockChanged: (Boolean) -> Unit,
+    onOverridingAppsChange: (Boolean) -> Unit,
+    onOverridingDockChange: (Boolean) -> Unit,
+    onOverridingClockChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -78,7 +81,7 @@ private fun FacetSettingsContent(
 
     StickyHeaderLayout(
         modifier = modifier,
-        header = { FacetSettingsHeader(title = facet?.name ?: "Facet", onBack = onBack) },
+        header = { FacetSettingsHeader(title = facet?.name ?: stringResource(R.string.facet_settings_default_name), onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -92,7 +95,7 @@ private fun FacetSettingsContent(
                 item {
                     SettingsCard {
                         FacetSettingsRow(
-                            title = "Rename facet",
+                            title = stringResource(R.string.facet_settings_rename_facet),
                             subtitle = facet?.name,
                             onClick = { showRenameDialog = true },
                             testTag = "facet_settings_rename_row",
@@ -102,21 +105,28 @@ private fun FacetSettingsContent(
                 }
 
                 item { Spacer(modifier = Modifier.height(18.dp)) }
-                item { SectionHeader("APPS LIST") }
+                item { SectionHeader(stringResource(R.string.facet_settings_section_apps_list)) }
                 item {
                     InheritOverrideCard(
                         overriding = uiState.isOverridingApps,
-                        onOverridingChanged = onOverridingAppsChanged,
+                        onOverridingChange = onOverridingAppsChange,
                         testTagPrefix = "facet_apps",
-                        inheritSubtitle = uiState.globalListContentMode.displayLabel() +
-                            if (uiState.globalListContentMode != ListContentMode.FAVORITES) " · ${uiState.globalAppsToShowCount} apps" else "",
+                        inheritSubtitle = if (uiState.globalListContentMode != ListContentMode.FAVORITES) {
+                            stringResource(
+                                R.string.dot_join_2,
+                                uiState.globalListContentMode.displayLabel(),
+                                pluralStringResource(R.plurals.format_count_apps, uiState.globalAppsToShowCount, uiState.globalAppsToShowCount),
+                            )
+                        } else {
+                            uiState.globalListContentMode.displayLabel()
+                        },
                     )
                 }
                 item { Spacer(modifier = Modifier.height(12.dp)) }
                 item {
                     SettingsCard {
                         FacetSettingsRow(
-                            title = "Apps list settings",
+                            title = stringResource(R.string.facet_settings_apps_list_settings_title),
                             subtitle = appsSubtitle(uiState),
                             onClick = onAppsListClick,
                             testTag = "facet_apps_list_row",
@@ -126,21 +136,29 @@ private fun FacetSettingsContent(
                 }
 
                 item { Spacer(modifier = Modifier.height(18.dp)) }
-                item { SectionHeader("DOCK") }
+                item { SectionHeader(stringResource(R.string.onboarding_dock_section_header)) }
                 item {
                     InheritOverrideCard(
                         overriding = uiState.isOverridingDock,
-                        onOverridingChanged = onOverridingDockChanged,
+                        onOverridingChange = onOverridingDockChange,
                         testTagPrefix = "facet_dock",
-                        inheritSubtitle = "${uiState.globalDockDisplayMode.displayLabel()} · ${uiState.defaultDockApps.size} apps",
+                        inheritSubtitle = stringResource(
+                            R.string.dot_join_2,
+                            uiState.globalDockDisplayMode.displayLabel(),
+                            pluralStringResource(R.plurals.format_count_apps, uiState.defaultDockApps.size, uiState.defaultDockApps.size),
+                        ),
                     )
                 }
                 item { Spacer(modifier = Modifier.height(12.dp)) }
                 item {
                     SettingsCard {
                         FacetSettingsRow(
-                            title = "Dock settings",
-                            subtitle = "${uiState.dockDisplayMode.displayLabel()} · ${uiState.effectiveDockApps.size} apps",
+                            title = stringResource(R.string.facet_settings_dock_settings_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                uiState.dockDisplayMode.displayLabel(),
+                                pluralStringResource(R.plurals.format_count_apps, uiState.effectiveDockApps.size, uiState.effectiveDockApps.size),
+                            ),
                             onClick = onDockClick,
                             testTag = "facet_dock_settings_row",
                             trailing = { NavigationChevron() },
@@ -149,30 +167,37 @@ private fun FacetSettingsContent(
                 }
 
                 item { Spacer(modifier = Modifier.height(18.dp)) }
-                item { SectionHeader("CLOCK & CALENDAR") }
+                item { SectionHeader(stringResource(R.string.settings_section_clock_calendar)) }
                 item {
                     InheritOverrideCard(
                         overriding = uiState.isOverridingClock,
-                        onOverridingChanged = onOverridingClockChanged,
+                        onOverridingChange = onOverridingClockChange,
                         testTagPrefix = "facet_clock",
-                        inheritSubtitle = "${uiState.globalClockTemplateId.name.replace("_", " ")} · ${if (uiState.globalUse24HourTime) "24-hour" else "12-hour"} time",
+                        inheritSubtitle = stringResource(
+                            R.string.dot_join_2,
+                            stringResource(uiState.globalClockTemplateId.displayNameRes),
+                            stringResource(if (uiState.globalUse24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+                        ),
                     )
                 }
                 item { Spacer(modifier = Modifier.height(12.dp)) }
                 item {
                     SettingsCard {
                         FacetSettingsRow(
-                            title = "Clock & Calendar Style",
-                            subtitle = if (uiState.isOverridingClock) "Overriding defaults · tap to edit" else "Inherits default · Light stack · tap to preview",
+                            title = stringResource(R.string.settings_clock_calendar_title),
+                            subtitle = stringResource(if (uiState.isOverridingClock) R.string.facet_settings_clock_overriding else R.string.facet_settings_clock_inherits),
                             onClick = onClockStyleClick,
                             testTag = "facet_clock_style_gallery_row",
                             trailing = { NavigationChevron() },
                         )
                         CardDivider()
                         FacetSettingsRow(
-                            title = "Calendars to display",
-                            subtitle = "${uiState.selectedCalendarCount} calendars selected · " +
-                                if (uiState.effectiveShowAllDayEvents) "All-day events visible" else "All-day events hidden",
+                            title = stringResource(R.string.settings_calendars_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                pluralStringResource(R.plurals.settings_calendars_selected, uiState.selectedCalendarCount, uiState.selectedCalendarCount),
+                                stringResource(if (uiState.effectiveShowAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
+                            ),
                             onClick = onCalendarClick,
                             testTag = "facet_calendar_settings_row",
                             trailing = { NavigationChevron() },
@@ -185,8 +210,8 @@ private fun FacetSettingsContent(
 
     if (showRenameDialog && facet != null) {
         RenameDialog(
-            title = "Rename facet",
-            explanation = "Rename this facet.",
+            title = stringResource(R.string.facet_settings_rename_facet),
+            explanation = stringResource(R.string.facet_settings_rename_explanation),
             initialValue = facet.name,
             onSave = { newName -> onRename(newName); showRenameDialog = false },
             onDismiss = { showRenameDialog = false },
@@ -194,12 +219,13 @@ private fun FacetSettingsContent(
     }
 }
 
+@Composable
 private fun appsSubtitle(uiState: FacetSettingsUiState): String {
     val mode = uiState.listContentMode
     return if (mode == ListContentMode.FAVORITES) {
-        "${mode.displayLabel()} · ${uiState.favoritesLabel}"
+        stringResource(R.string.dot_join_2, mode.displayLabel(), uiState.favoritesLabel)
     } else {
-        "${mode.displayLabel()} · ${uiState.appsToShowCount} apps"
+        stringResource(R.string.dot_join_2, mode.displayLabel(), pluralStringResource(R.plurals.format_count_apps, uiState.appsToShowCount, uiState.appsToShowCount))
     }
 }
 
@@ -216,9 +242,9 @@ private fun FacetSettingsScreenPreview() {
             onCalendarClick = {},
             onClockStyleClick = {},
             onRename = {},
-            onOverridingAppsChanged = {},
-            onOverridingDockChanged = {},
-            onOverridingClockChanged = {},
+            onOverridingAppsChange = {},
+            onOverridingDockChange = {},
+            onOverridingClockChange = {},
         )
     }
 }

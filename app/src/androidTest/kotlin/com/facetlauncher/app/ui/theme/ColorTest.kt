@@ -64,7 +64,7 @@ class ColorTest {
     @Test
     fun `Wallpaper resolves to the light and dark tokens`() {
         val (light, dark) = resolveBoth { Wallpaper }
-        assertEquals(0xFFE9ECF2.toInt(), light.toArgb())
+        assertEquals(0xFFFFFFFF.toInt(), light.toArgb())
         assertEquals(0xFF14171D.toInt(), dark.toArgb())
     }
 

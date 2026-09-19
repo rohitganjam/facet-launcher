@@ -280,7 +280,7 @@ fun FacetNavHost(
             ManageFacetsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onEditFacet = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
-                onFacetApplied = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
+                onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
             )
         }
         composable(

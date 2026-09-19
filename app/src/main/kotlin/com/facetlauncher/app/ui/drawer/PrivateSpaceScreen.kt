@@ -27,7 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.AppIcon
@@ -46,7 +48,7 @@ fun PrivateSpaceScreen(
     state: PrivateSpaceState,
     apps: List<AppInfo>,
     query: String,
-    onQueryChanged: (String) -> Unit,
+    onQueryChange: (String) -> Unit,
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -60,16 +62,16 @@ fun PrivateSpaceScreen(
         ) {
             PrivateSpaceSearchBar(
                 query = query,
-                onQueryChanged = onQueryChanged,
+                onQueryChange = onQueryChange,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
             )
             when {
                 state is PrivateSpaceState.Locked -> PrivateSpaceMessage(
-                    text = "Private Space is locked",
+                    text = stringResource(R.string.private_space_locked),
                     modifier = Modifier.testTag("private_space_locked_message"),
                 )
                 apps.isEmpty() -> PrivateSpaceMessage(
-                    text = if (query.isBlank()) "No apps in Private Space" else "No matches",
+                    text = stringResource(if (query.isBlank()) R.string.private_space_no_apps else R.string.private_space_no_matches),
                     modifier = Modifier.testTag("private_space_empty_message"),
                 )
                 else -> LazyColumn {
@@ -83,7 +85,7 @@ fun PrivateSpaceScreen(
 }
 
 @Composable
-private fun PrivateSpaceSearchBar(query: String, onQueryChanged: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun PrivateSpaceSearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -98,8 +100,8 @@ private fun PrivateSpaceSearchBar(query: String, onQueryChanged: (String) -> Uni
         )
         TextField(
             value = query,
-            onValueChange = onQueryChanged,
-            placeholder = { Text("Search Private Space") },
+            onValueChange = onQueryChange,
+            placeholder = { Text(stringResource(R.string.private_space_search)) },
             singleLine = true,
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,

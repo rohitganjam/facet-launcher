@@ -37,7 +37,12 @@ fun FontWeightSlider(
     selected: FontWeightOption,
     onSelectedChange: (FontWeightOption) -> Unit,
     modifier: Modifier = Modifier,
+    label: String = "Weight",
     previewText: String = "The quick brown fox",
+    /** `false` when an external live preview already exists elsewhere on screen (e.g. Appearance's
+     *  own `HomeSurfacePreview` card, Calendar style gallery's `CalendarEventsBlock`) — see chat
+     *  history: showing this slider's own sample text alongside that live preview was redundant. */
+    showPreview: Boolean = true,
     /** Tags the interactive [Slider] node itself (not this composable's own outer block) — tests
      *  drive it via the `SetProgress` semantics action, which only the [Slider] exposes. */
     sliderTestTag: String? = null,
@@ -48,7 +53,7 @@ fun FontWeightSlider(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(text = "Weight", style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink)
             Text(text = stringResource(selected.displayNameRes), style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         Slider(
@@ -65,12 +70,14 @@ fun FontWeightSlider(
             ),
             modifier = sliderTestTag?.let { Modifier.testTag(it) } ?: Modifier,
         )
-        Text(
-            text = previewText,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = selected.resolve()),
-            color = Ink,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        if (showPreview) {
+            Text(
+                text = previewText,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = selected.resolve()),
+                color = Ink,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }
 

@@ -129,7 +129,7 @@ class FavoritesPickerViewModel @Inject constructor(
         viewModelScope.launch { installedApps.value = getInstalledApps() }
     }
 
-    fun onQueryChanged(newQuery: String) {
+    fun onQueryChange(newQuery: String) {
         query.value = newQuery
     }
 
@@ -137,12 +137,12 @@ class FavoritesPickerViewModel @Inject constructor(
      * to route to the permission explanation instead of calling this in that case, but this stays
      * the actual source of truth so [FavoritesPickerUiState.sortOption] never silently ends up at
      * [AppSortOption.LAST_USED] without it. */
-    fun onSortOptionChanged(option: AppSortOption) {
+    fun onSortOptionChange(option: AppSortOption) {
         if (option == AppSortOption.LAST_USED && !usageAccessRepository.isGranted()) return
         sortOption.value = option
     }
 
-    fun onSortDirectionToggled() {
+    fun onSortDirectionToggle() {
         sortDirection.value = if (sortDirection.value == SortDirection.ASCENDING) SortDirection.DESCENDING else SortDirection.ASCENDING
     }
 

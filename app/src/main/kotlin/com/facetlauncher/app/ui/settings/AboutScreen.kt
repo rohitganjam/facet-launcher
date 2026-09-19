@@ -27,10 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.BuildConfig
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -84,18 +86,18 @@ private fun AboutContent(
             ) {
                 item {
                     SettingsCard {
-                        InfoRow(title = "Version", subtitle = versionName, testTag = "about_version_row")
+                        InfoRow(title = stringResource(R.string.about_version), subtitle = versionName, testTag = "about_version_row")
                         CardDivider()
                         ClickableAboutRow(
-                            title = "Check for updates",
-                            subtitle = "Open Facet Launcher on Google Play",
+                            title = stringResource(R.string.about_check_for_updates),
+                            subtitle = stringResource(R.string.about_check_for_updates_subtitle),
                             onClick = onCheckForUpdatesClick,
                             testTag = "about_check_updates_row",
                         )
                         CardDivider()
                         ClickableAboutRow(
-                            title = "Join the Discord",
-                            subtitle = "Chat with the community, share feedback, follow along",
+                            title = stringResource(R.string.about_join_discord),
+                            subtitle = stringResource(R.string.about_join_discord_subtitle),
                             onClick = onJoinDiscordClick,
                             testTag = "about_discord_row",
                         )
@@ -120,7 +122,7 @@ private fun AboutHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "About", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.about_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 

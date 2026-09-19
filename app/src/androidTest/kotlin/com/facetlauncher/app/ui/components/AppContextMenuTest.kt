@@ -366,8 +366,10 @@ class AppContextMenuTest {
         composeRule.onNodeWithTag("app_context_menu_create_folder").assertExists()
         composeRule.onNodeWithTag("app_context_menu_folder_1").assertExists()
         composeRule.onNodeWithText("Games").assertExists()
-        // Each candidate row shows its own app-count subheading, not just the name.
-        composeRule.onNodeWithText("1 apps").assertExists()
+        // Each candidate row shows its own app-count subheading, not just the name — singular
+        // "1 app", not "1 apps" (pluralStringResource, not raw string concatenation — see chat
+        // history: this folder-app-count text used to be built as "${size} apps" unconditionally).
+        composeRule.onNodeWithText("1 app").assertExists()
     }
 
     @Test

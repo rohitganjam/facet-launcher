@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import android.content.Context
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
@@ -20,6 +21,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -41,6 +43,7 @@ class PermissionsViewModelTest {
 
     private fun createViewModel(
         settings: LauncherSettings = LauncherSettings(),
+        context: Context = mock(Context::class.java),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         contactPermissionRepository: ContactPermissionRepository = mock(ContactPermissionRepository::class.java),
@@ -48,7 +51,13 @@ class PermissionsViewModelTest {
         notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
     ): PermissionsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
+        // A mocked Context's getString(Int) otherwise returns null — fine for Java callers, but
+        // PermissionRowState.title/subtitle are non-null Kotlin String, so the assignment throws
+        // an NPE that Flow.combine swallows silently, leaving uiState stuck at its empty default
+        // (see chat history: this is exactly what "expected 4 but was 0" turned out to be).
+        `when`(context.getString(anyInt())).thenReturn("")
         return PermissionsViewModel(
+            context,
             settingsRepository,
             calendarPermissionRepository,
             contactPermissionRepository,

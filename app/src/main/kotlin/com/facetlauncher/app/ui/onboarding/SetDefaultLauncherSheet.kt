@@ -27,8 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
@@ -101,7 +103,7 @@ fun SetDefaultLauncherSheet(
             if (!isDefaultLauncher) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
-                    text = "Later",
+                    text = stringResource(R.string.onboarding_later),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Muted,
                     // 48dp minimum touch target (M3 guideline), centered on the text.
@@ -120,10 +122,10 @@ fun SetDefaultLauncherSheet(
 @Composable
 private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = "Make Facet your home screen", style = MaterialTheme.typography.titleMedium, color = Ink)
+        Text(text = stringResource(R.string.set_default_launcher_headline), style = MaterialTheme.typography.titleMedium, color = Ink)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Android will ask you to confirm. You can switch back to your old launcher any time from Settings.",
+            text = stringResource(R.string.set_default_launcher_body),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
         )
@@ -137,12 +139,12 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             AppIcon(icon = null, size = 28.dp, cornerRadius = 8.dp, contentDescription = null)
-            Text(text = "Facet Launcher", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
-            Text(text = "Home app", style = MaterialTheme.typography.bodySmall, color = Muted)
+            Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+            Text(text = stringResource(R.string.set_default_launcher_home_app_badge), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "Set as default",
+            text = stringResource(R.string.set_default_launcher_cta),
             style = MaterialTheme.typography.bodyLarge,
             color = InkInverted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -155,7 +157,7 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Permissions come later, one at a time, only when a feature needs them.",
+            text = stringResource(R.string.set_default_launcher_permissions_note),
             style = MaterialTheme.typography.bodySmall,
             color = Faint,
         )
@@ -166,12 +168,12 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
 private fun AlreadyDefaultContent(onDone: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = "✓", style = MaterialTheme.typography.titleMedium, color = SuccessColor)
-            Text(text = "Facet is already your home screen", style = MaterialTheme.typography.titleMedium, color = Ink)
+            Text(text = stringResource(R.string.set_default_launcher_checkmark), style = MaterialTheme.typography.titleMedium, color = SuccessColor)
+            Text(text = stringResource(R.string.set_default_launcher_already_default), style = MaterialTheme.typography.titleMedium, color = Ink)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "Done",
+            text = stringResource(R.string.action_done),
             style = MaterialTheme.typography.bodyLarge,
             color = InkInverted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,

@@ -7,6 +7,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Ink
@@ -42,7 +44,7 @@ fun ConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.testTag("confirm_dialog_cancel")) {
-                Text(text = "Cancel", style = MaterialTheme.typography.bodyLarge, color = Muted)
+                Text(text = stringResource(R.string.action_cancel), style = MaterialTheme.typography.bodyLarge, color = Muted)
             }
         },
     )

@@ -51,8 +51,8 @@ import com.facetlauncher.app.ui.theme.Surface
 fun AppSortControl(
     sortOption: AppSortOption,
     sortDirection: SortDirection,
-    onSortOptionChanged: (AppSortOption) -> Unit,
-    onSortDirectionToggled: () -> Unit,
+    onSortOptionChange: (AppSortOption) -> Unit,
+    onSortDirectionToggle: () -> Unit,
     tagPrefix: String,
     modifier: Modifier = Modifier,
 ) {
@@ -99,7 +99,7 @@ fun AppSortControl(
                         label = stringResource(option.labelRes),
                         onClick = {
                             expanded = false
-                            onSortOptionChanged(option)
+                            onSortOptionChange(option)
                         },
                         modifier = Modifier.testTag("${tagPrefix}_sort_option_${option.name}"),
                     )
@@ -107,7 +107,7 @@ fun AppSortControl(
             }
         }
         IconButton(
-            onClick = onSortDirectionToggled,
+            onClick = onSortDirectionToggle,
             modifier = Modifier.testTag("${tagPrefix}_sort_direction_toggle"),
         ) {
             Icon(
@@ -116,7 +116,9 @@ fun AppSortControl(
                 // set this project otherwise draws from (Google Fonts' icon-render API:
                 // fonts.gstatic.com/render/v1/Material+Symbols+Outlined/24dp/list_arrow.kt).
                 painter = painterResource(R.drawable.list_arrow_24),
-                contentDescription = if (sortDirection == SortDirection.ASCENDING) "Sort ascending" else "Sort descending",
+                contentDescription = stringResource(
+                    if (sortDirection == SortDirection.ASCENDING) R.string.app_sort_ascending else R.string.app_sort_descending,
+                ),
                 tint = Ink,
                 modifier = Modifier.rotate(rotation),
             )

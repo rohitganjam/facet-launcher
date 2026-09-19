@@ -35,10 +35,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
@@ -74,7 +76,7 @@ fun DockSettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onAddDockApp = onAddDockApp,
-        onDockDisplayModeChanged = viewModel::setDockDisplayMode,
+        onDockDisplayModeChange = viewModel::setDockDisplayMode,
         onReorderDockItems = viewModel::reorderDockItems,
         modifier = modifier,
     )
@@ -85,7 +87,7 @@ private fun DockSettingsContent(
     uiState: DockSettingsUiState,
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
-    onDockDisplayModeChanged: (DockDisplayMode) -> Unit,
+    onDockDisplayModeChange: (DockDisplayMode) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -116,17 +118,17 @@ private fun DockSettingsContent(
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
-                            title = "Display style",
+                            title = stringResource(R.string.dock_display_style),
                             options = DockDisplayMode.entries,
                             selected = uiState.dockDisplayMode,
-                            label = { it.dockDisplayLabel() },
-                            onSelect = onDockDisplayModeChanged,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onDockDisplayModeChange,
                             testTag = "dock_display_style_row",
                         )
                         CardDivider()
                         DockClickableRow(
-                            title = "Select Dock Apps",
-                            subtitle = "${uiState.dockItems.size} of ${DockAppRepository.MAX_APPS}",
+                            title = stringResource(R.string.dock_select_apps),
+                            subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, DockAppRepository.MAX_APPS),
                             onClick = onAddDockApp,
                             testTag = "add_dock_app_row",
                         )
@@ -154,13 +156,8 @@ private fun DockSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Dock", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.settings_dock_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
-}
-
-private fun DockDisplayMode.dockDisplayLabel(): String = when (this) {
-    DockDisplayMode.ICONS -> "Icons"
-    DockDisplayMode.TEXT -> "Text"
 }
 
 @Composable
@@ -209,7 +206,7 @@ private fun DockAppsRow(
             key = { it.reorderKey() },
             axis = Orientation.Horizontal,
             slotSizePx = slotWidthPx,
-            onOrderChanged = { order = it },
+            onOrderChange = { order = it },
             onDragCommit = { onReorder(it) },
         )
 
@@ -249,7 +246,7 @@ private fun DockAppsRow(
             }
         }
         Text(
-            text = "Drag to reorder",
+            text = stringResource(R.string.drag_to_reorder_content_description),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             modifier = Modifier.padding(top = 8.dp),
@@ -270,7 +267,7 @@ private fun DockSettingsScreenPreview() {
             ),
             onBack = {},
             onAddDockApp = {},
-            onDockDisplayModeChanged = {},
+            onDockDisplayModeChange = {},
             onReorderDockItems = {},
         )
     }

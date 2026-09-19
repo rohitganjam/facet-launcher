@@ -13,10 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
@@ -41,7 +43,7 @@ fun HubEmptyState(onAddClick: () -> Unit, modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "+",
+                text = stringResource(R.string.facet_carousel_add_glyph),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Light,
                     shadow = homeAppLabelShadow(HomeAppTextColorFaint),
@@ -51,20 +53,20 @@ fun HubEmptyState(onAddClick: () -> Unit, modifier: Modifier = Modifier) {
             )
         }
         Text(
-            text = "No widgets yet",
+            text = stringResource(R.string.hub_empty_state_title),
             style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),
             color = HomeAppTextColor,
             modifier = Modifier.padding(top = 22.dp),
         )
         Text(
-            text = "Add a widget to get started.",
+            text = stringResource(R.string.hub_empty_state_subtitle),
             style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
             color = Muted,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp).width(250.dp),
         )
         TonalButton(
-            text = "Add widget",
+            text = stringResource(R.string.hub_widget_picker_title),
             onClick = onAddClick,
             modifier = Modifier.padding(top = 20.dp).testTag("hub_empty_add_widget"),
         )

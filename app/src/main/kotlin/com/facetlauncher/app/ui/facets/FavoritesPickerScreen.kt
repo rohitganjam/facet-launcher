@@ -43,15 +43,15 @@ fun FavoritesPickerScreen(
         selectedSectionLabel = "FAVORITES",
         screenTestTag = "favorites_picker_screen",
         tagPrefix = "favorites_picker",
-        onQueryChanged = viewModel::onQueryChanged,
-        onSortOptionChanged = { option ->
+        onQueryChange = viewModel::onQueryChange,
+        onSortOptionChange = { option ->
             if (option == AppSortOption.LAST_USED && !usageAccessGranted) {
                 onNavigateToUsageAccessExplanation()
             } else {
-                viewModel.onSortOptionChanged(option)
+                viewModel.onSortOptionChange(option)
             }
         },
-        onSortDirectionToggled = viewModel::onSortDirectionToggled,
+        onSortDirectionToggle = viewModel::onSortDirectionToggle,
         onToggleApp = viewModel::toggleFavorite,
         onDone = onDone,
         modifier = modifier,

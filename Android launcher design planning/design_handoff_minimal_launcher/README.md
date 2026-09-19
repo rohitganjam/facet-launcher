@@ -297,7 +297,7 @@ Data the launcher must fetch: installed app list (`LauncherApps`, live callbacks
 
 | Token | Value |
 |---|---|
-| Wallpaper | `#e9ecf2` |
+| Wallpaper | `#ffffff` |
 | Carousel backdrop | `#dfe3ea` (`#d3d8e1` while dragging) |
 | Surface | `#ffffff` |
 | Drawer overlay | `rgba(255,255,255,.88)` |

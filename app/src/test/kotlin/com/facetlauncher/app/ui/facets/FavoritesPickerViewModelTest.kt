@@ -88,7 +88,7 @@ class FavoritesPickerViewModelTest {
     }
 
     @Test
-    fun `onSortOptionChanged reorders otherResults but never selectedResults`() = runTest {
+    fun `onSortOptionChange reorders otherResults but never selectedResults`() = runTest {
         val a = appInfo('a')
         val b = appInfo('b')
         val c = appInfo('c')
@@ -98,7 +98,7 @@ class FavoritesPickerViewModelTest {
         assertEquals(listOf(b, a), viewModel.uiState.value.selectedResults)
         assertEquals(listOf(c), viewModel.uiState.value.otherResults)
 
-        viewModel.onSortDirectionToggled()
+        viewModel.onSortDirectionToggle()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(SortDirection.DESCENDING, viewModel.uiState.value.sortDirection)
@@ -106,26 +106,26 @@ class FavoritesPickerViewModelTest {
     }
 
     @Test
-    fun `onSortOptionChanged to LAST_USED is a no-op without Usage Access granted`() = runTest {
+    fun `onSortOptionChange to LAST_USED is a no-op without Usage Access granted`() = runTest {
         val a = appInfo('a')
         val viewModel = createViewModel(facetId = 1L, installed = listOf(a), favorites = emptyList(), usageAccessGranted = false)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onSortOptionChanged(AppSortOption.LAST_USED)
+        viewModel.onSortOptionChange(AppSortOption.LAST_USED)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(AppSortOption.ALPHABETICAL, viewModel.uiState.value.sortOption)
     }
 
     @Test
-    fun `onSortOptionChanged to LAST_USED applies once Usage Access is granted`() = runTest {
+    fun `onSortOptionChange to LAST_USED applies once Usage Access is granted`() = runTest {
         val a = appInfo('a')
         val viewModel = createViewModel(facetId = 1L, installed = listOf(a), favorites = emptyList(), usageAccessGranted = true)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onSortOptionChanged(AppSortOption.LAST_USED)
+        viewModel.onSortOptionChange(AppSortOption.LAST_USED)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(AppSortOption.LAST_USED, viewModel.uiState.value.sortOption)

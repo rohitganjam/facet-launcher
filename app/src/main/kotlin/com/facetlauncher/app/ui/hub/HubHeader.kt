@@ -4,7 +4,9 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.facetlauncher.app.R
 import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
 import com.facetlauncher.app.ui.components.ScreenHeader
 import com.facetlauncher.app.ui.components.TonalButton
@@ -28,13 +30,13 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 @Composable
 fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick: () -> Unit, modifier: Modifier = Modifier) {
     ScreenHeader(
-        title = "Widgets",
-        subtitle = "$widgetCount of $HUB_MAX_WIDGETS widgets",
+        title = stringResource(R.string.hub_header_title),
+        subtitle = stringResource(R.string.hub_header_subtitle, widgetCount, HUB_MAX_WIDGETS),
         modifier = modifier,
         onWallpaper = true,
         trailingAction = {
             TonalButton(
-                text = "Add",
+                text = stringResource(R.string.hub_header_add),
                 enabled = !isAtCapacity,
                 onClick = onAddClick,
                 modifier = Modifier.testTag("hub_add_button"),

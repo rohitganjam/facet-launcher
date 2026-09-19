@@ -239,7 +239,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it })
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
 
@@ -260,12 +260,12 @@ class AppDrawerScreenTest {
     @Test
     fun clearingTheSearchQueryRestoresTheFullList() {
         // Given a drawer filtered down to one app by typing into the search field (going
-        // through the real onQueryChanged callback, not an external state write, keeps this
+        // through the real onQueryChange callback, not an external state write, keeps this
         // in sync with Compose's own event handling/snapshot timing)
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it })
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
@@ -286,7 +286,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = manyMatches, onAppClick = {}, query = query, onQueryChanged = { query = it })
+                AppDrawerScreen(apps = manyMatches, onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
 
@@ -309,7 +309,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it })
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("zqx")
@@ -548,7 +548,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it }, contacts = emptyList())
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it }, contacts = emptyList())
             }
         }
 
@@ -572,7 +572,7 @@ class AppDrawerScreenTest {
                     apps = apps,
                     onAppClick = {},
                     query = query,
-                    onQueryChanged = { query = it },
+                    onQueryChange = { query = it },
                     contacts = emptyList(),
                     showContactsPermissionPrompt = showPrompt,
                     onContactsPermissionPromptClick = { clicked = true; showPrompt = false },
@@ -614,7 +614,7 @@ class AppDrawerScreenTest {
                     apps = apps,
                     onAppClick = {},
                     query = query,
-                    onQueryChanged = { query = it },
+                    onQueryChange = { query = it },
                     contacts = emptyList(),
                     showContactsSettingPrompt = showPrompt,
                     onContactsSettingPromptClick = { clicked = true; showPrompt = false },
@@ -661,7 +661,7 @@ class AppDrawerScreenTest {
                     apps = apps,
                     onAppClick = {},
                     query = query,
-                    onQueryChanged = { query = it },
+                    onQueryChange = { query = it },
                     contacts = listOf(contact),
                     onRequestConnections = { listOf(callConnection) },
                 )
@@ -699,7 +699,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it }, settingsEntries = emptyList())
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it }, settingsEntries = emptyList())
             }
         }
 
@@ -723,7 +723,7 @@ class AppDrawerScreenTest {
                     apps = apps,
                     onAppClick = {},
                     query = query,
-                    onQueryChanged = { query = it },
+                    onQueryChange = { query = it },
                     settingsEntries = listOf(entry),
                     onSettingsEntryClick = { clickedEntry = it },
                 )
@@ -748,7 +748,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChanged = { query = it })
+                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
@@ -863,7 +863,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = mixedApps, onAppClick = {}, workProfiles = workProfiles, query = query, onQueryChanged = { query = it })
+                AppDrawerScreen(apps = mixedApps, onAppClick = {}, workProfiles = workProfiles, query = query, onQueryChange = { query = it })
             }
         }
 

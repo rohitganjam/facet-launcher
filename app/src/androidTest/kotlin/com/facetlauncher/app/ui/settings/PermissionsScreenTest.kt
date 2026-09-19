@@ -38,6 +38,7 @@ class PermissionsScreenTest {
                     ),
                 )
                 PermissionsViewModel(
+                    context,
                     settingsRepository,
                     FakeCalendarPermissionRepository(context, granted = false),
                     ContactPermissionRepository(context),
@@ -142,6 +143,7 @@ class PermissionsScreenGrantedTest {
                     ),
                 )
                 PermissionsViewModel(
+                    context,
                     settingsRepository,
                     FakeCalendarPermissionRepository(context, granted = true),
                     ContactPermissionRepository(context),

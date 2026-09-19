@@ -36,12 +36,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -138,7 +140,7 @@ fun FolderContentsSheet(
                         if (headerAction is FolderSheetHeaderAction.AddHere) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.content_description_back),
                                 tint = Ink,
                                 modifier = Modifier
                                     .testTag("folder_contents_sheet_back")
@@ -156,7 +158,7 @@ fun FolderContentsSheet(
                         )
                         when (headerAction) {
                             is FolderSheetHeaderAction.Rename -> Text(
-                                text = "Rename",
+                                text = stringResource(R.string.action_rename),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Accent,
                                 modifier = Modifier
@@ -164,7 +166,7 @@ fun FolderContentsSheet(
                                     .clickable(onClick = { showRenameDialog = true }),
                             )
                             is FolderSheetHeaderAction.AddHere -> Text(
-                                text = "Add to folder",
+                                text = stringResource(R.string.folder_add_to_folder),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Accent,
                                 modifier = Modifier
@@ -203,8 +205,8 @@ fun FolderContentsSheet(
     if (showRenameDialog) {
         val renameAction = headerAction as? FolderSheetHeaderAction.Rename
         RenameDialog(
-            title = "Rename folder",
-            explanation = "Choose a new name for this folder.",
+            title = stringResource(R.string.folder_rename_title),
+            explanation = stringResource(R.string.folder_rename_explanation),
             initialValue = folder.name,
             onSave = { name ->
                 showRenameDialog = false
@@ -226,7 +228,7 @@ private fun FolderContentsEmptyState(modifier: Modifier = Modifier) {
             Icon(imageVector = Icons.Outlined.FolderOpen, contentDescription = null, tint = Muted, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "No apps in this folder yet",
+                text = stringResource(R.string.folder_no_apps_yet),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Muted,
                 textAlign = TextAlign.Center,

@@ -54,6 +54,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -63,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -126,7 +129,7 @@ private const val CAROUSEL_SCRIM_ALPHA = 0.6f
  * Switch Facets carousel (`3a`, `4n`, `4o`): a follow-finger panel to Home's right (see
  * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute] — this screen is never a `NavHost`
  * destination, it's always composed and just offset off-screen when closed, exactly like the
- * Hub). Tapping a card applies it and returns Home ([onFacetApplied]); [onReorderFacets]
+ * Hub). Tapping a card applies it and returns Home ([onFacetApply]); [onReorderFacets]
  * opens the standalone Manage Facets screen.
  *
  * This screen doesn't own opening/closing itself — its host does, via
@@ -141,7 +144,7 @@ private const val CAROUSEL_SCRIM_ALPHA = 0.6f
  */
 @Composable
 fun FacetCarouselScreen(
-    onFacetApplied: () -> Unit,
+    onFacetApply: () -> Unit,
     onEditFacet: (facetId: Long) -> Unit,
     onReorderFacets: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -153,7 +156,7 @@ fun FacetCarouselScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     FacetCarouselContent(
         uiState = uiState,
-        onSelect = { facetId -> viewModel.selectFacet(facetId); onFacetApplied() },
+        onSelect = { facetId -> viewModel.selectFacet(facetId); onFacetApply() },
         onEditFacet = onEditFacet,
         onAddFacet = viewModel::addFacet,
         onDeleteFacet = viewModel::deleteFacet,
@@ -344,9 +347,9 @@ private fun FacetCarouselContent(
 
     deletingFacet?.let { facet ->
         ConfirmDialog(
-            title = "Delete ${facet.name}?",
-            message = "This can't be undone. Its favorites also be removed.",
-            confirmLabel = "Delete",
+            title = stringResource(R.string.facet_carousel_delete_title, facet.name),
+            message = stringResource(R.string.facet_carousel_delete_message),
+            confirmLabel = stringResource(R.string.action_delete),
             onConfirm = { onDeleteFacet(facet); deletingFacet = null },
             onDismiss = { deletingFacet = null },
         )
@@ -361,12 +364,12 @@ private fun FacetCarouselContent(
 @Composable
 private fun FacetCarouselHeader(facetCount: Int, canReorder: Boolean, onReorderClick: () -> Unit, modifier: Modifier = Modifier) {
     ScreenHeader(
-        title = "Switch Facets",
-        subtitle = if (facetCount == 1) "1 facet available" else "$facetCount facets available",
+        title = stringResource(R.string.facet_carousel_header_title),
+        subtitle = pluralStringResource(R.plurals.facet_carousel_count, facetCount, facetCount),
         modifier = modifier,
         trailingAction = {
             TonalButton(
-                text = "Reorder",
+                text = stringResource(R.string.facet_carousel_reorder),
                 enabled = canReorder,
                 onClick = onReorderClick,
                 modifier = Modifier.testTag("facet_carousel_reorder"),
@@ -406,8 +409,8 @@ private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifi
                 modifier = Modifier.padding(end = 14.dp).size(24.dp),
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = "Launcher settings", style = MaterialTheme.typography.bodyLarge, color = Ink)
-                Text(text = "Appearance, Default clock, favorites, drawer and more", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                Text(text = stringResource(R.string.facet_carousel_launcher_settings), style = MaterialTheme.typography.bodyLarge, color = Ink)
+                Text(text = stringResource(R.string.facet_carousel_launcher_settings_subtitle), style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
         }
         Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Ink)
@@ -492,7 +495,7 @@ private fun FacetPreviewPage(
             if (isActive) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = "Active",
+                    contentDescription = stringResource(R.string.facet_carousel_active),
                     tint = Accent,
                     modifier = Modifier.padding(start = 6.dp).testTag("facet_page_active_${facet.id}"),
                 )
@@ -581,7 +584,7 @@ private fun FacetPreviewPage(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                     )
                     if (favorites.isEmpty()) {
-                        Text(text = "No favorites yet", style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
+                        Text(text = stringResource(R.string.facet_carousel_no_favorites), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
                     } else {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             favorites.forEach { item ->
@@ -672,7 +675,7 @@ private fun FacetPreviewPage(
                     onClick = onEditFacetClick,
                     modifier = Modifier.testTag("facet_page_settings_${facet.id}"),
                 ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Facet settings", tint = Muted)
+                    Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.facet_carousel_facet_settings), tint = Muted)
                 }
                 IconButton(
                     onClick = onDeleteClick,
@@ -681,7 +684,7 @@ private fun FacetPreviewPage(
                 ) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Delete facet",
+                        contentDescription = stringResource(R.string.facet_carousel_delete_facet),
                         tint = if (canDelete) Muted else Faint,
                     )
                 }
@@ -691,10 +694,11 @@ private fun FacetPreviewPage(
 }
 
 /** Matches HomeScreen.kt's own list-header label exactly, so the preview's section header agrees with the real screen. */
+@Composable
 private fun ListContentMode.previewLabel(): String = when (this) {
-    ListContentMode.FAVORITES -> "FAVORITES"
-    ListContentMode.RECENTS -> "RECENTS"
-    ListContentMode.MOST_USED -> "MOST USED"
+    ListContentMode.FAVORITES -> stringResource(R.string.home_list_header_favorites)
+    ListContentMode.RECENTS -> stringResource(R.string.home_list_header_recents)
+    ListContentMode.MOST_USED -> stringResource(R.string.home_list_header_most_used)
 }
 
 @Composable
@@ -731,11 +735,11 @@ private fun AddFacetPage(onClick: () -> Unit, modifier: Modifier = Modifier) {
                     .clip(RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "+", style = FacetType.clock.copy(fontSize = 34.sp), color = Faint)
+                Text(text = stringResource(R.string.facet_carousel_add_glyph), style = FacetType.clock.copy(fontSize = 34.sp), color = Faint)
             }
-            Text(text = "Add facet", style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
+            Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
             Text(
-                text = "Starts with your launcher's default clock, calendar, favorite apps, and settings. Customize them per facet.",
+                text = stringResource(R.string.facet_carousel_add_facet_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Muted,
                 textAlign = TextAlign.Center,

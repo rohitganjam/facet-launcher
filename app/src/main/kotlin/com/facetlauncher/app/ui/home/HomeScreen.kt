@@ -66,6 +66,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -240,7 +242,7 @@ fun HomeScreen(
     var useCompactAppSpacing by remember { mutableStateOf(false) }
     // Live delta accumulated for the drag gesture in progress only — added to the persisted
     // clockZoneHeightDp for the live preview position, then zeroed on commit (mirrors
-    // ui/components/DragReorderState's own onOrderChanged/onDragCommit split: cheap local state
+    // ui/components/DragReorderState's own onOrderChange/onDragCommit split: cheap local state
     // during the drag, one persisting call on release).
     var liveDragDeltaPx by remember { mutableFloatStateOf(0f) }
 
@@ -544,9 +546,9 @@ fun HomeScreen(
                             val listLabelColor = Muted
                             Text(
                                 text = when (listContentMode) {
-                                    ListContentMode.FAVORITES -> "FAVORITES"
-                                    ListContentMode.RECENTS -> "RECENTS"
-                                    ListContentMode.MOST_USED -> "MOST USED"
+                                    ListContentMode.FAVORITES -> stringResource(R.string.home_list_header_favorites)
+                                    ListContentMode.RECENTS -> stringResource(R.string.home_list_header_recents)
+                                    ListContentMode.MOST_USED -> stringResource(R.string.home_list_header_most_used)
                                 },
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     shadow = homeAppLabelShadow(listLabelColor),
@@ -825,12 +827,12 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Most used needs usage access from system settings.",
+            text = stringResource(R.string.home_usage_access_needed),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             modifier = Modifier.weight(1f),
         )
-        Text(text = "Open settings", style = MaterialTheme.typography.bodyMedium, color = Accent)
+        Text(text = stringResource(R.string.open_settings), style = MaterialTheme.typography.bodyMedium, color = Accent)
     }
 }
 

@@ -3,8 +3,10 @@ package com.facetlauncher.app.ui.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.ui.components.AppPickerScreen
 
@@ -36,18 +38,18 @@ fun FolderAppPickerScreen(
         canRemove = true,
         sortOption = uiState.sortOption,
         sortDirection = uiState.sortDirection,
-        selectedSectionLabel = "IN FOLDER",
+        selectedSectionLabel = stringResource(R.string.folder_app_picker_in_folder),
         screenTestTag = "folder_app_picker_screen",
         tagPrefix = "folder_app_picker",
-        onQueryChanged = viewModel::onQueryChanged,
-        onSortOptionChanged = { option ->
+        onQueryChange = viewModel::onQueryChange,
+        onSortOptionChange = { option ->
             if (option == AppSortOption.LAST_USED && !usageAccessGranted) {
                 onNavigateToUsageAccessExplanation()
             } else {
-                viewModel.onSortOptionChanged(option)
+                viewModel.onSortOptionChange(option)
             }
         },
-        onSortDirectionToggled = viewModel::onSortDirectionToggled,
+        onSortDirectionToggle = viewModel::onSortDirectionToggle,
         onToggleApp = viewModel::toggleApp,
         onDone = onDone,
         modifier = modifier,

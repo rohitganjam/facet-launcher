@@ -50,7 +50,8 @@ class FoldersSettingsScreenTest {
         setContent()
 
         composeRule.onNodeWithText("Games").assertExists()
-        composeRule.onNodeWithText("1 apps").assertExists()
+        // Singular "1 app", not "1 apps" — pluralStringResource, see chat history.
+        composeRule.onNodeWithText("1 app").assertExists()
     }
 
     @Test

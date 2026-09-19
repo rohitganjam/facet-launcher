@@ -376,7 +376,7 @@ fun HomeDrawerRoute(
     LaunchedEffect(isDrawerOpen) {
         if (!isDrawerOpen) {
             drawerQuery = ""
-            drawerViewModel.onQueryChanged("")
+            drawerViewModel.onQueryChange("")
             listState.scrollToItem(0)
             gridState.scrollToItem(0)
             searchListState.scrollToItem(0)
@@ -405,7 +405,7 @@ fun HomeDrawerRoute(
     LaunchedEffect(showPrivateSpaceDrawer) {
         if (!showPrivateSpaceDrawer) {
             privateSpaceQuery = ""
-            privateSpaceViewModel.onQueryChanged("")
+            privateSpaceViewModel.onQueryChange("")
         }
     }
 
@@ -674,7 +674,7 @@ fun HomeDrawerRoute(
             notificationBadgeStyle = drawerSettings.notificationBadgeStyle,
             badgeCounts = drawerBadgeCounts,
             query = drawerQuery,
-            onQueryChanged = { drawerQuery = it; drawerViewModel.onQueryChanged(it) },
+            onQueryChange = { drawerQuery = it; drawerViewModel.onQueryChange(it) },
             searchBarPosition = drawerSettings.searchBarPosition,
             onNavigateToSettings = onNavigateToSettings,
             secureFolderIntent = drawerViewModel.secureFolderIntent,
@@ -735,7 +735,7 @@ fun HomeDrawerRoute(
                 state = privateSpaceState,
                 apps = privateSpaceApps,
                 query = privateSpaceQuery,
-                onQueryChanged = { privateSpaceQuery = it; privateSpaceViewModel.onQueryChanged(it) },
+                onQueryChange = { privateSpaceQuery = it; privateSpaceViewModel.onQueryChange(it) },
                 onAppClick = { app ->
                     onAppClick(app)
                     showPrivateSpaceDrawer = false
@@ -791,7 +791,7 @@ fun HomeDrawerRoute(
                 },
         ) {
             FacetCarouselScreen(
-                onFacetApplied = { coroutineScope.launch { facetAxis.close() } },
+                onFacetApply = { coroutineScope.launch { facetAxis.close() } },
                 onEditFacet = onNavigateToFacetSettings,
                 onReorderFacets = onNavigateToManageFacets,
                 onNavigateToSettings = onNavigateToSettings,

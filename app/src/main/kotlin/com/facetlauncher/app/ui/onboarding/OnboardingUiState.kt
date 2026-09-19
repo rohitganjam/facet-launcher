@@ -1,7 +1,5 @@
 package com.facetlauncher.app.ui.onboarding
 
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -26,7 +24,4 @@ data class OnboardingUiState(
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     /** List vs Grid — see `AppDrawerSettingsScreen`'s own identical "Show apps as" row. */
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
-) {
-    val dockCountLabel: String get() = "${dockApps.size} of ${DockAppRepository.MAX_APPS}"
-    val favoriteCountLabel: String get() = "${favoriteApps.size} of ${DefaultFavoriteAppRepository.MAX_FAVORITES}"
-}
+)

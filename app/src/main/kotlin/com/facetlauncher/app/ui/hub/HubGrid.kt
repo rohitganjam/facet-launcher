@@ -43,10 +43,12 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.domain.HUB_MAX_ROWS
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -54,8 +56,8 @@ import com.facetlauncher.app.ui.theme.Accent
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-private val HUB_GRID_GAP = 8.dp
-private val HUB_GRID_HORIZONTAL_PADDING = 24.dp
+private val HUB_GRID_GAP = 4.dp
+private val HUB_GRID_HORIZONTAL_PADDING = 16.dp
 
 /** README `4a` — "Six rows fit the screen"; the grid still scrolls past that for however many more are placed. */
 private const val HUB_VISIBLE_ROWS = 6
@@ -108,12 +110,12 @@ fun HubGrid(
     widgets: List<HubWidgetUi>,
     columns: Int,
     createHostView: (Context, Int) -> AppWidgetHostView?,
-    onWidgetSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
+    onWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     onRemoveOrphan: (Int) -> Unit,
     onKeepOrphanSpace: (Int) -> Unit,
-    onWidgetDropped: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
+    onWidgetDrop: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
     onWidgetDroppedOnTrash: (Int) -> Unit,
-    onWidgetResized: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
+    onWidgetResize: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -133,8 +135,8 @@ fun HubGrid(
     // Live preview of where a grabbed widget would land if released right now.
     var dropTargetRow by remember { mutableStateOf<Int?>(null) }
     var dropTargetCol by remember { mutableStateOf<Int?>(null) }
-    val currentOnWidgetDropped = rememberUpdatedState(onWidgetDropped)
-    val currentOnWidgetResized = rememberUpdatedState(onWidgetResized)
+    val currentOnWidgetDropped = rememberUpdatedState(onWidgetDrop)
+    val currentOnWidgetResized = rememberUpdatedState(onWidgetResize)
     val scrollState = rememberScrollState()
     // -1/0/1 — which way (if any) a grabbed widget parked near the viewport's edge is auto-scrolling.
     var autoScrollDirection by remember { mutableIntStateOf(0) }
@@ -438,7 +440,7 @@ fun HubGrid(
                                     tileHeight = tileHeight,
                                     isInteracting = isGrabbed || isResizing,
                                     createHostView = createHostView,
-                                    onSizeChanged = onWidgetSizeChanged,
+                                    onSizeChange = onWidgetSizeChange,
                                 )
                             }
 
@@ -479,7 +481,7 @@ fun HubGrid(
                                 shape = MaterialTheme.shapes.medium,
                             ) {
                                 ThemedDropdownMenuItem(
-                                    label = "Resize widget",
+                                    label = stringResource(R.string.hub_grid_resize_widget),
                                     onClick = {
                                         showContextMenuForAppWidgetId = null
                                         resizingAppWidgetId = widget.appWidgetId
@@ -490,7 +492,7 @@ fun HubGrid(
                                     enabled = !widget.isOrphaned,
                                 )
                                 ThemedDropdownMenuItem(
-                                    label = "Remove widget",
+                                    label = stringResource(R.string.hub_grid_remove_widget),
                                     onClick = {
                                         showContextMenuForAppWidgetId = null
                                         onWidgetDroppedOnTrash(widget.appWidgetId)

@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
  * [isDragging]/[dragOffset] to drive its own visuals. That keeps every list's styling exactly as
  * it was — this only replaces the copy-pasted gesture/index-math that used to sit next to it.
  *
- * [onOrderChanged] fires on every slot boundary the drag crosses, so it must be cheap — update
+ * [onOrderChange] fires on every slot boundary the drag crosses, so it must be cheap — update
  * local Compose state only, never a repository/Room write. [onDragCommit] fires once, when the
  * finger lifts (or the gesture is cancelled), with the final order — that's where a caller should
  * persist, matching the two-tier callback the facet list's reorder screen already used.
@@ -36,7 +36,7 @@ class DragReorderState<T> internal constructor(
     private val itemKey: (T) -> Any,
     private val axis: Orientation,
     private val slotSizePx: State<Float>,
-    private val onOrderChanged: State<(List<T>) -> Unit>,
+    private val onOrderChange: State<(List<T>) -> Unit>,
     private val onDragCommit: State<(List<T>) -> Unit>,
 ) {
     var draggingKey by mutableStateOf<Any?>(null)
@@ -73,7 +73,7 @@ class DragReorderState<T> internal constructor(
         if (currentIndex == -1) return
         val targetIndex = (currentIndex + shift).coerceIn(0, list.lastIndex)
         if (targetIndex != currentIndex) {
-            onOrderChanged.value(list.toMutableList().apply { add(targetIndex, removeAt(currentIndex)) })
+            onOrderChange.value(list.toMutableList().apply { add(targetIndex, removeAt(currentIndex)) })
         }
         dragOffset -= shift * slot
     }
@@ -96,12 +96,12 @@ fun <T> rememberDragReorderState(
     key: (T) -> Any,
     axis: Orientation,
     slotSizePx: Float,
-    onOrderChanged: (List<T>) -> Unit,
+    onOrderChange: (List<T>) -> Unit,
     onDragCommit: (List<T>) -> Unit = {},
 ): DragReorderState<T> {
     val currentItems = rememberUpdatedState(items)
     val currentSlotSizePx = rememberUpdatedState(slotSizePx)
-    val currentOnOrderChanged = rememberUpdatedState(onOrderChanged)
+    val currentOnOrderChanged = rememberUpdatedState(onOrderChange)
     val currentOnDragCommit = rememberUpdatedState(onDragCommit)
     return remember {
         DragReorderState(
@@ -109,7 +109,7 @@ fun <T> rememberDragReorderState(
             itemKey = key,
             axis = axis,
             slotSizePx = currentSlotSizePx,
-            onOrderChanged = currentOnOrderChanged,
+            onOrderChange = currentOnOrderChanged,
             onDragCommit = currentOnDragCommit,
         )
     }

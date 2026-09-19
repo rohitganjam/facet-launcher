@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
@@ -105,7 +107,7 @@ private fun UsageAccessExplanationContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             BackButton(onClick = onBack)
-            Text(text = "Usage access", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = stringResource(R.string.permission_usage_access_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
 
         // Centered when it fits the viewport, scrollable from the top once it doesn't (e.g. a
@@ -116,20 +118,19 @@ private fun UsageAccessExplanationContent(
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                text = "Recents and Most used show apps based on how you actually use your phone.",
+                text = stringResource(R.string.usage_access_explanation_headline),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Ink,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This needs usage access, a special permission granted from system Settings — Facet can't request it directly. " +
-                    "It only reads which apps you open and for how long; nothing leaves your device.",
+                text = stringResource(R.string.usage_access_explanation_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Muted,
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Open settings",
+                text = stringResource(R.string.open_settings),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Accent,
                 textAlign = TextAlign.Center,

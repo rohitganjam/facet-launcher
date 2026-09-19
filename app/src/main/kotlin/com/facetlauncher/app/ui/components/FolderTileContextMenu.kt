@@ -23,7 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
@@ -96,14 +98,14 @@ fun FolderTileContextMenu(
             )
         }
         AppContextMenuItem(
-            label = "Rename",
+            label = stringResource(R.string.action_rename),
             modifier = Modifier.testTag("folder_tile_context_menu_rename"),
             leadingIcon = { Icon(imageVector = Icons.Outlined.DriveFileRenameOutline, contentDescription = null, tint = Muted) },
             onClick = { showRenameDialog = true },
         )
         quickAddState.favoritesAction?.let { action ->
             AppContextMenuItem(
-                label = quickPlacementLabel(action, "Favorites"),
+                label = quickPlacementLabel(action, stringResource(R.string.quick_placement_favorites)),
                 modifier = Modifier.testTag("folder_tile_context_menu_add_to_favorites"),
                 leadingIcon = { Icon(imageVector = Icons.Outlined.StarBorder, contentDescription = null, tint = Muted) },
                 trailingContent = { QuickPlacementBadge(action = action) },
@@ -115,7 +117,7 @@ fun FolderTileContextMenu(
         }
         quickAddState.dockAction?.let { action ->
             AppContextMenuItem(
-                label = quickPlacementLabel(action, "Dock"),
+                label = quickPlacementLabel(action, stringResource(R.string.quick_placement_dock)),
                 modifier = Modifier.testTag("folder_tile_context_menu_add_to_dock"),
                 leadingIcon = { Icon(imageVector = Icons.Outlined.Dock, contentDescription = null, tint = Muted) },
                 trailingContent = { QuickPlacementBadge(action = action) },
@@ -129,8 +131,8 @@ fun FolderTileContextMenu(
 
     if (showRenameDialog) {
         RenameDialog(
-            title = "Rename folder",
-            explanation = "Choose a new name for this folder.",
+            title = stringResource(R.string.folder_rename_title),
+            explanation = stringResource(R.string.folder_rename_explanation),
             initialValue = folder.name,
             onSave = { name ->
                 showRenameDialog = false

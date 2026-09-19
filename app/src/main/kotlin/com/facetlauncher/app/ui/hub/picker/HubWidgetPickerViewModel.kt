@@ -63,7 +63,7 @@ class HubWidgetPickerViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState())
 
-    fun onQueryChanged(newQuery: String) {
+    fun onQueryChange(newQuery: String) {
         query.value = newQuery
     }
 
@@ -76,7 +76,7 @@ class HubWidgetPickerViewModel @Inject constructor(
         allOptions.value = null
     }
 
-    fun onProviderSelected(option: WidgetProviderOption) {
+    fun onProviderSelect(option: WidgetProviderOption) {
         viewModelScope.launch {
             if (uiState.value.remaining <= 0) {
                 _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))

@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
@@ -32,16 +33,11 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /** Shared building blocks for [FacetSettingsScreen]'s own nav-list layout. */
 
-internal fun ListContentMode.displayLabel(): String = when (this) {
-    ListContentMode.FAVORITES -> "Favorites"
-    ListContentMode.RECENTS -> "Recents"
-    ListContentMode.MOST_USED -> "Most used"
-}
+@Composable
+internal fun ListContentMode.displayLabel(): String = stringResource(displayNameRes)
 
-internal fun DockDisplayMode.displayLabel(): String = when (this) {
-    DockDisplayMode.ICONS -> "Icons"
-    DockDisplayMode.TEXT -> "Text"
-}
+@Composable
+internal fun DockDisplayMode.displayLabel(): String = stringResource(displayNameRes)
 
 @Composable
 internal fun FacetSettingsHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {

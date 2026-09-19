@@ -29,9 +29,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
@@ -67,21 +69,21 @@ fun AppDrawerSettingsScreen(
     AppDrawerSettingsContent(
         settings = settings,
         onBack = onBack,
-        onDrawerPresentationChanged = viewModel::setDrawerPresentation,
-        onDrawerGridSizeChanged = viewModel::setDrawerGridSize,
-        onDrawerListItemSizeChanged = viewModel::setDrawerListItemSize,
-        onShowDrawerIconsChanged = viewModel::setShowDrawerIcons,
-        onShowDrawerLabelsChanged = viewModel::setShowDrawerLabels,
-        onSearchContactsToggled = { enabled ->
+        onDrawerPresentationChange = viewModel::setDrawerPresentation,
+        onDrawerGridSizeChange = viewModel::setDrawerGridSize,
+        onDrawerListItemSizeChange = viewModel::setDrawerListItemSize,
+        onShowDrawerIconsChange = viewModel::setShowDrawerIcons,
+        onShowDrawerLabelsChange = viewModel::setShowDrawerLabels,
+        onSearchContactsToggle = { enabled ->
             // Turning it on triggers the real request; the launcher's own callback (above) is
             // what actually persists the new value once the user responds. Turning it off needs
             // no permission dance — just write the value directly.
             if (enabled) requestContactsPermission.launch(Manifest.permission.READ_CONTACTS) else viewModel.setSearchContactsEnabled(false)
         },
-        onSearchSettingsToggled = viewModel::setSearchSettingsEnabled,
-        onSearchBarPositionChanged = viewModel::setSearchBarPosition,
-        onDrawerOpacityChanged = viewModel::setDrawerOpacity,
-        onDrawerFolderDisplayModeChanged = viewModel::setDrawerFolderDisplayMode,
+        onSearchSettingsToggle = viewModel::setSearchSettingsEnabled,
+        onSearchBarPositionChange = viewModel::setSearchBarPosition,
+        onDrawerOpacityChange = viewModel::setDrawerOpacity,
+        onDrawerFolderDisplayModeChange = viewModel::setDrawerFolderDisplayMode,
         modifier = modifier,
     )
 }
@@ -90,16 +92,16 @@ fun AppDrawerSettingsScreen(
 private fun AppDrawerSettingsContent(
     settings: LauncherSettings,
     onBack: () -> Unit,
-    onDrawerPresentationChanged: (DrawerPresentation) -> Unit,
-    onDrawerGridSizeChanged: (DrawerGridSize) -> Unit,
-    onDrawerListItemSizeChanged: (DrawerListItemSize) -> Unit,
-    onShowDrawerIconsChanged: (Boolean) -> Unit,
-    onShowDrawerLabelsChanged: (Boolean) -> Unit,
-    onSearchContactsToggled: (Boolean) -> Unit,
-    onSearchSettingsToggled: (Boolean) -> Unit,
-    onSearchBarPositionChanged: (SearchBarPosition) -> Unit,
-    onDrawerOpacityChanged: (Float) -> Unit,
-    onDrawerFolderDisplayModeChanged: (DrawerFolderDisplayMode) -> Unit,
+    onDrawerPresentationChange: (DrawerPresentation) -> Unit,
+    onDrawerGridSizeChange: (DrawerGridSize) -> Unit,
+    onDrawerListItemSizeChange: (DrawerListItemSize) -> Unit,
+    onShowDrawerIconsChange: (Boolean) -> Unit,
+    onShowDrawerLabelsChange: (Boolean) -> Unit,
+    onSearchContactsToggle: (Boolean) -> Unit,
+    onSearchSettingsToggle: (Boolean) -> Unit,
+    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
+    onDrawerOpacityChange: (Float) -> Unit,
+    onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val presentation = settings.drawerPresentation
@@ -120,89 +122,89 @@ private fun AppDrawerSettingsContent(
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
-                            title = "Show apps as",
+                            title = stringResource(R.string.app_drawer_show_apps_as),
                             options = DrawerPresentation.entries,
                             selected = presentation,
-                            label = { it.appDrawerDisplayLabel() },
-                            onSelect = onDrawerPresentationChanged,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onDrawerPresentationChange,
                             testTag = "drawer_presentation_row",
                         )
                         if (presentation == DrawerPresentation.GRID) {
                             CardDivider()
                             LabeledDropdownRow(
-                                title = "Grid size",
+                                title = stringResource(R.string.app_drawer_grid_size),
                                 options = DrawerGridSize.entries,
                                 selected = settings.drawerGridSize,
                                 label = { it.appDrawerDisplayLabel() },
-                                onSelect = onDrawerGridSizeChanged,
+                                onSelect = onDrawerGridSizeChange,
                                 testTag = "drawer_grid_size_row",
                             )
                         }
                         if (presentation == DrawerPresentation.LIST) {
                             CardDivider()
                             LabeledDropdownRow(
-                                title = "List item size",
+                                title = stringResource(R.string.app_drawer_list_item_size),
                                 options = DrawerListItemSize.entries,
                                 selected = settings.drawerListItemSize,
-                                label = { it.appDrawerDisplayLabel() },
-                                onSelect = onDrawerListItemSizeChanged,
+                                label = { stringResource(it.displayNameRes) },
+                                onSelect = onDrawerListItemSizeChange,
                                 testTag = "drawer_list_item_size_row",
                             )
                             CardDivider()
                             AppDrawerToggleRow(
-                                title = "Show icons",
-                                subtitle = "Shows icons with the application name",
+                                title = stringResource(R.string.app_drawer_show_icons_title),
+                                subtitle = stringResource(R.string.app_drawer_show_icons_subtitle),
                                 checked = settings.showDrawerIcons,
-                                onCheckedChange = onShowDrawerIconsChanged,
+                                onCheckedChange = onShowDrawerIconsChange,
                                 testTag = "show_drawer_icons_toggle",
                             )
                         }
                         if (presentation == DrawerPresentation.GRID) {
                             CardDivider()
                             AppDrawerToggleRow(
-                                title = "Show labels",
-                                subtitle = "Shows application name below the icon",
+                                title = stringResource(R.string.app_drawer_show_labels_title),
+                                subtitle = stringResource(R.string.app_drawer_show_labels_subtitle),
                                 checked = settings.showDrawerLabels,
-                                onCheckedChange = onShowDrawerLabelsChanged,
+                                onCheckedChange = onShowDrawerLabelsChange,
                                 testTag = "show_drawer_labels_toggle",
                             )
                         }
                         CardDivider()
                         AppDrawerToggleRow(
-                            title = "Search contacts",
-                            subtitle = "Call, message, WhatsApp from results",
+                            title = stringResource(R.string.app_drawer_search_contacts_title),
+                            subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
                             checked = settings.searchContactsEnabled,
-                            onCheckedChange = onSearchContactsToggled,
+                            onCheckedChange = onSearchContactsToggle,
                             testTag = "search_contacts_toggle",
                         )
                         CardDivider()
                         AppDrawerToggleRow(
-                            title = "Search settings",
-                            subtitle = "Jump to system settings like Wi-Fi or Bluetooth",
+                            title = stringResource(R.string.app_drawer_search_settings_title),
+                            subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
                             checked = settings.searchSettingsEnabled,
-                            onCheckedChange = onSearchSettingsToggled,
+                            onCheckedChange = onSearchSettingsToggle,
                             testTag = "search_settings_toggle",
                         )
                         CardDivider()
                         LabeledDropdownRow(
-                            title = "Search bar position",
+                            title = stringResource(R.string.app_drawer_search_bar_position),
                             options = SearchBarPosition.entries,
                             selected = settings.searchBarPosition,
-                            label = { it.appDrawerDisplayLabel() },
-                            onSelect = onSearchBarPositionChanged,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onSearchBarPositionChange,
                             testTag = "search_bar_position_row",
                         )
                         CardDivider()
                         LabeledDropdownRow(
-                            title = "Folders in drawer",
+                            title = stringResource(R.string.app_drawer_folders_in_drawer),
                             options = DrawerFolderDisplayMode.entries,
                             selected = settings.drawerFolderDisplayMode,
-                            label = { it.appDrawerDisplayLabel() },
-                            onSelect = onDrawerFolderDisplayModeChanged,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onDrawerFolderDisplayModeChange,
                             testTag = "drawer_folder_display_mode_row",
                         )
                         CardDivider()
-                        DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChanged)
+                        DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChange)
                     }
                 }
             }
@@ -223,34 +225,15 @@ private fun AppDrawerSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mod
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "App Drawer", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.app_drawer_settings_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 
-private fun DrawerPresentation.appDrawerDisplayLabel(): String = when (this) {
-    DrawerPresentation.LIST -> "List"
-    DrawerPresentation.GRID -> "Grid"
-}
-
-private fun DrawerGridSize.appDrawerDisplayLabel(): String = "$columns cols × $rows rows"
-
-private fun DrawerListItemSize.appDrawerDisplayLabel(): String = when (this) {
-    DrawerListItemSize.COMPACT -> "Compact"
-    DrawerListItemSize.REGULAR -> "Regular"
-    DrawerListItemSize.SPACIOUS -> "Spacious"
-}
-
-private fun SearchBarPosition.appDrawerDisplayLabel(): String = when (this) {
-    SearchBarPosition.TOP -> "Top"
-    SearchBarPosition.BOTTOM -> "Bottom"
-}
-
-private fun DrawerFolderDisplayMode.appDrawerDisplayLabel(): String = when (this) {
-    DrawerFolderDisplayMode.DO_NOT_SHOW -> "Do not show"
-    DrawerFolderDisplayMode.INLINE -> "Show folders inline"
-    DrawerFolderDisplayMode.SHOW_FIRST -> "Show folders first"
-    DrawerFolderDisplayMode.SHOW_LAST -> "Show folders last"
-}
+/** Not a fixed per-value [androidx.annotation.StringRes] like this file's other enum labels — the
+ *  actual column/row counts are [DrawerGridSize]'s own numeric fields, so this stays a format
+ *  template rather than 4 near-identical fixed strings. */
+@Composable
+private fun DrawerGridSize.appDrawerDisplayLabel(): String = stringResource(R.string.drawer_grid_size_label, columns, rows)
 
 @Composable
 private fun AppDrawerToggleRow(
@@ -282,8 +265,8 @@ private fun AppDrawerToggleRow(
 private fun DrawerOpacitySlider(opacity: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.testTag("drawer_opacity_slider").padding(vertical = 8.dp)) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(text = "Drawer opacity", style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = "${(opacity * 100).roundToInt()}%", style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Text(text = stringResource(R.string.app_drawer_opacity_label), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Text(text = stringResource(R.string.percent_format, (opacity * 100).roundToInt()), style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         // Plain M3 Slider — default thumb/track shape, just this app's Accent/Hairline colors.
         Slider(
@@ -307,16 +290,16 @@ private fun AppDrawerSettingsScreenPreview() {
         AppDrawerSettingsContent(
             settings = LauncherSettings(),
             onBack = {},
-            onDrawerPresentationChanged = {},
-            onDrawerGridSizeChanged = {},
-            onDrawerListItemSizeChanged = {},
-            onShowDrawerIconsChanged = {},
-            onShowDrawerLabelsChanged = {},
-            onSearchContactsToggled = {},
-            onSearchSettingsToggled = {},
-            onSearchBarPositionChanged = {},
-            onDrawerOpacityChanged = {},
-            onDrawerFolderDisplayModeChanged = {},
+            onDrawerPresentationChange = {},
+            onDrawerGridSizeChange = {},
+            onDrawerListItemSizeChange = {},
+            onShowDrawerIconsChange = {},
+            onShowDrawerLabelsChange = {},
+            onSearchContactsToggle = {},
+            onSearchSettingsToggle = {},
+            onSearchBarPositionChange = {},
+            onDrawerOpacityChange = {},
+            onDrawerFolderDisplayModeChange = {},
         )
     }
 }

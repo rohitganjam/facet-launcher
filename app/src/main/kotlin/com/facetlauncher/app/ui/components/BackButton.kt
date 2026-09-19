@@ -8,6 +8,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Ink
 
 /**
@@ -26,6 +28,6 @@ fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier.testTag("back_button"),
         colors = IconButtonDefaults.iconButtonColors(contentColor = Ink),
     ) {
-        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
     }
 }

@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
@@ -74,14 +76,14 @@ fun HomeSurfacePreview(
 
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text(
-                text = "PREVIEW",
+                text = stringResource(R.string.home_surface_preview_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = Muted,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
             if (rows.isEmpty() && dockApps.isEmpty()) {
                 Text(
-                    text = "Nothing to preview yet",
+                    text = stringResource(R.string.home_surface_preview_nothing_yet),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Muted,
                 )

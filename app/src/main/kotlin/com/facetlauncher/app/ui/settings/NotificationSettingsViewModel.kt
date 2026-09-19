@@ -25,7 +25,7 @@ data class NotificationSettingsUiState(
  * an inline toggle, per direct feedback, since it now governs both whether badges show at all
  * and which style they render in. Turning the toggle on when notification listener access isn't
  * granted yet routes through [NotificationAccessExplanationScreen] instead of flipping the
- * setting directly — see [NotificationSettingsScreen]'s own `onEnabledChanged` wiring.
+ * setting directly — see [NotificationSettingsScreen]'s own `onEnabledChange` wiring.
  */
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(

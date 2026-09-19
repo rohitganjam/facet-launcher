@@ -46,12 +46,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.ui.components.BackButton
@@ -87,6 +90,8 @@ fun HubWidgetPickerScreen(
         viewModel.onBindResult(result.resultCode == android.app.Activity.RESULT_OK)
     }
 
+    val hubFullMessage = stringResource(R.string.hub_widget_picker_full)
+    val setupCancelledMessage = stringResource(R.string.hub_widget_picker_setup_cancelled)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -95,8 +100,8 @@ fun HubWidgetPickerScreen(
                 HubAddWidgetEvent.WidgetAdded -> onDone()
                 is HubAddWidgetEvent.AddFailed -> {
                     failureMessage = when (event.reason) {
-                        AddFailureReason.HUB_FULL -> "Full — remove a widget first"
-                        AddFailureReason.SETUP_CANCELLED -> "Setup wasn't finished, so that widget wasn't added"
+                        AddFailureReason.HUB_FULL -> hubFullMessage
+                        AddFailureReason.SETUP_CANCELLED -> setupCancelledMessage
                     }
                 }
             }
@@ -113,8 +118,8 @@ fun HubWidgetPickerScreen(
     HubWidgetPickerContent(
         uiState = uiState,
         failureMessage = failureMessage,
-        onQueryChanged = viewModel::onQueryChanged,
-        onProviderSelected = viewModel::onProviderSelected,
+        onQueryChange = viewModel::onQueryChange,
+        onProviderSelect = viewModel::onProviderSelect,
         onBack = onDone,
         modifier = modifier,
     )
@@ -123,8 +128,8 @@ fun HubWidgetPickerScreen(
 @Composable
 internal fun HubWidgetPickerContent(
     uiState: HubWidgetPickerUiState,
-    onQueryChanged: (String) -> Unit,
-    onProviderSelected: (WidgetProviderOption) -> Unit,
+    onQueryChange: (String) -> Unit,
+    onProviderSelect: (WidgetProviderOption) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     failureMessage: String? = null,
@@ -150,8 +155,8 @@ internal fun HubWidgetPickerContent(
                     item {
                         OutlinedTextField(
                             value = uiState.query,
-                            onValueChange = onQueryChanged,
-                            placeholder = { Text("Search widgets") },
+                            onValueChange = onQueryChange,
+                            placeholder = { Text(stringResource(R.string.hub_widget_picker_search)) },
                             modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_search").padding(bottom = 12.dp),
                             singleLine = true,
                         )
@@ -167,12 +172,12 @@ internal fun HubWidgetPickerContent(
                         }
                     }
                     items(uiState.groups, key = { it.appLabel }) { group ->
-                        WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelected = onProviderSelected)
+                        WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
                     }
                     if (uiState.groups.isEmpty()) {
                         item {
                             Text(
-                                text = "No widgets found",
+                                text = stringResource(R.string.hub_widget_picker_none_found),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Muted,
                                 modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
@@ -217,10 +222,10 @@ private fun HubWidgetPickerHeader(remaining: Int, onBack: () -> Unit, modifier: 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BackButton(onClick = onBack)
-            Text(text = "Add widget", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = stringResource(R.string.hub_widget_picker_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
         Text(
-            text = "$remaining left",
+            text = stringResource(R.string.hub_widget_picker_remaining, remaining),
             style = MaterialTheme.typography.labelMedium,
             color = Muted,
             modifier = Modifier.testTag("hub_widget_picker_remaining"),
@@ -232,14 +237,14 @@ private fun HubWidgetPickerHeader(remaining: Int, onBack: () -> Unit, modifier: 
 private fun WidgetProviderGroupRow(
     group: WidgetProviderGroup,
     tileWidth: Dp,
-    onProviderSelected: (WidgetProviderOption) -> Unit,
+    onProviderSelect: (WidgetProviderOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(top = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = group.appLabel, style = MaterialTheme.typography.bodyLarge, color = Ink)
             Text(
-                text = if (group.options.size == 1) "1 widget" else "${group.options.size} widgets",
+                text = pluralStringResource(R.plurals.hub_widget_picker_option_count, group.options.size, group.options.size),
                 style = MaterialTheme.typography.labelSmall,
                 color = Muted,
             )
@@ -254,7 +259,7 @@ private fun WidgetProviderGroupRow(
             verticalArrangement = Arrangement.spacedBy(11.dp),
         ) {
             group.options.forEach { option ->
-                WidgetProviderOptionTile(option = option, tileWidth = tileWidth, onClick = { onProviderSelected(option) })
+                WidgetProviderOptionTile(option = option, tileWidth = tileWidth, onClick = { onProviderSelect(option) })
             }
         }
     }
@@ -290,7 +295,7 @@ private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp
                     )
                 } else {
                     Text(
-                        text = "${option.columns}×${option.rows}",
+                        text = stringResource(R.string.hub_widget_dimensions, option.columns, option.rows),
                         style = MaterialTheme.typography.labelSmall,
                         color = Muted,
                     )
@@ -304,7 +309,7 @@ private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp
             }
         }
         Text(
-            text = "${option.widgetLabel} ${option.columns}×${option.rows}",
+            text = stringResource(R.string.hub_widget_label_with_dimensions, option.widgetLabel, option.columns, option.rows),
             style = MaterialTheme.typography.labelSmall,
             color = Muted,
             textAlign = TextAlign.Center,
@@ -331,8 +336,8 @@ private fun HubWidgetPickerScreenPreview() {
                 ),
                 remaining = 14,
             ),
-            onQueryChanged = {},
-            onProviderSelected = {},
+            onQueryChange = {},
+            onProviderSelect = {},
             onBack = {},
         )
     }

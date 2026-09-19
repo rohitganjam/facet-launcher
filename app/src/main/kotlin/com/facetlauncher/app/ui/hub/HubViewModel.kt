@@ -91,7 +91,7 @@ class HubViewModel @Inject constructor(
      * latest [uiState] either way). The whole grid is then gravity-compacted (see
      * [CompactWidgetsUseCase]) so this never leaves — or uncovers — an empty row gap.
      */
-    fun onWidgetDropped(appWidgetId: Int, targetRow: Int, targetCol: Int, colSpan: Int, rowSpan: Int) {
+    fun onWidgetDrop(appWidgetId: Int, targetRow: Int, targetCol: Int, colSpan: Int, rowSpan: Int) {
         val current = currentPlacements()
         val resolved = resolveWidgetDrop(current, appWidgetId, targetRow, targetCol, colSpan, rowSpan) ?: return
         commitPlacements(compactWidgets(mergeResolved(current, resolved)))
@@ -113,7 +113,7 @@ class HubViewModel @Inject constructor(
      * [ResolveWidgetResizeUseCase] — unless even that can't make room, in which case nothing
      * changes and the resize snaps back to its pre-drag span.
      */
-    fun onWidgetResized(appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) {
+    fun onWidgetResize(appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) {
         val current = currentPlacements()
         val resolved = resolveWidgetResize(current, appWidgetId, row, col, colSpan, rowSpan) ?: return
         commitPlacements(compactWidgets(mergeResolved(current, resolved)))

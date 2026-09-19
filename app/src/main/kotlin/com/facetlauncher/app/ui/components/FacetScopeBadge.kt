@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Muted
 
@@ -40,13 +42,13 @@ private fun ScopeBadge(label: String, color: Color, modifier: Modifier = Modifie
 @Composable
 fun FacetScopeBadge(facetName: String?, modifier: Modifier = Modifier) {
     val color = if (facetName != null) Accent else Muted
-    ScopeBadge(label = facetName ?: "Global", color = color, modifier = modifier)
+    ScopeBadge(label = facetName ?: stringResource(R.string.facet_scope_global), color = color, modifier = modifier)
 }
 
 /** Marks a row as belonging to a Work Profile app — [AppContextMenu]'s header, alongside the app's name. */
 @Composable
 fun WorkScopeBadge(modifier: Modifier = Modifier) {
-    ScopeBadge(label = "Work", color = Accent, modifier = modifier)
+    ScopeBadge(label = stringResource(R.string.facet_scope_work), color = Accent, modifier = modifier)
 }
 
 /**
@@ -58,5 +60,5 @@ fun WorkScopeBadge(modifier: Modifier = Modifier) {
  */
 @Composable
 fun OtherScopeBadge(modifier: Modifier = Modifier) {
-    ScopeBadge(label = "Other profile", color = Muted, modifier = modifier)
+    ScopeBadge(label = stringResource(R.string.facet_scope_other_profile), color = Muted, modifier = modifier)
 }

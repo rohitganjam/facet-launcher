@@ -40,11 +40,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.ConfirmDialog
@@ -73,7 +75,7 @@ private val REORDER_ROW_SPACING = 10.dp
 fun ManageFacetsScreen(
     onBack: () -> Unit,
     onEditFacet: (facetId: Long) -> Unit,
-    onFacetApplied: () -> Unit,
+    onFacetApply: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ManageFacetsViewModel = hiltViewModel(),
 ) {
@@ -83,7 +85,7 @@ fun ManageFacetsScreen(
         onBack = onBack,
         onReorder = viewModel::reorderFacets,
         onEditFacet = onEditFacet,
-        onApplyFacet = { facetId -> viewModel.applyFacet(facetId); onFacetApplied() },
+        onApplyFacet = { facetId -> viewModel.applyFacet(facetId); onFacetApply() },
         onDeleteFacet = viewModel::deleteFacet,
         onAddFacet = viewModel::addFacet,
         modifier = modifier,
@@ -116,7 +118,7 @@ private fun ManageFacetsContent(
                 activeFacetId = uiState.activeFacetId,
                 canAddFacet = uiState.canAddFacet,
                 canDeleteFacet = uiState.canDeleteFacet,
-                onOrderChanged = { workingList = it },
+                onOrderChange = { workingList = it },
                 onCommit = { onReorder(workingList) },
                 onEditFacet = onEditFacet,
                 onApplyFacet = onApplyFacet,
@@ -134,9 +136,9 @@ private fun ManageFacetsContent(
 
     deletingFacet?.let { facet ->
         ConfirmDialog(
-            title = "Delete ${facet.name}?",
-            message = "This can't be undone. Its favorites will be removed too.",
-            confirmLabel = "Delete",
+            title = stringResource(R.string.facet_carousel_delete_title, facet.name),
+            message = stringResource(R.string.manage_facets_delete_message),
+            confirmLabel = stringResource(R.string.action_delete),
             onConfirm = { onDeleteFacet(facet); deletingFacet = null },
             onDismiss = { deletingFacet = null },
         )
@@ -156,7 +158,7 @@ private fun ManageFacetsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Manage Facets", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.manage_facets_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 
@@ -172,7 +174,7 @@ private fun FacetReorderList(
     activeFacetId: Long,
     canAddFacet: Boolean,
     canDeleteFacet: Boolean,
-    onOrderChanged: (List<FacetEntity>) -> Unit,
+    onOrderChange: (List<FacetEntity>) -> Unit,
     onCommit: () -> Unit,
     onEditFacet: (Long) -> Unit,
     onApplyFacet: (Long) -> Unit,
@@ -187,7 +189,7 @@ private fun FacetReorderList(
         key = { it.id },
         axis = Orientation.Vertical,
         slotSizePx = rowSlotHeightPx,
-        onOrderChanged = onOrderChanged,
+        onOrderChange = onOrderChange,
         onDragCommit = { onCommit() },
     )
 
@@ -198,7 +200,7 @@ private fun FacetReorderList(
     ) {
         item(key = "reorder_hint") {
             Text(
-                text = "Drag to re-order facets",
+                text = stringResource(R.string.manage_facets_drag_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted,
                 modifier = Modifier.padding(bottom = 4.dp).testTag("facet_reorder_hint"),
@@ -263,7 +265,7 @@ private fun FacetReorderRow(
     ) {
         Icon(
             Icons.Default.DragHandle,
-            contentDescription = "Drag to reorder",
+            contentDescription = stringResource(R.string.drag_to_reorder_content_description),
             tint = Faint,
             modifier = Modifier
                 .padding(end = 12.dp)
@@ -276,20 +278,20 @@ private fun FacetReorderRow(
                 onClick = { menuExpanded = true },
                 modifier = Modifier.testTag("facet_reorder_menu_${facet.id}"),
             ) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Facet options", tint = Muted)
+                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.manage_facets_options), tint = Muted)
             }
             ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                 ThemedDropdownMenuItem(
-                    label = "Facet settings",
+                    label = stringResource(R.string.facet_carousel_facet_settings),
                     onClick = { menuExpanded = false; onEditFacetClick() },
                 )
                 ThemedDropdownMenuItem(
-                    label = "Apply facet",
+                    label = stringResource(R.string.manage_facets_apply_facet),
                     enabled = !isActive,
                     onClick = { menuExpanded = false; onApplyFacetClick() },
                 )
                 ThemedDropdownMenuItem(
-                    label = "Delete",
+                    label = stringResource(R.string.action_delete),
                     enabled = canDelete,
                     destructive = true,
                     onClick = { menuExpanded = false; onDeleteClick() },
@@ -314,7 +316,7 @@ private fun AddFacetRow(enabled: Boolean, onClick: () -> Unit, modifier: Modifie
         horizontalArrangement = Arrangement.Center,
     ) {
         Icon(Icons.Default.Add, contentDescription = null, tint = Accent)
-        Text(text = "Add facet", style = MaterialTheme.typography.bodyLarge, color = Accent, modifier = Modifier.padding(start = 8.dp))
+        Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Accent, modifier = Modifier.padding(start = 8.dp))
     }
 }
 

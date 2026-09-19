@@ -20,7 +20,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -35,25 +37,25 @@ import com.facetlauncher.app.ui.theme.Surface
 @Composable
 fun InheritOverrideCard(
     overriding: Boolean,
-    onOverridingChanged: (Boolean) -> Unit,
+    onOverridingChange: (Boolean) -> Unit,
     testTagPrefix: String,
     modifier: Modifier = Modifier,
-    inheritSubtitle: String = "Follows the launcher-wide default",
+    inheritSubtitle: String = stringResource(R.string.inherit_override_follows_default),
 ) {
     SettingsCard(modifier = modifier) {
         RadioOptionRow(
-            title = "Inherit default",
+            title = stringResource(R.string.inherit_override_inherit_default),
             subtitle = inheritSubtitle,
             selected = !overriding,
-            onClick = { onOverridingChanged(false) },
+            onClick = { onOverridingChange(false) },
             testTag = "${testTagPrefix}_inherit_row",
         )
         CardDivider()
         RadioOptionRow(
-            title = "Override for this facet",
-            subtitle = "Changes here don't affect other facets",
+            title = stringResource(R.string.inherit_override_override_for_facet),
+            subtitle = stringResource(R.string.inherit_override_changes_dont_affect_others),
             selected = overriding,
-            onClick = { onOverridingChanged(true) },
+            onClick = { onOverridingChange(true) },
             testTag = "${testTagPrefix}_override_row",
         )
     }

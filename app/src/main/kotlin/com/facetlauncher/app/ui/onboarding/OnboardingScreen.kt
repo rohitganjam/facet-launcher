@@ -40,9 +40,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.dock.DockAppPickerScreen
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
@@ -205,10 +207,10 @@ fun OnboardingScreen(
                     uiState = uiState,
                     onReorderDockApps = viewModel::reorderDockApps,
                     onOpenDockPicker = { subScreen = OnboardingSubScreen.DOCK_PICKER },
-                    onListContentModeChanged = viewModel::setListContentMode,
-                    onAppsToShowCountChanged = viewModel::setAppsToShowCount,
+                    onListContentModeChange = viewModel::setListContentMode,
+                    onAppsToShowCountChange = viewModel::setAppsToShowCount,
                     drawerPresentation = uiState.drawerPresentation,
-                    onDrawerPresentationChanged = viewModel::setDrawerPresentation,
+                    onDrawerPresentationChange = viewModel::setDrawerPresentation,
                     onOpenFavoritesPicker = { subScreen = OnboardingSubScreen.FAVORITES_PICKER },
                     onReorderFavorites = viewModel::reorderFavorites,
                     onClearFavorites = viewModel::clearFavorites,
@@ -262,7 +264,7 @@ fun OnboardingScreen(
         // home screen" prompt itself now lives on the real Home screen, not here.
         if (subScreen == null) {
             Text(
-                text = "Skip",
+                text = stringResource(R.string.onboarding_skip),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Muted,
                 modifier = Modifier

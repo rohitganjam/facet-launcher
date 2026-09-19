@@ -12,8 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
@@ -33,13 +35,13 @@ fun HubAtCapacityStrip(onManageClick: () -> Unit, modifier: Modifier = Modifier)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Full at 20 widgets — remove one to add another.",
+            text = stringResource(R.string.hub_at_capacity_message),
             style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
             color = HomeAppTextColorFaint,
             modifier = Modifier.weight(1f),
         )
         Text(
-            text = "Manage",
+            text = stringResource(R.string.hub_at_capacity_manage),
             style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(Accent)),
             color = Accent,
             modifier = Modifier.clickable(onClick = onManageClick),

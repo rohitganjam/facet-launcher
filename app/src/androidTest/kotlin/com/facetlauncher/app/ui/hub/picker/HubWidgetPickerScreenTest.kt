@@ -104,8 +104,8 @@ class HubWidgetPickerScreenTest {
                 HubWidgetPickerContent(
                     uiState = HubWidgetPickerUiState(),
                     failureMessage = "Setup wasn't finished, so that widget wasn't added",
-                    onQueryChanged = {},
-                    onProviderSelected = {},
+                    onQueryChange = {},
+                    onProviderSelect = {},
                     onBack = {},
                 )
             }

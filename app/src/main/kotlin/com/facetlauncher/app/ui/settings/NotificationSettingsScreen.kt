@@ -22,12 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
@@ -37,11 +39,6 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
-
-private fun NotificationBadgeStyle.displayLabel(): String = when (this) {
-    NotificationBadgeStyle.DOT -> "Dot"
-    NotificationBadgeStyle.COUNT -> "Count"
-}
 
 /** F13's own page (reached from Settings' NOTIFICATIONS card) rather than an inline toggle — see `NotificationSettingsViewModel`. */
 @Composable
@@ -68,7 +65,7 @@ fun NotificationSettingsScreen(
     NotificationSettingsContent(
         uiState = uiState,
         onBack = onBack,
-        onEnabledChanged = { checked ->
+        onEnabledChange = { checked ->
             // Turning it on without access yet routes through the explanation screen first,
             // which persists the setting itself once the grant actually lands (see
             // NotificationAccessExplanationViewModel) — turning off needs no permission dance.
@@ -78,7 +75,7 @@ fun NotificationSettingsScreen(
                 viewModel.setEnabled(checked)
             }
         },
-        onBadgeStyleChanged = viewModel::setBadgeStyle,
+        onBadgeStyleChange = viewModel::setBadgeStyle,
         modifier = modifier,
     )
 }
@@ -87,8 +84,8 @@ fun NotificationSettingsScreen(
 private fun NotificationSettingsContent(
     uiState: NotificationSettingsUiState,
     onBack: () -> Unit,
-    onEnabledChanged: (Boolean) -> Unit,
-    onBadgeStyleChanged: (NotificationBadgeStyle) -> Unit,
+    onEnabledChange: (Boolean) -> Unit,
+    onBadgeStyleChange: (NotificationBadgeStyle) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // The stored preference alone isn't enough to actually show badges — it defaults to true and
@@ -112,7 +109,7 @@ private fun NotificationSettingsContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             BackButton(onClick = onBack)
-            Text(text = "Notifications", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = stringResource(R.string.settings_notifications_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
 
         SettingsCard {
@@ -121,20 +118,20 @@ private fun NotificationSettingsContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Notification badges", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                Text(text = stringResource(R.string.notification_badges_row_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
                 Switch(
                     checked = enabled,
-                    onCheckedChange = onEnabledChanged,
+                    onCheckedChange = onEnabledChange,
                     modifier = Modifier.testTag("notification_badges_toggle"),
                 )
             }
             CardDivider()
             LabeledDropdownRow(
-                title = "Badge style",
+                title = stringResource(R.string.notification_badge_style_row_title),
                 options = NotificationBadgeStyle.entries,
                 selected = uiState.settings.notificationBadgeStyle,
-                label = { it.displayLabel() },
-                onSelect = onBadgeStyleChanged,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onBadgeStyleChange,
                 enabled = enabled,
                 testTag = "badge_style_row",
                 modifier = Modifier.alpha(if (enabled) 1f else 0.4f),
@@ -151,8 +148,8 @@ private fun NotificationSettingsScreenPreview() {
         NotificationSettingsContent(
             uiState = NotificationSettingsUiState(),
             onBack = {},
-            onEnabledChanged = {},
-            onBadgeStyleChanged = {},
+            onEnabledChange = {},
+            onBadgeStyleChange = {},
         )
     }
 }

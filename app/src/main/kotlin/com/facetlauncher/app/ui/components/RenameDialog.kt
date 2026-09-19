@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -67,7 +69,7 @@ fun RenameDialog(
                 )
                 if (value != initialValue) {
                     TextButton(onClick = { value = initialValue }, modifier = Modifier.testTag("rename_dialog_reset")) {
-                        Text(text = "Reset", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                        Text(text = stringResource(R.string.action_reset), style = MaterialTheme.typography.bodyMedium, color = Muted)
                     }
                 }
             }
@@ -78,12 +80,12 @@ fun RenameDialog(
                 enabled = value.isNotBlank(),
                 modifier = Modifier.testTag("rename_dialog_save"),
             ) {
-                Text(text = "Save", style = MaterialTheme.typography.bodyLarge, color = Accent)
+                Text(text = stringResource(R.string.action_save), style = MaterialTheme.typography.bodyLarge, color = Accent)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.testTag("rename_dialog_cancel")) {
-                Text(text = "Cancel", style = MaterialTheme.typography.bodyLarge, color = Muted)
+                Text(text = stringResource(R.string.action_cancel), style = MaterialTheme.typography.bodyLarge, color = Muted)
             }
         },
     )

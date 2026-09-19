@@ -8,12 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.homeTextShadow
 
 /**
@@ -60,7 +62,7 @@ fun BatteryAccessoryContent(
     if (percent == null) return
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize))
-        Text(text = "$percent%", style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
+        Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
     }
 }
 
@@ -86,7 +88,7 @@ fun ClockAccessoryRow(
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AlarmAccessoryContent(nextAlarmText, mutedColor, family, fontSize = fontSize, fontWeight = fontWeight)
         if (nextAlarmText != null && batteryPercent != null) {
-            Text(text = "·", style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
+            Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
         }
         BatteryAccessoryContent(batteryPercent, isCharging, mutedColor, accentColor, family, fontSize = fontSize, fontWeight = fontWeight)
     }

@@ -30,7 +30,7 @@ class ManageFacetsScreenTest {
     private fun setContent(
         onBack: () -> Unit = {},
         onEditFacet: (Long) -> Unit = {},
-        onFacetApplied: () -> Unit = {},
+        onFacetApply: () -> Unit = {},
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
@@ -51,7 +51,7 @@ class ManageFacetsScreenTest {
                 ManageFacetsScreen(
                     onBack = onBack,
                     onEditFacet = onEditFacet,
-                    onFacetApplied = onFacetApplied,
+                    onFacetApply = onFacetApply,
                     viewModel = viewModel,
                 )
             }
@@ -144,7 +144,7 @@ class ManageFacetsScreenTest {
         var secondId = 0L
         var applied = false
         val settingsRepository = setContent(
-            onFacetApplied = { applied = true },
+            onFacetApply = { applied = true },
             seed = { facetRepository, settingsRepository ->
                 val first = facetRepository.addFacet()
                 secondId = facetRepository.addFacet().id

@@ -19,9 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.DrawerRailTextColor
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -162,7 +164,7 @@ private fun RailFolderGlyph(active: Boolean, modifier: Modifier = Modifier) {
     val glyphSize = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.fontSize.toDp() }
     Icon(
         imageVector = Icons.Outlined.FolderIcon,
-        contentDescription = "Folders",
+        contentDescription = stringResource(R.string.app_picker_tab_folders),
         tint = if (active) Accent else DrawerRailTextColor,
         modifier = modifier.size(glyphSize),
     )

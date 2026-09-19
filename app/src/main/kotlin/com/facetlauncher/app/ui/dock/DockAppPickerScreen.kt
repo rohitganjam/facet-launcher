@@ -42,15 +42,15 @@ fun DockAppPickerScreen(
         selectedSectionLabel = "IN DOCK",
         screenTestTag = "dock_app_picker_screen",
         tagPrefix = "dock_picker",
-        onQueryChanged = viewModel::onQueryChanged,
-        onSortOptionChanged = { option ->
+        onQueryChange = viewModel::onQueryChange,
+        onSortOptionChange = { option ->
             if (option == AppSortOption.LAST_USED && !usageAccessGranted) {
                 onNavigateToUsageAccessExplanation()
             } else {
-                viewModel.onSortOptionChanged(option)
+                viewModel.onSortOptionChange(option)
             }
         },
-        onSortDirectionToggled = viewModel::onSortDirectionToggled,
+        onSortDirectionToggle = viewModel::onSortDirectionToggle,
         onToggleApp = viewModel::toggleDockApp,
         onDone = onDone,
         modifier = modifier,

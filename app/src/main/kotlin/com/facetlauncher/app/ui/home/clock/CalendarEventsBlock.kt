@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,7 +24,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.ui.home.rememberTickingNow
@@ -151,7 +151,7 @@ private fun EventRow(
     val timeText: @Composable () -> Unit = {
         Text(
             text = time,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 16.sp, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = MaterialTheme.typography.bodyLarge.fontSize, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             modifier = Modifier.widthIn(min = 48.dp),
         )
@@ -159,7 +159,7 @@ private fun EventRow(
     val titleText: @Composable () -> Unit = {
         Text(
             text = event.title,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = 16.sp, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = MaterialTheme.typography.bodyLarge.fontSize, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

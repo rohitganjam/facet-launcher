@@ -88,6 +88,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -96,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
@@ -192,7 +194,7 @@ fun AppDrawerScreen(
     notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     badgeCounts: Map<String, Int> = emptyMap(),
     query: String = "",
-    onQueryChanged: (String) -> Unit = {},
+    onQueryChange: (String) -> Unit = {},
     searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
     onNavigateToSettings: () -> Unit = {},
     /** `null` when Secure Folder isn't installed — see [DrawerSearchBar]'s own doc for why this isn't Work-Profile-style enumeration. */
@@ -321,7 +323,7 @@ fun AppDrawerScreen(
     // drawer-close BackHandler.
     BackHandler(enabled = isSearching) {
         focusManager.clearFocus()
-        onQueryChanged("")
+        onQueryChange("")
     }
 
     val scrollToIndex: suspend (Int) -> Unit = if (presentation == DrawerPresentation.GRID) {
@@ -385,7 +387,7 @@ fun AppDrawerScreen(
         if (searchBarPosition == SearchBarPosition.TOP) {
             DrawerSearchBar(
                 query = query,
-                onQueryChanged = onQueryChanged,
+                onQueryChange = onQueryChange,
                 onNavigateToSettings = onNavigateToSettings,
                 secureFolderIntent = secureFolderIntent,
                 onOpenSecureFolder = onOpenSecureFolder,
@@ -421,7 +423,7 @@ fun AppDrawerScreen(
                 badgeStyle = notificationBadgeStyle,
                 badgeCounts = badgeCounts,
                 onAppClick = onAppClick,
-                onClearSearch = { onQueryChanged("") },
+                onClearSearch = { onQueryChange("") },
                 onRequestShortcuts = onRequestShortcuts,
                 onLaunchShortcut = onLaunchShortcut,
                 onAppInfo = onAppInfo,
@@ -511,10 +513,10 @@ fun AppDrawerScreen(
                 letters = groupedItems.letters,
                 activeSelection = draggingSelection,
                 folderPosition = railFolderPosition,
-                onSelectionChanged = ::onRailSelectionChanged,
+                onSelectionChange = ::onRailSelectionChanged,
                 showRail = true,
                 railHeightPx = railHeightPx,
-                onRailHeightMeasured = { railHeightPx = it },
+                onRailHeightMeasure = { railHeightPx = it },
                 modifier = Modifier.testTag("alphabet_rail"),
             )
         }
@@ -523,10 +525,10 @@ fun AppDrawerScreen(
             letters = groupedItems.letters,
             activeSelection = draggingSelection,
             folderPosition = railFolderPosition,
-            onSelectionChanged = ::onRailSelectionChanged,
+            onSelectionChange = ::onRailSelectionChanged,
             showRail = false,
             railHeightPx = railHeightPx,
-            onRailHeightMeasured = {},
+            onRailHeightMeasure = {},
             modifier = Modifier.align(Alignment.CenterStart).testTag("left_edge_letter_jump_zone"),
             requireDrag = true,
         )
@@ -547,7 +549,7 @@ fun AppDrawerScreen(
             RailSelection.Folders -> {
                 Icon(
                     imageVector = Icons.Outlined.FolderIcon,
-                    contentDescription = "Folders",
+                    contentDescription = stringResource(R.string.app_picker_tab_folders),
                     tint = Accent,
                     // .size() last (not first, unlike a Modifier.size(x).padding(y) chain) so the
                     // pill's background/padding wrap around the icon rather than squeezing it —
@@ -568,7 +570,7 @@ fun AppDrawerScreen(
         if (searchBarPosition == SearchBarPosition.BOTTOM) {
             DrawerSearchBar(
                 query = query,
-                onQueryChanged = onQueryChanged,
+                onQueryChange = onQueryChange,
                 onNavigateToSettings = onNavigateToSettings,
                 secureFolderIntent = secureFolderIntent,
                 onOpenSecureFolder = onOpenSecureFolder,
@@ -687,7 +689,7 @@ private fun DrawerProfileTabRow(tabs: List<DrawerTab>, selected: DrawerTab, onSe
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = if (tab == DrawerTab.Personal) "Personal" else (tab as DrawerTab.Work).label,
+                        text = if (tab == DrawerTab.Personal) stringResource(R.string.drawer_tab_personal) else (tab as DrawerTab.Work).label,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) Surface else Ink,
                     )
@@ -708,7 +710,7 @@ private fun DrawerProfileTabRow(tabs: List<DrawerTab>, selected: DrawerTab, onSe
 @Composable
 private fun DrawerSearchBar(
     query: String,
-    onQueryChanged: (String) -> Unit,
+    onQueryChange: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     secureFolderIntent: Intent? = null,
     onOpenSecureFolder: (Intent) -> Unit = {},
@@ -737,8 +739,8 @@ private fun DrawerSearchBar(
         )
         TextField(
             value = query,
-            onValueChange = onQueryChanged,
-            placeholder = { Text("Search apps") },
+            onValueChange = onQueryChange,
+            placeholder = { Text(stringResource(R.string.app_picker_search_apps)) },
             singleLine = true,
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = Surface,
@@ -750,24 +752,24 @@ private fun DrawerSearchBar(
         )
         Box {
             IconButton(onClick = { menuExpanded = true }, modifier = Modifier.testTag("drawer_search_overflow")) {
-                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More options", tint = Muted)
+                Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.drawer_search_more_options), tint = Muted)
             }
             ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                 ThemedDropdownMenuItem(
-                    label = "Launcher settings",
+                    label = stringResource(R.string.drawer_search_launcher_settings),
                     onClick = { menuExpanded = false; onNavigateToSettings() },
                     modifier = Modifier.testTag("drawer_search_overflow_settings"),
                 )
                 if (secureFolderIntent != null) {
                     ThemedDropdownMenuItem(
-                        label = "Open Secure Folder",
+                        label = stringResource(R.string.drawer_search_open_secure_folder),
                         onClick = { menuExpanded = false; onOpenSecureFolder(secureFolderIntent) },
                         modifier = Modifier.testTag("drawer_search_overflow_secure_folder"),
                     )
                 }
                 if (showPrivateSpaceRow) {
                     ThemedDropdownMenuItem(
-                        label = "Private Space",
+                        label = stringResource(R.string.drawer_search_private_space),
                         onClick = { menuExpanded = false; onPrivateSpaceRowClick() },
                         modifier = Modifier.testTag("drawer_search_overflow_private_space"),
                     )
@@ -833,7 +835,7 @@ private fun DrawerSearchResults(
         if (apps.isNotEmpty()) {
             item {
                 Text(
-                    text = "APPS",
+                    text = stringResource(R.string.drawer_search_section_apps),
                     style = MaterialTheme.typography.labelSmall,
                     color = DrawerHeaderTextColor,
                     modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
@@ -897,7 +899,7 @@ private fun DrawerSearchResults(
         if (contacts.isNotEmpty() || showContactsPermissionPrompt || showContactsSettingPrompt) {
             item {
                 Text(
-                    text = "CONTACTS",
+                    text = stringResource(R.string.drawer_search_section_contacts),
                     style = MaterialTheme.typography.labelSmall,
                     color = DrawerHeaderTextColor,
                     modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
@@ -925,7 +927,7 @@ private fun DrawerSearchResults(
         if (settingsEntries.isNotEmpty()) {
             item {
                 Text(
-                    text = "SETTINGS",
+                    text = stringResource(R.string.drawer_search_section_settings),
                     style = MaterialTheme.typography.labelSmall,
                     color = DrawerHeaderTextColor,
                     modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
@@ -959,12 +961,12 @@ private fun ContactsAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifi
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Contact search needs access from system settings.",
+            text = stringResource(R.string.drawer_contacts_access_needed),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             modifier = Modifier.weight(1f),
         )
-        Text(text = "Open settings", style = MaterialTheme.typography.bodyMedium, color = Accent)
+        Text(text = stringResource(R.string.open_settings), style = MaterialTheme.typography.bodyMedium, color = Accent)
     }
 }
 
@@ -987,12 +989,12 @@ private fun ContactsSettingOffStrip(onClick: () -> Unit, modifier: Modifier = Mo
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Contact search is off in App Drawer settings.",
+            text = stringResource(R.string.drawer_contacts_search_off),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             modifier = Modifier.weight(1f),
         )
-        Text(text = "Turn on", style = MaterialTheme.typography.bodyMedium, color = Accent)
+        Text(text = stringResource(R.string.permission_turn_on), style = MaterialTheme.typography.bodyMedium, color = Accent)
     }
 }
 
@@ -1073,7 +1075,7 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
     ) {
         Icon(imageVector = Icons.Default.SearchOff, contentDescription = null, tint = Muted, modifier = Modifier.size(32.dp))
         Spacer(modifier = Modifier.height(12.dp))
-        Text(text = "No matches found for “$query”", style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center)
+        Text(text = stringResource(R.string.drawer_search_no_matches, query), style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(18.dp))
         Box(
             modifier = Modifier
@@ -1087,7 +1089,7 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
                 .padding(horizontal = 16.dp, vertical = 9.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "Clear search", style = MaterialTheme.typography.bodyMedium, color = Ink)
+            Text(text = stringResource(R.string.drawer_search_clear), style = MaterialTheme.typography.bodyMedium, color = Ink)
         }
     }
 }
@@ -1098,7 +1100,7 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
  * [RailFolderPosition.NONE], the folder glyph at that end) via [railSelectionAt], clamped to the
  * visible rail's own (content-sized, much shorter) band — computed from [railHeightPx], which
  * the right-edge zone measures from its actual rendered [AlphabetRail] (folder glyph included)
- * and reports via [onRailHeightMeasured] so the left-edge zone (gesture-only, no visible rail of
+ * and reports via [onRailHeightMeasure] so the left-edge zone (gesture-only, no visible rail of
  * its own) can use the same band. Only the right-edge zone renders the visible [AlphabetRail]
  * ([showRail]).
  */
@@ -1106,10 +1108,10 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
 private fun LetterJumpZone(
     letters: List<String>,
     activeSelection: RailSelection?,
-    onSelectionChanged: (RailSelection?) -> Unit,
+    onSelectionChange: (RailSelection?) -> Unit,
     showRail: Boolean,
     railHeightPx: Float,
-    onRailHeightMeasured: (Float) -> Unit,
+    onRailHeightMeasure: (Float) -> Unit,
     modifier: Modifier = Modifier,
     folderPosition: RailFolderPosition = RailFolderPosition.NONE,
     requireDrag: Boolean = false,
@@ -1134,28 +1136,28 @@ private fun LetterJumpZone(
                 if (requireDrag) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            onSelectionChanged(selectionFor(offset.y))
+                            onSelectionChange(selectionFor(offset.y))
                         },
                         onDrag = { change, _ ->
                             change.consume()
-                            onSelectionChanged(selectionFor(change.position.y))
+                            onSelectionChange(selectionFor(change.position.y))
                         },
-                        onDragEnd = { onSelectionChanged(null) },
-                        onDragCancel = { onSelectionChanged(null) }
+                        onDragEnd = { onSelectionChange(null) },
+                        onDragCancel = { onSelectionChange(null) }
                     )
                 } else {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
-                        onSelectionChanged(selectionFor(down.position.y))
+                        onSelectionChange(selectionFor(down.position.y))
                         while (true) {
                             val event = awaitPointerEvent()
                             val change = event.changes.firstOrNull { it.id == down.id } ?: break
                             if (!change.pressed) break
                             change.consume()
-                            onSelectionChanged(selectionFor(change.position.y))
+                            onSelectionChange(selectionFor(change.position.y))
                         }
-                        onSelectionChanged(null)
+                        onSelectionChange(null)
                     }
                 }
             },
@@ -1168,7 +1170,7 @@ private fun LetterJumpZone(
                 folderActive = activeSelection is RailSelection.Folders,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .onSizeChanged { onRailHeightMeasured(it.height.toFloat()) },
+                    .onSizeChanged { onRailHeightMeasure(it.height.toFloat()) },
             )
         }
     }
@@ -1317,7 +1319,7 @@ private fun LazyListScope.drawerFolderSection(
     if (folders.isEmpty()) return
     item(key = "header_folders") {
         Text(
-            text = "Folders",
+            text = stringResource(R.string.app_picker_tab_folders),
             style = MaterialTheme.typography.labelSmall,
             color = DrawerHeaderTextColor,
             modifier = Modifier

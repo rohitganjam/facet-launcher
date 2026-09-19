@@ -37,9 +37,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
@@ -69,16 +71,14 @@ import kotlinx.coroutines.isActive
 fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_facets_page").padding(horizontal = 24.dp)) {
         Column(modifier = Modifier.weight(1f).padding(top = 48.dp)) {
-            Text(text = "More than one home screen", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = stringResource(R.string.onboarding_facets_headline), style = MaterialTheme.typography.headlineSmall, color = Ink)
             Spacer(modifier = Modifier.height(28.dp))
 
             FacetSwitchDemo()
 
             Spacer(modifier = Modifier.height(28.dp))
             Text(
-                text = "\nFacets are separate home layouts, each with its own clock style, calendars, app list, favorites, " +
-                    "and dock if needed. \n\nSwipe left from home to switch facets."
-                +"\n\nCreate multiple facets for different occasions, like work, focus, personal etc.",
+                text = stringResource(R.string.onboarding_facets_body),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Muted,
             )
@@ -92,7 +92,7 @@ fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext:
             OnboardingDots(step = 2, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(
-                    text = "Back",
+                    text = stringResource(R.string.action_back),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Muted,
                     // 48dp minimum touch target (M3 guideline), centered on the text.
@@ -106,7 +106,7 @@ fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext:
                     // Not "Next" (this is the last swipeable step) or "Finish" (it doesn't finish
                     // onboarding by itself — it leads into the set-default sheet, the real final
                     // action) — "Continue" describes moving on into that sheet without overclaiming.
-                    text = "Continue",
+                    text = stringResource(R.string.action_continue),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Accent,
                     modifier = Modifier
@@ -242,7 +242,7 @@ private fun MockFacetCard(facet: MockFacet, modifier: Modifier = Modifier) {
         Text(text = facet.time, style = MaterialTheme.typography.titleLarge, color = Ink)
         Text(text = facet.date, style = MaterialTheme.typography.labelSmall, color = Muted)
         Spacer(modifier = Modifier.height(14.dp))
-        Text(text = "FAVORITES", style = MaterialTheme.typography.labelSmall, color = Faint)
+        Text(text = stringResource(R.string.onboarding_facets_mock_favorites_label), style = MaterialTheme.typography.labelSmall, color = Faint)
         Spacer(modifier = Modifier.height(6.dp))
         facet.favorites.forEach { name ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 3.dp)) {

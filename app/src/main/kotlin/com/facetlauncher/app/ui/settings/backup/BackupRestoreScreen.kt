@@ -34,10 +34,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.ConfirmDialog
@@ -103,9 +106,9 @@ fun BackupRestoreScreen(
 
     if (showImportConfirm) {
         ConfirmDialog(
-            title = "Replace everything on this device?",
-            message = "Importing replaces every facet, the dock, and default favorites with what's in the backup file. This can't be undone.",
-            confirmLabel = "Replace",
+            title = stringResource(R.string.backup_restore_confirm_title),
+            message = stringResource(R.string.backup_restore_confirm_message),
+            confirmLabel = stringResource(R.string.backup_restore_confirm_replace),
             onConfirm = {
                 showImportConfirm = false
                 importLauncher.launch(arrayOf("application/json"))
@@ -160,16 +163,16 @@ private fun BackupRestoreContent(
                 item {
                     SettingsCard {
                         RowScaffold(
-                            title = "Export backup",
-                            subtitle = "Save every facet, dock, favorite, and setting as a file",
+                            title = stringResource(R.string.backup_restore_export_title),
+                            subtitle = stringResource(R.string.backup_restore_export_subtitle),
                             onClick = onExportClick,
                             enabled = !uiState.isBusy,
                             testTag = "export_backup_row",
                         )
                         CardDivider()
                         RowScaffold(
-                            title = "Import backup",
-                            subtitle = "Replace everything on this device from a backup file",
+                            title = stringResource(R.string.backup_restore_import_title),
+                            subtitle = stringResource(R.string.backup_restore_import_subtitle),
                             onClick = onImportClick,
                             enabled = !uiState.isBusy,
                             testTag = "import_backup_row",
@@ -191,7 +194,7 @@ private fun BackupRestoreContent(
                 if (actionablePending.isNotEmpty()) {
                     item {
                         Text(
-                            text = "WIDGETS TO RE-ADD",
+                            text = stringResource(R.string.backup_restore_widgets_to_readd_header),
                             style = MaterialTheme.typography.labelMedium,
                             color = Muted,
                             modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
@@ -199,7 +202,7 @@ private fun BackupRestoreContent(
                     }
                     item {
                         Text(
-                            text = "These widgets couldn't be restored automatically — tap each one to add it back where it was.",
+                            text = stringResource(R.string.backup_restore_widgets_to_readd_explanation),
                             style = MaterialTheme.typography.bodySmall,
                             color = Muted,
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -226,14 +229,23 @@ private fun BackupRestoreContent(
 @Composable
 private fun MessageBanner(message: BackupRestoreMessage, modifier: Modifier = Modifier) {
     val (text, isError) = when (message) {
-        BackupRestoreMessage.ExportSucceeded -> "Backup saved" to false
-        BackupRestoreMessage.ExportFailed -> "Couldn't save the backup" to true
+        BackupRestoreMessage.ExportSucceeded -> stringResource(R.string.backup_restore_export_succeeded) to false
+        BackupRestoreMessage.ExportFailed -> stringResource(R.string.backup_restore_export_failed) to true
         is BackupRestoreMessage.ImportSucceeded -> {
-            val widgetNote = if (message.pendingWidgetCount > 0) " · ${message.pendingWidgetCount} widget(s) need re-adding below" else ""
-            "Restored ${message.facetCount} facet(s)$widgetNote" to false
+            val facetsPart = pluralStringResource(R.plurals.backup_restored_facets_count, message.facetCount, message.facetCount)
+            val text = if (message.pendingWidgetCount > 0) {
+                stringResource(
+                    R.string.dot_join_2,
+                    facetsPart,
+                    pluralStringResource(R.plurals.backup_widgets_need_readding_count, message.pendingWidgetCount, message.pendingWidgetCount),
+                )
+            } else {
+                facetsPart
+            }
+            text to false
         }
-        BackupRestoreMessage.ImportFailedInvalidFile -> "That file isn't a valid Facet backup" to true
-        is BackupRestoreMessage.ImportFailedUnsupportedVersion -> "That backup was made by a newer version of Facet" to true
+        BackupRestoreMessage.ImportFailedInvalidFile -> stringResource(R.string.backup_restore_import_failed_invalid_file) to true
+        is BackupRestoreMessage.ImportFailedUnsupportedVersion -> stringResource(R.string.backup_restore_import_failed_unsupported_version) to true
     }
     Text(
         text = text,
@@ -265,18 +277,18 @@ private fun PendingWidgetRow(
                 color = if (widget.providerAvailable) Ink else Muted,
             )
             Text(
-                text = if (widget.providerAvailable) (widget.appLabel ?: "") else "App not installed",
+                text = if (widget.providerAvailable) (widget.appLabel ?: "") else stringResource(R.string.backup_restore_app_not_installed),
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted,
             )
         }
         if (widget.providerAvailable) {
             TextButton(onClick = onReadd, modifier = Modifier.testTag("widget_readd_button")) {
-                Text(text = "Re-add", color = Accent, style = MaterialTheme.typography.bodyMedium)
+                Text(text = stringResource(R.string.backup_restore_readd), color = Accent, style = MaterialTheme.typography.bodyMedium)
             }
         }
         TextButton(onClick = onSkip, modifier = Modifier.testTag("widget_skip_button")) {
-            Text(text = "Skip", color = Muted, style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.backup_restore_skip), color = Muted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -318,7 +330,7 @@ private fun BackupRestoreHeader(onBack: () -> Unit, modifier: Modifier = Modifie
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Backup & restore", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.settings_backup_restore_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 

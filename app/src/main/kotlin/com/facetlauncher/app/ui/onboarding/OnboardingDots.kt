@@ -9,17 +9,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
 
 /** Onboarding's shared pagination indicator — active step a 16×5 rounded bar, inactive steps a 5dp dot. */
 @Composable
 fun OnboardingDots(step: Int, totalSteps: Int, modifier: Modifier = Modifier) {
+    val stepDescription = stringResource(R.string.onboarding_dots_step_content_description, step + 1, totalSteps)
     Row(
-        modifier = modifier.semantics { contentDescription = "Step ${step + 1} of $totalSteps" }.testTag("onboarding_dots"),
+        modifier = modifier.semantics { contentDescription = stepDescription }.testTag("onboarding_dots"),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         repeat(totalSteps) { index ->

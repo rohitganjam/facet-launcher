@@ -48,7 +48,7 @@ class FacetCarouselScreenTest {
      * they're seeded together rather than via a second [FacetRepository]/[SettingsRepository]-only hook).
      */
     private fun setContent(
-        onFacetApplied: () -> Unit = {},
+        onFacetApply: () -> Unit = {},
         onEditFacet: (Long) -> Unit = {},
         onReorderFacets: () -> Unit = {},
         onNavigateToSettings: () -> Unit = {},
@@ -110,7 +110,7 @@ class FacetCarouselScreenTest {
             }
             FacetLauncherTheme {
                 FacetCarouselScreen(
-                    onFacetApplied = onFacetApplied,
+                    onFacetApply = onFacetApply,
                     onEditFacet = onEditFacet,
                     onReorderFacets = onReorderFacets,
                     onNavigateToSettings = onNavigateToSettings,
@@ -158,7 +158,7 @@ class FacetCarouselScreenTest {
         var secondFacetId = 0L
         var applied = false
         setContent(
-            onFacetApplied = { applied = true },
+            onFacetApply = { applied = true },
             seed = { facetRepository, settings ->
                 val first = facetRepository.addFacet()
                 val second = facetRepository.addFacet()
@@ -175,7 +175,7 @@ class FacetCarouselScreenTest {
         composeRule.onNodeWithTag("facet_page_name_$secondFacetId", useUnmergedTree = true).assertTextEquals("Facet 2")
         composeRule.onNodeWithTag("facet_page_$secondFacetId").performClick()
 
-        // Then it becomes the active facet and onFacetApplied fires (the caller returns Home)
+        // Then it becomes the active facet and onFacetApply fires (the caller returns Home)
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { settingsRepository.settings.first().activeFacetId == secondFacetId }
         }
@@ -242,7 +242,7 @@ class FacetCarouselScreenTest {
         var dragEnded = false
         var applied = false
         setContent(
-            onFacetApplied = { applied = true },
+            onFacetApply = { applied = true },
             onDismissDrag = { draggedTotal += it },
             onDismissDragEnd = { dragEnded = true },
             seed = { facetRepository, settings ->
@@ -482,7 +482,7 @@ class FacetCarouselScreenTest {
         var favoriteLabel = ""
         var applied = false
         setContent(
-            onFacetApplied = { applied = true },
+            onFacetApply = { applied = true },
             seed = { facetRepository, settings ->
                 val only = facetRepository.addFacet()
                 facetId = only.id
@@ -512,7 +512,7 @@ class FacetCarouselScreenTest {
         var dockLabel = ""
         var applied = false
         setContent(
-            onFacetApplied = { applied = true },
+            onFacetApply = { applied = true },
             seed = { facetRepository, settings ->
                 val only = facetRepository.addFacet()
                 facetId = only.id

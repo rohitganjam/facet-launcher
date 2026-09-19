@@ -34,9 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.facetlauncher.app.R
+import com.facetlauncher.app.data.DefaultFavoriteAppRepository
+import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -69,10 +73,10 @@ fun OnboardingHomeSetupPage(
     uiState: OnboardingUiState,
     onReorderDockApps: (List<AppInfo>) -> Unit,
     onOpenDockPicker: () -> Unit,
-    onListContentModeChanged: (ListContentMode) -> Unit,
-    onAppsToShowCountChanged: (Int) -> Unit,
+    onListContentModeChange: (ListContentMode) -> Unit,
+    onAppsToShowCountChange: (Int) -> Unit,
     drawerPresentation: DrawerPresentation,
-    onDrawerPresentationChanged: (DrawerPresentation) -> Unit,
+    onDrawerPresentationChange: (DrawerPresentation) -> Unit,
     onOpenFavoritesPicker: () -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
     onClearFavorites: () -> Unit,
@@ -83,10 +87,10 @@ fun OnboardingHomeSetupPage(
 ) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_home_setup_page")) {
         Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 48.dp)) {
-            Text(text = "Set up your home screen", style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = stringResource(R.string.onboarding_home_setup_headline), style = MaterialTheme.typography.headlineSmall, color = Ink)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Pick the apps you want on Home. You can change all of this later.",
+                text = stringResource(R.string.onboarding_home_setup_subhead),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Muted,
             )
@@ -97,11 +101,11 @@ fun OnboardingHomeSetupPage(
                 Spacer(modifier = Modifier.height(24.dp))
                 HomeAppsSection(
                     listContentMode = uiState.listContentMode,
-                    onListContentModeChanged = onListContentModeChanged,
+                    onListContentModeChange = onListContentModeChange,
                     appsToShowCount = uiState.appsToShowCount,
-                    onAppsToShowCountChanged = onAppsToShowCountChanged,
+                    onAppsToShowCountChange = onAppsToShowCountChange,
                     favoriteApps = uiState.favoriteApps,
-                    favoriteCountLabel = uiState.favoriteCountLabel,
+                    favoriteCountLabel = stringResource(R.string.format_count_of_max, uiState.favoriteApps.size, DefaultFavoriteAppRepository.MAX_FAVORITES),
                     onEditFavoritesClick = onOpenFavoritesPicker,
                     onReorderFavorites = onReorderFavorites,
                     onClearFavorites = onClearFavorites,
@@ -109,7 +113,7 @@ fun OnboardingHomeSetupPage(
                 Spacer(modifier = Modifier.height(40.dp))
                 DockSection(
                     dockApps = uiState.dockApps,
-                    countLabel = uiState.dockCountLabel,
+                    countLabel = stringResource(R.string.format_count_of_max, uiState.dockApps.size, DockAppRepository.MAX_APPS),
                     onReorder = onReorderDockApps,
                     onManageClick = onOpenDockPicker,
                     onClearDockApps = onClearDockApps,
@@ -117,7 +121,7 @@ fun OnboardingHomeSetupPage(
                 Spacer(modifier = Modifier.height(40.dp))
                 AppDrawerSection(
                     presentation = drawerPresentation,
-                    onPresentationChanged = onDrawerPresentationChanged,
+                    onPresentationChange = onDrawerPresentationChange,
                 )
             }
             item { Spacer(modifier = Modifier.height(96.dp)) }
@@ -131,7 +135,7 @@ fun OnboardingHomeSetupPage(
             OnboardingDots(step = 1, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(
-                    text = "Back",
+                    text = stringResource(R.string.action_back),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Muted,
                     // 48dp minimum touch target (M3 guideline), centered on the text.
@@ -142,7 +146,7 @@ fun OnboardingHomeSetupPage(
                         .wrapContentSize(Alignment.Center),
                 )
                 Text(
-                    text = "Next",
+                    text = stringResource(R.string.action_next),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Accent,
                     modifier = Modifier
@@ -168,10 +172,10 @@ private fun DockSection(
     var showClearConfirm by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "DOCK", style = MaterialTheme.typography.labelSmall, color = Muted)
+            Text(text = stringResource(R.string.onboarding_dock_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
             if (dockApps.isNotEmpty()) {
                 Text(
-                    text = "Clear all",
+                    text = stringResource(R.string.action_clear_all),
                     style = MaterialTheme.typography.labelSmall,
                     color = Accent,
                     modifier = Modifier.clickable { showClearConfirm = true }.testTag("onboarding_clear_dock"),
@@ -180,7 +184,7 @@ private fun DockSection(
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "The default dock — each facet can customize its own later. Drag to reorder.",
+            text = stringResource(R.string.onboarding_dock_section_subhead),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
         )
@@ -196,9 +200,9 @@ private fun DockSection(
     }
     if (showClearConfirm) {
         ConfirmDialog(
-            title = "Clear the dock?",
-            message = "Removes every app from the default dock. You can add apps back anytime.",
-            confirmLabel = "Clear all",
+            title = stringResource(R.string.onboarding_clear_dock_title),
+            message = stringResource(R.string.onboarding_clear_dock_message),
+            confirmLabel = stringResource(R.string.action_clear_all),
             onConfirm = { onClearDockApps(); showClearConfirm = false },
             onDismiss = { showClearConfirm = false },
         )
@@ -217,7 +221,7 @@ private fun DockClickableRow(countLabel: String, onClick: () -> Unit, modifier: 
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Manage dock apps", style = MaterialTheme.typography.bodyLarge, color = Ink)
+        Text(text = stringResource(R.string.onboarding_manage_dock_apps), style = MaterialTheme.typography.bodyLarge, color = Ink)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = countLabel, style = MaterialTheme.typography.bodyMedium, color = Muted)
             Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted)
@@ -227,26 +231,21 @@ private fun DockClickableRow(countLabel: String, onClick: () -> Unit, modifier: 
 
 /** Mirrors `AppDrawerSettingsScreen`'s own "Show apps as" row — List vs Grid, default List. */
 @Composable
-private fun AppDrawerSection(presentation: DrawerPresentation, onPresentationChanged: (DrawerPresentation) -> Unit, modifier: Modifier = Modifier) {
+private fun AppDrawerSection(presentation: DrawerPresentation, onPresentationChange: (DrawerPresentation) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = "APP DRAWER", style = MaterialTheme.typography.labelSmall, color = Muted)
+        Text(text = stringResource(R.string.onboarding_app_drawer_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
         Spacer(modifier = Modifier.height(8.dp))
         SettingsCard {
             LabeledDropdownRow(
-                title = "Show apps as",
+                title = stringResource(R.string.app_drawer_show_apps_as),
                 options = DrawerPresentation.entries,
                 selected = presentation,
-                label = { it.onboardingDisplayLabel() },
-                onSelect = onPresentationChanged,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onPresentationChange,
                 testTag = "onboarding_drawer_presentation_row",
             )
         }
     }
-}
-
-private fun DrawerPresentation.onboardingDisplayLabel(): String = when (this) {
-    DrawerPresentation.LIST -> "List"
-    DrawerPresentation.GRID -> "Grid"
 }
 
 private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
@@ -269,7 +268,7 @@ private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo
         key = { it.packageName to it.activityName },
         axis = Orientation.Horizontal,
         slotSizePx = slotWidthPx,
-        onOrderChanged = { order = it },
+        onOrderChange = { order = it },
         onDragCommit = onReorder,
     )
 
@@ -304,9 +303,9 @@ private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo
 @Composable
 private fun HomeAppsSection(
     listContentMode: ListContentMode,
-    onListContentModeChanged: (ListContentMode) -> Unit,
+    onListContentModeChange: (ListContentMode) -> Unit,
     appsToShowCount: Int,
-    onAppsToShowCountChanged: (Int) -> Unit,
+    onAppsToShowCountChange: (Int) -> Unit,
     favoriteApps: List<AppInfo>,
     favoriteCountLabel: String,
     onEditFavoritesClick: () -> Unit,
@@ -317,10 +316,10 @@ private fun HomeAppsSection(
     var showClearConfirm by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "HOME APPS", style = MaterialTheme.typography.labelSmall, color = Muted)
+            Text(text = stringResource(R.string.onboarding_home_apps_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
             if (listContentMode == ListContentMode.FAVORITES && favoriteApps.isNotEmpty()) {
                 Text(
-                    text = "Clear all",
+                    text = stringResource(R.string.action_clear_all),
                     style = MaterialTheme.typography.labelSmall,
                     color = Accent,
                     modifier = Modifier.clickable { showClearConfirm = true }.testTag("onboarding_clear_favorites"),
@@ -330,11 +329,11 @@ private fun HomeAppsSection(
         Spacer(modifier = Modifier.height(8.dp))
         SettingsCard {
             LabeledDropdownRow(
-                title = "Show",
+                title = stringResource(R.string.onboarding_show_label),
                 options = ListContentMode.entries,
                 selected = listContentMode,
                 label = { it.onboardingDisplayLabel() },
-                onSelect = onListContentModeChanged,
+                onSelect = onListContentModeChange,
                 testTag = "onboarding_list_content_mode_row",
             )
             if (listContentMode == ListContentMode.FAVORITES) {
@@ -347,11 +346,11 @@ private fun HomeAppsSection(
             } else {
                 CardDivider()
                 LabeledDropdownRow(
-                    title = "Apps to show",
+                    title = stringResource(R.string.home_apps_list_apps_to_show),
                     options = AppListLimits.APPS_TO_SHOW_OPTIONS,
                     selected = appsToShowCount,
                     label = { it.toString() },
-                    onSelect = onAppsToShowCountChanged,
+                    onSelect = onAppsToShowCountChange,
                     testTag = "onboarding_apps_to_show_row",
                 )
             }
@@ -359,19 +358,20 @@ private fun HomeAppsSection(
     }
     if (showClearConfirm) {
         ConfirmDialog(
-            title = "Clear favorites?",
-            message = "Removes every app from your default favorites. You can add apps back anytime.",
-            confirmLabel = "Clear all",
+            title = stringResource(R.string.onboarding_clear_favorites_title),
+            message = stringResource(R.string.onboarding_clear_favorites_message),
+            confirmLabel = stringResource(R.string.action_clear_all),
             onConfirm = { onClearFavorites(); showClearConfirm = false },
             onDismiss = { showClearConfirm = false },
         )
     }
 }
 
+@Composable
 private fun ListContentMode.onboardingDisplayLabel(): String = when (this) {
-    ListContentMode.FAVORITES -> "Favorites"
-    ListContentMode.RECENTS -> "Recently used"
-    ListContentMode.MOST_USED -> "Most used"
+    ListContentMode.FAVORITES -> stringResource(R.string.onboarding_list_content_favorites)
+    ListContentMode.RECENTS -> stringResource(R.string.onboarding_list_content_recently_used)
+    ListContentMode.MOST_USED -> stringResource(R.string.onboarding_list_content_most_used)
 }
 
 @Composable
@@ -385,7 +385,7 @@ private fun FavoritesClickableRow(countLabel: String, onClick: () -> Unit, modif
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Favorites", style = MaterialTheme.typography.bodyLarge, color = Ink)
+        Text(text = stringResource(R.string.onboarding_list_content_favorites), style = MaterialTheme.typography.bodyLarge, color = Ink)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = countLabel, style = MaterialTheme.typography.bodyMedium, color = Muted)
             Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted)
@@ -404,7 +404,7 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
         key = { it.packageName to it.activityName },
         axis = Orientation.Vertical,
         slotSizePx = rowHeightPx,
-        onOrderChanged = { order = it },
+        onOrderChange = { order = it },
         onDragCommit = onReorder,
     )
 
@@ -436,7 +436,7 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
             ) {
                 Icon(
                     imageVector = Icons.Default.DragHandle,
-                    contentDescription = "Drag to reorder",
+                    contentDescription = stringResource(R.string.drag_to_reorder_content_description),
                     tint = Faint,
                     modifier = Modifier
                         .testTag("onboarding_favorite_reorder_handle_${app.packageName}")
@@ -461,10 +461,10 @@ private fun OnboardingHomeSetupPagePreview() {
             ),
             onReorderDockApps = {},
             onOpenDockPicker = {},
-            onListContentModeChanged = {},
-            onAppsToShowCountChanged = {},
+            onListContentModeChange = {},
+            onAppsToShowCountChange = {},
             drawerPresentation = DrawerPresentation.LIST,
-            onDrawerPresentationChanged = {},
+            onDrawerPresentationChange = {},
             onOpenFavoritesPicker = {},
             onReorderFavorites = {},
             onClearFavorites = {},

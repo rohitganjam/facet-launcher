@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
@@ -534,7 +536,7 @@ private fun SpelledOutTemplate(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(7.dp), horizontalAlignment = horizontalAlignment) {
         Text(
-            text = timeInWords(now),
+            text = timeInWords(now, locale),
             style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 46.sp, lineHeight = 50.sp, shadow = homeTextShadow(textColor)),
             color = textColor,
         )
@@ -657,7 +659,7 @@ private fun BracketMinimalTemplate(
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "[ ",
+                text = stringResource(R.string.clock_template_bracket_open),
                 style = TextStyle(
                     fontFamily = family,
                     fontWeight = FontWeight.ExtraLight,
@@ -676,7 +678,7 @@ private fun BracketMinimalTemplate(
                 color = textColor
             )
             Text(
-                text = " ]",
+                text = stringResource(R.string.clock_template_bracket_close),
                 style = TextStyle(
                     fontFamily = family,
                     fontWeight = FontWeight.ExtraLight,
@@ -701,9 +703,9 @@ private fun BracketMinimalTemplate(
         )
         if (nextAlarmText != null || batteryPercent != null) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
-                Text(text = "[ ", style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                Text(text = stringResource(R.string.clock_template_bracket_open), style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                 ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 17.sp)
-                Text(text = " ]", style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                Text(text = stringResource(R.string.clock_template_bracket_close), style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
             }
         }
     }
@@ -807,7 +809,7 @@ private fun BoldColonTemplate(
                 color = textColor
             )
             Text(
-                text = ":",
+                text = stringResource(R.string.clock_template_colon),
                 style = TextStyle(
                     fontFamily = RobotoFlexBlack,
                     fontSize = 96.sp,
@@ -842,7 +844,7 @@ private fun BoldColonTemplate(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 5.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 20.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
-                    Text(text = ":", style = TextStyle(fontFamily = RobotoFlexBlack, fontSize = 20.sp, shadow = homeTextShadow(textColor)), color = textColor)
+                    Text(text = stringResource(R.string.clock_template_colon), style = TextStyle(fontFamily = RobotoFlexBlack, fontSize = 20.sp, shadow = homeTextShadow(textColor)), color = textColor)
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 20.sp)
             }
@@ -1004,7 +1006,7 @@ private fun FluidStackTemplate(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 16.dp)) {
                     AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 19.sp)
                     if (nextAlarmText != null && batteryPercent != null) {
-                        Text(text = "·", style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                        Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                     }
                     BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
                 }
@@ -1239,7 +1241,7 @@ private fun AccentContrastTemplate(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 if (nextAlarmText != null && batteryPercent != null) {
-                    Text(text = "·", style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                    Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -1414,7 +1416,7 @@ private fun DuotoneOverlapTemplate(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 19.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
-                    Text(text = "·", style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                    Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
             }
@@ -1622,7 +1624,7 @@ private fun DigitCellsTemplate(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             hourDigits.forEach { digit -> DigitCell(digit.toString(), family, textColor) }
-            SeparatorText(":", family, accentColor, 38.sp, FontWeight.Bold)
+            SeparatorText(stringResource(R.string.clock_template_colon), family, accentColor, 38.sp, FontWeight.Bold)
             minuteDigits.forEach { digit -> DigitCell(digit.toString(), family, textColor) }
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
         }
@@ -1873,7 +1875,7 @@ private fun ColonMarkTemplate(
                     .padding(7.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                SeparatorText(":", family, Surface, 26.sp, FontWeight.Bold)
+                SeparatorText(stringResource(R.string.clock_template_colon), family, Surface, 26.sp, FontWeight.Bold)
             }
             MinuteText(now.format(minuteFormatter), family, textColor, 72.sp, FontWeight.Light)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))

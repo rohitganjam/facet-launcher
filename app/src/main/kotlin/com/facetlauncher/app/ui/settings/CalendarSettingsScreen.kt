@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.InheritOverrideCard
@@ -98,11 +99,11 @@ fun CalendarSettingsScreen(
     CalendarSettingsContent(
         uiState = uiState,
         onBack = onBack,
-        onShowAllDayEventsChanged = viewModel::setShowAllDayEvents,
-        onOverridingChanged = viewModel::setOverriding,
+        onShowAllDayEventsChange = viewModel::setShowAllDayEvents,
+        onOverridingChange = viewModel::setOverriding,
         onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
-        onCalendarToggled = viewModel::setCalendarSelected,
-        onSelectAllCalendarsChanged = viewModel::setAllCalendarsSelected,
+        onCalendarToggle = viewModel::setCalendarSelected,
+        onSelectAllCalendarsChange = viewModel::setAllCalendarsSelected,
         modifier = modifier,
     )
 }
@@ -111,11 +112,11 @@ fun CalendarSettingsScreen(
 private fun CalendarSettingsContent(
     uiState: CalendarSettingsUiState,
     onBack: () -> Unit,
-    onShowAllDayEventsChanged: (Boolean) -> Unit,
-    onOverridingChanged: (Boolean) -> Unit,
+    onShowAllDayEventsChange: (Boolean) -> Unit,
+    onOverridingChange: (Boolean) -> Unit,
     onTurnOnClick: () -> Unit,
-    onCalendarToggled: (String, Boolean) -> Unit,
-    onSelectAllCalendarsChanged: (Boolean) -> Unit,
+    onCalendarToggle: (String, Boolean) -> Unit,
+    onSelectAllCalendarsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Every control below (all-day events, calendar selection) is read-only under Inherit and live under Override.
@@ -138,9 +139,9 @@ private fun CalendarSettingsContent(
                     item {
                         InheritOverrideCard(
                             overriding = uiState.isOverriding,
-                            onOverridingChanged = onOverridingChanged,
+                            onOverridingChange = onOverridingChange,
                             testTagPrefix = "calendar",
-                            inheritSubtitle = "Follows the launcher-wide Calendar setting",
+                            inheritSubtitle = stringResource(R.string.calendar_settings_follows_launcher_wide),
                         )
                     }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -156,10 +157,10 @@ private fun CalendarSettingsContent(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(text = "Show all-day events", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                            Text(text = stringResource(R.string.calendar_settings_show_all_day_events), style = MaterialTheme.typography.bodyLarge, color = Ink)
                             Switch(
                                 checked = uiState.effectiveShowAllDayEvents,
-                                onCheckedChange = onShowAllDayEventsChanged,
+                                onCheckedChange = onShowAllDayEventsChange,
                                 enabled = controlsEnabled,
                                 modifier = Modifier.testTag("show_all_day_events_toggle"),
                             )
@@ -177,7 +178,7 @@ private fun CalendarSettingsContent(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(text = "Calendars to display", style = MaterialTheme.typography.bodyLarge, color = Ink)
+                                Text(text = stringResource(R.string.settings_calendars_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
                                 // Selects/deselects every calendar in one tap instead of one-by-one — real
                                 // pain with a lot of calendars (see chat history). Indeterminate when only
                                 // some are selected, matching the standard "select all" checkbox convention.
@@ -190,28 +191,28 @@ private fun CalendarSettingsContent(
                                     }
                                     TriStateCheckbox(
                                         state = allState,
-                                        onClick = { onSelectAllCalendarsChanged(allState != ToggleableState.On) },
+                                        onClick = { onSelectAllCalendarsChange(allState != ToggleableState.On) },
                                         modifier = Modifier.testTag("calendar_select_all_checkbox"),
                                     )
                                 }
                             }
                             if (uiState.isCalendarAccessGranted) {
                                 if (uiState.calendars.isEmpty()) {
-                                    Text(text = "No calendars found on this device.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                                    Text(text = stringResource(R.string.calendar_settings_no_calendars_found), style = MaterialTheme.typography.bodyMedium, color = Muted)
                                 } else {
                                     uiState.calendars.forEach { calendar ->
                                         CalendarPickerRow(
                                             calendar = calendar,
                                             swatch = uiState.calendarColors[calendar.id]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
                                             checked = uiState.isCalendarSelected(calendar.id),
-                                            onToggle = { onCalendarToggled(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
+                                            onToggle = { onCalendarToggle(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
                                         )
                                     }
                                 }
                             } else {
                                 PermissionDeniedStrip(
-                                    message = "Calendar access off — events hidden.",
-                                    actionLabel = "Turn on",
+                                    message = stringResource(R.string.calendar_settings_access_off),
+                                    actionLabel = stringResource(R.string.permission_turn_on),
                                     testTag = "calendar_permission_strip",
                                     onClick = onTurnOnClick,
                                 )
@@ -238,7 +239,7 @@ private fun CalendarSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modi
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Calendar settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.calendar_settings_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 
@@ -300,11 +301,11 @@ private fun CalendarSettingsScreenPreview() {
         CalendarSettingsContent(
             uiState = CalendarSettingsUiState(),
             onBack = {},
-            onShowAllDayEventsChanged = {},
-            onOverridingChanged = {},
+            onShowAllDayEventsChange = {},
+            onOverridingChange = {},
             onTurnOnClick = {},
-            onCalendarToggled = { _, _ -> },
-            onSelectAllCalendarsChanged = {},
+            onCalendarToggle = { _, _ -> },
+            onSelectAllCalendarsChange = {},
         )
     }
 }

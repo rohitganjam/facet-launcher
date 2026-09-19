@@ -38,7 +38,7 @@ class PrivateSpaceViewModel @Inject constructor(
         rankBySearchRelevance(apps, query) { it.label }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun onQueryChanged(newQuery: String) {
+    fun onQueryChange(newQuery: String) {
         query.value = newQuery
     }
 }

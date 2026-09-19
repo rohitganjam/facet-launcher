@@ -19,10 +19,10 @@ import androidx.compose.ui.viewinterop.AndroidView
  * stays testable/stateless per `CLAUDE.md` — the real implementation is `HubViewModel::createHostView`.
  *
  * [tileWidth]/[tileHeight] are pushed into [AppWidgetHostView.updateAppWidgetSize] **and**
- * [onSizeChanged] on every recomposition where they change (a resize, most notably) — the outer
+ * [onSizeChange] on every recomposition where they change (a resize, most notably) — the outer
  * Compose `Box` resizing on its own only changes the *host* view's bounds; a widget's own
  * `RemoteViews` content doesn't reflow to fill the new space without this, which is why a resized
- * widget's content previously looked like it "snapped back" (see chat history). [onSizeChanged]
+ * widget's content previously looked like it "snapped back" (see chat history). [onSizeChange]
  * additionally sets `OPTION_APPWIDGET_SIZES` (see [com.facetlauncher.app.data.widget.AppWidgetRepository.updateWidgetSize])
  * without which modern RemoteViews/Glance widgets render as "Can't show content".
  */
@@ -33,7 +33,7 @@ fun HubWidgetTile(
     tileHeight: Dp,
     isInteracting: Boolean,
     createHostView: (Context, Int) -> AppWidgetHostView?,
-    onSizeChanged: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
+    onSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var hostView: AppWidgetHostView? = remember { null }
@@ -70,7 +70,7 @@ fun HubWidgetTile(
                     view.updateAppWidgetSize(null, widthDp, heightDp, widthDp, heightDp)
                     // Last write wins on the merged options bundle, and this one carries a
                     // non-empty OPTION_APPWIDGET_SIZES (the view call above doesn't, on One UI).
-                    onSizeChanged(appWidgetId, widthDp, heightDp)
+                    onSizeChange(appWidgetId, widthDp, heightDp)
                 }
             }
         },

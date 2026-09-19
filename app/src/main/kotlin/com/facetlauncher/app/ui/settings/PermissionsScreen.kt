@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -42,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -174,7 +176,7 @@ private fun PermissionsHeader(onBack: () -> Unit, modifier: Modifier = Modifier)
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Permissions", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.permissions_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 
@@ -194,14 +196,14 @@ private fun PermissionRow(permission: PermissionRowState, onTurnOnClick: () -> U
         }
         if (permission.isGranted) {
             Text(
-                text = "On",
+                text = stringResource(R.string.permission_status_on),
                 style = MaterialTheme.typography.bodyMedium,
                 color = SuccessColor,
                 modifier = Modifier.testTag("permission_status_${permission.kind.name}"),
             )
         } else {
             Text(
-                text = "Turn on",
+                text = stringResource(R.string.permission_turn_on),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Accent,
                 modifier = Modifier

@@ -34,11 +34,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -144,12 +146,12 @@ private fun SettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
-                item { SectionHeader("FACETS") }
+                item { SectionHeader(stringResource(R.string.settings_section_facets)) }
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Facets",
-                            subtitle = "Create and manage facet-specific settings",
+                            title = stringResource(R.string.settings_facets_title),
+                            subtitle = stringResource(R.string.settings_facets_subtitle),
                             onClick = onViewFacets,
                             testTag = "view_facets_row",
                             trailing = { NavigationChevron() },
@@ -157,20 +159,20 @@ private fun SettingsContent(
                     }
                 }
 
-                item { SectionHeader("APPEARANCE") }
+                item { SectionHeader(stringResource(R.string.settings_section_appearance)) }
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Change wallpaper",
-                            subtitle = "Change your system wallpaper",
+                            title = stringResource(R.string.settings_change_wallpaper_title),
+                            subtitle = stringResource(R.string.settings_change_wallpaper_subtitle),
                             onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
                             testTag = "change_wallpaper_row",
                             trailing = { NavigationChevron() },
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Launcher Appearance",
-                            subtitle = "Theme, accent, icons, fonts",
+                            title = stringResource(R.string.settings_appearance_title),
+                            subtitle = stringResource(R.string.settings_appearance_subtitle),
                             onClick = onNavigateToAppearance,
                             testTag = "appearance_row",
                             trailing = { NavigationChevron() },
@@ -178,22 +180,28 @@ private fun SettingsContent(
                     }
                 }
 
-                item { SectionHeader("CLOCK & CALENDAR") }
+                item { SectionHeader(stringResource(R.string.settings_section_clock_calendar)) }
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Clock & Calendar Style",
-                            subtitle = stringResource(uiState.settings.clockTemplateId.displayNameRes) + " · " +
-                                if (uiState.settings.use24HourTime) "24-hour time" else "12-hour time",
+                            title = stringResource(R.string.settings_clock_calendar_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                stringResource(uiState.settings.clockTemplateId.displayNameRes),
+                                stringResource(if (uiState.settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+                            ),
                             onClick = onNavigateToClockStyleGallery,
                             testTag = "clock_style_gallery_row",
                             trailing = { NavigationChevron() },
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Calendars to display",
-                            subtitle = "${uiState.selectedCalendarCount} calendars selected · " +
-                                if (uiState.settings.showAllDayEvents) "All-day events visible" else "All-day events hidden",
+                            title = stringResource(R.string.settings_calendars_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                pluralStringResource(R.plurals.settings_calendars_selected, uiState.selectedCalendarCount, uiState.selectedCalendarCount),
+                                stringResource(if (uiState.settings.showAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
+                            ),
                             onClick = onNavigateToCalendarSettings,
                             testTag = "calendar_settings_row",
                             trailing = { NavigationChevron() },
@@ -201,11 +209,11 @@ private fun SettingsContent(
                     }
                 }
 
-                item { SectionHeader("HOME & APPS") }
+                item { SectionHeader(stringResource(R.string.settings_section_home_apps)) }
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Dock",
+                            title = stringResource(R.string.settings_dock_title),
                             subtitle = dockSummary(uiState.dockItems),
                             onClick = onNavigateToDockSettings,
                             testTag = "dock_settings_row",
@@ -213,7 +221,7 @@ private fun SettingsContent(
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Home Apps List",
+                            title = stringResource(R.string.settings_home_apps_list_title),
                             subtitle = appsListSummary(uiState.settings.listContentMode, uiState.defaultFavorites.size, uiState.settings.appsToShowCount),
                             onClick = onNavigateToHomeAppsListSettings,
                             testTag = "home_apps_list_settings_row",
@@ -221,7 +229,7 @@ private fun SettingsContent(
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "App Drawer",
+                            title = stringResource(R.string.settings_app_drawer_title),
                             subtitle = appDrawerSummary(uiState.settings.drawerPresentation, uiState.settings.searchContactsEnabled, uiState.settings.searchSettingsEnabled),
                             onClick = onNavigateToAppDrawerSettings,
                             testTag = "app_drawer_settings_row",
@@ -229,11 +237,11 @@ private fun SettingsContent(
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Notifications",
+                            title = stringResource(R.string.settings_notifications_title),
                             subtitle = if (uiState.settings.notificationDotsEnabled) {
-                                "Enabled · ${uiState.settings.notificationBadgeStyle.notificationsSummaryLabel()} on Dock, Home & Drawer"
+                                stringResource(R.string.settings_notifications_enabled_subtitle, uiState.settings.notificationBadgeStyle.notificationsSummaryLabel())
                             } else {
-                                "Disabled"
+                                stringResource(R.string.settings_notifications_disabled_subtitle)
                             },
                             onClick = onNavigateToNotificationSettings,
                             testTag = "notification_settings_row",
@@ -241,7 +249,7 @@ private fun SettingsContent(
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Folders",
+                            title = stringResource(R.string.settings_folders_title),
                             subtitle = folderCountSummary(uiState.folderCount),
                             onClick = onNavigateToFolders,
                             testTag = "folders_settings_row",
@@ -250,28 +258,28 @@ private fun SettingsContent(
                     }
                 }
 
-                item { SectionHeader("SYSTEM") }
+                item { SectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
                     SettingsCard {
                         ClickableRow(
-                            title = "Permissions",
-                            subtitle = "See what Facet Launcher can access and why",
+                            title = stringResource(R.string.settings_permissions_title),
+                            subtitle = stringResource(R.string.settings_permissions_subtitle),
                             onClick = onNavigateToPermissions,
                             testTag = "view_permissions_row",
                             trailing = { NavigationChevron() },
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Backup & restore",
-                            subtitle = "Export settings as a file · widgets need re-adding on import",
+                            title = stringResource(R.string.settings_backup_restore_title),
+                            subtitle = stringResource(R.string.settings_backup_restore_subtitle),
                             onClick = onNavigateToBackupRestore,
                             testTag = "backup_restore_row",
                             trailing = { NavigationChevron() },
                         )
                         CardDivider()
                         ClickableRow(
-                            title = "Set as default launcher",
-                            subtitle = if (uiState.isDefaultLauncher) "Active" else "Not set",
+                            title = stringResource(R.string.settings_set_default_launcher_title),
+                            subtitle = stringResource(if (uiState.isDefaultLauncher) R.string.settings_status_active else R.string.settings_status_not_set),
                             onClick = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
                             testTag = "set_default_launcher_row",
                             trailing = { NavigationChevron() },
@@ -287,7 +295,7 @@ private fun SettingsContent(
                             CardDivider()
                             ClickableRow(
                                 title = workProfile.label,
-                                subtitle = if (workProfile.isPaused) "Paused" else "Active",
+                                subtitle = stringResource(if (workProfile.isPaused) R.string.settings_status_paused else R.string.settings_status_active),
                                 onClick = { runCatching { context.startActivity(onRequestWorkProfileSettingsIntent()) } },
                                 testTag = "work_profile_row",
                                 trailing = { NavigationChevron() },
@@ -295,8 +303,8 @@ private fun SettingsContent(
                         }
                         CardDivider()
                         ClickableRow(
-                            title = "About Facet Launcher",
-                            subtitle = "Version, updates, and community",
+                            title = stringResource(R.string.settings_about_title),
+                            subtitle = stringResource(R.string.settings_about_subtitle),
                             onClick = onNavigateToAbout,
                             testTag = "about_row",
                             trailing = { NavigationChevron() },
@@ -326,43 +334,54 @@ private fun SettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = "Settings", style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = stringResource(R.string.settings_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
     }
 }
 
 /** "4 Favorites"/"5 Most used"/"5 Recents" — the live count for whichever list content mode is active, not just its name. */
+@Composable
 private fun appsListSummary(mode: ListContentMode, favoritesCount: Int, appsToShowCount: Int): String = when (mode) {
-    ListContentMode.FAVORITES -> "$favoritesCount Favorites"
-    ListContentMode.RECENTS -> "$appsToShowCount Recents"
-    ListContentMode.MOST_USED -> "$appsToShowCount Most used"
+    ListContentMode.FAVORITES -> pluralStringResource(R.plurals.settings_favorites_count, favoritesCount, favoritesCount)
+    ListContentMode.RECENTS -> pluralStringResource(R.plurals.settings_recents_count, appsToShowCount, appsToShowCount)
+    ListContentMode.MOST_USED -> stringResource(R.string.settings_most_used_count, appsToShowCount)
 }
 
+@Composable
 private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEnabled: Boolean, searchSettingsEnabled: Boolean): String {
-    val layout = when (presentation) {
-        DrawerPresentation.LIST -> "List"
-        DrawerPresentation.GRID -> "Grid"
-    }
-    val contactSearch = if (searchContactsEnabled) "On" else "Off"
-    val settingsSearch = if (searchSettingsEnabled) "On" else "Off"
-    return "Show as $layout · Contact search $contactSearch · Settings search $settingsSearch"
+    val layout = stringResource(presentation.displayNameRes)
+    val contactSearch = stringResource(if (searchContactsEnabled) R.string.settings_search_on else R.string.settings_search_off)
+    val settingsSearch = stringResource(if (searchSettingsEnabled) R.string.settings_search_on else R.string.settings_search_off)
+    return stringResource(
+        R.string.dot_join_3,
+        stringResource(R.string.settings_show_as, layout),
+        stringResource(R.string.settings_contact_search, contactSearch),
+        stringResource(R.string.settings_settings_search, settingsSearch),
+    )
 }
 
 /** "4 Dock Apps" / "3 Dock Apps, 1 Folder" — Dock capacity is counted by item (a folder costs one slot regardless of how many apps it holds), so this mirrors that rather than the old flat app count, which silently dropped folder members entirely. */
+@Composable
 private fun dockSummary(items: List<PlacedItem>): String {
     val folderCount = items.count { it is PlacedItem.FolderItem }
     val appCount = items.size - folderCount
-    val appsPart = "$appCount " + if (appCount == 1) "Dock App" else "Dock Apps"
-    return if (folderCount == 0) appsPart else "$appsPart, $folderCount " + if (folderCount == 1) "Folder" else "Folders"
+    val appsPart = pluralStringResource(R.plurals.settings_dock_apps_count, appCount, appCount)
+    return if (folderCount == 0) {
+        appsPart
+    } else {
+        stringResource(R.string.comma_join_2, appsPart, pluralStringResource(R.plurals.settings_dock_folders_count, folderCount, folderCount))
+    }
 }
 
 /** "No folders yet" / "1 folder" / "3 folders" for the Folders row's own subtitle — the full folder library's size, independent of where (if anywhere) each folder is placed. */
+@Composable
 private fun folderCountSummary(count: Int): String =
-    if (count == 0) "No folders yet" else "$count " + if (count == 1) "folder" else "folders"
+    if (count == 0) stringResource(R.string.settings_folders_none) else pluralStringResource(R.plurals.settings_folders_count, count, count)
 
 /** "Dots"/"Counts" — the actual configured badge style, not a generic "dots/badges" placeholder. */
+@Composable
 private fun NotificationBadgeStyle.notificationsSummaryLabel(): String = when (this) {
-    NotificationBadgeStyle.DOT -> "Dots"
-    NotificationBadgeStyle.COUNT -> "Counts"
+    NotificationBadgeStyle.DOT -> stringResource(R.string.settings_notification_badge_dots)
+    NotificationBadgeStyle.COUNT -> stringResource(R.string.settings_notification_badge_counts)
 }
 
 @Composable

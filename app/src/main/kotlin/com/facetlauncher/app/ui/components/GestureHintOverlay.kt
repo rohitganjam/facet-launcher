@@ -17,8 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
@@ -53,28 +55,28 @@ fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Switch facets", style = MaterialTheme.typography.headlineSmall, color = Ink)
-                Text(text = "←", style = MaterialTheme.typography.headlineMedium, color = Muted)
+                Text(text = stringResource(R.string.gesture_hint_switch_facets), style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(text = stringResource(R.string.gesture_hint_arrow_left), style = MaterialTheme.typography.headlineMedium, color = Muted)
             }
             Row(
                 modifier = Modifier.padding(top = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "→", style = MaterialTheme.typography.headlineMedium, color = Muted)
-                Text(text = "Widgets", style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(text = stringResource(R.string.gesture_hint_arrow_right), style = MaterialTheme.typography.headlineMedium, color = Muted)
+                Text(text = stringResource(R.string.gesture_hint_widgets), style = MaterialTheme.typography.headlineSmall, color = Ink)
             }
             Column(
                 modifier = Modifier.weight(1f).padding(bottom = 120.dp),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(text = "All your apps", style = MaterialTheme.typography.headlineSmall, color = Ink)
-                Text(text = "↑", style = MaterialTheme.typography.headlineMedium, color = Muted)
+                Text(text = stringResource(R.string.gesture_hint_all_your_apps), style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(text = stringResource(R.string.gesture_hint_arrow_up), style = MaterialTheme.typography.headlineMedium, color = Muted)
             }
         }
         SurfaceButton(
-            text = "Got it",
+            text = stringResource(R.string.gesture_hint_got_it),
             onClick = onDismiss,
             modifier = Modifier
                 .align(Alignment.BottomCenter)

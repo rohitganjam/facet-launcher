@@ -48,7 +48,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppShortcut
@@ -211,7 +214,7 @@ fun AppContextMenu(
                         }
                     }
                     AppContextMenuItem(
-                        label = "App info",
+                        label = stringResource(R.string.app_context_menu_app_info),
                         modifier = Modifier.testTag("app_context_menu_app_info"),
                         leadingIcon = { Icon(imageVector = Icons.Outlined.Info, contentDescription = null, tint = Muted) },
                         onClick = {
@@ -221,7 +224,7 @@ fun AppContextMenu(
                     )
                     quickAddState.favoritesAction?.let { action ->
                         AppContextMenuItem(
-                            label = quickPlacementLabel(action, "Favorites"),
+                            label = quickPlacementLabel(action, stringResource(R.string.quick_placement_favorites)),
                             modifier = Modifier.testTag("app_context_menu_add_to_favorites"),
                             leadingIcon = { Icon(imageVector = Icons.Outlined.StarBorder, contentDescription = null, tint = Muted) },
                             trailingContent = { QuickPlacementBadge(action = action) },
@@ -233,7 +236,7 @@ fun AppContextMenu(
                     }
                     quickAddState.dockAction?.let { action ->
                         AppContextMenuItem(
-                            label = quickPlacementLabel(action, "Dock"),
+                            label = quickPlacementLabel(action, stringResource(R.string.quick_placement_dock)),
                             modifier = Modifier.testTag("app_context_menu_add_to_dock"),
                             leadingIcon = { Icon(imageVector = Icons.Outlined.Dock, contentDescription = null, tint = Muted) },
                             trailingContent = { QuickPlacementBadge(action = action) },
@@ -245,7 +248,7 @@ fun AppContextMenu(
                     }
                     if (folderCandidates != null) {
                         AppContextMenuItem(
-                            label = "Add to folder",
+                            label = stringResource(R.string.folder_add_to_folder),
                             modifier = Modifier.testTag("app_context_menu_add_to_folder"),
                             leadingIcon = { Icon(imageVector = Icons.Outlined.CreateNewFolder, contentDescription = null, tint = Muted) },
                             onClick = { addingToFolder = true },
@@ -253,7 +256,7 @@ fun AppContextMenu(
                     }
                     if (removeFromFolderId != null) {
                         AppContextMenuItem(
-                            label = "Remove from folder",
+                            label = stringResource(R.string.folder_remove_from_folder),
                             modifier = Modifier.testTag("app_context_menu_remove_from_folder"),
                             leadingIcon = { Icon(imageVector = Icons.Outlined.FolderIcon, contentDescription = null, tint = Muted) },
                             onClick = {
@@ -274,7 +277,7 @@ fun AppContextMenu(
                         )
                     }
                     AppContextMenuItem(
-                        label = "Uninstall",
+                        label = stringResource(R.string.app_context_menu_uninstall),
                         destructive = true,
                         modifier = Modifier.testTag("app_context_menu_uninstall"),
                         leadingIcon = { Icon(imageVector = Icons.Outlined.DeleteOutline, contentDescription = null, tint = ErrorColor) },
@@ -298,7 +301,7 @@ fun AppContextMenu(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.content_description_back),
                             tint = Ink,
                             modifier = Modifier
                                 .testTag("app_context_menu_folder_page_back")
@@ -306,14 +309,14 @@ fun AppContextMenu(
                                 .padding(8.dp),
                         )
                         Text(
-                            text = "Add to folder",
+                            text = stringResource(R.string.folder_add_to_folder),
                             style = MaterialTheme.typography.titleMedium,
                             color = Ink,
                             modifier = Modifier.padding(start = 4.dp),
                         )
                     }
                     AppContextMenuItem(
-                        label = "Create new folder",
+                        label = stringResource(R.string.folder_create_new_folder),
                         modifier = Modifier.testTag("app_context_menu_create_folder"),
                         leadingIcon = { Icon(imageVector = Icons.Outlined.CreateNewFolder, contentDescription = null, tint = Accent) },
                         onClick = { showCreateFolderDialog = true },
@@ -334,8 +337,8 @@ fun AppContextMenu(
 
     if (showCreateFolderDialog) {
         RenameDialog(
-            title = "New folder",
-            explanation = "Name this folder.",
+            title = stringResource(R.string.folder_new_folder_title),
+            explanation = stringResource(R.string.folder_name_this_folder),
             initialValue = "",
             onSave = { name ->
                 showCreateFolderDialog = false
@@ -379,18 +382,23 @@ private fun FolderCandidateRow(folder: Folder, onClick: () -> Unit, modifier: Mo
         Icon(imageVector = Icons.Outlined.FolderIcon, contentDescription = null, tint = Muted)
         Column {
             Text(text = folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = "${folder.apps.size} apps", style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Text(
+                text = pluralStringResource(R.plurals.folder_app_count, folder.apps.size, folder.apps.size),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+            )
         }
     }
 }
 
 /** Shared label wording for a Favorites/Dock quick-placement row — used by both [AppContextMenu] and [FolderTileContextMenu]. The row's own label never names a list target; that's [QuickPlacementBadge]'s job. */
+@Composable
 internal fun quickPlacementLabel(action: QuickPlacementAction, listName: String): String {
-    val verb = when (action) {
-        is QuickPlacementAction.Add -> "Add to"
-        is QuickPlacementAction.Remove -> "Remove from"
+    val templateRes = when (action) {
+        is QuickPlacementAction.Add -> R.string.quick_placement_add_to
+        is QuickPlacementAction.Remove -> R.string.quick_placement_remove_from
     }
-    return "$verb $listName"
+    return stringResource(templateRes, listName)
 }
 
 /** Trailing pill on a Favorites/Dock quick-placement row, naming which list it targets — see [FacetScopeBadge]. */
