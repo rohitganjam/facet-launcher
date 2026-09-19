@@ -6,6 +6,11 @@ Run automatically by scripts/release.sh after a successful build, using the comm
 scripts/last-release.json as the start point. Can also be run manually for an arbitrary range:
   python3 scripts/gen-release-notes.py --since <commit> --to <commit> --version 0.1.7
 
+Writes two copies: RELEASE_NOTES.md (always the latest release, overwritten each run) and
+RELEASE_NOTES_<version>.md (a permanent, versioned copy — one file per release, never
+overwritten), the same pattern scripts/release.sh already uses for the APK/AAB
+(app-release.apk alongside app-release-<version>.apk).
+
 Requires the `claude` CLI (Claude Code) to be installed and already logged in (OAuth/keychain —
 this deliberately does NOT pass --bare, since that mode only accepts ANTHROPIC_API_KEY auth, not
 a normal interactive login). --restricted --permission-prompts none keeps the call tool-free and
@@ -95,6 +100,11 @@ def main() -> None:
         sys.exit(1)
 
     OUT.write_text(notes)
+
+    versioned_out = ROOT / f"RELEASE_NOTES_{args.version}.md"
+    versioned_out.write_text(notes)
+    print(f"(also wrote {versioned_out.relative_to(ROOT)})", file=sys.stderr)
+
     print(notes)
 
 
