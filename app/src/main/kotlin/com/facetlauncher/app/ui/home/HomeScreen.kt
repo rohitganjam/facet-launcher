@@ -945,9 +945,9 @@ internal fun AppRow(
     var menuExpanded by remember { mutableStateOf(false) }
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
     val showLabel = presentation != AppRowPresentation.ICON_ONLY
-    Box {
+    Box(modifier = modifier) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 // Large/16dp (MaterialTheme.shapes.large — see CLAUDE.md's shape table, which
                 // names this the "navigation drawers" token) clips the ripple/press state to a
@@ -1144,10 +1144,10 @@ private fun SingleAppDockIcon(
     } else {
         Modifier.clickable(onClick = onClick)
     }
-    Box {
+    Box(modifier = modifier) {
         when (displayMode) {
             DockDisplayMode.ICONS -> Box(
-                modifier = modifier.then(clickModifier),
+                modifier = clickModifier,
             ) {
                 AppIcon(
                     icon = app.icon,
@@ -1158,8 +1158,7 @@ private fun SingleAppDockIcon(
                 )
             }
             DockDisplayMode.TEXT -> Row(
-                modifier = modifier
-                    .then(clickModifier)
+                modifier = clickModifier
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1222,48 +1221,49 @@ private fun FolderDockIcon(
     } else {
         Modifier.clickable(onClick = {})
     }
-    when (displayMode) {
-        DockDisplayMode.ICONS -> Box(modifier = modifier.then(clickModifier).testTag("dock_folder_tile_${folder.id}")) {
-            FolderTileGlyph(folder = folder)
+    Box(modifier = modifier) {
+        when (displayMode) {
+            DockDisplayMode.ICONS -> Box(modifier = clickModifier.testTag("dock_folder_tile_${folder.id}")) {
+                FolderTileGlyph(folder = folder)
+            }
+            DockDisplayMode.TEXT -> Row(
+                modifier = clickModifier
+                    .testTag("dock_folder_tile_${folder.id}")
+                    .padding(vertical = 14.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = folder.name,
+                    style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
+                    color = labelColor,
+                )
+            }
         }
-        DockDisplayMode.TEXT -> Row(
-            modifier = modifier
-                .then(clickModifier)
-                .testTag("dock_folder_tile_${folder.id}")
-                .padding(vertical = 14.dp, horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = folder.name,
-                style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
-                color = labelColor,
+        if (enableLongPressMenu && sheetOpen) {
+            FolderContentsSheet(
+                folder = folder,
+                onDismissRequest = { sheetOpen = false },
+                onAppClick = onAppClick,
+                presentation = drawerPresentation,
+                onRemoveFromFolder = onRemoveFromFolder,
+                headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
             )
         }
-    }
-    if (enableLongPressMenu && sheetOpen) {
-        FolderContentsSheet(
-            folder = folder,
-            onDismissRequest = { sheetOpen = false },
-            onAppClick = onAppClick,
-            presentation = drawerPresentation,
-            onRemoveFromFolder = onRemoveFromFolder,
-            headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
-            onAppInfo = onAppInfo,
-        )
-    }
-    if (enableLongPressMenu) {
-        FolderTileContextMenu(
-            folder = folder,
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
-            onRename = onRenameFolder,
-            onRequestQuickAddState = onRequestQuickAddState,
-            onFavoritesAction = onFavoritesAction,
-            onDockAction = onDockAction,
-        )
+        if (enableLongPressMenu) {
+            FolderTileContextMenu(
+                folder = folder,
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                onRename = onRenameFolder,
+                onRequestQuickAddState = onRequestQuickAddState,
+                onFavoritesAction = onFavoritesAction,
+                onDockAction = onDockAction,
+            )
+        }
     }
 }
 

@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -107,12 +106,12 @@ fun FolderContentsSheet(
         val view = LocalView.current
         SideEffect { (view.parent as? DialogWindowProvider)?.window?.setDimAmount(0f) }
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .then(if (headerAction is FolderSheetHeaderAction.AddHere) Modifier else Modifier.background(Scrim))
                 .clickable(onClick = onDismissRequest),
         ) {
-            BoxWithConstraints(modifier = modifier.fillMaxWidth().align(Alignment.BottomCenter)) {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)) {
                 val minHeight = maxHeight * 0.3f
                 val maxSheetHeight = maxHeight * 0.7f
                 Column(
@@ -275,12 +274,12 @@ private fun FolderContentsAppRow(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier = modifier) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .testTag("folder_contents_app_${app.packageName}")
-                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                 .padding(horizontal = 24.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -343,10 +342,10 @@ private fun FolderContentsGridTile(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier = modifier) {
         Column(
-            modifier = modifier
-                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+            modifier = Modifier
+                .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                 .testTag("folder_contents_grid_tile_${app.packageName}"),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

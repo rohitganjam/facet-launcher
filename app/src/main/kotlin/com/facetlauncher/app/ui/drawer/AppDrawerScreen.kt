@@ -1365,9 +1365,9 @@ private fun DrawerFolderRow(
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier = modifier) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.large)
                 .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
@@ -1426,9 +1426,9 @@ private fun DrawerAppRow(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier = modifier) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 // Large/16dp (MaterialTheme.shapes.large — see CLAUDE.md's shape table, which
                 // names this the "navigation drawers" token) clips the ripple/press state to a
@@ -1642,6 +1642,13 @@ private fun DrawerGridTile(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    // NOT restructured to move `modifier` onto this Box like the other ModifierNotUsedAtRoot
+    // fixes in this file — `modifier` carries DrawerGridContent's explicit per-row height, and
+    // that height has to land on the SAME node as the clickable/testTag (this Column) so the
+    // touch target and the grid's own row-height math (DrawerGridSize.rows) still span the real
+    // rendered tile size. Moving it to the Box left the Column content-intrinsic height again —
+    // caught by gridSizeRowsSettingControlsTileHeight, which exists specifically to guard against
+    // tile height going back to being row-count-independent (see chat history).
     Box {
         Column(
             modifier = modifier
@@ -1713,6 +1720,7 @@ private fun DrawerFolderTile(
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
+    // NOT restructured — see DrawerGridTile's identical comment.
     Box {
         Column(
             modifier = modifier
