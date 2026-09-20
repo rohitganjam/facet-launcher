@@ -38,10 +38,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
@@ -119,6 +121,7 @@ fun HubGrid(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
+    val haptics = LocalHapticFeedback.current
     var grabbedAppWidgetId by remember { mutableStateOf<Int?>(null) }
     var dragOffsetPx by remember { mutableStateOf(Offset.Zero) }
     var resizingAppWidgetId by remember { mutableStateOf<Int?>(null) }
@@ -358,6 +361,7 @@ fun HubGrid(
                                             // first, then proceeds as an ordinary grab-or-menu
                                             // gesture from a clean slate; resize and grab are never
                                             // simultaneously active (see chat history).
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                             resizingAppWidgetId = null
                                             resizeDeltaPx = Offset.Zero
                                             horizontalResizeEdge = null

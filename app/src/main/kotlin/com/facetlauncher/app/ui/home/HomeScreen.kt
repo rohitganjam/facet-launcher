@@ -13,7 +13,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -104,6 +103,7 @@ import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
+import com.facetlauncher.app.ui.components.longPressReleaseClickable
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.FolderGlyphBackground
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
@@ -955,7 +955,7 @@ internal fun AppRow(
                 .clip(MaterialTheme.shapes.large)
                 .then(
                     if (enableLongPressMenu) {
-                        Modifier.combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                        Modifier.longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                     } else {
                         Modifier.clickable(onClick = onClick)
                     }
@@ -1140,7 +1140,7 @@ private fun SingleAppDockIcon(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+        Modifier.longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = onClick)
     }
@@ -1218,7 +1218,7 @@ private fun FolderDockIcon(
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+        Modifier.longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = {})
     }
@@ -1375,7 +1375,7 @@ internal fun FolderRow(
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
     val showLabel = presentation != AppRowPresentation.ICON_ONLY
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+        Modifier.longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = onClick)
     }

@@ -68,6 +68,18 @@ flowchart LR
 Folder tiles get the mirror menu (`FolderTileContextMenu`): rename, add/remove from
 Favorites/Dock, delete.
 
+**Long-press timing:** the menu opens on release, not at the long-press threshold. Every
+long-press row/tile across Home, Dock, and Drawer (`AppRow`, `SingleAppDockIcon`,
+`FolderDockIcon`, `FolderRow`, `DrawerAppRow`, `DrawerFolderRow`, `DrawerGridTile`,
+`DrawerFolderTile`) uses `Modifier.longPressReleaseClickable`
+(`ui/components/LongPressReleaseGesture.kt`) in place of `combinedClickable` — a
+`HapticFeedbackType.LongPress` tick fires the instant the threshold is met (also wired into the
+Widget Hub's own long-press grab gesture, `WidgetGrabGesture.kt`, so the tick is consistent across
+every long-press surface in the app), but `menuExpanded` only flips once the finger actually lifts
+without having moved. This mirrors the Hub's own `detectGrabOrResizeGesture` pattern and is a
+deliberate prerequisite for a future long-press-drag (reorder/merge-to-folder) feature on these
+same rows, which the immediate-open-on-threshold behavior would otherwise conflict with.
+
 ## 4. Gestures & routing (why the drawer isn't a nav destination)
 
 `HomeDrawerRoute` owns every follow-finger drag that starts on Home, on one axis at a time

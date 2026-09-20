@@ -17,7 +17,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -127,6 +126,7 @@ import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
+import com.facetlauncher.app.ui.components.longPressReleaseClickable
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.DrawerAppTextColor
@@ -1370,7 +1370,7 @@ private fun DrawerFolderRow(
             modifier = modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.large)
-                .combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+                .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
                 .testTag("drawer_folder_row_${folder.id}")
                 .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -1434,7 +1434,7 @@ private fun DrawerAppRow(
                 // names this the "navigation drawers" token) clips the ripple/press state to a
                 // rounded rect instead of a full-bleed rectangle (see chat history).
                 .clip(MaterialTheme.shapes.large)
-                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                 .testTag("drawer_app_row_${app.packageName}")
                 // Base 6dp vertical padding plus the selected size tier's extra (0/8/16dp) — see
                 // DrawerListItemSize's own doc (see chat history).
@@ -1645,7 +1645,7 @@ private fun DrawerGridTile(
     Box {
         Column(
             modifier = modifier
-                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
+                .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                 .testTag("drawer_grid_tile_${app.packageName}"),
             horizontalAlignment = Alignment.CenterHorizontally,
             // The tile is now given an explicit row height (see DrawerGridContent's [rows]
@@ -1716,7 +1716,7 @@ private fun DrawerFolderTile(
     Box {
         Column(
             modifier = modifier
-                .combinedClickable(onClick = { sheetOpen = true }, onLongClick = { menuExpanded = true })
+                .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
                 .testTag("drawer_grid_folder_tile_${folder.id}"),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,

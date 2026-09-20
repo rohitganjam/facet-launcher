@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.center
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -788,6 +789,35 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithTag("drawer_app_row_com.example.A").performTouchInput { longClick() }
 
         // Then the context menu opens
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun holdingPastTheLongPressThresholdWithoutReleasingDoesNotOpenTheMenu() {
+        // Given List presentation (the default)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {})
+            }
+        }
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+
+        // When a row is held past the long-press threshold without lifting the finger — pause
+        // the test clock and drive it forward explicitly so the long-press coroutine timeout
+        // fires deterministically, matching this codebase's `createComposeRule()` virtual-time host.
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithTag("drawer_app_row_com.example.A").performTouchInput { down(center) }
+        composeRule.mainClock.advanceTimeBy(600)
+
+        // Then the menu has not opened yet — it's gated on release, not on the threshold
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+
+        // When the finger finally lifts
+        composeRule.onNodeWithTag("drawer_app_row_com.example.A").performTouchInput { up() }
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+
+        // Then the menu opens
         composeRule.onNodeWithTag("app_context_menu").assertExists()
     }
 

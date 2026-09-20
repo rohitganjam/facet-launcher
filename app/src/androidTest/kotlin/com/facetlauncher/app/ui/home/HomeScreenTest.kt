@@ -11,6 +11,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.center
+import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -21,6 +23,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.up
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -387,6 +390,35 @@ class HomeScreenTest {
         composeRule.onNodeWithText("App 1").performTouchInput { longClick() }
 
         // Then the context menu opens
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun holdingPastTheLongPressThresholdWithoutReleasingDoesNotOpenTheMenu() {
+        // Given a favorite row
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
+            }
+        }
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+
+        // When it's held past the long-press threshold without lifting the finger — pause the
+        // test clock and drive it forward explicitly so the long-press coroutine timeout fires
+        // deterministically, matching this codebase's `createComposeRule()` virtual-time host.
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithText("App 1").performTouchInput { down(center) }
+        composeRule.mainClock.advanceTimeBy(600)
+
+        // Then the menu has not opened yet — it's gated on release, not on the threshold
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+
+        // When the finger finally lifts
+        composeRule.onNodeWithText("App 1").performTouchInput { up() }
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+
+        // Then the menu opens
         composeRule.onNodeWithTag("app_context_menu").assertExists()
     }
 
@@ -915,6 +947,37 @@ class HomeScreenTest {
         composeRule.onNodeWithText("App 10").assertIsNotDisplayed()
         composeRule.onNodeWithTag("home_app_list_scroll_region").performTouchInput { swipeUp() }
         composeRule.onNodeWithText("App 10").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipingFromARowScrollsTheListInsteadOfLaunchingTheApp() {
+        // Given the same forced-overflow setup, tracking which app (if any) gets launched
+        var clicked: AppInfo? = null
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(10).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = { clicked = it },
+                    clockZoneHeightDp = 2000f,
+                )
+            }
+        }
+        composeRule.onNodeWithText("App 10").assertIsNotDisplayed()
+
+        // When the user swipes starting from a row itself, not the scroll container — an explicit
+        // large drag rather than swipeUp() (which spans only the row's own small bounds, too
+        // short to scroll all the way to App 10)
+        composeRule.onNodeWithText("App 1").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, -800f))
+            up()
+        }
+
+        // Then the swipe scrolled the list (claimed by the scrollable ancestor)...
+        composeRule.onNodeWithText("App 10").assertIsDisplayed()
+        // ...and the app underneath the finger was never launched
+        assertEquals(null, clicked)
     }
 
     @Test
