@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.facets
 
+import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -27,6 +28,9 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -86,6 +90,13 @@ class FacetCarouselScreenTest {
                 val wallpaperRepository = com.facetlauncher.app.data.WallpaperRepository(
                     android.app.WallpaperManager.getInstance(context),
                 )
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
+                )
                 runBlocking {
                     seed(facetRepository, settingsRepository)
                 }
@@ -94,6 +105,7 @@ class FacetCarouselScreenTest {
                     facetRepository,
                     settingsRepository,
                     wallpaperRepository,
+                    DeleteFacetUseCase(facetRepository, appWidgetRepository),
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,

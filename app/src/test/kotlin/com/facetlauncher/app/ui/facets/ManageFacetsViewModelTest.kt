@@ -5,6 +5,8 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -59,12 +61,16 @@ class ManageFacetsViewModelTest {
         `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings(activeFacetId = activeFacetId)))
     }
 
+    /** A real [DeleteFacetUseCase] over [facetRepository] — its [AppWidgetRepository] side is a bare mock, since these tests never bind a clock widget. */
+    private fun deleteFacetUseCase(facetRepository: FacetRepository) =
+        DeleteFacetUseCase(facetRepository, mock(AppWidgetRepository::class.java))
+
     @Test
     fun `uiState reflects the observed facets and the add-max rule`() = runTest(dispatcher) {
         val facetRepository = FacetRepository(FakeFacetDao())
         facetRepository.addFacet()
         facetRepository.addFacet()
-        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings())
+        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings(), deleteFacetUseCase(facetRepository))
 
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
@@ -79,7 +85,7 @@ class ManageFacetsViewModelTest {
         val facetRepository = FacetRepository(FakeFacetDao())
         facetRepository.addFacet()
         facetRepository.addFacet()
-        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings())
+        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings(), deleteFacetUseCase(facetRepository))
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -94,7 +100,7 @@ class ManageFacetsViewModelTest {
     fun `addFacet is a no-op once the maximum is reached`() = runTest(dispatcher) {
         val facetRepository = FacetRepository(FakeFacetDao())
         repeat(FacetRepository.MAX_FACETS) { facetRepository.addFacet() }
-        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings())
+        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings(), deleteFacetUseCase(facetRepository))
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
         assertFalse(viewModel.uiState.value.canAddFacet)
@@ -111,7 +117,7 @@ class ManageFacetsViewModelTest {
         val first = facetRepository.addFacet()
         val second = facetRepository.addFacet()
         val settings = fakeSettings(activeFacetId = first.id)
-        val viewModel = ManageFacetsViewModel(facetRepository, settings)
+        val viewModel = ManageFacetsViewModel(facetRepository, settings, deleteFacetUseCase(facetRepository))
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
 

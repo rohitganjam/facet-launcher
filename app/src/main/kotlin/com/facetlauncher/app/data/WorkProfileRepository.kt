@@ -47,7 +47,14 @@ class WorkProfileRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
 
-    /** Re-emits once immediately, then again whenever a Work Profile is added, removed, paused, or resumed. */
+    /**
+     * Re-emits once immediately, then again whenever a Work Profile is added, removed, paused, or
+     * resumed. [unregisterReceiver] is guarded — `registerReceiver` isn't a suspending call, so a
+     * collector cancelled quickly enough (e.g. a composable torn down right after composition, seen
+     * in instrumented tests) can reach [awaitClose]'s cleanup before or without ever actually
+     * registering, and `unregisterReceiver` throws `IllegalArgumentException` on a receiver that
+     * was never (or no longer) registered.
+     */
     private fun observeProfileStateChanges(): Flow<Unit> = callbackFlow {
         trySend(Unit)
         val receiver = object : BroadcastReceiver() {
@@ -56,7 +63,13 @@ class WorkProfileRepository @Inject constructor(
             }
         }
         ContextCompat.registerReceiver(context, receiver, PROFILE_STATE_ACTIONS, ContextCompat.RECEIVER_NOT_EXPORTED)
-        awaitClose { context.unregisterReceiver(receiver) }
+        awaitClose {
+            try {
+                context.unregisterReceiver(receiver)
+            } catch (_: IllegalArgumentException) {
+                // Never registered, or already unregistered — nothing to clean up.
+            }
+        }
     }
 
     /**

@@ -9,11 +9,17 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import android.appwidget.AppWidgetManager
+import android.os.UserManager
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -45,7 +51,19 @@ class ManageFacetsScreenTest {
                     ),
                 )
                 runBlocking { seed(facetRepository, settingsRepository) }
-                ManageFacetsViewModel(facetRepository, settingsRepository)
+                val appRepository = AppRepository(
+                    context.getSystemService(android.content.pm.LauncherApps::class.java),
+                    context.getSystemService(UserManager::class.java),
+                    context,
+                )
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
+                )
+                ManageFacetsViewModel(facetRepository, settingsRepository, DeleteFacetUseCase(facetRepository, appWidgetRepository))
             }
             FacetLauncherTheme {
                 ManageFacetsScreen(

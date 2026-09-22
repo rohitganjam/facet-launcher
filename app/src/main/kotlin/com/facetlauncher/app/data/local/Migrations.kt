@@ -376,8 +376,23 @@ object Migrations {
         }
     }
 
+    /** Adds `facets.clockWidgetAppWidgetId` (nullable `INTEGER`) — PRD F15, see [FacetEntity.clockWidgetAppWidgetId]'s own doc. `NULL` is itself the meaningful default ("this facet uses its native clock"), not a placeholder. */
+    val MIGRATION_20_21: Migration = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockWidgetAppWidgetId INTEGER DEFAULT NULL")
+        }
+    }
+
+    /** Adds `facets.clockWidgetWidthDp`/`clockWidgetHeightDp` (nullable `INTEGER`) — PRD F15's interactive resize, see [FacetEntity.clockWidgetWidthDp]'s own doc. `NULL` means "not yet resized — use the provider's own declared minimum", not a placeholder. */
+    val MIGRATION_21_22: Migration = object : Migration(21, 22) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockWidgetWidthDp INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockWidgetHeightDp INTEGER DEFAULT NULL")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
-        MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
+        MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
     )
 }

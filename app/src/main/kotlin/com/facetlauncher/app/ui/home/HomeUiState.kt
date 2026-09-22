@@ -46,6 +46,16 @@ data class HomeUiState(
     val activeFacet: FacetEntity?
         get() = facets.find { it.id == settings.activeFacetId }
 
+    /** PRD F15 — facet-scoped only, no global fallback (see F15's Scope: there's no meaningful "global hosted widget" to inherit). `null` means the active facet uses its own native clock. */
+    val clockWidgetAppWidgetId: Int?
+        get() = activeFacet?.clockWidgetAppWidgetId
+
+    /** PRD F15's persisted interactive-resize size — `null` until the user drags a resize handle for the first time; see [FacetEntity.clockWidgetWidthDp]'s own doc for what governs the effective size before that. */
+    val clockWidgetWidthDp: Int?
+        get() = activeFacet?.clockWidgetWidthDp
+    val clockWidgetHeightDp: Int?
+        get() = activeFacet?.clockWidgetHeightDp
+
     /** The active facet's clock settings, falling back to the global defaults when not overriding. */
     val clockTemplateId: ClockTemplateId
         get() = activeFacet?.let { if (it.overrideClock) it.clockTemplateId else settings.clockTemplateId } ?: settings.clockTemplateId

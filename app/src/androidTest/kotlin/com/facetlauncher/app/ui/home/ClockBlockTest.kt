@@ -1,9 +1,15 @@
 package com.facetlauncher.app.ui.home
 
+import android.appwidget.AppWidgetHostView
+import androidx.compose.ui.test.center
+import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.up
+import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -39,6 +45,113 @@ class ClockBlockTest {
         // Then it renders the matching time and date strings
         composeRule.onNodeWithText("9:05").assertExists()
         composeRule.onNodeWithText("Thursday, 27 August").assertExists()
+    }
+
+    @Test
+    fun rendersHostedWidgetInsteadOfTheNativeClockWhenClockWidgetAppWidgetIdIsSet() {
+        // Given a fixed clock, but the active facet has bound a hosted clock widget (PRD F15)
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+
+        // When the ClockBlock is composed with a non-null clockWidgetAppWidgetId
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    clockWidgetAppWidgetId = 42,
+                    clockWidgetWidthDp = 180.dp,
+                    clockWidgetHeightDp = 90.dp,
+                )
+            }
+        }
+
+        // Then the hosted widget's host view renders in place of the native clock
+        composeRule.onNodeWithTag("clock_widget_host_42").assertExists()
+        composeRule.onNodeWithText("9:05").assertDoesNotExist()
+    }
+
+    @Test
+    fun longPressingTheHostedWidgetFiresOnClockWidgetLongPressAndSwallowsItsOwnTap() {
+        // Given a hosted widget whose own content has a real click listener (its tap action) —
+        // real bug found on-device: a long-press on a hosted widget was firing this instead of
+        // opening the clock-adjust sheet, because a plain View's OnClickListener only cares about
+        // touch-slop, not hold duration.
+        var longPressed = false
+        var widgetOwnTapFired = false
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clockWidgetAppWidgetId = 42,
+                    clockWidgetWidthDp = 180.dp,
+                    clockWidgetHeightDp = 90.dp,
+                    createClockWidgetHostView = { context, _ ->
+                        AppWidgetHostView(context).apply { setOnClickListener { widgetOwnTapFired = true } }
+                    },
+                    onClockWidgetLongPress = { longPressed = true },
+                )
+            }
+        }
+
+        // When long-pressing the widget's own rendered surface — split into a real down/wait/up
+        // rather than performTouchInput { longClick() }: that helper only fabricates MotionEvent
+        // timestamps spanning the long-press duration, it doesn't make the test thread actually
+        // wait in real time. Our long-press detector deliberately fires immediately once the
+        // threshold is crossed (not release-gated, unlike e.g. FolderContentsSheet's own
+        // longPressReleaseClickable), which needs a genuine native Handler.postDelayed callback on
+        // the real main Looper — so the test has to let real time actually pass for it to fire.
+        composeRule.onNodeWithTag("clock_widget_host_42").performTouchInput { down(center) }
+        composeRule.waitUntil(timeoutMillis = 2_000) { longPressed }
+        composeRule.onNodeWithTag("clock_widget_host_42").performTouchInput { up() }
+
+        // Then Facet's own callback fires, and the widget's own tap action never does
+        assertTrue(longPressed)
+        assertTrue(!widgetOwnTapFired)
+    }
+
+    @Test
+    fun aPlainTapOnTheHostedWidgetReachesItsOwnClickHandlerUnintercepted() {
+        // Given the same setup, but this time a plain (short) tap
+        var longPressed = false
+        var widgetOwnTapFired = false
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clockWidgetAppWidgetId = 42,
+                    clockWidgetWidthDp = 180.dp,
+                    clockWidgetHeightDp = 90.dp,
+                    createClockWidgetHostView = { context, _ ->
+                        AppWidgetHostView(context).apply { setOnClickListener { widgetOwnTapFired = true } }
+                    },
+                    onClockWidgetLongPress = { longPressed = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("clock_widget_host_42").performTouchInput {
+            down(center)
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then the widget's own tap action fires normally, same as it would without this wrapper
+        assertTrue(widgetOwnTapFired)
+        assertTrue(!longPressed)
+    }
+
+    @Test
+    fun rendersTheNativeClockWhenNoClockWidgetIsBound() {
+        // Given the default (no hosted clock widget for the active facet)
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US)
+            }
+        }
+
+        // Then the native clock renders, and there's no hosted widget host view at all
+        composeRule.onNodeWithText("9:05").assertExists()
+        composeRule.onNodeWithTag("clock_widget_host_42").assertDoesNotExist()
     }
 
     @Test

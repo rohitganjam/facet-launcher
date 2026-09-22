@@ -46,6 +46,9 @@ class HomeViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val defaultLauncherRepository: DefaultLauncherRepository,
     private val quickAddState: ObserveQuickAddStateUseCase,
+    /** PRD F15 — the Composable layer calls straight through these (e.g. `homeViewModel.clockWidgetHost.createHostView(...)`, `homeViewModel.clockWidgetFacet.commitSize(homeUiState.activeFacet, ...)`); see their own docs for why these hooks live outside this class. */
+    val clockWidgetHost: ClockWidgetHostController,
+    val clockWidgetFacet: ClockWidgetFacetController,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
@@ -131,6 +134,7 @@ class HomeViewModel @Inject constructor(
                 ?: settingsRepository.setClockScale(scale)
         }
     }
+
 
     /**
      * Resolves the long-press menu's Add/Remove Favorites/Dock rows synchronously against this

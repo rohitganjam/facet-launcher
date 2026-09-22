@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ data class ManageFacetsUiState(
 class ManageFacetsViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
+    private val deleteFacetUseCase: DeleteFacetUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<ManageFacetsUiState> = combine(
@@ -55,7 +57,7 @@ class ManageFacetsViewModel @Inject constructor(
     fun deleteFacet(facet: FacetEntity) {
         if (!uiState.value.canDeleteFacet) return
         viewModelScope.launch {
-            facetRepository.deleteFacet(facet)
+            deleteFacetUseCase(facet)
             if (uiState.value.activeFacetId == facet.id) {
                 uiState.value.facets.firstOrNull { it.id != facet.id }
                     ?.let { settingsRepository.setActiveFacetId(it.id) }

@@ -41,6 +41,7 @@ class ImportBackupUseCaseTest {
     private val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
     private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
     private val folderRepository = mock(FolderRepository::class.java)
+    private val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
 
     private val useCase = ImportBackupUseCase(
         backupRepository,
@@ -51,6 +52,7 @@ class ImportBackupUseCaseTest {
         facetDockAppRepository,
         defaultFavoriteAppRepository,
         folderRepository,
+        repairOrphanedProfileRows,
     )
 
     private fun minimalSettings(activeFacetIndex: Int? = null) = BackupSettings(
@@ -178,6 +180,9 @@ class ImportBackupUseCaseTest {
         // ...every other setting field is applied...
         verify(settingsRepository).setUse24HourTime(true)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.DARK)
+        // ...restored rows (which land with no resolvable userId — see BackupBundle's own doc
+        // comment) are repaired immediately, not left orphaned until the next app launch...
+        verify(repairOrphanedProfileRows).invoke()
         // ...and widgets are reported back, not silently written to widget_placements.
         assertEquals(1, result.facetCount)
         assertEquals(1, result.dockAppCount)

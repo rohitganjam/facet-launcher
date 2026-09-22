@@ -2593,3 +2593,37 @@ considering this fully verified. Full unit suite (`./gradlew test`) passes.
 counts 49→50/51→52/49→50, backup key count 34→35) and
 `13-flow-facets-theme-notifications-onboarding.md` (theme resolution diagram + the
 weight-scope-restriction rationale) updated; `TEST_REGISTRY.md` regenerated.
+
+---
+
+## 📝 Planned, not started — Home Clock Widget Substitution (PRD F15)
+
+Design-only so far (see PRD's F15, proposed/not yet greenlit — §10 Open Question 3). Lets the user
+replace a facet's Home clock with a single hosted third-party `AppWidget`, reusing F5's Hub
+widget-hosting infrastructure rather than a parallel system. Position reuses the clock's existing
+move-handle system unchanged; **scale becomes real dp width/height pushed to the widget's provider**
+(`updateAppWidgetOptions`/`OPTION_APPWIDGET_SIZES`, same mechanism Hub's own resize already uses —
+see `AppWidgetRepository.kt:174`/`HubWidgetTile.kt`), not the clock's own continuous
+`clockScale` graphics-layer multiplier, since a hosted widget's `RemoteViews` need to actually
+reflow at the new size rather than being visually stretched. **Facet-level only, revised from the
+original design** — each facet owns its own independent widget choice (own `appWidgetId`), not a
+single shared instance with a per-facet position override; unset defaults to that facet's native
+clock, and picking a widget from that facet's sheet *is* the override, with no separate
+Inherit/Override switch (unlike every other Clock-card setting). Tradeoff (loses clock theming —
+accent color, launcher font, calendar overlay — once a third-party widget occupies the slot) is
+explicitly accepted, not something to design around.
+
+**Not scheduled to a phase yet** — needs a go/no-go decision before task-level planning below is
+treated as committed. Recorded here so the shape of the work isn't lost.
+
+- [ ] **Data model**: nullable `clockWidgetAppWidgetId: Int?` on `FacetEntity` (facet-scoped, not `LauncherSettings` — see Scope above) + `FacetRepository` persistence; a `FacetEntity` migration (`FacetDatabase.VERSION` bump + `Migration` step, per CLAUDE.md's table).
+- [ ] **UI entry point**: new **"Use custom widget"** row in `ClockAdjustSheet.kt`, alongside the existing "Adjust size & position" / "Edit … styles" rows. Sheet content becomes state-dependent: native clock active → show only "Use custom widget"; hosted widget active → hide "Edit … styles" (nothing to style), keep "Use custom widget" (pick a different one), add **"Switch to launcher clock widget"** (reverts to the native clock, framed as choosing the launcher's own widget rather than removing one).
+- [ ] **Rendering**: `ClockBlock` gains a hosted-widget branch — when the active facet's `clockWidgetAppWidgetId` is set, render a `HubWidgetTile`-equivalent (reusing `LauncherAppWidgetHost`/`AppWidgetRepository`, not a second hosting system) in place of `ClockDisplay`, inside the clock's existing position/handle chrome (`ClockCornerHandle.kt`).
+- [ ] **Resize mechanism**: extend/replace the corner-handle drag math for this mode to drive live real dp width/height (not `clockScale`'s float multiplier), pushing the committed size to `AppWidgetRepository.updateWidgetSize` on release. Clamp to the provider's own declared `minWidth`/`minHeight`/`minResizeWidth`/`minResizeHeight` (`AppWidgetProviderInfo`) plus the existing screen-fit clamp (`maxScaleThatFits`'s equivalent).
+- [ ] **Picker**: reuse F5's widget picker (`HubWidgetPickerScreen`/`HubWidgetPickerViewModel`) or a thin variant, launched from the sheet's "Replace"/"Change widget" row, writing the bound id to the *active facet's* `clockWidgetAppWidgetId`.
+- [ ] **Lifecycle reuse**: bind-permission dialog + provider config `Activity` handling, same as a Hub widget add — a swap isn't "placed" until both complete.
+- [ ] **Uninstall/orphan handling**: reuse `AppWidgetRepository`'s existing provider-lifecycle callbacks; on orphan, clear that facet's `clockWidgetAppWidgetId` and fall back to its native clock (consistent with the uninstall-handling principle used for favorites/dock/Hub orphans elsewhere).
+- [ ] **Facet deletion**: deleting a facet with an active hosted widget must call `AppWidgetHost.deleteAppWidgetId` to release the id, not just drop the `FacetEntity` row — same "don't leak ids" rule F5 already applies to Hub widget removal.
+- [ ] **Backup/restore**: extend `BackupBundle`'s per-facet fields the same way as other widget ids — F14's existing "re-binding isn't fully automatic" caveat applies here too.
+- [ ] **Docs**: update `docs/architecture` per CLAUDE.md's table — likely `02` (new `FacetEntity` column + migration step), `03 §4` (Home startup sequence), `10` (widget host lifecycle), `13` (facet Clock-card settings), possibly a new flow doc if this grows past what those already cover.
+- [ ] **Tests**: unit (persistence round-trip on `FacetEntity`; resize-bound-clamping as a pure function); instrumented (`ClockBlockTest`/`HomeScreenTest`/`FacetCarouselScreenTest` — hosted widget renders instead of native clock for the facet that set it, a sibling facet's native clock is unaffected; resize drag pushes correct dp to a fake `AppWidgetRepository`; orphan fallback restores that facet's native clock; deleting a facet with a bound widget releases its `appWidgetId`).

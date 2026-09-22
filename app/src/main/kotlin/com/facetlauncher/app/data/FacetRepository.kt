@@ -124,6 +124,29 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
     }
 
     /**
+     * PRD F15 — binds [appWidgetId] as this facet's hosted clock widget, or (`null`) reverts it
+     * to its native clock. The caller owns the real `AppWidgetHost` allocate/bind/configure
+     * round trip (see `ClockWidgetPickerViewModel`) and releasing the old id via
+     * `AppWidgetRepository.deleteAppWidgetId` when switching away from or replacing one — this
+     * just persists which id (if any) is currently bound.
+     */
+    suspend fun setClockWidgetAppWidgetId(facet: FacetEntity, appWidgetId: Int?) {
+        // Also clears the persisted size (real bug, found on-device): a facet's clockWidgetWidthDp/
+        // HeightDp is only ever a valid size for the widget it was resized against. Carrying it
+        // over to a newly-bound widget (a switch, or reverting to null) can force the new widget
+        // outside its own sane bounds and show "Can't show content" indefinitely, regardless of
+        // which provider is picked — matches FacetEntity.clockWidgetWidthDp's own doc ("meaningless
+        // whenever clockWidgetAppWidgetId is null"), extended here to "meaningless for a *different*
+        // non-null id too".
+        facetDao.update(facet.copy(clockWidgetAppWidgetId = appWidgetId, clockWidgetWidthDp = null, clockWidgetHeightDp = null))
+    }
+
+    /** PRD F15's interactive resize commit — see [FacetEntity.clockWidgetWidthDp]'s own doc. */
+    suspend fun setClockWidgetSize(facet: FacetEntity, widthDp: Int, heightDp: Int) {
+        facetDao.update(facet.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp))
+    }
+
+    /**
      * "Reset clock widget position" for this facet — the zone height back to `null`, BOTH
      * alignments back to `LEFT`, and scale back to `0.8f`, in one atomic upsert (avoids the
      * clobbering risk of sequential single-field upserts against the same stale snapshot).

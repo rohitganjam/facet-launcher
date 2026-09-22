@@ -48,6 +48,27 @@ data class FacetEntity(
     val clockZoneHeightDp: Float? = null,
     /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
     val clockScale: Float = 0.8f,
+    /**
+     * PRD F15 — a hosted third-party `AppWidget` bound as this facet's clock, replacing the
+     * native [clockTemplateId] rendering. Facet-scoped only (no global equivalent — see F15's
+     * Scope) — `null` (the default) means this facet uses its own native clock; non-null is this
+     * facet's own [android.appwidget.AppWidgetHost] id, unique to it, never shared with another
+     * facet or the Hub's own widget ids. Deleting a facet with a non-null id here must release it
+     * via `AppWidgetHost.deleteAppWidgetId` first (see `CleanUpUninstalledAppsUseCase`-style
+     * cleanup principle) — never just drop the row.
+     */
+    val clockWidgetAppWidgetId: Int? = null,
+    /**
+     * PRD F15 — this facet's hosted clock widget's own persisted on-screen size, real dp (not a
+     * scale factor — see `ClockBlock`'s own doc for why a hosted widget needs its actual box size,
+     * not [clockScale]'s continuous transform). `null` until the user drags a resize handle for
+     * the first time, mirroring [clockZoneHeightDp]'s own null-until-touched convention — the
+     * effective size before that first drag is the provider's own declared minimum (see
+     * `ClockWidgetHostController.defaultSizeDp`). Meaningless (and unset) whenever
+     * [clockWidgetAppWidgetId] is null.
+     */
+    val clockWidgetWidthDp: Int? = null,
+    val clockWidgetHeightDp: Int? = null,
 
     // Apps section
     val overrideApps: Boolean = false,

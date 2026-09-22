@@ -67,6 +67,7 @@ class HomeViewModelTest {
         facets: List<FacetEntity> = emptyList(),
         dockApps: List<PlacedItem> = emptyList(),
         favoriteItems: List<PlacedItem> = emptyList(),
+        clockWidgetFacet: ClockWidgetFacetController = mock(ClockWidgetFacetController::class.java),
     ): HomeViewModel {
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(
@@ -91,6 +92,8 @@ class HomeViewModelTest {
             facetRepository,
             defaultLauncherRepository,
             ObserveQuickAddStateUseCase(),
+            mock(ClockWidgetHostController::class.java),
+            clockWidgetFacet,
         )
     }
 
@@ -138,6 +141,8 @@ class HomeViewModelTest {
             mock(FacetRepository::class.java),
             defaultLauncherRepository,
             ObserveQuickAddStateUseCase(),
+            mock(ClockWidgetHostController::class.java),
+            mock(ClockWidgetFacetController::class.java),
         )
 
         // Then it's still loading well before the timeout

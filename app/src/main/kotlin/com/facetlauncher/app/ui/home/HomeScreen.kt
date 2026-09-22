@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.home
 
+import android.appwidget.AppWidgetHostView
+import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Rect as AndroidRect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -54,6 +57,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -63,7 +67,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -73,6 +79,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
@@ -191,6 +198,41 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit = {},
     /** Fired when the user selects "Facet settings" from the long-press menu — the caller resolves this to the active facet. */
     onNavigateToFacetSettings: () -> Unit = {},
+    /** PRD F15 — whether the active facet currently has a hosted `AppWidget` bound as its clock. */
+    hasCustomClockWidget: Boolean = false,
+    /** Fired when the user selects "Use custom widget" from the clock's adjustment menu. */
+    onUseCustomWidgetClick: () -> Unit = {},
+    /** Fired when the user selects "Switch to launcher clock widget" from the clock's adjustment menu. */
+    onSwitchToLauncherClockClick: () -> Unit = {},
+    /** PRD F15 — non-null when [hasCustomClockWidget] is true; threaded straight to [ClockBlock]'s own identically-named param. */
+    clockWidgetAppWidgetId: Int? = null,
+    createClockWidgetHostView: (Context, Int) -> AppWidgetHostView? = { _, _ -> null },
+    /** Current effective size — the persisted value if the user has resized it before, otherwise the provider's own declared default (the caller resolves that fallback; see `HomeDrawerRoute`). */
+    clockWidgetWidthDp: Dp? = null,
+    clockWidgetHeightDp: Dp? = null,
+    /** The floor an interactive resize drag may not shrink below — see `ClockWidgetHostController.resizeFloorDp`'s own doc. */
+    clockWidgetMinWidthDp: Dp? = null,
+    clockWidgetMinHeightDp: Dp? = null,
+    onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit = { _, _, _ -> },
+    /** Fired once, on release, by the hosted clock widget's own resize handles — see `ClockWidgetFacetController.commitSize`'s own doc. */
+    onClockWidgetSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
+    /**
+     * The hosted clock widget's current on-screen bounds, relative to this composable's own root —
+     * the same frame [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own swipe-gesture
+     * `pointerInput` (applied directly to this composable's [modifier]) sees touch positions in.
+     * `null` whenever no widget is active. Real bug found on-device: that swipe detector claims
+     * drags at `PointerEventPass.Initial` specifically so it can win against a descendant's own
+     * tap/long-press detector (e.g. an app icon's) — correct there, but it meant a swipe starting
+     * on a *hosted widget's own scrollable content* was being claimed as "open the drawer/shade"
+     * before the widget's own internal `ListView` ever got a chance to recognize its own scroll.
+     * The caller uses this to exclude the widget's own touch region from that claim.
+     */
+    onClockWidgetBoundsChange: (Rect?) -> Unit = {},
+    /** PRD F15's nested-scroll handoff, threaded straight to [ClockBlock]'s own identically-named params — see [ClockWidgetTile]'s own doc. */
+    onClockWidgetNestedScrollStart: () -> Unit = {},
+    onClockWidgetLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit = { _, _ -> },
+    onClockWidgetNestedScrollStop: () -> Unit = {},
+    onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit = { _, _ -> },
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
@@ -228,6 +270,14 @@ fun HomeScreen(
     val appLabelColor = appLabelColorOption.resolve()
     val appLabelFontWeight = homeAppsFontWeight.resolve()
     val density = LocalDensity.current
+    // The resize handles can land right at the screen edge (e.g. a full-width hosted widget) —
+    // real bug found on-device: Android's own edge-swipe back gesture (wider on some OEM skins,
+    // e.g. Samsung One UI) intercepts the touch-down before the handle's own pointerInput ever
+    // sees it, making it ungrabbable. View.setSystemGestureExclusionRects (API 29+) is the
+    // platform's own mechanism for exactly this — an app with edge-anchored interactive controls
+    // opts that specific region out of the gesture-nav intercept. Registered/cleared below,
+    // scoped to whichever ADJUST block (native clock or hosted widget) is actually active.
+    val view = LocalView.current
     // Measured once per layout pass — contentHeightPx is the content Box's own height;
     // clockNaturalHeightPx is the clock+calendar block's intrinsic height (offset-independent, so
     // this is a stable one-frame-lag measurement, same pattern as e.g. ui/components/HubGrid.kt).
@@ -240,11 +290,15 @@ fun HomeScreen(
     // padding, matching DrawerListItemSize.COMPACT) instead of Home's default 16dp — see the
     // one-shot check below.
     var useCompactAppSpacing by remember { mutableStateOf(false) }
-    // Live delta accumulated for the drag gesture in progress only — added to the persisted
-    // clockZoneHeightDp for the live preview position, then zeroed on commit (mirrors
-    // ui/components/DragReorderState's own onOrderChange/onDragCommit split: cheap local state
-    // during the drag, one persisting call on release).
-    var liveDragDeltaPx by remember { mutableFloatStateOf(0f) }
+    // The move handle's live position while dragging, as an absolute value (not a delta — mirrors
+    // liveScale below exactly, and for the same reason: a real flicker found on-device, where an
+    // eagerly-zeroed delta briefly exposed the *old* basePersistedHandlePx for the one-or-two
+    // frames between the drag ending and the new clockZoneHeightDp round-tripping back through the
+    // repo/StateFlow — a visible snap-back-then-forward right at release). Held past the drag's
+    // end until clockZoneHeightDp round-trips, then released so any external change (reset, facet
+    // switch) takes effect.
+    var liveHandlePx by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(clockZoneHeightDp) { liveHandlePx = null }
 
     // The clock's live scale while resizing, as an absolute value (not a delta — a delta briefly
     // double-counts against the committed clockScale in the frame the commit lands). Held past the
@@ -266,6 +320,19 @@ fun HomeScreen(
     // scale that point implies, so the clock doesn't pop on the first move.
     var dragGrabOffset by remember { mutableFloatStateOf(Float.NaN) }
 
+    // PRD F15 — the hosted clock widget's own live width/height while resizing, real px (not a
+    // scale factor — see ClockBlock's own doc for why a hosted widget needs its actual box size).
+    // Mirrors liveScale/dragGrabOffset's own held-until-round-trip and NaN-until-first-move
+    // conventions exactly, kept fully separate since the two resize mechanisms never apply to the
+    // same clockAdjustMode session (hasCustomClockWidget picks one or the other).
+    var liveWidgetWidthPx by remember { mutableStateOf<Float?>(null) }
+    var liveWidgetHeightPx by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(clockWidgetWidthDp, clockWidgetHeightDp) {
+        liveWidgetWidthPx = null
+        liveWidgetHeightPx = null
+    }
+    var widgetDragGrabOffset by remember { mutableStateOf<Offset?>(null) }
+
     val defaultTopOffsetPx = with(density) { HOME_CLOCK_DEFAULT_TOP_OFFSET.toPx() }
     val minGapPx = with(density) { HOME_CLOCK_MIN_GAP.toPx() }
     val topInsetPx = WindowInsets.systemBars.getTop(density).toFloat()
@@ -281,7 +348,7 @@ fun HomeScreen(
     // maxOf guards against contentHeightPx still being 0f before the first layout pass, which
     // would otherwise make the ceiling fall below the floor and crash coerceIn.
     val ceilingPx = maxOf(floorPx, HOME_CLOCK_ZONE_MAX_FRACTION * contentHeightPx)
-    val handlePx = (basePersistedHandlePx + liveDragDeltaPx).coerceIn(floorPx, ceilingPx)
+    val handlePx = (liveHandlePx ?: basePersistedHandlePx).coerceIn(floorPx, ceilingPx)
 
     // The clock renders at its persisted [clockScale] and nothing recomputes it frame to frame.
     // The largest scale that still fits — headroom above the pinned bottom (past the status bar,
@@ -303,6 +370,24 @@ fun HomeScreen(
             }
             minOf(HOME_CLOCK_MAX_SCALE, byHeight, byWidth).coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
         }
+    }
+
+    // PRD F15's analog of maxScaleThatFits above, for the hosted clock widget's own resize — real
+    // px width/height directly (no scale ratio: the widget's current box IS its real size, not a
+    // natural-size-times-scale like the native clock's own uniformScale layer), same bottom- and
+    // alignment-anchored reasoning. [boxTopLeft]/[boxSize] are the widget's own current box, so
+    // this is only meaningful once it's been measured at least once (same precondition as
+    // maxScaleThatFits's own callers).
+    val maxWidgetSizePxThatFits: (boxSize: IntSize, boxTopLeft: Offset, rootW: Int) -> Offset = { boxSize, boxTopLeft, rootW ->
+        val boxW = boxSize.width.toFloat()
+        val boxH = boxSize.height.toFloat()
+        val maxHeight = boxTopLeft.y + boxH - clockTopReservePx
+        val maxWidth = when (clockAlignment) {
+            ClockAlignment.CENTER -> rootW - 2f * sideMarginPx
+            ClockAlignment.LEFT -> rootW - sideMarginPx - boxTopLeft.x
+            ClockAlignment.RIGHT -> boxTopLeft.x + boxW - sideMarginPx
+        }
+        Offset(maxWidth, maxHeight)
     }
 
     // One-shot re-clamp: a style or position change resizes the clock's natural box, so a scale
@@ -404,6 +489,34 @@ fun HomeScreen(
             raw.coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
         }
     }
+
+    // PRD F15's analog of effectiveClockScale above — real width/height, only meaningful once
+    // clockWidgetWidthDp/HeightDp are both resolved (the caller only supplies these once a hosted
+    // widget is actually bound). While ADJUST mode is live it's clamped to whatever currently fits
+    // (maxWidgetSizePxThatFits), same "dragging the move handle upward shrinks it in real time"
+    // behavior the native clock's own effectiveClockScale already has.
+    val effectiveClockWidgetSizePx = if (clockWidgetWidthDp == null || clockWidgetHeightDp == null) {
+        null
+    } else {
+        val rawWidthPx = liveWidgetWidthPx ?: with(density) { clockWidgetWidthDp.toPx() }
+        val rawHeightPx = liveWidgetHeightPx ?: with(density) { clockWidgetHeightDp.toPx() }
+        val minWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
+        val minHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
+        val size = clockBoxSize
+        val origin = clockBoxOriginInRoot
+        val rootW = rootSize?.width
+        if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
+            val maxSize = maxWidgetSizePxThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
+            Offset(
+                rawWidthPx.coerceIn(minWidthPx, maxOf(minWidthPx, maxSize.x)),
+                rawHeightPx.coerceIn(minHeightPx, maxOf(minHeightPx, maxSize.y)),
+            )
+        } else {
+            Offset(rawWidthPx.coerceAtLeast(minWidthPx), rawHeightPx.coerceAtLeast(minHeightPx))
+        }
+    }
+    val effectiveClockWidgetWidthDp = effectiveClockWidgetSizePx?.let { with(density) { it.x.toDp() } } ?: clockWidgetWidthDp
+    val effectiveClockWidgetHeightDp = effectiveClockWidgetSizePx?.let { with(density) { it.y.toDp() } } ?: clockWidgetHeightDp
 
     Box(
         modifier = modifier
@@ -512,6 +625,22 @@ fun HomeScreen(
                     nextAlarmMillis = nextAlarmMillis,
                     batteryPercent = batteryPercent,
                     isCharging = isCharging,
+                    clockWidgetAppWidgetId = clockWidgetAppWidgetId,
+                    createClockWidgetHostView = createClockWidgetHostView,
+                    clockWidgetWidthDp = effectiveClockWidgetWidthDp,
+                    clockWidgetHeightDp = effectiveClockWidgetHeightDp,
+                    // The raw incoming (not live-drag-adjusted) size — only changes once a commit
+                    // round-trips through Room, unlike effectiveClockWidgetWidthDp/HeightDp above.
+                    // See ClockWidgetTile's own doc for why the real provider push must not track
+                    // every drag frame.
+                    clockWidgetCommittedWidthDp = clockWidgetWidthDp,
+                    clockWidgetCommittedHeightDp = clockWidgetHeightDp,
+                    onClockWidgetSizeChange = onClockWidgetSizeChange,
+                    onClockWidgetLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) },
+                    onClockWidgetNestedScrollStart = onClockWidgetNestedScrollStart,
+                    onClockWidgetLeftoverScroll = onClockWidgetLeftoverScroll,
+                    onClockWidgetNestedScrollStop = onClockWidgetNestedScrollStop,
+                    onClockWidgetLeftoverFling = onClockWidgetLeftoverFling,
                 )
 
                 Column(
@@ -671,18 +800,32 @@ fun HomeScreen(
                     .offset { IntOffset(0, handlePx.roundToInt()) },
                 onDragStart = { onDraggingHandleChange(true) },
                 onDrag = { deltaDp ->
-                    liveDragDeltaPx += with(density) { deltaDp.dp.toPx() }
+                    liveHandlePx = (liveHandlePx ?: basePersistedHandlePx) + with(density) { deltaDp.dp.toPx() }
                 },
                 onDragEnd = {
                     onDraggingHandleChange(false)
                     onClockZoneHeightCommit(with(density) { handlePx.toDp().value })
-                    liveDragDeltaPx = 0f
+                    // liveHandlePx is deliberately left set — held until LaunchedEffect(clockZoneHeightDp)
+                    // above sees the commit land, same reasoning as liveScale below.
                     if (effectiveClockScale < clockScale - 0.005f) onClockScaleCommit(effectiveClockScale)
                 },
             )
         }
 
-        if (clockAdjustMode == ClockAdjustMode.ADJUST && clockBoxSize != null && clockBoxOriginInRoot != null && rootOriginInRoot != null && rootSize != null) {
+        // Plain local var, not remembered state — read once via the SideEffect below, after both
+        // ADJUST blocks (at most one of which is ever active) have had a chance to populate it.
+        var handleExclusionRects: List<AndroidRect> = emptyList()
+        val handleExclusionSizePx = with(density) { 40.dp.toPx() }.roundToInt()
+        fun handleExclusionRect(xPx: Float, yPx: Float): AndroidRect {
+            val left = xPx.roundToInt()
+            val top = yPx.roundToInt()
+            return AndroidRect(left, top, left + handleExclusionSizePx, top + handleExclusionSizePx)
+        }
+
+        // PRD F15 — the native clock's own scale-based resize handles only apply when there's no
+        // hosted widget to resize instead (see the parallel, real-size-based block below).
+        val clockGeometryReady = clockBoxSize != null && clockBoxOriginInRoot != null && rootOriginInRoot != null && rootSize != null
+        if (clockAdjustMode == ClockAdjustMode.ADJUST && clockWidgetAppWidgetId == null && clockGeometryReady) {
             val rootOrigin = rootOriginInRoot!!
             // The clock's natural (unscaled) box in root coords — stable throughout a drag (uniformScale
             // keeps the layout footprint at natural size). Everything below is a pure function of this
@@ -741,6 +884,10 @@ fun HomeScreen(
             // Safety net for the top handles: never let them sit in the status-bar strip even if
             // clockMaxScale is momentarily stale (e.g. right after a template switch).
             val handleTopPx = (visualTopLeftY - handleInsetPx).coerceAtLeast(topInsetPx)
+            handleExclusionRects = listOf(
+                handleExclusionRect(visualTopLeftX - handleInsetPx, handleTopPx),
+                handleExclusionRect(visualTopLeftX + visualWidth - handleInsetPx, handleTopPx),
+            )
             Box(
                 modifier = Modifier
                     .offset { IntOffset(visualTopLeftX.roundToInt(), visualTopLeftY.roundToInt()) }
@@ -764,6 +911,117 @@ fun HomeScreen(
                 onDragStart = onHandleDragStart,
                 onDrag = onHandleDrag,
                 onDragEnd = onHandleDragEnd,
+            )
+        }
+
+        // PRD F15 — the hosted clock widget's own resize handles: real width/height directly (the
+        // widget's current box size IS its real size — no natural-size-times-scale layer to derive
+        // from, unlike the native clock's own block above), otherwise the same bottom- and
+        // alignment-anchored geometry, corner-handle placement, and live-clamped-while-dragging
+        // behavior.
+        if (clockAdjustMode == ClockAdjustMode.ADJUST && clockWidgetAppWidgetId != null && clockGeometryReady) {
+            val rootOrigin = rootOriginInRoot!!
+            val boxW = clockBoxSize!!.width.toFloat()
+            val boxH = clockBoxSize!!.height.toFloat()
+            val boxTopLeft = clockBoxOriginInRoot!! - rootOrigin
+            val maxWidgetSize = maxWidgetSizePxThatFits(clockBoxSize!!, boxTopLeft, rootSize!!.width)
+            val minWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
+            val minHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
+
+            val boxBottom = boxTopLeft.y + boxH
+            // The x that stays put as the box resizes (matches the widget's own alignment anchor).
+            val anchorX = when (clockAlignment) {
+                ClockAlignment.LEFT -> boxTopLeft.x
+                ClockAlignment.RIGHT -> boxTopLeft.x + boxW
+                ClockAlignment.CENTER -> boxTopLeft.x + boxW / 2f
+            }
+
+            // Real width/height a touch point implies, if that point were the dragged corner.
+            val sizeAtTouch: (Offset) -> Offset = { t ->
+                val w = when (clockAlignment) {
+                    ClockAlignment.LEFT -> t.x - anchorX
+                    ClockAlignment.RIGHT -> anchorX - t.x
+                    ClockAlignment.CENTER -> abs(t.x - anchorX) * 2f
+                }
+                Offset(w, boxBottom - t.y)
+            }
+            val onWidgetHandleDragStart: () -> Unit = {
+                widgetDragGrabOffset = null
+                onDraggingHandleChange(true)
+            }
+            val onWidgetHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
+                val implied = sizeAtTouch(touchInAbsolute - rootOrigin)
+                // First move: capture where the finger sits vs the corner, so the box doesn't pop.
+                val grab = widgetDragGrabOffset
+                    ?: Offset(implied.x - (liveWidgetWidthPx ?: boxW), implied.y - (liveWidgetHeightPx ?: boxH))
+                        .also { widgetDragGrabOffset = it }
+                liveWidgetWidthPx = (implied.x - grab.x).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
+                liveWidgetHeightPx = (implied.y - grab.y).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
+            }
+            val onWidgetHandleDragEnd: () -> Unit = {
+                onDraggingHandleChange(false)
+                val finalWidthPx = (liveWidgetWidthPx ?: boxW).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
+                val finalHeightPx = (liveWidgetHeightPx ?: boxH).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
+                val widthDp = with(density) { finalWidthPx.toDp().value }.roundToInt()
+                val heightDp = with(density) { finalHeightPx.toDp().value }.roundToInt()
+                onClockWidgetSizeCommit(widthDp, heightDp)
+            }
+
+            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
+            val handleTopPx = (boxTopLeft.y - handleInsetPx).coerceAtLeast(topInsetPx)
+            handleExclusionRects = listOf(
+                handleExclusionRect(boxTopLeft.x - handleInsetPx, handleTopPx),
+                handleExclusionRect(boxTopLeft.x + boxW - handleInsetPx, handleTopPx),
+            )
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(boxTopLeft.x.roundToInt(), boxTopLeft.y.roundToInt()) }
+                    .size(with(density) { boxW.toDp() }, with(density) { boxH.toDp() })
+                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+            )
+            ClockCornerHandle(
+                isRightSide = false,
+                modifier = Modifier.offset {
+                    IntOffset((boxTopLeft.x - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
+                },
+                onDragStart = onWidgetHandleDragStart,
+                onDrag = onWidgetHandleDrag,
+                onDragEnd = onWidgetHandleDragEnd,
+            )
+            ClockCornerHandle(
+                isRightSide = true,
+                modifier = Modifier.offset {
+                    IntOffset((boxTopLeft.x + boxW - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
+                },
+                onDragStart = onWidgetHandleDragStart,
+                onDrag = onWidgetHandleDrag,
+                onDragEnd = onWidgetHandleDragEnd,
+            )
+        }
+
+        // Opts the resize handles' own touch region out of the system's edge-swipe back gesture —
+        // see handleExclusionRects' own declaration above. Empty (clearing any previously
+        // registered rects) whenever neither ADJUST block above ran this composition, e.g. leaving
+        // ADJUST mode or a hosted widget being sized small enough that its handles never land near
+        // an edge (this still runs, it just sets an empty list, a cheap no-op call).
+        SideEffect { view.systemGestureExclusionRects = handleExclusionRects }
+
+        // Reports the hosted widget's current bounds so HomeDrawerRoute's own swipe-to-open-drawer
+        // gesture can exclude them — see onClockWidgetBoundsChange's own doc. null whenever no
+        // widget is active (the native clock has no independent scrollable content to protect, so
+        // a swipe starting on it keeps opening the drawer/shade exactly as it does today) or its
+        // box hasn't been measured yet.
+        SideEffect {
+            val size = clockBoxSize
+            val origin = clockBoxOriginInRoot
+            val rootOrigin = rootOriginInRoot
+            val boundsReady = size != null && origin != null && rootOrigin != null
+            onClockWidgetBoundsChange(
+                if (clockWidgetAppWidgetId != null && boundsReady) {
+                    Rect(offset = origin - rootOrigin, size = size.toSize())
+                } else {
+                    null
+                },
             )
         }
 
@@ -807,7 +1065,16 @@ fun HomeScreen(
                     onAdjustModeChange(ClockAdjustMode.NONE)
                     onNavigateToSettings()
                 },
+                onUseCustomWidgetClick = {
+                    onAdjustModeChange(ClockAdjustMode.NONE)
+                    onUseCustomWidgetClick()
+                },
+                onSwitchToLauncherClockClick = {
+                    onAdjustModeChange(ClockAdjustMode.NONE)
+                    onSwitchToLauncherClockClick()
+                },
                 overrideFacetName = clockPositionOwnerFacetName,
+                hasCustomClockWidget = hasCustomClockWidget,
             )
         }
     }

@@ -375,6 +375,39 @@ class FacetDatabaseMigrationTest {
         bothCursor.close()
     }
 
+    @Test
+    fun migration20To21AddsClockWidgetAppWidgetIdColumnDefaultingToNullWithoutLosingExistingRows() {
+        // Given a v20 database with one real facet row, predating PRD F15's clock widget substitution
+        val dbV20 = helper.createDatabase(TEST_DB, 20)
+        dbV20.execSQL(
+            "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
+                "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, calendarFontOption, calendarColorOption, " +
+                "calendarFontWeight, clockAlignment, calendarAlignment, clockZoneHeightDp, clockScale, overrideApps, appRowPosition, " +
+                "appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment, overridingFavorites, overrideDock, " +
+                "dockDisplayMode, overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv) VALUES " +
+                "(1, 'Work', 0, 0, 'LIGHT_STACK', 'LAUNCHER_DEFAULT', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LAUNCHER_DEFAULT', " +
+                "'THEME', 'REGULAR', 'LEFT', 'LEFT', NULL, 0.8, 0, 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 0, 0, 'ICONS', 0, 1, NULL)",
+        )
+        dbV20.close()
+
+        // When migrating to v21
+        val dbV21 = helper.runMigrationsAndValidate(TEST_DB, 21, true, Migrations.MIGRATION_20_21)
+
+        // Then the existing row survived, with the new column defaulting to NULL — this facet
+        // keeps using its own native clock until the user explicitly picks a custom widget.
+        val cursor = dbV21.query("SELECT clockWidgetAppWidgetId FROM facets WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertTrue(cursor.isNull(cursor.getColumnIndexOrThrow("clockWidgetAppWidgetId")))
+        cursor.close()
+
+        // ...and the column accepts a real AppWidgetHost id once one is bound.
+        dbV21.execSQL("UPDATE facets SET clockWidgetAppWidgetId = 42 WHERE id = 1")
+        val updatedCursor = dbV21.query("SELECT clockWidgetAppWidgetId FROM facets WHERE id = 1")
+        assertTrue(updatedCursor.moveToFirst())
+        assertEquals(42, updatedCursor.getInt(updatedCursor.getColumnIndexOrThrow("clockWidgetAppWidgetId")))
+        updatedCursor.close()
+    }
+
     private companion object {
         const val TEST_DB = "facet-migration-test.db"
     }

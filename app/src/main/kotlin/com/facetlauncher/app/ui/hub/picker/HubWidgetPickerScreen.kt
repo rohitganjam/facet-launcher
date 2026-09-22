@@ -133,6 +133,8 @@ internal fun HubWidgetPickerContent(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     failureMessage: String? = null,
+    /** `null` (the default) keeps the Hub's own "Add widget" title — PRD F15's clock widget picker overrides it. */
+    title: String? = null,
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -143,7 +145,7 @@ internal fun HubWidgetPickerContent(
         val tileWidth = widgetTileWidth(maxWidth - WIDGET_PICKER_HORIZONTAL_PADDING * 2)
         StickyHeaderLayout(
             modifier = Modifier.fillMaxSize(),
-            header = { HubWidgetPickerHeader(remaining = uiState.remaining, onBack = onBack) },
+            header = { HubWidgetPickerHeader(remaining = uiState.remaining, onBack = onBack, title = title) },
             content = { headerHeight ->
                 LazyColumn(
                     modifier = Modifier
@@ -209,7 +211,7 @@ private fun widgetTileWidth(availableWidth: Dp): Dp {
 }
 
 @Composable
-private fun HubWidgetPickerHeader(remaining: Int, onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun HubWidgetPickerHeader(remaining: Int?, onBack: () -> Unit, modifier: Modifier = Modifier, title: String? = null) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -222,14 +224,16 @@ private fun HubWidgetPickerHeader(remaining: Int, onBack: () -> Unit, modifier: 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BackButton(onClick = onBack)
-            Text(text = stringResource(R.string.hub_widget_picker_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
+            Text(text = title ?: stringResource(R.string.hub_widget_picker_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
-        Text(
-            text = stringResource(R.string.hub_widget_picker_remaining, remaining),
-            style = MaterialTheme.typography.labelMedium,
-            color = Muted,
-            modifier = Modifier.testTag("hub_widget_picker_remaining"),
-        )
+        if (remaining != null) {
+            Text(
+                text = stringResource(R.string.hub_widget_picker_remaining, remaining),
+                style = MaterialTheme.typography.labelMedium,
+                color = Muted,
+                modifier = Modifier.testTag("hub_widget_picker_remaining"),
+            )
+        }
     }
 }
 

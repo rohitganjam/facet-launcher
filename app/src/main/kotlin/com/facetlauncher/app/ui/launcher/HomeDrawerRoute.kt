@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -79,6 +80,8 @@ import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet
@@ -170,6 +173,14 @@ private enum class Axis { VERTICAL, HORIZONTAL }
  * [com.facetlauncher.app.ui.hub.detectGrabOrResizeGesture] for Hub widget tiles.
  */
 private suspend fun PointerInputScope.detectHomeSwipeGestures(
+    /**
+     * `false` for a down position this detector should leave completely alone this gesture — not
+     * even watched, let alone consumed — so a descendant with its own independent scroll (a hosted
+     * clock widget's own `ListView`, see [com.facetlauncher.app.ui.home.HomeScreen]'s own
+     * `onClockWidgetBoundsChange` doc) gets the whole gesture undisturbed. Defaults to always
+     * claiming, this function's original behavior.
+     */
+    shouldClaim: (Offset) -> Boolean = { true },
     onDragStart: () -> Unit,
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
@@ -178,6 +189,7 @@ private suspend fun PointerInputScope.detectHomeSwipeGestures(
     val slop = viewConfiguration.touchSlop
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
+        if (!shouldClaim(down.position)) return@awaitEachGesture
         var accumulated = Offset.Zero
         var dragging = false
         var completedCleanly = true
@@ -244,6 +256,7 @@ fun HomeDrawerRoute(
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
     widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
+    clockWidgetPickerViewModel: ClockWidgetPickerViewModel = hiltViewModel(),
     facetViewModel: FacetCarouselViewModel = hiltViewModel(),
     launcherViewModel: LauncherViewModel,
 ) {
@@ -302,6 +315,12 @@ fun HomeDrawerRoute(
     // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
     // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
     var showWidgetPicker by remember { mutableStateOf(false) }
+    // PRD F15 — the clock widget picker, an in-place overlay over Home itself (not gated by
+    // isHubOpen like showWidgetPicker above, since it's opened from ClockAdjustSheet on Home, not
+    // from the Hub). clockWidgetPickerFacetId is set once when the flow starts and stays fixed for
+    // its duration, mirroring ClockWidgetPickerViewModel's own pendingFacetId — see its doc.
+    var showClockWidgetPicker by remember { mutableStateOf(false) }
+    var clockWidgetPickerFacetId by remember { mutableStateOf<Long?>(null) }
     var showPrivateSpaceDrawer by remember { mutableStateOf(false) }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
     var draggingHandle by remember { mutableStateOf(false) }
@@ -309,6 +328,9 @@ fun HomeDrawerRoute(
     var homeDragStartedClosed by remember { mutableStateOf(false) }
     var homeRawDragDistance by remember { mutableFloatStateOf(0f) }
     var homeDragAxis by remember { mutableStateOf<Axis?>(null) }
+    // PRD F15 — reported by HomeScreen's own onClockWidgetBoundsChange; see its doc and
+    // detectHomeSwipeGestures' own shouldClaim param for why this exists.
+    var clockWidgetBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
     val velocityTracker = remember { VelocityTracker() }
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -358,11 +380,19 @@ fun HomeDrawerRoute(
     val isFacetOpen by remember { derivedStateOf { facetAxis.progress.value > 0f } }
 
     // AppWidgetHost.startListening() is what actually makes hosted AppWidgetHostViews render/
-    // update — without it, widget tiles stay blank. Only listen while the Hub is actually
-    // visible, matching every other AppWidgetHost caller's lifecycle discipline.
-    DisposableEffect(isHubOpen) {
-        if (isHubOpen) hubViewModel.onHubVisible()
-        onDispose { if (isHubOpen) hubViewModel.onHubHidden() }
+    // update — without it, widget tiles stay blank. hubViewModel/homeViewModel share the exact
+    // same singleton AppWidgetRepository/AppWidgetHost (WidgetModule.kt — "never create a second
+    // one with this id"), and start/stop aren't reference-counted by the platform: whichever
+    // surface closes last would otherwise silently stop listening for the other too. So this is
+    // ONE combined trigger for "does anything need the shared host listening right now" —
+    // PRD F15's clock widget (always potentially visible on Home) or the Hub grid (only while
+    // open) — routed through hubViewModel's existing methods since they're a thin pass-through to
+    // the same repository either way, not because this is conceptually Hub-specific.
+    val clockWidgetNeedsListening = homeUiState.clockWidgetAppWidgetId != null
+    DisposableEffect(isHubOpen, clockWidgetNeedsListening) {
+        val shouldListen = isHubOpen || clockWidgetNeedsListening
+        if (shouldListen) hubViewModel.onHubVisible()
+        onDispose { if (shouldListen) hubViewModel.onHubHidden() }
     }
 
     // Clear focus whenever the drawer, hub, or facet carousel starts moving via a drag.
@@ -400,6 +430,14 @@ fun HomeDrawerRoute(
         }
     }
 
+    // Clear the clock widget picker's search/target facet whenever its own panel closes.
+    LaunchedEffect(showClockWidgetPicker) {
+        if (!showClockWidgetPicker) {
+            clockWidgetPickerViewModel.reset()
+            clockWidgetPickerFacetId = null
+        }
+    }
+
     // Clear the Private Space screen's own search whenever it closes — independent of the main
     // Drawer's own query state (drawerQuery), which it never shares.
     LaunchedEffect(showPrivateSpaceDrawer) {
@@ -416,14 +454,102 @@ fun HomeDrawerRoute(
         }
     }
 
-    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || showWidgetPicker || showPrivateSpaceDrawer) {
+    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || showWidgetPicker || showClockWidgetPicker || showPrivateSpaceDrawer) {
         focusManager.clearFocus()
         when {
+            showClockWidgetPicker -> showClockWidgetPicker = false
             showWidgetPicker -> showWidgetPicker = false
             showPrivateSpaceDrawer -> showPrivateSpaceDrawer = false
             isDrawerOpen -> coroutineScope.launch { drawerAxis.close() }
             isHubOpen -> coroutineScope.launch { hubAxis.close() }
             isFacetOpen -> coroutineScope.launch { facetAxis.close() }
+        }
+    }
+
+    // PRD F15 — the provider's own declared default (getAppWidgetInfo is a real system query, so
+    // resolved once per bound widget id, not every recomposition) and resize floor. The persisted
+    // size (homeUiState.clockWidgetWidthDp/HeightDp) — once the user has actually dragged a resize
+    // handle — takes precedence over this default; see HomeScreen's own effectiveClockWidgetSize.
+    val clockWidgetDefaultSizeDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
+        remember(appWidgetId) { homeViewModel.clockWidgetHost.defaultSizeDp(appWidgetId) }
+    }
+    val clockWidgetResizeFloorDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
+        remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(appWidgetId) }
+    }
+    // The persisted size (once the user has actually resized) wins over the provider's own default.
+    val clockWidgetEffectiveWidthDp = homeUiState.clockWidgetWidthDp ?: clockWidgetDefaultSizeDp?.first
+    val clockWidgetEffectiveHeightDp = homeUiState.clockWidgetHeightDp ?: clockWidgetDefaultSizeDp?.second
+
+    // PRD F15's nested-scroll handoff (see ClockWidgetTile's own doc) drives the exact same
+    // drawerAxis/hubAxis/facetAxis state detectHomeSwipeGestures' own Compose-pointer-input path
+    // does below — extracted here so both gesture sources share one implementation instead of two
+    // that could drift apart. Set once a fling handoff has already settled the axis, so the
+    // nested-scroll session's own onStopNestedScroll (which always fires, fling or not) doesn't
+    // call settle() a second time and risk flipping an already-committed outcome.
+    var nestedScrollFlingHandledSettle by remember { mutableStateOf(false) }
+
+    fun onHomeSwipeStart() {
+        homeDragAxis = null
+        velocityTracker.resetTracking()
+        homeDragStartedClosed = drawerAxis.progress.value == 0f
+        homeRawDragDistance = 0f
+    }
+
+    // dx/dy are raw finger-movement convention (positive = finger moving right/down) — the same
+    // convention Compose's own dragAmount uses. PRD F15's nested-scroll caller negates its own
+    // dxUnconsumed/dyUnconsumed before calling this — see its own call site for why (Android's
+    // nested-scroll dy convention is a scroll-offset delta, the *negation* of raw finger movement:
+    // confirmed against AbsListView's own dispatch, which negates its raw touch delta before
+    // passing it to dispatchNestedPreScroll).
+    fun onHomeSwipeDrag(dx: Float, dy: Float) {
+        if (homeDragAxis == null) {
+            homeDragAxis = if (abs(dx) > abs(dy)) Axis.HORIZONTAL else Axis.VERTICAL
+        }
+        if (clockAdjustMode != ClockAdjustMode.NONE) {
+            clockAdjustMode = ClockAdjustMode.NONE
+        }
+        when (homeDragAxis) {
+            Axis.VERTICAL -> {
+                drawerAxis.dragBy(-dy)
+                homeRawDragDistance += dy
+            }
+            Axis.HORIZONTAL -> {
+                when {
+                    hubAxis.dragActive || (!facetAxis.dragActive && dx > 0f) -> hubAxis.dragBy(dx)
+                    facetAxis.dragActive || (!hubAxis.dragActive && dx < 0f) -> facetAxis.dragBy(-dx)
+                }
+            }
+            null -> Unit
+        }
+    }
+
+    /** [velocity] only matters for [Axis.VERTICAL] (whether the shade-expand threshold is met) — a horizontal settle always ignores it, same as before this was extracted. */
+    fun onHomeSwipeSettle(velocity: Float) {
+        when (homeDragAxis) {
+            Axis.VERTICAL -> {
+                drawerAxis.settle(velocity = -velocity)
+                if (homeDragStartedClosed &&
+                    (homeRawDragDistance >= swipeDownShadeDistancePx || velocity >= VELOCITY_THRESHOLD_PX)
+                ) {
+                    homeViewModel.expandNotificationShade()
+                }
+            }
+            Axis.HORIZONTAL -> {
+                if (hubAxis.dragActive) hubAxis.settle()
+                if (facetAxis.dragActive) facetAxis.settle()
+            }
+            null -> Unit
+        }
+    }
+
+    fun onHomeSwipeCancel() {
+        when (homeDragAxis) {
+            Axis.VERTICAL -> drawerAxis.settle()
+            Axis.HORIZONTAL -> {
+                if (hubAxis.dragActive) hubAxis.settle()
+                if (facetAxis.dragActive) facetAxis.settle()
+            }
+            null -> Unit
         }
     }
 
@@ -475,6 +601,51 @@ fun HomeDrawerRoute(
             onNavigateToSettings = onNavigateToSettings,
             onNavigateToFacetSettings = {
                 homeUiState.activeFacet?.let { onNavigateToFacetSettings(it.id) }
+            },
+            hasCustomClockWidget = homeUiState.clockWidgetAppWidgetId != null,
+            onUseCustomWidgetClick = {
+                homeUiState.activeFacet?.let { facet ->
+                    clockWidgetPickerFacetId = facet.id
+                    showClockWidgetPicker = true
+                }
+            },
+            onSwitchToLauncherClockClick = {
+                homeUiState.activeFacet?.let { facet ->
+                    coroutineScope.launch { homeViewModel.clockWidgetFacet.switchToNativeClock(facet) }
+                }
+            },
+            clockWidgetAppWidgetId = homeUiState.clockWidgetAppWidgetId,
+            createClockWidgetHostView = homeViewModel.clockWidgetHost::createHostView,
+            clockWidgetWidthDp = clockWidgetEffectiveWidthDp?.dp,
+            clockWidgetHeightDp = clockWidgetEffectiveHeightDp?.dp,
+            clockWidgetMinWidthDp = clockWidgetResizeFloorDp?.first?.dp,
+            clockWidgetMinHeightDp = clockWidgetResizeFloorDp?.second?.dp,
+            onClockWidgetSizeChange = homeViewModel.clockWidgetHost::updateSize,
+            onClockWidgetSizeCommit = { widthDp, heightDp ->
+                homeUiState.activeFacet?.let { facet ->
+                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp) }
+                }
+            },
+            onClockWidgetBoundsChange = { clockWidgetBoundsInHomeRoot = it },
+            onClockWidgetNestedScrollStart = {
+                nestedScrollFlingHandledSettle = false
+                onHomeSwipeStart()
+            },
+            onClockWidgetLeftoverScroll = { dxPx, dyPx ->
+                // Android's nested-scroll delta is a scroll-offset convention — the negation of
+                // raw finger movement (see onHomeSwipeDrag's own doc) — negate back before reusing
+                // the same drag handler the Compose pointer-input path feeds raw movement into.
+                onHomeSwipeDrag(-dxPx, -dyPx)
+            },
+            onClockWidgetNestedScrollStop = {
+                // Skipped when a fling already settled this session — see
+                // nestedScrollFlingHandledSettle's own doc for why calling settle() twice risks
+                // flipping an already-committed outcome.
+                if (!nestedScrollFlingHandledSettle) onHomeSwipeSettle(0f)
+            },
+            onClockWidgetLeftoverFling = { velocityXPx, velocityYPx ->
+                nestedScrollFlingHandledSettle = true
+                onHomeSwipeSettle(if (homeDragAxis == Axis.HORIZONTAL) velocityXPx else velocityYPx)
             },
             appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
             nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
@@ -546,78 +717,18 @@ fun HomeDrawerRoute(
                     if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
 
                     detectHomeSwipeGestures(
+                        shouldClaim = { position -> clockWidgetBoundsInHomeRoot?.contains(position) != true },
                         onDragStart = {
-                            homeDragAxis = null
-                            velocityTracker.resetTracking()
-                            homeDragStartedClosed = drawerAxis.progress.value == 0f
-                            homeRawDragDistance = 0f
+                            nestedScrollFlingHandledSettle = false
+                            onHomeSwipeStart()
                         },
-                        onDragEnd = {
-                            when (homeDragAxis) {
-                                Axis.VERTICAL -> {
-                                    val velocity = velocityTracker.calculateVelocity().y
-                                    drawerAxis.settle(velocity = -velocity)
-                                    if (homeDragStartedClosed &&
-                                        (homeRawDragDistance >= swipeDownShadeDistancePx || velocity >= VELOCITY_THRESHOLD_PX)
-                                    ) {
-                                        homeViewModel.expandNotificationShade()
-                                    }
-                                }
-                                // Exactly one of these is ever dragActive per gesture (see the
-                                // ownership rule in the drag callback below) — settle whichever
-                                // one it is.
-                                Axis.HORIZONTAL -> {
-                                    if (hubAxis.dragActive) hubAxis.settle()
-                                    if (facetAxis.dragActive) facetAxis.settle()
-                                }
-                                null -> Unit
-                            }
-                        },
-                        onDragCancel = {
-                            when (homeDragAxis) {
-                                Axis.VERTICAL -> drawerAxis.settle()
-                                Axis.HORIZONTAL -> {
-                                    if (hubAxis.dragActive) hubAxis.settle()
-                                    if (facetAxis.dragActive) facetAxis.settle()
-                                }
-                                null -> Unit
-                            }
-                        },
+                        onDragEnd = { onHomeSwipeSettle(velocityTracker.calculateVelocity().y) },
+                        onDragCancel = { onHomeSwipeCancel() },
                     ) { change, dragAmount ->
-                        // First post-touch-slop movement decides the axis for the rest of this
-                        // gesture — whichever of x/y is larger wins, so a diagonal swipe commits
-                        // to one axis instead of driving both.
-                        if (homeDragAxis == null) {
-                            homeDragAxis = if (abs(dragAmount.x) > abs(dragAmount.y)) Axis.HORIZONTAL else Axis.VERTICAL
-                        }
-                        // If a screen gesture successfully starts (crosses slop) while we're in
-                        // an adjustment mode (but not holding a handle), cancel adjustment.
-                        if (clockAdjustMode != ClockAdjustMode.NONE) {
-                            clockAdjustMode = ClockAdjustMode.NONE
-                        }
-
-                        when (homeDragAxis) {
-                            Axis.VERTICAL -> {
-                                drawerAxis.dragBy(-dragAmount.y)
-                                homeRawDragDistance += dragAmount.y
-                                velocityTracker.addPosition(change.uptimeMillis, change.position)
-                            }
-                            Axis.HORIZONTAL -> {
-                                // Whichever axis this gesture engages first (by its very first
-                                // horizontal delta) owns it for the rest of the gesture, even
-                                // through a direction reversal — dragBy() already handles negative
-                                // deltas fine (it just walks progress back down), so once an axis
-                                // goes dragActive it keeps tracking the finger instead of control
-                                // flipping to the other panel mid-drag.
-                                when {
-                                    hubAxis.dragActive || (!facetAxis.dragActive && dragAmount.x > 0f) ->
-                                        hubAxis.dragBy(dragAmount.x)
-                                    facetAxis.dragActive || (!hubAxis.dragActive && dragAmount.x < 0f) ->
-                                        facetAxis.dragBy(-dragAmount.x)
-                                }
-                            }
-                            null -> Unit
-                        }
+                        onHomeSwipeDrag(dragAmount.x, dragAmount.y)
+                        // Only meaningful for the vertical (shade-expand) case — see
+                        // onHomeSwipeSettle's own doc — but harmless to keep populated regardless.
+                        velocityTracker.addPosition(change.uptimeMillis, change.position)
                     }
                 },
         )
@@ -800,6 +911,24 @@ fun HomeDrawerRoute(
                 modifier = Modifier.fillMaxSize(),
                 viewModel = facetViewModel,
             )
+        }
+
+        // PRD F15's clock widget picker — an in-place overlay over everything above (drawn last,
+        // same "sub-screen without leaving composition" precedent as the Hub's own widget picker),
+        // since it's reached from ClockAdjustSheet on Home itself rather than from the Hub.
+        clockWidgetPickerFacetId?.let { facetId ->
+            AnimatedVisibility(
+                visible = showClockWidgetPicker,
+                enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
+                exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
+                modifier = Modifier.testTag("clock_widget_picker_overlay"),
+            ) {
+                ClockWidgetPickerScreen(
+                    facetId = facetId,
+                    onDone = { showClockWidgetPicker = false },
+                    viewModel = clockWidgetPickerViewModel,
+                )
+            }
         }
 
         // One-time "make Facet your home screen" prompt, over real Home itself rather than a

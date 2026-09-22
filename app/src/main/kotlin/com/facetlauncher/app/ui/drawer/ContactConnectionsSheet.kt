@@ -104,10 +104,12 @@ fun ContactConnectionsSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("contact_connections_sheet")
-                .clickable(enabled = false, onClick = {})
                 // M3's ModalBottomSheet default shape (SheetDefaults.ExpandedShape) is
                 // extraLarge (28dp), applied top-only — see CLAUDE.md's Material 3 shape section.
                 .background(Surface, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                // clickable after background/clip so a ripple (if this were ever enabled) would
+                // respect the shape above rather than fill the full rectangular bounds.
+                .clickable(enabled = false, onClick = {})
                 .heightIn(min = if (disambiguating != null) disambiguationMinHeight else minHeight, max = maxSheetHeight),
         ) {
             Box(

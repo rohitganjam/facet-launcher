@@ -28,6 +28,7 @@ import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ExportBackupUseCase
 import com.facetlauncher.app.domain.ImportBackupUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
+import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -67,6 +68,10 @@ class BackupRestoreScreenTest {
                     ImportBackupUseCase(
                         backupRepository, settingsRepository, facetRepository, favoriteAppRepository,
                         dockAppRepository, facetDockAppRepository, defaultFavoriteAppRepository, folderRepository,
+                        RepairOrphanedProfileRowsUseCase(
+                            appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository,
+                            defaultFavoriteAppRepository, folderRepository,
+                        ),
                     ),
                     appRepository,
                     appWidgetRepository,

@@ -20,6 +20,7 @@ import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.FacetPreviewData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -111,6 +112,7 @@ class FacetCarouselViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val wallpaperRepository: WallpaperRepository,
+    private val deleteFacetUseCase: DeleteFacetUseCase,
     observeFacetPreviews: ObserveFacetPreviewsUseCase,
 ) : ViewModel() {
 
@@ -148,7 +150,7 @@ class FacetCarouselViewModel @Inject constructor(
     fun deleteFacet(facet: FacetEntity) {
         if (!uiState.value.canDeleteFacet) return
         viewModelScope.launch {
-            facetRepository.deleteFacet(facet)
+            deleteFacetUseCase(facet)
             if (uiState.value.activeFacetId == facet.id) {
                 val remaining = uiState.value.facets.firstOrNull { it.id != facet.id }
                 remaining?.let { settingsRepository.setActiveFacetId(it.id) }

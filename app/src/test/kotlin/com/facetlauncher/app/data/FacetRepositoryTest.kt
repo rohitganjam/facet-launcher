@@ -351,4 +351,38 @@ class FacetRepositoryTest {
         repository.setCalendarFontWeight(facet, FontWeightOption.LIGHT)
         assertEquals(FontWeightOption.LIGHT, repository.observeFacets().first().single().calendarFontWeight)
     }
+
+    @Test
+    fun `setClockWidgetAppWidgetId round-trips, null reverts to the native clock`() = runTest {
+        val dao = FakeFacetDao()
+        val repository = FacetRepository(dao)
+        val facet = repository.addFacet()
+        assertNull(facet.clockWidgetAppWidgetId)
+
+        repository.setClockWidgetAppWidgetId(facet, 42)
+        assertEquals(42, repository.observeFacets().first().single().clockWidgetAppWidgetId)
+
+        repository.setClockWidgetAppWidgetId(repository.observeFacets().first().single(), null)
+        assertNull(repository.observeFacets().first().single().clockWidgetAppWidgetId)
+    }
+
+    @Test
+    fun `setClockWidgetAppWidgetId clears the persisted size — a size is only ever valid for the widget it was resized against`() = runTest {
+        val dao = FakeFacetDao()
+        val repository = FacetRepository(dao)
+        val facet = repository.addFacet()
+        repository.setClockWidgetAppWidgetId(facet, 42)
+        repository.setClockWidgetSize(repository.observeFacets().first().single(), 400, 300)
+        val resized = repository.observeFacets().first().single()
+        assertEquals(400, resized.clockWidgetWidthDp)
+
+        // Switching to a different widget must not carry the old widget's size over — a real bug
+        // found on-device: a size sane for widget A could be outside widget B's own sane bounds,
+        // showing "Can't show content" no matter which provider is picked.
+        repository.setClockWidgetAppWidgetId(resized, 99)
+        val switched = repository.observeFacets().first().single()
+        assertEquals(99, switched.clockWidgetAppWidgetId)
+        assertNull(switched.clockWidgetWidthDp)
+        assertNull(switched.clockWidgetHeightDp)
+    }
 }

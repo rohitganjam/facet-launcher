@@ -15,7 +15,13 @@ class ClockAdjustSheetTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(overrideFacetName: String?, onEditStylesClick: () -> Unit = {}) {
+    private fun setContent(
+        overrideFacetName: String?,
+        onEditStylesClick: () -> Unit = {},
+        hasCustomClockWidget: Boolean = false,
+        onUseCustomWidgetClick: () -> Unit = {},
+        onSwitchToLauncherClockClick: () -> Unit = {},
+    ) {
         composeRule.setContent {
             FacetLauncherTheme {
                 ClockAdjustSheet(
@@ -23,7 +29,10 @@ class ClockAdjustSheetTest {
                     onEditStylesClick = onEditStylesClick,
                     onFacetSettingsClick = {},
                     onLauncherSettingsClick = {},
+                    onUseCustomWidgetClick = onUseCustomWidgetClick,
+                    onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
                     overrideFacetName = overrideFacetName,
+                    hasCustomClockWidget = hasCustomClockWidget,
                 )
             }
         }
@@ -67,6 +76,48 @@ class ClockAdjustSheetTest {
         setContent(overrideFacetName = null, onEditStylesClick = { clicked = true })
 
         composeRule.onNodeWithTag("clock_adjust_edit_styles").performClick()
+
+        assert(clicked)
+    }
+
+    @Test
+    fun nativeClockShowsUseCustomWidgetRowButNotSwitchBackRow() {
+        // Given the active facet has no hosted clock widget
+        setContent(overrideFacetName = null, hasCustomClockWidget = false)
+
+        // Then "Use custom widget" is offered, "Switch to launcher clock widget" is not, and styles stay editable
+        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_edit_styles").assertExists()
+    }
+
+    @Test
+    fun customWidgetActiveHidesEditStylesAndShowsSwitchBackRow() {
+        // Given the active facet already has a hosted clock widget
+        setContent(overrideFacetName = null, hasCustomClockWidget = true)
+
+        // Then "Edit ... styles" is hidden (nothing to style), and both widget-choice rows are offered
+        composeRule.onNodeWithTag("clock_adjust_edit_styles").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").assertExists()
+    }
+
+    @Test
+    fun tappingUseCustomWidgetRowFiresOnUseCustomWidgetClick() {
+        var clicked = false
+        setContent(overrideFacetName = null, onUseCustomWidgetClick = { clicked = true })
+
+        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").performClick()
+
+        assert(clicked)
+    }
+
+    @Test
+    fun tappingSwitchToLauncherClockRowFiresOnSwitchToLauncherClockClick() {
+        var clicked = false
+        setContent(overrideFacetName = null, hasCustomClockWidget = true, onSwitchToLauncherClockClick = { clicked = true })
+
+        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
 
         assert(clicked)
     }

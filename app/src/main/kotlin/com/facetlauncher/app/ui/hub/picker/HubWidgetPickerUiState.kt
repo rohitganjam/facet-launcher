@@ -12,7 +12,8 @@ data class WidgetProviderGroup(
 data class HubWidgetPickerUiState(
     val query: String = "",
     val groups: List<WidgetProviderGroup> = emptyList(),
-    val remaining: Int = 0,
+    /** `null` hides the header's "N left" counter entirely — used by PRD F15's clock widget picker, which has no capacity concept (a facet has exactly 0 or 1 clock widget, not up to [com.facetlauncher.app.domain.HUB_MAX_WIDGETS]). */
+    val remaining: Int? = 0,
 )
 
 enum class AddFailureReason { HUB_FULL, SETUP_CANCELLED }

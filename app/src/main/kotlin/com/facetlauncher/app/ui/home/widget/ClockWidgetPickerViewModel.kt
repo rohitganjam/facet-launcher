@@ -1,14 +1,14 @@
-package com.facetlauncher.app.ui.hub.picker
+package com.facetlauncher.app.ui.home.widget
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.WidgetPlacementRepository
-import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
-import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
-import com.facetlauncher.app.domain.PlaceWidgetResult
-import com.facetlauncher.app.domain.PlaceWidgetUseCase
+import com.facetlauncher.app.ui.hub.picker.AddFailureReason
+import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
+import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerUiState
+import com.facetlauncher.app.ui.hub.picker.WidgetProviderGroup
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -18,22 +18,25 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Orchestrates the add-widget flow (README `4c`): allocate -> bind (possibly detouring through
- * the system's own bind-permission dialog) -> configure (possibly detouring through the
- * provider's own configure activity) -> place -> persist. Generalizes `CalendarSettingsScreen.kt`'s
- * direct-onClick `rememberLauncherForActivityResult` pattern into an event-driven one, since this
- * flow has two independent, sequential system-Activity detours rather than just one permission ask.
+ * PRD F15's "Use custom widget" flow — allocate -> bind (possibly detouring through the system's
+ * own bind-permission dialog) -> configure (possibly detouring through the provider's own
+ * configure activity) -> bind as the target facet's clock. Mirrors
+ * [com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel]'s own orchestration shape
+ * (reusing its [HubAddWidgetEvent]/[HubWidgetPickerUiState]/[WidgetProviderGroup] types directly,
+ * since the Activity-result-detour shape is identical) but finishes differently: no grid
+ * placement — this facet has exactly one clock slot, not up to
+ * [com.facetlauncher.app.domain.HUB_MAX_WIDGETS] — so [HubWidgetPickerUiState.remaining] is always
+ * `null` here (hides the picker's "N left" counter) and the finish step writes straight to
+ * [FacetRepository] instead of [com.facetlauncher.app.data.WidgetPlacementRepository].
  */
 @HiltViewModel
-class HubWidgetPickerViewModel @Inject constructor(
+class ClockWidgetPickerViewModel @Inject constructor(
     private val appWidgetRepository: AppWidgetRepository,
-    private val widgetPlacementRepository: WidgetPlacementRepository,
-    private val placeWidget: PlaceWidgetUseCase,
+    private val facetRepository: FacetRepository,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -41,47 +44,39 @@ class HubWidgetPickerViewModel @Inject constructor(
     private val _events = MutableSharedFlow<HubAddWidgetEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<HubAddWidgetEvent> = _events.asSharedFlow()
 
-    /** The one add in flight, if any — carried across the bind/configure round trips back from the composable. */
+    /** The one bind in flight, if any — carried across the bind/configure round trips back from the composable. */
     private var pendingAppWidgetId: Int? = null
 
-    val uiState: StateFlow<HubWidgetPickerUiState> = combine(
-        query,
-        widgetPlacementRepository.observeAll(),
-        allOptions,
-    ) { currentQuery, placements, options ->
+    /** Which facet this bind is for — set when the flow starts, since it must not change mid-flow even if the user could otherwise switch facets. */
+    private var pendingFacetId: Long? = null
+
+    val uiState: StateFlow<HubWidgetPickerUiState> = combine(query, allOptions) { currentQuery, options ->
         val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
         val filtered = if (currentQuery.isBlank()) {
             currentOptions
         } else {
-            // Search only by app name, not widget name, per user request.
             currentOptions.filter { it.appLabel.contains(currentQuery, ignoreCase = true) }
         }
         HubWidgetPickerUiState(
             query = currentQuery,
             groups = filtered.groupBy { it.appLabel }.map { (appLabel, options) -> WidgetProviderGroup(appLabel, options) },
-            remaining = (HUB_MAX_WIDGETS - placements.size).coerceAtLeast(0),
+            remaining = null,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState(remaining = null))
 
     fun onQueryChange(newQuery: String) {
         query.value = newQuery
     }
 
-    /**
-     * Resets search query and cached widget options. Called when the user exits the hub screen
-     * to ensure a fresh state on return.
-     */
+    /** Called when the picker is dismissed, so a fresh open starts clean — mirrors [com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel.reset]. */
     fun reset() {
         query.value = ""
         allOptions.value = null
     }
 
-    fun onProviderSelect(option: WidgetProviderOption) {
+    fun onProviderSelect(option: WidgetProviderOption, facetId: Long) {
         viewModelScope.launch {
-            if ((uiState.value.remaining ?: Int.MAX_VALUE) <= 0) {
-                _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))
-                return@launch
-            }
+            pendingFacetId = facetId
             val appWidgetId = appWidgetRepository.allocateAppWidgetId()
             if (!appWidgetRepository.bindAppWidgetIdIfAllowed(appWidgetId, option.provider, option.userHandle)) {
                 pendingAppWidgetId = appWidgetId
@@ -114,12 +109,7 @@ class HubWidgetPickerViewModel @Inject constructor(
                 failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
                 return@launch
             }
-            val info = appWidgetRepository.getAppWidgetInfo(appWidgetId)
-            if (info == null) {
-                failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
-                return@launch
-            }
-            finishPlacing(appWidgetId, info.provider.packageName, info.provider.className)
+            finishBinding(appWidgetId)
         }
     }
 
@@ -135,33 +125,20 @@ class HubWidgetPickerViewModel @Inject constructor(
             _events.emit(HubAddWidgetEvent.LaunchConfigure(configureIntentSender))
             return
         }
-        finishPlacing(appWidgetId, info.provider.packageName, info.provider.className)
+        finishBinding(appWidgetId)
     }
 
-    private suspend fun finishPlacing(appWidgetId: Int, providerPackageName: String, providerClassName: String) {
-        val existing = widgetPlacementRepository.observeAll().first()
-        // Prefers the provider's declared targetCellWidth/Height (API 31+) over the legacy
-        // minWidth/minHeight dp math — see AppWidgetRepository.defaultSpanFor.
-        val (colSpan, rowSpan) = appWidgetRepository.defaultSpan(appWidgetId) ?: (1 to 1)
-        when (val result = placeWidget(existing, colSpan, rowSpan)) {
-            is PlaceWidgetResult.Placed -> {
-                widgetPlacementRepository.upsert(
-                    WidgetPlacementEntity(
-                        appWidgetId = appWidgetId,
-                        providerPackageName = providerPackageName,
-                        providerClassName = providerClassName,
-                        row = result.row,
-                        col = result.col,
-                        colSpan = colSpan,
-                        rowSpan = rowSpan,
-                        profile = appWidgetRepository.profileForWidget(appWidgetId),
-                        userId = appWidgetRepository.userIdForWidget(appWidgetId),
-                    ),
-                )
-                _events.emit(HubAddWidgetEvent.WidgetAdded)
-            }
-            PlaceWidgetResult.HubFull -> failAndRelease(appWidgetId, AddFailureReason.HUB_FULL)
+    /** Releases this facet's previously-bound clock widget id (if any) before storing the new one — never leaves the old id leaked. */
+    private suspend fun finishBinding(appWidgetId: Int) {
+        val facetId = pendingFacetId
+        val facet = facetId?.let { facetRepository.getById(it) }
+        if (facet == null) {
+            failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
+            return
         }
+        facet.clockWidgetAppWidgetId?.let { appWidgetRepository.deleteAppWidgetId(it) }
+        facetRepository.setClockWidgetAppWidgetId(facet, appWidgetId)
+        _events.emit(HubAddWidgetEvent.WidgetAdded)
     }
 
     private suspend fun failAndRelease(appWidgetId: Int, reason: AddFailureReason) {

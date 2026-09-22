@@ -62,7 +62,9 @@ import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
+import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
@@ -82,6 +84,9 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.facetlauncher.app.ui.home.ClockWidgetFacetController
+import com.facetlauncher.app.ui.home.ClockWidgetHostController
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Rule
@@ -124,6 +129,13 @@ class KeyboardDismissalTest {
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 val notificationBadgeRepository = NotificationBadgeRepository()
                 val notificationAccessRepository = NotificationAccessRepository(context)
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
+                )
                 HomeViewModel(
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
@@ -145,6 +157,8 @@ class KeyboardDismissalTest {
                     facetRepository,
                     DefaultLauncherRepository(context),
                     ObserveQuickAddStateUseCase(),
+                    ClockWidgetHostController(appWidgetRepository),
+                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
                 )
             }
             launcherViewModel = remember {
@@ -252,6 +266,19 @@ class KeyboardDismissalTest {
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
+            val clockWidgetPickerViewModel = remember {
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
+                val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
+                val facetRepository = FacetRepository(database.facetDao())
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
+                )
+                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository)
+            }
             // A throwaway set of repos, same as this file's other view models — none of this
             // test's cases touch the carousel itself, so correctness here doesn't matter, only
             // that it constructs.
@@ -274,6 +301,16 @@ class KeyboardDismissalTest {
                     facetRepository,
                     settingsRepository,
                     wallpaperRepository,
+                    DeleteFacetUseCase(
+                        facetRepository,
+                        AppWidgetRepository(
+                            context,
+                            AppWidgetManager.getInstance(context),
+                            LauncherAppWidgetHost(context),
+                            context.getSystemService(UserManager::class.java),
+                            appRepository,
+                        ),
+                    ),
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
@@ -302,6 +339,7 @@ class KeyboardDismissalTest {
                     privateSpaceViewModel = privateSpaceViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
+                    clockWidgetPickerViewModel = clockWidgetPickerViewModel,
                     facetViewModel = facetViewModel,
                     launcherViewModel = launcherViewModel,
                 )

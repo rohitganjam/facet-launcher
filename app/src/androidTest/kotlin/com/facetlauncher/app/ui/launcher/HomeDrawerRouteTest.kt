@@ -79,7 +79,9 @@ import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
+import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
+import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
@@ -99,6 +101,9 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.facetlauncher.app.ui.home.ClockWidgetFacetController
+import com.facetlauncher.app.ui.home.ClockWidgetHostController
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -206,6 +211,13 @@ class HomeDrawerRouteTest {
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 val notificationBadgeRepository = NotificationBadgeRepository()
                 val notificationAccessRepository = NotificationAccessRepository(context)
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
+                )
                 HomeViewModel(
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
@@ -227,6 +239,8 @@ class HomeDrawerRouteTest {
                     facetRepository,
                     DefaultLauncherRepository(context),
                     ObserveQuickAddStateUseCase(),
+                    ClockWidgetHostController(appWidgetRepository),
+                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
                 )
             }
             val launcherViewModel = remember {
@@ -331,6 +345,16 @@ class HomeDrawerRouteTest {
                 )
                 HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, PlaceWidgetUseCase())
             }
+            val clockWidgetPickerViewModel = remember {
+                val appWidgetRepository = AppWidgetRepository(
+                    context,
+                    AppWidgetManager.getInstance(context),
+                    LauncherAppWidgetHost(context),
+                    context.getSystemService(UserManager::class.java),
+                    appRepository,
+                )
+                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository)
+            }
             // Shares the same facetRepository/settingsRepository/app-backed repos as
             // homeViewModel/launcherViewModel above — same reasoning as that block's own doc: a
             // separate throwaway copy here would observe a different activeFacetId than what
@@ -341,6 +365,16 @@ class HomeDrawerRouteTest {
                     facetRepository,
                     settingsRepository,
                     wallpaperRepository,
+                    DeleteFacetUseCase(
+                        facetRepository,
+                        AppWidgetRepository(
+                            context,
+                            AppWidgetManager.getInstance(context),
+                            LauncherAppWidgetHost(context),
+                            context.getSystemService(UserManager::class.java),
+                            appRepository,
+                        ),
+                    ),
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
@@ -369,6 +403,7 @@ class HomeDrawerRouteTest {
                     privateSpaceViewModel = privateSpaceViewModel,
                     hubViewModel = hubViewModel,
                     widgetPickerViewModel = widgetPickerViewModel,
+                    clockWidgetPickerViewModel = clockWidgetPickerViewModel,
                     facetViewModel = facetViewModel,
                     launcherViewModel = launcherViewModel,
                 )

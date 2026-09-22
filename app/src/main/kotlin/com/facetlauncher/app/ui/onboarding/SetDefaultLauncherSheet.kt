@@ -78,11 +78,13 @@ fun SetDefaultLauncherSheet(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .background(Surface, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 // Swallows taps on the sheet's own non-interactive area (e.g. its body text) so
                 // they don't fall through to the scrim's onFinish above — same pattern as
                 // ContactConnectionsSheet's own `.clickable(enabled = false, onClick = {})`.
+                // Placed after background/clip so a ripple (if this were ever enabled) would
+                // respect the shape above rather than fill the full rectangular bounds.
                 .clickable(enabled = false, onClick = {})
-                .background(Surface, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 .padding(horizontal = 24.dp)
                 .padding(top = 20.dp, bottom = 34.dp),
         ) {

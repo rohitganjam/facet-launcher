@@ -34,6 +34,29 @@ class HomeUiStateTest {
     }
 
     @Test
+    fun `clockWidgetAppWidgetId is null when the active facet uses its native clock`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = null)),
+        )
+
+        assertEquals(null, state.clockWidgetAppWidgetId)
+    }
+
+    @Test
+    fun `clockWidgetAppWidgetId reflects the active facet's own bound widget, facet-scoped only`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 2L),
+            facets = listOf(
+                FacetEntity(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = 7),
+                FacetEntity(id = 2L, name = "Facet 2", position = 1, clockWidgetAppWidgetId = 42),
+            ),
+        )
+
+        assertEquals(42, state.clockWidgetAppWidgetId)
+    }
+
+    @Test
     fun `usage access prompt is hidden for favorites mode regardless of grant state`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),

@@ -618,6 +618,13 @@
     <string name="clock_adjust_edit_styles">Edit clock &amp; calendar styles</string>
     <string name="clock_adjust_edit_styles_subtitle">Templates, fonts, colors, and alignment</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
+    <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
+    <string name="clock_adjust_use_custom_widget">Use custom widget</string>
+    <string name="clock_adjust_use_custom_widget_subtitle">Replace the clock with a widget of your choice</string>
+    <string name="clock_adjust_switch_to_launcher_clock">Switch to launcher clock widget</string>
+    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Use Facet\'s own clock instead</string>
+    <!-- ClockWidgetPickerScreen (reuses hub_widget_picker_search/none_found/setup_cancelled — see HubWidgetPickerScreen) -->
+    <string name="clock_widget_picker_title">Choose clock widget</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Full — remove a widget first</string>

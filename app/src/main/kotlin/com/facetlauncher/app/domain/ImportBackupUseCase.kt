@@ -69,6 +69,7 @@ class ImportBackupUseCase @Inject constructor(
     private val facetDockAppRepository: FacetDockAppRepository,
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val folderRepository: FolderRepository,
+    private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
         val bundle = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
@@ -122,6 +123,12 @@ class ImportBackupUseCase @Inject constructor(
                 defaultFavoriteAppRepository.restoreDefaultFavoriteFolderPlacement(folderId, placement.position)
             }
         }
+
+        // BackupAppEntry has no portable userId (see BackupBundle's own doc comment), so every
+        // restored row lands at the -1 orphaned sentinel and won't hydrate against installed apps
+        // until resolved — same repair LauncherViewModel.init runs once per app launch, but run
+        // here too so restored apps/folders show up immediately instead of needing a restart.
+        repairOrphanedProfileRows()
 
         return ImportBackupResult.Success(
             facetCount = bundle.facets.size,

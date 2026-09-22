@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,6 +55,14 @@ import com.facetlauncher.app.ui.theme.Surface
  * Favorites/Dock rows (decided explicitly by the user to apply that same badge logic here, over
  * folding the distinction into the sentence itself, e.g. "Edit Facet clock & calendar styles" —
  * see chat history).
+ *
+ * PRD F15 — [hasCustomClockWidget] switches the sheet between two widget-choice rows rather than
+ * offering a destructive "remove": "Use custom widget" (always shown — picks a widget, or a
+ * different one if one's already active) and, only once [hasCustomClockWidget] is true, "Switch
+ * to launcher clock widget" (reverts to this facet's own native clock). "Edit … styles" is hidden
+ * while a custom widget is active — no [com.facetlauncher.app.data.model.ClockTemplateId] styling
+ * applies to a hosted widget's own content — but "Adjust size & position" stays available either
+ * way.
  */
 @Composable
 fun ClockAdjustSheet(
@@ -60,9 +70,13 @@ fun ClockAdjustSheet(
     onEditStylesClick: () -> Unit,
     onFacetSettingsClick: () -> Unit,
     onLauncherSettingsClick: () -> Unit,
+    onUseCustomWidgetClick: () -> Unit,
+    onSwitchToLauncherClockClick: () -> Unit,
     /** Non-null names the facet whose own clock/calendar styles are in effect right now; `null` means the launcher-wide default applies — see [FacetScopeBadge]. */
     overrideFacetName: String?,
     modifier: Modifier = Modifier,
+    /** Whether the active facet currently has a hosted `AppWidget` bound as its clock (PRD F15) — see this composable's own doc. */
+    hasCustomClockWidget: Boolean = false,
 ) {
     Column(
         modifier = modifier
@@ -88,15 +102,13 @@ fun ClockAdjustSheet(
             testTag = "clock_adjust_open",
         )
         CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-        AdjustRow(
-            icon = { Icon(painter = painterResource(R.drawable.ic_palette_24), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = stringResource(R.string.clock_adjust_edit_styles),
-            subtitle = stringResource(R.string.clock_adjust_edit_styles_subtitle),
-            onClick = onEditStylesClick,
-            testTag = "clock_adjust_edit_styles",
-            trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
+        ClockWidgetChoiceRows(
+            onEditStylesClick = onEditStylesClick,
+            onUseCustomWidgetClick = onUseCustomWidgetClick,
+            onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
+            overrideFacetName = overrideFacetName,
+            hasCustomClockWidget = hasCustomClockWidget,
         )
-        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
         AdjustRow(
             icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
             label = stringResource(R.string.facet_carousel_facet_settings),
@@ -112,6 +124,50 @@ fun ClockAdjustSheet(
             onClick = onLauncherSettingsClick,
             testTag = "clock_adjust_launcher_settings",
         )
+    }
+}
+
+/**
+ * PRD F15's "Edit … styles"/widget-choice rows — factored out of [ClockAdjustSheet] itself purely
+ * to stay under this codebase's max-composable-length lint rule; behavior is exactly
+ * [ClockAdjustSheet]'s own doc.
+ */
+@Composable
+private fun ClockWidgetChoiceRows(
+    onEditStylesClick: () -> Unit,
+    onUseCustomWidgetClick: () -> Unit,
+    onSwitchToLauncherClockClick: () -> Unit,
+    overrideFacetName: String?,
+    hasCustomClockWidget: Boolean,
+) = Column {
+    if (!hasCustomClockWidget) {
+        AdjustRow(
+            icon = { Icon(painter = painterResource(R.drawable.ic_palette_24), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
+            label = stringResource(R.string.clock_adjust_edit_styles),
+            subtitle = stringResource(R.string.clock_adjust_edit_styles_subtitle),
+            onClick = onEditStylesClick,
+            testTag = "clock_adjust_edit_styles",
+            trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
+        )
+        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
+    }
+    AdjustRow(
+        icon = { Icon(imageVector = Icons.Default.Widgets, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
+        label = stringResource(R.string.clock_adjust_use_custom_widget),
+        subtitle = stringResource(R.string.clock_adjust_use_custom_widget_subtitle),
+        onClick = onUseCustomWidgetClick,
+        testTag = "clock_adjust_use_custom_widget",
+    )
+    CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
+    if (hasCustomClockWidget) {
+        AdjustRow(
+            icon = { Icon(imageVector = Icons.Default.AccessTime, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
+            label = stringResource(R.string.clock_adjust_switch_to_launcher_clock),
+            subtitle = stringResource(R.string.clock_adjust_switch_to_launcher_clock_subtitle),
+            onClick = onSwitchToLauncherClockClick,
+            testTag = "clock_adjust_switch_to_launcher_clock",
+        )
+        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
     }
 }
 
@@ -158,7 +214,26 @@ private fun ClockAdjustSheetPreview() {
             onEditStylesClick = {},
             onFacetSettingsClick = {},
             onLauncherSettingsClick = {},
+            onUseCustomWidgetClick = {},
+            onSwitchToLauncherClockClick = {},
             overrideFacetName = null,
+        )
+    }
+}
+
+@Preview(name = "Custom widget active", showBackground = true)
+@Composable
+private fun ClockAdjustSheetCustomWidgetPreview() {
+    FacetLauncherTheme {
+        ClockAdjustSheet(
+            onAdjustClick = {},
+            onEditStylesClick = {},
+            onFacetSettingsClick = {},
+            onLauncherSettingsClick = {},
+            onUseCustomWidgetClick = {},
+            onSwitchToLauncherClockClick = {},
+            overrideFacetName = null,
+            hasCustomClockWidget = true,
         )
     }
 }
