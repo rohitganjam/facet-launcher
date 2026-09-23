@@ -566,7 +566,11 @@ private val RobotoFlexNarrow = FontFamily(
         com.facetlauncher.app.R.font.roboto_flex_variable,
         variationSettings = FontVariation.Settings(
             FontVariation.width(30f),
-            FontVariation.weight(480)
+            FontVariation.weight(300),
+            // "auto" optical sizing (CSS's font-optical-sizing: auto default) tracks the rendered
+            // point size — this template's digits render at 96.sp, so opsz follows that directly
+            // rather than a fixed value, unlike the fixed axis values above.
+            FontVariation.Setting("opsz", 96f)
         )
     )
 )
@@ -1122,7 +1126,16 @@ private fun RobotoFlexNarrowTemplate(
                 color = mutedTextColor,
                 textAlign = if (isRightAligned) TextAlign.End else TextAlign.Start,
             )
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, modifier = Modifier.padding(top = 7.dp), fontSize = 19.sp)
+            // One accessory per line (not the shared ClockAccessoryRow's single horizontal line)
+            // so the column grows downward and stays narrow, matching this template's own design.
+            Column(
+                horizontalAlignment = if (isRightAligned) Alignment.End else Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.padding(top = 7.dp),
+            ) {
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 19.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+            }
         }
     }
     Row(

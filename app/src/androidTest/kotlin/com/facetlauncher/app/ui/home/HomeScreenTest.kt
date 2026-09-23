@@ -639,6 +639,35 @@ class HomeScreenTest {
     }
 
     @Test
+    fun tappingAwayFromAdjustModeThenLongPressingEmptySpaceReopensTheMenu() {
+        // Given ADJUST mode entered (move handle showing), and empty space beside the clock
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+        enterAdjustMode()
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertIsDisplayed()
+
+        // When tapping that empty space dismisses ADJUST mode back to NONE
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
+            down(besideClock)
+            up()
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertDoesNotExist()
+
+        // Then a fresh long-press on that same empty space still reopens the adjust menu.
+        // Regression test: the root Box's ADJUST/NONE pointerInput branches used to share the
+        // same `pointerInput(Unit)` key, so Compose reused the ADJUST-mode gesture-detector
+        // coroutine instead of restarting it on this transition — leaving the stale tap-to-
+        // dismiss handler (no onLongPress) running forever until something forced the whole tree
+        // to recompose.
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+    }
+
+    @Test
     fun tappingLauncherSettingsInTheSheetNavigatesAndClosesIt() {
         // Given the sheet opened via a long-press on the clock, with a hoisted settings callback
         var navigated = false

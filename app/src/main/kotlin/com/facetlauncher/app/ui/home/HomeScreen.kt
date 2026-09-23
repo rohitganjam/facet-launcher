@@ -536,10 +536,17 @@ fun HomeScreen(
             // history).
             .then(
                 when (clockAdjustMode) {
-                    ClockAdjustMode.ADJUST -> Modifier.pointerInput(Unit) {
+                    // Keyed on clockAdjustMode itself, not Unit: ADJUST and NONE both install a
+                    // pointerInput at this same modifier-chain slot, so if they shared a key
+                    // Compose would reuse the existing gesture-detector node (and its already-
+                    // running coroutine) across an ADJUST->NONE transition instead of cancelling
+                    // and relaunching it — leaving the stale ADJUST tap-to-dismiss handler running
+                    // forever with no onLongPress, so nothing reopens the menu until something
+                    // else (e.g. navigating away and back) forces the whole tree to recompose.
+                    ClockAdjustMode.ADJUST -> Modifier.pointerInput(clockAdjustMode) {
                         detectTapGestures(onTap = { onAdjustModeChange(ClockAdjustMode.NONE) })
                     }
-                    ClockAdjustMode.NONE -> Modifier.pointerInput(Unit) {
+                    ClockAdjustMode.NONE -> Modifier.pointerInput(clockAdjustMode) {
                         detectTapGestures(onLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) })
                     }
                     ClockAdjustMode.MENU -> Modifier
