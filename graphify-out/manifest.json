@@ -828,9 +828,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/ClockFontOption.kt": {
-    "mtime": 1790176099.4237747,
-    "seen": 1790264486.3131971,
-    "ast_hash": "e0de9235adcc86f3c003d23bc2645902",
+    "mtime": 1790265482.1428335,
+    "seen": 1790265909.457431,
+    "ast_hash": "aebe7553cffdcce53bafcdd9c8a46ace",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/ClockTemplateId.kt": {
@@ -870,9 +870,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/LauncherFontOption.kt": {
-    "mtime": 1789702996.355847,
-    "seen": 1789704148.380238,
-    "ast_hash": "feaacd3ac8153353bb5c6b60c57bebfe",
+    "mtime": 1790265477.9138157,
+    "seen": 1790265909.457438,
+    "ast_hash": "587afc05470c7e241bb5d47ab21f402b",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/LauncherSettings.kt": {
@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/ClockFonts.kt": {
-    "mtime": 1789191962.8804216,
-    "seen": 1789191966.558748,
-    "ast_hash": "fd1cbc38eaf3439e817ab89e9a6976b6",
+    "mtime": 1790265512.2927942,
+    "seen": 1790265909.457539,
+    "ast_hash": "b684fc3ae88ab50e1e4b7130c588638c",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/Color.kt": {
@@ -3051,6 +3051,24 @@
     "mtime": 1790215139.2229698,
     "seen": 1790264486.313131,
     "ast_hash": "aee190ce4b933357bdaebc06a58a9595",
+    "semantic_hash": ""
+  },
+  "THIRD_PARTY_FONT_LICENSES/inter_OFL.txt": {
+    "mtime": 1790265473.0336018,
+    "seen": 1790265909.4576252,
+    "ast_hash": "5e95cb23ed621124015c5d23224ba2d3",
+    "semantic_hash": ""
+  },
+  "THIRD_PARTY_FONT_LICENSES/lato_OFL.txt": {
+    "mtime": 1790265473.7819252,
+    "seen": 1790265909.457626,
+    "ast_hash": "39591640d6982378c43eba1db4b68e12",
+    "semantic_hash": ""
+  },
+  "THIRD_PARTY_FONT_LICENSES/montserrat_OFL.txt": {
+    "mtime": 1790265473.3552992,
+    "seen": 1790265909.4576268,
+    "ast_hash": "2fdec60339ef243dcaca42a0c7bce717",
     "semantic_hash": ""
   }
 }
