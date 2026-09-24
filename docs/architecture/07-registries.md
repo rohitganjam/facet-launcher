@@ -13,17 +13,17 @@ dependency is not listed the class does not have it.
 | `AppWidgetRepository` (`data/widget`) | `AppWidgetManager` + `LauncherAppWidgetHost` | `Context`, `AppWidgetManager`, `LauncherAppWidgetHost`, `UserManager`, `AppRepository` | provider listing, `allocateAppWidgetId`, `bindAppWidgetIdIfAllowed`, `createBindIntent`, `createConfigureIntentSender`, `createHostView`, `updateWidgetSize`, `start/stopListening`, `observeProviderChanges()`, `deleteAppWidgetId` | `HubViewModel`, `HubWidgetPickerViewModel`, `BackupRestoreViewModel`, `ObserveHubStateUseCase`, `DeleteWidgetUseCase` |
 | `BackupRepository` | SAF `Uri` file I/O + JSON | `Context` | `writeBackup(uri, bundle)`, `readBackup(uri)` (IO) | `ExportBackupUseCase`, `ImportBackupUseCase` |
 | `BatteryRepository` | `ACTION_BATTERY_CHANGED` sticky broadcast | `Context` | `observeBatteryStatus(): Flow` | `ObserveClockAccessoriesUseCase` |
-| `CalendarPermissionRepository` (`open`) | `checkSelfPermission(READ_CALENDAR)` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `CalendarSettingsViewModel`, `PermissionsViewModel` |
-| `CalendarRepository` | `CalendarContract` via `ContentResolver` | `ContentResolver` | `getTodayEvents(ids, includeAllDay)` (IO, one-shot), calendar listing | same three + `CalendarSettingsViewModel` |
+| `CalendarPermissionRepository` (`open`) | `checkSelfPermission(READ_CALENDAR)` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `CalendarSettingsViewModel`, `PermissionsViewModel`, `AppearanceSettingsViewModel` |
+| `CalendarRepository` | `CalendarContract` via `ContentResolver` | `ContentResolver` | `getTodayEvents(ids, includeAllDay)` (IO, one-shot), calendar listing | same three + `CalendarSettingsViewModel`, `AppearanceSettingsViewModel` |
 | `ContactPermissionRepository` | `checkSelfPermission(READ_CONTACTS)` | `Context` | `isGranted()` | `DrawerViewModel`, `PermissionsViewModel` |
 | `ContactRepository` | `ContactsContract` via `ContentResolver` | `ContentResolver`, `Context` | `searchContacts(q, limit)`, `getConnections(contactId)` (IO) | `DrawerViewModel` |
-| `DefaultAppRepository` | `PackageManager.resolveActivity` for browser/SMS/camera/mail/phone intents | `Context` | `getDefaultAppPackages()` (IO) | `SeedDefaultDockUseCase`, `AppearanceSettingsViewModel`, `HomeAppsListSettingsViewModel` |
-| `DefaultFavoriteAppRepository` | Room `default_favorite_apps` + `default_favorite_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | `observeDefaultFavorites()`, `observeDefaultItems()`, add/remove/place/reorder, `removeByPackage/UserId`, raw getters, `restore*`, `getOrphanedRows`, `backfillUserId`, `deleteAll*` | 6 use cases (add/remove favorites, cleanup, repair, export, import), 3 observe use cases, 4 ViewModels |
+| `DefaultAppRepository` | `PackageManager.resolveActivity` for browser/SMS/camera/mail/phone intents | `Context` | `getDefaultAppPackages()` (IO) | `SeedDefaultDockUseCase`, `HomeAppsListSettingsViewModel` |
+| `DefaultFavoriteAppRepository` | Room `default_favorite_apps` + `default_favorite_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | `observeDefaultFavorites()`, `observeDefaultItems()`, add/remove/place/reorder, `removeByPackage/UserId`, raw getters, `restore*`, `getOrphanedRows`, `backfillUserId`, `deleteAll*` | 6 use cases (add/remove favorites, cleanup, repair, export, import), 3 observe use cases, 5 ViewModels |
 | `DefaultLauncherRepository` | `RoleManager` / `PackageManager` home-role query | `Context` | `isDefaultLauncher()`, `requestDefaultLauncherIntent()` | `HomeViewModel`, `SettingsViewModel` |
-| `DockAppRepository` | Room `dock_apps` + `dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | as `DefaultFavoriteAppRepository`, dock-named; `MAX_APPS` constant | 9 use cases, 5 ViewModels |
-| `FacetDockAppRepository` | Room `facet_dock_apps` + `facet_dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeDockItemsForFacets(ids)`, `replaceItems(facetId, items)` | 8 use cases, 3 ViewModels |
-| `FacetRepository` | Room `facets` | `FacetDao` | `observeFacets()`, `getById`, `addFacet()`, `renameFacet`, 30 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters, `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 13 use cases, 8 ViewModels |
-| `FavoriteAppRepository` | Room `favorite_apps` + `favorite_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeFavoriteItemsForFacets(ids)`, `replaceItems` | 8 use cases, 3 ViewModels |
+| `DockAppRepository` | Room `dock_apps` + `dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | as `DefaultFavoriteAppRepository`, dock-named; `MAX_APPS` constant | 9 use cases, 6 ViewModels |
+| `FacetDockAppRepository` | Room `facet_dock_apps` + `facet_dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeDockItemsForFacets(ids)`, `replaceItems(facetId, items)` | 8 use cases, 4 ViewModels |
+| `FacetRepository` | Room `facets` | `FacetDao` | `observeFacets()`, `getById`, `addFacet()`, `renameFacet`, 24 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters (trimmed — `updateOverridingApps`/`updateOverridingDock` no longer take the four look-field params, moved to `AppearanceSettingsViewModel`'s own per-column setters), `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 13 use cases, 9 ViewModels |
+| `FavoriteAppRepository` | Room `favorite_apps` + `favorite_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeFavoriteItemsForFacets(ids)`, `replaceItems` | 8 use cases, 4 ViewModels |
 | `FolderRepository` | Room `folders` + `folder_apps` | `FolderDao`, `AppRepository` | `observeFolders(): Flow<List<Folder>>` (hydrated), create/rename/delete, add/remove/reorder members, `removeByPackage/UserId`, `getRawFolders`, `restoreFolder`, `deleteAllFolders`, orphan repair | 4 placement repositories, 5 use cases, 6 ViewModels |
 | `NextAlarmRepository` | `AlarmManager.nextAlarmClock` + `ACTION_NEXT_ALARM_CLOCK_CHANGED` | `Context`, `Clock` | `observeNextAlarmMillis(): Flow<Long?>` | `ObserveClockAccessoriesUseCase` |
 | `NotificationAccessRepository` (`open`) | `NotificationManagerCompat.getEnabledListenerPackages` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel`, 3 settings ViewModels |
@@ -31,7 +31,7 @@ dependency is not listed the class does not have it.
 | `NotificationShadeRepository` | `StatusBarManager.expandNotificationsPanel` (reflection, `EXPAND_STATUS_BAR`) | `Context` | `expand()` | `HomeViewModel` |
 | `PrivateSpaceRepository` | `UserManager` quiet-mode + `ACTION_PROFILE_*` broadcasts | `UserManager`, `AppRepository`, `Context` | `observePrivateSpaceState(): Flow<PrivateSpaceState>`, `observePrivateSpaceApps()`, `requestUnlock()` | `DrawerViewModel`, `PrivateSpaceViewModel` |
 | `SecureFolderRepository` | `PackageManager.getLaunchIntentForPackage(Samsung Secure Folder)` | `Context` | `launchIntent(): Intent?` | `DrawerViewModel` |
-| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 50 `suspend fun set*/reset*/mark*` writers | 11 use cases, 20 ViewModels |
+| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 48 `suspend fun set*/reset*/mark*` writers | 11 use cases, 20 ViewModels |
 | `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context` | `search(query)` (IO) | `DrawerViewModel` |
 | `UsageAccessRepository` | `AppOpsManager.unsafeCheckOpNoThrow(GET_USAGE_STATS)` | `AppOpsManager`, `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `PermissionsViewModel`, `UsageAccessExplanationViewModel` |
 | `UsageStatsRepository` | `UsageStatsManager.queryUsageStats` | `UsageStatsManager`, `AppRepository` | `getRecentApps(limit)`, `getMostUsedApps(limit)` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase` |
@@ -101,7 +101,7 @@ cycles; `AppRepository` is the single root.
 | `ResolveWidgetDropUseCase` | pure grid | — | `HubViewModel` |
 | `ResolveWidgetResizeUseCase` | pure grid | — | `HubViewModel` |
 | `SeedDefaultDockUseCase` | startup write (once, `defaults_seeded`) | `SettingsRepository`, `DefaultAppRepository`, `DockAppRepository`, `GetInstalledAppsUseCase` | `LauncherViewModel` |
-| `SelectPreviewAppsUseCase` | pure | — | `AppearanceSettingsViewModel`, `HomeAppsListSettingsViewModel` |
+| `SelectPreviewAppsUseCase` | pure | — | `HomeAppsListSettingsViewModel` |
 | `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
 
 Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridConstants.kt`
@@ -126,7 +126,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `ClockStyleGalleryViewModel` | `ClockStyleGalleryScreen` | `facetId?` |
 | `OnboardingViewModel` | `OnboardingScreen` | — |
 | `SettingsViewModel` | `SettingsScreen` | — |
-| `AppearanceSettingsViewModel` | `AppearanceSettingsScreen` | — |
+| `AppearanceSettingsViewModel` | `AppearanceSettingsScreen` | `facetId?` |
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |
 | `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId?` |

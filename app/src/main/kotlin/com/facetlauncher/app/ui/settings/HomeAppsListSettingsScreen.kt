@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,9 +35,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,6 +57,7 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
+import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -68,7 +72,7 @@ import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
 
-/** Settings → Home & Apps → Home Apps List — also a facet's own Apps-list screen when `viewModel` is facet-scoped. */
+/** Settings → Home & Apps → Home Apps List — also a facet's own Apps-list screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
 @Composable
 fun HomeAppsListSettingsScreen(
     onBack: () -> Unit,
@@ -81,12 +85,10 @@ fun HomeAppsListSettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onEditFavorites = onEditFavorites,
-        onAppRowPositionChange = viewModel::setAppRowPosition,
-        onAppRowPresentationChange = viewModel::setAppRowPresentation,
         onListContentModeChange = viewModel::setListContentMode,
         onAppsToShowCountChange = viewModel::setAppsToShowCount,
-        onAppListVerticalAlignmentChange = viewModel::setAppListVerticalAlignment,
         onReorderFavorites = viewModel::reorderFavorites,
+        onOverridingChange = viewModel::setOverriding,
         modifier = modifier,
     )
 }
@@ -96,14 +98,14 @@ private fun HomeAppsListSettingsContent(
     uiState: HomeAppsListUiState,
     onBack: () -> Unit,
     onEditFavorites: () -> Unit,
-    onAppRowPositionChange: (AppRowPosition) -> Unit,
-    onAppRowPresentationChange: (AppRowPresentation) -> Unit,
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
-    onAppListVerticalAlignmentChange: (AppListVerticalAlignment) -> Unit,
     onReorderFavorites: (List<PlacedItem>) -> Unit,
+    onOverridingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
+
     StickyHeaderLayout(
         modifier = modifier,
         header = { HomeAppsListSettingsHeader(onBack = onBack) },
@@ -117,6 +119,25 @@ private fun HomeAppsListSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
+                if (uiState.isFacetScoped) {
+                    item {
+                        InheritOverrideCard(
+                            overriding = uiState.isOverriding,
+                            onOverridingChange = onOverridingChange,
+                            testTagPrefix = "home_apps_list",
+                            inheritSubtitle = if (uiState.globalListContentMode != ListContentMode.FAVORITES) {
+                                stringResource(
+                                    R.string.dot_join_2,
+                                    stringResource(uiState.globalListContentMode.displayNameRes),
+                                    pluralStringResource(R.plurals.format_count_apps, uiState.globalAppsToShowCount, uiState.globalAppsToShowCount),
+                                )
+                            } else {
+                                stringResource(uiState.globalListContentMode.displayNameRes)
+                            },
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
                 item {
                     HomeSurfacePreview(
                         appList = uiState.previewApps,
@@ -132,38 +153,12 @@ private fun HomeAppsListSettingsContent(
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_position),
-                            options = AppRowPosition.entries,
-                            selected = uiState.appRowPosition,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppRowPositionChange,
-                            testTag = "default_app_row_position_row",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_list_position),
-                            options = AppListVerticalAlignment.entries,
-                            selected = uiState.appListVerticalAlignment,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppListVerticalAlignmentChange,
-                            testTag = "app_list_vertical_alignment_row",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_presentation),
-                            options = AppRowPresentation.entries,
-                            selected = uiState.appRowPresentation,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppRowPresentationChange,
-                            testTag = "default_app_row_presentation_row",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
                             title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_content_facet else R.string.home_apps_list_content_default),
                             options = ListContentMode.entries,
                             selected = uiState.listContentMode,
                             label = { stringResource(it.displayNameRes) },
                             onSelect = onListContentModeChange,
+                            enabled = controlsEnabled,
                             testTag = "default_list_content_row",
                         )
                         if (uiState.listContentMode != ListContentMode.FAVORITES) {
@@ -174,6 +169,7 @@ private fun HomeAppsListSettingsContent(
                                 selected = uiState.appsToShowCount,
                                 label = { it.toString() },
                                 onSelect = onAppsToShowCountChange,
+                                enabled = controlsEnabled,
                                 testTag = "default_apps_to_show_row",
                             )
                         }
@@ -182,11 +178,15 @@ private fun HomeAppsListSettingsContent(
                             title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_favorites_facet else R.string.home_apps_list_favorites_default),
                             subtitle = uiState.favoritesLabel,
                             onClick = onEditFavorites,
+                            enabled = controlsEnabled,
                             testTag = "default_favorites_row",
                         )
                         if (uiState.favorites.isNotEmpty()) {
                             CardDivider()
-                            DefaultFavoritesReorderList(favorites = uiState.favorites, onReorder = onReorderFavorites)
+                            DefaultFavoritesReorderList(
+                                favorites = uiState.favorites,
+                                onReorder = if (controlsEnabled) onReorderFavorites else { {} },
+                            )
                         }
                     }
                 }
@@ -213,13 +213,14 @@ private fun HomeAppsListSettingsHeader(onBack: () -> Unit, modifier: Modifier = 
 }
 
 @Composable
-private fun HomeAppsListClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
+private fun HomeAppsListClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Row(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 13.dp),
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 13.dp)
+            .alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -326,12 +327,10 @@ private fun HomeAppsListSettingsScreenPreview() {
             uiState = HomeAppsListUiState(),
             onBack = {},
             onEditFavorites = {},
-            onAppRowPositionChange = {},
-            onAppRowPresentationChange = {},
             onListContentModeChange = {},
             onAppsToShowCountChange = {},
-            onAppListVerticalAlignmentChange = {},
             onReorderFavorites = {},
+            onOverridingChange = {},
         )
     }
 }

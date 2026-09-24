@@ -2627,3 +2627,625 @@ treated as committed. Recorded here so the shape of the work isn't lost.
 - [ ] **Backup/restore**: extend `BackupBundle`'s per-facet fields the same way as other widget ids — F14's existing "re-binding isn't fully automatic" caveat applies here too.
 - [ ] **Docs**: update `docs/architecture` per CLAUDE.md's table — likely `02` (new `FacetEntity` column + migration step), `03 §4` (Home startup sequence), `10` (widget host lifecycle), `13` (facet Clock-card settings), possibly a new flow doc if this grows past what those already cover.
 - [ ] **Tests**: unit (persistence round-trip on `FacetEntity`; resize-bound-clamping as a pure function); instrumented (`ClockBlockTest`/`HomeScreenTest`/`FacetCarouselScreenTest` — hosted widget renders instead of native clock for the facet that set it, a sibling facet's native clock is unaffected; resize drag pushes correct dp to a fake `AppWidgetRepository`; orphan fallback restores that facet's native clock; deleting a facet with a bound widget releases its `appWidgetId`).
+
+---
+
+## 📝 Planned, not started — Calendar/Appearance styling consolidation + facet-symmetric Appearance overrides
+
+Design-only so far (see chat history for the full back-and-forth this fell out of). Calendar's own
+styling controls (`calendarFontWeight`/`calendarFontOption`/`calendarColorOption`/`calendarAlignment`,
+today a "Calendars" card inside `ClockStyleGalleryScreen`) largely duplicate knobs that already exist
+elsewhere for the same purpose, at both the global and per-facet layer. Consolidating them removes
+settings sprawl; doing it well surfaces a second, larger gap — `AppearanceSettingsScreen`
+(`homeAppsFontWeight`/`launcherFontOption`/`fontScaleOption`/`appLabelColorOption`) is the only
+facet-customizable-looking settings category with **no** actual per-facet override mechanism, unlike
+Apps/Dock/Clock+Calendar/Calendar-selection which all have one. Split into two parts so the
+lower-risk consolidation can ship and settle before the bigger override feature starts.
+
+**Decisions locked in from discussion, not to be re-litigated without new information:**
+- **Font size** needs no work — `CalendarEventsBlock` already reads `MaterialTheme.typography.bodyLarge`,
+  already scaled app-wide by `fontScaleOption` (`Type.kt`).
+- **Font weight** (`calendarFontWeight` → `homeAppsFontWeight`) and **font family**
+  (`calendarFontOption: ClockFontOption` → `launcherFontOption: LauncherFontOption`) are clean merges —
+  same underlying 5-font set, `ClockFontOption`'s only extra member (`LAUNCHER_DEFAULT`) is a
+  passthrough sentinel that becomes moot once calendar has no independent font choice.
+- **Color** (`calendarColorOption` → `appLabelColorOption`, not `clockColorOption`/`clockAccentColorOption`):
+  all four already share the `ClockColorOption` type, but `clockAccentColorOption` is only read by
+  templates where `usesAccentColor` is true (bad fit — calendar color would silently no-op on other
+  templates), and `clockColorOption` risks tying calendar's body-like text to what's often a
+  deliberately bold/loud clock-statement color. `appLabelColorOption` (default `THEME`) matches the
+  weight/family decision's direction and calendar's actual role as smaller, denser, list-like text.
+- **Alignment** (`calendarAlignment` → `clockAlignment`): both fields are already per-facet-overridable
+  today, and `ClockStyleGalleryScreen`/`ClockStyleGalleryViewModel` are already dual-mode (global route
+  `CLOCK_STYLE_GALLERY` vs facet-scoped `FACET_CLOCK_STYLE_GALLERY/{facetId}`, branching on a `facetId`
+  read off `SavedStateHandle`) — this merge rides on existing machinery, no new facet work needed.
+- **Preview**: `ClockStyleGalleryScreen`'s embedded `CalendarEventsBlock` is the *only* live
+  calendar-styling preview in the app (`AppearanceSettingsScreen`'s `HomeSurfacePreview` has no clock/
+  calendar rendering at all) — losing the Calendars card must not lose that preview. Keep the
+  `CalendarEventsBlock` call, drop only the control rows above it; it already reads live settings
+  state, so it keeps working as a read-only "here's what your calendar looks like" strip.
+- **Nav**: "Clock style" moves from a top-level `SettingsScreen` row into a row inside
+  `AppearanceSettingsScreen` (same `CLOCK_STYLE_GALLERY` route, different entry point). "Calendars"
+  (which-calendars-to-show, `CalendarSettingsScreen`) is unaffected and stays where it is — its
+  "Clock & Calendar" section in `SettingsScreen` loses its other row and should be renamed or folded
+  into "Home & Apps" rather than left as a one-item section.
+- **Full preview**: give Appearance a live mockup (wallpaper + clock + apps + dock), matching what
+  `FacetCarouselScreen`'s private `FacetPreviewPage` already renders for facet previews. Don't build a
+  third independent implementation alongside `FacetPreviewPage` and `HomeSurfacePreview` (which
+  already duplicate the same wallpaper/apps/dock scaffold) — extract a shared "mini home preview"
+  composable both consumers call, parameterized cleanly rather than `FacetPreviewPage`'s current ~30
+  flat params. `ClockBlock` is already proven safe in a compact/scaled, non-interactive context (no
+  gesture code baked in — drag-to-resize lives externally in `HomeScreen.kt`; `FacetPreviewPage`
+  already renders it scaled via `clockScale` + a measured `LocalDensity`), so folding it into the
+  shared composable is low-risk.
+- **Facet-level Clock folds into the same Appearance override, not its own category** (revised —
+  supersedes the original Part B sketch, direct request): mirroring Part A's global nav move, the
+  facet-scoped "Clock style" row moves inside the facet Appearance screen too, and
+  `FacetSettingsScreen`'s separate Clock+Calendar `InheritOverrideCard` goes away — one Appearance
+  `InheritOverrideCard` now gates clock styling too. "Calendars" (which-calendars-to-show, backed by
+  `overrideCalendar`) stays its own independent section — data selection, not style, unaffected by
+  this. The Appearance section also moves higher in `FacetSettingsScreen`'s row order (right after
+  "Rename facet", ahead of Apps list/Dock) since it now governs the facet's overall look, not just one
+  slice of it.
+- **Per-field override granularity, facet-only — reuses the existing `LAUNCHER_DEFAULT` sentinel
+  pattern, not a new mechanism** (corrected — supersedes an earlier sketch of this section that
+  invented nullable columns and a new paired selector widget; direct correction: "this is already
+  supported today — calendar and clock font options already support launcher default as a choice.
+  this same concept should be extended"). `ClockFontOption` already ships exactly this: a
+  `LAUNCHER_DEFAULT` member (`ClockFontOption.kt:20`) that "doesn't pick a font of its own; it resolves
+  to whatever `LauncherFontOption` ... is currently set to" — used as the *default value* of both
+  `LauncherSettings.clockFontOption` and `FacetEntity.clockFontOption`, with no separate override
+  boolean or nullable column involved (`FacetEntity.kt:32`/`40`). Extending "this same concept" means:
+  add an equivalent sentinel member to each enum backing a field that should gain per-field facet
+  granularity — `FontWeightOption` and `FontScaleOption` need one (note `FontScaleOption` already has a
+  member literally named `DEFAULT(1.0f)` — the concrete "normal size" stop — so the new sentinel must
+  be named `LAUNCHER_DEFAULT` like `ClockFontOption`'s, not `DEFAULT`, to avoid colliding with it), and
+  any color enum gaining new facet reach needs the same. `FacetEntity` columns stay **non-null**,
+  exactly like `clockFontOption` today — no nullable-column migration, no new override-tracking field.
+  Dropdown-backed fields surface the sentinel as one more `LabeledDropdownRow` entry, same as
+  `clockFontOption` today. **Sliders are the one exception, direct request**: a slider's own step range
+  has no clean ordinal spot for "inherit" (is it below Small? its own category?), so
+  `FontSizeSlider`/`FontWeightSlider` get a small paired dropdown instead — "Launcher default" /
+  "Override" — sitting above the slider, facet-mode only; picking "Override" enables the slider
+  (seeded at the current resolved value, not an arbitrary stop) and writes a concrete value; picking
+  "Launcher default" disables the slider and writes the `LAUNCHER_DEFAULT` sentinel. The underlying
+  data model is unchanged by this — still the same non-null enum + sentinel value as every other
+  field, just a different UI presentation for these two specifically.
+- **The one real difference from the existing pattern**: for clock fields, `LAUNCHER_DEFAULT` is
+  meaningful even in the *global* `AppearanceSettingsScreen`/`ClockStyleGalleryScreen`, because
+  `clockFontOption` is a genuinely separate field from `launcherFontOption` at every scope — "should
+  the clock specifically follow the launcher font, or have its own?" is a sensible question globally,
+  not just per-facet. For the *new* Appearance-proper fields, the global screen **is** where the
+  launcher default itself gets defined, so offering "use launcher default" there is circular and must
+  not appear — the sentinel option on these specific fields is filtered out of the option list when the
+  screen is in global mode, and only shown in facet mode. Existing clock fields (`clockFontOption`,
+  `clockColorOption`, `clockAccentColorOption`, etc.) keep their current global-and-facet availability
+  unchanged.
+- **Correction: `launcherFontOption` belongs in the new facet-overridable set after all** — an earlier
+  pass here wrongly said it "needs no sentinel... nothing above it to defer to" and dropped it from the
+  new-fields list. That's true only of the *global* copy (correct, nothing above global to defer to);
+  the *facet* copy of `launcherFontOption` needs exactly the same treatment as
+  `homeAppsFontWeight`/`fontScaleOption`/`appLabelColorOption` — a facet should be able to run its own
+  font independent of the launcher default. Fix: `LauncherFontOption` gains its own
+  `LAUNCHER_DEFAULT` sentinel (mirroring `ClockFontOption`'s), and `launcherFontOption` rejoins the four
+  new non-null `FacetEntity` columns from Part B's task list below.
+- **New: a `FACET_DEFAULT` sentinel for clock's own style fields, chaining through the facet's
+  Appearance instead of jumping straight to global** (direct request). Today `ClockFontOption`'s
+  `LAUNCHER_DEFAULT` always resolves to the *global* `launcherFontOption`, even for a facet that has
+  its own overridden font — so customizing a facet's font doesn't flow through to that facet's clock
+  without a second, manual edit to `clockFontOption`. Reason given: "I can define basic facet changes —
+  like font style — and want it to reflect in my clock too, if it consumes facet default, instead of
+  manually changing it to match." Fix: `ClockFontOption` gains a third member, `FACET_DEFAULT`,
+  resolving to *this facet's own* resolved `launcherFontOption` (i.e. `facet.launcherFontOption ==
+  LAUNCHER_DEFAULT ? global.launcherFontOption : facet.launcherFontOption` — the same resolution
+  Part B's Appearance screen already does, just consumed by the clock too). `FACET_DEFAULT` and
+  `LAUNCHER_DEFAULT` behave identically until the facet actually overrides its own font, at which point
+  `FACET_DEFAULT` follows it and `LAUNCHER_DEFAULT` deliberately doesn't (kept as an explicit "pin this
+  facet's clock to the global font regardless" escape hatch). Since `FACET_DEFAULT` strictly dominates
+  `LAUNCHER_DEFAULT` at facet scope, **`FacetEntity.clockFontOption`'s default value becomes
+  `FACET_DEFAULT`**, not `LAUNCHER_DEFAULT` (existing facets migrate to it — see task below).
+  `FACET_DEFAULT` is meaningless at global scope (no facet to chain through) — filtered out of the
+  option list there, same technique as the other facet-only sentinel entries; `LAUNCHER_DEFAULT` stays
+  the global default, unchanged.
+  **Resolved: color does *not* get the same `FACET_DEFAULT` chain-through treatment as font** (direct
+  discussion, settled). Font needed it because every font pick is fully independent — two facets can
+  pick genuinely different fonts with nothing shared between them, so "chain through the facet's own
+  choice" was the only way to avoid a second manual edit. The `FACET_DEFAULT`-for-color question was
+  originally reasoned from "the accent swatch is a single global primitive" — that premise is corrected
+  below (accent color *does* become facet-overridable), but the conclusion still holds for a different
+  reason: font's ask was specifically "auto-follow so I don't have to manually re-sync," and a facet can
+  already directly pick `ACCENT_PRIMARY` for its own `clockColorOption` with no chaining mechanism
+  needed for that to work. So: `ClockColorOption` gains a `LAUNCHER_DEFAULT` member only (parallel
+  structure to `ClockFontOption`, no `FACET_DEFAULT`), used for `clockColorOption`/
+  `clockAccentColorOption` at both scopes — a facet can explicitly defer to the *global* clock color, or
+  pick one of the four regular options directly and facet-independently, same as it already can today.
+- **Correction: accent color (`accentFromSystem`/`customAccentSwatch`/`wallpaperAccentRole`) *does*
+  belong in Part B's facet-overridable set** — an earlier pass silently left it out along with
+  `themeMode`/`iconRenderMode` (all three share one doc-comment tier in `LauncherSettings.kt:167-168`,
+  "global only... not facet-overridable") without a deliberate call being made either way. Checked and
+  confirmed: `FacetEntity` has no per-facet wallpaper column, and none is planned in this phase — but
+  that doesn't block this. `accentFromSystem`/`customAccentSwatch`/`wallpaperAccentRole` govern *which*
+  tonal role of the one shared wallpaper gets used, or whether to bypass it for a manually-picked
+  "Basic colors" swatch instead — a facet can pick its own answer to that independent of the global one
+  without needing its own wallpaper.
+- **Overridden again: `themeMode`/`iconRenderMode` join the facet-overridable set too** (direct
+  instruction — "move ALL settings to facet", superseding the "leave these two global-only" call made
+  moments earlier when the user had no preference between them). Every remaining field in
+  `LauncherSettings.kt:167-168`'s "global only" tier is now in scope for Part B — nothing about
+  Appearance stays global-exclusive. Both are plain flat dropdowns (`ThemeMode`: `LIGHT`/`DARK`/
+  `SYSTEM`; `IconRenderMode`: `SYSTEM_DEFAULT`/`MONOCHROME_BLACK_WHITE`/`MONOCHROME_ACCENT`), so they
+  get the same treatment as `launcherFontOption`/clock fields — a `LAUNCHER_DEFAULT` member folded
+  directly into each enum's own option list, no paired widget (neither name collides with an existing
+  member, so no naming conflict to work around).
+- **Accent color's facet UI matches the slider treatment, not the plain-dropdown one** (direct
+  correction): a swatch picker is a rich custom widget, same category as a slider, not a flat option
+  list — folding `LAUNCHER_DEFAULT` into it directly would be as awkward as folding it into a slider's
+  steps. So: `accentFromSystem: Boolean` is promoted to a tri-state enum for facet purposes,
+  `AccentSourceOption { LAUNCHER_DEFAULT, WALLPAPER, BASIC }` (`customAccentSwatch`/
+  `wallpaperAccentRole` stay as satellite fields, read only when `BASIC`/`WALLPAPER` is selected, same
+  relationship they already have today). The facet Appearance screen's Accent color row gets the same
+  paired "Launcher default" / "Override" dropdown as the sliders — picking "Override" reveals the
+  existing Wallpaper/Basic picker UI (unchanged) underneath, scoped to the facet; picking
+  "Launcher default" hides it and writes the sentinel. Same data-model principle as everywhere else in
+  this plan: still a non-null enum + sentinel underneath, the paired dropdown is just this specific
+  field's UI presentation of it, chosen because the value-selection control itself is a picker, not a
+  list.
+- **Outer `InheritOverrideCard` gate — likely droppable for Appearance specifically**: Apps/Dock/
+  Calendar stay all-or-nothing (no per-field granularity there), so they keep their outer inherit/
+  override gate. Appearance, once every field carries its own `LAUNCHER_DEFAULT`-capable sentinel,
+  gets that "fully inherits" state for free — a facet where every field is left at the sentinel value
+  *is* inheriting, no separate boolean needed. Recommendation carried into the tasks below: no
+  `overrideAppearance` gate, no outer card — the facet Appearance screen is just always reachable, each
+  field independently resolving `LAUNCHER_DEFAULT` or its own value. Flagged as a recommendation, not
+  fully settled — revisit if a summary "3 fields overridden" affordance turns out to need a real flag.
+
+### Part A — Global level (do first)
+
+- [x] Remove `calendarFontWeight`/`calendarFontOption`/`calendarColorOption`/`calendarAlignment` from
+  `LauncherSettings`, their `SettingsRepository` keys/getters/setters, and the Calendars card's
+  control rows in `ClockStyleGalleryScreen.kt`; wire `CalendarEventsBlock` to read
+  `homeAppsFontWeight`/`launcherFontOption`/`appLabelColorOption`/`clockAlignment` instead. Keep the
+  `CalendarEventsBlock` preview call itself.
+- [x] Remove the matching `FacetEntity` override columns (same four) — `FacetDatabase.VERSION` bump +
+  `Migration` step per CLAUDE.md's table (`MIGRATION_22_23`, v22→v23, create-copy-drop-rename since
+  SQLite `DROP COLUMN` needs 3.35+; test added to `FacetDatabaseMigrationTest`). **This intentionally
+  removes a facet's ability to have its own calendar style independent of the global default until
+  Part B restores general Appearance overrides** — documented in `02-persistence-room.md`'s §0 and
+  "Clock design" section intro so it doesn't read as an accidental regression later.
+- [x] Give `AppearanceSettingsScreen`'s preview a clock. **Scoped down from the original literal
+  plan** (extracting `FacetPreviewPage`'s whole wallpaper+clock+apps+dock rendering, including its
+  card-aspect-ratio + density-scaling machinery, out of `FacetCarouselScreen` for reuse here) — that
+  full extraction was judged too high-risk to the already-shipped, tested carousel for the value it
+  added, given `AppearanceSettingsScreen`'s preview is a different shape entirely (a short band, not
+  a full-screen-aspect card). Landed instead: `HomeSurfacePreview` (already shared by Appearance/
+  Dock/Home-Apps-List) gained an optional `clockContent: (@Composable () -> Unit)? = null` slot,
+  rendered above the app rows when non-null; `AppearanceSettingsScreen` passes a real `ClockBlock`
+  fed from its own `settings: LauncherSettings` (global mode only — a facet's own clock look/preview
+  stays on its separate "Clock style" screen, so facet mode passes `null`). `FacetCarouselScreen`/
+  `FacetPreviewPage` themselves are untouched. New testTag `appearance_preview_clock`.
+- [x] Move the "Clock style" row from `SettingsScreen.kt` into `AppearanceSettingsScreen.kt`; remove it
+  from `SettingsScreen`; fold the now-single-item "Clock & Calendar" section into "Home & Apps"
+  (`ClickableRow`/`NavigationChevron` promoted from `private` to package-visible so both screens can
+  share them).
+- [x] `BackupBundle`: drop the four removed calendar style fields (tolerant-reader discipline, no
+  `CURRENT_BACKUP_VERSION` bump, following the `fontScaleOption` precedent) — wired through
+  `BackupMapping`/`Export`/`ImportBackupUseCase`.
+- [x] Docs: `README.md`, `01`, `02` (key/field/migration-step/writer-count tables, backup field
+  count), `05` (F11), `06` (test count), `07` (writer counts), `13` (`updateOverridingClock` value
+  count, calendar's new theming data source) all updated; `TEST_REGISTRY.md` regenerated
+  (133 classes / 1070 cases).
+- [x] Tests: removed/updated tests referencing the deleted fields, setters, and testTags across
+  `SettingsRepositoryTest`, `FacetRepositoryTest`, `HomeUiStateTest`, `ClockStyleGalleryViewModelTest`,
+  `ClockStyleGalleryScreenTest`, `ClockBlockTest`, `BackupRepositoryTest`, `ImportBackupUseCaseTest`,
+  `SettingsScreenTest`; new coverage in `AppearanceSettingsScreenTest`
+  (`clockStyleGalleryRowIsClickable`) and `ClockStyleGalleryViewModelTest` (Appearance fields resolve
+  from global settings regardless of facet scope); `FacetDatabaseMigrationTest` gained
+  `migration22To23DropsCalendarStyleColumnsWithoutLosingExistingRowsOrOtherColumns`. Full unit suite
+  (620 cases) passes; `detekt` clean; androidTest sources compile (not run — no emulator booted this
+  session, per CLAUDE.md's instrumented-test policy).
+
+### Part B — Facet level (after Part A ships and settles)
+
+- [ ] Add a `LAUNCHER_DEFAULT`-equivalent sentinel member to each enum that needs new per-field facet
+  reach: `FontWeightOption` (new member, distinct from any existing entry), `FontScaleOption` (must be
+  named `LAUNCHER_DEFAULT`, not `DEFAULT` — that name is taken by the existing `1.0f` stop),
+  `LauncherFontOption` (was wrongly scoped out of an earlier pass — see correction above; needed so the
+  *facet* copy can defer to the global font, same as `ClockFontOption` already does), `ThemeMode` and
+  `IconRenderMode` (both plain flat dropdowns, `themeMode`/`iconRenderMode` now in scope per "move ALL
+  settings to facet" — direct instruction), and `ClockColorOption` (backs `appLabelColorOption`,
+  `clockColorOption`, and `clockAccentColorOption` — one enum change covers all three; see the
+  color-vs-font discussion above for why this one stays `LAUNCHER_DEFAULT`-only, no `FACET_DEFAULT`).
+  Each resolves the same way `ClockFontOption.LAUNCHER_DEFAULT` already does (`ClockFonts.kt:84`):
+  defers to the corresponding global `LauncherSettings` value rather than carrying a value of its own.
+- [ ] New tri-state enum `AccentSourceOption { LAUNCHER_DEFAULT, WALLPAPER, BASIC }` replacing
+  `accentFromSystem: Boolean` for facet purposes (see accent color design decision above) —
+  `customAccentSwatch`/`wallpaperAccentRole` stay as satellite fields, read only when `BASIC`/
+  `WALLPAPER` is selected.
+- [ ] New **non-null** `FacetEntity` columns: `homeAppsFontWeight: FontWeightOption =
+  FontWeightOption.LAUNCHER_DEFAULT`, `launcherFontOption: LauncherFontOption =
+  LauncherFontOption.LAUNCHER_DEFAULT`, `fontScaleOption: FontScaleOption =
+  FontScaleOption.LAUNCHER_DEFAULT`, `appLabelColorOption: ClockColorOption =
+  ClockColorOption.LAUNCHER_DEFAULT`, `themeMode: ThemeMode = ThemeMode.LAUNCHER_DEFAULT`,
+  `iconRenderMode: IconRenderMode = IconRenderMode.LAUNCHER_DEFAULT`, `accentSource: AccentSourceOption
+  = AccentSourceOption.LAUNCHER_DEFAULT`, `customAccentSwatch: String?`, `wallpaperAccentRole:
+  WallpaperAccentRole = WallpaperAccentRole.PRIMARY` — `FacetDatabase.VERSION` bump + `Migration` step,
+  each non-satellite column `NOT NULL DEFAULT` its sentinel so every existing facet row transparently
+  inherits on migration, no true/false branching needed (unlike a boolean-gate design). Existing
+  `clockColorOption`/`clockAccentColorOption` columns keep their current default (`ACCENT_PRIMARY`/
+  `THEME` etc.), just gain `LAUNCHER_DEFAULT` as a newly-selectable option, same non-migration treatment
+  as `clockFontOption`.
+- [ ] `AppearanceSettingsScreen`/`AppearanceSettingsViewModel` go dual-mode, mirroring
+  `ClockStyleGalleryScreen`/`ClockStyleGalleryViewModel`: new `FACET_APPEARANCE_SETTINGS/{facetId}`
+  route alongside the existing global one; ViewModel branches on `facetId` from `SavedStateHandle`. Read
+  path resolves `if (facetValue == X.LAUNCHER_DEFAULT) globalValue else facetValue` per field
+  (same shape as `ClockFonts.kt`'s existing resolution); write path sets only that facet's column,
+  never `SettingsRepository`.
+- [ ] `LabeledDropdownRow`-backed fields handle this the same way `entries` already does for
+  `ClockFontOption` — no new widget, just the sentinel added as one more option. Applies to
+  `homeAppsFontWeight`/`launcherFontOption`/`fontScaleOption`/`appLabelColorOption`/`themeMode`/
+  `iconRenderMode`: filter the `LAUNCHER_DEFAULT` entry out of the option list when the screen is in
+  **global** mode (offering "use launcher default" there is circular — global mode *is* defining that
+  value), but keep it in facet mode. Existing clock fields (`clockFontOption`, etc.) are unaffected —
+  keep showing `LAUNCHER_DEFAULT` in both modes exactly as today.
+- [ ] `FontSizeSlider`/`FontWeightSlider` **and** the Accent color row gain a facet-mode-only paired
+  "Launcher default" / "Override" dropdown above the value control (see design decisions above) — the
+  control itself (slider, or the existing Wallpaper/Basic swatch picker) stays disabled while "Launcher
+  default" is selected and writes the sentinel; selecting "Override" seeds it at the current resolved
+  value and enables it for editing. Not shown at all in the global `AppearanceSettingsScreen` (same
+  reasoning as the dropdown fields above — nothing to inherit from there).
+- [ ] Add `ClockFontOption.FACET_DEFAULT` (see design decision above) — resolves to this facet's own
+  resolved `launcherFontOption`, chaining through the same `facetValue`-or-`globalValue` resolution
+  Appearance itself uses, rather than jumping straight to the global font. Migration: existing
+  `FacetEntity.clockFontOption`/`LauncherSettings.clockFontOption` rows keep their current values
+  unchanged (nothing forces an existing explicit choice to `FACET_DEFAULT`); only the **default value**
+  for newly-created facets' `clockFontOption` column changes, from `LAUNCHER_DEFAULT` to
+  `FACET_DEFAULT`. Filter `FACET_DEFAULT` out of the option list in global mode (no facet to chain
+  through there) — same technique as the other facet-only entries. `LAUNCHER_DEFAULT` remains available
+  and unchanged at both scopes, as the explicit "pin to the global font regardless of this facet's own"
+  choice. **Settled: no `ClockColorOption` equivalent** — see the color-vs-font discussion above.
+- [ ] Move the facet-scoped "Clock style" row inside the facet Appearance screen (mirroring Part A's
+  global nav move); remove `FacetSettingsScreen.kt`'s separate Clock+Calendar section and its
+  `InheritOverrideCard`. Per the recommendation above, don't add a new outer Appearance
+  `InheritOverrideCard` either — the facet Appearance row becomes a plain nav row (like Calendars),
+  always reachable, each field resolving independently. "Calendars" keeps its own independent section,
+  `overrideCalendar` untouched. Revisit only if product wants a single "N fields overridden" affordance
+  that a per-field-only model can't cheaply express — that's the one case still worth a real flag.
+- [ ] Extend the shared mini-home-preview composable (built in Part A) to resolve facet-scoped values
+  (`facetValue`-or-`globalValue` per field, same resolution as above) when editing a facet, instead of
+  always reading global `LauncherSettings`.
+- [ ] `BackupBundle`/`CURRENT_BACKUP_VERSION` bump for all the new per-facet fields (`homeAppsFontWeight`,
+  `launcherFontOption`, `fontScaleOption`, `appLabelColorOption`, `themeMode`, `iconRenderMode`,
+  `accentSource`, `customAccentSwatch`, `wallpaperAccentRole`); `Export`/`ImportBackupUseCase` updates,
+  tolerant-reader fallback to `LAUNCHER_DEFAULT` on unparseable values (mirroring
+  `ClockFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT)` in `BackupMapping.kt`);
+  `clockFontOption`'s existing backup handling also needs its fallback re-checked once `FACET_DEFAULT`
+  exists, so an unparseable facet-scoped value falls back to `FACET_DEFAULT` there, not
+  `LAUNCHER_DEFAULT`.
+- [ ] Docs: `01`, `02` (new columns, migration step, backup version bump), `07 §3`, `13` (facet
+  Appearance override — sentinel-resolution model, not a boolean gate, now covering every Appearance
+  field with no global-only exceptions; supersedes its existing Clock-override description; also
+  document `ClockFontOption.FACET_DEFAULT` and its resolution chain, and `AccentSourceOption`).
+- [ ] Tests: unit (persistence round-trip on the new columns; resolution helper's `LAUNCHER_DEFAULT`-vs-
+  explicit-value branching per field, mirroring any existing `ClockFonts.kt` resolution test; option-list
+  filtering — sentinel present in facet mode, absent in global mode, across every new field; the
+  Accent color row's paired dropdown enabling/disabling the swatch picker; `FACET_DEFAULT`'s
+  chain-through resolution — clock font follows a facet's overridden `launcherFontOption` when set,
+  falls back to global when the facet doesn't override, and diverges correctly from `LAUNCHER_DEFAULT`
+  in the overridden case); instrumented (facet-scoped Appearance screen edits don't leak into the
+  global default and vice versa; a facet overriding only one field still tracks every other field live
+  if the launcher default changes; the shared preview reflects the correct facet's resolved values).
+
+### FacetSettingsScreen restructure — switches move to their destination screens (direct request)
+
+Separate from Part A/B above: `FacetSettingsScreen` used to host a per-section `InheritOverrideCard`
+(Apps list / Dock / Clock style) directly on itself, each rendered outside the actual controls it
+gated. Restructured to look like `SettingsScreen`: a plain nav-row list (Rename row, then one
+"HOME & APPS" card with Apps list/Dock/Clock style/Calendars rows), with the Inherit/Override switch
+moved onto each destination screen instead — the same place `CalendarSettingsScreen` already put it,
+which served as the reference pattern for this change.
+
+- [x] `HomeAppsListSettingsScreen`/`HomeAppsListSettingsViewModel`: added `InheritOverrideCard`
+  (`testTagPrefix = "home_apps_list"`) and `setOverriding(overriding: Boolean)`; `controlsEnabled =
+  !isFacetScoped || isOverriding` threaded through all 5 dropdowns, the favorites row, and the reorder
+  list.
+- [x] `DockSettingsScreen`/`DockSettingsViewModel`: same pattern, `testTagPrefix = "dock_settings"`,
+  `setOverriding` calling `updateOverridingDock` (+ `facetDockAppRepository.replaceItems` seed on
+  first override).
+- [x] `ClockStyleGalleryScreen`/`ClockStyleGalleryViewModel`: same pattern, `testTagPrefix =
+  "clock_style"`, `setOverridingClock`; `ClockPositionResetRow` gained an `enabled` param so the reset
+  row dims/disables along with everything else while inheriting.
+- [x] `FacetSettingsScreen`/`FacetSettingsViewModel`: removed the 3 `InheritOverrideCard` blocks and
+  `setOverridingClock`/`setOverridingApps`/`setOverridingDock` (moved to the destination ViewModels
+  above); merged Apps list/Dock/Clock style/Calendars into one `SettingsCard` under a "HOME & APPS"
+  `SectionHeader`.
+- [x] Tests: removed `FacetSettingsScreenTest`'s 3 now-dead override-persistence tests (their testTags
+  no longer exist on this screen — coverage moved to the destination screens' own tests); updated its
+  `"APPS LIST"` text assertion to `"HOME & APPS"`. Added `facetScopedModeShowsInheritOverrideSwitch` to
+  `HomeAppsListSettingsScreenTest`, `DockSettingsScreenTest`, and `ClockStyleGalleryScreenTest`
+  (mirroring `CalendarSettingsScreenTest`'s existing reference test). Fixed several pre-existing
+  facet-scoped tests that assumed controls were always live regardless of override state (a
+  behavioral change introduced by this restructure, since these screens previously wrote to a facet's
+  row unconditionally): `HomeAppsListSettingsScreenTest`'s
+  `facetScopedScreenWritesThePositionToThatFacetsRowOnceOverriding` (renamed),
+  `aFolderFavoritedOnAFacet_isCountedAndShownInPreviewAndReorderList`;
+  `DockSettingsScreenTest`'s `facetScopedScreenWritesTheDisplayStyleToThatFacetsRowOnceOverriding`
+  (renamed), `aFolderInAFacetsOwnDock_rendersAsAFolderTileInThePreview`;
+  `ClockStyleGalleryScreenTest`'s `facetScopedClockAlignmentPersistsToTheFacetDirectly`,
+  `facetScopedResetClockWidgetPositionClearsTheFacetsOwnHeightAndAlignment` — each now flips the
+  relevant `*_override_row` on (and waits for the facet's `override*` flag to persist) before
+  interacting with the now-gated control. `TEST_REGISTRY.md` regenerated (133 classes / 1070 cases).
+  Full unit suite passes, `detekt` clean, `androidTest` sources compile.
+- [x] Docs: `13-flow-facets-theme-notifications-onboarding.md` — relabeled the "FacetSettingsScreen —
+  one Inherit/Override switch per card" diagram subgraph to "Destination screens — each owns its own
+  Inherit/Override switch", and added a bullet describing the new nav-list shape of
+  `FacetSettingsScreen` and where `setOverriding*` now lives.
+
+### Move dock/app-list display style + position to Appearance (direct request)
+
+Separate from Part A/B: dock's Icons/Text display style and the Home apps list's row position,
+icon/text presentation, and vertical (top/bottom) anchor — all "look"/placement, not content —
+moved out of `DockSettingsScreen`/`HomeAppsListSettingsScreen` into `AppearanceSettingsScreen`,
+which gained a facet-scoped mode for exactly these four fields. Per direct request, the facet
+override model here is the **per-field `LAUNCHER_DEFAULT` sentinel** Part B already sketches for
+the rest of Appearance (`clockFontOption`'s existing precedent), not a new whole-block
+Inherit/Override switch: picking `LAUNCHER_DEFAULT` from a dropdown is itself what reverts a facet
+to inheriting — there's no separate toggle to flip first, unlike Clock/Calendar/Apps/Dock's own
+content screens.
+
+- [x] `DockDisplayMode`/`AppRowPosition`/`AppRowPresentation`/`AppListVerticalAlignment` each gained
+  a `LAUNCHER_DEFAULT` member (first entry, mirroring `ClockFontOption`'s ordering) — facet-only,
+  filtered out of the dropdown's option list at global scope (`entries - X.LAUNCHER_DEFAULT`);
+  `FacetEntity`'s four matching columns default to it for new facets. New string resources
+  (`*_launcher_default`, "Default launcher position"/"Default launcher style").
+- [x] `FacetEntity.resolveSentinel(facetValue, sentinel, globalValue)` — the per-field counterpart to
+  the existing `resolveOverride` (boolean-gated) helper: `facetValue == sentinel ? globalValue :
+  facetValue`, independent of any override flag. Used everywhere these four fields are read:
+  `HomeUiState.activeAppRowPosition/activeAppRowPresentation/activeAppListVerticalAlignment/
+  activeDockDisplayMode`, `FacetCarouselViewModel.appRowPosition/appRowPresentation/dockDisplayMode`,
+  `DockSettingsUiState.dockDisplayMode`, `HomeAppsListUiState.appRowPosition/appRowPresentation/
+  appListVerticalAlignment` (both still read the resolved value for their own preview cards, even
+  though they no longer expose editable controls for it), `FacetSettingsUiState.dockDisplayMode/
+  appRowPosition/appRowPresentation`, and the new `AppearanceSettingsUiState`.
+- [x] `FacetRepository.updateOverridingApps`/`updateOverridingDock` trimmed — no longer take
+  position/presentation/verticalAlignment/displayMode params, since those are no longer seeded
+  alongside the whole-block override flag; the flags now gate only their screens' remaining content
+  (list content mode/count/favorites; the dock's own app list). The individual per-field setters
+  (`setDockDisplayMode`/`setAppRowPosition`/`setAppRowPresentation`/`setAppListVerticalAlignment`)
+  already existed and are unchanged — `AppearanceSettingsViewModel` calls them now instead of
+  `DockSettingsViewModel`/`HomeAppsListSettingsViewModel`.
+- [x] `MIGRATION_23_24` (`FacetDatabase.VERSION` 23→24) — no column/type change (the columns are
+  already `TEXT NOT NULL`; `LAUNCHER_DEFAULT` is just a new valid string), but a real data migration
+  is still needed: a facet that wasn't overriding apps/dock had stale, previously-unread values
+  sitting in these four columns — left alone, they'd silently start "overriding" once resolution
+  stopped gating on `overrideApps`/`overrideDock`. `UPDATE facets SET ... = 'LAUNCHER_DEFAULT' WHERE
+  overrideApps = 0` (and the same for `dockDisplayMode`/`overrideDock`) resets exactly those rows;
+  a facet that *was* overriding keeps its real chosen value untouched.
+  `migration23To24ResetsLookFieldsToLauncherDefaultOnlyForFacetsNotOverridingThatSection` in
+  `FacetDatabaseMigrationTest` covers both cases with two seeded rows.
+- [x] `AppearanceSettingsViewModel`/`AppearanceSettingsScreen` go dual-mode — `facetId?` via
+  `SavedStateHandle` (`FacetNavHost`'s `APPEARANCE_SETTINGS` route widened to
+  `"appearanceSettings?facetId={facetId}"`, matching `DOCK_SETTINGS`'s existing query-param-style
+  shape, with a new `FacetDestinations.appearanceSettings(facetId)` helper). New
+  `AppearanceSettingsUiState` (`facet: FacetEntity?` + `settings: LauncherSettings` +
+  `isFacetScoped`/resolved `dockDisplayMode`/`appRowPosition`/`appRowPresentation`/
+  `appListVerticalAlignment` properties) alongside the screen's existing global-only `settings`
+  StateFlow. Facet mode shows only the four moved-in fields (each dropdown offering
+  `LAUNCHER_DEFAULT`); every other field (Clock style row, theme, accent, icons, launcher font, app
+  label color, font size/weight) is global-only and simply absent in facet mode, same reasoning
+  Calendar/Clock already use for their own global-only fields.
+- [x] `FacetSettingsScreen`/`FacetSettingsViewModel` gained a new "Appearance" row
+  (`facet_appearance_row`) in the "HOME & APPS" card, between Dock and Clock style, subtitled with
+  the effective dock display style + app row presentation (`DockDisplayMode.displayLabel()`/new
+  `AppRowPresentation.displayLabel()` in `FacetSettingsComponents.kt`); navigates to the facet-scoped
+  Appearance screen. `FacetSettingsViewModel`'s own `dockDisplayMode`/`appRowPosition`/
+  `appRowPresentation` properties switched from `isOverridingDock`/`isOverridingApps`-gated
+  resolution to `resolveSentinel`.
+- [x] `DockSettingsScreen`/`HomeAppsListSettingsScreen`: removed the now-moved dropdown rows
+  (`dock_display_style_row`; `default_app_row_position_row`/`default_app_row_presentation_row`/
+  `app_list_vertical_alignment_row`) and their ViewModel setters/params — both screens still read
+  the resolved value for their own preview card, just don't expose a control for it any more.
+  `HomeScreen.kt`'s 4 exhaustive `when`/`if` branches over `DockDisplayMode`/`AppRowPosition`
+  (`AppRow`/`FolderRow`/`DockIcon`/`FolderDockIcon`) updated for the new `LAUNCHER_DEFAULT` member —
+  the two `DockDisplayMode` ones collapsed from `when` to a plain `if (displayMode == TEXT)` (only
+  two real renderings), the two `AppRowPosition` ones added an explicit `LAUNCHER_DEFAULT -> ` branch
+  alongside `LEFT` (defensive only — a resolved value passed down here is never actually the
+  sentinel).
+- [x] `BackupMapping.kt`'s `BackupFacet.toFacetEntity()` tolerant-reader fallback for
+  `appRowPosition`/`appRowPresentation`/`dockDisplayMode` changed from a concrete value (`LEFT`/
+  `ICON_AND_TEXT`/`ICONS`) to `LAUNCHER_DEFAULT`, matching `clockFontOption`'s existing facet-scope
+  fallback precedent — an unparseable facet-scoped value now falls back to "inherit" rather than a
+  guessed concrete look. Global `LauncherSettings`-level fallbacks (`ExportBackupUseCase`/
+  `ImportBackupUseCase`) are untouched (`LAUNCHER_DEFAULT` is meaningless at global scope).
+  `appListVerticalAlignment` was already missing from `BackupFacet` entirely before this change (a
+  pre-existing gap, out of scope here) — restoring a facet backup already reset it to the entity
+  default, which is now `LAUNCHER_DEFAULT` instead of `BOTTOM` (a behavior-neutral-to-slightly-better
+  change, not a regression).
+- [x] Tests: `FacetRepositoryTest` updated for the trimmed `updateOverridingApps` signature;
+  `DockSettingsViewModelTest`/`HomeAppsListSettingsViewModelTest` updated (setter tests removed
+  where the setter moved, added resolution tests proving the field no longer depends on
+  `overrideDock`/`overrideApps`); `AppearanceSettingsViewModelTest` gained `SavedStateHandle`/
+  `FacetRepository` + facet-mode tests (global/facet-scoped writes, sentinel resolution) — its
+  `createViewModel` helper gained a `settings: LauncherSettings` param after a first draft's
+  pre-call `when(settingsRepository.settings)` stub got silently overwritten by the helper's own
+  internal default stub (Mockito's last-stub-wins). `AppearanceSettingsScreenTest` gained a
+  `facetId`-scoped `setContent` variant and coverage for all four moved rows (global writes,
+  `LAUNCHER_DEFAULT` filtered at global scope, facet mode hiding Clock-style/global-only fields,
+  facet-scoped writes, the preview's new clock). `DockSettingsScreenTest`/
+  `HomeAppsListSettingsScreenTest` lost their now-dead display-style/position tests (coverage moved
+  to `AppearanceSettingsScreenTest`) and had their `facetScopedModeShowsInheritOverrideSwitch` tests
+  re-gated on a control that's still actually on those screens (`add_dock_app_row`/
+  `default_list_content_row`) instead of the removed one. `FacetSettingsScreenTest` gained
+  `appearanceRowNavigatesWithTheFacetsIdAndReflectsTheEffectiveLookFields`.
+  `TEST_REGISTRY.md` regenerated (133 classes / 1079 cases: 625 unit / 454 instrumented). Full unit
+  suite (625 cases) passes; `detekt` clean (two new baseline entries —
+  `TooManyFunctions:AppearanceSettingsViewModel` and `LongMethod:DockSettingsScreen.kt:
+  DockSettingsContent` — matching the existing convention for other ViewModels/screen-content
+  functions in this file, e.g. `ClockStyleGalleryViewModel`/`CalendarSettingsContent`); androidTest
+  compiles and the touched instrumented classes (`DockSettingsScreenTest`,
+  `HomeAppsListSettingsScreenTest`, `AppearanceSettingsScreenTest`, `FacetSettingsScreenTest`,
+  `FacetDatabaseMigrationTest`) verified passing on the emulator.
+- [x] Docs: `02-persistence-room.md` (ER diagram gate-column annotations updated to "content only
+  now"; new paragraph on the sentinel resolution shape as a third pattern distinct from
+  boolean-gated and always-global fields; migration-step table row for 23→24), `07-registries.md`
+  (`AppearanceSettingsViewModel`'s nav-arg column: `—` → `facetId?`), `13-flow-...md` (new `LOOK`
+  diagram subgraph for `AppearanceSettingsScreen`'s sentinel writes, distinct from the `OVERRIDE`
+  subgraph's boolean-gated ones; `FacetSettingsScreen` bullet mentions the new Appearance row),
+  `README.md`/`06-testing.md` (test counts).
+
+### Appearance screen redesign — separate cards, renamed rows, calendar preview relocated (direct request)
+
+Follow-up to the section above, same session: `AppearanceSettingsScreen` split into three visually
+separate cards, its look-field rows renamed, and its calendar preview moved in from
+`ClockStyleGalleryScreen` with a preview scaled like the facet carousel's own cards.
+
+- [x] Card separation: "DOCK & HOME" (the four `LAUNCHER_DEFAULT`-sentinel look fields, always
+  shown), then in global mode only "CLOCK" (just the Clock style nav row, on its own now — no
+  longer bundled with theme/accent/etc) and "GENERAL" (theme, accent, icons, launcher font, app
+  label color, font size/weight sliders). New `AppearanceSectionHeader` (mirrors
+  `FacetSettingsComponents.kt`'s `SectionHeader` — a third near-identical private copy, matching
+  this codebase's existing precedent of one per file rather than a shared cross-package import)
+  and three new string resources (`appearance_section_dock_home`/`_clock`/`_general`).
+- [x] Row renames (in place, same string keys — confirmed unreferenced anywhere else in Kotlin
+  source before changing): `dock_display_style` "Display style" → "Show Dock apps as",
+  `home_apps_list_position` "Position" → "Home Apps Alignment", `home_apps_list_presentation`
+  "Presentation" → "Show Home apps as", `home_apps_list_list_position` "List position" → "Home
+  Apps list position".
+- [x] Calendar preview moved from `ClockStyleGalleryScreen` (which dropped its own
+  `CalendarEventsBlock` preview block, section label, divider, and the two now-dead
+  `homeAppsFontWeight`/`appLabelColorOption` params/UiState fields/tests that only fed it) to
+  `AppearanceSettingsScreen`'s own preview card — `ClockBlock` already renders
+  `CalendarEventsBlock` unconditionally beneath the clock, so this needed no new calendar-reading
+  code, just fixed sample events (`PreviewCalendarEvents`, same "Team standup"/"Design review"
+  sample `ClockStyleGalleryScreen` used to show, now living in `AppearanceSettingsScreen.kt`) fed
+  through a fixed `PREVIEW_CLOCK` reference instant (matching that screen's own `fixedClock`).
+- [x] New `AppearancePreviewCard` (private, `AppearanceSettingsScreen.kt`) replaces the plain
+  `HomeSurfacePreview` call for this screen only (`HomeSurfacePreview` itself, and its Dock/
+  Home-Apps-List callers, are untouched — the `clockContent` slot added earlier this session was
+  reverted since nothing uses it any more) — scaled to `APPEARANCE_PREVIEW_CARD_SCALE = 0.55f` of
+  the real screen (matching `FacetCarouselScreen`'s own `CAROUSEL_CARD_SCALE`) and density-scaled
+  to match, via the same `BoxWithConstraints` + scaled-`LocalDensity` technique
+  `FacetPreviewPage` uses for its carousel cards — deliberately reimplemented rather than shared,
+  so a change to one can't regress the other (that card stays read-only/non-interactive here, with
+  no click-to-apply or header/footer icon row, unlike the carousel's). **Caught and fixed during
+  verification**: a first draft locked the card to `fillMaxWidth()` at the real screen's aspect
+  ratio directly (no scale-down), which made it nearly full-screen-tall on a real device and
+  pushed every card below it off the initial viewport — instrumented tests (and a manual
+  screenshot check on the emulator) caught this before it shipped.
+- [x] Tests: `ClockStyleGalleryScreenTest` lost `calendarPreviewSectionIsSeparatedFromClockSectionByADivider`/
+  `calendarPreviewMovesLiveWhenClockAlignmentChanges` (coverage moved) and its
+  `facetScopedModeShowsInheritOverrideSwitch` gained the same "wait for facet-scoped state to
+  resolve asynchronously" guard other screens' equivalent tests already needed (a latent gap that
+  started flaking once this file's item count dropped, unrelated to the redesign itself, caught in
+  the same round of on-emulator verification). `ClockStyleGalleryViewModelTest` lost its two
+  now-dead `homeAppsFontWeight`/`appLabelColorOption` resolution tests. `AppearanceSettingsScreenTest`
+  gained `globalModeShowsThreeSeparateSectionsInOrder`, `facetScopedModeShowsOnlyTheDockAndHomeSection`,
+  `dockAndHomeRowsShowTheirRenamedTitles`, `previewCardShowsTheCalendarPreviewInGlobalMode`; several
+  existing tests needed scrolling into view that hadn't before (the "General" card is now much
+  further down, past two more cards) — `previewCardStillRendersAfterChangingAppLabelColor`
+  specifically needed to scroll back *up* to the preview card after editing a "General" row, since
+  the preview is now far enough away to be disposed from the `LazyColumn`'s composed range by the
+  time that edit lands. `TEST_REGISTRY.md` regenerated (133 classes / 1079 cases: 623 unit / 456
+  instrumented — the unit/instrumented split shifted from the removed/added tests above, total
+  unchanged). Full unit suite, `detekt`, and both compile targets pass; `AppearanceSettingsScreenTest`
+  (25 cases), `ClockStyleGalleryScreenTest` (11 cases), and `FacetSettingsScreenTest` all verified
+  passing on the emulator, plus a manual install + screenshot check of both the collapsed and
+  scrolled states.
+- [x] Docs: `13-flow-facets-theme-notifications-onboarding.md` — new bullet describing the
+  three-card layout, renamed row titles, and the calendar preview's move, plus the matching
+  `CAROUSEL_CARD_SCALE`/`APPEARANCE_PREVIEW_CARD_SCALE` scaling note; `06-testing.md` (test counts).
+
+### Appearance preview: live favorites/dock/calendar instead of sampled/mock data (direct request)
+
+Follow-up to the section above, same session: the redesigned preview card was still showing
+*sampled* installed apps (`SelectPreviewAppsUseCase`) and fixed sample calendar events, not this
+scope's actual configured content. "in launcher settings - consume defaults / in facet settings -
+consume the resolved output between facet and defaults" (direct request) — the same
+`overrideApps`/`overrideDock`/`overrideCalendar` facet-or-global resolution pattern
+`HomeAppsListSettingsViewModel`/`DockSettingsViewModel`/`ObserveHomeScreenStateUseCase` already use.
+
+- [x] `AppearanceSettingsViewModel` rewritten: `GetInstalledAppsUseCase`/`SelectPreviewAppsUseCase`/
+  `DefaultAppRepository` dependency removed entirely; `uiState` now `combine()`s `settings`,
+  `facetRepository.observeFacets()`, and two nested favorites/dock `Pair` combines
+  (`FavoriteAppRepository`/`DefaultFavoriteAppRepository`, `FacetDockAppRepository`/`DockAppRepository`).
+  New `effectiveFavorites`/`effectiveDockItems` getters on `AppearanceSettingsUiState` resolve
+  facet-or-global exactly like those other two ViewModels' own equivalents (`if (facet?.overrideApps
+  == true) facetFavorites else globalFavorites`, same for dock). `calendarEvents` computed via a new
+  private `observeCalendarEvents(facet, settings)` suspend fun, called from inside the `combine`
+  transform lambda (itself `suspend`) — mirrors `ObserveHomeScreenStateUseCase`'s own
+  permission-gated, facet-or-global `showAllDayEvents`/`selectedCalendarIds` resolution, empty (never
+  a sample fallback) when `CalendarPermissionRepository.isGranted()` is false.
+- [x] `CalendarRepository.getTodayEvents` marked `open` (mirrors the existing `getCalendars`
+  precedent) so an instrumented test can override it with a fixed event list.
+- [x] `AppearancePreviewCard` (`AppearanceSettingsScreen.kt`) takes `favorites: List<PlacedItem>`/
+  `dockItems: List<PlacedItem>`/`calendarEvents: List<CalendarEvent>` instead of the removed
+  `previewApps: List<AppInfo>` — favorites render via the same `PlacedItem.SingleApp`/`FolderItem`
+  branch `HomeSurfacePreview` uses (so a favorited folder renders as a real `FolderRow`, not
+  flattened), dock via `DockIcon` (which already branches on `PlacedItem` internally). The clock now
+  uses its own real system-default `Clock` instead of a fixed reference instant, since real calendar
+  events need to render sensibly against real "now". Fixed `PREVIEW_CLOCK`/`PreviewCalendarEvents`
+  sample data deleted.
+- [x] **Real bug found via a from-scratch instrumented-test rewrite, not observed live**: an
+  instrumented test seeded favorites/dock rows with a synthetic `AppInfo(packageName =
+  "com.example.appearance.N", ...)` — `DefaultFavoriteAppRepository.observeDefaultItems()`/
+  `DockAppRepository.observeDockItems()` hydrate every stored row against
+  `AppRepository.observeInstalledApps()`'s live installed-app list (the same uninstall-collapse
+  pattern `DockAppRepository` already documents), so a package that was never actually installed is
+  silently `mapNotNull`-filtered out of what the preview ever renders — the test could never pass no
+  matter how long it polled. Fixed by seeding with the device's own real installed apps
+  (`appRepository.getInstalledApps()[n]`), matching the precedent already established in
+  `FacetCarouselScreenTest`'s `seed`/`seedApps` split (`setContent` here gained the same split, one
+  lambda for `FacetRepository`-only setup, one for the real app-repository-dependent seeding).
+- [x] **Second bug, same rewrite**: a calendar-preview test's fixture used
+  `endTimeMillis = 1` (1ms after the Unix epoch) — `CalendarEventsBlock` itself filters out any
+  non-all-day event whose `endTimeMillis` has already passed relative to real "now", so the seeded
+  event was silently dropped every time; fixed by timing the fixture relative to
+  `System.currentTimeMillis()` instead of a fixed small constant.
+- [x] **Third bug, same rewrite**: a facet-overriding test fetched a `FacetEntity` once, then called
+  `facetRepository.setOverrideApps(facet, true)` followed by `updateOverridingDock(facet, true)`
+  reusing that same now-stale snapshot — since `FacetDao.update` replaces the whole row, the second
+  call's `.copy(overrideDock = true)` clobbered the first call's `overrideApps = true` back to
+  `false`. Fixed by re-fetching the facet between the two writes.
+- [x] **Fourth bug, unit tests**: `AppearanceSettingsViewModelTest`'s own `createViewModel()` helper
+  unconditionally re-stubbed `defaultFavoriteAppRepository.observeDefaultItems()`/
+  `dockAppRepository.observeDockItems()`/etc. with an empty-list default *after* a caller had already
+  stubbed the same mock with real data — Mockito's last-stub-wins silently discarded the caller's
+  stub (the same trap this test class's `calendarGranted` param was already built to avoid, just not
+  yet applied to the favorites/dock repositories). Fixed by giving `createViewModel()` plain
+  `facetFavorites`/`globalFavorites`/`facetDockItems`/`globalDockItems` value params, stubbed only
+  once inside the helper — mirrors `DockSettingsViewModelTest.createViewModel`'s own `dockItems:
+  List<PlacedItem>` param, rather than letting a test pre-stub a mock the helper also touches.
+- [x] Tests: `AppearanceSettingsViewModelTest` gained 5 cases covering global/facet-not-overriding/
+  facet-overriding favorites+dock resolution and calendar-granted/ungranted. `AppearanceSettingsScreenTest`
+  gained `previewCardShowsRealCalendarEventsWhenPermissionIsGranted`,
+  `previewCardShowsNoCalendarEventsWithoutPermissionRatherThanASampleFallback`,
+  `facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding`,
+  `facetScopedPreviewShowsThatFacetsOwnFavoritesAndDockWhileOverriding`; existing
+  `previewCardShowsTheRealFavoritesAndDockApps`/`previewCardStillRendersAfterChangingAppLabelColor`/
+  `previewCardRendersTheWallpaperBehindItsContent` rewritten to seed real installed apps instead of
+  sample `AppInfo`s and to poll (`waitUntil`) for the seeded content to actually render — the
+  favorites/dock/calendar repositories are real Room + `LauncherApps` queries that settle
+  asynchronously after the first composition, same lesson as `FacetCarouselScreenTest`'s own
+  `previewCardShowsBothFavoritesAndDockAppsTogether`. `TEST_REGISTRY.md` regenerated (133 classes /
+  1087 cases). Full unit suite, `detekt`, and both compile targets pass; `AppearanceSettingsScreenTest`
+  (28 cases) and `ClockStyleGalleryScreenTest` verified passing on the emulator, plus a manual
+  install + screenshot check confirming the preview shows a real configured favorite ("Calendar")
+  and the real dock apps (Chrome/Messages/Camera), not sample data.
+- [x] Docs: `13-flow-facets-theme-notifications-onboarding.md` — updated to describe the preview's
+  real data sourcing (`FavoriteAppRepository`/`DefaultFavoriteAppRepository`/`DockAppRepository`/
+  `FacetDockAppRepository`/`CalendarRepository`/`CalendarPermissionRepository`) instead of sampled
+  installed apps.
+- [x] **Real bug found via direct user report, not caught by the tests above**: the preview card's
+  own `PREVIEW_HOME_APP_COUNT = 2`/`PREVIEW_DOCK_APP_COUNT = 3` were arbitrary "glanceable strip"
+  caps left over from the old sample-data era — with live data wired in, they silently truncated the
+  preview to 2 favorites/3 dock apps regardless of how many were actually configured (4 favorites, 5
+  dock apps configured → only 2/3 shown), which read as a propagation bug but was purely a display
+  cap. Fixed by pointing both constants at the app's real, single-source-of-truth limits instead of a
+  duplicated magic number — `AppListLimits.MAX_FAVORITES` (6) and `DockAppRepository.MAX_APPS` (5) —
+  making `.take()` a no-op safety net rather than a lossy truncation, and re-verified manually on the
+  emulator across both override states (facet not overriding shows the global default's full list;
+  facet overriding shows that facet's own full list).
+- [x] **Spacing fix, same direct report**: `AppearanceSectionHeader` (new this session, see above) was
+  missing the `top = 18.dp` padding `SettingsScreen`'s own `SectionHeader` uses (`padding(top =
+  18.dp, bottom = 6.dp)`) — since `SettingsCard` itself carries no bottom margin, "CLOCK"/"GENERAL"
+  sat flush against the card above with no breathing room, unlike every section header on the main
+  Settings screen. Fixed to match exactly.

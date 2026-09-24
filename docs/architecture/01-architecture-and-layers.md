@@ -27,7 +27,7 @@ flowchart TB
     end
 
     subgraph SRC["Sources"]
-        DAO["data/local — Room DAOs\nFacetDatabase v20"]
+        DAO["data/local — Room DAOs\nFacetDatabase v23"]
         DS["DataStore of Preferences\nfacet_settings"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end

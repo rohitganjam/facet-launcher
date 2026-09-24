@@ -170,9 +170,6 @@ class ImportBackupUseCase @Inject constructor(
             setClockFontOption(settings.clockFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT))
             setClockColorOption(settings.clockColorOption.toEnumOrDefault(ClockColorOption.THEME))
             setClockShowMeridiem(settings.clockShowMeridiem)
-            setCalendarFontOption(settings.calendarFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT))
-            setCalendarColorOption(settings.calendarColorOption.toEnumOrDefault(ClockColorOption.THEME))
-            setCalendarFontWeight(settings.calendarFontWeight.toEnumOrDefault(FontWeightOption.REGULAR))
             setHomeAppsFontWeight(settings.homeAppsFontWeight.toEnumOrDefault(FontWeightOption.REGULAR))
         }
     }

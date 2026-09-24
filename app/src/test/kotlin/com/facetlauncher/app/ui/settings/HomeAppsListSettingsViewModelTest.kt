@@ -34,7 +34,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
@@ -115,41 +114,36 @@ class HomeAppsListSettingsViewModelTest {
 
     @Test
     fun `global-scoped setter writes to SettingsRepository`() = runTest {
+        // position/presentation/vertical alignment setters moved to AppearanceSettingsViewModel
+        // (see chat history — look fields, edited from Settings -> Appearance now); covered there.
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
-        viewModel.setAppRowPosition(AppRowPosition.RIGHT)
-        viewModel.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
         viewModel.setListContentMode(ListContentMode.RECENTS)
         viewModel.setAppsToShowCount(7)
-        viewModel.setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setAppRowPosition(AppRowPosition.RIGHT)
-        verify(settingsRepository).setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
         verify(settingsRepository).setListContentMode(ListContentMode.RECENTS)
         verify(settingsRepository).setAppsToShowCount(7)
-        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
     }
 
     @Test
-    fun `facet-scoped setter writes to that facet's row, not SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val facetRepository = mock(FacetRepository::class.java)
-        val facet = FacetEntity(id = 7L, name = "Work", position = 0)
-        `when`(facetRepository.getById(7L)).thenReturn(facet)
-        val viewModel = createViewModel(
-            facetId = 7L,
-            facets = listOf(facet),
-            settingsRepository = settingsRepository,
-            facetRepository = facetRepository,
+    fun `appRowPosition and appRowPresentation resolve independently of overrideApps via their own LAUNCHER_DEFAULT sentinel`() = runTest {
+        // A facet not overriding apps content, but with explicit look values (set from
+        // Appearance), still resolves to them here — its own preview needs it, even though this
+        // screen no longer edits them (see chat history).
+        val facet = FacetEntity(
+            id = 7L, name = "Work", position = 0, overrideApps = false,
+            appRowPosition = AppRowPosition.RIGHT, appRowPresentation = AppRowPresentation.TEXT_ONLY,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
         )
-
-        viewModel.setAppRowPosition(AppRowPosition.RIGHT)
+        val viewModel = createViewModel(facetId = 7L, facets = listOf(facet))
+        backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setAppRowPosition(facet, AppRowPosition.RIGHT)
-        verify(settingsRepository, never()).setAppRowPosition(AppRowPosition.RIGHT)
+        assertEquals(AppRowPosition.RIGHT, viewModel.uiState.value.appRowPosition)
+        assertEquals(AppRowPresentation.TEXT_ONLY, viewModel.uiState.value.appRowPresentation)
+        assertEquals(AppListVerticalAlignment.TOP, viewModel.uiState.value.appListVerticalAlignment)
     }
 
     @Test

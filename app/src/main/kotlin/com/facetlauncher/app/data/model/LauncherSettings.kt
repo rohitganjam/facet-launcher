@@ -3,7 +3,19 @@ package com.facetlauncher.app.data.model
 import androidx.annotation.StringRes
 import com.facetlauncher.app.R
 
+/**
+ * [LAUNCHER_DEFAULT] is facet-only (filtered out of the option list at global scope, same
+ * technique as [com.facetlauncher.app.data.model.ClockFontOption]'s own sentinel) — a facet
+ * carrying it inherits whatever [LauncherSettings.dockDisplayMode] currently is, live, rather
+ * than being pinned to a value copied at the moment it stopped overriding. Editable from
+ * Settings → Appearance now, not Dock's own screen (see chat history — dock/app "look" controls
+ * moved out of their content screens into Appearance, alongside [AppRowPosition]/
+ * [AppRowPresentation]/[AppListVerticalAlignment]); [com.facetlauncher.app.data.local.FacetEntity.dockDisplayMode]'s
+ * resolution no longer goes through `overrideDock` (that flag still gates the dock's own app
+ * list) — see [com.facetlauncher.app.data.local.resolveSentinel].
+ */
 enum class DockDisplayMode(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.dock_display_mode_launcher_default),
     ICONS(R.string.dock_display_mode_icons),
     TEXT(R.string.dock_display_mode_text),
 }
@@ -79,14 +91,17 @@ enum class NotificationBadgeStyle(@param:StringRes val displayNameRes: Int) {
  * `LEFT`'s normal reading order (icon then label) but centers that group within the row's full
  * width instead of packing it to either edge.
  */
+/** [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
 enum class AppRowPosition(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_row_position_launcher_default),
     LEFT(R.string.app_row_position_left),
     CENTER(R.string.app_row_position_center),
     RIGHT(R.string.app_row_position_right),
 }
 
-/** What renders per app-list row — independent of [AppRowPosition]. `ICON_AND_TEXT` is the default, unchanged look. */
+/** What renders per app-list row — independent of [AppRowPosition]. `ICON_AND_TEXT` is the default, unchanged look. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
 enum class AppRowPresentation(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_row_presentation_launcher_default),
     ICON_ONLY(R.string.app_row_presentation_icon_only),
     ICON_AND_TEXT(R.string.app_row_presentation_icon_and_text),
     TEXT_ONLY(R.string.app_row_presentation_text_only),
@@ -99,8 +114,9 @@ enum class ClockAlignment(@param:StringRes val displayNameRes: Int) {
     RIGHT(R.string.app_row_position_right),
 }
 
-/** Home app list's vertical anchor. `BOTTOM` is today's unchanged behavior (list sits right above the dock). `TOP` anchors it immediately below the clock's grab handle instead. */
+/** Home app list's vertical anchor. `BOTTOM` is today's unchanged behavior (list sits right above the dock). `TOP` anchors it immediately below the clock's grab handle instead. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
 enum class AppListVerticalAlignment(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_list_vertical_alignment_launcher_default),
     TOP(R.string.app_list_vertical_alignment_top),
     BOTTOM(R.string.app_list_vertical_alignment_bottom),
 }
@@ -211,11 +227,6 @@ data class LauncherSettings(
     val clockShowMeridiem: Boolean = false,
     /** "Full" ("Thursday, 27 August") vs "Condensed" ("Thu, 27 Aug") — applies to every template that renders its date line through `ClockTemplates.kt`'s shared `dateFormatter()`. */
     val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    /** Calendar events block (`ui/home/clock/CalendarEventsBlock`) — configured independently of the clock's own font/color. */
-    val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
-    /** Calendar events block's own font weight — part of the same Clock+Calendar design bundle as [calendarFontOption]/[calendarColorOption] above, facet-overridable alongside them. */
-    val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**
      * Settings → Appearance → "Text weight" — Home's app list/Dock/App Drawer labels apply it
      * directly (see `ui/home/HomeScreen.kt`'s `AppRow`/`DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s
@@ -235,15 +246,6 @@ data class LauncherSettings(
      * per-facet bundle).
      */
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    /**
-     * Home calendar events strip's horizontal placement — deliberately independent of
-     * [clockAlignment]: the clock and calendar are two separate blocks that can each be
-     * positioned on their own (see `ui/home/ClockBlock.kt`). `RIGHT` also reverses each event
-     * row's own internal item order (event name, then time, then the calendar-color indicator —
-     * the mirror image of the normal indicator/time/name order), the same way [AppRowPosition.RIGHT]
-     * reverses an app row's icon/label order. Facet-overridable, same as [clockAlignment].
-     */
-    val calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /**
      * Y-position (dp, measured from the top of Home's content area) of the drag handle sitting
      * below the clock+calendar block — equivalently, where the app list's reserved region begins.

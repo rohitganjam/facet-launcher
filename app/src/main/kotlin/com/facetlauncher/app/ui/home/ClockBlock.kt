@@ -28,8 +28,8 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.ui.home.clock.CalendarEventsBlock
 import com.facetlauncher.app.ui.home.clock.ClockDisplay
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.fontFamily
 import com.facetlauncher.app.ui.theme.resolve
-import com.facetlauncher.app.ui.theme.resolveFontFamily
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -37,10 +37,12 @@ import java.util.Locale
 
 /**
  * Home clock — real, persisted [templateId]/[fontOption]/[colorOption]/[showMeridiem] (Settings'
- * Clock card → the clock style gallery) stacked above [CalendarEventsBlock] (its own persisted
- * [calendarFontOption]/[calendarColorOption], independent of the clock's). Every default here
- * matches the app's original shipped look (Light stack, system font, Ink) so nothing changes for
- * a fresh install before any setting is ever touched.
+ * Clock card → the clock style gallery) stacked above [CalendarEventsBlock], which reads
+ * Appearance's home-text settings ([launcherFontOption]/[homeAppsFontWeight]/[appLabelColorOption])
+ * and this block's own [clockAlignment] rather than having independent styling of its own (see
+ * chat history: calendar/appearance styling consolidation). Every default here matches the app's
+ * original shipped look (Light stack, system font, Ink) so nothing changes for a fresh install
+ * before any setting is ever touched.
  */
 @Composable
 fun ClockBlock(
@@ -50,8 +52,8 @@ fun ClockBlock(
      * `testTag` that must hug just the time/date, not [CalendarEventsBlock] beneath it or the
      * empty space beside it. Kept separate from [modifier] (which sizes/positions the WHOLE
      * clock+calendar block, since this stays [androidx.compose.foundation.layout.fillMaxWidth] so
-     * [CalendarEventsBlock]'s own independent [calendarAlignment] keeps resolving against the
-     * true content width) — see [com.facetlauncher.app.ui.home.HomeScreen]'s own call site for why.
+     * [CalendarEventsBlock]'s own [clockAlignment] keeps resolving against the true content
+     * width) — see [com.facetlauncher.app.ui.home.HomeScreen]'s own call site for why.
      */
     clockContentModifier: Modifier = Modifier,
     /**
@@ -72,15 +74,14 @@ fun ClockBlock(
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
     events: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
-    calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    calendarColorOption: ClockColorOption = ClockColorOption.THEME,
-    calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    /** Settings → Appearance → "Text weight" — see [com.facetlauncher.app.data.model.LauncherSettings.homeAppsFontWeight]; also styles [CalendarEventsBlock] now. */
+    homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    /** Settings → Appearance → "Font Color" — see [com.facetlauncher.app.data.model.LauncherSettings.appLabelColorOption]; also styles [CalendarEventsBlock] now. */
+    appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     onEventClick: (CalendarEvent) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
-    /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.facetlauncher.app.ui.facets.FacetCarouselScreen]). */
+    /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.facetlauncher.app.ui.facets.FacetCarouselScreen]). Also positions [CalendarEventsBlock] now, which no longer has an alignment of its own (see chat history). */
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    /** Settings → Clock & Calendar Style → "Calendar alignment" — entirely independent of [clockAlignment]; positions [CalendarEventsBlock] (and reverses its row order at [ClockAlignment.RIGHT]) without moving the clock. */
-    calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
     clockScale: Float = 0.8f,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
@@ -162,10 +163,10 @@ fun ClockBlock(
             locale = locale,
             use24HourTime = use24HourTime,
             calendarColors = calendarColors,
-            fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
-            textColor = calendarColorOption.resolve(),
-            fontWeight = calendarFontWeight.resolve(),
-            alignment = calendarAlignment,
+            fontFamily = launcherFontOption.fontFamily,
+            textColor = appLabelColorOption.resolve(),
+            fontWeight = homeAppsFontWeight.resolve(),
+            alignment = clockAlignment,
             onEventClick = onEventClick,
         )
     }

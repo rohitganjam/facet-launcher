@@ -85,8 +85,6 @@ class ImportBackupUseCaseTest {
         clockFontOption = "LAUNCHER_DEFAULT",
         clockColorOption = "THEME_INVERTED",
         clockShowMeridiem = true,
-        calendarFontOption = "LAUNCHER_DEFAULT",
-        calendarColorOption = "THEME",
     )
 
     @Test
@@ -134,7 +132,6 @@ class ImportBackupUseCaseTest {
                     clockShowMeridiem = false, overrideApps = false, appRowPosition = "LEFT",
                     appRowPresentation = "ICON_AND_TEXT", listContentMode = "FAVORITES", appsToShowCount = 5,
                     overridingFavorites = true, overrideCalendar = false, showAllDayEvents = true,
-                    calendarFontOption = "LAUNCHER_DEFAULT", calendarColorOption = "THEME",
                     selectedCalendarIds = listOf("3", "4"),
                     favorites = listOf(BackupAppEntry(packageName = "com.example.a", activityName = ".Main", position = 0)),
                     overrideDock = true,
@@ -156,8 +153,7 @@ class ImportBackupUseCaseTest {
             clockColorOption = ClockColorOption.THEME, use24HourTime = false, clockShowMeridiem = false,
             overrideApps = false, appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
-            overrideCalendar = false, showAllDayEvents = true, calendarFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-            calendarColorOption = ClockColorOption.THEME, selectedCalendarIdsCsv = "3,4",
+            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIdsCsv = "3,4",
             overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)

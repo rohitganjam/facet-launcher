@@ -28,7 +28,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
@@ -88,43 +87,48 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `global-scoped setters write to SettingsRepository and DockAppRepository`() = runTest {
+    fun `global-scoped reorder writes to DockAppRepository`() = runTest {
+        // dockDisplayMode's own setter moved to AppearanceSettingsViewModel (see chat history —
+        // display style is a look field, edited from Settings -> Appearance now); covered there.
         val settingsRepository = mock(SettingsRepository::class.java)
         val dockAppRepository = mock(DockAppRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository, dockAppRepository = dockAppRepository)
         val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
 
-        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
         viewModel.reorderDockItems(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setDockDisplayMode(DockDisplayMode.TEXT)
         verify(dockAppRepository).reorderDockItems(reordered)
     }
 
     @Test
-    fun `facet-scoped setters write to that facet, not the launcher-wide dock`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val facetRepository = mock(FacetRepository::class.java)
+    fun `facet-scoped reorder writes to that facet, not the launcher-wide dock`() = runTest {
         val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
         `when`(facetDockAppRepository.observeDockItems(anyLong())).thenReturn(flowOf(emptyList()))
         val facet = FacetEntity(id = 7L, name = "Work", position = 0)
-        `when`(facetRepository.getById(7L)).thenReturn(facet)
         val viewModel = createViewModel(
             facetId = 7L,
             facets = listOf(facet),
-            settingsRepository = settingsRepository,
-            facetRepository = facetRepository,
             facetDockAppRepository = facetDockAppRepository,
         )
         val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
 
-        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
         viewModel.reorderDockItems(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setDockDisplayMode(facet, DockDisplayMode.TEXT)
         verify(facetDockAppRepository).reorderDockItems(7L, reordered)
-        verify(settingsRepository, never()).setDockDisplayMode(DockDisplayMode.TEXT)
+    }
+
+    @Test
+    fun `dockDisplayMode resolves independently of overrideDock via its own LAUNCHER_DEFAULT sentinel`() = runTest {
+        // A facet not overriding dock content, but with an explicit dockDisplayMode (set from
+        // Appearance), still resolves to that value here — its own preview needs it, even though
+        // this screen no longer edits it (see chat history).
+        val facet = FacetEntity(id = 3L, name = "Work", position = 0, overrideDock = false, dockDisplayMode = DockDisplayMode.TEXT)
+        val viewModel = createViewModel(facetId = 3L, facets = listOf(facet))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(DockDisplayMode.TEXT, viewModel.uiState.value.dockDisplayMode)
     }
 }

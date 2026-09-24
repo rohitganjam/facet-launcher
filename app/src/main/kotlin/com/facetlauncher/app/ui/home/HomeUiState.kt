@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveOverride
+import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -74,17 +75,6 @@ data class HomeUiState(
     val clockDateStyle: ClockDateStyle
         get() = activeFacet?.let { if (it.overrideClock) it.clockDateStyle else settings.clockDateStyle } ?: settings.clockDateStyle
 
-    /** The active facet's calendar font, falling back to the global default when not overriding — mirrors [clockFontOption] but gated by [com.facetlauncher.app.data.local.FacetEntity.overrideCalendar], not `overrideClock`. */
-    val activeCalendarFontOption: ClockFontOption
-        get() = activeFacet?.let { if (it.overrideCalendar) it.calendarFontOption else settings.calendarFontOption } ?: settings.calendarFontOption
-
-    val activeCalendarColorOption: ClockColorOption
-        get() = activeFacet?.let { if (it.overrideCalendar) it.calendarColorOption else settings.calendarColorOption } ?: settings.calendarColorOption
-
-    /** Mirrors [activeCalendarFontOption]'s own gating exactly — same `overrideCalendar` flag, same fallback shape. */
-    val activeCalendarFontWeight: FontWeightOption
-        get() = activeFacet?.let { if (it.overrideCalendar) it.calendarFontWeight else settings.calendarFontWeight } ?: settings.calendarFontWeight
-
     val effectiveUse24HourTime: Boolean
         get() = activeFacet?.let { if (it.overrideClock) it.use24HourTime else settings.use24HourTime } ?: settings.use24HourTime
 
@@ -94,13 +84,13 @@ data class HomeUiState(
     val activeListContentMode: ListContentMode
         get() = activeFacet?.let { if (it.overrideApps) it.listContentMode else settings.listContentMode } ?: settings.listContentMode
 
-    /** The active facet's app-row position, falling back to the global default when not overriding. */
+    /** The active facet's app-row position — a look/placement field, edited from Settings → Appearance and resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideApps` (see [com.facetlauncher.app.data.local.resolveSentinel]). */
     val activeAppRowPosition: AppRowPosition
-        get() = activeFacet?.let { if (it.overrideApps) it.appRowPosition else settings.appRowPosition } ?: settings.appRowPosition
+        get() = activeFacet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
 
-    /** The active facet's app-row presentation, falling back to the global default when not overriding. */
+    /** The active facet's app-row presentation — see [activeAppRowPosition]'s own doc for the resolution shape. */
     val activeAppRowPresentation: AppRowPresentation
-        get() = activeFacet?.let { if (it.overrideApps) it.appRowPresentation else settings.appRowPresentation } ?: settings.appRowPresentation
+        get() = activeFacet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, settings.appRowPresentation)
 
     /** True when the active facet's mode needs `PACKAGE_USAGE_STATS`, it isn't granted yet, and the user hasn't already dismissed this prompt by tapping its button. */
     val showUsageAccessPrompt: Boolean
@@ -118,10 +108,6 @@ data class HomeUiState(
     val clockScale: Float
         get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
 
-    /** The active facet's calendar alignment, falling back to the global default when not overriding — independent of [clockAlignment], same as [com.facetlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
-    val calendarAlignment: ClockAlignment
-        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.calendarAlignment }, settings.calendarAlignment)
-
     /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
     val clockPositionOwningFacet: FacetEntity?
         get() = activeFacet?.takeIf { it.overrideClock }
@@ -134,13 +120,13 @@ data class HomeUiState(
     val favoritesOverrideFacetName: String?
         get() = activeFacet?.takeIf { it.overridingFavorites }?.name
 
-    /** The active facet's app-list vertical anchor, falling back to the global default when not overriding — mirrors [activeAppRowPosition]'s own resolution shape. */
+    /** The active facet's app-list vertical anchor — mirrors [activeAppRowPosition]'s own resolution shape. */
     val activeAppListVerticalAlignment: AppListVerticalAlignment
-        get() = activeFacet?.let { if (it.overrideApps) it.appListVerticalAlignment else settings.appListVerticalAlignment } ?: settings.appListVerticalAlignment
+        get() = activeFacet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
 
-    /** The active facet's dock display style, falling back to the global default when not overriding — [dockApps] itself is already resolved per-facet upstream in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]. */
+    /** The active facet's dock display style — a look field, resolved independently of `overrideDock` (that flag still gates only [dockApps], already resolved per-facet upstream in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]) — see [activeAppRowPosition]'s own doc for the resolution shape. */
     val activeDockDisplayMode: DockDisplayMode
-        get() = activeFacet?.let { if (it.overrideDock) it.dockDisplayMode else settings.dockDisplayMode } ?: settings.dockDisplayMode
+        get() = activeFacet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode)
 
     /** Shown once, immediately after onboarding finishes — scoped by `onboardingCompleted &&` rather than a launch counter, so it never reappears once dismissed (persisted in [LauncherSettings.coachMarksSeen]). */
     val showGestureHint: Boolean

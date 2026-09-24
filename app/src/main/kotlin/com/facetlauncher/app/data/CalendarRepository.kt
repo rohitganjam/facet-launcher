@@ -49,7 +49,7 @@ open class CalendarRepository @Inject constructor(
      * @param calendarIds restrict to these calendar ids; `null` means every calendar.
      * @param includeAllDay whether all-day events are included at all.
      */
-    suspend fun getTodayEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(Dispatchers.IO) {
+    open suspend fun getTodayEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(Dispatchers.IO) {
         val begin = startOfToday()
         val end = begin + DAY_MILLIS - 1
         val today = LocalDate.now()

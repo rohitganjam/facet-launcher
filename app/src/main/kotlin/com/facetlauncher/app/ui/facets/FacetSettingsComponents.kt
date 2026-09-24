@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.ui.components.BackButton
@@ -38,6 +39,9 @@ internal fun ListContentMode.displayLabel(): String = stringResource(displayName
 
 @Composable
 internal fun DockDisplayMode.displayLabel(): String = stringResource(displayNameRes)
+
+@Composable
+internal fun AppRowPresentation.displayLabel(): String = stringResource(displayNameRes)
 
 @Composable
 internal fun FacetSettingsHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {

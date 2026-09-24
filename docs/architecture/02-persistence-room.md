@@ -4,21 +4,25 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v20**, `exportSchema = true` → `app/schemas/.../1.json … 20.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/calendar/app-list/dock design defaults, theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 50 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v23**, `exportSchema = true` → `app/schemas/.../1.json … 23.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 46 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
 | Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v3: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
 
 Nothing else is persisted: no `SharedPreferences`, no files in `filesDir`/`cacheDir`, no network.
 
-**Global defaults vs per-facet overrides.** The clock, calendar, app-list and dock *defaults* the
-user sets in Settings are DataStore keys (`clock_template_id`, `calendar_font_option`,
+**Global defaults vs per-facet overrides.** The clock, app-list and dock *defaults* the
+user sets in Settings are DataStore keys (`clock_template_id`, `clock_alignment`,
 `list_content_mode`, `dock_display_mode`, …). The `facets` table carries the same fields again
 as *overrides*, each block gated by a flag (`overrideClock`, `overrideApps`, `overrideDock`,
 `overrideCalendar`, `overridingFavorites`); `FacetEntity.resolveOverride(...)` picks the facet
 value when its flag is set and the DataStore value otherwise. The ER diagram in §1 is Room only —
-the defaults are in §5.
+the defaults are in §5. The calendar events strip is the one exception to this pattern — it has no
+design fields of its own anywhere (Room or DataStore); it reads the global-only
+`home_apps_font_weight`/`app_label_color_option` (§5.4 "Home app list") and `launcher_font_option`
+(§5.4 "Theme & appearance") keys for font/weight/color, and `clockAlignment` (Room,
+facet-overridable) for its position — see chat history: calendar/appearance styling consolidation.
 
 What is **not** persisted: the installed-app list. Room rows reference apps only by
 `(packageName, activityName, userId)`; labels, icons and `UserHandle`s are re-resolved live from
@@ -40,11 +44,7 @@ erDiagram
         boolean use24HourTime
         boolean clockShowMeridiem
         string clockDateStyle
-        string calendarFontOption
-        string calendarColorOption
-        string calendarFontWeight
-        string clockAlignment
-        string calendarAlignment
+        string clockAlignment "also positions the calendar events strip"
         float clockZoneHeightDp "nullable"
         float clockScale
         boolean overrideApps
@@ -332,6 +332,10 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 17→18 | Folders: `folders`, `folder_apps` + the four `*_folder_placements` tables |
 | 18→19 | `profile` column on all six app/widget tables |
 | 19→20 | `userId` column on the same six tables (backfilled from personal user), unique indices rebuilt to include it |
+| 20→21 | `facets.clockWidgetAppWidgetId` (PRD F15) |
+| 21→22 | `facets.clockWidgetWidthDp`, `clockWidgetHeightDp` (PRD F15) |
+| 22→23 | Recreate `facets` (create-copy-drop-rename, same pattern as 16→17) dropping `calendarFontOption`, `calendarColorOption`, `calendarFontWeight`, `calendarAlignment` — calendar/appearance styling consolidation |
+| 23→24 | No column change (`LAUNCHER_DEFAULT` is just a new valid string for the already-`TEXT NOT NULL` `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` columns) — data-only `UPDATE` resetting those four columns to `'LAUNCHER_DEFAULT'` on every facet row where the matching `overrideApps`/`overrideDock` flag is `0` (a stale, previously-unread value would otherwise start "overriding" silently); a row where the flag is `1` keeps its real value untouched |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -357,13 +361,9 @@ erDiagram
         boolean use_24_hour_time "default false"
         boolean clock_show_meridiem "default false"
         string clock_date_style "ClockDateStyle, default FULL"
-        string clock_alignment "ClockAlignment, default LEFT"
-        string calendar_alignment "ClockAlignment, default LEFT"
+        string clock_alignment "ClockAlignment, default LEFT; also positions the calendar events strip"
         float clock_zone_height_dp "nullable, absent = template height"
         float clock_scale "default 0.8"
-        string calendar_font_option "ClockFontOption, default LAUNCHER_DEFAULT"
-        string calendar_color_option "ClockColorOption, default THEME"
-        string calendar_font_weight "FontWeightOption, default REGULAR"
         boolean show_all_day_events "default true"
         stringset selected_calendar_ids "nullable, absent = all calendars"
         stringset calendar_colors "entries calendarId:colorName"
@@ -404,23 +404,34 @@ erDiagram
 
     facets {
         long id PK
-        boolean overrideClock "gate: 14 clock+calendar design columns"
-        boolean overrideApps "gate: listContentMode, appsToShowCount, appRowPosition, appRowPresentation, appListVerticalAlignment"
+        boolean overrideClock "gate: 10 clock design columns (also positions the calendar strip)"
+        boolean overrideApps "gate: listContentMode, appsToShowCount (content only now)"
         boolean overridingFavorites "gate: favorite_apps vs default_favorite_apps"
-        boolean overrideDock "gate: dockDisplayMode + facet_dock_apps vs dock_apps"
+        boolean overrideDock "gate: facet_dock_apps vs dock_apps (content only now)"
         boolean overrideCalendar "gate: showAllDayEvents, selectedCalendarIdsCsv"
     }
 
     facet_settings ||--o{ facets : "active_facet_id selects one"
     facet_settings }|..|| facets : "clock keys overridden when overrideClock"
-    facet_settings }|..|| facets : "app-list keys overridden when overrideApps"
-    facet_settings }|..|| facets : "dock_display_mode overridden when overrideDock"
+    facet_settings }|..|| facets : "list content mode/count overridden when overrideApps"
     facet_settings }|..|| facets : "calendar keys overridden when overrideCalendar"
 ```
 
 Keys with **no** facet counterpart (always global): `home_apps_font_weight`,
-`app_label_color_option`, `calendar_colors`, everything under Theme, Drawer, Search,
+`app_label_color_option`, `launcher_font_option` (all three of which the calendar events strip
+reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, Search,
 Notifications, Permission bookkeeping, and First-run.
+
+**`appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` are a third
+resolution shape**, distinct from both the boolean-gated fields above and the always-global list —
+edited from Settings → Appearance now (moved out of Dock's/Home Apps List's own screens, see chat
+history), each resolved via its own `LAUNCHER_DEFAULT` sentinel value (mirroring
+`ClockFontOption`'s existing one) rather than a shared override flag:
+`facetValue == LAUNCHER_DEFAULT ? globalValue : facetValue`
+([`resolveSentinel`](../../app/src/main/kotlin/com/facetlauncher/app/data/local/FacetEntity.kt)),
+independently of `overrideApps`/`overrideDock`. `LAUNCHER_DEFAULT` is filtered out of the option
+list at global scope (nothing to inherit from there) and is each `FacetEntity` column's own
+default value for a newly-created facet.
 
 ### 5.2 Read path
 
@@ -452,7 +463,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (52 functions)
+### 5.3 Write path — the complete writer API (48 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -467,14 +478,10 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setClockShowMeridiem(Boolean)` | `clock_show_meridiem` | set | `ClockStyleGalleryViewModel` |
 | `setClockDateStyle(ClockDateStyle)` | `clock_date_style` | set | `ClockStyleGalleryViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel` |
-| `setCalendarAlignment(ClockAlignment)` | `calendar_alignment` | set | `ClockStyleGalleryViewModel` |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
 | `setClockScale(Float)` | `clock_scale` | set | `HomeViewModel` (corner handle) |
 | `resetClockScale()` | `clock_scale` | **remove** | `ClockStyleGalleryViewModel` |
-| `setCalendarFontOption(ClockFontOption)` | `calendar_font_option` | set | `ClockStyleGalleryViewModel` |
-| `setCalendarColorOption(ClockColorOption)` | `calendar_color_option` | set | `ClockStyleGalleryViewModel` |
-| `setCalendarFontWeight(FontWeightOption)` | `calendar_font_weight` | set | `ClockStyleGalleryViewModel` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
 | `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
@@ -512,16 +519,21 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setDefaultsSeeded(Boolean)` | `defaults_seeded` | set | `SeedDefaultDockUseCase` |
 | `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel` |
 
-`ImportBackupUseCase.applySettings()` restores settings by calling these same setters one at a time (33 calls, plus `setActiveFacetId` after facets are re-inserted) —
+`ImportBackupUseCase.applySettings()` restores settings by calling these same setters one at a time (30 calls, plus `setActiveFacetId` after facets are re-inserted) —
 there is no bulk "replace all preferences" entry point, so a restore is not atomic at the
 DataStore level either.
 
 ### 5.4 Key registry by section
 
-Same 50 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+Same 46 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
-#### Clock + calendar design (global; overridden per facet when `facets.overrideClock`)
+#### Clock design (global; overridden per facet when `facets.overrideClock`)
+
+The calendar events strip has no design keys of its own here any more — it reads the global-only
+`home_apps_font_weight`/`app_label_color_option` ("Home app list", below) and `launcher_font_option`
+("Theme & appearance", below) keys for font/weight/color, and `clock_alignment` in this section for
+its position (see chat history: calendar/appearance styling consolidation).
 
 | Key | Type | `LauncherSettings` field | Default | Notes |
 |---|---|---|---|---|
@@ -532,13 +544,9 @@ each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 | `use_24_hour_time` | Boolean | `use24HourTime` | `false` | |
 | `clock_show_meridiem` | Boolean | `clockShowMeridiem` | `false` | |
 | `clock_date_style` | String (`ClockDateStyle`) | `clockDateStyle` | `FULL` | |
-| `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | |
-| `calendar_alignment` | String (`ClockAlignment`) | `calendarAlignment` | `LEFT` | |
+| `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | also positions the calendar events strip |
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
 | `clock_scale` | Float | `clockScale` | `0.8` | `resetClockScale()` removes the key |
-| `calendar_font_option` | String (`ClockFontOption`) | `calendarFontOption` | `LAUNCHER_DEFAULT` | |
-| `calendar_color_option` | String (`ClockColorOption`) | `calendarColorOption` | `THEME` | |
-| `calendar_font_weight` | String (`FontWeightOption`) | `calendarFontWeight` | `REGULAR` | |
 
 #### Calendar selection (global; overridden when `facets.overrideCalendar`)
 
@@ -557,8 +565,8 @@ each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 | `app_row_position` | String (`AppRowPosition`) | `appRowPosition` | `LEFT` | |
 | `app_row_presentation` | String (`AppRowPresentation`) | `appRowPresentation` | `ICON_AND_TEXT` | |
 | `app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `appListVerticalAlignment` | `BOTTOM` | |
-| `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | not facet-overridable |
-| `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | not facet-overridable |
+| `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | not facet-overridable; also styles the calendar events strip |
+| `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | not facet-overridable; also styles the calendar events strip |
 
 #### Dock (global; overridden when `facets.overrideDock`)
 
@@ -581,7 +589,7 @@ each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 | `custom_accent_swatch` | String (`AccentSwatch.name`) | `customAccentSwatch` | `null` | nullable; parsed to enum in `LauncherActivity` |
 | `wallpaper_accent_role` | String (`WallpaperAccentRole`) | `wallpaperAccentRole` | `PRIMARY` | only meaningful when `accent_from_system` |
 | `icon_render_mode` | String (`IconRenderMode`) | `iconRenderMode` | `SYSTEM_DEFAULT` | |
-| `launcher_font_option` | String (`LauncherFontOption`) | `launcherFontOption` | `SYSTEM` | |
+| `launcher_font_option` | String (`LauncherFontOption`) | `launcherFontOption` | `SYSTEM` | also styles the calendar events strip |
 | `font_scale_option` | String (`FontScaleOption`) | `fontScaleOption` | `DEFAULT` | multiplies every `MaterialTheme.typography` role's `fontSize`/`lineHeight` app-wide except the clock |
 
 #### App drawer
@@ -643,15 +651,15 @@ live from the OS on every check), the installed-app list, and notification count
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 35 of the 50 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 32 of the 46 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
-`clock_accent_color_option`, `clock_date_style`, `clock_alignment`, `calendar_alignment`,
+`clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,
 `calendar_colors`, `search_settings_enabled`, both `*_permission_requested` flags,
-`onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first seven are a real gap
+`onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.
-`BackupFacet` has the same seven omissions per facet (`facets.clockAccentColorOption`,
-`clockDateStyle`, `clockAlignment`, `calendarAlignment`, `clockZoneHeightDp`, `clockScale`,
+`BackupFacet` has the same six omissions per facet (`facets.clockAccentColorOption`,
+`clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
 `appListVerticalAlignment` — every column added in v13–v15 — are not exported). See finding F11.
 Then
 `facets: List<BackupFacet>` (each with its own favorites, dock apps, folder placements),

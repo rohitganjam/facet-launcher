@@ -119,11 +119,7 @@ class FacetRepositoryTest {
             colorOption = ClockColorOption.THEME,
             use24HourTime = true,
             showMeridiem = true,
-            calendarFontOption = ClockFontOption.POPPINS,
-            calendarColorOption = ClockColorOption.ACCENT_SECONDARY,
-            calendarFontWeight = FontWeightOption.SEMI_BOLD,
             clockAlignment = ClockAlignment.CENTER,
-            calendarAlignment = ClockAlignment.RIGHT,
             clockZoneHeightDp = 180f,
             clockScale = 1.2f,
         )
@@ -134,11 +130,7 @@ class FacetRepositoryTest {
         assertEquals(ClockColorOption.THEME, stored.clockColorOption)
         assertEquals(true, stored.use24HourTime)
         assertEquals(true, stored.clockShowMeridiem)
-        assertEquals(ClockFontOption.POPPINS, stored.calendarFontOption)
-        assertEquals(ClockColorOption.ACCENT_SECONDARY, stored.calendarColorOption)
-        assertEquals(FontWeightOption.SEMI_BOLD, stored.calendarFontWeight)
         assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
-        assertEquals(ClockAlignment.RIGHT, stored.calendarAlignment)
         assertEquals(180f, stored.clockZoneHeightDp)
         assertEquals(1.2f, stored.clockScale, 0.001f)
     }
@@ -163,7 +155,7 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `setClockAlignment and setCalendarAlignment round-trip independently`() = runTest {
+    fun `setClockAlignment persists and round-trips`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
@@ -172,13 +164,6 @@ class FacetRepositoryTest {
 
         val stored = repository.observeFacets().first().single()
         assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
-        assertEquals(ClockAlignment.LEFT, stored.calendarAlignment)
-
-        repository.setCalendarAlignment(stored, ClockAlignment.RIGHT)
-
-        val restored = repository.observeFacets().first().single()
-        assertEquals(ClockAlignment.CENTER, restored.clockAlignment)
-        assertEquals(ClockAlignment.RIGHT, restored.calendarAlignment)
     }
 
     @Test
@@ -208,13 +193,12 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `resetClockPosition clears the zone height, both alignments, and scale together`() = runTest {
+    fun `resetClockPosition clears the zone height, alignment, and scale together`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
         repository.setClockZoneHeight(facet, 220f)
         repository.setClockAlignment(facet, ClockAlignment.CENTER)
-        repository.setCalendarAlignment(facet, ClockAlignment.RIGHT)
         repository.setClockScale(facet, 1.5f)
         val dragged = repository.observeFacets().first().single()
 
@@ -223,28 +207,25 @@ class FacetRepositoryTest {
         val stored = repository.observeFacets().first().single()
         assertNull(stored.clockZoneHeightDp)
         assertEquals(ClockAlignment.LEFT, stored.clockAlignment)
-        assertEquals(ClockAlignment.LEFT, stored.calendarAlignment)
         assertEquals(0.8f, stored.clockScale, 0.001f)
     }
 
     @Test
-    fun `updateOverridingApps sets all fields and flag together`() = runTest {
+    fun `updateOverridingApps sets content fields and flag together`() = runTest {
+        // position/presentation are no longer part of this bundle — they're look fields, edited
+        // from Settings -> Appearance independently now (see chat history)
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
         repository.updateOverridingApps(
             facet = facet,
             overriding = true,
-            position = AppRowPosition.RIGHT,
-            presentation = AppRowPresentation.TEXT_ONLY,
             mode = ListContentMode.MOST_USED,
             count = 6,
             overridingFavorites = true
         )
         val stored = repository.observeFacets().first().single()
         assertEquals(true, stored.overrideApps)
-        assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
-        assertEquals(AppRowPresentation.TEXT_ONLY, stored.appRowPresentation)
         assertEquals(ListContentMode.MOST_USED, stored.listContentMode)
         assertEquals(6, stored.appsToShowCount)
         assertEquals(true, stored.overridingFavorites)
@@ -308,9 +289,6 @@ class FacetRepositoryTest {
         assertEquals(true, stored.overrideCalendar)
         assertEquals(false, stored.showAllDayEvents)
         assertEquals(setOf("1", "2"), stored.selectedCalendarIds)
-        // Design fields (font/color) belong to overrideClock's group now, not overrideCalendar's — untouched here.
-        assertEquals(ClockFontOption.LAUNCHER_DEFAULT, stored.calendarFontOption)
-        assertEquals(ClockColorOption.THEME, stored.calendarColorOption)
     }
 
     @Test
@@ -324,32 +302,6 @@ class FacetRepositoryTest {
 
         repository.setSelectedCalendarIds(repository.observeFacets().first().single(), null)
         assertEquals(null, repository.observeFacets().first().single().selectedCalendarIds)
-    }
-
-    @Test
-    fun `setCalendarFontOption and setCalendarColorOption round-trip independently`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao)
-        val facet = repository.addFacet()
-
-        repository.setCalendarFontOption(facet, ClockFontOption.MANROPE)
-        val afterFont = repository.observeFacets().first().single()
-        assertEquals(ClockFontOption.MANROPE, afterFont.calendarFontOption)
-
-        repository.setCalendarColorOption(afterFont, ClockColorOption.THEME_INVERTED)
-        val stored = repository.observeFacets().first().single()
-        assertEquals(ClockFontOption.MANROPE, stored.calendarFontOption)
-        assertEquals(ClockColorOption.THEME_INVERTED, stored.calendarColorOption)
-    }
-
-    @Test
-    fun `setCalendarFontWeight round-trips`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao)
-        val facet = repository.addFacet()
-
-        repository.setCalendarFontWeight(facet, FontWeightOption.LIGHT)
-        assertEquals(FontWeightOption.LIGHT, repository.observeFacets().first().single().calendarFontWeight)
     }
 
     @Test

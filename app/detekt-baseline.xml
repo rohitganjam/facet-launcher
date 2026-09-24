@@ -75,12 +75,14 @@
     <ID>LongMethod:AppDrawerSettingsScreen.kt:@Composable private fun AppDrawerSettingsContent</ID>
     <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
+    <ID>LongMethod:AppearanceSettingsScreen.kt:@Composable private fun AppearancePreviewCard</ID>
     <ID>LongMethod:AppearanceSettingsScreen.kt:@Composable private fun AppearanceSettingsContent</ID>
     <ID>LongMethod:BackupRestoreScreen.kt:@Composable private fun BackupRestoreContent</ID>
     <ID>LongMethod:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
     <ID>LongMethod:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
     <ID>LongMethod:ClockTemplates.kt:@Composable private fun StubTemplate</ID>
     <ID>LongMethod:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
+    <ID>LongMethod:DockSettingsScreen.kt:@Composable private fun DockSettingsContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetCarouselContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
     <ID>LongMethod:FacetNavHost.kt:@Composable fun FacetNavHost</ID>
@@ -135,6 +137,8 @@
     <ID>TooGenericExceptionCaught:LauncherAppWidgetHost.kt:LauncherAppWidgetHost$e: Exception</ID>
     <ID>TooManyFunctions:AppDrawerScreen.kt:com.facetlauncher.app.ui.drawer.AppDrawerScreen.kt</ID>
     <ID>TooManyFunctions:AppWidgetRepository.kt:AppWidgetRepository</ID>
+    <ID>TooManyFunctions:AppearanceSettingsScreen.kt:com.facetlauncher.app.ui.settings.AppearanceSettingsScreen.kt</ID>
+    <ID>TooManyFunctions:AppearanceSettingsViewModel.kt:AppearanceSettingsViewModel : ViewModel</ID>
     <ID>TooManyFunctions:BackupMapping.kt:com.facetlauncher.app.domain.BackupMapping.kt</ID>
     <ID>TooManyFunctions:ClockStyleGalleryViewModel.kt:ClockStyleGalleryViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ClockTemplates.kt:com.facetlauncher.app.ui.home.clock.ClockTemplates.kt</ID>
@@ -168,7 +172,8 @@
     <ID>UnstableCollections:AppPickerScreen.kt:List&lt;Folder&gt;</ID>
     <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Long&gt;</ID>
     <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Pair&lt;String, String&gt;&gt;</ID>
-    <ID>UnstableCollections:AppearanceSettingsScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:AppearanceSettingsScreen.kt:List&lt;CalendarEvent&gt;</ID>
+    <ID>UnstableCollections:AppearanceSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:CalendarEventsBlock.kt:List&lt;CalendarEvent&gt;</ID>
     <ID>UnstableCollections:CalendarEventsBlock.kt:Map&lt;String, String&gt;</ID>
     <ID>UnstableCollections:ClockBlock.kt:List&lt;CalendarEvent&gt;</ID>

@@ -391,8 +391,80 @@ object Migrations {
         }
     }
 
+    /**
+     * Removes `facets.calendarFontOption`/`calendarColorOption`/`calendarFontWeight`/
+     * `calendarAlignment` — the calendar events strip no longer has independent styling; it reads
+     * Appearance's home-text settings and the clock's own `clockAlignment` instead (see chat
+     * history: calendar/appearance styling consolidation). SQLite `DROP COLUMN` needs 3.35+, not
+     * reliably available across this app's minSdk 31 devices, so — same
+     * create-copy-drop-rename pattern MIGRATION_16_17 used, and for the same reason — the table is
+     * recreated without the four columns rather than altered in place. `facets` has no indices or
+     * declared foreign keys of its own to recreate; the child tables that reference it by name
+     * (`facet_dock_apps`, `favorite_apps`, etc.) are unaffected since the table's *name* doesn't
+     * change, only its column set — unlike MIGRATION_16_17's rename, where the name itself changed.
+     */
+    val MIGRATION_22_23: Migration = object : Migration(22, 23) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE facets_new (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, " +
+                    "`overrideClock` INTEGER NOT NULL, `clockTemplateId` TEXT NOT NULL, `clockFontOption` TEXT NOT NULL, " +
+                    "`clockColorOption` TEXT NOT NULL, `clockAccentColorOption` TEXT NOT NULL, `use24HourTime` INTEGER NOT NULL, " +
+                    "`clockShowMeridiem` INTEGER NOT NULL, `clockDateStyle` TEXT NOT NULL, `clockAlignment` TEXT NOT NULL, " +
+                    "`clockZoneHeightDp` REAL, `clockScale` REAL NOT NULL, `clockWidgetAppWidgetId` INTEGER, " +
+                    "`clockWidgetWidthDp` INTEGER, `clockWidgetHeightDp` INTEGER, `overrideApps` INTEGER NOT NULL, " +
+                    "`appRowPosition` TEXT NOT NULL, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, " +
+                    "`appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `overridingFavorites` INTEGER NOT NULL, " +
+                    "`overrideDock` INTEGER NOT NULL, `dockDisplayMode` TEXT NOT NULL, `overrideCalendar` INTEGER NOT NULL, " +
+                    "`showAllDayEvents` INTEGER NOT NULL, `selectedCalendarIdsCsv` TEXT)",
+            )
+            db.execSQL(
+                "INSERT INTO facets_new (id, name, position, overrideClock, clockTemplateId, clockFontOption, " +
+                    "clockColorOption, clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, " +
+                    "clockAlignment, clockZoneHeightDp, clockScale, clockWidgetAppWidgetId, clockWidgetWidthDp, " +
+                    "clockWidgetHeightDp, overrideApps, appRowPosition, appRowPresentation, listContentMode, " +
+                    "appsToShowCount, appListVerticalAlignment, overridingFavorites, overrideDock, dockDisplayMode, " +
+                    "overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv) " +
+                    "SELECT id, name, position, overrideClock, clockTemplateId, clockFontOption, " +
+                    "clockColorOption, clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, " +
+                    "clockAlignment, clockZoneHeightDp, clockScale, clockWidgetAppWidgetId, clockWidgetWidthDp, " +
+                    "clockWidgetHeightDp, overrideApps, appRowPosition, appRowPresentation, listContentMode, " +
+                    "appsToShowCount, appListVerticalAlignment, overridingFavorites, overrideDock, dockDisplayMode, " +
+                    "overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv FROM facets",
+            )
+            db.execSQL("DROP TABLE facets")
+            db.execSQL("ALTER TABLE facets_new RENAME TO facets")
+        }
+    }
+
+    /**
+     * Decouples `facets.appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
+     * `dockDisplayMode` from the whole-block `overrideApps`/`overrideDock` gate — these four
+     * "look" fields are edited from Settings → Appearance now, independently of Dock's/Apps-list's
+     * own content (see chat history: dock/favorites display controls moved to Appearance with a
+     * per-field `LAUNCHER_DEFAULT` sentinel, mirroring `clockFontOption`'s existing one). No column
+     * type changes — `LAUNCHER_DEFAULT` is just a new valid string for these already-`TEXT NOT NULL`
+     * columns — but a data migration is still needed: a facet that was NOT overriding apps/dock had
+     * its `appRowPosition`/etc columns sitting at whatever stale default they were created with
+     * (unread, since resolution ignored them while `overrideApps`/`overrideDock` was `false`).
+     * Leaving that stale literal value in place after this change would make the facet silently
+     * start "overriding" with that value instead of continuing to inherit — so every row where the
+     * matching flag is `0` gets reset to `'LAUNCHER_DEFAULT'` here; a row that *was* overriding
+     * keeps its real chosen value untouched.
+     */
+    val MIGRATION_23_24: Migration = object : Migration(23, 24) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "UPDATE facets SET appRowPosition = 'LAUNCHER_DEFAULT', appRowPresentation = 'LAUNCHER_DEFAULT', " +
+                    "appListVerticalAlignment = 'LAUNCHER_DEFAULT' WHERE overrideApps = 0",
+            )
+            db.execSQL("UPDATE facets SET dockDisplayMode = 'LAUNCHER_DEFAULT' WHERE overrideDock = 0")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
+        MIGRATION_22_23, MIGRATION_23_24,
     )
 }

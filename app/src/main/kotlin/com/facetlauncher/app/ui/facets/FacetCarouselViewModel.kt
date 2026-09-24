@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveOverride
+import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -16,7 +17,6 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
@@ -72,39 +72,25 @@ data class FacetCarouselUiState(
     fun clockAlignment(facetId: Long): ClockAlignment =
         facet(facetId).resolveOverride({ it.overrideClock }, { it.clockAlignment }, globalSettings.clockAlignment)
 
-    /** Independent of [clockAlignment] — see [com.facetlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
-    fun calendarAlignment(facetId: Long): ClockAlignment =
-        facet(facetId).resolveOverride({ it.overrideClock }, { it.calendarAlignment }, globalSettings.calendarAlignment)
-
     fun clockZoneHeightDp(facetId: Long): Float? =
         facet(facetId).resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, globalSettings.clockZoneHeightDp)
 
     fun clockScale(facetId: Long): Float =
         facet(facetId).resolveOverride({ it.overrideClock }, { it.clockScale }, globalSettings.clockScale)
 
-    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeCalendarFontOption]'s own gating exactly — same `overrideCalendar` flag. */
-    fun calendarFontOption(facetId: Long): ClockFontOption =
-        facet(facetId)?.let { if (it.overrideCalendar) it.calendarFontOption else globalSettings.calendarFontOption } ?: globalSettings.calendarFontOption
-
-    fun calendarColorOption(facetId: Long): ClockColorOption =
-        facet(facetId)?.let { if (it.overrideCalendar) it.calendarColorOption else globalSettings.calendarColorOption } ?: globalSettings.calendarColorOption
-
-    fun calendarFontWeight(facetId: Long): FontWeightOption =
-        facet(facetId)?.let { if (it.overrideCalendar) it.calendarFontWeight else globalSettings.calendarFontWeight } ?: globalSettings.calendarFontWeight
-
-    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeAppRowPosition]'s own gating exactly — same `overrideApps` flag. */
+    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeAppRowPosition]'s own resolution — a look field, resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideApps`. */
     fun appRowPosition(facetId: Long): AppRowPosition =
-        facet(facetId)?.let { if (it.overrideApps) it.appRowPosition else globalSettings.appRowPosition } ?: globalSettings.appRowPosition
+        facet(facetId).resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, globalSettings.appRowPosition)
 
     fun appRowPresentation(facetId: Long): AppRowPresentation =
-        facet(facetId)?.let { if (it.overrideApps) it.appRowPresentation else globalSettings.appRowPresentation } ?: globalSettings.appRowPresentation
+        facet(facetId).resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalSettings.appRowPresentation)
 
     fun listContentMode(facetId: Long): ListContentMode =
         facet(facetId)?.let { if (it.overrideApps) it.listContentMode else globalSettings.listContentMode } ?: globalSettings.listContentMode
 
-    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeDockDisplayMode]'s own gating — same `overrideDock` flag. The dock's app list itself comes from each facet's [FacetPreviewData.dockApps]. */
+    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeDockDisplayMode]'s own resolution — a look field, resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideDock`. The dock's app list itself comes from each facet's [FacetPreviewData.dockApps]. */
     fun dockDisplayMode(facetId: Long): DockDisplayMode =
-        facet(facetId)?.let { if (it.overrideDock) it.dockDisplayMode else globalSettings.dockDisplayMode } ?: globalSettings.dockDisplayMode
+        facet(facetId).resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, globalSettings.dockDisplayMode)
 }
 
 @HiltViewModel

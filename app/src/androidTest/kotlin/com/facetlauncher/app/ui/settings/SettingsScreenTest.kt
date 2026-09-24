@@ -41,7 +41,6 @@ class SettingsScreenTest {
         onBack: () -> Unit = {},
         onViewFacets: () -> Unit = {},
         onNavigateToAppearance: () -> Unit = {},
-        onNavigateToClockStyleGallery: () -> Unit = {},
         onNavigateToCalendarSettings: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
@@ -77,7 +76,6 @@ class SettingsScreenTest {
                     onBack = onBack,
                     onViewFacets = onViewFacets,
                     onNavigateToAppearance = onNavigateToAppearance,
-                    onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
@@ -303,19 +301,6 @@ class SettingsScreenTest {
         assertEquals(true, viewFacetsClicked)
     }
 
-    @Test
-    fun clockStyleGalleryRowIsClickable() {
-        // Given the settings screen, scrolled to the Clock & Calendar card's style row
-        var navigated = false
-        setContent(onNavigateToClockStyleGallery = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-
-        // When tapping it
-        composeRule.onNodeWithTag("clock_style_gallery_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
 
     @Test
     fun permissionsRowIsClickable() {

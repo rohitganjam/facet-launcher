@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home.clock
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.semantics.SemanticsActions
@@ -171,54 +173,8 @@ class ClockStyleGalleryScreenTest {
         }
     }
 
-    @Test
-    fun globalCalendarAlignmentSelectionPersistsThroughSettingsRepositoryIndependentlyOfClockAlignment() {
-        // Given the global (non-facet-scoped) entry point, Left by default for both
-        val (settingsRepository, _) = setContent()
-
-        // When picking Right alignment for the calendar only
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("calendar_alignment_row"))
-        composeRule.onNodeWithTag("calendar_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
-
-        // Then it's persisted to the real repository without touching the clock's own alignment
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().calendarAlignment == com.facetlauncher.app.data.model.ClockAlignment.RIGHT }
-        }
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().clockAlignment })
-    }
-
-    @Test
-    fun calendarPreviewMovesLiveWhenCalendarAlignmentChanges() {
-        // Given the gallery, the calendar preview's own event row initially left-packed (default)
-        val (settingsRepository, _) = setContent()
-        val leftBefore = composeRule.onNodeWithTag("clock_event_row_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
-
-        // When selecting Right calendar alignment
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("calendar_alignment_row"))
-        composeRule.onNodeWithTag("calendar_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
-        // waitForIdle() alone only settles Compose's own pipeline — it doesn't wait for the
-        // ViewModel's async DataStore write to land and re-emit, which is what actually drives
-        // the recomposition this test is asserting on (see CLAUDE.md's own guidance on this exact
-        // pattern). Waiting on the real repository value directly is the reliable way to know the
-        // write has landed before reading the now-recomposed UI.
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().calendarAlignment == com.facetlauncher.app.data.model.ClockAlignment.RIGHT }
-        }
-        composeRule.waitForIdle()
-
-        // Then the preview's own event row shifts further right — it moves live with the setting,
-        // not just on the real Home screen
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_event_row_1"))
-        val leftAfter = composeRule.onNodeWithTag("clock_event_row_1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
-        org.junit.Assert.assertTrue(leftAfter > leftBefore)
-    }
+    // calendarPreviewMovesLiveWhenClockAlignmentChanges moved to AppearanceSettingsScreenTest —
+    // the calendar preview itself lives there now (see chat history).
 
     @Test
     fun clockTemplateCardPreviewMovesLiveWhenClockAlignmentChanges() {
@@ -257,13 +213,12 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun tappingResetClockWidgetPositionClearsTheZoneHeightAndBothAlignments() {
-        // Given a previously-dragged clock zone height and non-default alignments, both persisted
+    fun tappingResetClockWidgetPositionClearsTheZoneHeightAndAlignment() {
+        // Given a previously-dragged clock zone height and non-default alignment, both persisted
         val (settingsRepository, _) = setContent()
         runBlocking {
             settingsRepository.setClockZoneHeight(180f)
             settingsRepository.setClockAlignment(com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
-            settingsRepository.setCalendarAlignment(com.facetlauncher.app.data.model.ClockAlignment.CENTER)
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { settingsRepository.settings.first().clockZoneHeightDp != null }
@@ -275,24 +230,20 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("reset_clock_position_row").performClick()
         composeRule.waitForIdle()
 
-        // Then the zone height clears AND both alignments return to Left — the whole widget's
-        // position resets, not just its height. resetClockPosition() issues these as three
-        // separate sequential DataStore writes in one coroutine (zone height, then clock
-        // alignment, then calendar alignment) — waiting on zone height alone raced ahead of the
-        // other two, which could still be mid-flight when the assertions below ran (see chat
-        // history: this is what "expected LEFT but was CENTER" on calendarAlignment meant). Waiting
-        // on the actual condition being asserted — all three reset — is what makes this reliable.
+        // Then the zone height clears AND the alignment returns to Left — the whole widget's
+        // position resets, not just its height. resetClockPosition() issues these as sequential
+        // DataStore writes in one coroutine — waiting on zone height alone could race ahead of the
+        // alignment write, which might still be mid-flight when the assertion below ran. Waiting
+        // on the actual condition being asserted is what makes this reliable.
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking {
                 val settings = settingsRepository.settings.first()
                 settings.clockZoneHeightDp == null &&
-                    settings.clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.LEFT &&
-                    settings.calendarAlignment == com.facetlauncher.app.data.model.ClockAlignment.LEFT
+                    settings.clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.LEFT
             }
         }
         val settings = runBlocking { settingsRepository.settings.first() }
         assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, settings.clockAlignment)
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, settings.calendarAlignment)
     }
 
     @Test
@@ -301,6 +252,13 @@ class ClockStyleGalleryScreenTest {
         // design bundle as font/color/template, so it's facet-overridable the same way (see
         // chat history: this used to be global-only and hidden entirely on this variant).
         val (settingsRepository, facetRepository) = setContent(facetId = 1L)
+
+        // The alignment control is disabled until Override is picked (same `controlsEnabled`
+        // gating as the rest of this screen's controls — see chat history)
+        composeRule.onNodeWithTag("clock_style_override_row").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { facetRepository.observeFacets().first().any { it.overrideClock } }
+        }
 
         // When picking Center alignment for the clock
         composeRule.onNodeWithTag("clock_style_gallery_list")
@@ -319,37 +277,20 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun facetScopedCalendarAlignmentPersistsToTheFacetDirectly() {
-        // Given a facet-scoped entry point
-        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
-
-        // When picking Right alignment for the calendar
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("calendar_alignment_row"))
-        composeRule.onNodeWithTag("calendar_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_alignment_row_option_RIGHT").performClick()
-
-        // Then it's persisted to this facet's own row, not the launcher-wide global setting
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking {
-                facetRepository.observeFacets().first().single().calendarAlignment == com.facetlauncher.app.data.model.ClockAlignment.RIGHT
-            }
-        }
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().calendarAlignment })
-    }
-
-    @Test
-    fun facetScopedResetClockWidgetPositionClearsTheFacetsOwnHeightAndBothAlignments() {
-        // Given a facet-scoped entry point with a previously-dragged height and non-default alignments
+    fun facetScopedResetClockWidgetPositionClearsTheFacetsOwnHeightAndAlignment() {
+        // Given a facet-scoped entry point, overriding, with a previously-dragged height and
+        // non-default alignment
         val (_, facetRepository) = setContent(facetId = 1L)
+        composeRule.onNodeWithTag("clock_style_override_row").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { facetRepository.observeFacets().first().any { it.overrideClock } }
+        }
         runBlocking {
             // Each setter re-fetches the current row rather than reusing one stale snapshot —
             // otherwise the next call's copy() would silently clobber the previous field back to
             // its original value (see chat history: this exact bug bit this test's first draft).
             facetRepository.setClockZoneHeight(facetRepository.observeFacets().first().single(), 180f)
             facetRepository.setClockAlignment(facetRepository.observeFacets().first().single(), com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
-            facetRepository.setCalendarAlignment(facetRepository.observeFacets().first().single(), com.facetlauncher.app.data.model.ClockAlignment.CENTER)
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp != null }
@@ -361,91 +302,44 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("reset_clock_position_row").performClick()
         composeRule.waitForIdle()
 
-        // Then this facet's own height and both alignments reset — the global default is untouched
+        // Then this facet's own height and alignment reset — the global default is untouched
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp == null }
         }
         val facet = runBlocking { facetRepository.observeFacets().first().single() }
         assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, facet.clockAlignment)
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, facet.calendarAlignment)
     }
 
-    @Test
-    fun calendarAndClockSectionsAreSeparatedByADivider() {
-        // Given the gallery
-        setContent()
-
-        // Then a divider sits between the Calendar section (font/color + preview) and the Clock section
-        composeRule.onNodeWithTag("calendar_clock_section_divider").assertIsDisplayed()
-    }
+    // The calendar preview (and its divider from the Clock section) moved to
+    // AppearanceSettingsScreen — see chat history; coverage moved to
+    // AppearanceSettingsScreenTest's own preview tests.
 
     @Test
-    fun globalCalendarStyleFontSelectionPersistsThroughSettingsRepository() {
-        // Given the global (non-facet-scoped) entry point
-        val (settingsRepository, _) = setContent()
+    fun facetScopedModeShowsInheritOverrideSwitch() {
+        // Given a facet-scoped entry point
+        setContent(facetId = 1L)
 
-        // When picking a calendar-style font other than the default
-        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
-
-        // Then it's persisted to the real repository
+        // The facet-scoped state resolves asynchronously (Room query behind the ViewModel's
+        // StateFlow combine) — wait for the switch to actually render rather than assuming
+        // setContent()'s own waitForIdle() already caught it (see chat history — this same race
+        // hit other facet-scoped screens' equivalent tests earlier).
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().calendarFontOption == com.facetlauncher.app.data.model.ClockFontOption.POPPINS }
+            composeRule.onAllNodesWithTag("clock_style_override_row").fetchSemanticsNodes().isNotEmpty()
         }
-    }
 
-    @Test
-    fun facetScopedCalendarStyleFontPersistsToTheFacetDirectly() {
-        // Given a facet-scoped entry point — this gallery has no per-row Inherit/Override
-        // gating of its own; reaching it scoped to a facet always edits that facet directly
-        // (the Inherit/Override choice lives on FacetSettingsScreen's own card instead).
-        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
+        // Then the inherit/override switch is present, defaulting to Inherit (controls disabled)
+        composeRule.onNodeWithTag("clock_style_inherit_row").assertExists()
+        composeRule.onNodeWithTag("clock_style_override_row").assertExists()
+        composeRule.onNodeWithTag("clock_style_gallery_list")
+            .performScrollToNode(hasTestTag("clock_alignment_row"))
+        composeRule.onNodeWithTag("clock_alignment_row").assertIsNotEnabled()
 
-        // When picking a calendar-style font other than the default
-        composeRule.onNodeWithTag("calendar_style_font_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("calendar_style_font_row_option_POPPINS").performClick()
+        // When switching to Override
+        composeRule.onNodeWithTag("clock_style_override_row").performClick()
 
-        // Then it's persisted to this facet's own row, not the launcher-wide global setting
+        // Then the controls become live
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking {
-                facetRepository.observeFacets().first().single().calendarFontOption == com.facetlauncher.app.data.model.ClockFontOption.POPPINS
-            }
+            runCatching { composeRule.onNodeWithTag("clock_alignment_row").assertIsEnabled() }.isSuccess
         }
-        val settings = runBlocking { settingsRepository.settings.first() }
-        assert(settings.calendarFontOption != com.facetlauncher.app.data.model.ClockFontOption.POPPINS)
-    }
-
-    @Test
-    fun globalCalendarWeightSelectionPersistsThroughSettingsRepository() {
-        // Given the global (non-facet-scoped) entry point, Regular weight by default
-        val (settingsRepository, _) = setContent()
-
-        // When dragging the calendar weight slider to its last stop (Semi Bold)
-        composeRule.onNodeWithTag("calendar_style_weight_slider_control")
-            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontWeightOption.entries.size - 1).toFloat()) }
-
-        // Then it's persisted to the real repository
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().calendarFontWeight == FontWeightOption.SEMI_BOLD }
-        }
-    }
-
-    @Test
-    fun facetScopedCalendarWeightPersistsToTheFacetDirectly() {
-        // Given a facet-scoped entry point (same reasoning as the font/color tests above)
-        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
-
-        // When dragging the calendar weight slider to its last stop (Semi Bold)
-        composeRule.onNodeWithTag("calendar_style_weight_slider_control")
-            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontWeightOption.entries.size - 1).toFloat()) }
-
-        // Then it's persisted to this facet's own row, not the launcher-wide global setting
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().single().calendarFontWeight == FontWeightOption.SEMI_BOLD }
-        }
-        val settings = runBlocking { settingsRepository.settings.first() }
-        assert(settings.calendarFontWeight != FontWeightOption.SEMI_BOLD)
     }
 }

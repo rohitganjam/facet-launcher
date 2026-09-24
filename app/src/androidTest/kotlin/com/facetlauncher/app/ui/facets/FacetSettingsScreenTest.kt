@@ -34,11 +34,13 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * The top-level per-facet screen is now a short nav list — Rename, three Inherit/Override
- * cards, and a row into each area's own settings screen. The detailed controls (position,
- * presentation, dock display style, favorites, …) are exercised by
- * `com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreenTest` /
- * `DockSettingsScreenTest`, which cover both the global and the facet-scoped instance.
+ * The top-level per-facet screen is now a short nav list — Rename, then one "HOME & APPS" card
+ * with a plain row into each area's own settings screen (Apps list / Dock / Clock style /
+ * Calendars), mirroring `SettingsScreen`'s own layout. No Inherit/Override switches here any
+ * more — each destination screen now owns its own (see chat history), exercised by
+ * `com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreenTest` / `DockSettingsScreenTest` /
+ * `com.facetlauncher.app.ui.home.clock.ClockStyleGalleryScreenTest`, which cover both the global
+ * and the facet-scoped instance of each.
  */
 class FacetSettingsScreenTest {
 
@@ -53,6 +55,7 @@ class FacetSettingsScreenTest {
         onNavigateToDockSettings: (Long) -> Unit = {},
         onNavigateToCalendarSettings: (Long) -> Unit = {},
         onNavigateToClockStyleGallery: (Long) -> Unit = {},
+        onNavigateToAppearance: (Long) -> Unit = {},
     ): FacetRepository {
         lateinit var facetRepository: FacetRepository
         composeRule.setContent {
@@ -85,6 +88,7 @@ class FacetSettingsScreenTest {
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
+                    onNavigateToAppearance = onNavigateToAppearance,
                     viewModel = viewModel,
                 )
             }
@@ -108,7 +112,7 @@ class FacetSettingsScreenTest {
         setContent()
 
         val renameTop = composeRule.onNodeWithTag("facet_settings_rename_row").fetchSemanticsNode().boundsInRoot.top
-        val appsSectionTop = composeRule.onNodeWithText("APPS LIST").fetchSemanticsNode().boundsInRoot.top
+        val appsSectionTop = composeRule.onNodeWithText("HOME & APPS").fetchSemanticsNode().boundsInRoot.top
         assert(renameTop < appsSectionTop)
     }
 
@@ -176,46 +180,6 @@ class FacetSettingsScreenTest {
     }
 
     @Test
-    fun overridingTheAppsCardPersistsTheFlag() {
-        val facetRepository = setContent()
-        awaitFacetLoaded()
-
-        composeRule.onNodeWithTag("facet_apps_override_row").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().first().overrideApps }
-        }
-    }
-
-    @Test
-    fun overridingTheDockCardPersistsTheFlag() {
-        val facetRepository = setContent()
-        awaitFacetLoaded()
-
-        scrollToRow("facet_dock_override_row")
-        composeRule.onNodeWithTag("facet_dock_override_row").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().first().overrideDock }
-        }
-    }
-
-    @Test
-    fun overridingTheClockCardPersistsTheFlag() {
-        val facetRepository = setContent()
-        awaitFacetLoaded()
-
-        scrollToRow("facet_clock_override_row")
-        composeRule.onNodeWithTag("facet_clock_override_row").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().first().overrideClock }
-        }
-        // The "Clock & Calendar Style" row's subtitle then flips to "Overriding defaults · tap to
-        // edit" (a plain `if (isOverridingClock)` branch — asserted at the unit level).
-    }
-
-    @Test
     fun dockRowSubtitleReflectsTheEffectiveDisplayStyle() {
         setContent()
         awaitFacetLoaded()
@@ -223,6 +187,21 @@ class FacetSettingsScreenTest {
         // Not overriding -> inherits the global default (Icons)
         scrollToRow("facet_dock_settings_row")
         composeRule.onNodeWithTag("facet_dock_settings_row").assertTextContains("Icons", substring = true)
+    }
+
+    @Test
+    fun appearanceRowNavigatesWithTheFacetsIdAndReflectsTheEffectiveLookFields() {
+        var navigatedFromAppearance: Long? = null
+        setContent(onNavigateToAppearance = { navigatedFromAppearance = it })
+        awaitFacetLoaded()
+
+        // The dock display style/app row presentation move to Appearance now (see chat history) —
+        // this row previews both, inheriting the global defaults (Icons, Icon & Text) since this
+        // facet overrides neither.
+        scrollToRow("facet_appearance_row")
+        composeRule.onNodeWithTag("facet_appearance_row").assertTextContains("Icons", substring = true)
+        composeRule.onNodeWithTag("facet_appearance_row").performClick()
+        assertEquals(true, navigatedFromAppearance != null)
     }
 
     @Test

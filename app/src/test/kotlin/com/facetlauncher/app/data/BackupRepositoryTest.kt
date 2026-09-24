@@ -27,7 +27,6 @@ class BackupRepositoryTest {
         appLabelColorOption = "THEME", appRowPosition = "LEFT", appRowPresentation = "ICON_AND_TEXT",
         listContentMode = "FAVORITES", appsToShowCount = 5, clockTemplateId = "LIGHT_STACK",
         clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", clockShowMeridiem = false,
-        calendarFontOption = "LAUNCHER_DEFAULT", calendarColorOption = "THEME",
     )
 
     @Test

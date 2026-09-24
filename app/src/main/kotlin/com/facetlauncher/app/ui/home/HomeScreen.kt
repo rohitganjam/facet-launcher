@@ -168,8 +168,6 @@ fun HomeScreen(
     clockShowMeridiem: Boolean = false,
     clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    /** Independent of [clockAlignment] — positions the calendar events strip separately from the clock. */
-    calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
     clockScale: Float = 0.8f,
     /** Current adjustment mode — hoisted to the caller (e.g. [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]) so screen gestures can be coordinated. */
@@ -240,9 +238,6 @@ fun HomeScreen(
     isCharging: Boolean = false,
     calendarEvents: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
-    calendarFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    calendarColorOption: ClockColorOption = ClockColorOption.THEME,
-    calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     onEventClick: (CalendarEvent) -> Unit = {},
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
@@ -620,13 +615,11 @@ fun HomeScreen(
                     showMeridiem = clockShowMeridiem,
                     dateStyle = clockDateStyle,
                     clockAlignment = clockAlignment,
-                    calendarAlignment = calendarAlignment,
                     clockScale = effectiveClockScale,
                     events = calendarEvents,
                     calendarColors = calendarColors,
-                    calendarFontOption = calendarFontOption,
-                    calendarColorOption = calendarColorOption,
-                    calendarFontWeight = calendarFontWeight,
+                    homeAppsFontWeight = homeAppsFontWeight,
+                    appLabelColorOption = appLabelColorOption,
                     onEventClick = onEventClick,
                     launcherFontOption = launcherFontOption,
                     nextAlarmMillis = nextAlarmMillis,
@@ -688,10 +681,11 @@ fun HomeScreen(
                                 },
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     shadow = homeAppLabelShadow(listLabelColor),
+                                    // See AppRow's own identical `when` for why LAUNCHER_DEFAULT falls in with LEFT.
                                     textAlign = when (appRowPosition) {
                                         AppRowPosition.RIGHT -> TextAlign.End
                                         AppRowPosition.CENTER -> TextAlign.Center
-                                        AppRowPosition.LEFT -> TextAlign.Start
+                                        AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> TextAlign.Start
                                     },
                                 ),
                                 color = listLabelColor,
@@ -1239,10 +1233,14 @@ internal fun AppRow(
             // RIGHT packs the whole row's content against the trailing edge (not just reversed
             // order while left-anchored) so the row visually hugs the screen's right edge; CENTER
             // centers that same (unreversed) group within the row's full width instead.
+            // LAUNCHER_DEFAULT never reaches this composable — callers always pass an already-
+            // resolved effective value (HomeUiState.activeAppRowPosition/FacetCarouselViewModel's
+            // own resolver), which resolves the sentinel away before it gets here. Handled the same
+            // as LEFT only because AppRowPosition's `when` must stay exhaustive.
             horizontalArrangement = when (position) {
                 AppRowPosition.RIGHT -> Arrangement.spacedBy(14.dp, Alignment.End)
                 AppRowPosition.CENTER -> Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)
-                AppRowPosition.LEFT -> Arrangement.spacedBy(14.dp)
+                AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Arrangement.spacedBy(14.dp)
             },
         ) {
             val icon: @Composable () -> Unit = {
@@ -1419,19 +1417,12 @@ private fun SingleAppDockIcon(
         Modifier.clickable(onClick = onClick)
     }
     Box(modifier = modifier) {
-        when (displayMode) {
-            DockDisplayMode.ICONS -> Box(
-                modifier = clickModifier,
-            ) {
-                AppIcon(
-                    icon = app.icon,
-                    size = AppIconSize.TILE,
-                    contentDescription = app.label,
-                    notificationCount = badgeCount,
-                    badgeStyle = badgeStyle,
-                )
-            }
-            DockDisplayMode.TEXT -> Row(
+        // Treated as a straight boolean rather than an exhaustive `when` over DockDisplayMode:
+        // LAUNCHER_DEFAULT never reaches this composable (callers always pass an already-resolved
+        // effective value — see HomeUiState.activeDockDisplayMode/FacetCarouselViewModel's own
+        // resolver), so it renders as Icons here the same as ICONS, without a case of its own.
+        if (displayMode == DockDisplayMode.TEXT) {
+            Row(
                 modifier = clickModifier
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -1446,6 +1437,18 @@ private fun SingleAppDockIcon(
                 // no icon to anchor to, so it trails the label instead — same placement AppRow uses
                 // for the favorites list's own icon-less badge slot.
                 if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
+            }
+        } else {
+            Box(
+                modifier = clickModifier,
+            ) {
+                AppIcon(
+                    icon = app.icon,
+                    size = AppIconSize.TILE,
+                    contentDescription = app.label,
+                    notificationCount = badgeCount,
+                    badgeStyle = badgeStyle,
+                )
             }
         }
         if (enableLongPressMenu) {
@@ -1496,11 +1499,10 @@ private fun FolderDockIcon(
         Modifier.clickable(onClick = {})
     }
     Box(modifier = modifier) {
-        when (displayMode) {
-            DockDisplayMode.ICONS -> Box(modifier = clickModifier.testTag("dock_folder_tile_${folder.id}")) {
-                FolderTileGlyph(folder = folder)
-            }
-            DockDisplayMode.TEXT -> Row(
+        // See DockIcon's own identical treatment above for why this is a boolean, not an
+        // exhaustive `when` over DockDisplayMode.
+        if (displayMode == DockDisplayMode.TEXT) {
+            Row(
                 modifier = clickModifier
                     .testTag("dock_folder_tile_${folder.id}")
                     .padding(vertical = 14.dp, horizontal = 4.dp),
@@ -1512,6 +1514,10 @@ private fun FolderDockIcon(
                     style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(labelColor), fontWeight = labelFontWeight),
                     color = labelColor,
                 )
+            }
+        } else {
+            Box(modifier = clickModifier.testTag("dock_folder_tile_${folder.id}")) {
+                FolderTileGlyph(folder = folder)
             }
         }
         if (enableLongPressMenu && sheetOpen) {
@@ -1661,10 +1667,11 @@ internal fun FolderRow(
             .testTag("${testTagPrefix}folder_row_${folder.id}")
             .padding(horizontal = 8.dp, vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically,
+        // See AppRow's own identical `when` above for why LAUNCHER_DEFAULT falls in with LEFT here.
         horizontalArrangement = when (position) {
             AppRowPosition.RIGHT -> Arrangement.spacedBy(14.dp, Alignment.End)
             AppRowPosition.CENTER -> Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)
-            AppRowPosition.LEFT -> Arrangement.spacedBy(14.dp)
+            AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Arrangement.spacedBy(14.dp)
         },
     ) {
         val icon: @Composable () -> Unit = {

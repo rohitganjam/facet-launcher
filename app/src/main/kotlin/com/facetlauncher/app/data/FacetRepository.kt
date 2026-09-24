@@ -12,7 +12,6 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.ListContentMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -89,25 +88,8 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(clockShowMeridiem = enabled))
     }
 
-    suspend fun setCalendarFontOption(facet: FacetEntity, option: ClockFontOption) {
-        facetDao.update(facet.copy(calendarFontOption = option))
-    }
-
-    suspend fun setCalendarColorOption(facet: FacetEntity, option: ClockColorOption) {
-        facetDao.update(facet.copy(calendarColorOption = option))
-    }
-
-    suspend fun setCalendarFontWeight(facet: FacetEntity, weight: FontWeightOption) {
-        facetDao.update(facet.copy(calendarFontWeight = weight))
-    }
-
     suspend fun setClockAlignment(facet: FacetEntity, alignment: ClockAlignment) {
         facetDao.update(facet.copy(clockAlignment = alignment))
-    }
-
-    /** Independent of [setClockAlignment] — see [FacetEntity.calendarAlignment]. */
-    suspend fun setCalendarAlignment(facet: FacetEntity, alignment: ClockAlignment) {
-        facetDao.update(facet.copy(calendarAlignment = alignment))
     }
 
     suspend fun setClockZoneHeight(facet: FacetEntity, heightDp: Float) {
@@ -147,29 +129,29 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
     }
 
     /**
-     * "Reset clock widget position" for this facet — the zone height back to `null`, BOTH
-     * alignments back to `LEFT`, and scale back to `0.8f`, in one atomic upsert (avoids the
-     * clobbering risk of sequential single-field upserts against the same stale snapshot).
+     * "Reset clock widget position" for this facet — the zone height back to `null`, alignment
+     * back to `LEFT`, and scale back to `0.8f`, in one atomic upsert (avoids the clobbering risk
+     * of sequential single-field upserts against the same stale snapshot).
      */
     suspend fun resetClockPosition(facet: FacetEntity) {
         facetDao.update(
             facet.copy(
                 clockZoneHeightDp = null,
                 clockAlignment = ClockAlignment.LEFT,
-                calendarAlignment = ClockAlignment.LEFT,
                 clockScale = 0.8f,
             ),
         )
     }
 
     /**
-     * Seeds the facet's clock+calendar *design* settings from effective values and toggles the
-     * override flag. One toggle for the whole Home clock/calendar block — it's a single visual
-     * unit, not two independent design decisions — which is why `calendarFontOption`/
-     * `calendarColorOption` (and, since they moved in from being global-only, `clockAlignment`/
-     * `calendarAlignment`/`clockZoneHeightDp`) are seeded here too, not by [updateOverridingCalendar]
-     * (that one is calendar *selection* only — which calendars, which events — see its own doc
-     * comment). Atomic upsert to avoid clobbering.
+     * Seeds the facet's clock *design* settings from effective values and toggles the override
+     * flag. One toggle for the whole Home clock/calendar block — it's a single visual unit, not
+     * independent design decisions — which is why `clockAlignment`/`clockZoneHeightDp` (moved in
+     * from being global-only) are seeded here too, not by [updateOverridingCalendar] (that one is
+     * calendar *selection* only — which calendars, which events — see its own doc comment). The
+     * calendar events strip no longer has its own font/color/weight to seed — it reads Appearance
+     * (global-only) and this block's own `clockAlignment` (see chat history). Atomic upsert to
+     * avoid clobbering.
      */
     suspend fun updateOverridingClock(
         facet: FacetEntity,
@@ -179,11 +161,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         colorOption: ClockColorOption,
         use24HourTime: Boolean,
         showMeridiem: Boolean,
-        calendarFontOption: ClockFontOption,
-        calendarColorOption: ClockColorOption,
-        calendarFontWeight: FontWeightOption,
         clockAlignment: ClockAlignment = facet.clockAlignment,
-        calendarAlignment: ClockAlignment = facet.calendarAlignment,
         clockZoneHeightDp: Float? = facet.clockZoneHeightDp,
         clockScale: Float = facet.clockScale,
         accentColorOption: ClockColorOption = facet.clockAccentColorOption,
@@ -197,11 +175,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
                 clockColorOption = colorOption,
                 use24HourTime = use24HourTime,
                 clockShowMeridiem = showMeridiem,
-                calendarFontOption = calendarFontOption,
-                calendarColorOption = calendarColorOption,
-                calendarFontWeight = calendarFontWeight,
                 clockAlignment = clockAlignment,
-                calendarAlignment = calendarAlignment,
                 clockZoneHeightDp = clockZoneHeightDp,
                 clockScale = clockScale,
                 clockAccentColorOption = accentColorOption,
@@ -241,28 +215,26 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
     }
 
     /**
-     * Seeds the facet's app settings from effective values and toggles the override flags.
-     * Atomic upsert to avoid clobbering.
+     * Seeds the facet's app *content* settings from effective values and toggles the override
+     * flag. Atomic upsert to avoid clobbering. `appRowPosition`/`appRowPresentation`/
+     * `appListVerticalAlignment` are no longer part of this bundle — they're "look" fields, edited
+     * from Settings → Appearance independently now, resolved via their own `LAUNCHER_DEFAULT`
+     * sentinel regardless of [overriding] (see [setAppRowPosition]/[setAppRowPresentation]/
+     * [setAppListVerticalAlignment] and [com.facetlauncher.app.data.local.resolveSentinel]).
      */
     suspend fun updateOverridingApps(
         facet: FacetEntity,
         overriding: Boolean,
-        position: AppRowPosition,
-        presentation: AppRowPresentation,
         mode: ListContentMode,
         count: Int,
         overridingFavorites: Boolean,
-        verticalAlignment: AppListVerticalAlignment = facet.appListVerticalAlignment,
     ) {
         facetDao.update(
             facet.copy(
                 overrideApps = overriding,
-                appRowPosition = position,
-                appRowPresentation = presentation,
                 listContentMode = mode,
                 appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
                 overridingFavorites = overridingFavorites,
-                appListVerticalAlignment = verticalAlignment,
             ),
         )
     }
@@ -272,15 +244,14 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
     }
 
     /**
-     * The Dock card's single Inherit/Override switch — governs both the dock's app list (this
-     * facet's own [com.facetlauncher.app.data.local.FacetDockAppEntity] rows) and its
-     * Icons/Text display style, as one unit. Seeds the display mode from the current effective
-     * value and toggles the flag in one atomic upsert; seeding the app list itself (copying the
-     * default dock when the facet's own is empty) is the caller's job, mirroring
-     * [updateOverridingApps]/favorites.
+     * The Dock card's single Inherit/Override switch — governs only the dock's own app list (this
+     * facet's own [com.facetlauncher.app.data.local.FacetDockAppEntity] rows) now; its Icons/Text
+     * display style is edited from Settings → Appearance independently, resolved via its own
+     * `LAUNCHER_DEFAULT` sentinel regardless of [overriding] (see [setDockDisplayMode] and
+     * [com.facetlauncher.app.data.local.resolveSentinel]).
      */
-    suspend fun updateOverridingDock(facet: FacetEntity, overriding: Boolean, displayMode: DockDisplayMode) {
-        facetDao.update(facet.copy(overrideDock = overriding, dockDisplayMode = displayMode))
+    suspend fun updateOverridingDock(facet: FacetEntity, overriding: Boolean) {
+        facetDao.update(facet.copy(overrideDock = overriding))
     }
 
     /** Reverts this facet to inheriting the global default or switches to overriding. */

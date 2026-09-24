@@ -102,10 +102,6 @@ data class BackupSettings(
     val clockFontOption: String,
     val clockColorOption: String,
     val clockShowMeridiem: Boolean,
-    val calendarFontOption: String,
-    val calendarColorOption: String,
-    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before this field existed still deserializes cleanly). */
-    val calendarFontWeight: String = FontWeightOption.REGULAR.name,
     val homeAppsFontWeight: String = FontWeightOption.REGULAR.name,
 )
 
@@ -133,10 +129,6 @@ data class BackupFacet(
     val dockApps: List<BackupAppEntry> = emptyList(),
     val overrideCalendar: Boolean,
     val showAllDayEvents: Boolean,
-    val calendarFontOption: String,
-    val calendarColorOption: String,
-    /** Defaulted — tolerant-reader discipline, see this file's own doc comment. */
-    val calendarFontWeight: String = FontWeightOption.REGULAR.name,
     /**
      * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.local.FacetEntity.selectedCalendarIdsCsv]'s
      * own doc comment. A real JSON array here (not the Room column's comma-joined encoding),

@@ -12,7 +12,6 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.ListContentMode
 
 @Entity(tableName = "facets")
@@ -23,10 +22,10 @@ data class FacetEntity(
 
     // Clock + Calendar design section — one override flag for the whole visual block (see
     // FacetRepository.updateOverridingClock's own doc comment): template, font, color, time
-    // format, plus the calendar events strip's own font/color (calendarFontOption/calendarColorOption
-    // moved in from what used to be a separate Calendar-design override — see chat history), plus
-    // each block's own horizontal alignment and the shared zone height (see chat history — moved
-    // in from being global-only settings).
+    // format, plus the shared zone height (see chat history — moved in from being global-only
+    // settings). The calendar events strip no longer has its own font/color/weight/alignment —
+    // it reads Appearance's home-text settings and this block's own clockAlignment instead (see
+    // chat history: calendar/appearance styling consolidation).
     val overrideClock: Boolean = false,
     val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
@@ -37,13 +36,8 @@ data class FacetEntity(
     val clockShowMeridiem: Boolean = false,
     /** See [com.facetlauncher.app.data.model.LauncherSettings.clockDateStyle]. */
     val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    val calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val calendarColorOption: ClockColorOption = ClockColorOption.THEME,
-    val calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
-    /** The clock widget's own horizontal placement, independent of [calendarAlignment] — see [com.facetlauncher.app.data.model.LauncherSettings.clockAlignment]. */
+    /** The clock widget's own horizontal placement — also governs the calendar events strip, which shares it rather than having its own (see chat history: the strip's font/color/weight/alignment were consolidated into Appearance's/clock's shared settings). See [com.facetlauncher.app.data.model.LauncherSettings.clockAlignment]. */
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    /** The calendar strip's own horizontal placement, independent of [clockAlignment] — see [com.facetlauncher.app.data.model.LauncherSettings.calendarAlignment]. */
-    val calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until this facet drags the clock's grab handle for the first time — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. */
     val clockZoneHeightDp: Float? = null,
     /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
@@ -72,12 +66,13 @@ data class FacetEntity(
 
     // Apps section
     val overrideApps: Boolean = false,
-    val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
-    val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+    /** Look/placement, not content — editable from Settings → Appearance now, resolved independently of [overrideApps] via [resolveSentinel]. See [com.facetlauncher.app.data.model.DockDisplayMode]'s own doc for the sentinel model. */
+    val appRowPosition: AppRowPosition = AppRowPosition.LAUNCHER_DEFAULT,
+    val appRowPresentation: AppRowPresentation = AppRowPresentation.LAUNCHER_DEFAULT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
-    /** Whether this facet's app list anchors to the bottom (above the dock) or the top (below the clock's grab handle) — see [com.facetlauncher.app.data.model.LauncherSettings.appListVerticalAlignment]. */
-    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+    /** Look/placement, not content — see [appRowPosition]'s own doc for why this is a `LAUNCHER_DEFAULT`-sentinel field rather than [overrideApps]-gated. */
+    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.LAUNCHER_DEFAULT,
     /** 
      * Independent of [overrideApps] flag for the mode/count, but typically switched 
      * together in the UI (see [com.facetlauncher.app.ui.facets.FacetSettingsViewModel.setOverridingApps]).
@@ -90,7 +85,8 @@ data class FacetEntity(
     // launcher-wide default) plus its Icons/Text display style. Mirrors the Apps section's single
     // `overrideApps` flag exactly.
     val overrideDock: Boolean = false,
-    val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+    /** Look, not content — editable from Settings → Appearance now, resolved independently of [overrideDock] via [resolveSentinel] (that flag still gates only the dock's own app list). See [com.facetlauncher.app.data.model.DockDisplayMode]'s own doc for the sentinel model. */
+    val dockDisplayMode: DockDisplayMode = DockDisplayMode.LAUNCHER_DEFAULT,
 
     // Calendar selection section — content/productivity concerns (which calendars, which kinds
     // of events), deliberately separate from the Clock+Calendar *design* section above (see
@@ -123,3 +119,18 @@ data class FacetEntity(
  */
 inline fun <T> FacetEntity?.resolveOverride(overriding: (FacetEntity) -> Boolean, facetValue: (FacetEntity) -> T, globalValue: T): T =
     this?.let { if (overriding(it)) facetValue(it) else globalValue } ?: globalValue
+
+/**
+ * Per-field facet override via a `LAUNCHER_DEFAULT`-style sentinel — no separate override flag;
+ * [facetValue] reads this field's own stored value, [sentinel] is its "inherit the global value"
+ * marker, [globalValue] is the launcher-wide default. Used for Appearance's dock/app-list "look"
+ * fields ([com.facetlauncher.app.data.model.DockDisplayMode]/[com.facetlauncher.app.data.model.AppRowPosition]/
+ * [com.facetlauncher.app.data.model.AppRowPresentation]/[com.facetlauncher.app.data.model.AppListVerticalAlignment]) —
+ * moved out of the whole-block `overrideDock`/`overrideApps` gate that [resolveOverride] models,
+ * since these are edited from Appearance now, independently of Dock's/Apps-list's own content
+ * (see chat history).
+ */
+inline fun <T> FacetEntity?.resolveSentinel(facetValue: (FacetEntity) -> T, sentinel: T, globalValue: T): T {
+    val value = this?.let(facetValue) ?: return globalValue
+    return if (value == sentinel) globalValue else value
+}

@@ -583,7 +583,6 @@ fun HomeDrawerRoute(
             clockShowMeridiem = homeUiState.clockShowMeridiem,
             clockDateStyle = homeUiState.clockDateStyle,
             clockAlignment = homeUiState.clockAlignment,
-            calendarAlignment = homeUiState.calendarAlignment,
             clockZoneHeightDp = homeUiState.clockZoneHeightDp,
             onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
             clockScale = homeUiState.clockScale,
@@ -653,9 +652,6 @@ fun HomeDrawerRoute(
             isCharging = homeUiState.clockAccessories.isCharging,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
-            calendarFontOption = homeUiState.activeCalendarFontOption,
-            calendarColorOption = homeUiState.activeCalendarColorOption,
-            calendarFontWeight = homeUiState.activeCalendarFontWeight,
             onEventClick = { event ->
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }

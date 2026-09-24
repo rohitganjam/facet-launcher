@@ -408,6 +408,99 @@ class FacetDatabaseMigrationTest {
         updatedCursor.close()
     }
 
+    @Test
+    fun migration22To23DropsCalendarStyleColumnsWithoutLosingExistingRowsOrOtherColumns() {
+        // Given a v22 database with one real facet row, its calendar-style columns still populated
+        // (before calendar/appearance styling consolidation — see chat history)
+        val dbV22 = helper.createDatabase(TEST_DB, 22)
+        dbV22.execSQL(
+            "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
+                "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, calendarFontOption, calendarColorOption, " +
+                "calendarFontWeight, clockAlignment, calendarAlignment, clockZoneHeightDp, clockScale, clockWidgetAppWidgetId, " +
+                "clockWidgetWidthDp, clockWidgetHeightDp, overrideApps, appRowPosition, appRowPresentation, listContentMode, " +
+                "appsToShowCount, appListVerticalAlignment, overridingFavorites, overrideDock, dockDisplayMode, overrideCalendar, " +
+                "showAllDayEvents, selectedCalendarIdsCsv) VALUES " +
+                "(1, 'Work', 0, 1, 'VERTICAL_STACK_BOLD_HOUR', 'POPPINS', 'THEME_INVERTED', 'ACCENT_PRIMARY', 1, 1, 'FULL', " +
+                "'MANROPE', 'ACCENT_SECONDARY', 'SEMI_BOLD', 'RIGHT', 'CENTER', 180.0, 1.2, NULL, NULL, NULL, 0, 'LEFT', " +
+                "'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 0, 0, 'ICONS', 0, 1, NULL)",
+        )
+        dbV22.close()
+
+        // When migrating to v23
+        val dbV23 = helper.runMigrationsAndValidate(TEST_DB, 23, true, Migrations.MIGRATION_22_23)
+
+        // Then the row survived, every surviving column intact (including the clock's own
+        // font/color/alignment, untouched — only the calendar-specific columns were dropped)
+        val cursor = dbV23.query("SELECT name, clockFontOption, clockAlignment, clockScale FROM facets WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(cursor.getColumnIndexOrThrow("name")))
+        assertEquals("POPPINS", cursor.getString(cursor.getColumnIndexOrThrow("clockFontOption")))
+        assertEquals("RIGHT", cursor.getString(cursor.getColumnIndexOrThrow("clockAlignment")))
+        assertEquals(1.2f, cursor.getFloat(cursor.getColumnIndexOrThrow("clockScale")), 0.0001f)
+        cursor.close()
+
+        // ...and the four calendar-style columns are actually gone from the table, not just unread
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            dbV23.query("SELECT calendarFontOption FROM facets WHERE id = 1").close()
+        }
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            dbV23.query("SELECT calendarColorOption FROM facets WHERE id = 1").close()
+        }
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            dbV23.query("SELECT calendarFontWeight FROM facets WHERE id = 1").close()
+        }
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            dbV23.query("SELECT calendarAlignment FROM facets WHERE id = 1").close()
+        }
+    }
+
+    @Test
+    fun migration23To24ResetsLookFieldsToLauncherDefaultOnlyForFacetsNotOverridingThatSection() {
+        // Given a v23 database with two facet rows: one NOT overriding apps/dock (its own
+        // appRowPosition/appRowPresentation/appListVerticalAlignment/dockDisplayMode columns are
+        // stale — never read while those flags were false) and one that IS overriding both, with
+        // real explicitly-chosen values that must survive untouched.
+        val dbV23 = helper.createDatabase(TEST_DB, 23)
+        dbV23.execSQL(
+            "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
+                "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, clockAlignment, clockZoneHeightDp, " +
+                "clockScale, clockWidgetAppWidgetId, clockWidgetWidthDp, clockWidgetHeightDp, overrideApps, appRowPosition, " +
+                "appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment, overridingFavorites, " +
+                "overrideDock, dockDisplayMode, overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv) VALUES " +
+                "(1, 'Inheriting', 0, 0, 'LIGHT_STACK', 'SYSTEM', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LEFT', NULL, " +
+                "0.8, NULL, NULL, NULL, 0, 'RIGHT', 'TEXT_ONLY', 'FAVORITES', 6, 'TOP', 0, 0, 'TEXT', 0, 1, NULL), " +
+                "(2, 'Overriding', 1, 0, 'LIGHT_STACK', 'SYSTEM', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LEFT', NULL, " +
+                "0.8, NULL, NULL, NULL, 1, 'CENTER', 'ICON_ONLY', 'FAVORITES', 6, 'TOP', 0, 1, 'TEXT', 0, 1, NULL)",
+        )
+        dbV23.close()
+
+        // When migrating to v24
+        val dbV24 = helper.runMigrationsAndValidate(TEST_DB, 24, true, Migrations.MIGRATION_23_24)
+
+        // Then the non-overriding facet's stale look values reset to LAUNCHER_DEFAULT — it keeps
+        // inheriting the global default, not the last value that happened to be sitting there
+        val inheriting = dbV24.query(
+            "SELECT appRowPosition, appRowPresentation, appListVerticalAlignment, dockDisplayMode FROM facets WHERE id = 1",
+        )
+        assertTrue(inheriting.moveToFirst())
+        assertEquals("LAUNCHER_DEFAULT", inheriting.getString(inheriting.getColumnIndexOrThrow("appRowPosition")))
+        assertEquals("LAUNCHER_DEFAULT", inheriting.getString(inheriting.getColumnIndexOrThrow("appRowPresentation")))
+        assertEquals("LAUNCHER_DEFAULT", inheriting.getString(inheriting.getColumnIndexOrThrow("appListVerticalAlignment")))
+        assertEquals("LAUNCHER_DEFAULT", inheriting.getString(inheriting.getColumnIndexOrThrow("dockDisplayMode")))
+        inheriting.close()
+
+        // ...and the overriding facet's real, explicitly-chosen values are untouched
+        val overriding = dbV24.query(
+            "SELECT appRowPosition, appRowPresentation, appListVerticalAlignment, dockDisplayMode FROM facets WHERE id = 2",
+        )
+        assertTrue(overriding.moveToFirst())
+        assertEquals("CENTER", overriding.getString(overriding.getColumnIndexOrThrow("appRowPosition")))
+        assertEquals("ICON_ONLY", overriding.getString(overriding.getColumnIndexOrThrow("appRowPresentation")))
+        assertEquals("TOP", overriding.getString(overriding.getColumnIndexOrThrow("appListVerticalAlignment")))
+        assertEquals("TEXT", overriding.getString(overriding.getColumnIndexOrThrow("dockDisplayMode")))
+        overriding.close()
+    }
+
     private companion object {
         const val TEST_DB = "facet-migration-test.db"
     }

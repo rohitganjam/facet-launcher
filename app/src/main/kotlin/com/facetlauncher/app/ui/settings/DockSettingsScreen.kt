@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,8 +34,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,6 +54,7 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
+import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -63,7 +67,7 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
 
-/** Settings → Home & Apps → Dock. */
+/** Settings → Home & Apps → Dock — also a facet's own Dock screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
 @Composable
 fun DockSettingsScreen(
     onBack: () -> Unit,
@@ -76,8 +80,8 @@ fun DockSettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onAddDockApp = onAddDockApp,
-        onDockDisplayModeChange = viewModel::setDockDisplayMode,
         onReorderDockItems = viewModel::reorderDockItems,
+        onOverridingChange = viewModel::setOverriding,
         modifier = modifier,
     )
 }
@@ -87,10 +91,12 @@ private fun DockSettingsContent(
     uiState: DockSettingsUiState,
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
-    onDockDisplayModeChange: (DockDisplayMode) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
+    onOverridingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
+
     StickyHeaderLayout(
         modifier = modifier,
         header = { DockSettingsHeader(onBack = onBack) },
@@ -104,6 +110,21 @@ private fun DockSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
+                if (uiState.isFacetScoped) {
+                    item {
+                        InheritOverrideCard(
+                            overriding = uiState.isOverriding,
+                            onOverridingChange = onOverridingChange,
+                            testTagPrefix = "dock_settings",
+                            inheritSubtitle = stringResource(
+                                R.string.dot_join_2,
+                                stringResource(uiState.globalDockDisplayMode.displayNameRes),
+                                pluralStringResource(R.plurals.format_count_apps, uiState.globalDockItems.size, uiState.globalDockItems.size),
+                            ),
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
                 item {
                     HomeSurfacePreview(
                         appList = emptyList(),
@@ -117,24 +138,19 @@ private fun DockSettingsContent(
                 }
                 item {
                     SettingsCard {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.dock_display_style),
-                            options = DockDisplayMode.entries,
-                            selected = uiState.dockDisplayMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onDockDisplayModeChange,
-                            testTag = "dock_display_style_row",
-                        )
-                        CardDivider()
                         DockClickableRow(
                             title = stringResource(R.string.dock_select_apps),
                             subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, DockAppRepository.MAX_APPS),
                             onClick = onAddDockApp,
+                            enabled = controlsEnabled,
                             testTag = "add_dock_app_row",
                         )
                         if (uiState.dockItems.isNotEmpty()) {
                             CardDivider()
-                            DockAppsRow(dockItems = uiState.dockItems, onReorder = onReorderDockItems)
+                            DockAppsRow(
+                                dockItems = uiState.dockItems,
+                                onReorder = if (controlsEnabled) onReorderDockItems else { {} },
+                            )
                         }
                     }
                 }
@@ -161,13 +177,14 @@ private fun DockSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
+private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Row(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 13.dp),
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 13.dp)
+            .alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -261,14 +278,14 @@ private fun DockSettingsScreenPreview() {
     FacetLauncherTheme {
         DockSettingsContent(
             uiState = DockSettingsUiState(
-                dockItems = (1..4).map {
+                globalDockItems = (1..4).map {
                     PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null))
                 },
             ),
             onBack = {},
             onAddDockApp = {},
-            onDockDisplayModeChange = {},
             onReorderDockItems = {},
+            onOverridingChange = {},
         )
     }
 }

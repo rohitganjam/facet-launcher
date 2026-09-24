@@ -299,22 +299,26 @@
     <string name="app_row_position_left">Left</string>
     <string name="app_row_position_center">Center</string>
     <string name="app_row_position_right">Right</string>
+    <string name="app_row_position_launcher_default">Default launcher position</string>
     <string name="app_row_presentation_icon_only">Icon Only</string>
     <string name="app_row_presentation_icon_and_text">Icon &amp; Text</string>
     <string name="app_row_presentation_text_only">Text Only</string>
+    <string name="app_row_presentation_launcher_default">Default launcher style</string>
     <string name="app_list_vertical_alignment_top">Top</string>
     <string name="app_list_vertical_alignment_bottom">Bottom</string>
+    <string name="app_list_vertical_alignment_launcher_default">Default launcher position</string>
     <string name="list_content_mode_favorites">Favorites</string>
     <string name="list_content_mode_recents">Recents</string>
     <string name="list_content_mode_most_used">Most used</string>
     <string name="dock_display_mode_icons">Icons</string>
     <string name="dock_display_mode_text">Text</string>
+    <string name="dock_display_mode_launcher_default">Default launcher style</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Home Apps List</string>
-    <string name="home_apps_list_position">Position</string>
-    <string name="home_apps_list_list_position">List position</string>
-    <string name="home_apps_list_presentation">Presentation</string>
+    <string name="home_apps_list_position">Home Apps Alignment</string>
+    <string name="home_apps_list_list_position">Home Apps list position</string>
+    <string name="home_apps_list_presentation">Show Home apps as</string>
     <string name="home_apps_list_content_facet">App list content</string>
     <string name="home_apps_list_content_default">Default App list content</string>
     <string name="home_apps_list_apps_to_show">Apps to show</string>
@@ -346,6 +350,9 @@
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Appearance</string>
+    <string name="appearance_section_dock_home">DOCK &amp; HOME</string>
+    <string name="appearance_section_clock">CLOCK</string>
+    <string name="appearance_section_general">GENERAL</string>
     <string name="appearance_launcher_theme">Launcher theme</string>
     <string name="appearance_icon_style">Icon Style</string>
     <string name="appearance_launcher_font">Launcher Font</string>
@@ -401,7 +408,7 @@
     <string name="permission_notification_access_subtitle">Shows a dot or count badge on apps with active notifications.</string>
 
     <!-- DockSettingsScreen (header reuses settings_dock_title) -->
-    <string name="dock_display_style">Display style</string>
+    <string name="dock_display_style">Show Dock apps as</string>
     <string name="dock_select_apps">Select Dock Apps</string>
     <string name="format_count_of_max">%1$d of %2$d</string>
 
@@ -587,6 +594,7 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock settings</string>
+    <string name="facet_settings_appearance_title">Appearance</string>
     <string name="facet_settings_clock_overriding">Overriding defaults · tap to edit</string>
     <string name="facet_settings_clock_inherits">Inherits default · Light stack · tap to preview</string>
     <string name="facet_settings_rename_explanation">Rename this facet.</string>

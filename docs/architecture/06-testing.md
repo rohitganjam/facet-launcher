@@ -5,8 +5,8 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **123 test classes, 972 cases** — 555 unit (87 classes),
-417 instrumented (36 classes).
+Current counts (from the registry): **133 test classes, 1079 cases** — 623 unit (95 classes),
+456 instrumented (38 classes).
 
 ## 1. The two tiers
 

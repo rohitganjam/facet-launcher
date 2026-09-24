@@ -77,12 +77,8 @@ private object Keys {
     val CLOCK_ACCENT_COLOR_OPTION = stringPreferencesKey("clock_accent_color_option")
     val CLOCK_SHOW_MERIDIEM = booleanPreferencesKey("clock_show_meridiem")
     val CLOCK_DATE_STYLE = stringPreferencesKey("clock_date_style")
-    val CALENDAR_FONT_OPTION = stringPreferencesKey("calendar_font_option")
-    val CALENDAR_COLOR_OPTION = stringPreferencesKey("calendar_color_option")
-    val CALENDAR_FONT_WEIGHT = stringPreferencesKey("calendar_font_weight")
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
-    val CALENDAR_ALIGNMENT = stringPreferencesKey("calendar_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
     val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
@@ -164,18 +160,10 @@ class SettingsRepository @Inject constructor(
             clockShowMeridiem = preferences[Keys.CLOCK_SHOW_MERIDIEM] ?: defaults.clockShowMeridiem,
             clockDateStyle = preferences[Keys.CLOCK_DATE_STYLE]?.let { runCatching { ClockDateStyle.valueOf(it) }.getOrNull() }
                 ?: defaults.clockDateStyle,
-            calendarFontOption = preferences[Keys.CALENDAR_FONT_OPTION]?.let { runCatching { ClockFontOption.valueOf(it) }.getOrNull() }
-                ?: defaults.calendarFontOption,
-            calendarColorOption = preferences[Keys.CALENDAR_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
-                ?: defaults.calendarColorOption,
-            calendarFontWeight = preferences[Keys.CALENDAR_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
-                ?: defaults.calendarFontWeight,
             homeAppsFontWeight = preferences[Keys.HOME_APPS_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
                 ?: defaults.homeAppsFontWeight,
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.clockAlignment,
-            calendarAlignment = preferences[Keys.CALENDAR_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
-                ?: defaults.calendarAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
@@ -345,29 +333,12 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.CLOCK_DATE_STYLE] = dateStyle.name }
     }
 
-    suspend fun setCalendarFontOption(fontOption: ClockFontOption) {
-        dataStore.edit { it[Keys.CALENDAR_FONT_OPTION] = fontOption.name }
-    }
-
-    suspend fun setCalendarColorOption(colorOption: ClockColorOption) {
-        dataStore.edit { it[Keys.CALENDAR_COLOR_OPTION] = colorOption.name }
-    }
-
-    suspend fun setCalendarFontWeight(weight: FontWeightOption) {
-        dataStore.edit { it[Keys.CALENDAR_FONT_WEIGHT] = weight.name }
-    }
-
     suspend fun setHomeAppsFontWeight(weight: FontWeightOption) {
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
     }
 
     suspend fun setClockAlignment(alignment: ClockAlignment) {
         dataStore.edit { it[Keys.CLOCK_ALIGNMENT] = alignment.name }
-    }
-
-    /** Independent of [setClockAlignment] — see [LauncherSettings.calendarAlignment]. */
-    suspend fun setCalendarAlignment(alignment: ClockAlignment) {
-        dataStore.edit { it[Keys.CALENDAR_ALIGNMENT] = alignment.name }
     }
 
     suspend fun setClockZoneHeight(heightDp: Float) {

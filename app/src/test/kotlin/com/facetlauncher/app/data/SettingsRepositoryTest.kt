@@ -80,15 +80,11 @@ class SettingsRepositoryTest {
         assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.clockFontOption)
         assertEquals(ClockColorOption.THEME, settings.clockColorOption)
         assertFalse(settings.clockShowMeridiem)
-        assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.calendarFontOption)
-        assertEquals(ClockColorOption.THEME, settings.calendarColorOption)
         assertEquals(LauncherFontOption.SYSTEM, settings.launcherFontOption)
         assertEquals(FontScaleOption.DEFAULT, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME, settings.appLabelColorOption)
-        assertEquals(FontWeightOption.REGULAR, settings.calendarFontWeight)
         assertEquals(FontWeightOption.REGULAR, settings.homeAppsFontWeight)
         assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
-        assertEquals(ClockAlignment.LEFT, settings.calendarAlignment)
         assertEquals(null, settings.clockZoneHeightDp)
         assertEquals(0.8f, settings.clockScale, 0.0001f)
         assertEquals(AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
@@ -157,20 +153,6 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `setCalendarAlignment round-trips independently of setClockAlignment`() = runTest {
-        // Given a repository
-        val repository = createRepository()
-
-        // When the calendar's alignment is changed but the clock's is left untouched
-        repository.setCalendarAlignment(ClockAlignment.RIGHT)
-
-        // Then only the calendar's alignment changes
-        val settings = repository.settings.first()
-        assertEquals(ClockAlignment.RIGHT, settings.calendarAlignment)
-        assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
-    }
-
-    @Test
     fun `setClockScale persists and round-trips`() = runTest {
         // Given a repository
         val repository = createRepository()
@@ -223,32 +205,28 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `setCalendarFontWeight and setHomeAppsFontWeight round-trip independently`() = runTest {
+    fun `setHomeAppsFontWeight persists and round-trips`() = runTest {
         // Given a repository
         val repository = createRepository()
 
-        // When each font-weight setting is changed
-        repository.setCalendarFontWeight(FontWeightOption.LIGHT)
+        // When the font-weight setting is changed
         repository.setHomeAppsFontWeight(FontWeightOption.SEMI_BOLD)
 
-        // Then the new values come back, independently
+        // Then the new value comes back
         val settings = repository.settings.first()
-        assertEquals(FontWeightOption.LIGHT, settings.calendarFontWeight)
         assertEquals(FontWeightOption.SEMI_BOLD, settings.homeAppsFontWeight)
     }
 
     @Test
-    fun `clock and calendar style setters round-trip through the settings flow`() = runTest {
+    fun `clock style setters round-trip through the settings flow`() = runTest {
         // Given a repository
         val repository = createRepository()
 
-        // When each clock/calendar style setting is changed
+        // When each clock style setting is changed
         repository.setClockTemplateId(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR)
         repository.setClockFontOption(ClockFontOption.POPPINS)
         repository.setClockColorOption(ClockColorOption.THEME_INVERTED)
         repository.setClockShowMeridiem(true)
-        repository.setCalendarFontOption(ClockFontOption.MANROPE)
-        repository.setCalendarColorOption(ClockColorOption.ACCENT_PRIMARY)
 
         // Then the new values come back
         val settings = repository.settings.first()
@@ -256,8 +234,6 @@ class SettingsRepositoryTest {
         assertEquals(ClockFontOption.POPPINS, settings.clockFontOption)
         assertEquals(ClockColorOption.THEME_INVERTED, settings.clockColorOption)
         assertEquals(true, settings.clockShowMeridiem)
-        assertEquals(ClockFontOption.MANROPE, settings.calendarFontOption)
-        assertEquals(ClockColorOption.ACCENT_PRIMARY, settings.calendarColorOption)
     }
 
     @Test

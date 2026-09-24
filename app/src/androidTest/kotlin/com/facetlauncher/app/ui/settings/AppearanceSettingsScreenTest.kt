@@ -18,20 +18,29 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.assertCountEquals
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultAppRepository
+import com.facetlauncher.app.data.CalendarRepository
+import com.facetlauncher.app.data.DefaultFavoriteAppRepository
+import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
-import com.facetlauncher.app.data.model.FACET_LAUNCHER_PACKAGE_NAME
-import com.facetlauncher.app.domain.GetInstalledAppsUseCase
-import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -40,10 +49,37 @@ class AppearanceSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private lateinit var appRepository: AppRepository
-    private lateinit var defaultAppRepository: DefaultAppRepository
+    /** Fakes calendar *data* — no real Calendar Provider reads. Mirrors `CalendarSettingsScreenTest`'s own local `FakeCalendarRepository`, just overriding `getTodayEvents` instead of `getCalendars`. */
+    private class FakeCalendarRepository(
+        contentResolver: android.content.ContentResolver,
+        private val events: List<CalendarEvent>,
+    ) : CalendarRepository(contentResolver) {
+        override suspend fun getTodayEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = events
+    }
 
-    private fun setContent(onBack: () -> Unit = {}): SettingsRepository {
+    /**
+     * [facetId] non-null builds a facet-scoped screen — seeds a real facet with that id in the
+     * same in-memory DB. [seed] runs against [FacetRepository] before the screen renders (facet
+     * override flags etc.); [seedApps] runs against the real favorite/dock repositories, given the
+     * device's own real installed apps — mirrors `FacetCarouselScreenTest`'s own `seed`/`seedApps`
+     * split. Real installed apps, not a synthetic [AppInfo], are required here:
+     * [DefaultFavoriteAppRepository]/[DockAppRepository] hydrate every stored row against
+     * [AppRepository]'s live installed-app list (same uninstall-collapse pattern as Home itself),
+     * so a fake package name is silently filtered out of what the preview ever renders — the
+     * preview must reflect this scope's real, actual content, not mock/sample data (see chat
+     * history). [calendarGranted]/[calendarEvents] fake the calendar permission grant and its
+     * data via [FakeCalendarPermissionRepository]/[FakeCalendarRepository] — no real OS-level
+     * grant needed (see that fake's own doc for why).
+     */
+    private fun setContent(
+        onBack: () -> Unit = {},
+        onNavigateToClockStyleGallery: () -> Unit = {},
+        facetId: Long? = null,
+        calendarGranted: Boolean = false,
+        calendarEvents: List<CalendarEvent> = emptyList(),
+        seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
+        seedApps: suspend (AppRepository, FavoriteAppRepository, DefaultFavoriteAppRepository, DockAppRepository, FacetDockAppRepository, Long?) -> Unit = { _, _, _, _, _, _ -> },
+    ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
             val context = LocalContext.current
@@ -53,32 +89,40 @@ class AppearanceSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "appearance-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
-                defaultAppRepository = DefaultAppRepository(context)
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val wallpaperRepository = com.facetlauncher.app.data.WallpaperRepository(
                     android.app.WallpaperManager.getInstance(context),
                 )
-                AppearanceSettingsViewModel(settingsRepository, GetInstalledAppsUseCase(appRepository), defaultAppRepository, wallpaperRepository, SelectPreviewAppsUseCase())
+                val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
+                val facetRepository = FacetRepository(database.facetDao())
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                if (facetId != null) {
+                    runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
+                }
+                runBlocking { seed(facetRepository, facetId) }
+                runBlocking { seedApps(appRepository, favoriteAppRepository, defaultFavoriteAppRepository, dockAppRepository, facetDockAppRepository, facetId) }
+                AppearanceSettingsViewModel(
+                    SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
+                    settingsRepository,
+                    facetRepository,
+                    favoriteAppRepository,
+                    defaultFavoriteAppRepository,
+                    dockAppRepository,
+                    facetDockAppRepository,
+                    FakeCalendarRepository(context.contentResolver, calendarEvents),
+                    FakeCalendarPermissionRepository(context, granted = calendarGranted),
+                    wallpaperRepository,
+                )
             }
             FacetLauncherTheme {
-                AppearanceSettingsScreen(onBack = onBack, viewModel = viewModel)
+                AppearanceSettingsScreen(onBack = onBack, onNavigateToClockStyleGallery = onNavigateToClockStyleGallery, viewModel = viewModel)
             }
         }
         return settingsRepository
-    }
-
-    /**
-     * Mirrors [AppearanceSettingsViewModel.previewApps]'s own selection — same exclusion and same
-     * [SelectPreviewAppsUseCase] call — but via [AppRepository.getInstalledApps] rather than
-     * [GetInstalledAppsUseCase.observe]: the latter registers a
-     * [android.content.pm.LauncherApps.Callback], which needs a `Looper` on whatever thread calls
-     * it; the production [AppearanceSettingsViewModel] always collects on the main thread (which
-     * has one), but this test's `runBlocking` runs on the instrumentation thread, which doesn't.
-     */
-    private suspend fun installedPreviewApps(): List<AppInfo> {
-        val installed = appRepository.getInstalledApps().filterNot { it.packageName == FACET_LAUNCHER_PACKAGE_NAME }
-        val preferred = defaultAppRepository.getDefaultAppPackages()
-        return SelectPreviewAppsUseCase()(installed, preferred, count = 5)
     }
 
     @Test
@@ -93,9 +137,27 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
+    fun clockStyleGalleryRowIsClickable() {
+        // Given the screen, scrolled to the Clock style row (moved in from the main Settings
+        // list — see chat history: calendar/appearance styling consolidation)
+        var navigated = false
+        setContent(onNavigateToClockStyleGallery = { navigated = true })
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
+
+        // When tapping it
+        composeRule.onNodeWithTag("clock_style_gallery_row").performClick()
+
+        // Then its callback fires
+        org.junit.Assert.assertEquals(true, navigated)
+    }
+
+    @Test
     fun themeModeDropdownSwitchesBetweenLightDarkAndSystem() {
-        // Given the screen, System selected by default
+        // Given the screen, System selected by default — now in the separate "General" card,
+        // below the "Dock & Home" and "Clock" cards (see chat history), so it needs scrolling into
+        // view first.
         setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
         composeRule.onNodeWithTag("theme_mode_dropdown").assertTextContains("System")
 
         // When opening the dropdown and choosing "Dark"
@@ -111,8 +173,10 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun accentSwatchGridOnlyAppearsWhenBasicColorsIsSelectedAndPickingOneShowsItChecked() {
-        // Given the screen, "Wallpaper colors" selected by default
+        // Given the screen, "Wallpaper colors" selected by default — now in the "General" card,
+        // below "Dock & Home"/"Clock" (see chat history), so it needs scrolling into view first.
         setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("accent_source_basic"))
         composeRule.onNodeWithTag("accent_swatch_grid").assertDoesNotExist()
 
         // When switching to "Basic colors"
@@ -136,8 +200,10 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun wallpaperAccentRoleGridShowsByDefaultAndBasicColorsGridDoesNot() {
-        // Given the screen, "Wallpaper colors" selected by default
+        // Given the screen, "Wallpaper colors" selected by default — scrolled into view (see
+        // themeModeDropdownSwitchesBetweenLightDarkAndSystem's own comment)
         setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
 
         // Then the wallpaper-role grid is shown, and the Basic-colors grid is not
         composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
@@ -146,8 +212,9 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun wallpaperAccentRoleGridDisappearsWhenBasicColorsIsSelected() {
-        // Given the screen, "Wallpaper colors" selected by default
+        // Given the screen, "Wallpaper colors" selected by default — scrolled into view
         setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
         composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
 
         // When switching to "Basic colors"
@@ -162,8 +229,9 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun tappingAWallpaperAccentRoleSwatchPersistsTheChoice() {
-        // Given the screen, "Wallpaper colors" selected by default (PRIMARY role)
+        // Given the screen, "Wallpaper colors" selected by default (PRIMARY role) — scrolled into view
         val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_SECONDARY"))
 
         // When picking the Secondary wallpaper role
         composeRule.onNodeWithTag("wallpaper_accent_role_SECONDARY").performClick()
@@ -180,8 +248,9 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun iconRenderModeRowChangesTheSetting() {
-        // Given the screen, "System default" selected by default (F11)
+        // Given the screen, "System default" selected by default (F11) — scrolled into view
         setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_icons_row"))
         composeRule.onNodeWithText("System default").assertExists()
 
         // When picking "Monochrome (Accent)"
@@ -202,6 +271,11 @@ class AppearanceSettingsScreenTest {
         // tag, not a global text search, since the "Launcher theme" dropdown also defaults to
         // "System" (see chat history)
         setContent()
+        // The new "look fields" card (dock display style/app row position/presentation/vertical
+        // alignment) pushed this row further down — see chat history: those moved in from Dock's/
+        // Home Apps List's own screens — so it needs an explicit scroll into view now, otherwise
+        // its dropdown popup can open off the visible viewport.
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_font_row"))
         composeRule.onNodeWithTag("appearance_font_row").assertTextContains("System")
 
         // When picking "Manrope"
@@ -220,6 +294,8 @@ class AppearanceSettingsScreenTest {
         // Given the screen, "Font Color" row, Theme selected by default — scoped to this
         // row's own tag, consistent with the Font row above
         setContent()
+        // See launcherFontRowChangesTheSetting's own comment — this row moved further down too.
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_label_color_row"))
         composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("Theme")
 
         // When picking "Theme Inverted"
@@ -235,8 +311,9 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun homeAppsFontWeightSliderChangesTheSetting() {
-        // Given the screen, Regular weight by default
+        // Given the screen, Regular weight by default — scrolled into view
         val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_font_weight_slider_control"))
 
         // When dragging the Home Apps weight slider to its last stop (Semi Bold)
         composeRule.onNodeWithTag("appearance_font_weight_slider_control")
@@ -250,8 +327,9 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun fontSizeSliderChangesTheSetting() {
-        // Given the screen, Default text size by default
+        // Given the screen, Default text size by default — scrolled into view
         val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_font_size_slider_control"))
 
         // When dragging the Text Size slider to its last stop (Huge)
         composeRule.onNodeWithTag("appearance_font_size_slider_control")
@@ -264,50 +342,367 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun previewCardShowsRealInstalledAppsAndDockIcon() {
-        // Given the screen — the live preview card (M4) reuses the real AppRow/DockIcon, now
-        // backed by the device's own real installed apps instead of placeholder objects
-        setContent()
-        val installedApps = runBlocking { installedPreviewApps() }
+    fun previewCardShowsTheRealFavoritesAndDockApps() {
+        // Given the screen — the live preview card reuses the real AppRow/DockIcon, backed by
+        // this scope's actual configured favorites/dock, not mock/sample data (see chat history).
+        // Seeded with real installed apps, not a synthetic AppInfo — see setContent's own doc:
+        // DefaultFavoriteAppRepository/DockAppRepository hydrate against the device's real
+        // installed-app list, silently dropping any row that isn't actually installed.
+        var favorite1Label = ""
+        var favorite2Label = ""
+        var dockLabel = ""
+        setContent(
+            seedApps = { appRepository, _, defaultFavoriteAppRepository, dockAppRepository, _, _ ->
+                val installed = appRepository.getInstalledApps()
+                favorite1Label = installed[0].label
+                favorite2Label = installed[1].label
+                dockLabel = installed[2].label
+                defaultFavoriteAppRepository.addFavorite(installed[0], position = 0)
+                defaultFavoriteAppRepository.addFavorite(installed[1], position = 1)
+                dockAppRepository.addDockApp(installed[2], position = 0)
+            },
+        )
 
-        // Then the preview card renders, with its favorites row and dock icon labeled from the
-        // real installed-app list's own first entries (same slicing AppearancePreviewCard uses)
+        // Then the preview card renders the real configured apps' own labels — polled, since the
+        // favorites/dock repositories are backed by real Room queries, which settle asynchronously
+        // after the first composition (the same "real I/O" lesson as elsewhere — see CLAUDE.md).
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
-        composeRule.onNodeWithText(installedApps[0].label).assertExists()
-        composeRule.onNodeWithText(installedApps[1].label).assertExists()
-        composeRule.onNodeWithContentDescription(installedApps[2].label).assertExists()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(favorite1Label).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(favorite1Label).assertExists()
+        composeRule.onNodeWithText(favorite2Label).assertExists()
+        composeRule.onNodeWithContentDescription(dockLabel).assertExists()
     }
 
     @Test
     fun previewCardStillRendersAfterChangingAppLabelColor() {
-        // Given the screen, App label color at its default
-        setContent()
+        // Given the screen, App label color at its default, one real (installed) favorite seeded
+        var favoriteLabel = ""
+        setContent(
+            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+                val app = appRepository.getInstalledApps()[0]
+                favoriteLabel = app.label
+                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+            },
+        )
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
-        val firstAppLabel = runBlocking { installedPreviewApps()[0].label }
 
         // When changing App label color — the same value the preview's AppRow/DockIcon labelColor
-        // is wired from
+        // is wired from. See launcherFontRowChangesTheSetting's own comment — this row moved
+        // further down now, so it needs scrolling into view first.
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_label_color_row"))
         composeRule.onNodeWithTag("appearance_app_label_color_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_label_color_row_option_THEME_INVERTED").performClick()
+        composeRule.waitForIdle()
 
-        // Then the preview keeps rendering its content correctly through the recomposition
-        // (a wiring mistake here — e.g. a wrong param — would otherwise crash or blank the card)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithText(firstAppLabel).assertExists() }.isSuccess
+        // Then the preview keeps rendering its content correctly through the recomposition (a
+        // wiring mistake here — e.g. a wrong param — would otherwise crash or blank the card).
+        // The preview card is now far above the row just edited (see chat history — the "Dock &
+        // Home"/"Clock" cards sit between them), so it's scrolled out of the LazyColumn's composed
+        // range; scroll back up to it before asserting, rather than waiting on a node that's been
+        // disposed entirely.
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithText(favoriteLabel).assertExists() }.isSuccess
         }
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
     }
 
     @Test
     fun previewCardRendersTheWallpaperBehindItsContent() {
-        // Given the screen
-        setContent()
-        val firstAppLabel = runBlocking { installedPreviewApps()[0].label }
+        // Given the screen, one real (installed) favorite seeded
+        var favoriteLabel = ""
+        setContent(
+            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+                val app = appRepository.getInstalledApps()[0]
+                favoriteLabel = app.label
+                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+            },
+        )
 
-        // Then the preview card paints a wallpaper backdrop, with its sample content still on top
+        // Then the preview card paints a wallpaper backdrop, with its real content still on top —
+        // polled, same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
         composeRule.onNodeWithTag("wallpaper_background").assertExists()
-        composeRule.onNodeWithText(firstAppLabel).assertExists()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(favoriteLabel).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(favoriteLabel).assertExists()
+    }
+
+    @Test
+    fun previewCardShowsAClockInGlobalMode() {
+        // Given the global (non-facet-scoped) screen — the preview now includes the real clock
+        // (Part A's deferred "shared mini-home-preview" follow-up, scoped down to just this
+        // screen's own preview — see chat history)
+        setContent()
+
+        composeRule.onNodeWithTag("appearance_preview_clock").assertIsDisplayed()
+    }
+
+    @Test
+    fun dockDisplayStyleRowChangesTheGlobalSetting() {
+        // Given the screen, Icons selected by default — moved in from Dock's own screen (see chat history)
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").assertTextContains("Icons")
+
+        // When picking "Text"
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_dock_display_style_row_option_TEXT").performClick()
+
+        // Then it's persisted to the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().dockDisplayMode == com.facetlauncher.app.data.model.DockDisplayMode.TEXT }
+        }
+    }
+
+    @Test
+    fun appRowPositionPresentationAndVerticalAlignmentRowsChangeTheGlobalSetting() {
+        // Given the screen — moved in from Home Apps List's own screen (see chat history)
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_row_position_row"))
+
+        composeRule.onNodeWithTag("appearance_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_row_position_row_option_RIGHT").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.RIGHT }
+        }
+
+        composeRule.onNodeWithTag("appearance_app_row_presentation_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_row_presentation_row_option_TEXT_ONLY").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().appRowPresentation == com.facetlauncher.app.data.model.AppRowPresentation.TEXT_ONLY }
+        }
+
+        composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row_option_TOP").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
+        }
+    }
+
+    @Test
+    fun globalModeDoesNotOfferTheLauncherDefaultOption() {
+        // LAUNCHER_DEFAULT is facet-only — offering "use the launcher default" at global scope is
+        // circular, since this screen IS the launcher default (see chat history)
+        setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag("appearance_dock_display_style_row_option_LAUNCHER_DEFAULT").assertCountEquals(0)
+    }
+
+    @Test
+    fun facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField() {
+        // Given a facet-scoped entry point — waited for the facet-scoped combine() to settle first
+        // (the `facets` flow is a real Room query; the screen briefly renders as global/unscoped on
+        // its very first composition until it emits — see chat history).
+        setContent(facetId = 1L)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("clock_style_gallery_row").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_vertical_alignment_row"))
+
+        // Then the four moved-in look fields are still here...
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").assertExists()
+        composeRule.onNodeWithTag("appearance_app_row_position_row").assertExists()
+        composeRule.onNodeWithTag("appearance_app_row_presentation_row").assertExists()
+        composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row").assertExists()
+        // ...but the Clock style row and every purely-global field (theme, accent, icon, font,
+        // app label color, size/weight sliders) are gone — no per-facet override exists for those
+        // yet (see this screen's own doc comment)
+        composeRule.onNodeWithTag("clock_style_gallery_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("theme_mode_dropdown").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_icons_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_font_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_app_label_color_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_font_size_slider").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_font_weight_slider").assertDoesNotExist()
+        // ...and this screen's own preview has no clock (a facet's own clock look/preview lives on
+        // its separate "Clock style" screen instead)
+        composeRule.onNodeWithTag("appearance_preview_clock").assertDoesNotExist()
+    }
+
+    @Test
+    fun globalModeShowsThreeSeparateSectionsInOrder() {
+        // Dock & Home / Clock / General are each their own card now, not bundled together (see
+        // chat history). Each header is asserted right as it scrolls into view, in that order —
+        // not via cross-scroll bounds comparison, which breaks once an earlier item scrolls far
+        // enough to be disposed from the LazyColumn's composed range.
+        setContent()
+
+        composeRule.onNodeWithText("DOCK & HOME").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
+        composeRule.onNodeWithText("CLOCK").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
+        composeRule.onNodeWithText("GENERAL").assertIsDisplayed()
+    }
+
+    @Test
+    fun facetScopedModeShowsOnlyTheDockAndHomeSection() {
+        // No Clock or General section at all in facet mode (see
+        // facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField for the individual rows and its
+        // own comment on why this polls for settle first)
+        setContent(facetId = 1L)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("CLOCK").fetchSemanticsNodes().isEmpty()
+        }
+
+        composeRule.onNodeWithText("DOCK & HOME").assertIsDisplayed()
+        composeRule.onNodeWithText("CLOCK").assertDoesNotExist()
+        composeRule.onNodeWithText("GENERAL").assertDoesNotExist()
+    }
+
+    @Test
+    fun dockAndHomeRowsShowTheirRenamedTitles() {
+        // Renamed per direct request (see chat history) — asserted by title text since these
+        // rows have no other distinguishing content at rest.
+        setContent()
+
+        composeRule.onNodeWithText("Show Dock apps as").assertIsDisplayed()
+        composeRule.onNodeWithText("Home Apps Alignment").assertIsDisplayed()
+        composeRule.onNodeWithText("Show Home apps as").assertIsDisplayed()
+        composeRule.onNodeWithText("Home Apps list position").assertIsDisplayed()
+    }
+
+    @Test
+    fun previewCardShowsRealCalendarEventsWhenPermissionIsGranted() {
+        // The calendar preview moved here from ClockStyleGalleryScreen (see chat history) — real
+        // events for the effective calendar selection, not sample/mock data. Timed relative to
+        // real "now", not a fixed epoch instant — CalendarEventsBlock itself filters out any
+        // non-all-day event whose endTimeMillis has already passed (an earlier version of this
+        // fixture used endTimeMillis = 1, which is always in the past, so it was silently dropped
+        // and the test could never pass no matter how long it polled).
+        val now = System.currentTimeMillis()
+        val event = CalendarEvent(id = 1, calendarId = "1", title = "Team standup", startTimeMillis = now, endTimeMillis = now + 3_600_000, isAllDay = false)
+        setContent(calendarGranted = true, calendarEvents = listOf(event))
+
+        // Polled — the calendar events are read inside the combine()'s own async settle, same as
+        // the favorites/dock lists (see previewCardShowsTheRealFavoritesAndDockApps's own comment).
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Team standup").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Team standup").assertIsDisplayed()
+    }
+
+    @Test
+    fun previewCardShowsNoCalendarEventsWithoutPermissionRatherThanASampleFallback() {
+        // Given calendar permission not granted (this screen's setContent default)
+        setContent()
+
+        // Then the preview shows no events at all — never a fake/sample fallback (see chat history)
+        composeRule.onNodeWithText("Team standup").assertDoesNotExist()
+    }
+
+    @Test
+    fun facetScopedDockDisplayStyleRowOffersLauncherDefaultAndWritesToThatFacet() {
+        // Given a facet-scoped entry point, Icons inherited by default — waited for facet-scoped
+        // settle first (see facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField's own comment)
+        // so the dropdown's option list isn't read mid-transition from the global option set.
+        val facetId = 1L
+        setContent(facetId = facetId)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("clock_style_gallery_row").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").assertTextContains("Icons")
+
+        // When picking "Text" — no separate Inherit/Override switch to flip first; picking a real
+        // value here is itself what starts this facet overriding (see chat history)
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_dock_display_style_row_option_TEXT").performClick()
+
+        // Then it's persisted to this facet's own row, not the launcher-wide default
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("appearance_dock_display_style_row").assertTextContains("Text") }.isSuccess
+        }
+    }
+
+    @Test
+    fun facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding() {
+        // "in facet settings - consume the resolved output between facet and defaults" (see chat
+        // history) — a facet not overriding apps/dock content shows the launcher-wide default in
+        // its own preview, not its own (unused) stale rows.
+        val facetId = 1L
+        var globalFavoriteLabel = ""
+        var globalDockLabel = ""
+        var facetFavoriteLabel = ""
+        var facetDockLabel = ""
+        setContent(
+            facetId = facetId,
+            seedApps = { appRepository, favoriteAppRepository, defaultFavoriteAppRepository, dockAppRepository, facetDockAppRepository, id ->
+                val installed = appRepository.getInstalledApps()
+                globalFavoriteLabel = installed[0].label
+                globalDockLabel = installed[1].label
+                facetFavoriteLabel = installed[2].label
+                facetDockLabel = installed[3].label
+                defaultFavoriteAppRepository.addFavorite(installed[0], position = 0)
+                dockAppRepository.addDockApp(installed[1], position = 0)
+                favoriteAppRepository.addFavorite(id!!, installed[2], position = 0)
+                facetDockAppRepository.addDockApp(id, installed[3], position = 0)
+            },
+        )
+
+        // Polled — same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(globalFavoriteLabel).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(globalFavoriteLabel).assertExists()
+        composeRule.onNodeWithContentDescription(globalDockLabel).assertExists()
+        composeRule.onNodeWithText(facetFavoriteLabel).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(facetDockLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun facetScopedPreviewShowsThatFacetsOwnFavoritesAndDockWhileOverriding() {
+        // The inverse of facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding — once
+        // a facet overrides apps/dock content, its own rows win over the launcher-wide default.
+        val facetId = 1L
+        var globalFavoriteLabel = ""
+        var globalDockLabel = ""
+        var facetFavoriteLabel = ""
+        var facetDockLabel = ""
+        setContent(
+            facetId = facetId,
+            seed = { facetRepository, id ->
+                // Re-fetched between writes — `facetDao.update` replaces the whole row, so reusing
+                // the same (now-stale) `facet` snapshot for the second call would clobber the first
+                // call's own field change back to its old value.
+                val facet = facetRepository.getById(id!!)!!
+                facetRepository.setOverrideApps(facet, overriding = true)
+                val updated = facetRepository.getById(id)!!
+                facetRepository.updateOverridingDock(updated, overriding = true)
+            },
+            seedApps = { appRepository, favoriteAppRepository, defaultFavoriteAppRepository, dockAppRepository, facetDockAppRepository, id ->
+                val installed = appRepository.getInstalledApps()
+                globalFavoriteLabel = installed[0].label
+                globalDockLabel = installed[1].label
+                facetFavoriteLabel = installed[2].label
+                facetDockLabel = installed[3].label
+                defaultFavoriteAppRepository.addFavorite(installed[0], position = 0)
+                dockAppRepository.addDockApp(installed[1], position = 0)
+                favoriteAppRepository.addFavorite(id!!, installed[2], position = 0)
+                facetDockAppRepository.addDockApp(id, installed[3], position = 0)
+            },
+        )
+
+        // Polled — same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(facetFavoriteLabel).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(globalFavoriteLabel).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(globalDockLabel).assertDoesNotExist()
+        composeRule.onNodeWithText(facetFavoriteLabel).assertExists()
+        composeRule.onNodeWithContentDescription(facetDockLabel).assertExists()
     }
 }

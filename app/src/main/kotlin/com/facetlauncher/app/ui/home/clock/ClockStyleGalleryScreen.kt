@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -40,17 +39,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
-import com.facetlauncher.app.ui.components.FontWeightSlider
+import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
@@ -61,8 +58,8 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import com.facetlauncher.app.ui.theme.fontFamily
 import com.facetlauncher.app.ui.theme.resolve
-import com.facetlauncher.app.ui.theme.resolveFontFamily
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -85,9 +82,6 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         use24HourTime = uiState.use24HourTime,
         showMeridiem = uiState.showMeridiem,
         dateStyle = uiState.dateStyle,
-        calendarFontOption = uiState.calendarFontOption,
-        calendarColorOption = uiState.calendarColorOption,
-        calendarFontWeight = uiState.calendarFontWeight,
         launcherFontOption = uiState.launcherFontOption,
         onTemplateSelect = viewModel::setClockTemplateId,
         onFontOptionChange = viewModel::setClockFontOption,
@@ -96,14 +90,17 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         onUse24HourTimeChange = viewModel::setUse24HourTime,
         onShowMeridiemChange = viewModel::setClockShowMeridiem,
         onDateStyleChange = viewModel::setClockDateStyle,
-        onCalendarFontOptionChange = viewModel::setCalendarFontOption,
-        onCalendarColorOptionChange = viewModel::setCalendarColorOption,
-        onCalendarFontWeightChange = viewModel::setCalendarFontWeight,
         clockAlignment = uiState.clockAlignment,
-        calendarAlignment = uiState.calendarAlignment,
         onClockAlignmentChange = viewModel::setClockAlignment,
-        onCalendarAlignmentChange = viewModel::setCalendarAlignment,
         onResetClockPosition = viewModel::resetClockPosition,
+        isFacetScoped = uiState.isFacetScoped,
+        isOverriding = uiState.isOverriding,
+        onOverridingChange = viewModel::setOverridingClock,
+        inheritSubtitle = stringResource(
+            R.string.dot_join_2,
+            stringResource(uiState.globalTemplateId.displayNameRes),
+            stringResource(if (uiState.globalUse24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+        ),
     )
 }
 
@@ -117,15 +114,19 @@ fun FacetClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGaller
 }
 
 /**
- * Stateless clock-style picker. Order: Calendar font/color/weight controls plus its own "Calendar
- * alignment" row, then a live [CalendarEventsBlock] preview (which moves live with that alignment,
- * same as every other calendar control here), then Clock font/color/24h/meridiem controls plus its
- * own "Clock alignment" row, then every [ClockTemplateId] as its own selectable card — tapping one
- * calls [onTemplateSelect] and gets an [Accent] border to show it's the applied option. Each
- * alignment lives inside its own block's card (not a separate shared section) since it only ever
- * affects that one block; both alignments and the "Reset clock widget position" action are part of
- * the same Clock+Calendar design bundle as the font/color/template controls around them, so — like
- * those — they're facet-overridable too, not global-only. On [Surface] (the same theme-aware,
+ * Stateless clock-style picker. Order: an Inherit/Override switch when this instance is
+ * facet-scoped (moved in from `FacetSettingsScreen` so it sits on the same screen as the controls
+ * it gates — see chat history), then Clock font/color/24h/meridiem controls plus its own "Clock
+ * alignment" row, then every [ClockTemplateId] as its own selectable card — tapping one calls
+ * [onTemplateSelect] and gets an [Accent] border to show it's the applied option. No calendar
+ * preview here any more (see chat history) — that live preview moved to `AppearanceSettingsScreen`
+ * instead, which reads this same `clockAlignment` for it. The alignment row lives inside the Clock
+ * card (not a separate shared section) since it's part of the same Clock+Calendar design bundle as
+ * the font/color/template controls around it, so — like those — it's facet-overridable too, not
+ * global-only. Every control below the Inherit/Override switch is dimmed and disabled while
+ * Inheriting (same `controlsEnabled` pattern as `CalendarSettingsScreen`) — editing while
+ * inheriting would silently write to the facet's row without taking effect until Override is
+ * picked, which read as broken rather than merely inert. On [Surface] (the same theme-aware,
  * light/dark-following background every other screen uses).
  */
 @Composable
@@ -147,30 +148,20 @@ private fun ClockStyleGalleryScreen(
     onAccentColorOptionChange: (ClockColorOption) -> Unit = {},
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
     onDateStyleChange: (ClockDateStyle) -> Unit = {},
-    calendarFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    calendarColorOption: ClockColorOption = ClockColorOption.THEME,
-    calendarFontWeight: FontWeightOption = FontWeightOption.REGULAR,
-    onCalendarFontOptionChange: (ClockFontOption) -> Unit = {},
-    onCalendarColorOptionChange: (ClockColorOption) -> Unit = {},
-    onCalendarFontWeightChange: (FontWeightOption) -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    calendarAlignment: ClockAlignment = ClockAlignment.LEFT,
     onClockAlignmentChange: (ClockAlignment) -> Unit = {},
-    onCalendarAlignmentChange: (ClockAlignment) -> Unit = {},
     onResetClockPosition: () -> Unit = {},
+    isFacetScoped: Boolean = false,
+    isOverriding: Boolean = false,
+    onOverridingChange: (Boolean) -> Unit = {},
+    inheritSubtitle: String = "",
 ) {
+    val controlsEnabled = !isFacetScoped || isOverriding
     val textColor = colorOption.resolve()
     val accentColor = accentColorOption.resolve()
     val fixedClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
     val now = remember { LocalDateTime.now(fixedClock) }
-    val calendarPreviewClock = remember { Clock.fixed(Instant.parse("2026-08-27T21:05:00Z"), ZoneId.of("UTC")) }
-    val calendarPreviewEvents = remember {
-        listOf(
-            CalendarEvent(id = 1, calendarId = "1", title = "Team standup", startTimeMillis = calendarPreviewClock.millis() + 3_600_000, endTimeMillis = calendarPreviewClock.millis() + 5_400_000, isAllDay = false),
-            CalendarEvent(id = 2, calendarId = "1", title = "Design review", startTimeMillis = calendarPreviewClock.millis() + 7_200_000, endTimeMillis = calendarPreviewClock.millis() + 9_000_000, isAllDay = false),
-        )
-    }
     // Fixed sample accessory values (not the real device battery/alarm) so every card in the
     // gallery shows its "next alarm · battery" row the same way, letting the user compare
     // templates side by side — same reasoning as calendarPreviewEvents above. Computed against
@@ -193,70 +184,16 @@ private fun ClockStyleGalleryScreen(
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item {
-            Text(
-                text = stringResource(R.string.clock_style_calendar_section),
-                style = MaterialTheme.typography.labelSmall,
-                color = Muted,
-            )
-        }
-        item {
-            SettingsCard {
-                LabeledDropdownRow(
-                    title = stringResource(R.string.clock_style_font_label),
-                    options = ClockFontOption.entries,
-                    selected = calendarFontOption,
-                    label = { stringResource(it.displayNameRes) },
-                    onSelect = onCalendarFontOptionChange,
-                    testTag = "calendar_style_font_row",
-                )
-                CardDivider()
-                LabeledDropdownRow(
-                    title = stringResource(R.string.clock_style_color_label),
-                    options = ClockColorOption.entries,
-                    selected = calendarColorOption,
-                    label = { stringResource(it.displayNameRes) },
-                    onSelect = onCalendarColorOptionChange,
-                    testTag = "calendar_style_color_row",
-                )
-                CardDivider()
-                FontWeightSlider(
-                    selected = calendarFontWeight,
-                    onSelectedChange = onCalendarFontWeightChange,
-                    showPreview = false,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 13.dp)
-                        .testTag("calendar_style_weight_slider"),
-                    sliderTestTag = "calendar_style_weight_slider_control",
-                )
-                CardDivider()
-                LabeledDropdownRow(
-                    title = stringResource(R.string.clock_style_calendar_alignment),
-                    options = ClockAlignment.entries,
-                    selected = calendarAlignment,
-                    label = { stringResource(it.displayNameRes) },
-                    onSelect = onCalendarAlignmentChange,
-                    testTag = "calendar_alignment_row",
+        if (isFacetScoped) {
+            item {
+                InheritOverrideCard(
+                    overriding = isOverriding,
+                    onOverridingChange = onOverridingChange,
+                    testTagPrefix = "clock_style",
+                    inheritSubtitle = inheritSubtitle,
                 )
             }
         }
-        item {
-            CalendarEventsBlock(
-                events = calendarPreviewEvents,
-                clock = calendarPreviewClock,
-                fontFamily = calendarFontOption.resolveFontFamily(launcherFontOption),
-                textColor = calendarColorOption.resolve(),
-                fontWeight = calendarFontWeight.resolve(),
-                alignment = calendarAlignment,
-                modifier = Modifier.testTag("calendar_style_preview"),
-            )
-        }
-
-        item {
-            HorizontalDivider(color = Hairline, modifier = Modifier.testTag("calendar_clock_section_divider"))
-        }
-
         item {
             Text(
                 text = stringResource(R.string.clock_style_clock_section),
@@ -272,6 +209,7 @@ private fun ClockStyleGalleryScreen(
                     selected = fontOption,
                     label = { stringResource(it.displayNameRes) },
                     onSelect = onFontOptionChange,
+                    enabled = controlsEnabled,
                     testTag = "clock_font_row",
                 )
                 CardDivider()
@@ -281,6 +219,7 @@ private fun ClockStyleGalleryScreen(
                     selected = colorOption,
                     label = { stringResource(it.displayNameRes) },
                     onSelect = onColorOptionChange,
+                    enabled = controlsEnabled,
                     testTag = "clock_color_row",
                 )
                 CardDivider()
@@ -295,23 +234,29 @@ private fun ClockStyleGalleryScreen(
                     selected = accentColorOption,
                     label = { stringResource(it.displayNameRes) },
                     onSelect = onAccentColorOptionChange,
+                    enabled = controlsEnabled,
                     testTag = "clock_accent_color_row",
                 )
                 CardDivider()
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (controlsEnabled) 1f else 0.4f),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(text = stringResource(R.string.settings_time_format_24h), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                    Switch(checked = use24HourTime, onCheckedChange = onUse24HourTimeChange, modifier = Modifier.testTag("clock_use_24_hour_time_toggle"))
+                    Switch(
+                        checked = use24HourTime,
+                        onCheckedChange = onUse24HourTimeChange,
+                        enabled = controlsEnabled,
+                        modifier = Modifier.testTag("clock_use_24_hour_time_toggle"),
+                    )
                 }
                 CardDivider()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 13.dp)
-                        .alpha(if (use24HourTime) 0.4f else 1f),
+                        .alpha(if (use24HourTime || !controlsEnabled) 0.4f else 1f),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -319,7 +264,7 @@ private fun ClockStyleGalleryScreen(
                     Switch(
                         checked = showMeridiem && !use24HourTime,
                         onCheckedChange = onShowMeridiemChange,
-                        enabled = !use24HourTime,
+                        enabled = !use24HourTime && controlsEnabled,
                         modifier = Modifier.testTag("clock_show_meridiem_toggle"),
                     )
                 }
@@ -330,6 +275,7 @@ private fun ClockStyleGalleryScreen(
                     selected = dateStyle,
                     label = { stringResource(it.displayNameRes) },
                     onSelect = onDateStyleChange,
+                    enabled = controlsEnabled,
                     testTag = "clock_date_style_row",
                 )
                 CardDivider()
@@ -339,6 +285,7 @@ private fun ClockStyleGalleryScreen(
                     selected = clockAlignment,
                     label = { stringResource(it.displayNameRes) },
                     onSelect = onClockAlignmentChange,
+                    enabled = controlsEnabled,
                     testTag = "clock_alignment_row",
                 )
             }
@@ -353,7 +300,7 @@ private fun ClockStyleGalleryScreen(
         }
         item {
             SettingsCard {
-                ClockPositionResetRow(onClick = onResetClockPosition)
+                ClockPositionResetRow(onClick = onResetClockPosition, enabled = controlsEnabled)
             }
         }
 
@@ -381,7 +328,8 @@ private fun ClockStyleGalleryScreen(
                     .clip(shape)
                     .background(Surface, shape)
                     .border(width = if (selected) 2.dp else 1.dp, color = if (selected) Accent else Hairline, shape = shape)
-                    .clickable(onClick = { onTemplateSelect(id) })
+                    .clickable(enabled = controlsEnabled, onClick = { onTemplateSelect(id) })
+                    .alpha(if (controlsEnabled) 1f else 0.4f)
                     .testTag("clock_template_card_${id.name}")
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -424,18 +372,18 @@ private fun ClockStyleGalleryScreen(
 
 /**
  * Direct one-tap action, no confirmation — restores the whole clock+calendar widget's position:
- * `clockZoneHeightDp` back to `null` (the grab handle) AND both `clockAlignment`/`calendarAlignment`
- * back to `LEFT`, not just the height alone. Consistent with this screen's other immediate-effect
- * controls.
+ * `clockZoneHeightDp` back to `null` (the grab handle) AND `clockAlignment` back to `LEFT`, not
+ * just the height alone. Consistent with this screen's other immediate-effect controls.
  */
 @Composable
-private fun ClockPositionResetRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun ClockPositionResetRow(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .testTag("reset_clock_position_row")
-            .padding(vertical = 13.dp),
+            .padding(vertical = 13.dp)
+            .alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

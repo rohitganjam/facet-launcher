@@ -9,7 +9,6 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -131,39 +130,6 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `changing the calendar font calls the repository setter globally`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setCalendarFontOption(ClockFontOption.POPPINS)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setCalendarFontOption(ClockFontOption.POPPINS)
-    }
-
-    @Test
-    fun `changing the calendar color calls the repository setter globally`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setCalendarColorOption(ClockColorOption.THEME_INVERTED)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setCalendarColorOption(ClockColorOption.THEME_INVERTED)
-    }
-
-    @Test
-    fun `changing the calendar font weight calls the repository setter globally`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setCalendarFontWeight(FontWeightOption.SEMI_BOLD)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setCalendarFontWeight(FontWeightOption.SEMI_BOLD)
-    }
-
-    @Test
     fun `changing clock alignment calls the global repository setter when not facet-scoped`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
@@ -191,32 +157,7 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `changing calendar alignment calls the global repository setter when not facet-scoped, independent of clock alignment`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setCalendarAlignment(ClockAlignment.RIGHT)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setCalendarAlignment(ClockAlignment.RIGHT)
-    }
-
-    @Test
-    fun `changing calendar alignment writes the facet's own override when facet-scoped`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        `when`(facetRepository.getById(5L)).thenReturn(facet)
-        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
-
-        viewModel.setCalendarAlignment(ClockAlignment.RIGHT)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).setCalendarAlignment(facet, ClockAlignment.RIGHT)
-    }
-
-    @Test
-    fun `resetClockPosition resets the global height and both alignments when not facet-scoped`() = runTest {
+    fun `resetClockPosition resets the global height and alignment when not facet-scoped`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
@@ -225,7 +166,6 @@ class ClockStyleGalleryViewModelTest {
 
         verify(settingsRepository).resetClockZoneHeight()
         verify(settingsRepository).setClockAlignment(ClockAlignment.LEFT)
-        verify(settingsRepository).setCalendarAlignment(ClockAlignment.LEFT)
     }
 
     @Test
@@ -243,59 +183,13 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `facet-scoped calendar font, color, and weight changes write the facet's own override`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        `when`(facetRepository.getById(5L)).thenReturn(facet)
-        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setCalendarFontOption(ClockFontOption.MANROPE)
-        viewModel.setCalendarColorOption(ClockColorOption.ACCENT_SECONDARY)
-        viewModel.setCalendarFontWeight(FontWeightOption.LIGHT)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).setCalendarFontOption(facet, ClockFontOption.MANROPE)
-        verify(facetRepository).setCalendarColorOption(facet, ClockColorOption.ACCENT_SECONDARY)
-        verify(facetRepository).setCalendarFontWeight(facet, FontWeightOption.LIGHT)
-    }
-
-    @Test
-    fun `uiState resolves calendar font, color, and weight from the facet when scoped`() = runTest {
-        val facet = FacetEntity(
-            id = 5L,
-            name = "Work",
-            position = 0,
-            overrideClock = true,
-            calendarFontOption = ClockFontOption.MANROPE,
-            calendarColorOption = ClockColorOption.ACCENT_SECONDARY,
-            calendarFontWeight = FontWeightOption.SEMI_BOLD,
-        )
-        val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
-        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(ClockFontOption.MANROPE, viewModel.uiState.value.calendarFontOption)
-        assertEquals(ClockColorOption.ACCENT_SECONDARY, viewModel.uiState.value.calendarColorOption)
-        assertEquals(FontWeightOption.SEMI_BOLD, viewModel.uiState.value.calendarFontWeight)
-    }
-
-    @Test
-    fun `uiState resolves clock and calendar alignment from the facet when scoped`() = runTest {
+    fun `uiState resolves clock alignment from the facet when scoped`() = runTest {
         val facet = FacetEntity(
             id = 5L,
             name = "Work",
             position = 0,
             overrideClock = true,
             clockAlignment = ClockAlignment.CENTER,
-            calendarAlignment = ClockAlignment.RIGHT,
         )
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
@@ -307,7 +201,6 @@ class ClockStyleGalleryViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(ClockAlignment.CENTER, viewModel.uiState.value.clockAlignment)
-        assertEquals(ClockAlignment.RIGHT, viewModel.uiState.value.calendarAlignment)
     }
 
     @Test
@@ -333,26 +226,4 @@ class ClockStyleGalleryViewModelTest {
         assertEquals(ClockDateStyle.CONDENSED, viewModel.uiState.value.dateStyle)
     }
 
-    @Test
-    fun `uiState resolves calendar font, color, and weight from global settings when not scoped`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(
-            flowOf(
-                LauncherSettings(
-                    calendarFontOption = ClockFontOption.POPPINS,
-                    calendarColorOption = ClockColorOption.THEME_INVERTED,
-                    calendarFontWeight = FontWeightOption.LIGHT,
-                ),
-            ),
-        )
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(emptyList()))
-        val viewModel = ClockStyleGalleryViewModel(SavedStateHandle(), settingsRepository, facetRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(ClockFontOption.POPPINS, viewModel.uiState.value.calendarFontOption)
-        assertEquals(ClockColorOption.THEME_INVERTED, viewModel.uiState.value.calendarColorOption)
-        assertEquals(FontWeightOption.LIGHT, viewModel.uiState.value.calendarFontWeight)
-    }
 }

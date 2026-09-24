@@ -57,18 +57,18 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * Canonical Launcher Settings screen (`3c`) — purely a directory of navigation rows now (see chat
- * history for the reasoning behind this grouping): FACETS, APPEARANCE, CLOCK & CALENDAR,
- * HOME & APPS (Dock / Home Apps List / App Drawer / Notifications — grouped by "what shows on an
- * app icon or in the drawer", not by how narrowly each one's own settings happen to be scoped),
- * and SYSTEM (Permissions / Backup & restore / Set as default launcher / About — device-level,
- * not a launcher preference).
+ * history for the reasoning behind this grouping): FACETS, APPEARANCE (also where "Clock style"
+ * now lives, as a row inside it — see chat history: calendar/appearance styling consolidation),
+ * HOME & APPS (Calendars / Dock / Home Apps List / App Drawer / Notifications — grouped by "what
+ * shows on an app icon, on Home, or in the drawer", not by how narrowly each one's own settings
+ * happen to be scoped), and SYSTEM (Permissions / Backup & restore / Set as default launcher /
+ * About — device-level, not a launcher preference).
  */
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
     onNavigateToAppearance: () -> Unit,
-    onNavigateToClockStyleGallery: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
@@ -88,7 +88,6 @@ fun SettingsScreen(
         onBack = onBack,
         onViewFacets = onViewFacets,
         onNavigateToAppearance = onNavigateToAppearance,
-        onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
         onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
@@ -110,7 +109,6 @@ private fun SettingsContent(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
     onNavigateToAppearance: () -> Unit,
-    onNavigateToClockStyleGallery: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
@@ -180,21 +178,9 @@ private fun SettingsContent(
                     }
                 }
 
-                item { SectionHeader(stringResource(R.string.settings_section_clock_calendar)) }
+                item { SectionHeader(stringResource(R.string.settings_section_home_apps)) }
                 item {
                     SettingsCard {
-                        ClickableRow(
-                            title = stringResource(R.string.settings_clock_calendar_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_2,
-                                stringResource(uiState.settings.clockTemplateId.displayNameRes),
-                                stringResource(if (uiState.settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                            ),
-                            onClick = onNavigateToClockStyleGallery,
-                            testTag = "clock_style_gallery_row",
-                            trailing = { NavigationChevron() },
-                        )
-                        CardDivider()
                         ClickableRow(
                             title = stringResource(R.string.settings_calendars_title),
                             subtitle = stringResource(
@@ -206,12 +192,7 @@ private fun SettingsContent(
                             testTag = "calendar_settings_row",
                             trailing = { NavigationChevron() },
                         )
-                    }
-                }
-
-                item { SectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item {
-                    SettingsCard {
+                        CardDivider()
                         ClickableRow(
                             title = stringResource(R.string.settings_dock_title),
                             subtitle = dockSummary(uiState.dockItems),
@@ -396,8 +377,9 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     )
 }
 
+/** Package-visible (not private) — also used by [AppearanceSettingsScreen]'s own nav rows. */
 @Composable
-private fun ClickableRow(
+fun ClickableRow(
     title: String,
     subtitle: String?,
     onClick: () -> Unit,
@@ -428,9 +410,9 @@ private fun ClickableRow(
     }
 }
 
-/** Trailing affordance for a row that navigates to its own screen. */
+/** Trailing affordance for a row that navigates to its own screen. Package-visible — see [ClickableRow]. */
 @Composable
-private fun NavigationChevron(modifier: Modifier = Modifier) {
+fun NavigationChevron(modifier: Modifier = Modifier) {
     Icon(
         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
         contentDescription = null,
@@ -453,7 +435,6 @@ private fun SettingsScreenPreview() {
             onBack = {},
             onViewFacets = {},
             onNavigateToAppearance = {},
-            onNavigateToClockStyleGallery = {},
             onNavigateToCalendarSettings = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},

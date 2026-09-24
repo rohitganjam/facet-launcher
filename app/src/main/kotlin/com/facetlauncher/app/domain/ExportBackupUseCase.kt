@@ -103,8 +103,5 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     clockFontOption = clockFontOption.name,
     clockColorOption = clockColorOption.name,
     clockShowMeridiem = clockShowMeridiem,
-    calendarFontOption = calendarFontOption.name,
-    calendarColorOption = calendarColorOption.name,
-    calendarFontWeight = calendarFontWeight.name,
     homeAppsFontWeight = homeAppsFontWeight.name,
 )

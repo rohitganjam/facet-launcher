@@ -135,7 +135,7 @@ use case.
 
 `BackupSettings` and `BackupFacet` (`data/model/BackupBundle.kt`) were last extended for
 folders (v3) and never picked up the columns added in schema v13–v15: `clockAccentColorOption`,
-`clockDateStyle`, `clockAlignment`, `calendarAlignment`, `clockZoneHeightDp`, `clockScale`,
+`clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
 `appListVerticalAlignment` (plus, globally, `selected_calendar_ids` and `calendar_colors`). A
 restore therefore silently resets clock position/scale/date style and the calendar selection on
 every facet. Add them to both `@Serializable` classes with defaults (older files keep parsing),

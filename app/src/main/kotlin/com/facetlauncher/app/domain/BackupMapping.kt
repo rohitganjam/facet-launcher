@@ -24,7 +24,6 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.selectedCalendarIds
 
@@ -96,9 +95,6 @@ fun FacetEntity.toBackupFacet(
     dockApps = dockApps,
     overrideCalendar = overrideCalendar,
     showAllDayEvents = showAllDayEvents,
-    calendarFontOption = calendarFontOption.name,
-    calendarColorOption = calendarColorOption.name,
-    calendarFontWeight = calendarFontWeight.name,
     selectedCalendarIds = selectedCalendarIds?.toList(),
     favorites = favorites,
     dockFolderPlacements = dockFolderPlacements,
@@ -117,18 +113,18 @@ fun BackupFacet.toFacetEntity(): FacetEntity = FacetEntity(
     use24HourTime = use24HourTime,
     clockShowMeridiem = clockShowMeridiem,
     overrideApps = overrideApps,
-    appRowPosition = appRowPosition.toEnumOrDefault(AppRowPosition.LEFT),
-    appRowPresentation = appRowPresentation.toEnumOrDefault(AppRowPresentation.ICON_AND_TEXT),
+    // A facet's own row falls back to LAUNCHER_DEFAULT, not a concrete value — see
+    // FacetEntity.appRowPosition's own doc for why these are resolved independently of
+    // overrideApps/overrideDock now, mirroring ClockFontOption's existing facet-scope fallback.
+    appRowPosition = appRowPosition.toEnumOrDefault(AppRowPosition.LAUNCHER_DEFAULT),
+    appRowPresentation = appRowPresentation.toEnumOrDefault(AppRowPresentation.LAUNCHER_DEFAULT),
     listContentMode = listContentMode.toEnumOrDefault(ListContentMode.FAVORITES),
     appsToShowCount = appsToShowCount.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
     overridingFavorites = overridingFavorites,
     overrideDock = overrideDock,
-    dockDisplayMode = dockDisplayMode.toEnumOrDefault(DockDisplayMode.ICONS),
+    dockDisplayMode = dockDisplayMode.toEnumOrDefault(DockDisplayMode.LAUNCHER_DEFAULT),
     overrideCalendar = overrideCalendar,
     showAllDayEvents = showAllDayEvents,
-    calendarFontOption = calendarFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT),
-    calendarColorOption = calendarColorOption.toEnumOrDefault(ClockColorOption.THEME),
-    calendarFontWeight = calendarFontWeight.toEnumOrDefault(FontWeightOption.REGULAR),
     selectedCalendarIdsCsv = selectedCalendarIds?.joinToString(","),
 )
 

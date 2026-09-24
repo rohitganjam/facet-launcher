@@ -390,8 +390,9 @@ class ClockBlockTest {
     }
 
     @Test
-    fun clockAndCalendarAlignmentsMoveIndependentlyOfEachOther() {
-        // Given a clock aligned right but a calendar explicitly kept left
+    fun clockAndCalendarShareTheSameAlignment() {
+        // Given a clock aligned right — the calendar strip has no alignment of its own any more,
+        // it follows the clock's (see chat history: calendar/appearance styling consolidation)
         val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
         val event = CalendarEvent(
             id = 1,
@@ -402,7 +403,7 @@ class ClockBlockTest {
             isAllDay = false,
         )
 
-        // When the ClockBlock is composed with opposite alignments for each
+        // When the ClockBlock is composed with clockAlignment = RIGHT
         composeRule.setContent {
             FacetLauncherTheme {
                 ClockBlock(
@@ -410,16 +411,16 @@ class ClockBlockTest {
                     locale = Locale.US,
                     events = listOf(event),
                     clockAlignment = ClockAlignment.RIGHT,
-                    calendarAlignment = ClockAlignment.LEFT,
                 )
             }
         }
 
-        // Then the clock's time text sits further right than the calendar row — each obeys its
-        // own setting, unaffected by the other's
-        val clockLeft = composeRule.onNodeWithText("9:05").fetchSemanticsNode().boundsInRoot.left
-        val calendarRowLeft = composeRule.onNodeWithTag("clock_event_row_1").fetchSemanticsNode().boundsInRoot.left
-        assertTrue(clockLeft > calendarRowLeft)
+        // Then the calendar row's own alignment moved with the clock's — both are now end-aligned
+        // within the same fillMaxWidth column, so their right edges (not left, since the two
+        // items differ in width) land close together, near the container's right edge.
+        val clockRight = composeRule.onNodeWithText("9:05").fetchSemanticsNode().boundsInRoot.right
+        val calendarRowRight = composeRule.onNodeWithTag("clock_event_row_1").fetchSemanticsNode().boundsInRoot.right
+        assertTrue(kotlin.math.abs(clockRight - calendarRowRight) < 50f)
     }
 
     @Test
@@ -435,14 +436,15 @@ class ClockBlockTest {
             isAllDay = false,
         )
 
-        // When the ClockBlock is composed with calendarAlignment = RIGHT
+        // When the ClockBlock is composed with clockAlignment = RIGHT (also governs the calendar
+        // strip now — see chat history: calendar/appearance styling consolidation)
         composeRule.setContent {
             FacetLauncherTheme {
                 ClockBlock(
                     clock = fixedClock,
                     locale = Locale.US,
                     events = listOf(event),
-                    calendarAlignment = ClockAlignment.RIGHT,
+                    clockAlignment = ClockAlignment.RIGHT,
                 )
             }
         }

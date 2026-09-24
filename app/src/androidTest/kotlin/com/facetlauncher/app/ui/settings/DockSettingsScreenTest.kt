@@ -6,6 +6,8 @@ import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -23,7 +25,6 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
-import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -41,7 +42,7 @@ class DockSettingsScreenTest {
         onBack: () -> Unit = {},
         onAddDockApp: () -> Unit = {},
         facetId: Long? = null,
-        seed: suspend (AppRepository, DockAppRepository, FacetDockAppRepository, FolderRepository) -> Unit = { _, _, _, _ -> },
+        seed: suspend (AppRepository, DockAppRepository, FacetDockAppRepository, FolderRepository, FacetRepository) -> Unit = { _, _, _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -60,7 +61,7 @@ class DockSettingsScreenTest {
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                runBlocking { seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository) }
+                runBlocking { seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository, facetRepository) }
                 DockSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
@@ -93,19 +94,10 @@ class DockSettingsScreenTest {
         assertEquals(true, backInvoked)
     }
 
-    @Test
-    fun dockDisplayStyleDropdownPersistsToTheGlobalSetting() {
-        setContent()
-        composeRule.onNodeWithText("Icons").assertExists()
-
-        composeRule.onNodeWithTag("dock_display_style_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Text").fetchSemanticsNodes().isNotEmpty()
-        }
-    }
+    // Dock display style's own dropdown row moved to Settings -> Appearance (see chat history —
+    // "look" fields, edited independently of this screen's content now); coverage moved to
+    // AppearanceSettingsScreenTest's dockDisplayStyleRowChangesTheGlobalSetting/
+    // facetScopedDockDisplayStyleRowOffersLauncherDefaultAndWritesToThatFacet.
 
     @Test
     fun selectDockAppsRowIsClickable() {
@@ -119,7 +111,7 @@ class DockSettingsScreenTest {
     fun aFolderInTheDefaultDock_rendersAsAFolderTileInThePreview_notItsAppsFlattened() {
         var folderId = 0L
         setContent(
-            seed = { _, dockAppRepository, _, folderRepository ->
+            seed = { _, dockAppRepository, _, folderRepository, _ ->
                 folderId = folderRepository.createFolder("Games")
                 dockAppRepository.placeFolderInDock(folderId, position = 0)
             },
@@ -138,12 +130,16 @@ class DockSettingsScreenTest {
 
     @Test
     fun aFolderInAFacetsOwnDock_rendersAsAFolderTileInThePreview() {
+        // This facet must actually be overriding for its own dock to be the one shown — otherwise
+        // the screen correctly shows the (empty) launcher-wide default instead (see chat history:
+        // editing while inheriting used to silently write without taking effect).
         var folderId = 0L
         setContent(
             facetId = 42L,
-            seed = { _, _, facetDockAppRepository, folderRepository ->
+            seed = { _, _, facetDockAppRepository, folderRepository, facetRepository ->
                 folderId = folderRepository.createFolder("Games")
                 facetDockAppRepository.placeFolder(42L, folderId, position = 0)
+                facetRepository.getById(42L)?.let { facetRepository.updateOverridingDock(it, true) }
             },
         )
 
@@ -154,39 +150,29 @@ class DockSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedScreenWritesTheDisplayStyleToThatFacetsRow() {
-        lateinit var facetRepo: FacetRepository
-        composeRule.setContent {
-            val context = LocalContext.current
-            val viewModel = remember {
-                val settingsRepository = SettingsRepository(
-                    PreferenceDataStoreFactory.create(
-                        produceFile = { File(context.cacheDir, "dock-facet-test-${System.nanoTime()}.preferences_pb") },
-                    ),
-                )
-                val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                facetRepo = FacetRepository(database.facetDao())
-                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
-                val pid = runBlocking { facetRepo.addFacet().id }
-                DockSettingsViewModel(
-                    SavedStateHandle(mapOf("facetId" to pid)),
-                    settingsRepository,
-                    facetRepo,
-                    DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
-                    FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
-                    WallpaperRepository(WallpaperManager.getInstance(context)),
-                )
-            }
-            FacetLauncherTheme { DockSettingsScreen(onBack = {}, onAddDockApp = {}, viewModel = viewModel) }
-        }
-        composeRule.waitForIdle()
+    fun facetScopedModeShowsInheritOverrideSwitch() {
+        // Given a facet-scoped entry point
+        setContent(facetId = 1L)
 
-        composeRule.onNodeWithTag("dock_display_style_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
-
+        // The facet-scoped state resolves asynchronously — wait for the switch to actually render
+        // rather than assuming setContent()'s own waitForIdle() already caught it (see chat history)
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepo.observeFacets().first().first().dockDisplayMode == DockDisplayMode.TEXT }
+            composeRule.onAllNodesWithTag("dock_settings_override_row").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the inherit/override switch is present, defaulting to Inherit (controls disabled) —
+        // dockDisplayMode's own row moved to Appearance (see chat history), so this now gates the
+        // one control still left on this screen: the dock app list picker row.
+        composeRule.onNodeWithTag("dock_settings_inherit_row").assertExists()
+        composeRule.onNodeWithTag("dock_settings_override_row").assertExists()
+        composeRule.onNodeWithTag("add_dock_app_row").assertIsNotEnabled()
+
+        // When switching to Override
+        composeRule.onNodeWithTag("dock_settings_override_row").performClick()
+
+        // Then the controls become live
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("add_dock_app_row").assertIsEnabled() }.isSuccess
         }
     }
 }
