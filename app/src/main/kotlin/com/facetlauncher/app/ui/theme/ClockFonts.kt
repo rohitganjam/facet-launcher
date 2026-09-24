@@ -19,18 +19,22 @@ import com.facetlauncher.app.data.model.LauncherFontOption
  * render identically with no network dependency — see `THIRD_PARTY_FONT_LICENSES/` at the repo
  * root for the license text each family ships under.
  *
- * [RobotoFlexFamily], [ManropeFamily], and [NotoSansFamily] each wrap a single variable-font file.
- * A `Font()` entry declared with no `variationSettings` only ever resolves to that file's default
- * ("wght" 400) instance — Compose does **not** auto-interpolate a variable font's weight axis from
- * a bare `Font(resId)`, so every non-Regular [FontWeightOption] silently rendered identical to
- * Regular (see chat history: font-weight customization looked like it did nothing from Thin up
- * through Medium). [variableWeightInstances] fixes this by declaring one `Font()` per supported
- * stop, each pinned to its own "wght" value via [FontVariation.weight] — that's what actually gets
- * Android to pick a distinct instance per requested [FontWeight]. No italic instance exists for
- * Roboto Flex or Manrope upstream, so requesting [FontStyle.Italic] against them falls back to
- * upright; [NotoSansFamily] ships a true italic variable file, kept at its single default weight
- * since italic isn't wired to the font-weight feature. [PoppinsFamily] is a classic static family —
- * one file per weight/style combination actually bundled.
+ * [RobotoFlexFamily], [ManropeFamily], [NotoSansFamily], [InterFamily], and [MontserratFamily] each
+ * wrap a single variable-font file. A `Font()` entry declared with no `variationSettings` only ever
+ * resolves to that file's default ("wght" 400) instance — Compose does **not** auto-interpolate a
+ * variable font's weight axis from a bare `Font(resId)`, so every non-Regular [FontWeightOption]
+ * silently rendered identical to Regular (see chat history: font-weight customization looked like
+ * it did nothing from Thin up through Medium). [variableWeightInstances] fixes this by declaring
+ * one `Font()` per supported stop, each pinned to its own "wght" value via [FontVariation.weight] —
+ * that's what actually gets Android to pick a distinct instance per requested [FontWeight]. No
+ * italic instance exists for Roboto Flex or Manrope upstream, so requesting [FontStyle.Italic]
+ * against them falls back to upright; [NotoSansFamily], [InterFamily], and [MontserratFamily] each
+ * ship a true italic variable file, kept at its single default weight since italic isn't wired to
+ * the font-weight feature. [PoppinsFamily] and [LatoFamily] are classic static families — one file
+ * per weight/style combination actually bundled ([LatoFamily] happens to bundle one file per
+ * [FontWeightOption] stop, unlike [PoppinsFamily]'s partial coverage, since upstream Lato ships
+ * static Thin/ExtraLight/Light/Regular/Medium/SemiBold files where Roboto Flex/Manrope/Inter/
+ * Montserrat only ship as variable fonts).
  */
 @OptIn(ExperimentalTextApi::class)
 private fun variableWeightInstances(resId: Int, style: FontStyle = FontStyle.Normal): List<Font> =
@@ -57,9 +61,27 @@ private val PoppinsFamily = FontFamily(
     Font(R.font.poppins_medium_italic, FontWeight.Medium, FontStyle.Italic),
 )
 
+private val InterFamily = FontFamily(
+    variableWeightInstances(R.font.inter_variable) + Font(R.font.inter_italic_variable, FontWeight.Normal, FontStyle.Italic),
+)
+
+private val MontserratFamily = FontFamily(
+    variableWeightInstances(R.font.montserrat_variable) + Font(R.font.montserrat_italic_variable, FontWeight.Normal, FontStyle.Italic),
+)
+
+private val LatoFamily = FontFamily(
+    Font(R.font.lato_thin, FontWeight.Thin),
+    Font(R.font.lato_extralight, FontWeight.ExtraLight),
+    Font(R.font.lato_light, FontWeight.Light),
+    Font(R.font.lato_regular, FontWeight.Normal),
+    Font(R.font.lato_medium, FontWeight.Medium),
+    Font(R.font.lato_semibold, FontWeight.SemiBold),
+    Font(R.font.lato_italic, FontWeight.Normal, FontStyle.Italic),
+)
+
 /**
- * Resolves a [LauncherFontOption] to its real [FontFamily] — reuses the same four bundled
- * families [ClockFontOption] draws from, so picking a launcher-wide font never needs new assets.
+ * Resolves a [LauncherFontOption] to its real [FontFamily] — reuses the same bundled families
+ * [ClockFontOption] draws from, so picking a launcher-wide font never needs new assets.
  */
 val LauncherFontOption.fontFamily: FontFamily
     get() = when (this) {
@@ -68,6 +90,9 @@ val LauncherFontOption.fontFamily: FontFamily
         LauncherFontOption.NOTO_SANS -> NotoSansFamily
         LauncherFontOption.MANROPE -> ManropeFamily
         LauncherFontOption.POPPINS -> PoppinsFamily
+        LauncherFontOption.INTER -> InterFamily
+        LauncherFontOption.MONTSERRAT -> MontserratFamily
+        LauncherFontOption.LATO -> LatoFamily
     }
 
 /**
@@ -87,4 +112,7 @@ fun ClockFontOption.resolveFontFamily(launcherFontOption: LauncherFontOption): F
         ClockFontOption.NOTO_SANS -> NotoSansFamily
         ClockFontOption.MANROPE -> ManropeFamily
         ClockFontOption.POPPINS -> PoppinsFamily
+        ClockFontOption.INTER -> InterFamily
+        ClockFontOption.MONTSERRAT -> MontserratFamily
+        ClockFontOption.LATO -> LatoFamily
     }

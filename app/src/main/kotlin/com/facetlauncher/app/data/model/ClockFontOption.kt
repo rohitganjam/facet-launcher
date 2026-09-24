@@ -25,4 +25,7 @@ enum class ClockFontOption(@param:StringRes val displayNameRes: Int) {
     NOTO_SANS(R.string.font_name_noto_sans),
     MANROPE(R.string.font_name_manrope),
     POPPINS(R.string.font_name_poppins),
+    INTER(R.string.font_name_inter),
+    MONTSERRAT(R.string.font_name_montserrat),
+    LATO(R.string.font_name_lato),
 }

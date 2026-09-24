@@ -7,6 +7,9 @@
     <string name="font_name_noto_sans">Noto Sans</string>
     <string name="font_name_manrope">Manrope</string>
     <string name="font_name_poppins">Poppins</string>
+    <string name="font_name_inter">Inter</string>
+    <string name="font_name_montserrat">Montserrat</string>
+    <string name="font_name_lato">Lato</string>
 
     <!-- AppSortOption -->
     <string name="app_sort_alphabetical">Alfabética</string>
