@@ -27,21 +27,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * A long-press on a row/tile that only opens a context menu (no drag yet — see
- * [com.facetlauncher.app.ui.hub.WidgetGrabGesture] for the drag-capable sibling this was trimmed
- * from). [onLongPressHold] fires the instant the long-press threshold is met, so callers can fire
- * haptics or a lift visual while the finger is still down; the menu itself only opens on
- * [onReleaseInPlace], once the finger actually lifts — never at the threshold itself.
+ * A long-press on a row/tile that only opens a context menu. [onLongPressHold] fires the instant
+ * the long-press threshold is met — that's when callers open the menu and fire haptics, not on
+ * release.
  *
- * Distinguishes three outcomes for the initial hold, matching `detectTapGestures`'s own
- * three-way split (`waitForLongPress`'s `Success`/`Released`/`Canceled`): released cleanly before
- * the threshold → [onTap]; held past the threshold without being claimed elsewhere → [onLongPressHold]
- * then, eventually, [onReleaseInPlace]; claimed by an ancestor before either (e.g. a scrollable or
- * a swipe-to-close gesture taking over the drag) → neither. That third case matters here
- * specifically: swiping to scroll or to close the Drawer/Home list starts with a down on some row,
- * and treating "the ancestor took it" the same as "it was a tap" (as an earlier version of this
- * function did, by only checking whether the long-press timed out) launched the app underneath the
- * finger on every swipe instead of letting the swipe through.
+ * Distinguishes three outcomes for the hold, matching `detectTapGestures`'s own three-way split
+ * (`waitForLongPress`'s `Success`/`Released`/`Canceled`): released cleanly before the threshold →
+ * [onTap]; held past the threshold without being claimed elsewhere → [onLongPressHold]; claimed by
+ * an ancestor before either (e.g. a scrollable or a swipe-to-close gesture taking over the drag) →
+ * neither. That third case matters here specifically: swiping to scroll or to close the
+ * Drawer/Home list starts with a down on some row, and treating "the ancestor took it" the same as
+ * "it was a tap" (as an earlier version of this function did, by only checking whether the
+ * long-press timed out) launched the app underneath the finger on every swipe instead of letting
+ * the swipe through.
  *
  * [onPress]/[onPressEnd] report the down position for ripple purposes. They're plain callbacks
  * rather than suspend calls because `awaitEachGesture`'s scope is a restricted coroutine scope —
@@ -52,7 +50,6 @@ suspend fun PointerInputScope.detectLongPressReleaseGesture(
     onPress: (Offset) -> Unit,
     onPressEnd: () -> Unit,
     onLongPressHold: () -> Unit,
-    onReleaseInPlace: () -> Unit,
     onTap: () -> Unit,
 ) {
     awaitEachGesture {
@@ -95,7 +92,6 @@ suspend fun PointerInputScope.detectLongPressReleaseGesture(
         }
 
         onPressEnd()
-        onReleaseInPlace()
     }
 }
 
@@ -103,9 +99,8 @@ suspend fun PointerInputScope.detectLongPressReleaseGesture(
  * Drop-in replacement for `Modifier.combinedClickable(onClick, onLongClick)` on a row/tile whose
  * long-press opens a context menu: same ripple (via [LocalIndication]) and the same TalkBack
  * semantics (a synthetic long-click still invokes [onLongPress] directly, bypassing real pointer
- * timing) — the only behavior change is that a real touch's [onLongPress] now fires on release
- * rather than at the long-press threshold (see [detectLongPressReleaseGesture]), with
- * [HapticFeedbackType.LongPress] firing at the threshold itself.
+ * timing). A real touch's [onLongPress] fires at the long-press threshold itself (see
+ * [detectLongPressReleaseGesture]), alongside the [HapticFeedbackType.LongPress] tick.
  */
 @Composable
 fun Modifier.longPressReleaseClickable(onClick: () -> Unit, onLongPress: () -> Unit): Modifier {
@@ -128,9 +123,11 @@ fun Modifier.longPressReleaseClickable(onClick: () -> Unit, onLongPress: () -> U
                     pressInteraction?.let { press -> emitInteraction(scope, interactionSource, PressInteraction.Release(press)) }
                     pressInteraction = null
                 },
-                onLongPressHold = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+                onLongPressHold = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    currentOnLongPress.value()
+                },
                 onTap = { currentOnClick.value() },
-                onReleaseInPlace = { currentOnLongPress.value() },
             )
         }
         .semantics(mergeDescendants = false) {

@@ -95,9 +95,7 @@ class ClockBlockTest {
         // When long-pressing the widget's own rendered surface — split into a real down/wait/up
         // rather than performTouchInput { longClick() }: that helper only fabricates MotionEvent
         // timestamps spanning the long-press duration, it doesn't make the test thread actually
-        // wait in real time. Our long-press detector deliberately fires immediately once the
-        // threshold is crossed (not release-gated, unlike e.g. FolderContentsSheet's own
-        // longPressReleaseClickable), which needs a genuine native Handler.postDelayed callback on
+        // wait in real time. This gesture needs a genuine native Handler.postDelayed callback on
         // the real main Looper — so the test has to let real time actually pass for it to fire.
         composeRule.onNodeWithTag("clock_widget_host_42").performTouchInput { down(center) }
         composeRule.waitUntil(timeoutMillis = 2_000) { longPressed }
@@ -486,6 +484,31 @@ class ClockBlockTest {
         val titleLeft = composeRule.onNodeWithText("Standup", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
         assertTrue(indicatorLeft < timeLeft)
         assertTrue(timeLeft < titleLeft)
+    }
+
+    @Test
+    fun calendarCenterAlignmentKeepsRowsLeftAlignedWithinTheCenteredBlock() {
+        // Given two events with very different title lengths, and CENTER alignment
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val events = listOf(
+            CalendarEvent(id = 1, calendarId = "1", title = "A", startTimeMillis = Instant.parse("2026-08-27T10:00:00Z").toEpochMilli(), endTimeMillis = Instant.parse("2026-08-27T10:30:00Z").toEpochMilli(), isAllDay = false),
+            CalendarEvent(id = 2, calendarId = "1", title = "A much longer event title", startTimeMillis = Instant.parse("2026-08-27T11:00:00Z").toEpochMilli(), endTimeMillis = Instant.parse("2026-08-27T11:30:00Z").toEpochMilli(), isAllDay = false),
+        )
+
+        // When the ClockBlock is composed with CENTER alignment
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, events = events, clockAlignment = ClockAlignment.CENTER)
+            }
+        }
+
+        // Then both rows' own left edges line up — a naive per-row CenterHorizontally would
+        // instead center each row independently by its own width, leaving their left edges
+        // ragged; the block as a whole should be centered, with its rows left-aligned inside it
+        // (see chat history — direct request).
+        val row1Left = composeRule.onNodeWithTag("clock_event_row_1").fetchSemanticsNode().boundsInRoot.left
+        val row2Left = composeRule.onNodeWithTag("clock_event_row_2").fetchSemanticsNode().boundsInRoot.left
+        assertTrue(kotlin.math.abs(row1Left - row2Left) < 1f)
     }
 
     @Test

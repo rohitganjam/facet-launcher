@@ -50,7 +50,7 @@ class FolderContentsSheetTest {
     }
 
     @Test
-    fun holdingAnAppRowInAFolderPastTheThresholdWithoutReleasingDoesNotOpenTheMenu() {
+    fun theMenuOpensAtTheLongPressThresholdWithoutWaitingForRelease() {
         // Given List presentation
         setContent(DrawerPresentation.LIST)
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
@@ -59,17 +59,13 @@ class FolderContentsSheetTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.onNodeWithTag("folder_contents_app_${app.packageName}", useUnmergedTree = true).performTouchInput { down(center) }
         composeRule.mainClock.advanceTimeBy(600)
-
-        // Then the menu has not opened yet — it's gated on release, not on the threshold
-        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
-
-        // When the finger finally lifts
-        composeRule.onNodeWithTag("folder_contents_app_${app.packageName}", useUnmergedTree = true).performTouchInput { up() }
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
 
-        // Then the menu opens
+        // Then the menu has already opened, without the finger having lifted
         composeRule.onNodeWithTag("app_context_menu").assertExists()
+
+        composeRule.onNodeWithTag("folder_contents_app_${app.packageName}", useUnmergedTree = true).performTouchInput { up() }
     }
 
     @Test

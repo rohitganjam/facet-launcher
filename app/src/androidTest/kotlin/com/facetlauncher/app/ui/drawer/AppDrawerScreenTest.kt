@@ -793,7 +793,7 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun holdingPastTheLongPressThresholdWithoutReleasingDoesNotOpenTheMenu() {
+    fun theMenuOpensAtTheLongPressThresholdWithoutWaitingForRelease() {
         // Given List presentation (the default)
         composeRule.setContent {
             FacetLauncherTheme {
@@ -808,17 +808,13 @@ class AppDrawerScreenTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.onNodeWithTag("drawer_app_row_com.example.A").performTouchInput { down(center) }
         composeRule.mainClock.advanceTimeBy(600)
-
-        // Then the menu has not opened yet — it's gated on release, not on the threshold
-        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
-
-        // When the finger finally lifts
-        composeRule.onNodeWithTag("drawer_app_row_com.example.A").performTouchInput { up() }
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
 
-        // Then the menu opens
+        // Then the menu has already opened, without the finger having lifted
         composeRule.onNodeWithTag("app_context_menu").assertExists()
+
+        composeRule.onNodeWithTag("drawer_app_row_com.example.A").performTouchInput { up() }
     }
 
     @Test

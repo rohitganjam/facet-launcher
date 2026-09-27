@@ -68,17 +68,19 @@ flowchart LR
 Folder tiles get the mirror menu (`FolderTileContextMenu`): rename, add/remove from
 Favorites/Dock, delete.
 
-**Long-press timing:** the menu opens on release, not at the long-press threshold. Every
+**Long-press timing:** the menu opens at the long-press threshold itself, not on release. Every
 long-press row/tile across Home, Dock, and Drawer (`AppRow`, `SingleAppDockIcon`,
 `FolderDockIcon`, `FolderRow`, `DrawerAppRow`, `DrawerFolderRow`, `DrawerGridTile`,
 `DrawerFolderTile`) uses `Modifier.longPressReleaseClickable`
 (`ui/components/LongPressReleaseGesture.kt`) in place of `combinedClickable` — a
-`HapticFeedbackType.LongPress` tick fires the instant the threshold is met (also wired into the
-Widget Hub's own long-press grab gesture, `WidgetGrabGesture.kt`, so the tick is consistent across
-every long-press surface in the app), but `menuExpanded` only flips once the finger actually lifts
-without having moved. This mirrors the Hub's own `detectGrabOrResizeGesture` pattern and is a
-deliberate prerequisite for a future long-press-drag (reorder/merge-to-folder) feature on these
-same rows, which the immediate-open-on-threshold behavior would otherwise conflict with.
+`HapticFeedbackType.LongPress` tick and `menuExpanded = true` fire together the instant the
+threshold (the platform default, `ViewConfiguration.getLongPressTimeout()` — 500ms) is met. The
+tick is also wired into the Widget Hub's own long-press grab gesture, `WidgetGrabGesture.kt`, so
+it's consistent across every long-press surface in the app. A prior version of this gating opened
+the menu only on release, as deliberate prep for a future long-press-drag (reorder/merge-to-folder)
+feature on these same rows; that feature never landed, and immediate-open-on-threshold is simpler,
+so the release gating was removed. If that drag feature is picked up later, this timing will need
+revisiting.
 
 ## 4. Gestures & routing (why the drawer isn't a nav destination)
 
