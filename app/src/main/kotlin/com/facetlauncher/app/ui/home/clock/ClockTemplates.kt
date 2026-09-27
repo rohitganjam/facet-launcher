@@ -53,6 +53,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import com.facetlauncher.app.ui.theme.contentColorFor
 import com.facetlauncher.app.ui.theme.homeTextShadow
 import com.facetlauncher.app.ui.theme.resolve
 import com.facetlauncher.app.ui.theme.resolveFontFamily
@@ -1308,7 +1309,7 @@ private fun AccentFieldTemplate(
     }
 }
 
-/** `6b` — hour in a filled square-ish tile, knocked out in [Surface] tone on a [textColor] fill (the inverse knockout of [AccentFieldTemplate]); minute unbounded beside it. */
+/** `6b` — hour in a filled square-ish tile, knocked out in [contentColorFor]'s derived color on a [textColor] fill (flips with the tile across `THEME`/`THEME_INVERTED`; the inverse knockout of [AccentFieldTemplate]); minute unbounded beside it. */
 @Composable
 private fun HourTileTemplate(
     now: LocalDateTime,
@@ -1328,6 +1329,7 @@ private fun HourTileTemplate(
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+    val tileContentColor = contentColorFor(textColor)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(
@@ -1337,7 +1339,7 @@ private fun HourTileTemplate(
                     .padding(17.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                HourText(now.format(hourFormatter), family, Surface, 55.sp, FontWeight.SemiBold)
+                HourText(now.format(hourFormatter), family, tileContentColor, 55.sp, FontWeight.SemiBold)
             }
             MinuteText(now.format(minuteFormatter), family, textColor, 72.sp, FontWeight.Light)
             if (meridiem != null) MeridiemText(meridiem, family, textColor)
@@ -1666,7 +1668,7 @@ private fun DigitCell(digit: String, family: FontFamily, color: Color, modifier:
     }
 }
 
-/** `7a` — the whole clock sits on one filled [textColor]-tone panel, digits knocked out in [Surface], date knocked out in [accentColor]. The inverse of every other template. */
+/** `7a` — the whole clock sits on one filled [textColor]-tone panel, digits/accessory row knocked out in [contentColorFor]'s derived color (flips with the panel across `THEME`/`THEME_INVERTED`), date knocked out in [accentColor]. The inverse of every other template. */
 @Composable
 private fun NegativePanelTemplate(
     now: LocalDateTime,
@@ -1684,6 +1686,7 @@ private fun NegativePanelTemplate(
     batteryPercent: Int?,
     isCharging: Boolean,
 ) {
+    val panelContentColor = contentColorFor(textColor)
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
@@ -1692,8 +1695,8 @@ private fun NegativePanelTemplate(
         horizontalAlignment = horizontalAlignment,
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
-            ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), Surface, 55.sp, family, FontWeight.Light)
-            if (meridiem != null) MeridiemText(meridiem, family, Surface, Modifier.padding(start = 7.dp, bottom = 7.dp))
+            ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), panelContentColor, 55.sp, family, FontWeight.Light)
+            if (meridiem != null) MeridiemText(meridiem, family, panelContentColor, Modifier.padding(start = 7.dp, bottom = 7.dp))
         }
         TemplateDateText(
             now.format(dateFormatter(locale, dateStyle)).uppercase(locale),
@@ -1705,7 +1708,7 @@ private fun NegativePanelTemplate(
             modifier = Modifier.padding(top = 10.dp),
             shadow = false,
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, Surface.copy(alpha = 0.62f), accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 13.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, panelContentColor.copy(alpha = 0.62f), accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 13.sp)
     }
 }
 

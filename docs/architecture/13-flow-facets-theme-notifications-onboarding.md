@@ -107,6 +107,13 @@ flowchart LR
   (`THEME` / `ACCENT_PRIMARY` / …) resolves through `ui/theme/ClockColors.kt` against the current
   scheme. Clock's own colour is per-facet (`facets.clockColorOption`); the app-label colour
   (`app_label_color_option`) is global only.
+- `ClockTemplates.kt`'s `NegativePanelTemplate` fills its panel with the resolved clock colour
+  itself, so its digits/meridiem/accessory row can't reuse that same colour as their own — they're
+  knocked out via `ui/theme/Color.kt`'s `contentColorFor(panelBackground)`, which derives the
+  on-panel content colour from the panel's own luminance rather than a fixed `Surface` read. This
+  is what makes the panel and its content flip together across `THEME`/`THEME_INVERTED` (a fixed
+  `Surface` read stayed legible for one and went low-contrast for the other, since `THEME_INVERTED`
+  deliberately lands the panel on `Surface`'s own end of the scale).
 - Per-facet Private Space screens use `PrivateSpaceTheme`, a fixed override of the scheme.
 - `facetTypography`'s `fontScale` multiplies every role's `fontSize`/`lineHeight` app-wide except
   the clock (`FacetType.clock`, defined outside `facetTypography`); `fontWeight` only overrides

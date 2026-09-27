@@ -15,7 +15,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
  * Fonts bundled specifically for the clock/calendar template system (`ui/home/clock/`) — kept
  * separate from [facetTypography]'s app-wide font since clock/calendar
  * font choice is deliberately independent of the rest of the app's UI (see the clock template
- * gallery). All four are Google Fonts, OFL-licensed, bundled locally under `res/font/` so they
+ * gallery). All are Google Fonts, OFL-licensed, bundled locally under `res/font/` so they
  * render identically with no network dependency — see `THIRD_PARTY_FONT_LICENSES/` at the repo
  * root for the license text each family ships under.
  *

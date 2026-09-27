@@ -111,6 +111,35 @@ class ColorTest {
     }
 
     @Test
+    fun `contentColorFor picks the dark ink tone for a light panel and the light ink tone for a dark panel`() {
+        val lightPanel = Color(0xFFE7EAF0.toInt())
+        val darkPanel = Color(0xFF020817.toInt())
+        assertEquals(0xFF020817.toInt(), contentColorFor(lightPanel).toArgb())
+        assertEquals(0xFFE7EAF0.toInt(), contentColorFor(darkPanel).toArgb())
+    }
+
+    @Test
+    fun `contentColorFor flips between the THEME and THEME_INVERTED panel colors in both theme modes`() {
+        data class InkPair(val theme: Color, val inverted: Color)
+        var light: InkPair? = null
+        var dark: InkPair? = null
+        composeRule.setContent {
+            themed(dark = false) { light = InkPair(Ink, InkInverted) }
+            themed(dark = true) { dark = InkPair(Ink, InkInverted) }
+        }
+        composeRule.waitForIdle()
+
+        // A NegativePanelTemplate filled with THEME's Ink and one filled with THEME_INVERTED's
+        // InkInverted are opposite ends of the ink scale, so the content knocked out on top of
+        // each must flip too — landing on the other end — rather than staying pinned to whatever
+        // the ambient theme's Surface happens to be (the bug this function replaces).
+        for (inkPair in listOf(requireNotNull(light), requireNotNull(dark))) {
+            assertEquals(inkPair.inverted.toArgb(), contentColorFor(inkPair.theme).toArgb())
+            assertEquals(inkPair.theme.toArgb(), contentColorFor(inkPair.inverted).toArgb())
+        }
+    }
+
+    @Test
     fun `derived Home and Drawer text colors follow Ink and Muted into dark mode`() {
         var ink: Color? = null
         var muted: Color? = null

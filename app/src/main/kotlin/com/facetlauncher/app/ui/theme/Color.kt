@@ -242,6 +242,18 @@ fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIU
 }
 
 /**
+ * The knocked-out content color for text/icons painted directly on a solid, non-wallpaper panel
+ * fill — currently [NegativePanelTemplate][com.facetlauncher.app.ui.home.clock.ClockTemplates]'s
+ * digits, meridiem and accessory row, all drawn on top of the clock's own resolved
+ * [com.facetlauncher.app.data.model.ClockColorOption] color rather than the wallpaper. A fixed
+ * [Surface] read there stayed legible for `THEME` (whose panel and [Surface] land on opposite ends
+ * of the current theme) but went low-contrast for `THEME_INVERTED` (whose panel deliberately lands
+ * on [Surface]'s *own* end) — deriving from [background]'s actual [Color.luminance] instead keeps
+ * both cases (and any other panel fill, e.g. an accent color) correctly flipped.
+ */
+fun contentColorFor(background: Color): Color = if (background.luminance() > 0.5f) InkLight else InkDark
+
+/**
  * Home's app-list labels and dock text (not clock/calendar — see [homeTextShadow]'s doc). Always
  * a plain [Ink] tone — [InkLight] for light text, [InkDark] for dark text — never the wallpaper's
  * accent tones, unlike [homeTextShadow] (see chat history).

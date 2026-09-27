@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -97,26 +98,37 @@ fun CalendarEventsBlock(
     }
     if (visibleEvents.isEmpty()) return
 
+    // The outer Column is full-width and positions the block as a whole (start/center/end); the
+    // inner Column is sized to its widest row (IntrinsicSize.Min) and always left-aligns its own
+    // rows within that width. Giving the outer Column's own horizontalAlignment to each row
+    // directly (as a single fillMaxWidth Column used to) is correct for LEFT/RIGHT — every row's
+    // start/end edge already lands on the same line — but wrong for CENTER, which would center
+    // each row independently by its own width, producing ragged left edges instead of one
+    // centered block with its rows left-aligned inside it (see chat history — direct request).
     Column(
         modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(9.dp),
         horizontalAlignment = alignment.resolve(),
     ) {
-        visibleEvents.forEach { event ->
-            EventRow(
-                event = event,
-                barColor = calendarColors[event.calendarId]
-                    ?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() }
-                    ?.resolvedColor()
-                    ?: Accent,
-                timeFormatter = timeFormatter,
-                clock = clock,
-                fontFamily = fontFamily,
-                fontWeight = fontWeight,
-                textColor = textColor,
-                reversed = alignment == ClockAlignment.RIGHT,
-                onClick = { onEventClick(event) },
-            )
+        Column(
+            modifier = Modifier.width(IntrinsicSize.Min),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            visibleEvents.forEach { event ->
+                EventRow(
+                    event = event,
+                    barColor = calendarColors[event.calendarId]
+                        ?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() }
+                        ?.resolvedColor()
+                        ?: Accent,
+                    timeFormatter = timeFormatter,
+                    clock = clock,
+                    fontFamily = fontFamily,
+                    fontWeight = fontWeight,
+                    textColor = textColor,
+                    reversed = alignment == ClockAlignment.RIGHT,
+                    onClick = { onEventClick(event) },
+                )
+            }
         }
     }
 }
