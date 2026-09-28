@@ -462,9 +462,25 @@ object Migrations {
         }
     }
 
+    /**
+     * Adds Home app list layout (single column/two columns/grid) and its two mode-specific "look"
+     * fields — brand-new columns, so (unlike [MIGRATION_23_24]) there's no prior stored value to
+     * reset: every existing row gets `'LAUNCHER_DEFAULT'` straight away, same as any other
+     * `LAUNCHER_DEFAULT`-sentinel field's first-ever add (see [MIGRATION_15_16]'s own `dockDisplayMode`
+     * add for the shape, though that one predates the sentinel convention and used a concrete default).
+     */
+    val MIGRATION_24_25: Migration = object : Migration(24, 25) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN appListLayout TEXT NOT NULL DEFAULT 'LAUNCHER_DEFAULT'")
+            db.execSQL("ALTER TABLE facets ADD COLUMN appListColumnAlignment TEXT NOT NULL DEFAULT 'LAUNCHER_DEFAULT'")
+            db.execSQL("ALTER TABLE facets ADD COLUMN appListGridColumns TEXT NOT NULL DEFAULT 'LAUNCHER_DEFAULT'")
+            db.execSQL("ALTER TABLE facets ADD COLUMN appListGridDisplayMode TEXT NOT NULL DEFAULT 'LAUNCHER_DEFAULT'")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-        MIGRATION_22_23, MIGRATION_23_24,
+        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25,
     )
 }

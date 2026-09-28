@@ -9,6 +9,10 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -82,6 +86,10 @@ private object Keys {
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
     val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
+    val APP_LIST_LAYOUT = stringPreferencesKey("app_list_layout")
+    val APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("app_list_column_alignment")
+    val APP_LIST_GRID_COLUMNS = stringPreferencesKey("app_list_grid_columns")
+    val APP_LIST_GRID_DISPLAY_MODE = stringPreferencesKey("app_list_grid_display_mode")
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     val DEFAULTS_SEEDED = booleanPreferencesKey("defaults_seeded")
     val COACH_MARKS_SEEN = stringSetPreferencesKey("coach_marks_seen")
@@ -168,6 +176,14 @@ class SettingsRepository @Inject constructor(
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
+            appListLayout = preferences[Keys.APP_LIST_LAYOUT]?.let { runCatching { AppListLayout.valueOf(it) }.getOrNull() }
+                ?: defaults.appListLayout,
+            appListColumnAlignment = preferences[Keys.APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() }
+                ?: defaults.appListColumnAlignment,
+            appListGridColumns = preferences[Keys.APP_LIST_GRID_COLUMNS]?.let { runCatching { AppListGridColumns.valueOf(it) }.getOrNull() }
+                ?: defaults.appListGridColumns,
+            appListGridDisplayMode = preferences[Keys.APP_LIST_GRID_DISPLAY_MODE]?.let { runCatching { AppListGridDisplayMode.valueOf(it) }.getOrNull() }
+                ?: defaults.appListGridDisplayMode,
             onboardingCompleted = preferences[Keys.ONBOARDING_COMPLETED] ?: defaults.onboardingCompleted,
             defaultsSeeded = preferences[Keys.DEFAULTS_SEEDED] ?: defaults.defaultsSeeded,
             coachMarksSeen = preferences[Keys.COACH_MARKS_SEEN] ?: defaults.coachMarksSeen,
@@ -365,6 +381,26 @@ class SettingsRepository @Inject constructor(
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */
     suspend fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
         dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
+    }
+
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListLayout]. */
+    suspend fun setAppListLayout(layout: AppListLayout) {
+        dataStore.edit { it[Keys.APP_LIST_LAYOUT] = layout.name }
+    }
+
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListColumnAlignment]. */
+    suspend fun setAppListColumnAlignment(alignment: AppListColumnAlignment) {
+        dataStore.edit { it[Keys.APP_LIST_COLUMN_ALIGNMENT] = alignment.name }
+    }
+
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListGridColumns]. */
+    suspend fun setAppListGridColumns(columns: AppListGridColumns) {
+        dataStore.edit { it[Keys.APP_LIST_GRID_COLUMNS] = columns.name }
+    }
+
+    /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListGridDisplayMode]. */
+    suspend fun setAppListGridDisplayMode(mode: AppListGridDisplayMode) {
+        dataStore.edit { it[Keys.APP_LIST_GRID_DISPLAY_MODE] = mode.name }
     }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {

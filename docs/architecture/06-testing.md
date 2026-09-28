@@ -5,8 +5,8 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **138 test classes, 1125 cases** — 663 unit (100 classes),
-462 instrumented (38 classes).
+Current counts (from the registry): **138 test classes, 1144 cases** — 669 unit (100 classes),
+475 instrumented (38 classes).
 
 ## 1. The two tiers
 
@@ -79,8 +79,8 @@ class DockAppRepositoryTest {
   the exact repository call (which table the placement was routed to).
 - `ObserveHomeScreenStateUseCaseTest` (12 cases) and `ObserveFacetPreviewsUseCaseTest` (6) pin the
   override-routing matrix (facet flag × settings value → which repository is observed). The
-  largest unit classes overall are `TimeInWordsTest` (26) and `FacetSettingsViewModelTest` (20); the
-  largest instrumented ones `ClockBlockTest` (40), `AppDrawerScreenTest` (40), `HomeScreenTest` (39).
+  largest unit classes overall are `TimeInWordsTest` (26) and `FacetSettingsViewModelTest` (21); the
+  largest instrumented ones `HomeScreenTest` (45), `ClockBlockTest` (40), `AppDrawerScreenTest` (40).
 
 ### ViewModels (`ui/**/*ViewModelTest`)
 

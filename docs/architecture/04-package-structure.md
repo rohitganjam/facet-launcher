@@ -38,7 +38,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (28)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
+    └── settings/                  (29)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```
 

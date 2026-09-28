@@ -501,6 +501,40 @@ class FacetDatabaseMigrationTest {
         overriding.close()
     }
 
+    @Test
+    fun migration24To25AddsAppListLayoutColumnsDefaultingToLauncherDefault() {
+        // Given a v24 database with one real facet row (every column NOT NULL at that version)
+        val dbV24 = helper.createDatabase(TEST_DB, 24)
+        dbV24.execSQL(
+            "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
+                "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, clockAlignment, clockZoneHeightDp, " +
+                "clockScale, clockWidgetAppWidgetId, clockWidgetWidthDp, clockWidgetHeightDp, overrideApps, appRowPosition, " +
+                "appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment, overridingFavorites, " +
+                "overrideDock, dockDisplayMode, overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv) VALUES " +
+                "(1, 'Work', 0, 0, 'LIGHT_STACK', 'SYSTEM', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LEFT', NULL, " +
+                "0.8, NULL, NULL, NULL, 0, 'RIGHT', 'TEXT_ONLY', 'FAVORITES', 6, 'TOP', 0, 0, 'TEXT', 0, 1, NULL)",
+        )
+        dbV24.close()
+
+        // When migrating to v25
+        val dbV25 = helper.runMigrationsAndValidate(TEST_DB, 25, true, Migrations.MIGRATION_24_25)
+
+        // Then the existing row survived (unrelated columns untouched), and the 4 new columns
+        // default to LAUNCHER_DEFAULT — every pre-existing facet keeps inheriting the global
+        // layout/column-alignment/grid settings rather than landing on some arbitrary real value.
+        val cursor = dbV25.query(
+            "SELECT name, appRowPosition, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode FROM facets WHERE id = 1",
+        )
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(cursor.getColumnIndexOrThrow("name")))
+        assertEquals("RIGHT", cursor.getString(cursor.getColumnIndexOrThrow("appRowPosition")))
+        assertEquals("LAUNCHER_DEFAULT", cursor.getString(cursor.getColumnIndexOrThrow("appListLayout")))
+        assertEquals("LAUNCHER_DEFAULT", cursor.getString(cursor.getColumnIndexOrThrow("appListColumnAlignment")))
+        assertEquals("LAUNCHER_DEFAULT", cursor.getString(cursor.getColumnIndexOrThrow("appListGridColumns")))
+        assertEquals("LAUNCHER_DEFAULT", cursor.getString(cursor.getColumnIndexOrThrow("appListGridDisplayMode")))
+        cursor.close()
+    }
+
     private companion object {
         const val TEST_DB = "facet-migration-test.db"
     }

@@ -14,6 +14,10 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -69,6 +73,10 @@ data class AppearanceSettingsUiState(
     val appRowPosition: AppRowPosition get() = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
     val appRowPresentation: AppRowPresentation get() = facet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, settings.appRowPresentation)
     val appListVerticalAlignment: AppListVerticalAlignment get() = facet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
+    val appListLayout: AppListLayout get() = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout)
+    val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
+    val appListGridColumns: AppListGridColumns get() = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns)
+    val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode)
     /** Mirrors `HomeAppsListSettingsViewModel.HomeAppsListUiState.favorites`'s own resolution exactly — same `overrideApps` flag. */
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overrideApps == true) facetFavorites else globalFavorites
     /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
@@ -224,6 +232,34 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListVerticalAlignment(it, alignment) } }
                 ?: settingsRepository.setAppListVerticalAlignment(alignment)
+        }
+    }
+
+    fun setAppListLayout(layout: AppListLayout) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListLayout(it, layout) } }
+                ?: settingsRepository.setAppListLayout(layout)
+        }
+    }
+
+    fun setAppListColumnAlignment(alignment: AppListColumnAlignment) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListColumnAlignment(it, alignment) } }
+                ?: settingsRepository.setAppListColumnAlignment(alignment)
+        }
+    }
+
+    fun setAppListGridColumns(columns: AppListGridColumns) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridColumns(it, columns) } }
+                ?: settingsRepository.setAppListGridColumns(columns)
+        }
+    }
+
+    fun setAppListGridDisplayMode(mode: AppListGridDisplayMode) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridDisplayMode(it, mode) } }
+                ?: settingsRepository.setAppListGridDisplayMode(mode)
         }
     }
 }

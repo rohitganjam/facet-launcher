@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import org.junit.Assert.assertEquals
@@ -35,7 +36,7 @@ class ObserveQuickAddStateUseCaseTest {
 
     @Test
     fun `forApp hides Favorites row once the list is already at the cap and app isn't a member`() {
-        val fullFavorites = (1..6).map { PlacedItem.SingleApp(appInfo('a' + it)) }
+        val fullFavorites = (1..AppListLimits.MAX_FAVORITES).map { PlacedItem.SingleApp(appInfo('a' + it)) }
 
         val result = useCase.forApp(app, dockItems = emptyList(), favoriteItems = fullFavorites, dockFacetName = null, favoritesFacetName = null)
 
@@ -44,7 +45,8 @@ class ObserveQuickAddStateUseCaseTest {
 
     @Test
     fun `forApp shows Remove from Favorites when the app is already a member, even at the cap`() {
-        val fullFavoritesWithApp = listOf(PlacedItem.SingleApp(app)) + (1..5).map { PlacedItem.SingleApp(appInfo('a' + it)) }
+        val fullFavoritesWithApp = listOf(PlacedItem.SingleApp(app)) +
+            (1 until AppListLimits.MAX_FAVORITES).map { PlacedItem.SingleApp(appInfo('a' + it)) }
 
         val result = useCase.forApp(app, dockItems = emptyList(), favoriteItems = fullFavoritesWithApp, dockFacetName = null, favoritesFacetName = null)
 

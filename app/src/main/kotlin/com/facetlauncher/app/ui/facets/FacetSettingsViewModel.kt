@@ -11,6 +11,10 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -54,6 +58,10 @@ data class FacetSettingsUiState(
     val globalClockZoneHeightDp: Float? = null,
     val globalAppRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val globalAppRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+    val globalAppListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
+    val globalAppListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+    val globalAppListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
+    val globalAppListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
     val globalAppsToShowCount: Int = 5,
     val globalShowAllDayEvents: Boolean = true,
@@ -80,6 +88,10 @@ data class FacetSettingsUiState(
     /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverridingApps] via its own `LAUNCHER_DEFAULT` sentinel. */
     val appRowPosition: AppRowPosition get() = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, globalAppRowPosition)
     val appRowPresentation: AppRowPresentation get() = facet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalAppRowPresentation)
+    val appListLayout: AppListLayout get() = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, globalAppListLayout)
+    val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, globalAppListColumnAlignment)
+    val appListGridColumns: AppListGridColumns get() = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, globalAppListGridColumns)
+    val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, globalAppListGridDisplayMode)
     val listContentMode: ListContentMode get() = if (isOverridingApps) facet?.listContentMode ?: globalListContentMode else globalListContentMode
     val appsToShowCount: Int get() = if (isOverridingApps) facet?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overridingFavorites == true) favorites else defaultFavorites
@@ -148,6 +160,10 @@ class FacetSettingsViewModel @Inject constructor(
             globalClockZoneHeightDp = settings.clockZoneHeightDp,
             globalAppRowPosition = settings.appRowPosition,
             globalAppRowPresentation = settings.appRowPresentation,
+            globalAppListLayout = settings.appListLayout,
+            globalAppListColumnAlignment = settings.appListColumnAlignment,
+            globalAppListGridColumns = settings.appListGridColumns,
+            globalAppListGridDisplayMode = settings.appListGridDisplayMode,
             globalListContentMode = settings.listContentMode,
             globalAppsToShowCount = settings.appsToShowCount,
             globalShowAllDayEvents = settings.showAllDayEvents,

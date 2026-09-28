@@ -9,6 +9,10 @@ import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -84,6 +88,18 @@ data class FacetCarouselUiState(
 
     fun appRowPresentation(facetId: Long): AppRowPresentation =
         facet(facetId).resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalSettings.appRowPresentation)
+
+    fun appListLayout(facetId: Long): AppListLayout =
+        facet(facetId).resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, globalSettings.appListLayout)
+
+    fun appListColumnAlignment(facetId: Long): AppListColumnAlignment =
+        facet(facetId).resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, globalSettings.appListColumnAlignment)
+
+    fun appListGridColumns(facetId: Long): AppListGridColumns =
+        facet(facetId).resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, globalSettings.appListGridColumns)
+
+    fun appListGridDisplayMode(facetId: Long): AppListGridDisplayMode =
+        facet(facetId).resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, globalSettings.appListGridDisplayMode)
 
     fun listContentMode(facetId: Long): ListContentMode =
         facet(facetId)?.let { if (it.overrideApps) it.listContentMode else globalSettings.listContentMode } ?: globalSettings.listContentMode

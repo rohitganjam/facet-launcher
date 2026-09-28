@@ -31,7 +31,7 @@ flowchart TB
         C4["CalendarSettingsScreen\nupdateOverridingCalendar(...)"]
     end
     subgraph LOOK["AppearanceSettingsScreen — no override switch, sentinel per field"]
-        A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
+        A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
     end
     EAF["EnsureActiveFacetUseCase (startup)\nno facets → addFacet(); activeFacetId not found → first facet"] --> S1
@@ -45,12 +45,21 @@ flowchart TB
   destination's own ViewModel rather than `FacetSettingsViewModel`. The "Appearance" row is the one
   exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
   switch of its own (see the `LOOK` subgraph above).
-- **`AppearanceSettingsScreen` is three separate cards**, not one — "DOCK & HOME" (the four
-  `LOOK` fields above, always shown), then (global mode only) "CLOCK" (just the Clock style nav
+- **`AppearanceSettingsScreen` is three separate cards**, not one — "DOCK & HOME" (the `LOOK`
+  fields above, always shown), then (global mode only) "CLOCK" (just the Clock style nav
   row) and "GENERAL" (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
-  position". Its preview card (`AppearancePreviewCard`) is scaled to a fraction of the real screen
+  position". Within "DOCK & HOME", `appListLayout` ("App list layout" — always visible) then gates
+  three more rows, mutually exclusive per its value: `SINGLE_COLUMN` shows `appRowPosition`/
+  `appRowPresentation` (the rows above, unchanged); `TWO_COLUMN` hides `appRowPosition`, shows
+  `appListColumnAlignment` ("Column alignment" — both columns left-aligned, both right-aligned, or
+  "left aligns to the edge, right aligns to the other edge") alongside `appRowPresentation`
+  (unchanged, still applies to both columns); `GRID` hides both `appRowPosition` and
+  `appRowPresentation`, shows `appListGridColumns` ("Grid columns" — 4/5/6, user-choosable) and
+  `appListGridDisplayMode` ("Grid display" — icons or text, never both, shaped like
+  `dockDisplayMode` but a wholly separate field). `appListVerticalAlignment` stays visible and
+  applies uniformly across all three layouts. Its preview card (`AppearancePreviewCard`) is scaled to a fraction of the real screen
   and density-scaled to match — the same technique `FacetCarouselScreen`'s own `FacetPreviewPage`
   uses for its carousel cards (`CAROUSEL_CARD_SCALE`/`APPEARANCE_PREVIEW_CARD_SCALE`, both `0.55f`)
   — reimplemented independently rather than shared, so a change to one can't regress the other.
@@ -66,6 +75,20 @@ flowchart TB
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDayEvents`/`selectedCalendarIds` resolved the same way `ObserveHomeScreenStateUseCase`
   resolves them. The clock uses its own real system-default `Clock`, not a fixed reference instant.
+- **`FacetCarouselScreen`'s own `FacetPreviewPage` mirrors the same `LOOK`-field 3-way branch**
+  (`FacetPreviewAppList`/`FacetPreviewRow`/`FacetPreviewGridTile`, reading `FacetCarouselViewModel`'s
+  `appListLayout(facetId)`/`appListColumnAlignment(facetId)`/`appListGridColumns(facetId)`/
+  `appListGridDisplayMode(facetId)`), reimplemented separately from `AppearancePreviewCard` for the
+  same "can't regress the other" reason above — its tiles are tappable (`onCardClick` applies the
+  facet), unlike the read-only Appearance preview. Fixed on-device (2026-09-28, see chat history):
+  this card used to always render a plain single-column list regardless of the facet's real
+  `appListLayout`, and both preview cards used `Arrangement.SpaceEvenly` for Grid, which spread an
+  incomplete last row's tiles across the full width instead of packing them left like
+  `HomeScreen`'s real `LazyVerticalGrid(GridCells.Fixed(n))`. Both preview cards also cap how many
+  favorites they render — `previewItemCap`/`PREVIEW_ROW_BUDGET` (duplicated per-file, same
+  "deliberately reimplemented" reasoning), a row budget × items-per-row so `TWO_COLUMN`/`GRID`
+  show proportionally more of the real list than `SINGLE_COLUMN`'s tighter cap without overflowing
+  the card.
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.
@@ -73,9 +96,11 @@ flowchart TB
   so the card never goes blank — the per-facet table becomes an independent copy from that moment.
 - **Turning it off does not delete the facet's rows**; they're just ignored until the flag is set
   again (and are still exported by backup).
-- `FacetCarouselViewModel` exposes 14 `xxx(facetId)` resolvers that apply `resolveOverride` per
-  facet so each card renders with its own effective clock/apps/dock styling (down from 18 before
-  calendar/appearance styling consolidation removed the four calendar-specific resolvers).
+- `FacetCarouselViewModel` exposes 19 `xxx(facetId)` resolvers that apply `resolveOverride`/
+  `resolveSentinel` per facet so each card renders with its own effective clock/apps/dock styling
+  (dropped to 14 when calendar/appearance styling consolidation removed the four calendar-specific
+  resolvers, then rose to 19 with the four `appListLayout`/`appListColumnAlignment`/
+  `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added).
 
 ## 2. Theme resolution — from DataStore to `MaterialTheme`
 

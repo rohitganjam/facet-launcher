@@ -92,6 +92,62 @@ class BackupRepositoryTest {
     }
 
     @Test
+    fun `a backup missing the app list layout fields still imports, falling back to their defaults`() = runTest {
+        // Given a real file on disk from before the two-column/grid layout feature — its
+        // "settings" and facet objects have none of appListLayout/appListColumnAlignment/
+        // appListGridColumns/appListGridDisplayMode.
+        val file = File(context.cacheDir, "pre-app-list-layout-backup-${System.nanoTime()}.json")
+        file.writeText(
+            """
+            {
+                "exportedAtEpochMillis": 123456789,
+                "settings": {
+                    "use24HourTime": false, "dockDisplayMode": "ICONS", "drawerPresentation": "LIST",
+                    "drawerGridSize": "FIVE_BY_SIX", "drawerListItemSize": "REGULAR", "drawerOpacity": 0.6,
+                    "notificationDotsEnabled": true, "notificationBadgeStyle": "DOT", "showDrawerIcons": true,
+                    "showDrawerLabels": true, "searchBarPosition": "TOP", "activeProfileIndex": 0,
+                    "showAllDayEvents": true, "searchContactsEnabled": false, "themeMode": "SYSTEM",
+                    "accentFromSystem": true, "customAccentSwatch": null, "wallpaperAccentRole": "PRIMARY",
+                    "iconRenderMode": "SYSTEM_DEFAULT", "launcherFontOption": "SYSTEM", "appLabelColorOption": "THEME",
+                    "appRowPosition": "LEFT", "appRowPresentation": "ICON_AND_TEXT", "listContentMode": "FAVORITES",
+                    "appsToShowCount": 5, "clockTemplateId": "LIGHT_STACK", "clockFontOption": "LAUNCHER_DEFAULT",
+                    "clockColorOption": "THEME", "clockShowMeridiem": false
+                },
+                "profiles": [
+                    {
+                        "name": "Work", "position": 0, "overrideClock": false, "clockTemplateId": "LIGHT_STACK",
+                        "clockFontOption": "LAUNCHER_DEFAULT", "clockColorOption": "THEME", "use24HourTime": false,
+                        "clockShowMeridiem": false, "overrideApps": false, "appRowPosition": "LEFT",
+                        "appRowPresentation": "ICON_AND_TEXT", "listContentMode": "FAVORITES", "appsToShowCount": 5,
+                        "overridingFavorites": false, "overrideCalendar": false, "showAllDayEvents": true,
+                        "selectedCalendarIds": null, "favorites": [], "overrideDock": false, "dockDisplayMode": "LAUNCHER_DEFAULT",
+                        "dockApps": []
+                    }
+                ],
+                "dockApps": [],
+                "defaultFavoriteApps": [],
+                "widgetPlacements": []
+            }
+            """.trimIndent(),
+        )
+        val uri: Uri = Uri.fromFile(file)
+
+        // When importing it under the current model
+        val readBack = repository.readBackup(uri)
+
+        // Then the global settings land on their real defaults, and the facet's own fields land
+        // on the LAUNCHER_DEFAULT sentinel — same as any other field this facet never set.
+        assertEquals("SINGLE_COLUMN", readBack?.settings?.appListLayout)
+        assertEquals("BOTH_LEFT", readBack?.settings?.appListColumnAlignment)
+        assertEquals("FOUR", readBack?.settings?.appListGridColumns)
+        assertEquals("ICONS", readBack?.settings?.appListGridDisplayMode)
+        assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListLayout)
+        assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListColumnAlignment)
+        assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListGridColumns)
+        assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListGridDisplayMode)
+    }
+
+    @Test
     fun `reading a file that isn't valid JSON returns null instead of throwing`() = runTest {
         val file = File(context.cacheDir, "not-a-backup-${System.nanoTime()}.json")
         file.writeText("this is not json")

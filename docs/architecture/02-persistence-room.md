@@ -53,6 +53,10 @@ erDiagram
         string listContentMode
         int appsToShowCount
         string appListVerticalAlignment
+        string appListLayout "single column / two column / grid"
+        string appListColumnAlignment "two-column only"
+        string appListGridColumns "grid only"
+        string appListGridDisplayMode "grid only"
         boolean overridingFavorites
         boolean overrideDock
         string dockDisplayMode
@@ -336,6 +340,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 21→22 | `facets.clockWidgetWidthDp`, `clockWidgetHeightDp` (PRD F15) |
 | 22→23 | Recreate `facets` (create-copy-drop-rename, same pattern as 16→17) dropping `calendarFontOption`, `calendarColorOption`, `calendarFontWeight`, `calendarAlignment` — calendar/appearance styling consolidation |
 | 23→24 | No column change (`LAUNCHER_DEFAULT` is just a new valid string for the already-`TEXT NOT NULL` `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` columns) — data-only `UPDATE` resetting those four columns to `'LAUNCHER_DEFAULT'` on every facet row where the matching `overrideApps`/`overrideDock` flag is `0` (a stale, previously-unread value would otherwise start "overriding" silently); a row where the flag is `1` keeps its real value untouched |
+| 24→25 | `facets.appListLayout`, `appListColumnAlignment`, `appListGridColumns`, `appListGridDisplayMode` — Home app list two-column/grid layouts; brand-new columns (`DEFAULT 'LAUNCHER_DEFAULT'`), no data-reset step needed |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -422,7 +427,8 @@ Keys with **no** facet counterpart (always global): `home_apps_font_weight`,
 reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, Search,
 Notifications, Permission bookkeeping, and First-run.
 
-**`appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` are a third
+**`appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode`/`appListLayout`/
+`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode` are a third
 resolution shape**, distinct from both the boolean-gated fields above and the always-global list —
 edited from Settings → Appearance now (moved out of Dock's/Home Apps List's own screens, see chat
 history), each resolved via its own `LAUNCHER_DEFAULT` sentinel value (mirroring
@@ -565,6 +571,10 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `app_row_position` | String (`AppRowPosition`) | `appRowPosition` | `LEFT` | |
 | `app_row_presentation` | String (`AppRowPresentation`) | `appRowPresentation` | `ICON_AND_TEXT` | |
 | `app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `appListVerticalAlignment` | `BOTTOM` | |
+| `app_list_layout` | String (`AppListLayout`) | `appListLayout` | `SINGLE_COLUMN` | single column / two column / grid |
+| `app_list_column_alignment` | String (`AppListColumnAlignment`) | `appListColumnAlignment` | `BOTH_LEFT` | two-column only |
+| `app_list_grid_columns` | String (`AppListGridColumns`) | `appListGridColumns` | `FOUR` | grid only — 4/5/6 |
+| `app_list_grid_display_mode` | String (`AppListGridDisplayMode`) | `appListGridDisplayMode` | `ICONS` | grid only — icons or text, never both |
 | `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | not facet-overridable; also styles the calendar events strip |
 | `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | not facet-overridable; also styles the calendar events strip |
 
@@ -651,7 +661,7 @@ live from the OS on every check), the installed-app list, and notification count
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 32 of the 46 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 36 of the 50 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,
@@ -661,6 +671,9 @@ instead of `active_facet_id`. **Not backed up** (verified against `BackupSetting
 `BackupFacet` has the same six omissions per facet (`facets.clockAccentColorOption`,
 `clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
 `appListVerticalAlignment` — every column added in v13–v15 — are not exported). See finding F11.
+`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode` (added in
+v24→25, both `BackupSettings` and `BackupFacet`) **are** exported — new columns don't inherit the
+older ones' gap.
 Then
 `facets: List<BackupFacet>` (each with its own favorites, dock apps, folder placements),
 `dockApps`, `defaultFavoriteApps`, `folders` (with members), `dockFolderPlacements`,

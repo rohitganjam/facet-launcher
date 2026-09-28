@@ -157,6 +157,13 @@ Notes:
   (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume.
 - `HomeViewModel` seeds `HomeUiState(isLoading = true)` and additionally clears `isLoading`
   after `LOADING_TIMEOUT_MS` so a slow first `LauncherApps` scan can't leave Home blank forever.
+- `HomeUiState`'s resolved "look" properties (`activeAppRowPosition`, `activeAppRowPresentation`,
+  `activeAppListVerticalAlignment`, `activeAppListLayout`, `activeAppListColumnAlignment`,
+  `activeAppListGridColumns`, `activeAppListGridDisplayMode`, `activeDockDisplayMode`) aren't
+  separate nodes in this graph — they're derived directly from `S`/`F` (already flowing into `OUT`)
+  via each field's own `resolveSentinel`, not through `ObserveHomeScreenStateUseCase` at all. See
+  [13-flow-facets-theme-notifications-onboarding.md](13-flow-facets-theme-notifications-onboarding.md)'s
+  `LOOK` subgraph for the full list and each field's Settings row.
 
 ## 4. Process startup
 

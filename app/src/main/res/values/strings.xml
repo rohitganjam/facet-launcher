@@ -315,12 +315,31 @@
     <string name="dock_display_mode_icons">Icons</string>
     <string name="dock_display_mode_text">Text</string>
     <string name="dock_display_mode_launcher_default">Default launcher style</string>
+    <string name="app_list_layout_single_column">Single column</string>
+    <string name="app_list_layout_two_column">Two columns</string>
+    <string name="app_list_layout_grid">Grid</string>
+    <string name="app_list_layout_launcher_default">Default launcher layout</string>
+    <string name="app_list_column_alignment_both_left">Both left</string>
+    <string name="app_list_column_alignment_both_right">Both right</string>
+    <string name="app_list_column_alignment_mirrored">Left &amp; right</string>
+    <string name="app_list_column_alignment_launcher_default">Default launcher alignment</string>
+    <string name="app_list_grid_columns_four">4 columns</string>
+    <string name="app_list_grid_columns_five">5 columns</string>
+    <string name="app_list_grid_columns_six">6 columns</string>
+    <string name="app_list_grid_columns_launcher_default">Default launcher columns</string>
+    <string name="app_list_grid_display_mode_icons">Icons</string>
+    <string name="app_list_grid_display_mode_text">Text</string>
+    <string name="app_list_grid_display_mode_launcher_default">Default launcher style</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Home Apps List</string>
     <string name="home_apps_list_position">Home Apps Alignment</string>
     <string name="home_apps_list_list_position">Home Apps list position</string>
     <string name="home_apps_list_presentation">Show Home apps as</string>
+    <string name="home_apps_list_layout">App list layout</string>
+    <string name="home_apps_list_column_alignment">Column alignment</string>
+    <string name="home_apps_list_grid_columns">Grid columns</string>
+    <string name="home_apps_list_grid_display">Grid display</string>
     <string name="home_apps_list_content_facet">App list content</string>
     <string name="home_apps_list_content_default">Default App list content</string>
     <string name="home_apps_list_apps_to_show">Apps to show</string>

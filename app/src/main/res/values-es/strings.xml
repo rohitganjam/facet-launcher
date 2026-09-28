@@ -290,12 +290,27 @@
     <string name="list_content_mode_most_used">Más usadas</string>
     <string name="dock_display_mode_icons">Iconos</string>
     <string name="dock_display_mode_text">Texto</string>
+    <string name="app_list_layout_single_column">Una columna</string>
+    <string name="app_list_layout_two_column">Dos columnas</string>
+    <string name="app_list_layout_grid">Cuadrícula</string>
+    <string name="app_list_column_alignment_both_left">Ambas a la izquierda</string>
+    <string name="app_list_column_alignment_both_right">Ambas a la derecha</string>
+    <string name="app_list_column_alignment_mirrored">Izquierda y derecha</string>
+    <string name="app_list_grid_columns_four">4 columnas</string>
+    <string name="app_list_grid_columns_five">5 columnas</string>
+    <string name="app_list_grid_columns_six">6 columnas</string>
+    <string name="app_list_grid_display_mode_icons">Iconos</string>
+    <string name="app_list_grid_display_mode_text">Texto</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Lista de apps de inicio</string>
     <string name="home_apps_list_position">Posición</string>
     <string name="home_apps_list_list_position">Posición de la lista</string>
     <string name="home_apps_list_presentation">Presentación</string>
+    <string name="home_apps_list_layout">Diseño de la lista de apps</string>
+    <string name="home_apps_list_column_alignment">Alineación de columnas</string>
+    <string name="home_apps_list_grid_columns">Columnas de la cuadrícula</string>
+    <string name="home_apps_list_grid_display">Visualización de la cuadrícula</string>
     <string name="home_apps_list_content_facet">Contenido de la lista de apps</string>
     <string name="home_apps_list_content_default">Contenido predeterminado de la lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a mostrar</string>

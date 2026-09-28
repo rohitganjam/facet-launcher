@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -56,6 +57,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,6 +70,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -83,6 +89,9 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.toColumnPositions
+import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.ScreenHeader
 import com.facetlauncher.app.ui.components.TonalButton
@@ -91,6 +100,7 @@ import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.ClockBlock
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
 import com.facetlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.facetlauncher.app.ui.theme.Accent
@@ -290,6 +300,10 @@ private fun FacetCarouselContent(
                     launcherFontOption = uiState.globalSettings.launcherFontOption,
                     appRowPosition = uiState.appRowPosition(facet.id),
                     appRowPresentation = uiState.appRowPresentation(facet.id),
+                    appListLayout = uiState.appListLayout(facet.id),
+                    appListColumnAlignment = uiState.appListColumnAlignment(facet.id),
+                    appListGridColumns = uiState.appListGridColumns(facet.id),
+                    appListGridDisplayMode = uiState.appListGridDisplayMode(facet.id),
                     appLabelColorOption = uiState.globalSettings.appLabelColorOption,
                     homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
                     dockApps = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
@@ -443,6 +457,10 @@ private fun FacetPreviewPage(
     launcherFontOption: LauncherFontOption,
     appRowPosition: AppRowPosition,
     appRowPresentation: AppRowPresentation,
+    appListLayout: AppListLayout,
+    appListColumnAlignment: AppListColumnAlignment,
+    appListGridColumns: AppListGridColumns,
+    appListGridDisplayMode: AppListGridDisplayMode,
     appLabelColorOption: ClockColorOption,
     homeAppsFontWeight: FontWeightOption,
     dockApps: List<PlacedItem>,
@@ -566,53 +584,22 @@ private fun FacetPreviewPage(
                     if (favorites.isEmpty()) {
                         Text(text = stringResource(R.string.facet_carousel_no_favorites), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
                     } else {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            favorites.forEach { item ->
-                                when (item) {
-                                    is PlacedItem.SingleApp -> AppRow(
-                                        app = item.app,
-                                        onClick = onCardClick,
-                                        badgeCount = null,
-                                        badgeStyle = NotificationBadgeStyle.DOT,
-                                        onRequestShortcuts = { emptyList() },
-                                        onLaunchShortcut = {},
-                                        onAppInfo = {},
-                                        position = appRowPosition,
-                                        presentation = appRowPresentation,
-                                        labelColor = appLabelColorOption.resolve(),
-                                        labelFontWeight = homeAppsFontWeight.resolve(),
-                                        // This card is a read-only preview of a facet's Home layout,
-                                        // not a place to manage apps — long-press must not open the
-                                        // real Uninstall/App Info/shortcuts menu (see chat history).
-                                        enableLongPressMenu = false,
-                                        // Uses AppRow's own real Home density (16dp) — the scaled
-                                        // LocalDensity above shrinks it proportionally already, so no
-                                        // fixed override is needed here (see chat history).
-                                        // This card can be present in the same semantics tree as
-                                        // Home's own real AppRow for the same favorite app — a
-                                        // distinct prefix keeps onNodeWithTag lookups unambiguous.
-                                        testTagPrefix = "facet_preview_",
-                                    )
-                                    is PlacedItem.FolderItem -> FolderRow(
-                                        folder = item.folder,
-                                        onAppClick = {},
-                                        onRequestShortcuts = { emptyList() },
-                                        onLaunchShortcut = {},
-                                        onAppInfo = {},
-                                        onRemoveFromFolder = { _, _ -> },
-                                        onRenameFolder = { _, _ -> },
-                                        drawerPresentation = DrawerPresentation.LIST,
-                                        position = appRowPosition,
-                                        presentation = appRowPresentation,
-                                        labelColor = appLabelColorOption.resolve(),
-                                        labelFontWeight = homeAppsFontWeight.resolve(),
-                                        enableLongPressMenu = false,
-                                        onClick = onCardClick,
-                                        testTagPrefix = "facet_preview_",
-                                    )
-                                }
-                            }
-                        }
+                        FacetPreviewAppList(
+                            // Capped the same way AppearancePreviewCard is — this card is the same
+                            // CAROUSEL_CARD_SCALE-sized fixed space, never designed to render all
+                            // of AppListLimits.MAX_FAVORITES real rows in single-column mode (see
+                            // that cap's own doc comment for the full reasoning).
+                            favorites = favorites.take(appListLayout.previewItemCap(appListGridColumns.columns)),
+                            appListLayout = appListLayout,
+                            appListColumnAlignment = appListColumnAlignment,
+                            appListGridColumns = appListGridColumns,
+                            appListGridDisplayMode = appListGridDisplayMode,
+                            appRowPosition = appRowPosition,
+                            appRowPresentation = appRowPresentation,
+                            labelColor = appLabelColorOption.resolve(),
+                            labelFontWeight = homeAppsFontWeight,
+                            onCardClick = onCardClick,
+                        )
                     }
 
                     // Dock is shared across all facets (not per-facet); omit-when-empty. Uses
@@ -671,6 +658,164 @@ private fun FacetPreviewPage(
             }
         }
     }
+}
+
+/**
+ * [FacetPreviewPage]'s app-list region — the same 3-way [AppListLayout] branch
+ * `AppearanceSettingsScreen`'s own `AppearancePreviewAppList` uses, reimplemented here rather than
+ * shared (this card owns a tap-to-apply [onCardClick] that composable's read-only preview doesn't
+ * — see [FacetPreviewPage]'s own doc for why the two preview surfaces aren't shared code).
+ */
+@Composable
+private fun FacetPreviewAppList(
+    favorites: List<PlacedItem>,
+    appListLayout: AppListLayout,
+    appListColumnAlignment: AppListColumnAlignment,
+    appListGridColumns: AppListGridColumns,
+    appListGridDisplayMode: AppListGridDisplayMode,
+    appRowPosition: AppRowPosition,
+    appRowPresentation: AppRowPresentation,
+    labelColor: Color,
+    labelFontWeight: FontWeightOption,
+    onCardClick: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        when (appListLayout) {
+            AppListLayout.GRID -> {
+                // Fixed-slot columns, not Arrangement.SpaceEvenly — see AppearancePreviewAppList's
+                // own doc for why (a short last row must pack left, not stretch across the width).
+                favorites.chunked(appListGridColumns.columns).forEach { rowItems ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        repeat(appListGridColumns.columns) { columnIndex ->
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                rowItems.getOrNull(columnIndex)?.let { item ->
+                                    FacetPreviewGridTile(
+                                        item = item,
+                                        displayMode = appListGridDisplayMode,
+                                        labelColor = labelColor,
+                                        labelFontWeight = labelFontWeight.resolve(),
+                                        onClick = onCardClick,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+            AppListLayout.TWO_COLUMN -> {
+                val (leftPosition, rightPosition) = appListColumnAlignment.toColumnPositions()
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    listOf(
+                        favorites.filterIndexed { index, _ -> index % 2 == 0 } to leftPosition,
+                        favorites.filterIndexed { index, _ -> index % 2 == 1 } to rightPosition,
+                    ).forEach { (items, position) ->
+                        Column(modifier = Modifier.weight(1f)) {
+                            items.forEach { item ->
+                                FacetPreviewRow(item = item, position = position, presentation = appRowPresentation, labelColor = labelColor, labelFontWeight = labelFontWeight, onClick = onCardClick)
+                            }
+                        }
+                    }
+                }
+            }
+            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
+                favorites.forEach { item ->
+                    FacetPreviewRow(item = item, position = appRowPosition, presentation = appRowPresentation, labelColor = labelColor, labelFontWeight = labelFontWeight, onClick = onCardClick)
+                }
+            }
+        }
+    }
+}
+
+/** [FacetPreviewAppList]'s single/two-column row dispatch — identical [AppRow]/[FolderRow] call either layout needs, just with a different [position] and item subset. */
+@Composable
+private fun FacetPreviewRow(item: PlacedItem, position: AppRowPosition, presentation: AppRowPresentation, labelColor: Color, labelFontWeight: FontWeightOption, onClick: () -> Unit) {
+    when (item) {
+        is PlacedItem.SingleApp -> AppRow(
+            app = item.app,
+            onClick = onClick,
+            badgeCount = null,
+            badgeStyle = NotificationBadgeStyle.DOT,
+            onRequestShortcuts = { emptyList() },
+            onLaunchShortcut = {},
+            onAppInfo = {},
+            position = position,
+            presentation = presentation,
+            labelColor = labelColor,
+            labelFontWeight = labelFontWeight.resolve(),
+            // This card is a read-only preview of a facet's Home layout, not a place to manage
+            // apps — long-press must not open the real Uninstall/App Info/shortcuts menu.
+            enableLongPressMenu = false,
+            // Uses AppRow's own real Home density (16dp) — the scaled LocalDensity above shrinks
+            // it proportionally already, so no fixed override is needed here.
+            // This card can be present in the same semantics tree as Home's own real AppRow for
+            // the same favorite app — a distinct prefix keeps onNodeWithTag lookups unambiguous.
+            testTagPrefix = "facet_preview_",
+        )
+        is PlacedItem.FolderItem -> FolderRow(
+            folder = item.folder,
+            onAppClick = {},
+            onRequestShortcuts = { emptyList() },
+            onLaunchShortcut = {},
+            onAppInfo = {},
+            onRemoveFromFolder = { _, _ -> },
+            onRenameFolder = { _, _ -> },
+            drawerPresentation = DrawerPresentation.LIST,
+            position = position,
+            presentation = presentation,
+            labelColor = labelColor,
+            labelFontWeight = labelFontWeight.resolve(),
+            enableLongPressMenu = false,
+            onClick = onClick,
+            testTagPrefix = "facet_preview_",
+        )
+    }
+}
+
+/** [FacetPreviewAppList]'s grid-mode tile — tappable (applies the facet like every other spot on this card), unlike `AppearancePreviewCard`'s own read-only grid tile. See [AppListGridDisplayMode]'s own doc for why this is a strict icon-or-text branch. */
+@Composable
+private fun FacetPreviewGridTile(item: PlacedItem, displayMode: AppListGridDisplayMode, labelColor: Color, labelFontWeight: FontWeight, onClick: () -> Unit) {
+    val tagSuffix = when (item) {
+        is PlacedItem.SingleApp -> item.app.packageName
+        is PlacedItem.FolderItem -> "folder_${item.folder.id}"
+    }
+    Box(modifier = Modifier.clickable(onClick = onClick).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+        val label = when (item) {
+            is PlacedItem.SingleApp -> item.app.label
+            is PlacedItem.FolderItem -> item.folder.name
+        }
+        if (displayMode == AppListGridDisplayMode.TEXT) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = labelColor,
+                maxLines = 1,
+                fontWeight = labelFontWeight,
+                modifier = Modifier.testTag("facet_preview_grid_label_$tagSuffix"),
+            )
+        } else {
+            when (item) {
+                is PlacedItem.SingleApp -> AppIcon(icon = item.app.icon, size = AppIconSize.TILE, contentDescription = label, modifier = Modifier.testTag("facet_preview_grid_icon_$tagSuffix"))
+                is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
+            }
+        }
+    }
+}
+
+/**
+ * How many real favorites [FacetPreviewAppList]/`AppearancePreviewCard`'s own scaled preview card
+ * can show before crowding out the clock/dock — proven at [PREVIEW_ROW_BUDGET] rows for single
+ * column. [AppListLayout.TWO_COLUMN]/[AppListLayout.GRID] pack more than one item per row, so the
+ * same row budget lets them show proportionally more of the real list — in practice enough to
+ * show every one of [com.facetlauncher.app.data.model.AppListLimits.MAX_FAVORITES] without
+ * truncating at all.
+ */
+private const val PREVIEW_ROW_BUDGET = 6
+
+private fun AppListLayout.previewItemCap(gridColumns: Int): Int = when (this) {
+    AppListLayout.GRID -> PREVIEW_ROW_BUDGET * gridColumns
+    AppListLayout.TWO_COLUMN -> PREVIEW_ROW_BUDGET * 2
+    AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> PREVIEW_ROW_BUDGET
 }
 
 @Composable

@@ -9,6 +9,10 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockTemplateId
@@ -99,6 +103,54 @@ class FacetSettingsViewModelTest {
         )
 
         assertEquals(AppRowPresentation.TEXT_ONLY, state.appRowPresentation)
+    }
+
+    @Test
+    fun `app list layout, column alignment, grid columns and grid display resolve via their own sentinel, independent of overrideApps`() {
+        val notOverridingButExplicit = FacetSettingsUiState(
+            facet = FacetEntity(
+                id = 1L,
+                name = "Work",
+                position = 0,
+                overrideApps = false,
+                appListLayout = AppListLayout.GRID,
+                appListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
+                appListGridColumns = AppListGridColumns.SIX,
+                appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+            ),
+            globalAppListLayout = AppListLayout.SINGLE_COLUMN,
+            globalAppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+            globalAppListGridColumns = AppListGridColumns.FOUR,
+            globalAppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+        )
+        val overridingButDefaultSentinel = FacetSettingsUiState(
+            facet = FacetEntity(
+                id = 1L,
+                name = "Work",
+                position = 0,
+                overrideApps = true,
+                appListLayout = AppListLayout.LAUNCHER_DEFAULT,
+                appListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
+                appListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
+                appListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
+            ),
+            globalAppListLayout = AppListLayout.SINGLE_COLUMN,
+            globalAppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+            globalAppListGridColumns = AppListGridColumns.FOUR,
+            globalAppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+        )
+
+        // A facet's own explicit values win even without overrideApps — look fields, not gated by
+        // the apps-list content override.
+        assertEquals(AppListLayout.GRID, notOverridingButExplicit.appListLayout)
+        assertEquals(AppListColumnAlignment.BOTH_RIGHT, notOverridingButExplicit.appListColumnAlignment)
+        assertEquals(AppListGridColumns.SIX, notOverridingButExplicit.appListGridColumns)
+        assertEquals(AppListGridDisplayMode.TEXT, notOverridingButExplicit.appListGridDisplayMode)
+        // The LAUNCHER_DEFAULT sentinel falls back to the global value even with overrideApps set.
+        assertEquals(AppListLayout.SINGLE_COLUMN, overridingButDefaultSentinel.appListLayout)
+        assertEquals(AppListColumnAlignment.BOTH_LEFT, overridingButDefaultSentinel.appListColumnAlignment)
+        assertEquals(AppListGridColumns.FOUR, overridingButDefaultSentinel.appListGridColumns)
+        assertEquals(AppListGridDisplayMode.ICONS, overridingButDefaultSentinel.appListGridDisplayMode)
     }
 
     @Test
