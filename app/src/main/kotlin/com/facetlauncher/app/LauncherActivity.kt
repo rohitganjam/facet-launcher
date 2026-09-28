@@ -34,6 +34,8 @@ class LauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        handleFacetDeepLink(intent)
+
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -80,6 +82,13 @@ class LauncherActivity : ComponentActivity() {
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
             viewModel.onHomePressed()
         }
+        handleFacetDeepLink(intent)
+    }
+
+    /** Warm (`onNewIntent`) and cold (`onCreate`) start both funnel a facet deep link/shortcut launch here. */
+    private fun handleFacetDeepLink(intent: Intent) {
+        val uri = intent.data ?: return
+        viewModel.activateFacetFromDeepLink(uri)
     }
 
     private fun launchApp(app: AppInfo) {

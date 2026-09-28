@@ -309,6 +309,7 @@ fun FacetNavHost(
                 onNavigateToAppearance = { facetId ->
                     navController.navigate(FacetDestinations.appearanceSettings(facetId))
                 },
+                onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
             )
         }
         composable(

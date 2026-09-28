@@ -82,7 +82,6 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
-import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.ScreenHeader
@@ -276,7 +275,6 @@ private fun FacetCarouselContent(
                     facet = facet,
                     isActive = facet.id == uiState.activeFacetId,
                     favorites = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
-                    listContentMode = uiState.listContentMode(facet.id),
                     clockTemplateId = uiState.clockTemplateId(facet.id),
                     clockFontOption = uiState.clockFontOption(facet.id),
                     clockColorOption = uiState.clockColorOption(facet.id),
@@ -427,7 +425,6 @@ private fun FacetPreviewPage(
     /** Whether this is the facet currently applied to Home — distinct from which page the pager is centered on. */
     isActive: Boolean,
     favorites: List<PlacedItem>,
-    listContentMode: ListContentMode,
     clockTemplateId: ClockTemplateId,
     clockFontOption: ClockFontOption,
     clockColorOption: ClockColorOption,
@@ -566,12 +563,6 @@ private fun FacetPreviewPage(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    Text(
-                        text = listContentMode.previewLabel(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Muted,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    )
                     if (favorites.isEmpty()) {
                         Text(text = stringResource(R.string.facet_carousel_no_favorites), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.fillMaxWidth())
                     } else {
@@ -680,14 +671,6 @@ private fun FacetPreviewPage(
             }
         }
     }
-}
-
-/** Matches HomeScreen.kt's own list-header label exactly, so the preview's section header agrees with the real screen. */
-@Composable
-private fun ListContentMode.previewLabel(): String = when (this) {
-    ListContentMode.FAVORITES -> stringResource(R.string.home_list_header_favorites)
-    ListContentMode.RECENTS -> stringResource(R.string.home_list_header_recents)
-    ListContentMode.MOST_USED -> stringResource(R.string.home_list_header_most_used)
 }
 
 @Composable

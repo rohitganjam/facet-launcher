@@ -32,7 +32,6 @@ import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Folder
-import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
@@ -336,21 +335,6 @@ class HomeScreenTest {
     }
 
     @Test
-    fun sectionLabelReflectsTheActiveListContentMode() {
-        // The heading only renders alongside a real list (see HomeScreen.kt's own
-        // `if (appListItems.isNotEmpty())` gate) — an empty list here would never show any
-        // heading text regardless of listContentMode, which isn't what this test means to cover.
-        composeRule.setContent {
-            FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, listContentMode = ListContentMode.RECENTS)
-            }
-        }
-
-        composeRule.onNodeWithText("RECENTS").assertExists()
-        composeRule.onNodeWithText("FAVORITES").assertDoesNotExist()
-    }
-
-    @Test
     fun usageAccessPromptReplacesTheListAndFiresItsCallbackOnTap() {
         // Given Recents mode with usage access not yet granted
         var clicked = false
@@ -360,7 +344,6 @@ class HomeScreenTest {
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
-                    listContentMode = ListContentMode.RECENTS,
                     showUsageAccessPrompt = true,
                     onUsageAccessPromptClick = { clicked = true },
                 )
@@ -403,11 +386,16 @@ class HomeScreenTest {
         }
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
 
-        // When it's held past the long-press threshold without lifting the finger — pause the
-        // test clock and drive it forward explicitly so the long-press coroutine timeout fires
-        // deterministically, matching this codebase's `createComposeRule()` virtual-time host.
+        // When it's held past the long-press threshold without lifting the finger. Note:
+        // detectLongPressReleaseGesture's `withTimeout(viewConfiguration.longPressTimeoutMillis)`
+        // is a plain coroutine timeout — real wall-clock time, not gated by `mainClock` (which only
+        // governs frame-based animation time). Pausing/advancing `mainClock` here doesn't actually
+        // control when the long-press fires; it can already fire during the row lookup below on a
+        // slow/loaded machine. Target the row by its own tag rather than its visible text, so the
+        // lookup stays unambiguous even if the menu (whose header shows this same app label — see
+        // AppContextMenu.kt) has already opened by the time this runs.
         composeRule.mainClock.autoAdvance = false
-        composeRule.onNodeWithText("App 1").performTouchInput { down(center) }
+        composeRule.onNodeWithTag("home_app_label_com.example.app1").performTouchInput { down(center) }
         composeRule.mainClock.advanceTimeBy(600)
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
@@ -415,7 +403,7 @@ class HomeScreenTest {
         // Then the menu has already opened, without the finger having lifted
         composeRule.onNodeWithTag("app_context_menu").assertExists()
 
-        composeRule.onNodeWithText("App 1").performTouchInput { up() }
+        composeRule.onNodeWithTag("home_app_label_com.example.app1").performTouchInput { up() }
     }
 
     @Test
@@ -479,28 +467,6 @@ class HomeScreenTest {
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
         val groupCenter = (iconNode.boundsInRoot.left + labelNode.boundsInRoot.right) / 2f
         assert(groupCenter > rootWidth * 0.35f && groupCenter < rootWidth * 0.65f)
-    }
-
-    @Test
-    fun rightPositionAlsoRightAlignsTheSectionHeading() {
-        // Given Left position (default) — the "FAVORITES" heading hugs the left edge
-        var appRowPosition by mutableStateOf(AppRowPosition.LEFT)
-        composeRule.setContent {
-            FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = appRowPosition)
-            }
-        }
-        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
-        val leftPositionHeadingLeft = composeRule.onNodeWithText("FAVORITES").fetchSemanticsNode().boundsInRoot.left
-        assert(leftPositionHeadingLeft < rootWidth * 0.3f)
-
-        // When switching to Right position
-        appRowPosition = AppRowPosition.RIGHT
-        composeRule.waitForIdle()
-
-        // Then the heading moves with the app rows, now hugging the right edge instead
-        val rightPositionHeadingRight = composeRule.onNodeWithText("FAVORITES").fetchSemanticsNode().boundsInRoot.right
-        assert(rightPositionHeadingRight > rootWidth * 0.7f)
     }
 
     @Test

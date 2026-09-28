@@ -73,7 +73,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -100,7 +99,6 @@ import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
-import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppContextMenu
@@ -140,7 +138,7 @@ internal fun PlacedItem.stableKey(): Any = when (this) {
 
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
- * [appListItems] (Favorites/Recents/Most Used depending on [listContentMode], from
+ * [appListItems] (Favorites/Recents/Most Used depending on the active list content mode, from
  * [com.facetlauncher.app.data.FavoriteAppRepository] or
  * [com.facetlauncher.app.data.UsageStatsRepository]) and [dockApps] (from
  * [com.facetlauncher.app.data.DockAppRepository]) are real persisted state — this composable
@@ -152,7 +150,6 @@ fun HomeScreen(
     dockApps: List<PlacedItem>,
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
-    listContentMode: ListContentMode = ListContentMode.FAVORITES,
     appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     showUsageAccessPrompt: Boolean = false,
@@ -671,27 +668,6 @@ fun HomeScreen(
                             .onGloballyPositioned { appListNaturalHeightPx = it.size.height.toFloat() }
                             .graphicsLayer { alpha = appListAppearAlpha.value },
                     ) {
-                        if (appListItems.isNotEmpty()) {
-                            val listLabelColor = Muted
-                            Text(
-                                text = when (listContentMode) {
-                                    ListContentMode.FAVORITES -> stringResource(R.string.home_list_header_favorites)
-                                    ListContentMode.RECENTS -> stringResource(R.string.home_list_header_recents)
-                                    ListContentMode.MOST_USED -> stringResource(R.string.home_list_header_most_used)
-                                },
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    shadow = homeAppLabelShadow(listLabelColor),
-                                    // See AppRow's own identical `when` for why LAUNCHER_DEFAULT falls in with LEFT.
-                                    textAlign = when (appRowPosition) {
-                                        AppRowPosition.RIGHT -> TextAlign.End
-                                        AppRowPosition.CENTER -> TextAlign.Center
-                                        AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> TextAlign.Start
-                                    },
-                                ),
-                                color = listLabelColor,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                            )
-                        }
                         if (showUsageAccessPrompt) {
                             UsageAccessStrip(onClick = onUsageAccessPromptClick)
                         } else {
@@ -1081,7 +1057,7 @@ fun HomeScreen(
     }
 }
 
-/** README `4p`'s shared permission-denied/empty-state strip styling, with a real tap target — shown when [listContentMode] needs `PACKAGE_USAGE_STATS` and it isn't granted. */
+/** README `4p`'s shared permission-denied/empty-state strip styling, with a real tap target — shown when the active list content mode needs `PACKAGE_USAGE_STATS` and it isn't granted. */
 @Composable
 private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(

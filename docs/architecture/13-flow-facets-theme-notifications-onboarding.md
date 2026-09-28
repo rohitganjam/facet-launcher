@@ -12,6 +12,7 @@ defaults or override a whole block at a time.
 flowchart TB
     subgraph SWITCH["Switch / manage"]
         CAR["FacetCarouselScreen\n(drag-left from Home)"] -- "selectFacet(id)" --> S1["settingsRepository.setActiveFacetId(id)"]
+        EXT["Deep link / dynamic shortcut\n(external trigger — see 14)"] -- "ActivateFacetByIdUseCase(id)\n(no-op if id doesn't resolve)" --> S1
         CAR -- "addFacet()" --> S2["facetRepository.addFacet()\n(name 'Facet N', position = count)"]
         MAN["ManageFacetsScreen"] -- "reorderFacets / deleteFacet / rename" --> S3["FacetRepository update/delete\n(delete cascades all per-facet placements)"]
         S1 --> HOME["ObserveHomeScreenStateUseCase\nactiveFacet = facets.first { id == activeFacetId }\n→ flatMapLatest re-subscribes every facet-scoped flow"]

@@ -173,7 +173,6 @@
     <string name="facet_scope_other_profile">Anderes Profil</string>
 
     <!-- HomeSurfacePreview -->
-    <string name="home_surface_preview_label">VORSCHAU</string>
     <string name="home_surface_preview_nothing_yet">Noch nichts zum Anzeigen</string>
 
     <!-- AppSortControl -->
@@ -503,11 +502,6 @@
     <string name="private_space_no_matches">Keine Treffer</string>
     <string name="private_space_search">Privaten Bereich durchsuchen</string>
 
-    <!-- Shared list headers -->
-    <string name="home_list_header_favorites">FAVORITEN</string>
-    <string name="home_list_header_recents">ZULETZT VERWENDET</string>
-    <string name="home_list_header_most_used">MEISTGENUTZT</string>
-
     <!-- FacetCarouselScreen -->
     <string name="facet_carousel_delete_title">%1$s löschen?</string>
     <string name="facet_carousel_delete_message">Dies kann nicht rückgängig gemacht werden. Auch die Favoriten werden entfernt.</string>
@@ -536,6 +530,8 @@
 
     <!-- FacetSettingsScreen -->
     <string name="facet_settings_default_name">Facette</string>
+    <string name="facet_settings_active">Aktiv</string>
+    <string name="facet_settings_activate_facet">Aktivieren</string>
     <string name="facet_settings_rename_facet">Facette umbenennen</string>
     <string name="facet_settings_section_apps_list">APP-LISTE</string>
     <plurals name="format_count_apps">

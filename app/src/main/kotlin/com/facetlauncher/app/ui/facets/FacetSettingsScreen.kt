@@ -48,6 +48,7 @@ fun FacetSettingsScreen(
     onNavigateToCalendarSettings: (facetId: Long) -> Unit,
     onNavigateToClockStyleGallery: (facetId: Long) -> Unit,
     onNavigateToAppearance: (facetId: Long) -> Unit,
+    onFacetApply: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FacetSettingsViewModel = hiltViewModel(),
 ) {
@@ -62,6 +63,7 @@ fun FacetSettingsScreen(
         onClockStyleClick = { onNavigateToClockStyleGallery(viewModel.facetId) },
         onAppearanceClick = { onNavigateToAppearance(viewModel.facetId) },
         onRename = viewModel::renameFacet,
+        onApplyFacet = { viewModel.applyFacet(); onFacetApply() },
         modifier = modifier,
     )
 }
@@ -76,6 +78,7 @@ private fun FacetSettingsContent(
     onClockStyleClick: () -> Unit,
     onAppearanceClick: () -> Unit,
     onRename: (String) -> Unit,
+    onApplyFacet: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -83,7 +86,14 @@ private fun FacetSettingsContent(
 
     StickyHeaderLayout(
         modifier = modifier,
-        header = { FacetSettingsHeader(title = facet?.name ?: stringResource(R.string.facet_settings_default_name), onBack = onBack) },
+        header = {
+            FacetSettingsHeader(
+                title = facet?.name ?: stringResource(R.string.facet_settings_default_name),
+                isActive = uiState.isActive,
+                onBack = onBack,
+                onApplyFacet = onApplyFacet,
+            )
+        },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -202,6 +212,7 @@ private fun FacetSettingsScreenPreview() {
             onClockStyleClick = {},
             onAppearanceClick = {},
             onRename = {},
+            onApplyFacet = {},
         )
     }
 }

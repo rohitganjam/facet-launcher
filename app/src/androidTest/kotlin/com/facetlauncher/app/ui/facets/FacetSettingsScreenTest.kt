@@ -4,6 +4,8 @@ import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -56,6 +58,7 @@ class FacetSettingsScreenTest {
         onNavigateToCalendarSettings: (Long) -> Unit = {},
         onNavigateToClockStyleGallery: (Long) -> Unit = {},
         onNavigateToAppearance: (Long) -> Unit = {},
+        onFacetApply: () -> Unit = {},
     ): FacetRepository {
         lateinit var facetRepository: FacetRepository
         composeRule.setContent {
@@ -89,6 +92,7 @@ class FacetSettingsScreenTest {
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
                     onNavigateToAppearance = onNavigateToAppearance,
+                    onFacetApply = onFacetApply,
                     viewModel = viewModel,
                 )
             }
@@ -228,6 +232,39 @@ class FacetSettingsScreenTest {
             runCatching {
                 composeRule.onNodeWithTag("facet_calendar_settings_row").assertTextContains("2 calendars selected · All-day events visible", substring = true)
             }.isSuccess
+        }
+    }
+
+    @Test
+    fun applyFacetButtonActivatesThisFacetAndInvokesOnFacetApply() {
+        // Given a fresh facet that isn't yet the active one
+        var applied = false
+        val facetRepository = setContent(onFacetApply = { applied = true })
+        awaitFacetLoaded()
+        val facetId = runBlocking { facetRepository.observeFacets().first().first().id }
+        composeRule.onNodeWithTag("facet_settings_apply_button").assertIsEnabled()
+
+        // When the header's "Apply facet" button is tapped
+        composeRule.onNodeWithTag("facet_settings_apply_button").performClick()
+
+        // Then this facet becomes the active one and the nav callback fires
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().activeFacetId } == facetId
+        }
+        assertEquals(true, applied)
+    }
+
+    @Test
+    fun applyFacetButtonIsDisabledWhenThisFacetIsAlreadyActive() {
+        // Given this facet is already the active one
+        val facetRepository = setContent()
+        awaitFacetLoaded()
+        val facetId = runBlocking { facetRepository.observeFacets().first().first().id }
+        runBlocking { settingsRepository.setActiveFacetId(facetId) }
+
+        // Then the header's "Apply facet" button is disabled — nothing to apply
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("facet_settings_apply_button").assertIsNotEnabled() }.isSuccess
         }
     }
 }

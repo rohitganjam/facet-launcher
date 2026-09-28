@@ -563,7 +563,6 @@ fun HomeDrawerRoute(
     ) {
         HomeScreen(
             appListItems = homeUiState.appListItems,
-            listContentMode = homeUiState.activeListContentMode,
             appRowPosition = homeUiState.activeAppRowPosition,
             appRowPresentation = homeUiState.activeAppRowPresentation,
             showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,

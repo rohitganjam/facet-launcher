@@ -6,11 +6,13 @@ import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
+import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -64,6 +66,8 @@ class LauncherViewModelTest {
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         val viewModel = LauncherViewModel(
@@ -72,6 +76,8 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
             seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -98,6 +104,8 @@ class LauncherViewModelTest {
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
         val viewModel = LauncherViewModel(
@@ -106,6 +114,8 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
             seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -131,6 +141,8 @@ class LauncherViewModelTest {
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(onboardingCompleted = false)))
         val viewModel = LauncherViewModel(
@@ -139,6 +151,8 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
             seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -164,6 +178,8 @@ class LauncherViewModelTest {
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         val workProfile = WorkProfileInfo(handle = mock(android.os.UserHandle::class.java), isPaused = false, label = "Work")
@@ -173,6 +189,8 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
             seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
             settingsRepository,
             fakeWorkProfileRepository(listOf(workProfile)),
         )
@@ -191,6 +209,8 @@ class LauncherViewModelTest {
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
         val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
 
@@ -201,6 +221,8 @@ class LauncherViewModelTest {
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
             seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -208,5 +230,103 @@ class LauncherViewModelTest {
 
         // Then the one-time backfill pass ran
         org.mockito.Mockito.verify(repairOrphanedProfileRows).invoke()
+    }
+
+    @Test
+    fun `runs syncFacetShortcuts once on init`() = runTest {
+        // Given a fresh ViewModel
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+
+        // When it's constructed
+        LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveFacet,
+            cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
+            seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
+            settingsRepository,
+            fakeWorkProfileRepository(),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the live shortcut-sync collector was launched
+        org.mockito.Mockito.verify(syncFacetShortcuts).invoke()
+    }
+
+    @Test
+    fun `activateFacetFromDeepLink delegates the parsed id to ActivateFacetByIdUseCase`() = runTest {
+        // Given a fresh ViewModel
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveFacet,
+            cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
+            seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
+            settingsRepository,
+            fakeWorkProfileRepository(),
+        )
+
+        // When a valid facet deep link arrives
+        viewModel.activateFacetFromDeepLink(android.net.Uri.parse("facetlauncher://facet/7"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then its parsed id is forwarded to the use case
+        org.mockito.Mockito.verify(activateFacetById).invoke(7L)
+    }
+
+    @Test
+    fun `activateFacetFromDeepLink is a no-op for a uri that isn't a facet deep link`() = runTest {
+        // Given a fresh ViewModel
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
+        val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
+        val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
+        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
+        val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
+        val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            ensureActiveFacet,
+            cleanUpUninstalledApps,
+            repairOrphanedProfileRows,
+            seedDefaultDock,
+            syncFacetShortcuts,
+            activateFacetById,
+            settingsRepository,
+            fakeWorkProfileRepository(),
+        )
+
+        // When an unrelated uri (e.g. Intent.ACTION_MAIN with no data) arrives
+        viewModel.activateFacetFromDeepLink(android.net.Uri.parse("https://example.com"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the use case is never invoked
+        org.mockito.Mockito.verifyNoInteractions(activateFacetById)
     }
 }

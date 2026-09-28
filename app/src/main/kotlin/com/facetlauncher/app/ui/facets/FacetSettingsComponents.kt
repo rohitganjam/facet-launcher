@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,10 +25,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
@@ -43,8 +46,20 @@ internal fun DockDisplayMode.displayLabel(): String = stringResource(displayName
 @Composable
 internal fun AppRowPresentation.displayLabel(): String = stringResource(displayNameRes)
 
+/**
+ * [isActive] switches the trailing button between two distinct states — a disabled
+ * checkmark + "Active" once this facet is already live (mirrors `ManageFacetsScreen`'s own
+ * `enabled = !isActive` on its overflow menu's equivalent entry), or a clickable, icon-less
+ * "Activate facet" otherwise.
+ */
 @Composable
-internal fun FacetSettingsHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+internal fun FacetSettingsHeader(
+    title: String,
+    isActive: Boolean,
+    onBack: () -> Unit,
+    onApplyFacet: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -56,7 +71,22 @@ internal fun FacetSettingsHeader(title: String, onBack: () -> Unit, modifier: Mo
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier
+                .clickable(enabled = !isActive, onClick = onApplyFacet)
+                .testTag("facet_settings_apply_button")
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (isActive) {
+                Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Accent)
+                Text(text = stringResource(R.string.facet_settings_active), style = MaterialTheme.typography.bodyLarge, color = Accent)
+            } else {
+                Text(text = stringResource(R.string.facet_settings_activate_facet), style = MaterialTheme.typography.bodyLarge, color = Accent)
+            }
+        }
     }
 }
 
