@@ -228,6 +228,18 @@ fun HomeScreen(
     onClockWidgetLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit = { _, _ -> },
     onClockWidgetNestedScrollStop: () -> Unit = {},
     onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit = { _, _ -> },
+    /**
+     * Reports the app list's own scrollable viewport bounds, in the same root-relative coordinate
+     * space [onClockWidgetBoundsChange] uses — so [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s
+     * swipe-gesture detector can exclude it from its `PointerEventPass.Initial` claim exactly the way
+     * it already does for a hosted clock widget's own bounds (see that param's doc for why the
+     * Initial-pass claim otherwise wins before a descendant's own scroll ever gets a chance). Real
+     * bug found on-device: once the favorites/recents/most-used list had more rows than fit on
+     * screen, dragging within it always opened the Drawer/notification shade instead of scrolling,
+     * since the swipe detector claimed every vertical drag on Home's surface regardless of where it
+     * started. `null` whenever the list hasn't been measured yet.
+     */
+    onAppListBoundsChange: (Rect?) -> Unit = {},
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
@@ -307,6 +319,8 @@ fun HomeScreen(
     var rootOriginInRoot by remember { mutableStateOf<Offset?>(null) }
     var clockBoxSize by remember { mutableStateOf<IntSize?>(null) }
     var clockBoxOriginInRoot by remember { mutableStateOf<Offset?>(null) }
+    var appListSize by remember { mutableStateOf<IntSize?>(null) }
+    var appListOriginInRoot by remember { mutableStateOf<Offset?>(null) }
 
     // NaN until the first drag event captures the offset between where the finger grabbed and the
     // scale that point implies, so the clock doesn't pop on the first move.
@@ -654,6 +668,7 @@ fun HomeScreen(
                         // Inert (never binds) whenever there's ample room below the handle — only
                         // clips/scrolls in the genuine overflow case, which today has no fallback at all.
                         .heightIn(max = with(density) { (contentHeightPx - handlePx).coerceAtLeast(0f).toDp() })
+                        .onGloballyPositioned { appListSize = it.size; appListOriginInRoot = it.positionInRoot() }
                         .verticalScroll(rememberScrollState())
                         .testTag("home_app_list_scroll_region"),
                 ) {
@@ -995,6 +1010,21 @@ fun HomeScreen(
             val boundsReady = size != null && origin != null && rootOrigin != null
             onClockWidgetBoundsChange(
                 if (clockWidgetAppWidgetId != null && boundsReady) {
+                    Rect(offset = origin - rootOrigin, size = size.toSize())
+                } else {
+                    null
+                },
+            )
+        }
+
+        // Reports the app list's own scrollable viewport bounds — see onAppListBoundsChange's own
+        // doc. null whenever it hasn't been measured yet.
+        SideEffect {
+            val size = appListSize
+            val origin = appListOriginInRoot
+            val rootOrigin = rootOriginInRoot
+            onAppListBoundsChange(
+                if (size != null && origin != null && rootOrigin != null) {
                     Rect(offset = origin - rootOrigin, size = size.toSize())
                 } else {
                     null
