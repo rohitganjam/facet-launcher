@@ -290,12 +290,27 @@
     <string name="list_content_mode_most_used">Mais usados</string>
     <string name="dock_display_mode_icons">Ícones</string>
     <string name="dock_display_mode_text">Texto</string>
+    <string name="app_list_layout_single_column">Coluna única</string>
+    <string name="app_list_layout_two_column">Duas colunas</string>
+    <string name="app_list_layout_grid">Grade</string>
+    <string name="app_list_column_alignment_both_left">Ambas à esquerda</string>
+    <string name="app_list_column_alignment_both_right">Ambas à direita</string>
+    <string name="app_list_column_alignment_mirrored">Esquerda e direita</string>
+    <string name="app_list_grid_columns_four">4 colunas</string>
+    <string name="app_list_grid_columns_five">5 colunas</string>
+    <string name="app_list_grid_columns_six">6 colunas</string>
+    <string name="app_list_grid_display_mode_icons">Ícones</string>
+    <string name="app_list_grid_display_mode_text">Texto</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Lista de apps da tela inicial</string>
     <string name="home_apps_list_position">Posição</string>
     <string name="home_apps_list_list_position">Posição da lista</string>
     <string name="home_apps_list_presentation">Apresentação</string>
+    <string name="home_apps_list_layout">Layout da lista de apps</string>
+    <string name="home_apps_list_column_alignment">Alinhamento das colunas</string>
+    <string name="home_apps_list_grid_columns">Colunas da grade</string>
+    <string name="home_apps_list_grid_display">Exibição da grade</string>
     <string name="home_apps_list_content_facet">Conteúdo da lista de apps</string>
     <string name="home_apps_list_content_default">Conteúdo padrão da lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a exibir</string>

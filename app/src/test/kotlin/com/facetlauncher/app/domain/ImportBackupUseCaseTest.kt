@@ -79,6 +79,10 @@ class ImportBackupUseCaseTest {
         appLabelColorOption = "ACCENT_SECONDARY",
         appRowPosition = "RIGHT",
         appRowPresentation = "TEXT_ONLY",
+        appListLayout = "GRID",
+        appListColumnAlignment = "MIRRORED",
+        appListGridColumns = "SIX",
+        appListGridDisplayMode = "TEXT",
         listContentMode = "RECENTS",
         appsToShowCount = 6,
         clockTemplateId = "RULE",
@@ -176,6 +180,10 @@ class ImportBackupUseCaseTest {
         // ...every other setting field is applied...
         verify(settingsRepository).setUse24HourTime(true)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.DARK)
+        verify(settingsRepository).setAppListLayout(com.facetlauncher.app.data.model.AppListLayout.GRID)
+        verify(settingsRepository).setAppListColumnAlignment(com.facetlauncher.app.data.model.AppListColumnAlignment.MIRRORED)
+        verify(settingsRepository).setAppListGridColumns(com.facetlauncher.app.data.model.AppListGridColumns.SIX)
+        verify(settingsRepository).setAppListGridDisplayMode(com.facetlauncher.app.data.model.AppListGridDisplayMode.TEXT)
         // ...restored rows (which land with no resolvable userId — see BackupBundle's own doc
         // comment) are repaired immediately, not left orphaned until the next app launch...
         verify(repairOrphanedProfileRows).invoke()

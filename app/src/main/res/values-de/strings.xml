@@ -290,12 +290,27 @@
     <string name="list_content_mode_most_used">Meistgenutzt</string>
     <string name="dock_display_mode_icons">Symbole</string>
     <string name="dock_display_mode_text">Text</string>
+    <string name="app_list_layout_single_column">Einspaltig</string>
+    <string name="app_list_layout_two_column">Zweispaltig</string>
+    <string name="app_list_layout_grid">Raster</string>
+    <string name="app_list_column_alignment_both_left">Beide links</string>
+    <string name="app_list_column_alignment_both_right">Beide rechts</string>
+    <string name="app_list_column_alignment_mirrored">Links &amp; rechts</string>
+    <string name="app_list_grid_columns_four">4 Spalten</string>
+    <string name="app_list_grid_columns_five">5 Spalten</string>
+    <string name="app_list_grid_columns_six">6 Spalten</string>
+    <string name="app_list_grid_display_mode_icons">Symbole</string>
+    <string name="app_list_grid_display_mode_text">Text</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Startbildschirm-App-Liste</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Listenposition</string>
     <string name="home_apps_list_presentation">Darstellung</string>
+    <string name="home_apps_list_layout">App-Listenlayout</string>
+    <string name="home_apps_list_column_alignment">Spaltenausrichtung</string>
+    <string name="home_apps_list_grid_columns">Rasterspalten</string>
+    <string name="home_apps_list_grid_display">Rasteranzeige</string>
     <string name="home_apps_list_content_facet">App-Listeninhalt</string>
     <string name="home_apps_list_content_default">Standard-App-Listeninhalt</string>
     <string name="home_apps_list_apps_to_show">Anzuzeigende Apps</string>

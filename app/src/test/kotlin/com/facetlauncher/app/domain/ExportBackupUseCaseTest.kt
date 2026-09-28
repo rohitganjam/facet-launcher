@@ -16,6 +16,10 @@ import com.facetlauncher.app.data.local.FavoriteAppEntity
 import com.facetlauncher.app.data.local.FacetDockAppEntity
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.flow.flowOf
@@ -57,8 +61,28 @@ class ExportBackupUseCaseTest {
     @Test
     fun `bundles every repository's data and hands it to BackupRepository`() = runTest {
         // Given one active facet with a favorite, one dock app, one default favorite, one widget
-        val facet = FacetEntity(id = 7, name = "Work", position = 0, clockColorOption = ClockColorOption.ACCENT_PRIMARY, selectedCalendarIdsCsv = "3,4")
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(activeFacetId = 7)))
+        val facet = FacetEntity(
+            id = 7,
+            name = "Work",
+            position = 0,
+            clockColorOption = ClockColorOption.ACCENT_PRIMARY,
+            selectedCalendarIdsCsv = "3,4",
+            appListLayout = AppListLayout.TWO_COLUMN,
+            appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+            appListGridColumns = AppListGridColumns.SIX,
+            appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+        )
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(
+                LauncherSettings(
+                    activeFacetId = 7,
+                    appListLayout = AppListLayout.GRID,
+                    appListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
+                    appListGridColumns = AppListGridColumns.FIVE,
+                    appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+                ),
+            ),
+        )
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(favoriteAppRepository.getRawFavoritesForFacet(7)).thenReturn(
             listOf(FavoriteAppEntity(id = 1, facetId = 7, packageName = "com.example.a", activityName = ".Main", position = 0)),
@@ -92,6 +116,14 @@ class ExportBackupUseCaseTest {
         assertEquals(1, bundle.facets[0].favorites.size)
         assertEquals("com.example.a", bundle.facets[0].favorites[0].packageName)
         assertEquals(listOf("3", "4"), bundle.facets[0].selectedCalendarIds)
+        assertEquals("TWO_COLUMN", bundle.facets[0].appListLayout)
+        assertEquals("MIRRORED", bundle.facets[0].appListColumnAlignment)
+        assertEquals("SIX", bundle.facets[0].appListGridColumns)
+        assertEquals("TEXT", bundle.facets[0].appListGridDisplayMode)
+        assertEquals("GRID", bundle.settings.appListLayout)
+        assertEquals("BOTH_RIGHT", bundle.settings.appListColumnAlignment)
+        assertEquals("FIVE", bundle.settings.appListGridColumns)
+        assertEquals("TEXT", bundle.settings.appListGridDisplayMode)
         assertEquals(0, bundle.settings.activeFacetIndex)
         assertEquals(1, bundle.dockApps.size)
         assertEquals("com.example.b", bundle.dockApps[0].packageName)

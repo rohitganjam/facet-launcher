@@ -3,6 +3,10 @@ package com.facetlauncher.app.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -88,6 +92,10 @@ class SettingsRepositoryTest {
         assertEquals(null, settings.clockZoneHeightDp)
         assertEquals(0.8f, settings.clockScale, 0.0001f)
         assertEquals(AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
+        assertEquals(AppListLayout.SINGLE_COLUMN, settings.appListLayout)
+        assertEquals(AppListColumnAlignment.BOTH_LEFT, settings.appListColumnAlignment)
+        assertEquals(AppListGridColumns.FOUR, settings.appListGridColumns)
+        assertEquals(AppListGridDisplayMode.ICONS, settings.appListGridDisplayMode)
         assertFalse(settings.onboardingCompleted)
         assertFalse(settings.defaultsSeeded)
         assertEquals(emptySet<String>(), settings.coachMarksSeen)
@@ -266,6 +274,10 @@ class SettingsRepositoryTest {
         repository.setSearchSettingsEnabled(true)
         repository.setAppRowPosition(AppRowPosition.RIGHT)
         repository.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
+        repository.setAppListLayout(AppListLayout.GRID)
+        repository.setAppListColumnAlignment(AppListColumnAlignment.MIRRORED)
+        repository.setAppListGridColumns(AppListGridColumns.SIX)
+        repository.setAppListGridDisplayMode(AppListGridDisplayMode.TEXT)
         repository.setListContentMode(ListContentMode.MOST_USED)
         repository.setAppsToShowCount(6)
 
@@ -295,12 +307,16 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.searchSettingsEnabled)
         assertEquals(AppRowPosition.RIGHT, settings.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, settings.appRowPresentation)
+        assertEquals(AppListLayout.GRID, settings.appListLayout)
+        assertEquals(AppListColumnAlignment.MIRRORED, settings.appListColumnAlignment)
+        assertEquals(AppListGridColumns.SIX, settings.appListGridColumns)
+        assertEquals(AppListGridDisplayMode.TEXT, settings.appListGridDisplayMode)
         assertEquals(ListContentMode.MOST_USED, settings.listContentMode)
         assertEquals(6, settings.appsToShowCount)
     }
 
     @Test
-    fun `default apps-to-show count is coerced into the 3 to 6 range`() = runTest {
+    fun `default apps-to-show count is coerced into the 3 to 12 range`() = runTest {
         // Given a repository
         val repository = createRepository()
 
@@ -308,9 +324,9 @@ class SettingsRepositoryTest {
         repository.setAppsToShowCount(1)
         assertEquals(3, repository.settings.first().appsToShowCount)
 
-        // When set above the ceiling, it's coerced down to 6
+        // When set above the ceiling, it's coerced down to 12
         repository.setAppsToShowCount(99)
-        assertEquals(6, repository.settings.first().appsToShowCount)
+        assertEquals(12, repository.settings.first().appsToShowCount)
     }
 
     @Test

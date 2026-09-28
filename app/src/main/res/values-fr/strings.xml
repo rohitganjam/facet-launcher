@@ -290,12 +290,27 @@
     <string name="list_content_mode_most_used">Les plus utilisées</string>
     <string name="dock_display_mode_icons">Icônes</string>
     <string name="dock_display_mode_text">Texte</string>
+    <string name="app_list_layout_single_column">Colonne unique</string>
+    <string name="app_list_layout_two_column">Deux colonnes</string>
+    <string name="app_list_layout_grid">Grille</string>
+    <string name="app_list_column_alignment_both_left">Les deux à gauche</string>
+    <string name="app_list_column_alignment_both_right">Les deux à droite</string>
+    <string name="app_list_column_alignment_mirrored">Gauche et droite</string>
+    <string name="app_list_grid_columns_four">4 colonnes</string>
+    <string name="app_list_grid_columns_five">5 colonnes</string>
+    <string name="app_list_grid_columns_six">6 colonnes</string>
+    <string name="app_list_grid_display_mode_icons">Icônes</string>
+    <string name="app_list_grid_display_mode_text">Texte</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Liste d\'apps de l\'accueil</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Position de la liste</string>
     <string name="home_apps_list_presentation">Présentation</string>
+    <string name="home_apps_list_layout">Disposition de la liste d\'apps</string>
+    <string name="home_apps_list_column_alignment">Alignement des colonnes</string>
+    <string name="home_apps_list_grid_columns">Colonnes de la grille</string>
+    <string name="home_apps_list_grid_display">Affichage de la grille</string>
     <string name="home_apps_list_content_facet">Contenu de la liste d\'apps</string>
     <string name="home_apps_list_content_default">Contenu par défaut de la liste d\'apps</string>
     <string name="home_apps_list_apps_to_show">Apps à afficher</string>

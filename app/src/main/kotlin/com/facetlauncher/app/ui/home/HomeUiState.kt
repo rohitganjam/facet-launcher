@@ -3,6 +3,10 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -123,6 +127,22 @@ data class HomeUiState(
     /** The active facet's app-list vertical anchor — mirrors [activeAppRowPosition]'s own resolution shape. */
     val activeAppListVerticalAlignment: AppListVerticalAlignment
         get() = activeFacet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
+
+    /** The active facet's app-list layout (single column/two columns/grid) — mirrors [activeAppRowPosition]'s own resolution shape. */
+    val activeAppListLayout: AppListLayout
+        get() = activeFacet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout)
+
+    /** Only meaningful while [activeAppListLayout] is [AppListLayout.TWO_COLUMN] — see [activeAppRowPosition]'s own resolution shape. */
+    val activeAppListColumnAlignment: AppListColumnAlignment
+        get() = activeFacet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
+
+    /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID] — see [activeAppRowPosition]'s own resolution shape. */
+    val activeAppListGridColumns: AppListGridColumns
+        get() = activeFacet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns)
+
+    /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID] — see [activeAppRowPosition]'s own resolution shape. */
+    val activeAppListGridDisplayMode: AppListGridDisplayMode
+        get() = activeFacet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode)
 
     /** The active facet's dock display style — a look field, resolved independently of `overrideDock` (that flag still gates only [dockApps], already resolved per-facet upstream in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]) — see [activeAppRowPosition]'s own doc for the resolution shape. */
     val activeDockDisplayMode: DockDisplayMode

@@ -28,6 +28,9 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.DeleteFacetUseCase
@@ -463,6 +466,88 @@ class FacetCarouselScreenTest {
         // Then the preview card renders the favorite as a visible row and the dock app as an icon
         composeRule.onNodeWithText(favoriteLabel).assertExists()
         composeRule.onNodeWithContentDescription(dockLabel).assertExists()
+    }
+
+    @Test
+    fun previewCardRendersTheFacetsOwnGridLayoutInsteadOfAlwaysSingleColumn() {
+        // Given a facet with Grid layout (4 columns) and 6 of its own favorites — enough to wrap
+        // into two rows (4 + 2), the shape the left-align fix specifically targets. Before this
+        // card started reading the facet's own appListLayout, it always rendered a plain
+        // single-column AppRow list regardless of what the facet was actually configured to show
+        // on real Home — a real, confirmed gap (see chat history).
+        var facetId = 0L
+        val packages = mutableListOf<String>()
+        setContent(
+            seed = { facetRepository, settings ->
+                val created = facetRepository.addFacet()
+                facetId = created.id
+                settings.setActiveFacetId(created.id)
+                // Re-fetch between setters — each one copies from the entity it's given and
+                // fully replaces the stored row, so chaining off the same stale snapshot would
+                // silently discard the previous setter's own write (see FacetRepositoryTest's
+                // own setAppListLayout/etc. test for the same lesson).
+                facetRepository.setOverridingFavorites(created, true)
+                val afterOverride = facetRepository.observeFacets().first().single()
+                facetRepository.setAppListLayout(afterOverride, AppListLayout.GRID)
+                val afterLayout = facetRepository.observeFacets().first().single()
+                facetRepository.setAppListGridColumns(afterLayout, AppListGridColumns.FOUR)
+            },
+            seedApps = { appRepository, favoriteAppRepository, _ ->
+                val installed = appRepository.getInstalledApps()
+                (0 until 6).forEach { index ->
+                    favoriteAppRepository.addFavorite(facetId = facetId, app = installed[index], position = index)
+                    packages += installed[index].packageName
+                }
+            },
+        )
+
+        // Then the card renders grid icon tiles for every favorite...
+        packages.forEach { pkg ->
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithTag("facet_preview_grid_icon_$pkg", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+
+        // ...with the first 4 sharing one row and the last 2 wrapping to the next, packed under
+        // row 1's first two columns rather than spread across the card's full width (the same
+        // Arrangement.SpaceEvenly bug this test guards against in AppearancePreviewCard too).
+        val row1 = (0..3).map { composeRule.onNodeWithTag("facet_preview_grid_icon_${packages[it]}", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
+        val row2 = (4..5).map { composeRule.onNodeWithTag("facet_preview_grid_icon_${packages[it]}", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
+        assertEquals(row1[0].top, row1[1].top, 1f)
+        assert(row2[0].top > row1[0].top)
+        assertEquals(row1[0].left, row2[0].left, 1f)
+        assertEquals(row1[1].left, row2[1].left, 1f)
+    }
+
+    @Test
+    fun previewCardGridDisplayModeShowsTextInsteadOfIconsWhenChosen() {
+        // Given a facet with Grid layout and text display, one of its own favorites
+        var facetId = 0L
+        var packageName = ""
+        setContent(
+            seed = { facetRepository, settings ->
+                val created = facetRepository.addFacet()
+                facetId = created.id
+                settings.setActiveFacetId(created.id)
+                // Re-fetch between setters — see the sibling grid-layout test's own comment.
+                facetRepository.setOverridingFavorites(created, true)
+                val afterOverride = facetRepository.observeFacets().first().single()
+                facetRepository.setAppListLayout(afterOverride, AppListLayout.GRID)
+                val afterLayout = facetRepository.observeFacets().first().single()
+                facetRepository.setAppListGridDisplayMode(afterLayout, AppListGridDisplayMode.TEXT)
+            },
+            seedApps = { appRepository, favoriteAppRepository, _ ->
+                val app = appRepository.getInstalledApps()[0]
+                packageName = app.packageName
+                favoriteAppRepository.addFavorite(facetId = facetId, app = app, position = 0)
+            },
+        )
+
+        // Then the tile renders the label, not the icon
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("facet_preview_grid_label_$packageName", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("facet_preview_grid_icon_$packageName", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test

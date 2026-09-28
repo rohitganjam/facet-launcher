@@ -11,6 +11,10 @@ import com.facetlauncher.app.data.local.FacetDockFolderPlacementEntity
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.FolderWithApps
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -87,6 +91,10 @@ fun FacetEntity.toBackupFacet(
     overrideApps = overrideApps,
     appRowPosition = appRowPosition.name,
     appRowPresentation = appRowPresentation.name,
+    appListLayout = appListLayout.name,
+    appListColumnAlignment = appListColumnAlignment.name,
+    appListGridColumns = appListGridColumns.name,
+    appListGridDisplayMode = appListGridDisplayMode.name,
     listContentMode = listContentMode.name,
     appsToShowCount = appsToShowCount,
     overridingFavorites = overridingFavorites,
@@ -118,6 +126,10 @@ fun BackupFacet.toFacetEntity(): FacetEntity = FacetEntity(
     // overrideApps/overrideDock now, mirroring ClockFontOption's existing facet-scope fallback.
     appRowPosition = appRowPosition.toEnumOrDefault(AppRowPosition.LAUNCHER_DEFAULT),
     appRowPresentation = appRowPresentation.toEnumOrDefault(AppRowPresentation.LAUNCHER_DEFAULT),
+    appListLayout = appListLayout.toEnumOrDefault(AppListLayout.LAUNCHER_DEFAULT),
+    appListColumnAlignment = appListColumnAlignment.toEnumOrDefault(AppListColumnAlignment.LAUNCHER_DEFAULT),
+    appListGridColumns = appListGridColumns.toEnumOrDefault(AppListGridColumns.LAUNCHER_DEFAULT),
+    appListGridDisplayMode = appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.LAUNCHER_DEFAULT),
     listContentMode = listContentMode.toEnumOrDefault(ListContentMode.FAVORITES),
     appsToShowCount = appsToShowCount.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
     overridingFavorites = overridingFavorites,

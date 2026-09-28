@@ -2,6 +2,10 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -262,7 +266,35 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `setAppsToShowCount coerces into the 3 to 6 range`() = runTest {
+    fun `setAppListLayout, setAppListColumnAlignment, setAppListGridColumns and setAppListGridDisplayMode round-trip independently`() = runTest {
+        val dao = FakeFacetDao()
+        val repository = FacetRepository(dao)
+        val facet = repository.addFacet()
+
+        repository.setAppListLayout(facet, AppListLayout.GRID)
+        val afterLayout = repository.observeFacets().first().single()
+        assertEquals(AppListLayout.GRID, afterLayout.appListLayout)
+
+        // Re-fetch before each next setter — each setter copies from the entity it's given and
+        // fully replaces the stored row, so acting on a stale `facet` would discard prior updates.
+        repository.setAppListColumnAlignment(afterLayout, AppListColumnAlignment.MIRRORED)
+        val afterColumnAlignment = repository.observeFacets().first().single()
+        assertEquals(AppListColumnAlignment.MIRRORED, afterColumnAlignment.appListColumnAlignment)
+
+        repository.setAppListGridColumns(afterColumnAlignment, AppListGridColumns.SIX)
+        val afterGridColumns = repository.observeFacets().first().single()
+        assertEquals(AppListGridColumns.SIX, afterGridColumns.appListGridColumns)
+
+        repository.setAppListGridDisplayMode(afterGridColumns, AppListGridDisplayMode.TEXT)
+        val stored = repository.observeFacets().first().single()
+        assertEquals(AppListLayout.GRID, stored.appListLayout)
+        assertEquals(AppListColumnAlignment.MIRRORED, stored.appListColumnAlignment)
+        assertEquals(AppListGridColumns.SIX, stored.appListGridColumns)
+        assertEquals(AppListGridDisplayMode.TEXT, stored.appListGridDisplayMode)
+    }
+
+    @Test
+    fun `setAppsToShowCount coerces into the 3 to 12 range`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
@@ -271,7 +303,7 @@ class FacetRepositoryTest {
         repository.setAppsToShowCount(facet, 1)
         assertEquals(3, repository.observeFacets().first().single().appsToShowCount)
         repository.setAppsToShowCount(facet, 99)
-        assertEquals(6, repository.observeFacets().first().single().appsToShowCount)
+        assertEquals(12, repository.observeFacets().first().single().appsToShowCount)
     }
 
     @Test

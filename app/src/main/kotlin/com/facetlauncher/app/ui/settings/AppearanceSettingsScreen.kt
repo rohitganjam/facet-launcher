@@ -38,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -54,10 +55,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.DockDisplayMode
@@ -72,6 +78,8 @@ import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.FontSizeSlider
@@ -84,6 +92,7 @@ import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.ClockBlock
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -133,6 +142,10 @@ fun AppearanceSettingsScreen(
         onAppRowPositionChange = viewModel::setAppRowPosition,
         onAppRowPresentationChange = viewModel::setAppRowPresentation,
         onAppListVerticalAlignmentChange = viewModel::setAppListVerticalAlignment,
+        onAppListLayoutChange = viewModel::setAppListLayout,
+        onAppListColumnAlignmentChange = viewModel::setAppListColumnAlignment,
+        onAppListGridColumnsChange = viewModel::setAppListGridColumns,
+        onAppListGridDisplayModeChange = viewModel::setAppListGridDisplayMode,
         modifier = modifier,
     )
 }
@@ -157,6 +170,10 @@ private fun AppearanceSettingsContent(
     onAppRowPositionChange: (AppRowPosition) -> Unit,
     onAppRowPresentationChange: (AppRowPresentation) -> Unit,
     onAppListVerticalAlignmentChange: (AppListVerticalAlignment) -> Unit,
+    onAppListLayoutChange: (AppListLayout) -> Unit,
+    onAppListColumnAlignmentChange: (AppListColumnAlignment) -> Unit,
+    onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
+    onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isFacetScoped = uiState.isFacetScoped
@@ -167,6 +184,10 @@ private fun AppearanceSettingsContent(
     val appRowPositionOptions = if (isFacetScoped) AppRowPosition.entries else AppRowPosition.entries - AppRowPosition.LAUNCHER_DEFAULT
     val appRowPresentationOptions = if (isFacetScoped) AppRowPresentation.entries else AppRowPresentation.entries - AppRowPresentation.LAUNCHER_DEFAULT
     val appListVerticalAlignmentOptions = if (isFacetScoped) AppListVerticalAlignment.entries else AppListVerticalAlignment.entries - AppListVerticalAlignment.LAUNCHER_DEFAULT
+    val appListLayoutOptions = if (isFacetScoped) AppListLayout.entries else AppListLayout.entries - AppListLayout.LAUNCHER_DEFAULT
+    val appListColumnAlignmentOptions = if (isFacetScoped) AppListColumnAlignment.entries else AppListColumnAlignment.entries - AppListColumnAlignment.LAUNCHER_DEFAULT
+    val appListGridColumnsOptions = if (isFacetScoped) AppListGridColumns.entries else AppListGridColumns.entries - AppListGridColumns.LAUNCHER_DEFAULT
+    val appListGridDisplayModeOptions = if (isFacetScoped) AppListGridDisplayMode.entries else AppListGridDisplayMode.entries - AppListGridDisplayMode.LAUNCHER_DEFAULT
     StickyHeaderLayout(
         modifier = modifier,
         header = { AppearanceSettingsHeader(onBack = onBack) },
@@ -186,6 +207,10 @@ private fun AppearanceSettingsContent(
                         isFacetScoped = isFacetScoped,
                         appRowPosition = uiState.appRowPosition,
                         appRowPresentation = uiState.appRowPresentation,
+                        appListLayout = uiState.appListLayout,
+                        appListColumnAlignment = uiState.appListColumnAlignment,
+                        appListGridColumns = uiState.appListGridColumns,
+                        appListGridDisplayMode = uiState.appListGridDisplayMode,
                         dockDisplayMode = uiState.dockDisplayMode,
                         favorites = uiState.effectiveFavorites,
                         dockItems = uiState.effectiveDockItems,
@@ -213,23 +238,83 @@ private fun AppearanceSettingsContent(
                         )
                         CardDivider()
                         LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_position),
-                            options = appRowPositionOptions,
-                            selected = uiState.appRowPosition,
+                            title = stringResource(R.string.home_apps_list_layout),
+                            options = appListLayoutOptions,
+                            selected = uiState.appListLayout,
                             label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppRowPositionChange,
-                            testTag = "appearance_app_row_position_row",
+                            onSelect = onAppListLayoutChange,
+                            testTag = "appearance_app_list_layout_row",
                         )
                         CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_presentation),
-                            options = appRowPresentationOptions,
-                            selected = uiState.appRowPresentation,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppRowPresentationChange,
-                            testTag = "appearance_app_row_presentation_row",
-                        )
-                        CardDivider()
+                        // Each layout mode gets its own alignment/presentation controls — mirrors
+                        // how "Apps to show" is already conditionally hidden for Favorites mode on
+                        // HomeAppsListSettingsScreen. AppRowPosition (per-row left/center/right)
+                        // only makes sense for a single column; AppListColumnAlignment replaces it
+                        // for two columns; grid has no per-item alignment concept at all, so
+                        // neither position nor the icon/text presentation row below applies —
+                        // AppListGridDisplayMode is grid's own separate presentation setting.
+                        when (uiState.appListLayout) {
+                            AppListLayout.TWO_COLUMN -> {
+                                LabeledDropdownRow(
+                                    title = stringResource(R.string.home_apps_list_column_alignment),
+                                    options = appListColumnAlignmentOptions,
+                                    selected = uiState.appListColumnAlignment,
+                                    label = { stringResource(it.displayNameRes) },
+                                    onSelect = onAppListColumnAlignmentChange,
+                                    testTag = "appearance_app_list_column_alignment_row",
+                                )
+                                CardDivider()
+                                LabeledDropdownRow(
+                                    title = stringResource(R.string.home_apps_list_presentation),
+                                    options = appRowPresentationOptions,
+                                    selected = uiState.appRowPresentation,
+                                    label = { stringResource(it.displayNameRes) },
+                                    onSelect = onAppRowPresentationChange,
+                                    testTag = "appearance_app_row_presentation_row",
+                                )
+                                CardDivider()
+                            }
+                            AppListLayout.GRID -> {
+                                LabeledDropdownRow(
+                                    title = stringResource(R.string.home_apps_list_grid_columns),
+                                    options = appListGridColumnsOptions,
+                                    selected = uiState.appListGridColumns,
+                                    label = { stringResource(it.displayNameRes) },
+                                    onSelect = onAppListGridColumnsChange,
+                                    testTag = "appearance_app_list_grid_columns_row",
+                                )
+                                CardDivider()
+                                LabeledDropdownRow(
+                                    title = stringResource(R.string.home_apps_list_grid_display),
+                                    options = appListGridDisplayModeOptions,
+                                    selected = uiState.appListGridDisplayMode,
+                                    label = { stringResource(it.displayNameRes) },
+                                    onSelect = onAppListGridDisplayModeChange,
+                                    testTag = "appearance_app_list_grid_display_mode_row",
+                                )
+                                CardDivider()
+                            }
+                            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
+                                LabeledDropdownRow(
+                                    title = stringResource(R.string.home_apps_list_position),
+                                    options = appRowPositionOptions,
+                                    selected = uiState.appRowPosition,
+                                    label = { stringResource(it.displayNameRes) },
+                                    onSelect = onAppRowPositionChange,
+                                    testTag = "appearance_app_row_position_row",
+                                )
+                                CardDivider()
+                                LabeledDropdownRow(
+                                    title = stringResource(R.string.home_apps_list_presentation),
+                                    options = appRowPresentationOptions,
+                                    selected = uiState.appRowPresentation,
+                                    label = { stringResource(it.displayNameRes) },
+                                    onSelect = onAppRowPresentationChange,
+                                    testTag = "appearance_app_row_presentation_row",
+                                )
+                                CardDivider()
+                            }
+                        }
                         LabeledDropdownRow(
                             title = stringResource(R.string.home_apps_list_list_position),
                             options = appListVerticalAlignmentOptions,
@@ -340,13 +425,29 @@ private fun AppearanceSettingsContent(
 }
 
 /**
- * Not an arbitrary "glanceable strip" cap — [AppListLimits.MAX_FAVORITES]/[DockAppRepository.MAX_APPS]
- * are the real caps a favorites/dock list can never exceed, so `.take()`ing them is a no-op safety
- * net, not a lossy truncation. An earlier version of this preview capped at 2/3 regardless of how
- * many favorites/dock apps were actually configured — caught via direct user report: 4 configured
- * favorites showed only 2, 5 configured dock apps showed only 3 (see chat history).
+ * Not an arbitrary "glanceable strip" cap for the dock — [DockAppRepository.MAX_APPS] is the real
+ * cap a dock list can never exceed, so `.take()`ing it is a no-op safety net, not a lossy
+ * truncation. An earlier version of this preview capped at 2/3 regardless of how many favorites/
+ * dock apps were actually configured — caught via direct user report: 4 configured favorites
+ * showed only 2, 5 configured dock apps showed only 3 (see chat history).
+ *
+ * The favorites side is a real, decoupled cap instead of [AppListLimits.MAX_FAVORITES] directly —
+ * this card's small fixed, scaled space was never sized for that many rows in single-column mode
+ * — but the cap is layout-aware ([AppListLayout.previewItemCap]) rather than one flat number:
+ * [AppListLayout.TWO_COLUMN]/[AppListLayout.GRID] pack more than one item per row, so the same
+ * [PREVIEW_ROW_BUDGET] lets them show proportionally more of the real list without overflowing —
+ * in practice every one of [AppListLimits.MAX_FAVORITES] renders for those two layouts, and only
+ * single-column (the tightest case) actually truncates. On-device visual check (2026-09-28) caught
+ * the previous flat cap leaving Grid's preview mostly empty despite 12 real favorites configured
+ * (see chat history) — not just a design guess, a real gap once the cap raise shipped.
  */
-private const val PREVIEW_HOME_APP_COUNT = AppListLimits.MAX_FAVORITES
+private const val PREVIEW_ROW_BUDGET = 6
+
+private fun AppListLayout.previewItemCap(gridColumns: Int): Int = when (this) {
+    AppListLayout.GRID -> PREVIEW_ROW_BUDGET * gridColumns
+    AppListLayout.TWO_COLUMN -> PREVIEW_ROW_BUDGET * 2
+    AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> PREVIEW_ROW_BUDGET
+}
 private const val PREVIEW_DOCK_APP_COUNT = DockAppRepository.MAX_APPS
 
 /** Matches `FacetCarouselScreen`'s own `CAROUSEL_CARD_SCALE` — a genuine scale model of the
@@ -385,6 +486,10 @@ private fun AppearancePreviewCard(
     isFacetScoped: Boolean,
     appRowPosition: AppRowPosition,
     appRowPresentation: AppRowPresentation,
+    appListLayout: AppListLayout,
+    appListColumnAlignment: AppListColumnAlignment,
+    appListGridColumns: AppListGridColumns,
+    appListGridDisplayMode: AppListGridDisplayMode,
     dockDisplayMode: DockDisplayMode,
     favorites: List<PlacedItem>,
     dockItems: List<PlacedItem>,
@@ -443,44 +548,16 @@ private fun AppearancePreviewCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    favorites.take(PREVIEW_HOME_APP_COUNT).forEach { item ->
-                        when (item) {
-                            is PlacedItem.SingleApp -> AppRow(
-                                app = item.app,
-                                onClick = {},
-                                badgeCount = null,
-                                badgeStyle = NotificationBadgeStyle.DOT,
-                                onRequestShortcuts = { emptyList() },
-                                onLaunchShortcut = {},
-                                onAppInfo = {},
-                                position = appRowPosition,
-                                presentation = appRowPresentation,
-                                labelColor = settings.appLabelColorOption.resolve(),
-                                labelFontWeight = settings.homeAppsFontWeight.resolve(),
-                                enableLongPressMenu = false,
-                                testTagPrefix = "appearance_preview_",
-                            )
-                            is PlacedItem.FolderItem -> FolderRow(
-                                folder = item.folder,
-                                onAppClick = {},
-                                onRequestShortcuts = { emptyList() },
-                                onLaunchShortcut = {},
-                                onAppInfo = {},
-                                onRemoveFromFolder = { _, _ -> },
-                                onRenameFolder = { _, _ -> },
-                                drawerPresentation = DrawerPresentation.LIST,
-                                position = appRowPosition,
-                                presentation = appRowPresentation,
-                                labelColor = settings.appLabelColorOption.resolve(),
-                                labelFontWeight = settings.homeAppsFontWeight.resolve(),
-                                enableLongPressMenu = false,
-                                onClick = {},
-                                testTagPrefix = "appearance_preview_",
-                            )
-                        }
-                    }
-                }
+                AppearancePreviewAppList(
+                    favorites = favorites.take(appListLayout.previewItemCap(appListGridColumns.columns)),
+                    appListLayout = appListLayout,
+                    appListColumnAlignment = appListColumnAlignment,
+                    appListGridColumns = appListGridColumns,
+                    appListGridDisplayMode = appListGridDisplayMode,
+                    appRowPosition = appRowPosition,
+                    appRowPresentation = appRowPresentation,
+                    settings = settings,
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -500,6 +577,137 @@ private fun AppearancePreviewCard(
                 }
             }
         }
+        }
+    }
+}
+
+/** [AppearancePreviewCard]'s app-list region — its own 3-way [AppListLayout] branch, extracted to a dedicated composable to keep the card's own nesting depth within this codebase's Compose-nesting lint threshold. */
+@Composable
+private fun AppearancePreviewAppList(
+    favorites: List<PlacedItem>,
+    appListLayout: AppListLayout,
+    appListColumnAlignment: AppListColumnAlignment,
+    appListGridColumns: AppListGridColumns,
+    appListGridDisplayMode: AppListGridDisplayMode,
+    appRowPosition: AppRowPosition,
+    appRowPresentation: AppRowPresentation,
+    settings: LauncherSettings,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        when (appListLayout) {
+            AppListLayout.GRID -> {
+                // Fixed-slot columns, not Arrangement.SpaceEvenly — a short last row must leave
+                // its missing slots empty and pack real items to the left, matching HomeScreen's
+                // own LazyVerticalGrid(GridCells.Fixed(n)) behavior exactly (caught via on-device
+                // comparison: SpaceEvenly stretched an incomplete row's items across the full
+                // width instead, see chat history).
+                favorites.chunked(appListGridColumns.columns).forEach { rowItems ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        repeat(appListGridColumns.columns) { columnIndex ->
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                rowItems.getOrNull(columnIndex)?.let { item ->
+                                    AppearancePreviewGridTile(
+                                        item = item,
+                                        displayMode = appListGridDisplayMode,
+                                        labelColor = settings.appLabelColorOption.resolve(),
+                                        labelFontWeight = settings.homeAppsFontWeight.resolve(),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+            AppListLayout.TWO_COLUMN -> {
+                val (leftPosition, rightPosition) = appListColumnAlignment.toColumnPositions()
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    listOf(
+                        favorites.filterIndexed { index, _ -> index % 2 == 0 } to leftPosition,
+                        favorites.filterIndexed { index, _ -> index % 2 == 1 } to rightPosition,
+                    ).forEach { (items, position) ->
+                        Column(modifier = Modifier.weight(1f)) {
+                            items.forEach { item ->
+                                AppearancePreviewRow(item = item, position = position, presentation = appRowPresentation, settings = settings)
+                            }
+                        }
+                    }
+                }
+            }
+            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
+                favorites.forEach { item ->
+                    AppearancePreviewRow(item = item, position = appRowPosition, presentation = appRowPresentation, settings = settings)
+                }
+            }
+        }
+    }
+}
+
+/** [AppearancePreviewCard]'s single/two-column row dispatch, extracted since both layouts need the identical [AppRow]/[FolderRow] call, just with a different [position] and item subset. */
+@Composable
+private fun AppearancePreviewRow(item: PlacedItem, position: AppRowPosition, presentation: AppRowPresentation, settings: LauncherSettings) {
+    when (item) {
+        is PlacedItem.SingleApp -> AppRow(
+            app = item.app,
+            onClick = {},
+            badgeCount = null,
+            badgeStyle = NotificationBadgeStyle.DOT,
+            onRequestShortcuts = { emptyList() },
+            onLaunchShortcut = {},
+            onAppInfo = {},
+            position = position,
+            presentation = presentation,
+            labelColor = settings.appLabelColorOption.resolve(),
+            labelFontWeight = settings.homeAppsFontWeight.resolve(),
+            enableLongPressMenu = false,
+            testTagPrefix = "appearance_preview_",
+        )
+        is PlacedItem.FolderItem -> FolderRow(
+            folder = item.folder,
+            onAppClick = {},
+            onRequestShortcuts = { emptyList() },
+            onLaunchShortcut = {},
+            onAppInfo = {},
+            onRemoveFromFolder = { _, _ -> },
+            onRenameFolder = { _, _ -> },
+            drawerPresentation = DrawerPresentation.LIST,
+            position = position,
+            presentation = presentation,
+            labelColor = settings.appLabelColorOption.resolve(),
+            labelFontWeight = settings.homeAppsFontWeight.resolve(),
+            enableLongPressMenu = false,
+            onClick = {},
+            testTagPrefix = "appearance_preview_",
+        )
+    }
+}
+
+/** [AppearancePreviewCard]'s grid-mode tile — read-only, so a plain centered icon-or-label [Box], not [HomeScreen][com.facetlauncher.app.ui.home.HomeScreen]'s own clickable/long-pressable grid tile. See [AppListGridDisplayMode]'s own doc for why this is a strict icon-or-text branch. */
+@Composable
+private fun AppearancePreviewGridTile(item: PlacedItem, displayMode: AppListGridDisplayMode, labelColor: Color, labelFontWeight: FontWeight) {
+    val tagSuffix = when (item) {
+        is PlacedItem.SingleApp -> item.app.packageName
+        is PlacedItem.FolderItem -> "folder_${item.folder.id}"
+    }
+    Box(modifier = Modifier.padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+        val label = when (item) {
+            is PlacedItem.SingleApp -> item.app.label
+            is PlacedItem.FolderItem -> item.folder.name
+        }
+        if (displayMode == AppListGridDisplayMode.TEXT) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = labelColor,
+                maxLines = 1,
+                fontWeight = labelFontWeight,
+                modifier = Modifier.testTag("appearance_preview_grid_label_$tagSuffix"),
+            )
+        } else {
+            when (item) {
+                is PlacedItem.SingleApp -> AppIcon(icon = item.app.icon, size = AppIconSize.TILE, contentDescription = label, modifier = Modifier.testTag("appearance_preview_grid_icon_$tagSuffix"))
+                is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
+            }
         }
     }
 }
@@ -736,6 +944,10 @@ private fun AppearanceSettingsScreenPreview() {
             onAppRowPositionChange = {},
             onAppRowPresentationChange = {},
             onAppListVerticalAlignmentChange = {},
+            onAppListLayoutChange = {},
+            onAppListColumnAlignmentChange = {},
+            onAppListGridColumnsChange = {},
+            onAppListGridDisplayModeChange = {},
         )
     }
 }
@@ -767,6 +979,10 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             onAppRowPositionChange = {},
             onAppRowPresentationChange = {},
             onAppListVerticalAlignmentChange = {},
+            onAppListLayoutChange = {},
+            onAppListColumnAlignmentChange = {},
+            onAppListGridColumnsChange = {},
+            onAppListGridDisplayModeChange = {},
         )
     }
 }

@@ -9,6 +9,10 @@ import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupSettings
@@ -164,6 +168,10 @@ class ImportBackupUseCase @Inject constructor(
             setAppLabelColorOption(settings.appLabelColorOption.toEnumOrDefault(ClockColorOption.THEME))
             setAppRowPosition(settings.appRowPosition.toEnumOrDefault(AppRowPosition.LEFT))
             setAppRowPresentation(settings.appRowPresentation.toEnumOrDefault(AppRowPresentation.ICON_AND_TEXT))
+            setAppListLayout(settings.appListLayout.toEnumOrDefault(AppListLayout.SINGLE_COLUMN))
+            setAppListColumnAlignment(settings.appListColumnAlignment.toEnumOrDefault(AppListColumnAlignment.BOTH_LEFT))
+            setAppListGridColumns(settings.appListGridColumns.toEnumOrDefault(AppListGridColumns.FOUR))
+            setAppListGridDisplayMode(settings.appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.ICONS))
             setListContentMode(settings.listContentMode.toEnumOrDefault(ListContentMode.FAVORITES))
             setAppsToShowCount(settings.appsToShowCount)
             setClockTemplateId(settings.clockTemplateId.toEnumOrDefault(ClockTemplateId.LIGHT_STACK))

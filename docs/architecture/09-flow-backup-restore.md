@@ -111,6 +111,9 @@ leaks a host allocation.
 `CURRENT_BACKUP_VERSION = 3`. Rules, as implemented: new fields get `@Serializable` defaults so
 older files still parse (`folders` and the four `*FolderPlacements` lists default to empty); a
 file whose `backupVersion` is *greater* than the current constant is refused with
-`UnsupportedVersion`; the constant bumps whenever a field is added. `ExportBackupUseCaseTest` /
+`UnsupportedVersion`; the constant only bumps for a non-additive/breaking change — a purely
+additive, defaulted, tolerant-reader field does **not** require a bump (established by
+`fontScaleOption`, reused for `appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
+`appListGridDisplayMode` — see `BackupBundle.kt`'s own doc comment). `ExportBackupUseCaseTest` /
 `ImportBackupUseCaseTest` round-trip the bundle and must be extended for every new field
 (see F11 for the fields currently missing).

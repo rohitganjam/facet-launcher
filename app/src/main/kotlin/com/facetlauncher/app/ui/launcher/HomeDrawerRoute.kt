@@ -692,6 +692,10 @@ fun HomeDrawerRoute(
                 onHomeSwipeSettle(if (homeDragAxis == Axis.HORIZONTAL) velocityXPx else velocityYPx)
             },
             appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
+            appListLayout = homeUiState.activeAppListLayout,
+            appListColumnAlignment = homeUiState.activeAppListColumnAlignment,
+            appListGridColumns = homeUiState.activeAppListGridColumns,
+            appListGridDisplayMode = homeUiState.activeAppListGridDisplayMode,
             nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
             batteryPercent = homeUiState.clockAccessories.batteryPercent,
             isCharging = homeUiState.clockAccessories.isCharging,

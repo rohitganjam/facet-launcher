@@ -96,6 +96,11 @@ data class BackupSettings(
     val appLabelColorOption: String,
     val appRowPosition: String,
     val appRowPresentation: String,
+    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, as today's unchanged single-column look). */
+    val appListLayout: String = AppListLayout.SINGLE_COLUMN.name,
+    val appListColumnAlignment: String = AppListColumnAlignment.BOTH_LEFT.name,
+    val appListGridColumns: String = AppListGridColumns.FOUR.name,
+    val appListGridDisplayMode: String = AppListGridDisplayMode.ICONS.name,
     val listContentMode: String,
     val appsToShowCount: Int,
     val clockTemplateId: String,
@@ -119,6 +124,11 @@ data class BackupFacet(
     val overrideApps: Boolean,
     val appRowPosition: String,
     val appRowPresentation: String,
+    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, inheriting the launcher-wide layout). */
+    val appListLayout: String = AppListLayout.LAUNCHER_DEFAULT.name,
+    val appListColumnAlignment: String = AppListColumnAlignment.LAUNCHER_DEFAULT.name,
+    val appListGridColumns: String = AppListGridColumns.LAUNCHER_DEFAULT.name,
+    val appListGridDisplayMode: String = AppListGridDisplayMode.LAUNCHER_DEFAULT.name,
     val listContentMode: String,
     val appsToShowCount: Int,
     val overridingFavorites: Boolean,

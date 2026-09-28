@@ -2,6 +2,10 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -73,7 +77,15 @@ data class FacetEntity(
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     /** Look/placement, not content — see [appRowPosition]'s own doc for why this is a `LAUNCHER_DEFAULT`-sentinel field rather than [overrideApps]-gated. */
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.LAUNCHER_DEFAULT,
-    /** 
+    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
+    val appListLayout: AppListLayout = AppListLayout.LAUNCHER_DEFAULT,
+    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
+    val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
+    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
+    val appListGridColumns: AppListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
+    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
+    val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
+    /**
      * Independent of [overrideApps] flag for the mode/count, but typically switched 
      * together in the UI (see [com.facetlauncher.app.ui.facets.FacetSettingsViewModel.setOverridingApps]).
      * [false] = use global default favorites; [true] = use this facet's own list.

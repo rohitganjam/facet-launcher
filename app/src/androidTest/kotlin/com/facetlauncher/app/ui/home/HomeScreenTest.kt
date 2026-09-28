@@ -25,6 +25,10 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -992,5 +996,160 @@ class HomeScreenTest {
         // Then the clock's own position is unchanged
         val clockBoundsAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
         assertEquals(clockBoundsBefore.top, clockBoundsAfter.top, 1f)
+    }
+
+    @Test
+    fun twoColumnLayoutInterleavesEvenIndexItemsLeftAndOddIndexItemsRight() {
+        // Given 4 apps in Two column layout — interleaved by original order, not first-half/
+        // second-half: app1/app3 (index 0/2) land in the left column, app2/app4 (index 1/3) in
+        // the right, each column preserving its own top-to-bottom original order.
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(4).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.TWO_COLUMN,
+                )
+            }
+        }
+
+        val app1 = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val app2 = composeRule.onNodeWithTag("home_app_icon_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val app3 = composeRule.onNodeWithTag("home_app_icon_com.example.app3", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val app4 = composeRule.onNodeWithTag("home_app_icon_com.example.app4", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+
+        // Then app1/app3 share the left column's horizontal position, app2/app4 share the right
+        // column's — a different, greater one — and each column keeps its own top-to-bottom order
+        assertEquals(app1.left, app3.left, 1f)
+        assertEquals(app2.left, app4.left, 1f)
+        assert(app1.left < app2.left)
+        assert(app1.top < app3.top)
+        assert(app2.top < app4.top)
+    }
+
+    @Test
+    fun bothLeftColumnAlignmentRendersIconBeforeLabelInBothColumns() {
+        // Given Two column layout with BOTH_LEFT — both columns render as AppRowPosition.LEFT
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(2).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.TWO_COLUMN,
+                    appListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+                )
+            }
+        }
+        // Then both columns' icon renders before their label — normal reading order in both
+        assert(
+            composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left <
+                composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left,
+        )
+        assert(
+            composeRule.onNodeWithTag("home_app_icon_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left <
+                composeRule.onNodeWithTag("home_app_label_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left,
+        )
+    }
+
+    @Test
+    fun bothRightColumnAlignmentRendersLabelBeforeIconInBothColumns() {
+        // Given Two column layout with BOTH_RIGHT — both columns render as AppRowPosition.RIGHT
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(2).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.TWO_COLUMN,
+                    appListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
+                )
+            }
+        }
+        // Then both columns flip — label before icon in both
+        assert(
+            composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left <
+                composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left,
+        )
+        assert(
+            composeRule.onNodeWithTag("home_app_label_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left <
+                composeRule.onNodeWithTag("home_app_icon_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left,
+        )
+    }
+
+    @Test
+    fun mirroredColumnAlignmentKeepsTheLeftColumnLeftAndFlipsTheRightColumnToRight() {
+        // Given Two column layout with MIRRORED — the left column stays LEFT, the right column
+        // flips to RIGHT ("left aligns to the edge, right aligns to the other edge")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(2).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.TWO_COLUMN,
+                    appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+                )
+            }
+        }
+        // Then app1 (left column) keeps icon-before-label, app2 (right column) flips to label-before-icon
+        assert(
+            composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left <
+                composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left,
+        )
+        assert(
+            composeRule.onNodeWithTag("home_app_label_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left <
+                composeRule.onNodeWithTag("home_app_icon_com.example.app2", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left,
+        )
+    }
+
+    @Test
+    fun gridModeWrapsAtTheChosenColumnCountAndDisplaysIconsByDefault() {
+        // Given Grid layout, 4 columns, icon-only display, and 5 apps (one wraps to a second row)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(5).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.GRID,
+                    appListGridColumns = AppListGridColumns.FOUR,
+                    appListGridDisplayMode = AppListGridDisplayMode.ICONS,
+                )
+            }
+        }
+
+        // Then the first 4 apps share one row (same top) and the 5th wraps to the next row
+        val app1Top = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
+        val app4Top = composeRule.onNodeWithTag("home_app_icon_com.example.app4", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
+        val app5Top = composeRule.onNodeWithTag("home_app_icon_com.example.app5", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
+        assertEquals(app1Top, app4Top, 1f)
+        assert(app5Top > app1Top)
+
+        // And icon-only mode renders the icon but not the label
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun gridTextDisplayModeRendersLabelsInsteadOfIcons() {
+        // Given Grid layout with text-only display
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(5).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.GRID,
+                    appListGridColumns = AppListGridColumns.FOUR,
+                    appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+                )
+            }
+        }
+
+        // Then the label renders but not the icon
+        composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).assertDoesNotExist()
     }
 }

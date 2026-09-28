@@ -3375,3 +3375,103 @@ existing Facets flow diagram, which this work only adds a new entry arrow into (
   `activateFacetFromDeepLink delegates the parsed id to ActivateFacetByIdUseCase`, and
   `activateFacetFromDeepLink is a no-op for a uri that isn't a facet deep link`. Full unit suite,
   `detekt`, and `compileDebugKotlin` all pass.
+
+---
+
+## ✅ Home App List: Two-Column & Grid Layouts + Cap Raise to 12 — complete (direct request)
+
+Home's app list (Favorites/Recents/Most Used) is a single vertical column today, capped at 6 items
+(`AppListLimits.MAX_FAVORITES`/`MAX_APPS_TO_SHOW`). Adding two more layout options — **two columns**
+and **grid** — and raising the cap to 12 for all three list-content modes, now that the app-list
+overflow-scroll fix (above, this session) makes a longer list scroll correctly instead of fighting
+the Drawer's swipe-open gesture. Four new per-facet "look" settings, each following the existing
+sentinel-override pattern exactly (`AppRowPosition`/`AppRowPresentation`/`DockDisplayMode`/
+`AppListVerticalAlignment` are the direct templates — see `FacetEntity.resolveSentinel`).
+
+Decided: 2-column split is **interleaved** by original order (index 0,2,4… left column top to
+bottom; 1,3,5… right column top to bottom), not first-half/second-half. Each layout mode gets its
+own alignment/presentation controls in Settings → Appearance, swapped in based on which layout is
+selected (mirrors how "Apps to show" is already hidden for Favorites mode). Grid column count is
+user-choosable (4/5/6). Grid gets its own icon/text display setting shaped like `DockDisplayMode`
+(icons-only or text-only, no combined option) — separate from the Dock's own setting.
+
+New enums (`data/model/LauncherSettings.kt`): `AppListLayout` (SINGLE_COLUMN/TWO_COLUMN/GRID),
+`AppListColumnAlignment` (BOTH_LEFT/BOTH_RIGHT/MIRRORED — two-column only), `AppListGridColumns`
+(FOUR/FIVE/SIX, `Int`-backed like `DrawerGridSize`), `AppListGridDisplayMode` (ICONS/TEXT — grid
+only), each with a `LAUNCHER_DEFAULT` sentinel.
+
+- [x] **Data model**: 4 new fields on `LauncherSettings` (real defaults) and `FacetEntity`
+  (`LAUNCHER_DEFAULT` defaults); `SettingsRepository` keys/read-mapping/setters; `FacetRepository`
+  direct-`copy()` setters (no flag flip, same as the sibling sentinel fields); resolved `active*`/
+  resolved-`val` properties via the existing `resolveSentinel` in `HomeUiState`,
+  `FacetSettingsViewModel`, `FacetCarouselViewModel`, `AppearanceSettingsViewModel` (+ its 4 new
+  setter functions), `HomeAppsListSettingsViewModel`.
+- [x] **Migration**: `FacetDatabase.VERSION` 24→25, `MIGRATION_24_25` adding the 4 columns
+  (`ALTER TABLE facets ADD COLUMN ... DEFAULT 'LAUNCHER_DEFAULT'`, no data-reset step needed —
+  brand-new columns).
+- [x] **Backup**: `BackupSettings`/`BackupFacet` gain the 4 fields (global real-default,
+  per-facet `LAUNCHER_DEFAULT`-default tolerant-reader); `BackupMapping.kt` export/import for the
+  per-facet side; `ExportBackupUseCase`/`ImportBackupUseCase` for the global side. No
+  `CURRENT_BACKUP_VERSION` bump (purely additive, same precedent as `fontScaleOption`).
+- [x] **Cap raise**: `AppListLimits.MAX_FAVORITES`/`MAX_APPS_TO_SHOW` 6→12. `AppearancePreviewCard`
+  needs its own decoupled small preview-row cap (independent of `MAX_FAVORITES`) so its fixed-size
+  scaled card doesn't visually overflow once the real cap grows.
+- [x] **`HomeScreen.kt` rendering**: outer scroll `Column` (alignment/`heightIn`/
+  `onGloballyPositioned`/`home_app_list_scroll_region` — what the app-list nested-scroll fix
+  depends on) stays unconditional; only its `verticalScroll` presence (grid owns its own scroll,
+  the other two don't) and inner content switch on `appListLayout`. New `HomeAppTwoColumnList`
+  (interleaved split, reuses `AppRow`/`FolderRow` with `AppRowPosition.LEFT`/`RIGHT` per column —
+  no new mirroring logic needed) and `HomeAppGrid`/`HomeAppGridTile`/`HomeFolderGridTile`
+  (`LazyVerticalGrid(columns = GridCells.Fixed(n))`, tile look modeled on the App Drawer's
+  `DrawerGridTile` but branching `AppListGridDisplayMode` like `DockIcon` branches
+  `DockDisplayMode`, not `DrawerGridTile`'s own `showLabel: Boolean`). Verified: `LazyVerticalGrid`
+  dispatches through the same nested-scroll primitive as `verticalScroll`, so
+  `appListNestedScrollConnection` needs zero changes; bounds-reporting
+  (`onAppListBoundsChange`) needs zero new code since it's on the outer, mode-agnostic `Column`.
+  `useCompactAppSpacing` doesn't apply to Grid (its tiles don't take `verticalPadding`/`iconSize`).
+- [x] **Settings UI** (`AppearanceSettingsScreen.kt`'s "DOCK & HOME" card): new always-visible
+  "App list layout" `LabeledDropdownRow`, then conditional rows per mode — Single column keeps the
+  existing position/presentation rows; Two columns shows a new "Column alignment" row (position
+  row hidden) but keeps presentation; Grid shows new "Grid columns"/"Grid display" rows (both
+  position and presentation hidden). `AppListVerticalAlignment` row stays visible always.
+  `AppearancePreviewCard` (its own doc: "deliberately reimplemented, not shared") gets its own
+  copy of the 3-way branch. `HomeSurfacePreview.kt` (shared by Home Apps List/Dock settings) gets
+  the same branch + 4 new params; its `maxAppRows` param renamed to `maxAppItems` (rows stop being
+  the right unit once grid/2-column exist).
+- [x] **Tests**: `FacetEntityTest` gains direct `resolveSentinel` coverage (currently only tests
+  `resolveOverride` — a real pre-existing gap); `FacetSettingsViewModelTest`/
+  `SettingsRepositoryTest`/`FacetRepositoryTest`/backup tests get cases for the 4 new fields,
+  mirroring `appRowPosition`'s existing ones; new `FacetDatabaseMigrationTest` case for
+  `MIGRATION_24_25`; `HomeScreenTest` gains 3 cases (interleaved split lands the right items in
+  the right column; each `AppListColumnAlignment` renders the expected per-column icon/label
+  order; grid mode renders the chosen column count and respects `AppListGridDisplayMode`).
+- [x] **Docs**: `02-persistence-room.md` (ER diagram, migration table, key/writer tables, the
+  "third resolution shape" field list), `03` (Home state graph — 4 new `HomeUiState` properties),
+  `13-flow-facets-theme-notifications-onboarding.md` (`LOOK` subgraph + per-field Settings-row-
+  title bullets), `04` only if new composables land in a new file; `TEST_REGISTRY.md` regenerated.
+
+Full design/plan detail: see chat history (this session) — a research-backed plan was reviewed and
+approved before starting.
+
+**Real bugs found on-device (post-merge, 2026-09-28):**
+- `AppearancePreviewCard` and the Facet Carousel's own preview card capped favorites at a flat
+  `PREVIEW_HOME_APP_COUNT = 6` regardless of layout — once the cap raise shipped, Grid/Two-column
+  previews showed mostly empty card space despite 12 real favorites configured. Fixed with a
+  layout-aware `previewItemCap` (row-budget × items-per-row), duplicated in both files per their
+  own "deliberately reimplemented, not shared" precedent.
+- **`FacetCarouselScreen`'s `FacetPreviewPage` never read a facet's own `appListLayout` at all** —
+  it always rendered the old single-column `AppRow` list no matter what layout that facet actually
+  used on real Home, and had no cap (would overflow with 12 items). This was a real gap in the
+  original two-column/grid feature: `FacetCarouselViewModel`'s `appListLayout(facetId)`/etc.
+  accessors already existed but were never wired into the carousel's own preview. Fixed by adding
+  the same 3-way branch (`FacetPreviewAppList`/`FacetPreviewRow`/`FacetPreviewGridTile`).
+- Both grid branches used `Arrangement.SpaceEvenly`, which stretched an incomplete last row's
+  items across the full card width instead of packing them left — mismatched
+  `HomeScreen`'s real `LazyVerticalGrid(GridCells.Fixed(n))` behavior. Fixed with fixed
+  equal-weight slots per column (empty ones left blank).
+- New coverage: `AppearanceSettingsScreenTest` (`previewCardRendersGridLayoutWithTheChosenColumnCount`,
+  `previewCardGridDisplayModeSwitchesBetweenIconsAndText`) and `FacetCarouselScreenTest`
+  (`previewCardRendersTheFacetsOwnGridLayoutInsteadOfAlwaysSingleColumn`,
+  `previewCardGridDisplayModeShowsTextInsteadOfIconsWhenChosen`) — all four assert the left-packed
+  incomplete-row bounds directly, so a regression back to `SpaceEvenly` or a dropped layout branch
+  would fail them. `TEST_REGISTRY.md` regenerated.

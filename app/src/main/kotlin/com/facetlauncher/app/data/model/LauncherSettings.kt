@@ -122,6 +122,75 @@ enum class AppListVerticalAlignment(@param:StringRes val displayNameRes: Int) {
 }
 
 /**
+ * Home app list's own layout — separate from the App Drawer's [DrawerPresentation], deliberately
+ * not shared (Home's list is a short, bounded, curated list; the Drawer's is the full alphabetical
+ * catalog). `SINGLE_COLUMN` is today's unchanged default. `TWO_COLUMN` splits the list interleaved
+ * by original order (index 0,2,4… left column top-to-bottom; 1,3,5… right, see
+ * [AppListColumnAlignment]). `GRID` renders it as a [AppListGridColumns]-wide grid instead of rows.
+ * [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape.
+ */
+enum class AppListLayout(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_list_layout_launcher_default),
+    SINGLE_COLUMN(R.string.app_list_layout_single_column),
+    TWO_COLUMN(R.string.app_list_layout_two_column),
+    GRID(R.string.app_list_layout_grid),
+}
+
+/**
+ * Only meaningful when [AppListLayout.TWO_COLUMN] is active. `BOTH_LEFT`/`BOTH_RIGHT` render every
+ * row in both columns with that same [AppRowPosition] (icon-then-label or label-then-icon, packed
+ * to each column's own start/end edge). `MIRRORED` renders the left column `LEFT`-style and the
+ * right column `RIGHT`-style, so each column's icon hugs the screen's own outer edge. [LAUNCHER_DEFAULT]
+ * is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape.
+ */
+enum class AppListColumnAlignment(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_list_column_alignment_launcher_default),
+    BOTH_LEFT(R.string.app_list_column_alignment_both_left),
+    BOTH_RIGHT(R.string.app_list_column_alignment_both_right),
+    MIRRORED(R.string.app_list_column_alignment_mirrored),
+}
+
+/**
+ * Maps this two-column alignment to the (left column, right column) [AppRowPosition] pair each
+ * column's own rows should render with — [AppRow][com.facetlauncher.app.ui.home.AppRow]/
+ * [FolderRow][com.facetlauncher.app.ui.home.FolderRow] already fully implement the "pack to my
+ * own container's edge + reverse icon/label order" mirroring a column needs via `LEFT`/`RIGHT`,
+ * so this just picks which of those two existing values each column uses — no new mirroring
+ * logic needed. Shared by [com.facetlauncher.app.ui.home.HomeScreen]'s own two-column list and
+ * the Appearance preview card, so the two never drift apart.
+ */
+fun AppListColumnAlignment.toColumnPositions(): Pair<AppRowPosition, AppRowPosition> = when (this) {
+    AppListColumnAlignment.BOTH_LEFT -> AppRowPosition.LEFT to AppRowPosition.LEFT
+    AppListColumnAlignment.BOTH_RIGHT -> AppRowPosition.RIGHT to AppRowPosition.RIGHT
+    // The original "left aligns to the edge, right aligns to the other edge" request.
+    AppListColumnAlignment.MIRRORED -> AppRowPosition.LEFT to AppRowPosition.RIGHT
+    // Never reached — callers always pass an already-resolved effective value, same as
+    // AppRowPosition's own identical LAUNCHER_DEFAULT handling.
+    AppListColumnAlignment.LAUNCHER_DEFAULT -> AppRowPosition.LEFT to AppRowPosition.LEFT
+}
+
+/** Only meaningful when [AppListLayout.GRID] is active — how many tiles wide the grid renders. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
+enum class AppListGridColumns(val columns: Int, @param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(0, R.string.app_list_grid_columns_launcher_default),
+    FOUR(4, R.string.app_list_grid_columns_four),
+    FIVE(5, R.string.app_list_grid_columns_five),
+    SIX(6, R.string.app_list_grid_columns_six),
+}
+
+/**
+ * Only meaningful when [AppListLayout.GRID] is active — what a grid tile renders. Deliberately
+ * shaped like [DockDisplayMode] (icons-only or text-only, no combined option) rather than
+ * [AppRowPresentation]'s three-way shape, and a separate setting from the Dock's own —
+ * Home's grid tiles are visually distinct from the Dock. [LAUNCHER_DEFAULT] is facet-only — see
+ * [DockDisplayMode]'s own doc for the sentinel's exact shape.
+ */
+enum class AppListGridDisplayMode(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_list_grid_display_mode_launcher_default),
+    ICONS(R.string.app_list_grid_display_mode_icons),
+    TEXT(R.string.app_list_grid_display_mode_text),
+}
+
+/**
  * Which of the wallpaper's three Material You tonal roles (system_accent1/2/3) backs the accent
  * color when [LauncherSettings.accentFromSystem] is `true`. Only meaningful in that case, the
  * mirror image of [LauncherSettings.customAccentSwatch]'s "only meaningful when accentFromSystem
@@ -264,6 +333,14 @@ data class LauncherSettings(
      * top (right below the clock's grab handle).
      */
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+    /** The default every facet inherits unless it overrides it — see [AppListLayout]'s own doc. */
+    val appListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
+    /** Only meaningful while [appListLayout] is [AppListLayout.TWO_COLUMN] — see [AppListColumnAlignment]'s own doc. */
+    val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+    /** Only meaningful while [appListLayout] is [AppListLayout.GRID] — see [AppListGridColumns]'s own doc. */
+    val appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
+    /** Only meaningful while [appListLayout] is [AppListLayout.GRID] — see [AppListGridDisplayMode]'s own doc. */
+    val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     /**
      * Home clock's scale factor — the default every facet inherits.
      * Uniform scaling ensures proportions are preserved.

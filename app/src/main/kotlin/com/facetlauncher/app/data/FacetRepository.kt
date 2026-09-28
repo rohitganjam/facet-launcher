@@ -2,6 +2,10 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -210,6 +214,22 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(appListVerticalAlignment = alignment))
     }
 
+    suspend fun setAppListLayout(facet: FacetEntity, layout: AppListLayout) {
+        facetDao.update(facet.copy(appListLayout = layout))
+    }
+
+    suspend fun setAppListColumnAlignment(facet: FacetEntity, alignment: AppListColumnAlignment) {
+        facetDao.update(facet.copy(appListColumnAlignment = alignment))
+    }
+
+    suspend fun setAppListGridColumns(facet: FacetEntity, columns: AppListGridColumns) {
+        facetDao.update(facet.copy(appListGridColumns = columns))
+    }
+
+    suspend fun setAppListGridDisplayMode(facet: FacetEntity, mode: AppListGridDisplayMode) {
+        facetDao.update(facet.copy(appListGridDisplayMode = mode))
+    }
+
     suspend fun setOverridingFavorites(facet: FacetEntity, overriding: Boolean) {
         facetDao.update(facet.copy(overridingFavorites = overriding))
     }
@@ -217,7 +237,8 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
     /**
      * Seeds the facet's app *content* settings from effective values and toggles the override
      * flag. Atomic upsert to avoid clobbering. `appRowPosition`/`appRowPresentation`/
-     * `appListVerticalAlignment` are no longer part of this bundle — they're "look" fields, edited
+     * `appListVerticalAlignment`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
+     * `appListGridDisplayMode` are no longer part of this bundle — they're "look" fields, edited
      * from Settings → Appearance independently now, resolved via their own `LAUNCHER_DEFAULT`
      * sentinel regardless of [overriding] (see [setAppRowPosition]/[setAppRowPresentation]/
      * [setAppListVerticalAlignment] and [com.facetlauncher.app.data.local.resolveSentinel]).
