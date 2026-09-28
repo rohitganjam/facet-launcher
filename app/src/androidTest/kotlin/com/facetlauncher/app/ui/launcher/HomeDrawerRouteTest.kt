@@ -57,6 +57,7 @@ import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
@@ -68,6 +69,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFolderToDockUseCase
@@ -94,6 +96,7 @@ import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
+import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
@@ -140,6 +143,8 @@ class HomeDrawerRouteTest {
         onNavigateToManageFacets: () -> Unit = {},
         onboardingCompleted: Boolean = false,
         privateSpaceState: PrivateSpaceState = PrivateSpaceState.NotConfigured,
+        /** How many of [apps] to seed as default favorites — more than a screen's worth forces the app list to overflow and scroll. */
+        favoriteCount: Int = 1,
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -149,8 +154,8 @@ class HomeDrawerRouteTest {
             // LauncherViewModel's EnsureActiveFacetUseCase (which creates the facet and
             // sets activeFacetId) writes to a database/DataStore HomeViewModel never sees,
             // leaving its own activeFacet permanently null and its app list permanently
-            // empty (see chat history: this is why "FAVORITES" never rendered no matter how
-            // long a test waited for it).
+            // empty (see chat history: this is why home_app_list_scroll_region never rendered
+            // no matter how long a test waited for it).
             val database = remember {
                 Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
             }
@@ -198,9 +203,9 @@ class HomeDrawerRouteTest {
             val defaultFavoriteAppRepository = remember {
                 DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
                     // Never seeded otherwise — observeDefaultFavorites() combines DB rows against
-                    // installed apps, so with zero rows the list (and "FAVORITES") stays
-                    // permanently empty regardless of how fast/slow the installed-apps side is.
-                    runBlocking { repo.addFavorite(apps.first(), position = 0) }
+                    // installed apps, so with zero rows the app list stays permanently empty
+                    // regardless of how fast/slow the installed-apps side is.
+                    runBlocking { apps.take(favoriteCount).forEachIndexed { index, app -> repo.addFavorite(app, position = index) } }
                 }
             }
             val homeViewModel = remember {
@@ -256,6 +261,8 @@ class HomeDrawerRouteTest {
                         FolderRepository(database.folderDao(), appRepository),
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
+                    SyncFacetShortcutsUseCase(facetRepository, FacetShortcutRepository(context)),
+                    ActivateFacetByIdUseCase(facetRepository, settingsRepository),
                     settingsRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
@@ -424,7 +431,7 @@ class HomeDrawerRouteTest {
         // (see above), the installed-apps side is instant, so this is just Room/DataStore's own
         // ordinary emission latency, not a real system call — a short timeout is enough.
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -437,7 +444,7 @@ class HomeDrawerRouteTest {
     fun swipingUpPastHalfwayCommitsTheDrawerOpen() {
         // Given the launcher starts on Home
         setContent()
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
 
         // When swiping up (Compose test's default swipeUp() travels most of the node's height,
         // well past the halfway commit point)
@@ -474,6 +481,57 @@ class HomeDrawerRouteTest {
     }
 
     @Test
+    fun swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer() {
+        // Given far more favorites than fit on one screen (real bug found on-device: before this
+        // fix, dragging anywhere on Home's surface — including inside the app list itself — always
+        // opened the Drawer/shade, so an overflowing favorites list could never actually be
+        // scrolled; see appListNestedScrollConnection's own doc)
+        setContent(favoriteCount = apps.size)
+        val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
+        composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).assertExists()
+
+        // When dragging up within the app list's own scroll region (not empty space) by well
+        // under its own overflow — one continuous drag, like this file's other regression tests,
+        // rather than a real-time-sensitive high-level swipeUp() whose exact travel/velocity
+        // could itself cross the drawer's own commit threshold once leftover kicks in
+        composeRule.onRoot().performTouchInput {
+            down(listBounds.center)
+            moveTo(listBounds.center - Offset(0f, listBounds.height * 0.6f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the list itself scrolled — the first favorite is no longer visible — and the
+        // drawer never opened. assertIsNotDisplayed(), not assertDoesNotExist(): this is a plain
+        // verticalScroll Column, not a Lazy list, so every row stays composed (just scrolled off
+        // screen) regardless of scroll position.
+        composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).assertIsNotDisplayed()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingUpFurtherOnceTheAppListIsFullyScrolledStillOpensTheDrawer() {
+        // Given far more favorites than fit on one screen
+        setContent(favoriteCount = apps.size)
+        val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
+        val rootHeight = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.height
+
+        // When dragging up by far more than the list could ever consume in one gesture — enough
+        // to both exhaust its own scroll range and carry the remaining leftover past the drawer's
+        // own commit threshold, in one continuous drag
+        composeRule.onRoot().performTouchInput {
+            down(listBounds.center)
+            moveTo(listBounds.center - Offset(0f, rootHeight * 3f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the leftover, once the list had nothing left to consume, still opens the drawer —
+        // same as swiping from empty space
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+    }
+
+    @Test
     fun releasingBeforeHalfwaySpringsBackClosed() {
         // Given the launcher starts on Home
         setContent()
@@ -487,7 +545,7 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then it springs back to Home rather than opening
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
@@ -504,7 +562,7 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then it returns to Home
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
@@ -532,7 +590,7 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then it still fully closes back to Home, not left partially open
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
@@ -572,7 +630,7 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then it closes back to Home
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
@@ -599,7 +657,7 @@ class HomeDrawerRouteTest {
         // And a second back press then closes the Drawer to Home, same as normal
         Espresso.pressBack()
         settleAnimation()
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
@@ -1016,11 +1074,11 @@ class HomeDrawerRouteTest {
         // Given onboarding has just completed
         setContent(onboardingCompleted = true)
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
         }
 
         // Then the one-time "make Facet your home screen" prompt shows over real Home itself —
-        // not a mocked-up preview card, so Home's own real content (e.g. "FAVORITES") is already
+        // not a mocked-up preview card, so Home's own real content (the app list) is already
         // visible underneath it (HomeViewModel's own combine is real async work, same as
         // everywhere else in this file — not reliably caught by a single waitForIdle()).
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -1047,7 +1105,7 @@ class HomeDrawerRouteTest {
         // Given onboarding has just completed
         setContent(onboardingCompleted = true)
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("FAVORITES").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
         }
 
         // The one-time "make Facet your home screen" prompt shows first — dismiss it so it clears
@@ -1075,7 +1133,7 @@ class HomeDrawerRouteTest {
     fun gestureHintDoesNotShowBeforeOnboardingHasCompleted() {
         // Given onboarding has not completed (the default for every other test in this file)
         setContent(onboardingCompleted = false)
-        composeRule.onNodeWithText("FAVORITES").assertExists()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
 
         // Then no gesture hint overlay renders
         composeRule.onNodeWithTag("gesture_hint_overlay").assertDoesNotExist()

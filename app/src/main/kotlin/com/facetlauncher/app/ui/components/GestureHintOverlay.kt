@@ -24,7 +24,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Scrim
+import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * One-time gesture-hint overlay, shown over Home right after onboarding finishes — see
@@ -40,11 +40,17 @@ fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            // Bumped to 80% opacity (from Scrim's own ~28%/58% light/dark default) — at the
-            // default strength Home showed through too strongly for the hint text to read
-            // clearly over it (see chat history). Scoped to this overlay only, not the shared
-            // Scrim token other surfaces (App Drawer, the default-launcher sheet) still use.
-            .background(Scrim.copy(alpha = 0.8f))
+            // SurfaceContainer, not Scrim — real bug found on-device: Scrim is a dark-tinted
+            // dimmer in *both* themes (only its alpha/exact shade differs), so pushing it to a
+            // high alpha for readability produced a near-opaque *dark* backdrop even in light
+            // theme, clashing with Ink's light-theme (dark) text color — dark text on a dark
+            // backdrop. SurfaceContainer is the token that actually flips light/dark (near-white/
+            // near-black — this app's own "page background, with Surface elements on top of it"
+            // pairing, see its own doc), matching what Ink is designed to read against everywhere
+            // else, while staying visually distinct from the "Got it" button's own Surface
+            // background below rather than blending into an identical backdrop. High but not full
+            // opacity keeps this reading as an overlay over Home rather than an opaque panel.
+            .background(SurfaceContainer.copy(alpha = 0.92f))
             .testTag("gesture_hint_overlay")
             .clickable(onClick = onDismiss)
             .pointerInput(Unit) { detectDragGestures(onDragStart = { onDismiss() }) { _, _ -> } },

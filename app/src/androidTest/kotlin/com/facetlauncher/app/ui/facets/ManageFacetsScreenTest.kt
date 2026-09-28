@@ -158,6 +158,25 @@ class ManageFacetsScreenTest {
     }
 
     @Test
+    fun tappingTheRowNavigatesToEditFacet() {
+        // The drag handle and the "..." overflow menu are the only other interactive elements on
+        // this row — tapping anywhere else on it should open that facet's own settings directly.
+        var firstId = 0L
+        var editedId = -1L
+        setContent(
+            onEditFacet = { editedId = it },
+            seed = { facetRepository, _ ->
+                firstId = facetRepository.addFacet().id
+                facetRepository.addFacet()
+            },
+        )
+
+        composeRule.onNodeWithTag("facet_reorder_row_$firstId").performClick()
+
+        assertEquals(firstId, editedId)
+    }
+
+    @Test
     fun applyFacetFromTheOverflowMenuActivatesTheFacetAndNavigatesHome() {
         var secondId = 0L
         var applied = false

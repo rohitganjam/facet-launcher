@@ -69,6 +69,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Facet deep links (`facetlauncher://facet/{id}`) — lets an external app or
+                 automation tool switch the active facet without going through our own dynamic
+                 shortcuts (data/FacetShortcutRepository.kt). A separate filter, not folded into the
+                 HOME one above, since a custom-scheme ACTION_VIEW link and the HOME category are
+                 unrelated match conditions. See domain/ActivateFacetByIdUseCase.kt. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:scheme="facetlauncher"
+                    android:host="facet" />
+            </intent-filter>
         </activity>
 
         <!-- F13 Notification badges — special-access permission, granted per-app via system

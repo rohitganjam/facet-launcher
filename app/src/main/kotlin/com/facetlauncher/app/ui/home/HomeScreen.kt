@@ -73,7 +73,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -100,7 +99,6 @@ import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
-import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppContextMenu
@@ -140,7 +138,7 @@ internal fun PlacedItem.stableKey(): Any = when (this) {
 
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
- * [appListItems] (Favorites/Recents/Most Used depending on [listContentMode], from
+ * [appListItems] (Favorites/Recents/Most Used depending on the active list content mode, from
  * [com.facetlauncher.app.data.FavoriteAppRepository] or
  * [com.facetlauncher.app.data.UsageStatsRepository]) and [dockApps] (from
  * [com.facetlauncher.app.data.DockAppRepository]) are real persisted state — this composable
@@ -152,7 +150,6 @@ fun HomeScreen(
     dockApps: List<PlacedItem>,
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
-    listContentMode: ListContentMode = ListContentMode.FAVORITES,
     appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     showUsageAccessPrompt: Boolean = false,
@@ -231,6 +228,18 @@ fun HomeScreen(
     onClockWidgetLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit = { _, _ -> },
     onClockWidgetNestedScrollStop: () -> Unit = {},
     onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit = { _, _ -> },
+    /**
+     * Reports the app list's own scrollable viewport bounds, in the same root-relative coordinate
+     * space [onClockWidgetBoundsChange] uses — so [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s
+     * swipe-gesture detector can exclude it from its `PointerEventPass.Initial` claim exactly the way
+     * it already does for a hosted clock widget's own bounds (see that param's doc for why the
+     * Initial-pass claim otherwise wins before a descendant's own scroll ever gets a chance). Real
+     * bug found on-device: once the favorites/recents/most-used list had more rows than fit on
+     * screen, dragging within it always opened the Drawer/notification shade instead of scrolling,
+     * since the swipe detector claimed every vertical drag on Home's surface regardless of where it
+     * started. `null` whenever the list hasn't been measured yet.
+     */
+    onAppListBoundsChange: (Rect?) -> Unit = {},
     appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
@@ -310,6 +319,8 @@ fun HomeScreen(
     var rootOriginInRoot by remember { mutableStateOf<Offset?>(null) }
     var clockBoxSize by remember { mutableStateOf<IntSize?>(null) }
     var clockBoxOriginInRoot by remember { mutableStateOf<Offset?>(null) }
+    var appListSize by remember { mutableStateOf<IntSize?>(null) }
+    var appListOriginInRoot by remember { mutableStateOf<Offset?>(null) }
 
     // NaN until the first drag event captures the offset between where the finger grabbed and the
     // scale that point implies, so the clock doesn't pop on the first move.
@@ -657,6 +668,7 @@ fun HomeScreen(
                         // Inert (never binds) whenever there's ample room below the handle — only
                         // clips/scrolls in the genuine overflow case, which today has no fallback at all.
                         .heightIn(max = with(density) { (contentHeightPx - handlePx).coerceAtLeast(0f).toDp() })
+                        .onGloballyPositioned { appListSize = it.size; appListOriginInRoot = it.positionInRoot() }
                         .verticalScroll(rememberScrollState())
                         .testTag("home_app_list_scroll_region"),
                 ) {
@@ -671,27 +683,6 @@ fun HomeScreen(
                             .onGloballyPositioned { appListNaturalHeightPx = it.size.height.toFloat() }
                             .graphicsLayer { alpha = appListAppearAlpha.value },
                     ) {
-                        if (appListItems.isNotEmpty()) {
-                            val listLabelColor = Muted
-                            Text(
-                                text = when (listContentMode) {
-                                    ListContentMode.FAVORITES -> stringResource(R.string.home_list_header_favorites)
-                                    ListContentMode.RECENTS -> stringResource(R.string.home_list_header_recents)
-                                    ListContentMode.MOST_USED -> stringResource(R.string.home_list_header_most_used)
-                                },
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    shadow = homeAppLabelShadow(listLabelColor),
-                                    // See AppRow's own identical `when` for why LAUNCHER_DEFAULT falls in with LEFT.
-                                    textAlign = when (appRowPosition) {
-                                        AppRowPosition.RIGHT -> TextAlign.End
-                                        AppRowPosition.CENTER -> TextAlign.Center
-                                        AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> TextAlign.Start
-                                    },
-                                ),
-                                color = listLabelColor,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                            )
-                        }
                         if (showUsageAccessPrompt) {
                             UsageAccessStrip(onClick = onUsageAccessPromptClick)
                         } else {
@@ -1026,6 +1017,21 @@ fun HomeScreen(
             )
         }
 
+        // Reports the app list's own scrollable viewport bounds — see onAppListBoundsChange's own
+        // doc. null whenever it hasn't been measured yet.
+        SideEffect {
+            val size = appListSize
+            val origin = appListOriginInRoot
+            val rootOrigin = rootOriginInRoot
+            onAppListBoundsChange(
+                if (size != null && origin != null && rootOrigin != null) {
+                    Rect(offset = origin - rootOrigin, size = size.toSize())
+                } else {
+                    null
+                },
+            )
+        }
+
         // Adjustment menu sheet
         AnimatedVisibility(
             visible = clockAdjustMode == ClockAdjustMode.MENU,
@@ -1081,7 +1087,7 @@ fun HomeScreen(
     }
 }
 
-/** README `4p`'s shared permission-denied/empty-state strip styling, with a real tap target — shown when [listContentMode] needs `PACKAGE_USAGE_STATS` and it isn't granted. */
+/** README `4p`'s shared permission-denied/empty-state strip styling, with a real tap target — shown when the active list content mode needs `PACKAGE_USAGE_STATS` and it isn't granted. */
 @Composable
 private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(

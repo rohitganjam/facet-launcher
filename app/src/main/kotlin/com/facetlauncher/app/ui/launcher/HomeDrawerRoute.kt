@@ -331,6 +331,14 @@ fun HomeDrawerRoute(
     // PRD F15 — reported by HomeScreen's own onClockWidgetBoundsChange; see its doc and
     // detectHomeSwipeGestures' own shouldClaim param for why this exists.
     var clockWidgetBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    // Reported by HomeScreen's own onAppListBoundsChange — same reasoning as
+    // clockWidgetBoundsInHomeRoot above, for the favorites/recents/most-used list's own scroll.
+    var appListBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    // Whether the app list's own scroll has bottomed/topped out and is handing leftover drag to
+    // this route's drawer-open gesture — see appListNestedScrollConnection's own doc. Mirrors
+    // nestedScrollFlingHandledSettle's shape, just gating onHomeSwipeStart/onHomeSwipeSettle
+    // instead of skipping a duplicate settle().
+    var appListLeftoverDragActive by remember { mutableStateOf(false) }
     val velocityTracker = remember { VelocityTracker() }
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -553,6 +561,43 @@ fun HomeDrawerRoute(
         }
     }
 
+    // The app list's own scroll's nested-scroll counterpart to the App Drawer's nestedScrollConnection
+    // above, but the other direction: rather than intercepting *before* the list scrolls (to close an
+    // already-open surface once the list's own scroll is exhausted), this only ever sees *leftover*
+    // scroll the list itself couldn't consume — real bug found on-device: once the favorites/recents/
+    // most-used list overflowed its viewport, every drag inside it opened the Drawer/shade instead of
+    // scrolling, since detectHomeSwipeGestures' own PointerEventPass.Initial claim (see its own doc)
+    // otherwise wins the whole gesture before the list's `verticalScroll` ever sees it — excluding the
+    // list's own bounds via appListBoundsInHomeRoot (shouldClaim below) fixes that, but then the list
+    // would swallow *every* vertical drag, even past its own top/bottom, with nothing left to open the
+    // Drawer at all. This is what hands that leftover back once the list bottoms/tops out, exactly
+    // mirroring PRD F15's onClockWidgetLeftoverScroll/Fling bridge for a hosted clock widget's own
+    // ListView — just via Compose's own NestedScrollConnection instead of a raw View's legacy nested-
+    // scroll protocol, so no sign negation is needed here (Compose's own delta convention already
+    // matches onHomeSwipeDrag's raw dx/dy). Deliberately not remember()'d — it closes over the local
+    // onHomeSwipeStart/onHomeSwipeDrag/onHomeSwipeSettle functions above, which are redefined every
+    // recomposition; a remembered instance would freeze whatever generation of their own captured
+    // state existed on its first creation instead of always reading the live one.
+    val appListNestedScrollConnection = object : NestedScrollConnection {
+        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+            if (source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
+            if (!appListLeftoverDragActive) {
+                appListLeftoverDragActive = true
+                onHomeSwipeStart()
+            }
+            onHomeSwipeDrag(0f, available.y)
+            return available
+        }
+
+        override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+            if (appListLeftoverDragActive) {
+                appListLeftoverDragActive = false
+                onHomeSwipeSettle(available.y)
+            }
+            return super.onPreFling(available)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -563,7 +608,6 @@ fun HomeDrawerRoute(
     ) {
         HomeScreen(
             appListItems = homeUiState.appListItems,
-            listContentMode = homeUiState.activeListContentMode,
             appRowPosition = homeUiState.activeAppRowPosition,
             appRowPresentation = homeUiState.activeAppRowPresentation,
             showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
@@ -626,6 +670,7 @@ fun HomeDrawerRoute(
                 }
             },
             onClockWidgetBoundsChange = { clockWidgetBoundsInHomeRoot = it },
+            onAppListBoundsChange = { appListBoundsInHomeRoot = it },
             onClockWidgetNestedScrollStart = {
                 nestedScrollFlingHandledSettle = false
                 onHomeSwipeStart()
@@ -707,13 +752,19 @@ fun HomeDrawerRoute(
                         null
                     }
                 }
+                // Receives the app list's own leftover vertical scroll once it bottoms/tops out —
+                // see appListNestedScrollConnection's own doc.
+                .nestedScroll(appListNestedScrollConnection)
                 .pointerInput(draggingHandle, clockAdjustMode) {
                     // Suppress screen-wide gestures if we're in any adjustment mode
                     // or actively dragging a handle.
                     if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
 
                     detectHomeSwipeGestures(
-                        shouldClaim = { position -> clockWidgetBoundsInHomeRoot?.contains(position) != true },
+                        shouldClaim = { position ->
+                            clockWidgetBoundsInHomeRoot?.contains(position) != true &&
+                                appListBoundsInHomeRoot?.contains(position) != true
+                        },
                         onDragStart = {
                             nestedScrollFlingHandledSettle = false
                             onHomeSwipeStart()

@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 
 data class FacetSettingsUiState(
     val facet: FacetEntity? = null,
+    val activeFacetId: Long = 0L,
     /** This facet's own favorites — only meaningful/used while [isOverridingApps] is true. */
     val favorites: List<PlacedItem> = emptyList(),
     /** The launcher-wide default Favorites list — shown read-only while inheriting. */
@@ -59,6 +60,9 @@ data class FacetSettingsUiState(
     /** `null` means nothing has been explicitly chosen yet — see [com.facetlauncher.app.data.model.LauncherSettings.selectedCalendarIds]. */
     val globalSelectedCalendarIds: Set<String>? = null,
 ) {
+    /** Gates the header's "Apply facet" button — see [FacetSettingsHeader]'s own doc. */
+    val isActive: Boolean get() = facet?.id == activeFacetId
+
     /** The Clock card's single inherit/override switch — governs template, font, color, 24h, and meridiem. */
     val isOverridingClock: Boolean get() = facet?.overrideClock ?: false
     val clockTemplateId: ClockTemplateId get() = if (isOverridingClock) facet?.clockTemplateId ?: globalClockTemplateId else globalClockTemplateId
@@ -127,6 +131,7 @@ class FacetSettingsViewModel @Inject constructor(
         val (dockApps, defaultDockApps) = docks
         FacetSettingsUiState(
             facet = facets.find { it.id == facetId },
+            activeFacetId = settings.activeFacetId,
             favorites = favorites,
             defaultFavorites = defaultFavorites,
             dockApps = dockApps,
@@ -153,5 +158,11 @@ class FacetSettingsViewModel @Inject constructor(
     fun renameFacet(newName: String) {
         val facet = uiState.value.facet ?: return
         viewModelScope.launch { facetRepository.renameFacet(facet, newName) }
+    }
+
+    /** The header's "Apply facet" button — mirrors `ManageFacetsViewModel.applyFacet`. A no-op if already active (button is disabled in that state, but guard here too since it's cheap). */
+    fun applyFacet() {
+        if (uiState.value.isActive) return
+        viewModelScope.launch { settingsRepository.setActiveFacetId(facetId) }
     }
 }

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
@@ -12,11 +13,14 @@ import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.data.model.parseFacetIdFromDeepLink
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
+import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -74,6 +78,8 @@ class LauncherViewModel @Inject constructor(
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
     private val seedDefaultDock: SeedDefaultDockUseCase,
+    private val syncFacetShortcuts: SyncFacetShortcutsUseCase,
+    private val activateFacetById: ActivateFacetByIdUseCase,
     private val settingsRepository: SettingsRepository,
     private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
@@ -86,6 +92,18 @@ class LauncherViewModel @Inject constructor(
 
     fun onHomePressed() {
         _homePressedEvent.tryEmit(Unit)
+    }
+
+    /**
+     * Ingests an incoming `facetlauncher://facet/{id}` deep link — the shared entry point for both
+     * an external deep link and a dynamic shortcut's launch intent (see
+     * [com.facetlauncher.app.LauncherActivity]'s cold-start/`onNewIntent` callers). A `Uri` that
+     * isn't this scheme, or whose id doesn't resolve to a real facet, is a no-op (see
+     * [ActivateFacetByIdUseCase]'s own doc).
+     */
+    fun activateFacetFromDeepLink(uri: Uri) {
+        val facetId = parseFacetIdFromDeepLink(uri) ?: return
+        viewModelScope.launch { activateFacetById(facetId) }
     }
 
     /** Called once, from the final onboarding step ("Set as default" or "Later") — see [com.facetlauncher.app.LauncherActivity]. */
@@ -123,6 +141,9 @@ class LauncherViewModel @Inject constructor(
         // Not gated on the onboarding UI being shown or completed — a fresh install's dock is
         // seeded even if onboarding is killed/skipped partway through, see SeedDefaultDockUseCase.
         viewModelScope.launch { seedDefaultDock() }
+        // Runs for the app's whole lifetime, republishing the full dynamic-shortcut set on every
+        // facet add/rename/reorder/delete — see SyncFacetShortcutsUseCase.
+        viewModelScope.launch { syncFacetShortcuts() }
 
         viewModelScope.launch {
             delay(LOADING_TIMEOUT_MS)

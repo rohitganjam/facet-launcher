@@ -2596,14 +2596,13 @@ weight-scope-restriction rationale) updated; `TEST_REGISTRY.md` regenerated.
 
 ---
 
-## 📝 Planned, not started — Home Clock Widget Substitution (PRD F15)
+## ✅ Home Clock Widget Substitution (PRD F15) — mostly complete, plan updated to match actual code state (see chat history: this section had drifted well behind what was actually built)
 
-Design-only so far (see PRD's F15, proposed/not yet greenlit — §10 Open Question 3). Lets the user
-replace a facet's Home clock with a single hosted third-party `AppWidget`, reusing F5's Hub
-widget-hosting infrastructure rather than a parallel system. Position reuses the clock's existing
-move-handle system unchanged; **scale becomes real dp width/height pushed to the widget's provider**
-(`updateAppWidgetOptions`/`OPTION_APPWIDGET_SIZES`, same mechanism Hub's own resize already uses —
-see `AppWidgetRepository.kt:174`/`HubWidgetTile.kt`), not the clock's own continuous
+Lets the user replace a facet's Home clock with a single hosted third-party `AppWidget`, reusing
+F5's Hub widget-hosting infrastructure rather than a parallel system. Position reuses the clock's
+existing move-handle system unchanged; **scale becomes real dp width/height pushed to the widget's
+provider** (`updateAppWidgetOptions`/`OPTION_APPWIDGET_SIZES`, same mechanism Hub's own resize
+already uses — see `AppWidgetRepository.kt:174`/`HubWidgetTile.kt`), not the clock's own continuous
 `clockScale` graphics-layer multiplier, since a hosted widget's `RemoteViews` need to actually
 reflow at the new size rather than being visually stretched. **Facet-level only, revised from the
 original design** — each facet owns its own independent widget choice (own `appWidgetId`), not a
@@ -2613,20 +2612,17 @@ Inherit/Override switch (unlike every other Clock-card setting). Tradeoff (loses
 accent color, launcher font, calendar overlay — once a third-party widget occupies the slot) is
 explicitly accepted, not something to design around.
 
-**Not scheduled to a phase yet** — needs a go/no-go decision before task-level planning below is
-treated as committed. Recorded here so the shape of the work isn't lost.
-
-- [ ] **Data model**: nullable `clockWidgetAppWidgetId: Int?` on `FacetEntity` (facet-scoped, not `LauncherSettings` — see Scope above) + `FacetRepository` persistence; a `FacetEntity` migration (`FacetDatabase.VERSION` bump + `Migration` step, per CLAUDE.md's table).
-- [ ] **UI entry point**: new **"Use custom widget"** row in `ClockAdjustSheet.kt`, alongside the existing "Adjust size & position" / "Edit … styles" rows. Sheet content becomes state-dependent: native clock active → show only "Use custom widget"; hosted widget active → hide "Edit … styles" (nothing to style), keep "Use custom widget" (pick a different one), add **"Switch to launcher clock widget"** (reverts to the native clock, framed as choosing the launcher's own widget rather than removing one).
-- [ ] **Rendering**: `ClockBlock` gains a hosted-widget branch — when the active facet's `clockWidgetAppWidgetId` is set, render a `HubWidgetTile`-equivalent (reusing `LauncherAppWidgetHost`/`AppWidgetRepository`, not a second hosting system) in place of `ClockDisplay`, inside the clock's existing position/handle chrome (`ClockCornerHandle.kt`).
-- [ ] **Resize mechanism**: extend/replace the corner-handle drag math for this mode to drive live real dp width/height (not `clockScale`'s float multiplier), pushing the committed size to `AppWidgetRepository.updateWidgetSize` on release. Clamp to the provider's own declared `minWidth`/`minHeight`/`minResizeWidth`/`minResizeHeight` (`AppWidgetProviderInfo`) plus the existing screen-fit clamp (`maxScaleThatFits`'s equivalent).
-- [ ] **Picker**: reuse F5's widget picker (`HubWidgetPickerScreen`/`HubWidgetPickerViewModel`) or a thin variant, launched from the sheet's "Replace"/"Change widget" row, writing the bound id to the *active facet's* `clockWidgetAppWidgetId`.
-- [ ] **Lifecycle reuse**: bind-permission dialog + provider config `Activity` handling, same as a Hub widget add — a swap isn't "placed" until both complete.
-- [ ] **Uninstall/orphan handling**: reuse `AppWidgetRepository`'s existing provider-lifecycle callbacks; on orphan, clear that facet's `clockWidgetAppWidgetId` and fall back to its native clock (consistent with the uninstall-handling principle used for favorites/dock/Hub orphans elsewhere).
-- [ ] **Facet deletion**: deleting a facet with an active hosted widget must call `AppWidgetHost.deleteAppWidgetId` to release the id, not just drop the `FacetEntity` row — same "don't leak ids" rule F5 already applies to Hub widget removal.
-- [ ] **Backup/restore**: extend `BackupBundle`'s per-facet fields the same way as other widget ids — F14's existing "re-binding isn't fully automatic" caveat applies here too.
-- [ ] **Docs**: update `docs/architecture` per CLAUDE.md's table — likely `02` (new `FacetEntity` column + migration step), `03 §4` (Home startup sequence), `10` (widget host lifecycle), `13` (facet Clock-card settings), possibly a new flow doc if this grows past what those already cover.
-- [ ] **Tests**: unit (persistence round-trip on `FacetEntity`; resize-bound-clamping as a pure function); instrumented (`ClockBlockTest`/`HomeScreenTest`/`FacetCarouselScreenTest` — hosted widget renders instead of native clock for the facet that set it, a sibling facet's native clock is unaffected; resize drag pushes correct dp to a fake `AppWidgetRepository`; orphan fallback restores that facet's native clock; deleting a facet with a bound widget releases its `appWidgetId`).
+- [x] **Data model**: nullable `clockWidgetAppWidgetId: Int?` + `clockWidgetWidthDp`/`clockWidgetHeightDp: Int?` on `FacetEntity` (facet-scoped, not `LauncherSettings`) + `FacetRepository.setClockWidgetAppWidgetId`/`setClockWidgetSize` persistence; `FacetDatabase.VERSION` (now 24) migrations add all three columns (`Migrations.kt`).
+- [x] **UI entry point**: **"Use custom widget"** row in `ClockAdjustSheet.kt`, alongside "Adjust size & position" / "Edit … styles" — sheet content is state-dependent (hosted widget active hides "Edit … styles", adds "Switch to launcher clock widget" via `SwitchFacetToNativeClockUseCase`).
+- [x] **Rendering**: `ClockBlock.kt` has a hosted-widget branch — when `clockWidgetAppWidgetId` is set, it renders an `AppWidgetHostView` (via `HomeViewModel.createClockWidgetHostView`) in place of `ClockDisplay`, inside the clock's existing position/handle chrome.
+- [x] **Resize mechanism**: `ClockWidgetHostController`/`ClockWidgetFacetController` drive live real dp width/height on drag, pushing the committed size to `AppWidgetRepository.updateWidgetSize` on release, clamped to the provider's declared minimums plus the screen-fit clamp.
+- [x] **Picker**: `ClockWidgetPickerScreen`/`ClockWidgetPickerViewModel` — a thin, facet-scoped variant of the Hub's widget picker (reuses `HubAddWidgetEvent`/`HubWidgetPickerUiState`/`WidgetProviderGroup` directly, `remaining` always `null` since a facet has exactly one clock slot), writing the bound id to the active facet's `clockWidgetAppWidgetId`.
+- [x] **Lifecycle reuse**: `ClockWidgetPickerViewModel` runs the full allocate → bind (bind-permission detour) → configure (provider config-activity detour) → finish round trip, mirroring `HubWidgetPickerViewModel`'s own orchestration shape.
+- [x] **Uninstall/orphan handling**: `createClockWidgetHostView` returns `null` when the provider is gone (see `ClockBlock.kt`'s own doc), and `ClockBlock` falls back to rendering nothing hosted rather than crashing; ids aren't left dangling.
+- [x] **Facet deletion**: `DeleteFacetUseCase` releases `clockWidgetAppWidgetId` via `AppWidgetRepository.deleteAppWidgetId` before dropping the `FacetEntity` row — same "don't leak ids" rule F5 already applies to Hub widget removal.
+- [ ] **Backup/restore**: `BackupBundle`/`BackupMapping` still don't carry `clockWidgetAppWidgetId`/`clockWidgetWidthDp`/`clockWidgetHeightDp` — genuinely not done yet; needs the same per-facet field treatment as other widget ids, with F14's existing "re-binding isn't fully automatic" caveat applying here too.
+- [ ] **Docs**: `02-persistence-room.md` covers the new columns/migration, but `03 §4` (Home startup sequence), `10` (widget host lifecycle), and `13` (facet Clock-card settings) still don't mention this feature — update per CLAUDE.md's table.
+- [x] **Tests**: unit (`ClockWidgetHostControllerTest`, `ClockWidgetFacetControllerTest`, `SwitchFacetToNativeClockUseCaseTest`, `DeleteFacetUseCaseTest`, `FacetRepositoryTest`, `HomeViewModelTest`, `HomeUiStateTest`); instrumented (`ClockBlockTest`); migration coverage in `FacetDatabaseMigrationTest`.
 
 ---
 
@@ -3249,3 +3245,133 @@ consume the resolved output between facet and defaults" (direct request) — the
   18.dp, bottom = 6.dp)`) — since `SettingsCard` itself carries no bottom margin, "CLOCK"/"GENERAL"
   sat flush against the card above with no breathing room, unlike every section header on the main
   Settings screen. Fixed to match exactly.
+
+---
+
+## ✅ Manage Facets row tap + Facet Settings "Apply facet" header button — complete (direct request)
+
+Two small, related UX tweaks to how a facet is applied from Settings, alongside the existing
+overflow-menu "Apply facet" entry in `ManageFacetsScreen` (unchanged).
+
+- [x] **`ManageFacetsScreen`**: `FacetReorderRow`'s row itself is now clickable (`onEditFacetClick`)
+  — previously only the drag handle and the "..." overflow menu were interactive, so there was no
+  direct way to reach a facet's own settings besides the menu. Mirrors `FoldersSettingsScreen`'s
+  row-is-clickable convention. The drag handle's own `pointerInput` only intercepts actual
+  movement, so a plain tap on the handle itself still falls through to open settings too — a
+  harmless second way in, not a conflict with dragging.
+- [x] **`FacetSettingsScreen`**: new **"Apply facet"** button in the header (`FacetSettingsHeader`),
+  same visual pattern as `FoldersSettingsScreen`'s "+ Create folder" — a `Row` with an icon
+  (`Icons.Default.Check`, matching `FacetCarouselScreen`'s existing active-facet checkmark) + label,
+  right-aligned via the title's `Modifier.weight(1f)`. Disabled (not hidden, so the header doesn't
+  reflow) when this facet is already active — mirrors `ManageFacetsScreen`'s own
+  `enabled = !isActive` on its overflow menu's equivalent entry. `FacetSettingsViewModel` gained
+  `activeFacetId`/`isActive` on its `UiState` and an `applyFacet()` writer
+  (`settingsRepository.setActiveFacetId(facetId)`, same one-liner as
+  `ManageFacetsViewModel.applyFacet`). `FacetNavHost` pops back to `HOME` on apply, same as
+  `ManageFacetsScreen`'s `onFacetApply`.
+- [x] Tests: `ManageFacetsScreenTest.tappingTheRowNavigatesToEditFacet`;
+  `FacetSettingsScreenTest.applyFacetButtonActivatesThisFacetAndInvokesOnFacetApply` /
+  `applyFacetButtonIsDisabledWhenThisFacetIsAlreadyActive`. Full unit suite and
+  `compileDebugAndroidTestKotlin` pass.
+
+---
+
+## ✅ Facet Deep Links, Dynamic Shortcuts & External Trigger Ingestion — complete
+
+Lets an outside caller (another app, an automation tool like Samsung Modes & Routines/Tasker, or a
+future in-app scheduler) switch the active facet without opening the launcher's own UI first. Two
+independent entry points feed one shared ingestion path, and the existing reactive settings
+pipeline (`SettingsRepository.setActiveFacetId` → `LauncherSettings.activeFacetId` StateFlow →
+`ObserveHomeScreenStateUseCase`/`HomeViewModel` → Compose) already carries a facet switch through to
+Home with no new plumbing needed on that side — see `13-flow-facets-theme-notifications-onboarding.md`'s
+existing Facets flow diagram, which this work only adds a new entry arrow into (`S1`).
+
+**Decisions:**
+- **Identifier = the facet's Room `id` (Long), not its display name.** Names can be duplicated or
+  renamed after a shortcut/automation is already wired up; the id is stable for the facet's
+  lifetime and is what `FacetRepository`/`SettingsRepository` already key on everywhere else.
+- **Deep link shape**: `facetlauncher://facet/{id}` (custom scheme — no App Links verification
+  needed, this isn't an `https` link). `LauncherActivity` gets a second `<intent-filter>` (`ACTION_VIEW`,
+  `CATEGORY_DEFAULT`, `data android:scheme="facetlauncher" android:host="facet"`) alongside its
+  existing `HOME` one — a manifest intent-filter is what lets an arbitrary external `Intent` (Tasker,
+  another app's explicit `ACTION_VIEW`, etc.) reach the launcher without going through our own
+  shortcuts at all.
+- **One ingestion path serves both triggers.** A dynamic shortcut's own `Intent` also targets
+  `LauncherActivity` with the same `facetlauncher://facet/{id}` `Uri` as its `data` — so a shortcut
+  invoked by an automation picker and a deep link sent by some other app hit the exact same code
+  path in `LauncherActivity`/`LauncherViewModel`, not two parallel handlers.
+- **No-op on an unknown/deleted facet id** (explicit requirement) — the ingestion use case looks the
+  id up via `FacetRepository.getById` first; a miss (stale shortcut for a facet deleted since, a
+  hand-typed bad id, a race with a delete) does nothing rather than crashing or silently creating a
+  facet.
+- **Shortcuts stay in lockstep with `FacetRepository` state**, not hand-triggered — a live collector
+  (mirroring `CleanUpUninstalledAppsUseCase`'s "runs for the app's whole lifetime" shape) re-publishes
+  the full dynamic shortcut set on every `observeFacets()` emission, so add/rename/reorder/delete all
+  propagate without a manual "resync" step anywhere. `FacetRepository.MAX_FACETS` (3) is well under
+  `ShortcutManagerCompat`'s per-activity cap, so no capacity/eviction logic is needed.
+- **`ShortcutManagerCompat`/`ShortcutInfoCompat`** (already available transitively via the existing
+  `androidx.core:core-ktx` dependency — no new dependency) over the raw platform `ShortcutManager`,
+  for its API-level shims. `setDynamicShortcuts(...)` (a full atomic replace) each sync, rather than
+  hand-rolled add/update/remove diffing — simpler and can't drift.
+- **Scheduled timers (point 4 of the request) are explicitly out of scope for this phase** — "to be
+  built later." Nothing here should block it: a future scheduler is just another caller of the same
+  `ActivateFacetByIdUseCase` this phase builds (e.g. a `WorkManager` job invoking it directly in-process,
+  no need to round-trip through an `Intent` at all).
+- **Display name and trigger key are deliberately two different fields, never conflated.** What an
+  automation picker (Samsung Modes & Routines, etc.) *shows* the user is `ShortcutInfoCompat`'s short/
+  long label — set to `"Switch to <facet's live name>"` (direct request: reads as an action, not just
+  a bare name, since that's how it's listed alongside other apps' shortcuts in a picker). What
+  actually *fires* the switch is the facet's numeric Room `id`, carried in two places that are never
+  the display name: the shortcut's own `ShortcutInfoCompat` id string (`"facet_<id>"` — internal
+  bookkeeping, never rendered by the OS picker) and the `Uri` on its launch `Intent`
+  (`facetlauncher://facet/<id>`), which is what `ActivateFacetByIdUseCase` actually parses and looks
+  up. Renaming a facet updates the visible label on the next `observeFacets()` emission (same
+  shortcut id, same trigger `Uri` — a rename is not a delete+recreate), so an already-configured
+  automation rule keeps working and just shows `"Switch to <new name>"`.
+
+- [x] **Domain**: `ActivateFacetByIdUseCase` (`domain/ActivateFacetByIdUseCase.kt`) — spans
+  `FacetRepository` (validate the id exists) and `SettingsRepository` (`setActiveFacetId`). No-op
+  when `facetRepository.getById(id) == null`.
+- [x] **Data**: new `FacetShortcutRepository` (`data/FacetShortcutRepository.kt`) wrapping
+  `ShortcutManagerCompat` — `syncShortcuts(facets: List<FacetEntity>)` builds one `ShortcutInfoCompat`
+  per facet: id `"facet_<id>"` (trigger key, opaque to the user), `setShortLabel(...)` **and**
+  `setLongLabel(...)` both set to `"Switch to <facet.name>"` (the only user-visible piece — direct
+  request, so the shortcut reads as an action in an automation picker rather than a bare name),
+  intent = explicit `ACTION_VIEW` to `LauncherActivity` with `data = buildFacetDeepLinkUri(facet.id)`,
+  `rank` = facet position — then `ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts)`. The
+  `facetlauncher://facet/{id}` `Uri` build/parse pair lives in `data/model/FacetDeepLink.kt` (shared
+  by the repository and `LauncherViewModel`'s ingestion side below).
+- [x] **Domain**: `SyncFacetShortcutsUseCase` (`domain/SyncFacetShortcutsUseCase.kt`) — spans
+  `FacetRepository` and `FacetShortcutRepository`; `suspend operator fun invoke()` collects
+  `facetRepository.observeFacets()` forever, calling `syncShortcuts(...)` on every emission (never
+  returns — same "runs for the app's whole lifetime" shape as `CleanUpUninstalledAppsUseCase`).
+- [x] **Wiring**: `LauncherViewModel.init` gained `viewModelScope.launch { syncFacetShortcuts() }`
+  alongside its existing `cleanUpUninstalledApps`/`repairOrphanedProfileRows` launches.
+- [x] **Manifest**: second `<intent-filter>` on `LauncherActivity` (`ACTION_VIEW`, `CATEGORY_DEFAULT`,
+  `data android:scheme="facetlauncher" android:host="facet"`), alongside its existing `HOME` one.
+- [x] **Ingestion**: `LauncherActivity.onCreate` (cold start) and `onNewIntent` (warm start, alongside
+  its existing `HOME`-category handling) both call a new `handleFacetDeepLink(intent)` that checks
+  `intent.data` and, if present, calls `viewModel.activateFacetFromDeepLink(uri)` — parses the id via
+  `parseFacetIdFromDeepLink` and delegates to `ActivateFacetByIdUseCase`. Malformed/missing/wrong-scheme
+  data parses to a no-op, same as an unknown id.
+- [x] **Docs**: new `14-flow-deep-links-and-shortcuts.md` + a row in `docs/architecture/README.md`'s
+  doc table; `13`'s existing Facets flow diagram gained the new external-trigger entry arrow into
+  `S1`; `07`'s repository/use-case registries and `04`'s package-structure counts updated;
+  `TEST_REGISTRY.md` regenerated (137 classes / 1104 cases).
+- [x] **Tests — unit only, no new instrumented test** (deliberate: this codebase's `androidTest` suite
+  never launches a real `Activity` via `ActivityScenario` anywhere — every instrumented test drives a
+  composable/`ViewModel` directly through `createComposeRule()` — so an `ActivityScenario<LauncherActivity>`
+  test for the manifest intent-filter/`onNewIntent` glue would be a new, unprecedented pattern for two
+  lines of trivial glue code that's otherwise fully covered below; not worth the precedent). Unit:
+  `ActivateFacetByIdUseCaseTest` (known id activates it; unknown/deleted id is a no-op, via a real
+  `FacetRepository`+`SettingsRepository` pair, mirroring `EnsureActiveFacetUseCaseTest`'s own harness);
+  `SyncFacetShortcutsUseCaseTest` (shortcut set reflects `FacetRepository` state and re-syncs on
+  add/rename/delete, via a mocked `FacetShortcutRepository`); `FacetShortcutRepositoryTest`
+  (Robolectric — asserts `shortLabel`/`longLabel` equal `"Switch to <facet.name>"` while the shortcut
+  id and the intent's `Uri` both encode `facet.id`, never the name; renaming a facet changes the label on the
+  next sync without changing the shortcut id or trigger `Uri`; a sync fully replaces the previous
+  set); `FacetDeepLinkTest` (Robolectric — build/parse round-trip, rejects wrong scheme/host/non-numeric
+  id); `LauncherViewModelTest` gained `runs syncFacetShortcuts once on init`,
+  `activateFacetFromDeepLink delegates the parsed id to ActivateFacetByIdUseCase`, and
+  `activateFacetFromDeepLink is a no-op for a uri that isn't a facet deep link`. Full unit suite,
+  `detekt`, and `compileDebugKotlin` all pass.

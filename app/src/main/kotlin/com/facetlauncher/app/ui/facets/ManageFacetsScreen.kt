@@ -259,6 +259,12 @@ private fun FacetReorderRow(
             // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
             .clip(MaterialTheme.shapes.medium)
             .background(Surface)
+            // Tapping the row opens that facet's own settings — mirrors FoldersSettingsScreen's
+            // row-is-clickable convention. The drag handle's own pointerInput only intercepts
+            // actual movement (detectDragGestures consumes nothing on a motionless tap), so a
+            // plain tap on the handle itself still falls through to this and opens settings too —
+            // a harmless second way in, not a conflict with dragging.
+            .clickable(onClick = onEditFacetClick)
             .padding(horizontal = 12.dp)
             .testTag("facet_reorder_row_${facet.id}"),
         verticalAlignment = Alignment.CenterVertically,

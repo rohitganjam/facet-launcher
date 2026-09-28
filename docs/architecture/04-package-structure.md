@@ -8,16 +8,17 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (30)  @Singleton Repositories — the only layer that touches
+├── data/                          (31)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (4)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule
 │   ├── local/                     (26)  Room: FacetDatabase, 12 entities, 11 DAOs, Converters, Migrations
-│   ├── model/                     (25)  Immutable value types & enums shared by every layer
-│   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option, …)
+│   ├── model/                     (26)  Immutable value types & enums shared by every layer
+│   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
+│   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository
 │
-├── domain/                        (34)  31 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (36)  33 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -67,10 +68,11 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          24   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+├── data/          25   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     11   Converters, entities, DAO-level behaviour via in-memory Room
+│   ├── model/      1   FacetDeepLinkTest (build/parse round-trip + rejection cases)
 │   └── widget/     1
-├── domain/        29   one test per use case (pure logic — no Android needed for most)
+├── domain/        31   one test per use case (pure logic — no Android needed for most)
 └── ui/            26   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)

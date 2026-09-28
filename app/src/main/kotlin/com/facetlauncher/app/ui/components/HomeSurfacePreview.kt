@@ -75,12 +75,6 @@ fun HomeSurfacePreview(
         WallpaperBackground(homeWallpaper, Modifier.matchParentSize(), alignment = Alignment.BottomCenter)
 
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.home_surface_preview_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = Muted,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
             if (rows.isEmpty() && dockApps.isEmpty()) {
                 Text(
                     text = stringResource(R.string.home_surface_preview_nothing_yet),

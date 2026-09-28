@@ -181,7 +181,6 @@
     <string name="facet_scope_other_profile">Other profile</string>
 
     <!-- HomeSurfacePreview -->
-    <string name="home_surface_preview_label">PREVIEW</string>
     <string name="home_surface_preview_nothing_yet">Nothing to preview yet</string>
 
     <!-- AppSortControl -->
@@ -551,13 +550,6 @@
     <string name="private_space_no_matches">No matches</string>
     <string name="private_space_search">Search Private Space</string>
 
-    <!-- Shared "N Favorites"/"N Recents"/"N Most used" section header used identically by
-         HomeScreen and FacetCarouselScreen's preview cards (see FacetCarouselScreen's own
-         `previewLabel()` doc: "Matches HomeScreen.kt's own list-header label exactly"). -->
-    <string name="home_list_header_favorites">FAVORITES</string>
-    <string name="home_list_header_recents">RECENTS</string>
-    <string name="home_list_header_most_used">MOST USED</string>
-
     <!-- FacetCarouselScreen ("Delete" reuses action_delete) -->
     <string name="facet_carousel_delete_title">Delete %1$s?</string>
     <string name="facet_carousel_delete_message">This can\'t be undone. Its favorites also be removed.</string>
@@ -590,6 +582,8 @@
          "CLOCK & CALENDAR"/"Clock & Calendar Style"/"Calendars to display"/the calendars-selected
          count/all-day visibility/24h-12h time format all reuse phase-3 SettingsScreen resources) -->
     <string name="facet_settings_default_name">Facet</string>
+    <string name="facet_settings_active">Active</string>
+    <string name="facet_settings_activate_facet">Activate</string>
     <string name="facet_settings_rename_facet">Rename facet</string>
     <string name="facet_settings_section_apps_list">APPS LIST</string>
     <plurals name="format_count_apps">
