@@ -450,9 +450,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRouteTest.kt": {
-    "mtime": 1790566181.5745757,
-    "seen": 1790604445.515708,
-    "ast_hash": "7c5bed521e9cd23423aad7068fe67f30",
+    "mtime": 1790606259.9710238,
+    "seen": 1790608557.8109,
+    "ast_hash": "5a7b11bf135cbc886608923094228310",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/launcher/KeyboardDismissalTest.kt": {
@@ -1110,9 +1110,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/GestureHintOverlay.kt": {
-    "mtime": 1789747995.7355404,
-    "seen": 1789748241.312997,
-    "ast_hash": "8f34b561f1072f0b62d7697e7f0f433d",
+    "mtime": 1790605914.2029722,
+    "seen": 1790608557.8109848,
+    "ast_hash": "1a6f2b72b70ffc73ea4fc5c5a4b572be",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/HomeSurfacePreview.kt": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1790566181.578036,
-    "seen": 1790604445.515824,
-    "ast_hash": "9b979d2f2e8b6dbe7e5a51bc79f0c8d1",
+    "mtime": 1790604989.1331277,
+    "seen": 1790608557.811004,
+    "ast_hash": "3b29cf9a960beff644b11b91eb38a500",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeUiState.kt": {
@@ -1398,9 +1398,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRoute.kt": {
-    "mtime": 1790566181.578493,
-    "seen": 1790604445.51584,
-    "ast_hash": "9f8ffdd9f1308c69c3c57c18c4785da9",
+    "mtime": 1790605137.4308505,
+    "seen": 1790608557.811018,
+    "ast_hash": "c594c66dcc32693ecb63195b88d0c6ee",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/LauncherLocals.kt": {
@@ -2790,9 +2790,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1790604288.7192998,
-    "seen": 1790604445.5159621,
-    "ast_hash": "4faac905fb9398492478237c4deb746e",
+    "mtime": 1790608474.4679952,
+    "seen": 1790608557.811139,
+    "ast_hash": "8087f04a16388893a0a8fea9ed0f293b",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
