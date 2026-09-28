@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/ClockBlockTest.kt": {
-    "mtime": 1790510054.8563418,
-    "seen": 1790510141.143754,
-    "ast_hash": "6badfe3182d1cfc7d1ccb69ad9247c66",
+    "mtime": 1790559607.3636823,
+    "seen": 1790560360.112603,
+    "ast_hash": "bd4c81285b978f99c0aa09ca6b97dad6",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/HomeScreenTest.kt": {
@@ -1272,9 +1272,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/CalendarEventsBlock.kt": {
-    "mtime": 1790505156.7208014,
-    "seen": 1790509782.654398,
-    "ast_hash": "288d919d841e2aa05114584132c9dc79",
+    "mtime": 1790559592.9186554,
+    "seen": 1790560360.112709,
+    "ast_hash": "04043c3981171763655167fb744ab158",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockAccessoryIcons.kt": {
@@ -2790,9 +2790,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1790510474.7334604,
-    "seen": 1790510665.840894,
-    "ast_hash": "17fa100373306d69b8757943bc07bb13",
+    "mtime": 1790559831.509056,
+    "seen": 1790560360.1128252,
+    "ast_hash": "9b878805749bdc12bb1b45d62c52a597",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -2808,9 +2808,9 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1790266186.3146288,
-    "seen": 1790266195.780475,
-    "ast_hash": "1c5db62c4df60cf3c1d1f109039dc3c9",
+    "mtime": 1790511044.066131,
+    "seen": 1790511123.2188249,
+    "ast_hash": "affbacd194341b9996ae7aba211b74c9",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {
@@ -3075,6 +3075,12 @@
     "mtime": 1790266185.369132,
     "seen": 1790266195.780492,
     "ast_hash": "1c5db62c4df60cf3c1d1f109039dc3c9",
+    "semantic_hash": ""
+  },
+  "release_notes/0.1.13.md": {
+    "mtime": 1790511065.5623488,
+    "seen": 1790511123.218843,
+    "ast_hash": "affbacd194341b9996ae7aba211b74c9",
     "semantic_hash": ""
   }
 }
