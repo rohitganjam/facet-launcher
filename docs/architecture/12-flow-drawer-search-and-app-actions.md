@@ -13,7 +13,7 @@ flowchart TB
     S --> TAB["DrawerTab.Personal → profile ∈ {PERSONAL, OTHER}\nDrawerTab.Work(handle) → userHandle == handle"]
     TAB --> GRP["GroupAppsByLetterUseCase(items, locale) { displayName }\nICU AlphabeticIndex buckets → GroupedItems&lt;DrawerItem&gt;\n(headers + AlphabetRail index maps)\nitems = apps only, or apps+folders merged when INLINE"]
     DVM[DrawerViewModel] -- "badgeCounts, contactResults, settingsResults,\nshowContactsPermissionPrompt, showContactsSettingPrompt,\nprivateSpaceState, secureFolderIntent, folders" --> S
-    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridSize,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode" --> S
+    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridSize,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode, recentlyInstalledPosition" --> S
 ```
 
 ### 1a. Folders in the drawer (`DrawerFolderDisplayMode`)
@@ -25,6 +25,95 @@ flowchart TB
 - `SHOW_FIRST`/`SHOW_LAST`: `groupedItems` stays apps-only; every folder instead renders in its own pinned section (`drawerFolderSection`/`drawerFolderTiles`) before or after the lettered content — its own "Folders" header in List (Grid renders no headers at all, same as the lettered content).
 
 The alphabet rail (`AlphabetRail`, `LetterJumpZone`) mirrors this: `RailFolderPosition.NONE` for `DO_NOT_SHOW`/`INLINE` (a folder is reachable by its own letter in `INLINE`, same as any app), `TOP`/`BOTTOM` for `SHOW_FIRST`/`SHOW_LAST` — which renders `RailFolderGlyph` as one more rail entry and makes `railSelectionAt` resolve a drag/touch there to `RailSelection.Folders` instead of a letter, scrolling to that section's own start index. `DrawerFolderRow`/`DrawerFolderTile` reuse `FolderTileGlyph`/`FolderContentsSheet`/`FolderTileContextMenu` (rename + Add to Favorites/Dock), mirroring `ui/home/HomeScreen.kt`'s `FolderRow`/`FolderDockIcon`. Search results never include folders — this is browse-mode only.
+
+### 1b. "Recently installed" category (`RecentlyInstalledPosition`)
+
+A single virtual item — not a real `Folder`/`FolderEntity` — positioned by
+`LauncherSettings.recentlyInstalledPosition` (global-only `RecentlyInstalledPosition` enum:
+`SHOW_FIRST` default, `SHOW_LAST`, or `DO_NOT_SHOW`; Settings → App Drawer → "Recently installed",
+a `LabeledDropdownRow` mirroring `DrawerFolderDisplayMode`'s own dropdown). `SHOW_FIRST` places it
+above everything, even a `SHOW_FIRST` folder section; `SHOW_LAST` places it below everything, even
+a `SHOW_LAST` folder section — each independent of the other (a folder section and the category can
+sit at opposite ends, or the same end, with the category always the outermost item at that end).
+**List-only**: it has no grid-tile counterpart, so it disappears entirely when
+`DrawerPresentation.GRID` is selected (`recentlyInstalledOffset`/`showRecentlyInstalledTrailing` are
+both forced false whenever `presentation == GRID`). Computed live via `RecentlyInstalledAppsUseCase`
+(`domain/`, pure/stateless — filters `AppInfo.firstInstallTime` within the last 72 hours, sorted
+newest-first) over `tabScopedApps`, the *same* tab-filtered source the lettered list uses —
+deliberately unlike pinned folders (which are **not** tab-filtered): the Personal tab shows only
+Personal recently-installed apps, a Work tab only that profile's. Hidden entirely (not just an empty
+state) whenever the computed list is empty or the position is `DO_NOT_SHOW`, so it never occupies a
+dead tap target.
+
+**Section header**: an icon-only header (`DrawerRecentlyInstalledHeader`, `RecencyIcon` tinted
+`DrawerHeaderTextColor` at `labelSmall`'s font size, no text label) renders directly above the row
+— same `header_$letter` treatment as a letter group's own header, minus the label — for both
+`SHOW_FIRST` (leading) and `SHOW_LAST` (trailing) placement, in both `DrawerListContent` and
+`PrivateSpaceScreen` (`PrivateSpaceRecentlyInstalledHeader`, `onSurfaceVariant` tint). Adds its own
+lazy-list slot, so `recentlyInstalledOffset` is `2` (header + row), not `1`.
+
+**Category glyph**: `DrawerRecentlyInstalledRow`'s leading icon is `RecentlyInstalledGlyph` — the
+same 12dp-rounded-tile-with-inset-vignette container shape as `FolderTileGlyph`, but with its own
+background (`Ink`, not `FolderGlyphBackground`) and icon tint (`InkInverted`) — deliberately
+themed opposite to `FolderTileGlyph`'s fixed-dark tile, since `Ink`/`InkInverted` are exact
+inverses of each other in both themes so this stays high-contrast in light and dark alike, unlike
+a literal-white icon on a theme-invariant dark tile. `RecencyIcon` stands in for `FolderTileGlyph`'s
+own folder icon (not a star — see chat history: a star read as generic/unrelated, so the category
+glyph instead reuses the same "history" icon as each contained app's own badge, below).
+
+Tapping it opens `FolderContentsSheet` via a synthetic `Folder(id = -1L, name = "Recently
+installed", apps = recentlyInstalledApps)` — reused as-is since `Folder`/`FolderTileGlyph`/
+`FolderContentsSheet` are plain-data/Room-decoupled at the UI layer (see `13-flow-facets-…md`'s
+own note on this same reuse for Home's "look" preview cards). `FolderSheetHeaderAction` gained a
+third case, `None`, so the sheet renders with no "Rename" trailing action on this non-editable
+virtual folder. `DrawerRecentlyInstalledRow` has no long-press context menu (nothing to
+rename/favorite/dock for a virtual item) — just tap-to-open. Each contained app also gets a small
+recency badge (`RecencyBadge`, `FolderContentsSheet.kt`) at its icon's bottom-end corner —
+`showRecencyBadge: Boolean` on `FolderContentsSheet`/`FolderContentsList`/`FolderContentsAppRow`,
+`false` by default so real folders' contents are unaffected. The badge's (and category's) glyph is
+a custom `ImageVector` built from a supplied Material Symbols "history" SVG path (`RecencyIcon` in
+`FolderContentsSheet.kt`, `internal` for cross-file reuse) rather than
+`androidx.compose.material.icons`' own (older, visually different) `History` icon — parsed via
+`PathParser().parsePathString(...)`, then shifted into Compose's `[0, viewportHeight]` coordinate
+space with a `group(translationY = 960f)` wrapper, since the source SVG's
+`viewBox="0 -960 960 960"` has no direct Compose equivalent. The badge renders it as literal white
+(`Color.White`, not a theme token) — its background (`IconTile`) is dark in both light and dark
+theme, so a theme-aware tint would go dark-on-dark; the category glyph itself uses `InkInverted`
+on `Ink` instead (see above), which stays high-contrast without needing a literal color.
+
+**Alphabet rail entry**: `AlphabetRail`/`railSelectionAt` gained a `recentlyInstalledPosition:
+RailFolderPosition` param (reusing the same `NONE`/`TOP`/`BOTTOM` type already used for the folder
+glyph — mapped from the data-layer `RecentlyInstalledPosition` at the call site, and forced `NONE`
+in Grid) and a third `RailSelection` case, `RecentlyInstalled`. Slot ordering in both the rail's
+`Layout` and `railSelectionAt`'s touch-to-selection mapping mirrors the list's own render order:
+Recently Installed then a `TOP` folder glyph at the top end, a `BOTTOM` folder glyph then Recently
+Installed at the bottom end — so the category is always the outermost item at whichever end it's
+on. Tapping/dragging onto it scrolls to index `0` when `SHOW_FIRST`, or to the very last index
+(after any `SHOW_LAST` folder section) when `SHOW_LAST` — `onRailSelectionChanged`'s
+`RailSelection.RecentlyInstalled` branch and `RailSelection.Folders`' `SHOW_LAST` branch now share
+a local `afterLetteredContentIndex()` helper for that shared "index right after all lettered
+content" computation.
+
+A leading header+row shifts every absolute lazy-list index after it by 2 — `letterIndexOffset`
+(used by the alphabet rail's letter-jump) and `onRailSelectionChanged`'s `RailSelection.Folders`
+case (`SHOW_FIRST`'s fixed offset and `SHOW_LAST`'s summed index) add a `recentlyInstalledOffset`
+(0 or 2, and always 0 in Grid or when the position is `SHOW_LAST`) to stay correct. A trailing
+header+row needs no such offset — `DrawerListContent` renders it as the very last two `item`s
+instead, gated on `recentlyInstalledPosition == SHOW_LAST`.
+
+**Private Space's own copy**: `PrivateSpaceScreen`/`PrivateSpaceViewModel` get an independent
+instance of the same feature — same `RecentlyInstalledAppsUseCase` class and the same global
+`recentlyInstalledPosition` setting (including `SHOW_LAST` placement and its own icon-only
+`PrivateSpaceRecentlyInstalledHeader`, via a `recentlyInstalledPosition` param on
+`PrivateSpaceScreen` deciding whether its own leading/trailing header+row pair renders), but
+computed separately over Private Space's own already-isolated app list
+(`PrivateSpaceViewModel.recentlyInstalledApps`, a `combine(apps, query, settings)` `StateFlow`,
+hidden while `query` is non-blank — mirroring the main Drawer's own search-hides-browse-mode-content
+precedent). Not shared state with the main Drawer's version — no alphabet rail there to place it on
+either, just the row's own position in its flat `LazyColumn`. The row there
+(`PrivateSpaceRecentlyInstalledRow`) is styled through `PrivateSpaceTheme`'s own
+`MaterialTheme.colorScheme.*` tokens, like every other Private Space row, not this app's usual
+`Accent`/`Ink`, and also gets the sheet's recency badge (`showRecencyBadge = true`).
 
 ## 2. Search pipeline
 

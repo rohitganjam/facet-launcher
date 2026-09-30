@@ -275,6 +275,9 @@
     <string name="drawer_folder_display_mode_inline">Mostrar carpetas en línea</string>
     <string name="drawer_folder_display_mode_show_first">Mostrar carpetas primero</string>
     <string name="drawer_folder_display_mode_show_last">Mostrar carpetas al final</string>
+    <string name="recently_installed_position_show_first">Mostrar recientes primero</string>
+    <string name="recently_installed_position_show_last">Mostrar recientes al final</string>
+    <string name="recently_installed_position_do_not_show">No mostrar</string>
 
     <!-- AppRow/ListContentMode/DockDisplayMode enums -->
     <string name="app_row_position_left">Izquierda</string>
@@ -333,7 +336,9 @@
     <string name="app_drawer_search_settings_subtitle">Accede a ajustes del sistema como Wi-Fi o Bluetooth</string>
     <string name="app_drawer_search_bar_position">Posición de la barra de búsqueda</string>
     <string name="app_drawer_folders_in_drawer">Carpetas en el cajón</string>
+    <string name="app_drawer_recently_installed_position">Instaladas recientemente</string>
     <string name="app_drawer_opacity_label">Opacidad del cajón</string>
+    <string name="drawer_recently_installed_label">Instaladas recientemente</string>
 
     <!-- ThemeMode -->
     <string name="theme_mode_light">Claro</string>

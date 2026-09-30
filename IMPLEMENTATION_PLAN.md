@@ -3475,3 +3475,111 @@ approved before starting.
   `previewCardGridDisplayModeShowsTextInsteadOfIconsWhenChosen`) — all four assert the left-packed
   incomplete-row bounds directly, so a regression back to `SpaceEvenly` or a dropped layout branch
   would fail them. `TEST_REGISTRY.md` regenerated.
+
+## ✅ App Drawer & Private Space: "Recently Installed" Category — complete (direct request)
+
+A single virtual item — not a real `Folder`/`FolderEntity` in Room, just a computed view over
+`AppInfo.firstInstallTime` — positioned in every app-browsing list (main App Drawer's
+Personal/Work tabs, and Private Space's own separate list) by a 3-way `RecentlyInstalledPosition`
+setting: `SHOW_FIRST` (default, above everything including a `SHOW_FIRST`-pinned folder section),
+`SHOW_LAST` (below everything including a `SHOW_LAST` folder section), or `DO_NOT_SHOW`. Tapping it
+opens a bottom sheet of every app installed in the last 72 hours in that scope.
+
+Decided: scoped to whichever app list it's shown in — the main Drawer's copy is scoped to the
+active tab (`tabScopedApps`, unlike pinned folders, which are deliberately *not* tab-filtered);
+Private Space gets its own fully independent copy over its own already-isolated app list. Zero
+qualifying apps → hidden entirely, not an empty state. Fixed 72h window on `firstInstallTime` (not
+`lastUpdateTime`), not user-configurable. **List-only** (no grid-tile counterpart — direct feedback
+after the initial build).
+
+- [x] **`RecentlyInstalledAppsUseCase`** (`domain/`, pure `@Inject constructor()`, no Room):
+  filters `AppInfo.firstInstallTime` within the last 72h, sorted newest-first; `nowMillis` a
+  defaulted param for direct unit-testability.
+- [x] **Main Drawer**: computed inline via `remember(tabScopedApps, recentlyInstalledPosition)` in
+  `AppDrawerScreen.kt`, mirroring how `pinnedFolders`/`groupedItems` are already computed there —
+  no `DrawerViewModel` `StateFlow` involved. New `DrawerRecentlyInstalledRow` (List-only, no grid
+  counterpart) — no long-press menu (tap-only). `DrawerListContent` renders it as either the first
+  or the very last `item`, gated on `recentlyInstalledPosition`. `letterIndexOffset` and
+  `onRailSelectionChanged`'s `RailSelection.Folders`/`RailSelection.RecentlyInstalled` branches
+  share a `recentlyInstalledOffset` (leading-only, 0 in Grid or when `SHOW_LAST`) and a local
+  `afterLetteredContentIndex()` helper so the alphabet rail's letter-jump, "Folders" tap, and
+  "Recently installed" tap all land on the right index regardless of where either category sits.
+- [x] **Category glyph**: `RecentlyInstalledGlyph` — the same 12dp-rounded-tile-with-inset-vignette
+  container shape as `FolderTileGlyph` with `RecencyIcon` (see below) standing in for a folder's
+  own icon — not a star (direct feedback: a star read as generic/unrelated to "recently
+  installed"). Background/tint went through two rounds of direct feedback: `FolderGlyphBackground`
+  + literal white first (since that background is dark in both themes), then swapped to `Ink`
+  background + `InkInverted` tint (direct feedback) — `Ink`/`InkInverted` are exact opposites of
+  each other in both themes, so this stays themed and high-contrast without a literal color,
+  deliberately diverging from `FolderTileGlyph`'s own fixed-dark tile.
+- [x] **Section header**: icon-only `DrawerRecentlyInstalledHeader`/`PrivateSpaceRecentlyInstalledHeader`
+  (`RecencyIcon`, no text label) render directly above the row for both `SHOW_FIRST`/`SHOW_LAST`
+  placement, mirroring a letter group's own header minus the label (direct feedback, added after
+  the rest of the feature shipped) — bumped `recentlyInstalledOffset` from 1 to 2 (header + row).
+- [x] **Recency icon**: `RecencyIcon` (`FolderContentsSheet.kt`, `internal` for cross-file reuse) —
+  a custom `ImageVector` built from a supplied Material Symbols "history" SVG path via
+  `PathParser().parsePathString(...)`, shifted into Compose's `[0, viewportHeight]` space with a
+  `group(translationY = 960f)` wrapper (the source's `viewBox="0 -960 960 960"` has no direct
+  Compose equivalent) — used verbatim rather than substituted with `androidx.compose.material.icons`'
+  own (older, visually different) `History` icon, per direct feedback.
+- [x] **Sheet**: reused `FolderContentsSheet` via a synthetic `Folder(id = -1L, name = "Recently
+  installed", apps = recentlyInstalledApps)` — `Folder`/`FolderTileGlyph`/`FolderContentsSheet`
+  are already plain-data/Room-decoupled. `FolderSheetHeaderAction` gained a third case, `None`, so
+  the sheet renders with no "Rename" button on this non-editable virtual folder. Each contained
+  app also gets a small `RecencyBadge` (same `RecencyIcon`, literal white on `IconTile`) at its
+  icon's bottom-end corner — a new `showRecencyBadge: Boolean` param on
+  `FolderContentsSheet`/`FolderContentsList`/`FolderContentsAppRow`, `false` by default so real
+  folders' contents are unaffected.
+- [x] **Alphabet rail entry**: `AlphabetRail`/`railSelectionAt` gained a
+  `recentlyInstalledPosition: RailFolderPosition` param (reusing the folder glyph's own
+  `NONE`/`TOP`/`BOTTOM` type) and a third `RailSelection` case, `RecentlyInstalled` — its glyph
+  sits outermost at whichever end it's on (ahead of a `TOP` folder glyph, or after a `BOTTOM` one).
+  The big letter-jump indicator (the pill shown while dragging) got a fixed `96.dp × 64.dp`
+  footprint instead of padding-wraps-content, so a wide letter no longer resizes the pill versus a
+  narrow one; its `Text` now reads `MaterialTheme.typography.displayMedium` (the app's own
+  font-family/weight setting, like every other piece of text) instead of `FacetType.clock` — that
+  style is the one deliberate exception to the app's type scale, fixed to
+  `FontFamily.SansSerif`/`ExtraLight` regardless of the user's font choice, and read visibly
+  thinner than the Folders/Recently-installed glyphs shown in the same indicator slot.
+- [x] **Private Space's own copy**: `PrivateSpaceViewModel` gained `SettingsRepository` +
+  `RecentlyInstalledAppsUseCase` dependencies; new `recentlyInstalledApps: StateFlow<List<AppInfo>>`
+  via `combine(apps, query, settings)`, hidden while searching — mirrors the main Drawer's own
+  search-hides-browse-content precedent. `PrivateSpaceScreen` gained a
+  `recentlyInstalledPosition` param and renders the row as either its leading or trailing `item`
+  (no alphabet rail there to place it on) styled through `PrivateSpaceTheme`'s own color tokens,
+  not this app's usual `Accent`/`Ink`. Fully independent state from the main Drawer's copy — same
+  use case class, same global setting, separate computation.
+- [x] **Settings**: `recently_installed_position` DataStore key (`RecentlyInstalledPosition.name`,
+  default `SHOW_FIRST`) — `SettingsRepository` keys/read-mapping/setter,
+  `LauncherSettings.recentlyInstalledPosition`,
+  `AppDrawerSettingsViewModel.setRecentlyInstalledPosition`, a `LabeledDropdownRow` in
+  `AppDrawerSettingsScreen.kt` mirroring `DrawerFolderDisplayMode`'s own dropdown —
+  `SHOW_FIRST`/`SHOW_LAST` get their own "recents"-worded strings (`recently_installed_position_
+  show_first/last`, en+de+es+fr+pt) rather than reusing folders' "Show folders first/last" text
+  verbatim, but `DO_NOT_SHOW` gets its own dedicated string too (not shared with
+  `DrawerFolderDisplayMode`'s, despite identical English text) — threaded from `HomeDrawerRoute.kt`
+  into both `AppDrawerScreen` and `PrivateSpaceScreen`.
+- [x] **Tests**: `RecentlyInstalledAppsUseCaseTest` (window inclusion/exclusion at the 72h
+  boundary, sorting, empty input, install-vs-update distinction); `AppDrawerScreenTest` gains
+  cases (shows/hides on setting+qualifying-apps, sits above a `SHOW_FIRST` folder section, sits
+  below the lettered content when `SHOW_LAST`, tapping opens the sheet with the right apps, and —
+  the regression guard for this item's tab-scoping, deliberately unlike pinned folders — apps are
+  scoped to the active tab); `AppDrawerSettingsScreenTest` gains a dropdown round-trip case;
+  `AlphabetRailMappingTest` gains cases for `recentlyInstalledPosition` at `TOP`/`BOTTOM`,
+  independently and combined with a folder glyph at either end; `PrivateSpaceViewModelTest` (4
+  cases: 72h filter over Private Space's own apps, respects the setting, hidden while searching,
+  independent of the main Drawer). `TEST_REGISTRY.md` regenerated.
+- [x] **Docs**: `12-flow-drawer-search-and-app-actions.md` (§1b rewritten for the 3-way position,
+  the recency icon/badge, the rail's `TOP`/`BOTTOM` entry, Private Space's independent copy);
+  `11-flow-profiles-and-spaces.md` (Private Space app-list row cross-references §1b);
+  `02-persistence-room.md` (ER diagram, writer table, key/field registry — now a `String` enum
+  key, not `Boolean`); `07-registries.md` (use-case row); `04-package-structure.md` (file counts).
+
+Full design/plan detail: see chat history (this session) — a research-backed plan was reviewed and
+approved (twice revised on direct feedback before starting: tab-scoping vs. folders, and adding
+Private Space's own copy), then further revised after the initial build shipped: Grid support
+dropped, the category glyph changed from a star to the supplied "history" icon (then made literal
+white), the big rail letter-indicator's font/pill fixed, and the on/off toggle expanded into a
+3-way `SHOW_FIRST`/`SHOW_LAST`/`DO_NOT_SHOW` position setting with its own dedicated strings
+(sharing neither `DrawerFolderDisplayMode`'s "Show folders first/last" text nor
+`SearchBarPosition`'s generic "Top"/"Bottom" — direct feedback on each).

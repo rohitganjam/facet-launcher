@@ -27,6 +27,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
@@ -70,6 +71,7 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.TOP, settings.searchBarPosition)
         assertEquals(DrawerFolderDisplayMode.DO_NOT_SHOW, settings.drawerFolderDisplayMode)
+        assertEquals(RecentlyInstalledPosition.SHOW_FIRST, settings.recentlyInstalledPosition)
         assertEquals(NO_ACTIVE_FACET_ID, settings.activeFacetId)
         assertEquals(true, settings.showAllDayEvents)
         assertEquals(null, settings.selectedCalendarIds)
@@ -266,6 +268,7 @@ class SettingsRepositoryTest {
         repository.setShowDrawerLabels(false)
         repository.setSearchBarPosition(SearchBarPosition.BOTTOM)
         repository.setDrawerFolderDisplayMode(DrawerFolderDisplayMode.INLINE)
+        repository.setRecentlyInstalledPosition(RecentlyInstalledPosition.SHOW_LAST)
         repository.setActiveFacetId(7L)
         repository.setShowAllDayEvents(false)
         repository.setSelectedCalendarIds(setOf("cal-1", "cal-2"))
@@ -299,6 +302,7 @@ class SettingsRepositoryTest {
         assertEquals(false, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.BOTTOM, settings.searchBarPosition)
         assertEquals(DrawerFolderDisplayMode.INLINE, settings.drawerFolderDisplayMode)
+        assertEquals(RecentlyInstalledPosition.SHOW_LAST, settings.recentlyInstalledPosition)
         assertEquals(7L, settings.activeFacetId)
         assertEquals(false, settings.showAllDayEvents)
         assertEquals(setOf("cal-1", "cal-2"), settings.selectedCalendarIds)

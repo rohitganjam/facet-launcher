@@ -34,6 +34,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
@@ -55,6 +56,7 @@ private object Keys {
     val SHOW_DRAWER_LABELS = booleanPreferencesKey("show_drawer_labels")
     val SEARCH_BAR_POSITION = stringPreferencesKey("search_bar_position")
     val DRAWER_FOLDER_DISPLAY_MODE = stringPreferencesKey("drawer_folder_display_mode")
+    val RECENTLY_INSTALLED_POSITION = stringPreferencesKey("recently_installed_position")
     val ACTIVE_FACET_ID = longPreferencesKey("active_facet_id")
     val SHOW_ALL_DAY_EVENTS = booleanPreferencesKey("show_all_day_events")
     val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
@@ -125,6 +127,9 @@ class SettingsRepository @Inject constructor(
             drawerFolderDisplayMode = preferences[Keys.DRAWER_FOLDER_DISPLAY_MODE]?.let {
                 runCatching { DrawerFolderDisplayMode.valueOf(it) }.getOrNull()
             } ?: defaults.drawerFolderDisplayMode,
+            recentlyInstalledPosition = preferences[Keys.RECENTLY_INSTALLED_POSITION]?.let {
+                runCatching { RecentlyInstalledPosition.valueOf(it) }.getOrNull()
+            } ?: defaults.recentlyInstalledPosition,
             activeFacetId = preferences[Keys.ACTIVE_FACET_ID] ?: defaults.activeFacetId,
             showAllDayEvents = preferences[Keys.SHOW_ALL_DAY_EVENTS] ?: defaults.showAllDayEvents,
             selectedCalendarIds = preferences[Keys.SELECTED_CALENDAR_IDS],
@@ -216,6 +221,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
         dataStore.edit { it[Keys.DRAWER_FOLDER_DISPLAY_MODE] = mode.name }
+    }
+
+    suspend fun setRecentlyInstalledPosition(position: RecentlyInstalledPosition) {
+        dataStore.edit { it[Keys.RECENTLY_INSTALLED_POSITION] = position.name }
     }
 
     suspend fun setNotificationDotsEnabled(enabled: Boolean) {

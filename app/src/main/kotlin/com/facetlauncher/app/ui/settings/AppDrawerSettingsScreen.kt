@@ -39,6 +39,7 @@ import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
@@ -84,6 +85,7 @@ fun AppDrawerSettingsScreen(
         onSearchBarPositionChange = viewModel::setSearchBarPosition,
         onDrawerOpacityChange = viewModel::setDrawerOpacity,
         onDrawerFolderDisplayModeChange = viewModel::setDrawerFolderDisplayMode,
+        onRecentlyInstalledPositionChange = viewModel::setRecentlyInstalledPosition,
         modifier = modifier,
     )
 }
@@ -102,6 +104,7 @@ private fun AppDrawerSettingsContent(
     onSearchBarPositionChange: (SearchBarPosition) -> Unit,
     onDrawerOpacityChange: (Float) -> Unit,
     onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
+    onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val presentation = settings.drawerPresentation
@@ -204,6 +207,15 @@ private fun AppDrawerSettingsContent(
                             testTag = "drawer_folder_display_mode_row",
                         )
                         CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.app_drawer_recently_installed_position),
+                            options = RecentlyInstalledPosition.entries,
+                            selected = settings.recentlyInstalledPosition,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onRecentlyInstalledPositionChange,
+                            testTag = "recently_installed_position_row",
+                        )
+                        CardDivider()
                         DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChange)
                     }
                 }
@@ -300,6 +312,7 @@ private fun AppDrawerSettingsScreenPreview() {
             onSearchBarPositionChange = {},
             onDrawerOpacityChange = {},
             onDrawerFolderDisplayModeChange = {},
+            onRecentlyInstalledPositionChange = {},
         )
     }
 }

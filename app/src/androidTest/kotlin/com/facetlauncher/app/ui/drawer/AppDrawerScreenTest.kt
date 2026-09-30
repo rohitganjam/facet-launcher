@@ -40,6 +40,7 @@ import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -980,5 +981,146 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithTag("header_A").assertExists()
         composeRule.onNodeWithText("Ace Folder").assertExists()
         composeRule.onNodeWithText("A App").assertExists()
+    }
+
+    /** All 26 [apps] default to `firstInstallTime = 0L` — none ever qualify as recently installed on their own, so every test below seeds its own recently-installed app explicitly. */
+    private fun recentApp(letter: Char = 'Z', userHandle: UserHandle? = null) = AppInfo(
+        packageName = "com.example.recent$letter",
+        activityName = ".Main",
+        label = "Recent $letter App",
+        icon = null,
+        firstInstallTime = System.currentTimeMillis(),
+        userHandle = userHandle ?: android.os.Process.myUserHandle(),
+    )
+
+    @Test
+    fun recentlyInstalledRowShowsWhenAnAppQualifiesAndTheSettingIsOn() {
+        // Given the default setting (on) and one recently-installed app
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {})
+            }
+        }
+
+        composeRule.onNodeWithTag("drawer_recently_installed_row").assertExists()
+        // ...with its own icon-only section header, same as a letter or "Folders" header
+        composeRule.onNodeWithTag("header_recently_installed").assertExists()
+    }
+
+    @Test
+    fun recentlyInstalledRowIsHiddenWhenTheSettingIsOff() {
+        // Given a qualifying app, but the setting turned off
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {}, recentlyInstalledPosition = RecentlyInstalledPosition.DO_NOT_SHOW)
+            }
+        }
+
+        composeRule.onNodeWithTag("drawer_recently_installed_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("header_recently_installed").assertDoesNotExist()
+    }
+
+    @Test
+    fun recentlyInstalledRowSitsAtTheBottomWhenPositionIsShowLast() {
+        // Given a qualifying app and the setting set to show it last
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {}, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST)
+            }
+        }
+
+        // Then it still renders, past all 26 letter groups — scrolled to first, since a
+        // LazyColumn only composes what's near the viewport and this row sits well past the
+        // initially-visible "A"/"B" rows (mirrors folderDisplayModeShowLastPinsAFoldersSection...).
+        composeRule.onNodeWithTag("drawer_list").performScrollToNode(hasTestTag("drawer_recently_installed_row"))
+        composeRule.onNodeWithTag("drawer_recently_installed_row").assertExists()
+        composeRule.onNodeWithTag("header_recently_installed").assertExists()
+    }
+
+    @Test
+    fun recentlyInstalledRowIsHiddenWhenNoAppsQualify() {
+        // Given the setting on, but no app installed recently (all firstInstallTime = 0L)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps, onAppClick = {})
+            }
+        }
+
+        composeRule.onNodeWithTag("drawer_recently_installed_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun recentlyInstalledRowSitsAboveAShowFirstFolderSection() {
+        // Given a qualifying app and a SHOW_FIRST folder
+        val folder = Folder(id = 1, name = "Zeta Folder", apps = emptyList())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps + recentApp(),
+                    onAppClick = {},
+                    folderCandidates = listOf(folder),
+                    folderDisplayMode = DrawerFolderDisplayMode.SHOW_FIRST,
+                )
+            }
+        }
+
+        // Then both exist, with the recently-installed row above the folder in root-relative position
+        val rowTop = composeRule.onNodeWithTag("drawer_recently_installed_row").fetchSemanticsNode().boundsInRoot.top
+        val folderTop = composeRule.onNodeWithTag("drawer_folder_row_1").fetchSemanticsNode().boundsInRoot.top
+        assert(rowTop < folderTop)
+    }
+
+    @Test
+    fun tappingRecentlyInstalledRowOpensTheSheetWithTheExpectedApp() {
+        // Given one recently-installed app
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps + recentApp('Z'), onAppClick = {})
+            }
+        }
+
+        // When tapping the row
+        composeRule.onNodeWithTag("drawer_recently_installed_row").performClick()
+
+        // Then the sheet opens showing that app
+        composeRule.onNodeWithTag("folder_contents_sheet").assertExists()
+        composeRule.onNodeWithText("Recent Z App").assertExists()
+        // ...with no "Rename" action, since this isn't a real folder
+        composeRule.onNodeWithTag("folder_contents_sheet_rename").assertDoesNotExist()
+        // ...and a recency badge on the contained app's icon
+        composeRule.onNodeWithTag("recency_badge_com.example.recentZ", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun recentlyInstalledRowIsHiddenInGridPresentation() {
+        // Given Grid presentation and one recently-installed app — the feature is List-only
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {}, presentation = DrawerPresentation.GRID)
+            }
+        }
+
+        composeRule.onNodeWithTag("drawer_recently_installed_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun recentlyInstalledAppsAreScopedToTheActiveTabUnlikePinnedFolders() {
+        // Given a Personal recently-installed app and a Work recently-installed app, Personal
+        // selected (the default tab)
+        val workHandle = fakeUserHandle(7)
+        val personalRecent = recentApp('P')
+        val workRecent = recentApp('W', userHandle = workHandle).copy(profile = AppProfile.WORK)
+        val workProfiles = listOf(WorkProfileInfo(handle = workHandle, isPaused = false, label = "Work"))
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps + personalRecent + workRecent, onAppClick = {}, workProfiles = workProfiles)
+            }
+        }
+
+        // Then the sheet shows only the Personal app — the Work Profile's own recently-installed
+        // app is excluded, unlike a pinned folder (deliberately NOT tab-filtered — see chat history)
+        composeRule.onNodeWithTag("drawer_recently_installed_row").performClick()
+        composeRule.onNodeWithText("Recent P App").assertExists()
+        composeRule.onNodeWithText("Recent W App").assertDoesNotExist()
     }
 }

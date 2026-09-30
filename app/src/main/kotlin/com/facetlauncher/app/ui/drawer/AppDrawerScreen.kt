@@ -78,6 +78,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -110,6 +112,7 @@ import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
@@ -117,6 +120,7 @@ import com.facetlauncher.app.domain.GroupedItems
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
@@ -124,6 +128,7 @@ import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
+import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.components.longPressReleaseClickable
@@ -134,10 +139,10 @@ import com.facetlauncher.app.ui.theme.DrawerHeaderTextColor
 import com.facetlauncher.app.ui.theme.DrawerOverlay
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
+import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
-import com.facetlauncher.app.ui.theme.FacetType
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
@@ -221,6 +226,8 @@ fun AppDrawerScreen(
     onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     /** Settings → App Drawer → "Folders in drawer" — browse-mode only; search results never include folders (see chat history: scoped out of this pass). */
     folderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
+    /** Settings → App Drawer → "Recently installed" — `SHOW_FIRST`/`SHOW_LAST` place the category above/below everything (including a same-side pinned folder section); `DO_NOT_SHOW` hides it. Browse-mode only, same as [folderDisplayMode]. */
+    recentlyInstalledPosition: RecentlyInstalledPosition = RecentlyInstalledPosition.SHOW_FIRST,
     onRemoveFromFolder: (Long, AppInfo) -> Unit = { _, _ -> },
     onRenameFolder: (Long, String) -> Unit = { _, _ -> },
     onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
@@ -272,6 +279,31 @@ fun AppDrawerScreen(
             emptyList()
         }
     }
+    // Scoped to tabScopedApps, not the raw apps param — unlike pinnedFolders, deliberately NOT tab-filtered.
+    val recentlyInstalledUseCase = remember { RecentlyInstalledAppsUseCase() }
+    val recentlyInstalledApps = remember(tabScopedApps, isSearching, recentlyInstalledPosition) {
+        if (recentlyInstalledPosition != RecentlyInstalledPosition.DO_NOT_SHOW && !isSearching) {
+            recentlyInstalledUseCase(tabScopedApps)
+        } else {
+            emptyList()
+        }
+    }
+    // Leading-slot count only (List-only, and only when SHOW_FIRST) — index math below adds this
+    // wherever a leading recently-installed header+row shifts a subsequent index. 2 slots (icon
+    // header + the row itself), same shape as a SHOW_FIRST folder section's own "1 header + N
+    // folders". A trailing SHOW_LAST row needs no such offset: nothing after it to shift.
+    val recentlyInstalledOffset = if (
+        presentation != DrawerPresentation.GRID &&
+        recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_FIRST &&
+        recentlyInstalledApps.isNotEmpty()
+    ) {
+        2
+    } else {
+        0
+    }
+    val showRecentlyInstalledTrailing = presentation != DrawerPresentation.GRID &&
+        recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_LAST &&
+        recentlyInstalledApps.isNotEmpty()
     // Apps are always wrapped as DrawerItem — even outside INLINE — so DrawerListContent/
     // DrawerGridContent have a single item type to render regardless of folderDisplayMode; only
     // INLINE actually merges folders into this same alphabetical grouping (SHOW_FIRST/SHOW_LAST
@@ -297,6 +329,11 @@ fun AppDrawerScreen(
         pinnedFolders.isEmpty() -> RailFolderPosition.NONE
         folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST -> RailFolderPosition.TOP
         folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST -> RailFolderPosition.BOTTOM
+        else -> RailFolderPosition.NONE
+    }
+    val railRecentlyInstalledPosition = when {
+        recentlyInstalledOffset > 0 -> RailFolderPosition.TOP
+        showRecentlyInstalledTrailing -> RailFolderPosition.BOTTOM
         else -> RailFolderPosition.NONE
     }
     val coroutineScope = rememberCoroutineScope()
@@ -337,11 +374,21 @@ fun AppDrawerScreen(
     // List (which renders a header row per section, same as a letter), just N folders for Grid
     // (headerless, same reason Grid already skips letter headers). SHOW_LAST doesn't need this:
     // the pinned section comes after the lettered content, so letter indices are unaffected — only
-    // the section's own start index (below) needs computing.
-    val letterIndexOffset = if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
+    // the section's own start index (below) needs computing. recentlyInstalledOffset (always 0 in
+    // Grid) adds the recently-installed row's own leading slot on top of that.
+    val letterIndexOffset = recentlyInstalledOffset + if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
         if (presentation == DrawerPresentation.GRID) pinnedFolders.size else 1 + pinnedFolders.size
     } else {
         0
+    }
+
+    // The absolute index right after all lettered content (and any leading recently-installed
+    // row) — where a SHOW_LAST folder section, or a SHOW_LAST recently-installed row with no
+    // folder section, starts.
+    fun afterLetteredContentIndex(): Int = recentlyInstalledOffset + if (presentation == DrawerPresentation.GRID) {
+        groupedItems.groups.values.sumOf { it.size }
+    } else {
+        groupedItems.groups.values.sumOf { 1 + it.size }
     }
 
     fun onRailSelectionChanged(selection: RailSelection?) {
@@ -356,18 +403,26 @@ fun AppDrawerScreen(
                 coroutineScope.launch { scrollToIndex(index) }
             }
             RailSelection.Folders -> {
+                // Absolute lazy-list indices, so recentlyInstalledOffset shifts both branches too.
                 val index = when (folderDisplayMode) {
-                    DrawerFolderDisplayMode.SHOW_FIRST -> 0
-                    DrawerFolderDisplayMode.SHOW_LAST -> {
-                        if (presentation == DrawerPresentation.GRID) {
-                            groupedItems.groups.values.sumOf { it.size }
-                        } else {
-                            groupedItems.groups.values.sumOf { 1 + it.size }
-                        }
-                    }
+                    DrawerFolderDisplayMode.SHOW_FIRST -> recentlyInstalledOffset
+                    DrawerFolderDisplayMode.SHOW_LAST -> afterLetteredContentIndex()
                     else -> return
                 }
                 coroutineScope.launch { scrollToIndex(index) }
+            }
+            RailSelection.RecentlyInstalled -> {
+                val index = when (recentlyInstalledPosition) {
+                    RecentlyInstalledPosition.SHOW_FIRST -> 0
+                    // Sits after a SHOW_LAST folder section too, at the very bottom of the list.
+                    RecentlyInstalledPosition.SHOW_LAST -> afterLetteredContentIndex() + if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
+                        if (presentation == DrawerPresentation.GRID) pinnedFolders.size else 1 + pinnedFolders.size
+                    } else {
+                        0
+                    }
+                    RecentlyInstalledPosition.DO_NOT_SHOW -> null
+                }
+                if (index != null) coroutineScope.launch { scrollToIndex(index) }
             }
             null -> Unit
         }
@@ -485,6 +540,8 @@ fun AppDrawerScreen(
                     groupedItems = groupedItems,
                     pinnedFolders = pinnedFolders,
                     folderDisplayMode = folderDisplayMode,
+                    recentlyInstalledApps = recentlyInstalledApps,
+                    recentlyInstalledPosition = recentlyInstalledPosition,
                     listState = listState,
                     itemSize = listItemSize,
                     onAppClick = onAppClick,
@@ -513,6 +570,7 @@ fun AppDrawerScreen(
                 letters = groupedItems.letters,
                 activeSelection = draggingSelection,
                 folderPosition = railFolderPosition,
+                recentlyInstalledPosition = railRecentlyInstalledPosition,
                 onSelectionChange = ::onRailSelectionChanged,
                 showRail = true,
                 railHeightPx = railHeightPx,
@@ -525,6 +583,7 @@ fun AppDrawerScreen(
             letters = groupedItems.letters,
             activeSelection = draggingSelection,
             folderPosition = railFolderPosition,
+            recentlyInstalledPosition = railRecentlyInstalledPosition,
             onSelectionChange = ::onRailSelectionChanged,
             showRail = false,
             railHeightPx = railHeightPx,
@@ -533,36 +592,46 @@ fun AppDrawerScreen(
             requireDrag = true,
         )
 
-        when (val selection = draggingSelection) {
-            is RailSelection.Letter -> {
-                Text(
-                    text = selection.letter,
-                    style = FacetType.clock.copy(fontSize = 40.sp, lineHeight = 40.sp),
-                    color = Accent,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .testTag("alphabet_rail_indicator")
-                        .background(color = Surface.copy(alpha = 0.92f), shape = RoundedCornerShape(20.dp))
-                        .padding(horizontal = 28.dp, vertical = 12.dp),
-                )
+        // Fixed footprint, not padding-wraps-content — a wide letter like "W" no longer resizes
+        // the pill versus a narrow one like "I", or the icon branches' own fixed 40dp.
+        if (draggingSelection != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .testTag("alphabet_rail_indicator")
+                    .background(color = Surface.copy(alpha = 0.92f), shape = RoundedCornerShape(20.dp))
+                    .size(width = 96.dp, height = 64.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                when (val selection = draggingSelection) {
+                    is RailSelection.Letter -> {
+                        // displayMedium, not FacetType.clock — that's fixed ExtraLight/SansSerif
+                        // regardless of the user's font setting, and reads thin next to the icons.
+                        Text(
+                            text = selection.letter,
+                            style = MaterialTheme.typography.displayMedium,
+                            color = Accent,
+                        )
+                    }
+                    RailSelection.Folders -> {
+                        Icon(
+                            imageVector = Icons.Outlined.FolderIcon,
+                            contentDescription = stringResource(R.string.app_picker_tab_folders),
+                            tint = Accent,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
+                    RailSelection.RecentlyInstalled -> {
+                        Icon(
+                            imageVector = RecencyIcon,
+                            contentDescription = stringResource(R.string.drawer_recently_installed_label),
+                            tint = Accent,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
+                    null -> Unit
+                }
             }
-            RailSelection.Folders -> {
-                Icon(
-                    imageVector = Icons.Outlined.FolderIcon,
-                    contentDescription = stringResource(R.string.app_picker_tab_folders),
-                    tint = Accent,
-                    // .size() last (not first, unlike a Modifier.size(x).padding(y) chain) so the
-                    // pill's background/padding wrap around the icon rather than squeezing it —
-                    // Text sizes itself from its own 40sp font instead, so it never needs this.
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .testTag("alphabet_rail_indicator")
-                        .background(color = Surface.copy(alpha = 0.92f), shape = RoundedCornerShape(20.dp))
-                        .padding(horizontal = 28.dp, vertical = 12.dp)
-                        .size(40.dp),
-                )
-            }
-            null -> Unit
         }
         }
         }
@@ -1114,13 +1183,21 @@ private fun LetterJumpZone(
     onRailHeightMeasure: (Float) -> Unit,
     modifier: Modifier = Modifier,
     folderPosition: RailFolderPosition = RailFolderPosition.NONE,
+    recentlyInstalledPosition: RailFolderPosition = RailFolderPosition.NONE,
     requireDrag: Boolean = false,
 ) {
     var zoneHeightPx by remember { mutableFloatStateOf(0f) }
 
     fun selectionFor(y: Float): RailSelection? {
         val bandTop = (zoneHeightPx - railHeightPx) / 2f
-        return railSelectionAt(y = y, bandTopPx = bandTop, bandBottomPx = bandTop + railHeightPx, letters = letters, folderPosition = folderPosition)
+        return railSelectionAt(
+            y = y,
+            bandTopPx = bandTop,
+            bandBottomPx = bandTop + railHeightPx,
+            letters = letters,
+            folderPosition = folderPosition,
+            recentlyInstalledPosition = recentlyInstalledPosition,
+        )
     }
 
     Box(
@@ -1132,7 +1209,7 @@ private fun LetterJumpZone(
             // (awaitFirstDown, no slop wait) — this makes it feel responsive. The left edge
             // (requireDrag=true) requires a drag past the system's touch-slop threshold before
             // activating, preventing accidental jumps from simple touches.
-            .pointerInput(letters, folderPosition, requireDrag) {
+            .pointerInput(letters, folderPosition, recentlyInstalledPosition, requireDrag) {
                 if (requireDrag) {
                     detectDragGestures(
                         onDragStart = { offset ->
@@ -1168,6 +1245,8 @@ private fun LetterJumpZone(
                 activeLetter = (activeSelection as? RailSelection.Letter)?.letter,
                 folderPosition = folderPosition,
                 folderActive = activeSelection is RailSelection.Folders,
+                recentlyInstalledPosition = recentlyInstalledPosition,
+                recentlyInstalledActive = activeSelection is RailSelection.RecentlyInstalled,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .onSizeChanged { onRailHeightMeasure(it.height.toFloat()) },
@@ -1181,6 +1260,8 @@ private fun DrawerListContent(
     groupedItems: GroupedItems<DrawerItem>,
     pinnedFolders: List<Folder>,
     folderDisplayMode: DrawerFolderDisplayMode,
+    recentlyInstalledApps: List<AppInfo>,
+    recentlyInstalledPosition: RecentlyInstalledPosition,
     listState: LazyListState,
     itemSize: DrawerListItemSize,
     onAppClick: (AppInfo) -> Unit,
@@ -1212,6 +1293,20 @@ private fun DrawerListContent(
         // zone; an extra end padding here just left an empty gap between the two.
         modifier = modifier.padding(start = 48.dp, top = 4.dp, bottom = 40.dp),
     ) {
+        if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_FIRST) {
+            item(key = "header_recently_installed") { DrawerRecentlyInstalledHeader() }
+            item(key = "recently_installed") {
+                DrawerRecentlyInstalledRow(
+                    apps = recentlyInstalledApps,
+                    onAppClick = onAppClick,
+                    itemSize = itemSize,
+                    labelFontWeight = labelFontWeight,
+                    onRequestShortcuts = onRequestShortcuts,
+                    onLaunchShortcut = onLaunchShortcut,
+                    onAppInfo = onAppInfo,
+                )
+            }
+        }
         if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
             drawerFolderSection(
                 folders = pinnedFolders,
@@ -1292,6 +1387,20 @@ private fun DrawerListContent(
                 onFolderDockAction = onFolderDockAction,
             )
         }
+        if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_LAST) {
+            item(key = "header_recently_installed") { DrawerRecentlyInstalledHeader() }
+            item(key = "recently_installed") {
+                DrawerRecentlyInstalledRow(
+                    apps = recentlyInstalledApps,
+                    onAppClick = onAppClick,
+                    itemSize = itemSize,
+                    labelFontWeight = labelFontWeight,
+                    onRequestShortcuts = onRequestShortcuts,
+                    onLaunchShortcut = onLaunchShortcut,
+                    onAppInfo = onAppInfo,
+                )
+            }
+        }
     }
 }
 
@@ -1341,6 +1450,105 @@ private fun LazyListScope.drawerFolderSection(
             onRequestQuickAddState = onRequestFolderQuickAddState,
             onFavoritesAction = onFolderFavoritesAction,
             onDockAction = onFolderDockAction,
+        )
+    }
+}
+
+/** The "Recently installed" category's own section header — icon-only (no label, unlike [drawerFolderSection]'s text "Folders" header), same [MaterialTheme.typography.labelSmall]/[DrawerHeaderTextColor]/padding treatment as a letter header. */
+@Composable
+private fun DrawerRecentlyInstalledHeader(modifier: Modifier = Modifier) {
+    val glyphSize = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.fontSize.toDp() }
+    Icon(
+        imageVector = RecencyIcon,
+        contentDescription = null,
+        tint = DrawerHeaderTextColor,
+        modifier = modifier
+            .padding(top = 14.dp, bottom = 4.dp)
+            .size(glyphSize)
+            .testTag("header_recently_installed"),
+    )
+}
+
+/**
+ * The "Recently installed" category — always the very first row, List-only, above even a
+ * `SHOW_FIRST` folder section. A virtual item, not a real [Folder]: no long-press menu, just
+ * tap-to-open. Reuses [FolderContentsSheet] via a synthetic `Folder(id = -1L, ...)` with
+ * [FolderSheetHeaderAction.None] (no "Rename") and `showRecencyBadge = true`.
+ */
+@Composable
+private fun DrawerRecentlyInstalledRow(
+    apps: List<AppInfo>,
+    onAppClick: (AppInfo) -> Unit,
+    itemSize: DrawerListItemSize,
+    labelFontWeight: FontWeight,
+    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
+    onLaunchShortcut: (AppShortcut) -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var sheetOpen by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.large)
+                .clickable(onClick = { sheetOpen = true })
+                .testTag("drawer_recently_installed_row")
+                .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            RecentlyInstalledGlyph(modifier = Modifier.size(itemSize.iconSizeDp.dp))
+            Text(
+                text = stringResource(R.string.drawer_recently_installed_label),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight),
+                color = DrawerAppTextColor,
+            )
+        }
+        if (sheetOpen) {
+            FolderContentsSheet(
+                folder = Folder(id = -1L, name = stringResource(R.string.drawer_recently_installed_label), apps = apps),
+                onDismissRequest = { sheetOpen = false },
+                onAppClick = onAppClick,
+                presentation = DrawerPresentation.LIST,
+                onRemoveFromFolder = { _, _ -> },
+                headerAction = FolderSheetHeaderAction.None,
+                showRecencyBadge = true,
+                onRequestShortcuts = onRequestShortcuts,
+                onLaunchShortcut = onLaunchShortcut,
+                onAppInfo = onAppInfo,
+            )
+        }
+    }
+}
+
+/** [DrawerRecentlyInstalledRow]'s leading glyph — the same [FolderTileGlyph] container treatment
+ * (12dp-rounded tile with an inset vignette) so this row reads as a category alongside real
+ * folder rows, with [RecencyIcon] standing in for a folder's own icon. [Ink]/[InkInverted] are
+ * exact opposites of each other in both themes, so this stays high-contrast either way. */
+@Composable
+private fun RecentlyInstalledGlyph(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Ink)
+            .drawWithContent {
+                drawContent()
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.18f)),
+                        center = center,
+                        radius = size.maxDimension * 0.75f,
+                    ),
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = RecencyIcon,
+            contentDescription = null,
+            tint = InkInverted,
+            modifier = Modifier.size(AppIconSize.SHORTCUT),
         )
     }
 }

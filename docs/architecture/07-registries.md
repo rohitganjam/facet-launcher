@@ -99,6 +99,7 @@ cycles; `AppRepository` is the single root.
 | `ObserveSettingsScreenStateUseCase` | observe | `SettingsRepository`, `DockAppRepository`, `DefaultFavoriteAppRepository`, `FolderRepository` | `SettingsViewModel` |
 | `PlaceWidgetUseCase` | pure grid (`Placed` / `HubFull`) | — | `HubWidgetPickerViewModel`, `BackupRestoreViewModel` |
 | `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen`, F2) |
+| `RecentlyInstalledAppsUseCase` | pure (filters `firstInstallTime` within 72h) | — | `AppDrawerScreen` (inline `remember`), `PrivateSpaceViewModel` |
 | `RepairOrphanedProfileRowsUseCase` | startup one-shot write | `AppRepository` + 5 placement/folder repositories | `LauncherViewModel` |
 | `ResolveWidgetDropUseCase` | pure grid | — | `HubViewModel` |
 | `ResolveWidgetResizeUseCase` | pure grid | — | `HubViewModel` |

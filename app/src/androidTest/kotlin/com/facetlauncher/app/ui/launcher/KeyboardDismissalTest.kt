@@ -59,6 +59,7 @@ import com.facetlauncher.app.domain.AddFolderToDockUseCase
 import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
 import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
@@ -235,7 +236,12 @@ class KeyboardDismissalTest {
             val privateSpaceViewModel = remember {
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val privateSpaceRepository = PrivateSpaceRepository(context.getSystemService(UserManager::class.java), appRepository, context)
-                PrivateSpaceViewModel(privateSpaceRepository, RankBySearchRelevanceUseCase())
+                val settingsRepository = SettingsRepository(
+                    PreferenceDataStoreFactory.create(
+                        produceFile = { File(context.cacheDir, "test-settings-${System.nanoTime()}.preferences_pb") },
+                    ),
+                )
+                PrivateSpaceViewModel(privateSpaceRepository, RankBySearchRelevanceUseCase(), RecentlyInstalledAppsUseCase(), settingsRepository)
             }
             val hubViewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()

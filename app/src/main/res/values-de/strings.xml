@@ -275,6 +275,9 @@
     <string name="drawer_folder_display_mode_inline">Ordner eingebettet anzeigen</string>
     <string name="drawer_folder_display_mode_show_first">Ordner zuerst anzeigen</string>
     <string name="drawer_folder_display_mode_show_last">Ordner zuletzt anzeigen</string>
+    <string name="recently_installed_position_show_first">Neuinstallationen zuerst anzeigen</string>
+    <string name="recently_installed_position_show_last">Neuinstallationen zuletzt anzeigen</string>
+    <string name="recently_installed_position_do_not_show">Nicht anzeigen</string>
 
     <!-- Position/presentation enums -->
     <string name="app_row_position_left">Links</string>
@@ -333,7 +336,9 @@
     <string name="app_drawer_search_settings_subtitle">Direkt zu Systemeinstellungen wie WLAN oder Bluetooth springen</string>
     <string name="app_drawer_search_bar_position">Position der Suchleiste</string>
     <string name="app_drawer_folders_in_drawer">Ordner im Drawer</string>
+    <string name="app_drawer_recently_installed_position">Kürzlich installiert</string>
     <string name="app_drawer_opacity_label">Drawer-Deckkraft</string>
+    <string name="drawer_recently_installed_label">Kürzlich installiert</string>
 
     <!-- ThemeMode -->
     <string name="theme_mode_light">Hell</string>

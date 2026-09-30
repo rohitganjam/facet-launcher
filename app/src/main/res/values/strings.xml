@@ -292,6 +292,9 @@
     <string name="drawer_folder_display_mode_inline">Show folders inline</string>
     <string name="drawer_folder_display_mode_show_first">Show folders first</string>
     <string name="drawer_folder_display_mode_show_last">Show folders last</string>
+    <string name="recently_installed_position_show_first">Show recents first</string>
+    <string name="recently_installed_position_show_last">Show recents last</string>
+    <string name="recently_installed_position_do_not_show">Do not show</string>
 
     <!-- AppRowPosition/AppRowPresentation/AppListVerticalAlignment/ListContentMode/DockDisplayMode
          — enum option labels, same centralization pattern as above. ListContentMode/DockDisplayMode
@@ -362,7 +365,9 @@
     <string name="app_drawer_search_settings_subtitle">Jump to system settings like Wi-Fi or Bluetooth</string>
     <string name="app_drawer_search_bar_position">Search bar position</string>
     <string name="app_drawer_folders_in_drawer">Folders in drawer</string>
+    <string name="app_drawer_recently_installed_position">Recently installed</string>
     <string name="app_drawer_opacity_label">Drawer opacity</string>
+    <string name="drawer_recently_installed_label">Recently installed</string>
 
     <!-- ThemeMode -->
     <string name="theme_mode_light">Light</string>

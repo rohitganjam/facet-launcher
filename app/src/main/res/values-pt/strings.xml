@@ -275,6 +275,9 @@
     <string name="drawer_folder_display_mode_inline">Exibir pastas embutidas</string>
     <string name="drawer_folder_display_mode_show_first">Exibir pastas primeiro</string>
     <string name="drawer_folder_display_mode_show_last">Exibir pastas por último</string>
+    <string name="recently_installed_position_show_first">Exibir recentes primeiro</string>
+    <string name="recently_installed_position_show_last">Exibir recentes por último</string>
+    <string name="recently_installed_position_do_not_show">Não exibir</string>
 
     <!-- Position/presentation enums -->
     <string name="app_row_position_left">Esquerda</string>
@@ -333,7 +336,9 @@
     <string name="app_drawer_search_settings_subtitle">Vá direto às configurações do sistema, como Wi-Fi ou Bluetooth</string>
     <string name="app_drawer_search_bar_position">Posição da barra de busca</string>
     <string name="app_drawer_folders_in_drawer">Pastas na gaveta</string>
+    <string name="app_drawer_recently_installed_position">Instalados recentemente</string>
     <string name="app_drawer_opacity_label">Opacidade da gaveta</string>
+    <string name="drawer_recently_installed_label">Instalados recentemente</string>
 
     <!-- ThemeMode -->
     <string name="theme_mode_light">Claro</string>

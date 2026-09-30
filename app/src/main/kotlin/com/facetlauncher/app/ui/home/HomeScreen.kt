@@ -686,7 +686,11 @@ fun HomeScreen(
                         // Inert (never binds) whenever there's ample room below the handle — only
                         // clips/scrolls in the genuine overflow case, which today has no fallback at all.
                         .heightIn(max = with(density) { (contentHeightPx - handlePx).coerceAtLeast(0f).toDp() })
-                        .onGloballyPositioned { appListSize = it.size; appListOriginInRoot = it.positionInRoot() }
+                        .onGloballyPositioned {
+                            appListSize = it.size
+                            appListOriginInRoot = it.positionInRoot()
+                            android.util.Log.e("SCROLLPROBE", "appList onGloballyPositioned: size=${it.size} origin=${it.positionInRoot()} handlePx=$handlePx contentHeightPx=$contentHeightPx t=${System.nanoTime()}")
+                        }
                         // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
                         // second verticalScroll would double up the scroll gesture. Single-
                         // column/two-column still use this Column's own scroll, same as today.
@@ -1098,13 +1102,13 @@ fun HomeScreen(
             val size = appListSize
             val origin = appListOriginInRoot
             val rootOrigin = rootOriginInRoot
-            onAppListBoundsChange(
-                if (size != null && origin != null && rootOrigin != null) {
-                    Rect(offset = origin - rootOrigin, size = size.toSize())
-                } else {
-                    null
-                },
-            )
+            val bounds = if (size != null && origin != null && rootOrigin != null) {
+                Rect(offset = origin - rootOrigin, size = size.toSize())
+            } else {
+                null
+            }
+            android.util.Log.e("SCROLLPROBE", "onAppListBoundsChange SideEffect: bounds=$bounds t=${System.nanoTime()}")
+            onAppListBoundsChange(bounds)
         }
 
         // Adjustment menu sheet

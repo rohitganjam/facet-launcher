@@ -33,6 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathNode
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.group
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -49,6 +56,7 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
+import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Scrim
@@ -61,6 +69,9 @@ sealed interface FolderSheetHeaderAction {
 
     /** Reached from [AppContextMenu]'s "Add to folder" list — previews this folder's real contents before the pending app is actually added; tapping Add performs the add and dismisses. [onBack] returns to that folder list (a leading chevron in the header, since this preview sits on top of it rather than replacing it) rather than dismissing the whole flow. */
     data class AddHere(val onAdd: () -> Unit, val onBack: () -> Unit) : FolderSheetHeaderAction
+
+    /** No trailing action at all — for a synthetic [Folder] that isn't backed by a real one (e.g. the "Recently installed" star item), where "Rename" would be meaningless. */
+    data object None : FolderSheetHeaderAction
 }
 
 /**
@@ -98,6 +109,8 @@ fun FolderContentsSheet(
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
     onAppInfo: (AppInfo) -> Unit = {},
+    /** True for the "Recently installed" virtual folder (List-only) — each contained app's icon gets a small recency badge, since these apps aren't grouped by any visual similarity the way a real folder's contents are. */
+    showRecencyBadge: Boolean = false,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
 
@@ -174,6 +187,7 @@ fun FolderContentsSheet(
                                     .testTag("folder_contents_sheet_add")
                                     .clickable(onClick = headerAction.onAdd),
                             )
+                            FolderSheetHeaderAction.None -> Unit
                         }
                     }
                     if (folder.apps.isEmpty()) {
@@ -196,6 +210,7 @@ fun FolderContentsSheet(
                             onLaunchShortcut = onLaunchShortcut,
                             onAppInfo = onAppInfo,
                             onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
+                            showRecencyBadge = showRecencyBadge,
                         )
                     }
                 }
@@ -244,9 +259,10 @@ private fun FolderContentsList(
     onAppClick: (AppInfo) -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
+    onAppInfo: (AppInfo) -> Unit = {},
+    showRecencyBadge: Boolean = false,
 ) {
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         folder.apps.forEachIndexed { index, app ->
@@ -258,6 +274,7 @@ private fun FolderContentsList(
                 onLaunchShortcut = onLaunchShortcut,
                 onAppInfo = onAppInfo,
                 onRemoveFromFolder = { onRemoveFromFolder(app) },
+                showRecencyBadge = showRecencyBadge,
             )
         }
         Box(modifier = Modifier.padding(bottom = 24.dp))
@@ -271,9 +288,10 @@ private fun FolderContentsAppRow(
     onClick: () -> Unit,
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
     onLaunchShortcut: (AppShortcut) -> Unit,
-    onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: () -> Unit,
     modifier: Modifier = Modifier,
+    onAppInfo: (AppInfo) -> Unit = {},
+    showRecencyBadge: Boolean = false,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
@@ -286,7 +304,12 @@ private fun FolderContentsAppRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            AppIcon(icon = app.icon, size = AppIconSize.ROW_REGULAR, contentDescription = null)
+            Box {
+                AppIcon(icon = app.icon, size = AppIconSize.ROW_REGULAR, contentDescription = null)
+                if (showRecencyBadge) {
+                    RecencyBadge(modifier = Modifier.align(Alignment.BottomEnd).testTag("recency_badge_${app.packageName}"))
+                }
+            }
             Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink)
         }
         AppContextMenu(
@@ -298,6 +321,41 @@ private fun FolderContentsAppRow(
             onAppInfo = onAppInfo,
             removeFromFolderId = 0L,
             onRemoveFromFolder = { _, _ -> onRemoveFromFolder() },
+        )
+    }
+}
+
+/** The exact `history_2_24` glyph supplied for this feature, used for both the "Recently installed" category's own icon and this badge. `viewBox="0 -960 960 960"` has no direct Compose equivalent, so the path is shifted into `[0, 960]` via a `group(translationY = 960f)` instead of transcribing it by hand. `internal` so [com.facetlauncher.app.ui.drawer.AppDrawerScreen]/`AlphabetRail`/`PrivateSpaceScreen` can reuse it too. */
+internal val RecencyIconPathNodes: List<PathNode> by lazy {
+    PathParser().parsePathString(
+        "M480-80q-155 0-269-103T82-440h81q15 121 105.5 200.5T480-160q134 0 227-93t93-227q0-134-93-227t-227-93q-86 0-159.5 42.5T204-640h116v80H88q29-140 139-230t253-90q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm112-232L440-464v-216h80v184l128 128-56 56Z",
+    ).toNodes()
+}
+
+internal val RecencyIcon: ImageVector by lazy {
+    ImageVector.Builder(name = "Recency", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 960f, viewportHeight = 960f)
+        .group(translationY = 960f) {
+            addPath(pathData = RecencyIconPathNodes, fill = SolidColor(Color.White))
+        }
+        .build()
+}
+
+/** [FolderContentsAppRow]'s recency marker for the "Recently installed" virtual folder — a small [IconTile]-background tile (the same "themed icon background" treatment [AppIconGlyph][com.facetlauncher.app.ui.components.AppIconGlyph] uses for its own no-icon placeholder), anchored to the app icon's free corner (bottom-end — top-end/bottom-start are already [AppIcon]'s own notification/profile badge corners). */
+@Composable
+private fun RecencyBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(18.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(IconTile),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = RecencyIcon,
+            contentDescription = null,
+            // Literal white — IconTile is dark in both themes, so a theme token would go dark-on-dark.
+            tint = Color.White,
+            modifier = Modifier.size(12.dp),
         )
     }
 }

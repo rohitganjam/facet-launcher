@@ -270,6 +270,7 @@ fun HomeDrawerRoute(
     val showContactsSettingPrompt by drawerViewModel.showContactsSettingPrompt.collectAsStateWithLifecycle()
     val privateSpaceState by drawerViewModel.privateSpaceState.collectAsStateWithLifecycle()
     val privateSpaceApps by privateSpaceViewModel.filteredApps.collectAsStateWithLifecycle()
+    val privateSpaceRecentlyInstalledApps by privateSpaceViewModel.recentlyInstalledApps.collectAsStateWithLifecycle()
     var privateSpaceQuery by remember { mutableStateOf("") }
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
 
@@ -580,6 +581,7 @@ fun HomeDrawerRoute(
     // state existed on its first creation instead of always reading the live one.
     val appListNestedScrollConnection = object : NestedScrollConnection {
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+            android.util.Log.e("SCROLLPROBE", "onPostScroll: consumed=$consumed available=$available source=$source")
             if (source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
             if (!appListLeftoverDragActive) {
                 appListLeftoverDragActive = true
@@ -766,8 +768,10 @@ fun HomeDrawerRoute(
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
-                            clockWidgetBoundsInHomeRoot?.contains(position) != true &&
+                            val result = clockWidgetBoundsInHomeRoot?.contains(position) != true &&
                                 appListBoundsInHomeRoot?.contains(position) != true
+                            android.util.Log.e("SCROLLPROBE", "shouldClaim: position=$position appListBounds=$appListBoundsInHomeRoot result=$result")
+                            result
                         },
                         onDragStart = {
                             nestedScrollFlingHandledSettle = false
@@ -860,6 +864,7 @@ fun HomeDrawerRoute(
             onCreateFolder = drawerViewModel::createFolder,
             onAddToFolder = drawerViewModel::addToFolder,
             folderDisplayMode = drawerSettings.drawerFolderDisplayMode,
+            recentlyInstalledPosition = drawerSettings.recentlyInstalledPosition,
             onRemoveFromFolder = drawerViewModel::removeFromFolder,
             onRenameFolder = drawerViewModel::renameFolder,
             onRequestFolderQuickAddState = { folder -> homeViewModel.quickAddStateForFolder(folder) },
@@ -896,6 +901,8 @@ fun HomeDrawerRoute(
             PrivateSpaceScreen(
                 state = privateSpaceState,
                 apps = privateSpaceApps,
+                recentlyInstalledApps = privateSpaceRecentlyInstalledApps,
+                recentlyInstalledPosition = drawerSettings.recentlyInstalledPosition,
                 query = privateSpaceQuery,
                 onQueryChange = { privateSpaceQuery = it; privateSpaceViewModel.onQueryChange(it) },
                 onAppClick = { app ->

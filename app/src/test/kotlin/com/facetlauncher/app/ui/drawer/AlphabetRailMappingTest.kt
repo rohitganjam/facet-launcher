@@ -70,4 +70,40 @@ class AlphabetRailMappingTest {
             railSelectionAt(y = 150f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = emptyList(), folderPosition = RailFolderPosition.TOP),
         )
     }
+
+    @Test
+    fun `railSelectionAt gives Recently Installed its own slot ahead of every letter when at TOP`() {
+        // 4 letters + 1 Recently Installed slot = 5 equal slots across the 200px band (40px each)
+        assertEquals(RailSelection.RecentlyInstalled, railSelectionAt(y = 110f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.NONE, recentlyInstalledPosition = RailFolderPosition.TOP))
+        assertEquals(RailSelection.Letter("A"), railSelectionAt(y = 150f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.NONE, recentlyInstalledPosition = RailFolderPosition.TOP))
+        assertEquals(RailSelection.Letter("D"), railSelectionAt(y = 299f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.NONE, recentlyInstalledPosition = RailFolderPosition.TOP))
+    }
+
+    @Test
+    fun `railSelectionAt puts Recently Installed ahead of a TOP folder glyph, both ahead of the letters`() {
+        // 4 letters + Recently Installed + Folders = 6 equal slots (~33px each)
+        assertEquals(RailSelection.RecentlyInstalled, railSelectionAt(y = 110f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.TOP, recentlyInstalledPosition = RailFolderPosition.TOP))
+        assertEquals(RailSelection.Folders, railSelectionAt(y = 150f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.TOP, recentlyInstalledPosition = RailFolderPosition.TOP))
+        assertEquals(RailSelection.Letter("A"), railSelectionAt(y = 185f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.TOP, recentlyInstalledPosition = RailFolderPosition.TOP))
+    }
+
+    @Test
+    fun `railSelectionAt puts Recently Installed at TOP and Folders at BOTTOM independently`() {
+        assertEquals(RailSelection.RecentlyInstalled, railSelectionAt(y = 110f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.BOTTOM, recentlyInstalledPosition = RailFolderPosition.TOP))
+        assertEquals(RailSelection.Letter("C"), railSelectionAt(y = 200f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.BOTTOM, recentlyInstalledPosition = RailFolderPosition.TOP))
+        assertEquals(RailSelection.Folders, railSelectionAt(y = 299f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.BOTTOM, recentlyInstalledPosition = RailFolderPosition.TOP))
+    }
+
+    @Test
+    fun `railSelectionAt gives Recently Installed its own slot after every letter when at BOTTOM`() {
+        assertEquals(RailSelection.Letter("A"), railSelectionAt(y = 110f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.NONE, recentlyInstalledPosition = RailFolderPosition.BOTTOM))
+        assertEquals(RailSelection.RecentlyInstalled, railSelectionAt(y = 290f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.NONE, recentlyInstalledPosition = RailFolderPosition.BOTTOM))
+    }
+
+    @Test
+    fun `railSelectionAt puts a BOTTOM folder glyph ahead of a BOTTOM Recently Installed glyph, both after the letters`() {
+        // 4 letters + Folders + Recently Installed = 6 equal slots (~33px each)
+        assertEquals(RailSelection.Folders, railSelectionAt(y = 250f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.BOTTOM, recentlyInstalledPosition = RailFolderPosition.BOTTOM))
+        assertEquals(RailSelection.RecentlyInstalled, railSelectionAt(y = 290f, bandTopPx = bandTop, bandBottomPx = bandBottom, letters = letters, folderPosition = RailFolderPosition.BOTTOM, recentlyInstalledPosition = RailFolderPosition.BOTTOM))
+    }
 }

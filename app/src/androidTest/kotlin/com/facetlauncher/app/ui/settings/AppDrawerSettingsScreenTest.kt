@@ -138,4 +138,22 @@ class AppDrawerSettingsScreenTest {
             composeRule.onAllNodesWithText("Show folders first").fetchSemanticsNodes().isNotEmpty()
         }
     }
+
+    @Test
+    fun recentlyInstalledPositionDropdownDefaultsToShowFirstAndSwitchesToDoNotShow() {
+        // Given the screen, scrolled to the new row — "Show recents first" selected by default
+        setContent()
+        composeRule.onNodeWithTag("app_drawer_settings_screen").performScrollToNode(hasTestTag("recently_installed_position_row"))
+        composeRule.onNodeWithText("Show recents first").assertExists()
+
+        // When opening the dropdown and choosing "Do not show" (Popup root-registration note — see above)
+        composeRule.onNodeWithTag("recently_installed_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("recently_installed_position_row_option_DO_NOT_SHOW").performClick()
+
+        // Then the row's own current-value label reflects it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Do not show").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
 }

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -24,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.DrawerRailTextColor
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -53,10 +55,11 @@ private fun magnifyScale(distance: Int): Float {
 /** Where the drawer's folder-shortcut glyph sits relative to the letters — mirrors the App Drawer's "Show folders first/last" setting. [NONE] omits the glyph (folders hidden, or shown inline with the letters, where they need no separate rail entry). */
 enum class RailFolderPosition { NONE, TOP, BOTTOM }
 
-/** What a rail drag/touch resolved to — a specific [Letter], or [Folders] when [RailFolderPosition] is active and the touch landed on that end's glyph slot. */
+/** What a rail drag/touch resolved to — a specific [Letter], [Folders] when [RailFolderPosition] is active and the touch landed on that end's glyph slot, or [RecentlyInstalled] similarly. */
 sealed interface RailSelection {
     data class Letter(val letter: String) : RailSelection
     data object Folders : RailSelection
+    data object RecentlyInstalled : RailSelection
 }
 
 /**
@@ -77,7 +80,7 @@ sealed interface RailSelection {
  * and the optional folder glyph alike, since the [Layout] treats them uniformly — first, then
  * picks the largest spacing that still fits the incoming height constraint (down to `0`), so the
  * rail always renders every entry regardless of how many there are or how large the system font
- * scale is set. [RailFolderGlyph] sizes itself off the same [MaterialTheme.typography.labelSmall]
+ * scale is set. [RailGlyph] sizes itself off the same [MaterialTheme.typography.labelSmall]
  * metrics as the letters, so it grows and shrinks in lockstep with them under any font scale.
  *
  * [activeLetter] also drives a magnify-on-touch effect (per direct reference to another
@@ -97,13 +100,14 @@ fun AlphabetRail(
     activeLetter: String? = null,
     folderPosition: RailFolderPosition = RailFolderPosition.NONE,
     folderActive: Boolean = false,
+    recentlyInstalledPosition: RailFolderPosition = RailFolderPosition.NONE,
+    recentlyInstalledActive: Boolean = false,
 ) {
     val activeIndex = activeLetter?.let { letters.indexOf(it) }?.takeIf { it >= 0 }
     Layout(
         content = {
-            if (folderPosition == RailFolderPosition.TOP) {
-                RailFolderGlyph(active = folderActive)
-            }
+            RailGlyph(icon = RecencyIcon, contentDescription = stringResource(R.string.drawer_recently_installed_label), active = recentlyInstalledActive, visible = recentlyInstalledPosition == RailFolderPosition.TOP)
+            RailGlyph(icon = Icons.Outlined.FolderIcon, contentDescription = stringResource(R.string.app_picker_tab_folders), active = folderActive, visible = folderPosition == RailFolderPosition.TOP)
             letters.forEachIndexed { index, letter ->
                 val targetScale = activeIndex?.let { active -> magnifyScale(abs(index - active)) } ?: 1f
                 val scale by animateFloatAsState(
@@ -122,9 +126,8 @@ fun AlphabetRail(
                     },
                 )
             }
-            if (folderPosition == RailFolderPosition.BOTTOM) {
-                RailFolderGlyph(active = folderActive)
-            }
+            RailGlyph(icon = Icons.Outlined.FolderIcon, contentDescription = stringResource(R.string.app_picker_tab_folders), active = folderActive, visible = folderPosition == RailFolderPosition.BOTTOM)
+            RailGlyph(icon = RecencyIcon, contentDescription = stringResource(R.string.drawer_recently_installed_label), active = recentlyInstalledActive, visible = recentlyInstalledPosition == RailFolderPosition.BOTTOM)
         },
         modifier = modifier.width(34.dp),
     ) { measurables, constraints ->
@@ -152,19 +155,22 @@ fun AlphabetRail(
 }
 
 /**
- * The rail's folder-shortcut entry — sized to [MaterialTheme.typography.labelSmall]'s own font
- * size (converted through [LocalDensity], which folds in the system font-scale setting the same
- * way `sp` does for the letters' `Text`), so the glyph tracks a letter's footprint 1:1 at any
- * accessibility text size rather than sitting at a fixed `dp` that only matches at scale `1`.
- * Tints [Accent] when [active] (this end of the rail is the current drag target), mirroring how
- * an active letter recolors rather than resizes.
+ * The rail's folder-shortcut and "Recently installed" entries share this shape — sized to
+ * [MaterialTheme.typography.labelSmall]'s own font size (converted through [LocalDensity], which
+ * folds in the system font-scale setting the same way `sp` does for the letters' `Text`), so the
+ * glyph tracks a letter's footprint 1:1 at any accessibility text size rather than sitting at a
+ * fixed `dp` that only matches at scale `1`. Tints [Accent] when [active] (this end of the rail
+ * is the current drag target), mirroring how an active letter recolors rather than resizes.
+ * [visible] is a no-op flag (not a `Modifier`) so call sites stay a flat sequence of calls instead
+ * of wrapping each one in its own `if`.
  */
 @Composable
-private fun RailFolderGlyph(active: Boolean, modifier: Modifier = Modifier) {
+private fun RailGlyph(icon: ImageVector, contentDescription: String, active: Boolean, modifier: Modifier = Modifier, visible: Boolean = true) {
+    if (!visible) return
     val glyphSize = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.fontSize.toDp() }
     Icon(
-        imageVector = Icons.Outlined.FolderIcon,
-        contentDescription = stringResource(R.string.app_picker_tab_folders),
+        imageVector = icon,
+        contentDescription = contentDescription,
         tint = if (active) Accent else DrawerRailTextColor,
         modifier = modifier.size(glyphSize),
     )
@@ -180,11 +186,12 @@ internal fun letterAt(y: Float, bandTopPx: Float, bandBottomPx: Float, letters: 
     (railSelectionAt(y, bandTopPx, bandBottomPx, letters, RailFolderPosition.NONE) as? RailSelection.Letter)?.letter
 
 /**
- * [letterAt]'s generalization: same proportional band-clamping, but when [folderPosition] isn't
- * [RailFolderPosition.NONE] the folder glyph occupies one more equal slot at that end (matching
- * [AlphabetRail]'s own layout, which gives the glyph the same footprint as a letter — see
- * [RailFolderGlyph]'s own doc), so a touch landing there resolves to [RailSelection.Folders]
- * instead of being folded into the nearest real letter.
+ * [letterAt]'s generalization: same proportional band-clamping, but each non-letter glyph
+ * ([folderPosition], [recentlyInstalledPosition]) occupies one more equal slot at its own end
+ * (matching [AlphabetRail]'s own layout, which gives every glyph the same footprint as a letter),
+ * so a touch landing there resolves to that glyph's own [RailSelection] instead of being folded
+ * into the nearest real letter. Slot order mirrors [AlphabetRail]'s own rendering order: recently
+ * installed then folders at the `TOP` end, folders then recently installed at the `BOTTOM` end.
  */
 internal fun railSelectionAt(
     y: Float,
@@ -192,17 +199,26 @@ internal fun railSelectionAt(
     bandBottomPx: Float,
     letters: List<String>,
     folderPosition: RailFolderPosition,
+    recentlyInstalledPosition: RailFolderPosition = RailFolderPosition.NONE,
 ): RailSelection? {
-    val slotCount = letters.size + if (folderPosition == RailFolderPosition.NONE) 0 else 1
+    val leading = buildList {
+        if (recentlyInstalledPosition == RailFolderPosition.TOP) add(RailSelection.RecentlyInstalled)
+        if (folderPosition == RailFolderPosition.TOP) add(RailSelection.Folders)
+    }
+    val trailing = buildList {
+        if (folderPosition == RailFolderPosition.BOTTOM) add(RailSelection.Folders)
+        if (recentlyInstalledPosition == RailFolderPosition.BOTTOM) add(RailSelection.RecentlyInstalled)
+    }
+    val slotCount = leading.size + letters.size + trailing.size
     if (slotCount == 0) return null
     val bandHeight = bandBottomPx - bandTopPx
     if (bandHeight <= 0f) return null
     val relativeY = (y - bandTopPx).coerceIn(0f, bandHeight)
     val index = ((relativeY / bandHeight) * slotCount).toInt().coerceIn(0, slotCount - 1)
-    return when (folderPosition) {
-        RailFolderPosition.NONE -> RailSelection.Letter(letters[index])
-        RailFolderPosition.TOP -> if (index == 0) RailSelection.Folders else RailSelection.Letter(letters[index - 1])
-        RailFolderPosition.BOTTOM -> if (index == letters.size) RailSelection.Folders else RailSelection.Letter(letters[index])
+    return when {
+        index < leading.size -> leading[index]
+        index < leading.size + letters.size -> RailSelection.Letter(letters[index - leading.size])
+        else -> trailing[index - leading.size - letters.size]
     }
 }
 
@@ -235,7 +251,17 @@ private fun AlphabetRailFoldersLastPreview() {
     }
 }
 
-/** Dragged past the last letter, onto the folder glyph itself — [RailFolderGlyph] tints [Accent] exactly like an active letter would. */
+/** Recently installed sits ahead of a [RailFolderPosition.TOP] folder glyph at the same end. */
+@Preview(name = "Recently installed + folders first", showBackground = true, widthDp = 60, heightDp = 360)
+@Preview(name = "Recently installed + folders first — dark", showBackground = true, widthDp = 60, heightDp = 360, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun AlphabetRailRecentlyInstalledPreview() {
+    AlphabetRailPreviewSurface {
+        AlphabetRail(letters = PREVIEW_LETTERS, activeLetter = "C", folderPosition = RailFolderPosition.TOP, recentlyInstalledPosition = RailFolderPosition.TOP)
+    }
+}
+
+/** Dragged past the last letter, onto the folder glyph itself — [RailGlyph] tints [Accent] exactly like an active letter would. */
 @Preview(name = "Folder glyph active", showBackground = true, widthDp = 60, heightDp = 360)
 @Composable
 private fun AlphabetRailFolderActivePreview() {
@@ -244,7 +270,7 @@ private fun AlphabetRailFolderActivePreview() {
     }
 }
 
-/** Same rail content at three system font-scale settings — [RailFolderGlyph] must grow in lockstep with the letters at every scale, never sitting fixed-size while they grow around it. */
+/** Same rail content at three system font-scale settings — [RailGlyph] must grow in lockstep with the letters at every scale, never sitting fixed-size while they grow around it. */
 @Preview(name = "Font scale 1x", showBackground = true, widthDp = 60, heightDp = 500, fontScale = 1f)
 @Preview(name = "Font scale 1.5x", showBackground = true, widthDp = 60, heightDp = 500, fontScale = 1.5f)
 @Preview(name = "Font scale 2x (accessibility max)", showBackground = true, widthDp = 60, heightDp = 500, fontScale = 2f)

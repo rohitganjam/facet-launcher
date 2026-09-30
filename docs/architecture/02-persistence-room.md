@@ -396,6 +396,7 @@ erDiagram
         boolean show_drawer_labels "default true"
         string search_bar_position "SearchBarPosition, default TOP"
         string drawer_folder_display_mode "DrawerFolderDisplayMode, default DO_NOT_SHOW"
+        string recently_installed_position "RecentlyInstalledPosition, default SHOW_FIRST"
         boolean search_contacts_enabled "default false"
         boolean search_settings_enabled "default false"
         boolean notification_dots_enabled "default true"
@@ -515,6 +516,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setShowDrawerLabels(Boolean)` | `show_drawer_labels` | set | `AppDrawerSettingsViewModel` |
 | `setSearchBarPosition(SearchBarPosition)` | `search_bar_position` | set | `AppDrawerSettingsViewModel` |
 | `setDrawerFolderDisplayMode(DrawerFolderDisplayMode)` | `drawer_folder_display_mode` | set | `AppDrawerSettingsViewModel` |
+| `setRecentlyInstalledPosition(RecentlyInstalledPosition)` | `recently_installed_position` | set | `AppDrawerSettingsViewModel` |
 | `setSearchContactsEnabled(Boolean)` | `search_contacts_enabled` | set | `AppDrawerSettingsViewModel`, `DrawerViewModel` (inline prompt) |
 | `setSearchSettingsEnabled(Boolean)` | `search_settings_enabled` | set | `AppDrawerSettingsViewModel` |
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
@@ -614,6 +616,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `show_drawer_labels` | Boolean | `showDrawerLabels` | `true` |
 | `search_bar_position` | String (`SearchBarPosition`) | `searchBarPosition` | `TOP` |
 | `drawer_folder_display_mode` | String (`DrawerFolderDisplayMode`) | `drawerFolderDisplayMode` | `DO_NOT_SHOW` |
+| `recently_installed_position` | String (`RecentlyInstalledPosition`) | `recentlyInstalledPosition` | `SHOW_FIRST` — the "Recently installed" category's position, also used independently by `PrivateSpaceViewModel` for its own copy |
 
 #### Search
 

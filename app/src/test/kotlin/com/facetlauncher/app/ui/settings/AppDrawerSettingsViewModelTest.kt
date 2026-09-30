@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -145,5 +146,16 @@ class AppDrawerSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setDrawerFolderDisplayMode(DrawerFolderDisplayMode.SHOW_FIRST)
+    }
+
+    @Test
+    fun `changing recently installed position calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setRecentlyInstalledPosition(RecentlyInstalledPosition.SHOW_LAST)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setRecentlyInstalledPosition(RecentlyInstalledPosition.SHOW_LAST)
     }
 }

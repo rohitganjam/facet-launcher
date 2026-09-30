@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.DrawerGridSize
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -64,5 +65,9 @@ class AppDrawerSettingsViewModel @Inject constructor(
 
     fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
         viewModelScope.launch { settingsRepository.setDrawerFolderDisplayMode(mode) }
+    }
+
+    fun setRecentlyInstalledPosition(position: RecentlyInstalledPosition) {
+        viewModelScope.launch { settingsRepository.setRecentlyInstalledPosition(position) }
     }
 }

@@ -275,6 +275,9 @@
     <string name="drawer_folder_display_mode_inline">Afficher les dossiers en ligne</string>
     <string name="drawer_folder_display_mode_show_first">Afficher les dossiers en premier</string>
     <string name="drawer_folder_display_mode_show_last">Afficher les dossiers en dernier</string>
+    <string name="recently_installed_position_show_first">Afficher les récents en premier</string>
+    <string name="recently_installed_position_show_last">Afficher les récents en dernier</string>
+    <string name="recently_installed_position_do_not_show">Ne pas afficher</string>
 
     <!-- AppRow/ListContentMode/DockDisplayMode enums -->
     <string name="app_row_position_left">Gauche</string>
@@ -333,7 +336,9 @@
     <string name="app_drawer_search_settings_subtitle">Accédez aux réglages système comme le Wi-Fi ou le Bluetooth</string>
     <string name="app_drawer_search_bar_position">Position de la barre de recherche</string>
     <string name="app_drawer_folders_in_drawer">Dossiers dans le tiroir</string>
+    <string name="app_drawer_recently_installed_position">Installées récemment</string>
     <string name="app_drawer_opacity_label">Opacité du tiroir</string>
+    <string name="drawer_recently_installed_label">Installées récemment</string>
 
     <!-- ThemeMode -->
     <string name="theme_mode_light">Clair</string>

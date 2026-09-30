@@ -69,6 +69,13 @@ enum class DrawerFolderDisplayMode(@param:StringRes val displayNameRes: Int) {
     SHOW_LAST(R.string.drawer_folder_display_mode_show_last),
 }
 
+/** Where the "Recently installed" category sits in the app list — `SHOW_FIRST` (default) above everything including a `DrawerFolderDisplayMode.SHOW_FIRST` folder section, `SHOW_LAST` below everything including a `SHOW_LAST` folder section, or `DO_NOT_SHOW`. Its own "recents"-worded strings, distinct from [DrawerFolderDisplayMode]'s "Show folders first/last" text. */
+enum class RecentlyInstalledPosition(@param:StringRes val displayNameRes: Int) {
+    SHOW_FIRST(R.string.recently_installed_position_show_first),
+    SHOW_LAST(R.string.recently_installed_position_show_last),
+    DO_NOT_SHOW(R.string.recently_installed_position_do_not_show),
+}
+
 /** F11 — an explicit in-app override; `SYSTEM` (the default) follows the device's own light/dark setting. */
 enum class ThemeMode(@param:StringRes val displayNameRes: Int) {
     LIGHT(R.string.theme_mode_light),
@@ -220,6 +227,8 @@ data class LauncherSettings(
     val showDrawerLabels: Boolean = true,
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
     val drawerFolderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
+    /** The Drawer's (and Private Space's own) "Recently installed" category — apps installed in the last 72 hours, via [com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase]. */
+    val recentlyInstalledPosition: RecentlyInstalledPosition = RecentlyInstalledPosition.SHOW_FIRST,
     val activeFacetId: Long = NO_ACTIVE_FACET_ID,
     /** Global Calendar setting (`4l`) — whether all-day events render on the clock. */
     val showAllDayEvents: Boolean = true,
