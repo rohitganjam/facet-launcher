@@ -764,10 +764,18 @@ fun HomeScreen(
                                     labelColor = appLabelColor,
                                     labelFontWeight = appLabelFontWeight,
                                 )
-                                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> Column {
+                                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = when (appRowPosition) {
+                                        AppRowPosition.RIGHT -> Alignment.End
+                                        AppRowPosition.CENTER -> Alignment.CenterHorizontally
+                                        AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Alignment.Start
+                                    },
+                                ) {
                                     appListItems.forEach { item ->
                                         when (item) {
                                             is PlacedItem.SingleApp -> AppRow(
+                                                modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
                                                 app = item.app,
                                                 onClick = { onAppClick(item.app) },
                                                 badgeCount = badgeCounts[item.app.packageName],
@@ -790,6 +798,7 @@ fun HomeScreen(
                                                 iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
                                             )
                                             is PlacedItem.FolderItem -> FolderRow(
+                                                modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
                                                 folder = item.folder,
                                                 onAppClick = onAppClick,
                                                 onRequestShortcuts = onRequestShortcuts,
@@ -1216,6 +1225,9 @@ private const val GEOMETRY_SETTLE_DEBOUNCE_MS = 150L
 private const val GEOMETRY_SETTLE_TIMEOUT_MS = 3_000L
 
 /** [AppRow]'s regular per-row vertical padding — Home's own default density. See [HOME_APP_ROW_COMPACT_VERTICAL_PADDING]. */
+/** Single-column rows are only this fraction of the list's width (tap target + ripple), anchored by the row position. */
+private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.8f
+
 internal val HOME_APP_ROW_REGULAR_VERTICAL_PADDING = 16.dp
 
 /**

@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.center
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -154,6 +155,60 @@ class HomeScreenTest {
 
         // Then the callback receives that exact AppInfo
         assertEquals("com.example.app2", clicked?.packageName)
+    }
+
+    @Test
+    fun singleColumnRowIsOnlyClickableOnItsLeftEightyPercentWhenLeftAligned() {
+        // Given a single-column list, left-aligned
+        val clicks = mutableListOf<AppInfo>()
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(1).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = { clicks += it },
+                    appListLayout = AppListLayout.SINGLE_COLUMN,
+                    appRowPosition = AppRowPosition.LEFT,
+                )
+            }
+        }
+        val y = composeRule.onNodeWithText("App 1").fetchSemanticsNode().boundsInRoot.center.y
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When tapping on the trailing 5% of the screen width, then well inside the leading part
+        composeRule.onRoot().performTouchInput { click(Offset(rootWidth * 0.95f, y)) }
+        assertTrue(clicks.isEmpty())
+        composeRule.onRoot().performTouchInput { click(Offset(rootWidth * 0.3f, y)) }
+
+        // Then only the inside tap launched the app
+        assertEquals(listOf("com.example.app1"), clicks.map { it.packageName })
+    }
+
+    @Test
+    fun singleColumnRowIsOnlyClickableOnItsRightEightyPercentWhenRightAligned() {
+        // Given a single-column list, right-aligned
+        val clicks = mutableListOf<AppInfo>()
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(1).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = { clicks += it },
+                    appListLayout = AppListLayout.SINGLE_COLUMN,
+                    appRowPosition = AppRowPosition.RIGHT,
+                )
+            }
+        }
+        val y = composeRule.onNodeWithText("App 1").fetchSemanticsNode().boundsInRoot.center.y
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When tapping on the leading 5% of the screen width, then well inside the trailing part
+        composeRule.onRoot().performTouchInput { click(Offset(rootWidth * 0.05f, y)) }
+        assertTrue(clicks.isEmpty())
+        composeRule.onRoot().performTouchInput { click(Offset(rootWidth * 0.7f, y)) }
+
+        // Then only the inside tap launched the app
+        assertEquals(listOf("com.example.app1"), clicks.map { it.packageName })
     }
 
     @Test
@@ -601,6 +656,22 @@ class HomeScreenTest {
         composeRule.waitForIdle()
 
         // Then the same clock adjust sheet opens
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+    }
+
+    @Test
+    fun longPressingTheFreedStripBesideASingleColumnRowOpensTheAdjustMenuSheet() {
+        // Given a left-aligned single-column list, whose rows cover only the left 80% — leaving a
+        // strip at the same height as a row that is now empty space
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        val rowY = composeRule.onNodeWithText("App 2").fetchSemanticsNode().boundsInRoot.center.y
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When long-pressing in that strip, at the row's own height
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(rootWidth * 0.95f, rowY)) }
+        composeRule.waitForIdle()
+
+        // Then the same adjust menu sheet opens, rather than nothing (or an app's context menu)
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
     }
 
