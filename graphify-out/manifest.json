@@ -1,7 +1,7 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1790733601.4387617,
-    "seen": 1790733693.92434,
+    "mtime": 1790826834.0642183,
+    "seen": 1790827697.0551062,
     "ast_hash": "36ec381a5d851e1b873be207f97f5b64",
     "semantic_hash": ""
   },
@@ -450,9 +450,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRouteTest.kt": {
-    "mtime": 1790819889.8114235,
-    "seen": 1790820056.807824,
-    "ast_hash": "f18ef0528a439eb6eefa671d1fc0abab",
+    "mtime": 1790826960.276146,
+    "seen": 1790827697.055151,
+    "ast_hash": "aa06ad11feb43009105a25bf26d69717",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/launcher/KeyboardDismissalTest.kt": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/LauncherActivity.kt": {
-    "mtime": 1790608688.8026786,
-    "seen": 1790608692.445257,
-    "ast_hash": "dff2387adfc401e1e22aa3bb2ac80ac6",
+    "mtime": 1790826530.8391979,
+    "seen": 1790827697.055171,
+    "ast_hash": "c4233c731ac46e664c47a28f68f3e354",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppRepository.kt": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppContextMenu.kt": {
-    "mtime": 1789747911.8356073,
-    "seen": 1789748241.31299,
-    "ast_hash": "77afcf36d9dabc7bcd3092e3996574af",
+    "mtime": 1790826494.9076316,
+    "seen": 1790827697.0552902,
+    "ast_hash": "fba30838ae7332b569ebfa5af76305b9",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppIcon.kt": {
@@ -1398,9 +1398,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRoute.kt": {
-    "mtime": 1790819889.8120282,
-    "seen": 1790820056.807988,
-    "ast_hash": "97f290d188336393ba85da8236536267",
+    "mtime": 1790827025.5012362,
+    "seen": 1790827697.055367,
+    "ast_hash": "2cfd7a836afa1f25924658ccb5af8ef0",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/LauncherLocals.kt": {
@@ -2496,9 +2496,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/FolderTileContextMenu.kt": {
-    "mtime": 1789747925.650854,
-    "seen": 1789748241.312995,
-    "ast_hash": "9b20ca59d8160c4378260d27d66db0de",
+    "mtime": 1790826494.921297,
+    "seen": 1790827697.0553012,
+    "ast_hash": "30d88ffe71b6f6242eabe9c9020ba9ed",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/FolderAppPickerScreen.kt": {
@@ -2778,9 +2778,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/12-flow-drawer-search-and-app-actions.md": {
-    "mtime": 1790819889.8124213,
-    "seen": 1790820056.8081338,
-    "ast_hash": "c12ecc32b36181b480816795ec0f8482",
+    "mtime": 1790827525.9823895,
+    "seen": 1790827697.055569,
+    "ast_hash": "cb71f17a27135c3b2cdf7ed482024c08",
     "semantic_hash": ""
   },
   "docs/architecture/13-flow-facets-theme-notifications-onboarding.md": {
@@ -2790,9 +2790,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1790825691.4478366,
-    "seen": 1790825722.164434,
-    "ast_hash": "857acea18e0822e94e5f0dc4b0a47b6d",
+    "mtime": 1790827614.5707788,
+    "seen": 1790827697.055574,
+    "ast_hash": "d4659cec8310e28cf93c2db24b707d5d",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -3177,6 +3177,12 @@
     "mtime": 1790733678.8814783,
     "seen": 1790733693.9246259,
     "ast_hash": "afba5f741f66de961b12d5ec6fce5b7b",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/components/HomeSwipeGate.kt": {
+    "mtime": 1790826523.62495,
+    "seen": 1790827697.055306,
+    "ast_hash": "443a1efd83dcc47e1bcaf800b6be69c6",
     "semantic_hash": ""
   }
 }
