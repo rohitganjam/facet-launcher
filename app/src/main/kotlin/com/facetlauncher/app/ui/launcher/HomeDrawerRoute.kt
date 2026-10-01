@@ -97,14 +97,18 @@ private val DRAWER_SETTLE_SPEC = tween<Float>(durationMillis = FACET_TRANSITION_
 
 /** A drag needs to travel at least this fraction of the container size, in either direction, to commit open/closed. */
 private const val COMMIT_TRAVEL_FRACTION = 0.20f
-private const val VELOCITY_THRESHOLD_PX = 1000f
+private const val VELOCITY_THRESHOLD_PX = 1500f
+
+/** A Home drag must travel this far before it locks to an axis, and vertical must beat horizontal by [VERTICAL_DOMINANCE] to count as vertical. */
+private val HOME_SWIPE_SLOP = 16.dp
+private const val VERTICAL_DOMINANCE = 1.2f
 private const val HOME_FADE_SCALE_RANGE = 0.03f
 
 /** Home blurs behind the Hub/Switch Facets panels (not the Drawer — see README's "Not blurred"), scaling with whichever axis's progress is furthest open. */
 private val HOME_PANEL_BLUR_RADIUS = 24.dp
 
-/** README's swipe-up-opens-drawer distance (`>55px`), reused as the swipe-down-opens-shade distance — a downward swipe starting from a fully closed drawer that clears either this or [VELOCITY_THRESHOLD_PX] expands the notification shade instead of just springing back. */
-private val SWIPE_DOWN_SHADE_DISTANCE = 55.dp
+/** A downward swipe from a fully closed drawer that travels this fraction of the container height, or clears [VELOCITY_THRESHOLD_PX], expands the notification shade. */
+private const val SWIPE_DOWN_SHADE_FRACTION = 0.20f
 
 /**
  * One follow-finger open/close axis — [progress] is 0f (closed) to 1f (fully open), driven by
@@ -181,15 +185,18 @@ private suspend fun PointerInputScope.detectHomeSwipeGestures(
      * claiming, this function's original behavior.
      */
     shouldClaim: (Offset) -> Boolean = { true },
+    /** For a down position [shouldClaim] rejected: still watch it, but claim only a horizontally-dominant drag — a vertical one is left to the descendant's own scroll. */
+    claimHorizontalOnly: (Offset) -> Boolean = { false },
     onDragStart: () -> Unit,
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
     onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
 ) {
-    val slop = viewConfiguration.touchSlop
+    val slop = maxOf(viewConfiguration.touchSlop, HOME_SWIPE_SLOP.toPx())
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
-        if (!shouldClaim(down.position)) return@awaitEachGesture
+        val horizontalOnly = !shouldClaim(down.position)
+        if (horizontalOnly && !claimHorizontalOnly(down.position)) return@awaitEachGesture
         var accumulated = Offset.Zero
         var dragging = false
         var completedCleanly = true
@@ -204,6 +211,7 @@ private suspend fun PointerInputScope.detectHomeSwipeGestures(
             if (!dragging) {
                 accumulated += change.positionChange()
                 if (accumulated.getDistance() > slop) {
+                    if (horizontalOnly && abs(accumulated.y) > VERTICAL_DOMINANCE * abs(accumulated.x)) return@awaitEachGesture
                     dragging = true
                     change.consume()
                     onDragStart()
@@ -343,7 +351,7 @@ fun HomeDrawerRoute(
     val velocityTracker = remember { VelocityTracker() }
     val context = LocalContext.current
     val density = LocalDensity.current
-    val swipeDownShadeDistancePx = with(density) { SWIPE_DOWN_SHADE_DISTANCE.toPx() }
+    val swipeDownShadeDistancePx = containerHeightPx * SWIPE_DOWN_SHADE_FRACTION
 
     val isDrawerSearching = drawerQuery.isNotBlank()
     val nestedScrollConnection = remember(listState, gridState, searchListState, drawerSettings.drawerPresentation, isDrawerSearching) {
@@ -512,7 +520,7 @@ fun HomeDrawerRoute(
     // passing it to dispatchNestedPreScroll).
     fun onHomeSwipeDrag(dx: Float, dy: Float) {
         if (homeDragAxis == null) {
-            homeDragAxis = if (abs(dx) > abs(dy)) Axis.HORIZONTAL else Axis.VERTICAL
+            homeDragAxis = if (abs(dy) > VERTICAL_DOMINANCE * abs(dx)) Axis.VERTICAL else Axis.HORIZONTAL
         }
         if (clockAdjustMode != ClockAdjustMode.NONE) {
             clockAdjustMode = ClockAdjustMode.NONE
@@ -773,6 +781,8 @@ fun HomeDrawerRoute(
                             android.util.Log.e("SCROLLPROBE", "shouldClaim: position=$position appListBounds=$appListBoundsInHomeRoot result=$result")
                             result
                         },
+                        // App list: vertical drags belong to its own scroll, horizontal ones to Hub/carousel.
+                        claimHorizontalOnly = { position -> appListBoundsInHomeRoot?.contains(position) == true },
                         onDragStart = {
                             nestedScrollFlingHandledSettle = false
                             onHomeSwipeStart()

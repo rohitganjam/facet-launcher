@@ -182,8 +182,16 @@ revisiting.
 | right | Hub | drag left on the Hub |
 | left | Facet carousel | drag right on the carousel (empty space or first card) |
 
-Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` of the container *from where
-that drag started*; anything short springs back. Because the transition tracks the finger, none
+A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and counts as vertical only
+if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
+horizontal. A touch that starts inside the app list's own region is still watched, but only a
+horizontal-dominant drag is claimed (so Hub/carousel work over the list); a vertical one is left to the
+list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`.
+
+Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
+that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
+A downward drag from a closed drawer expands the notification shade on the same terms
+(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). Because the transition tracks the finger, none
 of these can be `NavHost` transitions — Home, Drawer, Hub and Carousel are composed together
 under the single `HOME` destination, and the keyboard is dismissed on drawer close
 (`KeyboardDismissalTest`). Everything else (settings, pickers, facet settings) is a real

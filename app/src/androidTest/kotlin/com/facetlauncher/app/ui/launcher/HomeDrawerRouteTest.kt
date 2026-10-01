@@ -29,6 +29,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.test.topCenter
 import androidx.compose.ui.test.up
@@ -788,6 +789,125 @@ class HomeDrawerRouteTest {
         // Then the Hub opened and the Drawer did not
         composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun aSlowUpwardDragShortOfTwentyPercentDoesNotOpenTheDrawer() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up only 12% of the screen height and releasing slowly (under both the
+        // 20% commit distance and the 1500 px/s velocity threshold)
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = bottomCenter,
+                end = bottomCenter - Offset(0f, visibleSize.height * 0.12f),
+                endVelocity = 200f,
+                durationMillis = 600,
+            )
+        }
+        settleAnimation()
+
+        // Then it springs back closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun aSlowUpwardDragPastTwentyPercentOpensTheDrawer() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up 28% of the screen height, slowly
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = bottomCenter,
+                end = bottomCenter - Offset(0f, visibleSize.height * 0.28f),
+                endVelocity = 200f,
+                durationMillis = 600,
+            )
+        }
+        settleAnimation()
+
+        // Then it commits open
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+    }
+
+    @Test
+    fun aNearDiagonalDragWhereVerticalDoesNotBeatHorizontalByTwentyPercentDoesNotOpenTheDrawer() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up and left at 1.1x vertical-to-horizontal — under the 1.2x dominance
+        // needed to count as a vertical drag
+        composeRule.onRoot().performTouchInput {
+            val dx = visibleSize.width * 0.3f
+            swipeWithVelocity(
+                start = bottomCenter,
+                end = bottomCenter + Offset(-dx, -dx * 1.1f),
+                endVelocity = 200f,
+                durationMillis = 400,
+            )
+        }
+        settleAnimation()
+
+        // Then the drag was treated as horizontal — the Drawer stays closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun aDragSmallerThanTheSixteenDpSlopOpensNothing() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up a mere 12dp, then lifting — below the 16dp slop, so never a drag
+        composeRule.onRoot().performTouchInput {
+            down(bottomCenter)
+            moveTo(bottomCenter - Offset(0f, 12.dp.toPx()))
+            up()
+        }
+        settleAnimation()
+
+        // Then nothing opened
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingLeftStartingOnTheAppListOpensTheFacetCarousel() {
+        // Given Home with a favorite app list rendered
+        setContent()
+        val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When swiping left starting inside the app list (regression: the list's own region used
+        // to be excluded from the Home swipe detector, so horizontal swipes there did nothing)
+        composeRule.onRoot().performTouchInput {
+            down(listBounds.center)
+            moveTo(listBounds.center - Offset(rootWidth * 0.5f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the carousel opens
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipingRightStartingOnTheAppListOpensTheHub() {
+        // Given Home with a favorite app list rendered
+        setContent()
+        val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When swiping right starting inside the app list
+        composeRule.onRoot().performTouchInput {
+            down(listBounds.center)
+            moveTo(listBounds.center + Offset(rootWidth * 0.5f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the Hub opens
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
     }
 
     @Test
