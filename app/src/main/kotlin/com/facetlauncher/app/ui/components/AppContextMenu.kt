@@ -166,6 +166,7 @@ fun AppContextMenu(
 
     if (!expanded) return
 
+    BlockHomeSwipesWhileShown()
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier.testTag("app_context_menu"),

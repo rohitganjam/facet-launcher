@@ -46,6 +46,7 @@
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Whether the app is currently rendering dark — resolved once by [FacetLauncherTheme] from * [com.facetlauncher.app.data.model.ThemeMode] (an explicit Light/Dark override, or System * following [androidx.compose.foundation.isSystemInDarkTheme]) and read from here by every * color in `Color.kt` instead of each calling `isSystemInDarkTheme()` itself, so the in-app * override actually takes effect everywhere a color is used. */ val LocalIsDarkTheme = staticCompositionLocalOf { false }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** Which wallpaper-derived tonal role [Accent] resolves to when [LocalAccentFromSystem] is `true` — see [WallpaperAccentRole]. */ val LocalWallpaperAccentRole = staticCompositionLocalOf { WallpaperAccentRole.PRIMARY }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:val LocalCustomAccentSwatch = compositionLocalOf&lt;AccentSwatch?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:HomeSwipeGate.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests, like `LocalHomePressedEvent`. */ val LocalHomeSwipeGate = staticCompositionLocalOf&lt;HomeSwipeGate?&gt; { null }</ID>
     <ID>CyclomaticComplexMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>

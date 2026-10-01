@@ -191,7 +191,14 @@ list's own scroll, which hands leftover drag back via `appListNestedScrollConnec
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
 A downward drag from a closed drawer expands the notification shade on the same terms
-(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). Because the transition tracks the finger, none
+(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height).
+
+While a long-press sheet (`AppContextMenu`, `FolderTileContextMenu`) is showing, Home's swipes are
+off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
+behind it. Each sheet calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
+`LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
+list's scroll handoff while the gate is non-zero, the same way it does for the clock adjust menu.
+System back is unaffected. Because the transition tracks the finger, none
 of these can be `NavHost` transitions — Home, Drawer, Hub and Carousel are composed together
 under the single `HOME` destination, and the keyboard is dismissed on drawer close
 (`KeyboardDismissalTest`). Everything else (settings, pickers, facet settings) is a real

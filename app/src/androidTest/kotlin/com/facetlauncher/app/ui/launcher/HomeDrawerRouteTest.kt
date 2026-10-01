@@ -5,6 +5,7 @@ import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -110,6 +111,8 @@ import com.facetlauncher.app.ui.home.ClockWidgetFacetController
 import com.facetlauncher.app.ui.home.ClockWidgetHostController
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
+import com.facetlauncher.app.ui.components.HomeSwipeGate
+import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
@@ -399,23 +402,25 @@ class HomeDrawerRouteTest {
                 )
             }
 
-            FacetLauncherTheme {
-                HomeDrawerRoute(
-                    apps = apps,
-                    onAppClick = {},
-                    onNavigateToSettings = {},
-                    onNavigateToFacetSettings = onNavigateToFacetSettings,
-                    onNavigateToManageFacets = onNavigateToManageFacets,
-                    onNavigateToUsageAccessExplanation = {},
-                    homeViewModel = homeViewModel,
-                    drawerViewModel = drawerViewModel,
-                    privateSpaceViewModel = privateSpaceViewModel,
-                    hubViewModel = hubViewModel,
-                    widgetPickerViewModel = widgetPickerViewModel,
-                    clockWidgetPickerViewModel = clockWidgetPickerViewModel,
-                    facetViewModel = facetViewModel,
-                    launcherViewModel = launcherViewModel,
-                )
+            CompositionLocalProvider(LocalHomeSwipeGate provides remember { HomeSwipeGate() }) {
+                FacetLauncherTheme {
+                    HomeDrawerRoute(
+                        apps = apps,
+                        onAppClick = {},
+                        onNavigateToSettings = {},
+                        onNavigateToFacetSettings = onNavigateToFacetSettings,
+                        onNavigateToManageFacets = onNavigateToManageFacets,
+                        onNavigateToUsageAccessExplanation = {},
+                        homeViewModel = homeViewModel,
+                        drawerViewModel = drawerViewModel,
+                        privateSpaceViewModel = privateSpaceViewModel,
+                        hubViewModel = hubViewModel,
+                        widgetPickerViewModel = widgetPickerViewModel,
+                        clockWidgetPickerViewModel = clockWidgetPickerViewModel,
+                        facetViewModel = facetViewModel,
+                        launcherViewModel = launcherViewModel,
+                    )
+                }
             }
         }
         // HomeDrawerRoute renders nothing at all until HomeViewModel's first real state emission
@@ -789,6 +794,37 @@ class HomeDrawerRouteTest {
         // Then the Hub opened and the Drawer did not
         composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun draggingLeftAfterALongPressOpensTheContextSheetWithoutOpeningTheCarousel() {
+        // Given Home with a favorite app row
+        setContent()
+        val iconCenter = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .center
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When holding that row past the long-press threshold (its context sheet opens), then — finger
+        // still down — dragging left well past the swipe distance (regression: this used to also open
+        // the facet carousel behind the sheet)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onRoot().performTouchInput { down(iconCenter) }
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+        // The sheet is its own window (a second root), so continue the gesture through Home's own root.
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
+            moveTo(iconCenter - Offset(rootWidth * 0.6f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the sheet is still showing and neither the carousel nor the Hub opened
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
     }
 
     @Test

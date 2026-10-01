@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.ui.components.HomeSwipeGate
+import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.navigation.FacetNavHost
@@ -38,8 +41,12 @@ class LauncherActivity : ComponentActivity() {
 
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val homeSwipeGate = remember { HomeSwipeGate() }
 
-            CompositionLocalProvider(LocalHomePressedEvent provides viewModel.homePressedEvent) {
+            CompositionLocalProvider(
+                LocalHomePressedEvent provides viewModel.homePressedEvent,
+                LocalHomeSwipeGate provides homeSwipeGate,
+            ) {
                 FacetLauncherTheme(
                     themeMode = uiState.themeMode,
                     accentFromSystem = uiState.accentFromSystem,

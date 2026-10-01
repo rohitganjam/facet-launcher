@@ -76,6 +76,7 @@ fun FolderTileContextMenu(
 
     if (!expanded) return
 
+    BlockHomeSwipesWhileShown()
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier.testTag("folder_tile_context_menu"),

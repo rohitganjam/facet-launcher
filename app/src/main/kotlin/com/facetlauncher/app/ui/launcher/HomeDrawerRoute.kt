@@ -69,6 +69,7 @@ import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.ui.components.GestureHintOverlay
+import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
@@ -348,6 +349,9 @@ fun HomeDrawerRoute(
     // nestedScrollFlingHandledSettle's shape, just gating onHomeSwipeStart/onHomeSwipeSettle
     // instead of skipping a duplicate settle().
     var appListLeftoverDragActive by remember { mutableStateOf(false) }
+    // A long-press sheet (app/folder context menu) is open — Home's swipes must not act on the
+    // still-down finger that opened it, or on anything else, until it closes (back still works).
+    val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
     val velocityTracker = remember { VelocityTracker() }
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -590,7 +594,7 @@ fun HomeDrawerRoute(
     val appListNestedScrollConnection = object : NestedScrollConnection {
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
             android.util.Log.e("SCROLLPROBE", "onPostScroll: consumed=$consumed available=$available source=$source")
-            if (source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
+            if (homeSwipeBlocked || source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
             if (!appListLeftoverDragActive) {
                 appListLeftoverDragActive = true
                 onHomeSwipeStart()
@@ -769,10 +773,10 @@ fun HomeDrawerRoute(
                 // Receives the app list's own leftover vertical scroll once it bottoms/tops out —
                 // see appListNestedScrollConnection's own doc.
                 .nestedScroll(appListNestedScrollConnection)
-                .pointerInput(draggingHandle, clockAdjustMode) {
-                    // Suppress screen-wide gestures if we're in any adjustment mode
-                    // or actively dragging a handle.
-                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
+                .pointerInput(draggingHandle, clockAdjustMode, homeSwipeBlocked) {
+                    // Suppress screen-wide gestures if we're in any adjustment mode,
+                    // actively dragging a handle, or a long-press sheet is open.
+                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE || homeSwipeBlocked) return@pointerInput
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
