@@ -681,7 +681,6 @@ fun HomeScreen(
                         .onGloballyPositioned {
                             appListSize = it.size
                             appListOriginInRoot = it.positionInRoot()
-                            android.util.Log.e("SCROLLPROBE", "appList onGloballyPositioned: size=${it.size} origin=${it.positionInRoot()} handlePx=$handlePx contentHeightPx=$contentHeightPx t=${System.nanoTime()}")
                         }
                         // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
                         // second verticalScroll would double up the scroll gesture. Single-
@@ -1108,7 +1107,6 @@ fun HomeScreen(
             } else {
                 null
             }
-            android.util.Log.e("SCROLLPROBE", "onAppListBoundsChange SideEffect: bounds=$bounds t=${System.nanoTime()}")
             onAppListBoundsChange(bounds)
         }
 

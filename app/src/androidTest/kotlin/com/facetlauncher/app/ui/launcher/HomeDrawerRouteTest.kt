@@ -535,30 +535,6 @@ class HomeDrawerRouteTest {
     }
 
     @Test
-    fun debugScrollProbe() {
-        setContent(favoriteCount = apps.size)
-        val listNode = composeRule.onNodeWithTag("home_app_list_scroll_region")
-        val listBounds = listNode.fetchSemanticsNode().boundsInRoot
-        fun dumpScroll(label: String) {
-            val config = listNode.fetchSemanticsNode().config
-            val key = androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange
-            val range = if (config.contains(key)) config[key] else null
-            android.util.Log.e("SCROLLPROBE", "$label: value=${range?.value?.invoke()} maxValue=${range?.maxValue?.invoke()} listBounds=$listBounds")
-        }
-        dumpScroll("before")
-        composeRule.onRoot().performTouchInput {
-            down(listBounds.center)
-            moveTo(listBounds.center - Offset(0f, listBounds.height * 0.6f))
-            up()
-        }
-        dumpScroll("immediately-after-touch")
-        settleAnimation()
-        dumpScroll("after-settle")
-        val aBounds = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-        android.util.Log.e("SCROLLPROBE", "aBounds=$aBounds")
-    }
-
-    @Test
     fun swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer() {
         // Given far more favorites than fit on one screen (real bug found on-device: before this
         // fix, dragging anywhere on Home's surface — including inside the app list itself — always

@@ -600,7 +600,6 @@ fun HomeDrawerRoute(
     // state existed on its first creation instead of always reading the live one.
     val appListNestedScrollConnection = object : NestedScrollConnection {
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-            android.util.Log.e("SCROLLPROBE", "onPostScroll: consumed=$consumed available=$available source=$source")
             if (homeSwipeBlocked || source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
             if (!appListLeftoverDragActive) {
                 appListLeftoverDragActive = true
@@ -787,10 +786,8 @@ fun HomeDrawerRoute(
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
-                            val result = clockWidgetBoundsInHomeRoot?.contains(position) != true &&
+                            clockWidgetBoundsInHomeRoot?.contains(position) != true &&
                                 appListBoundsInHomeRoot?.contains(position) != true
-                            android.util.Log.e("SCROLLPROBE", "shouldClaim: position=$position appListBounds=$appListBoundsInHomeRoot result=$result")
-                            result
                         },
                         // App list: vertical drags belong to its own scroll, horizontal ones to Hub/carousel.
                         claimHorizontalOnly = { position -> appListBoundsInHomeRoot?.contains(position) == true },
