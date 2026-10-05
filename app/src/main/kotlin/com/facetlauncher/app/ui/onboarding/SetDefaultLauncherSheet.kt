@@ -8,12 +8,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Hairline
@@ -39,17 +38,14 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Scrim
-import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SuccessColor
 
 /**
  * First-launch "make Facet your home screen" prompt (`4h`) — shown once, as an overlay on top of
  * the real [com.facetlauncher.app.ui.home.HomeScreen] itself (from
  * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute], right after onboarding completes), not as
- * a step inside [OnboardingScreen]'s own swipeable flow. It therefore paints no backdrop of its
- * own — just a [Scrim] dimming whatever's already on screen behind it, matching every other
- * first-run overlay Home hosts (e.g. `GestureHintOverlay`). "Set as default" launches
+ * a step inside [OnboardingScreen]'s own swipeable flow. It's a [ThemedModalBottomSheet] — the same
+ * sheet every Home action menu uses — so the real Home stays visible behind its scrim. "Set as default" launches
  * [requestDefaultLauncherIntent] via [rememberLauncherForActivityResult]; **any** result (granted,
  * denied, or dismissed) — same as "Later" — calls [onFinish]. If Facet already holds the role
  * (reinstall), swaps in a Success-colored "already default" variant with a single Done button.
@@ -63,39 +59,13 @@ fun SetDefaultLauncherSheet(
 ) {
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { onFinish() }
 
-    Box(modifier = modifier.fillMaxSize().testTag("set_default_launcher_prompt")) {
-        // Tapping anywhere outside the sheet itself is treated the same as "Later"/"Done" — not
-        // just those explicit buttons (see chat history).
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Scrim)
-                .clickable(onClick = onFinish)
-                .testTag("set_default_launcher_scrim"),
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(Surface, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                // Swallows taps on the sheet's own non-interactive area (e.g. its body text) so
-                // they don't fall through to the scrim's onFinish above — same pattern as
-                // ContactConnectionsSheet's own `.clickable(enabled = false, onClick = {})`.
-                // Placed after background/clip so a ripple (if this were ever enabled) would
-                // respect the shape above rather than fill the full rectangular bounds.
-                .clickable(enabled = false, onClick = {})
-                .padding(horizontal = 24.dp)
-                .padding(top = 20.dp, bottom = 34.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 16.dp)
-                    .size(width = 34.dp, height = 4.dp)
-                    .background(Faint, RoundedCornerShape(2.dp)),
-            )
-
+    // Dismissing any way — scrim, swipe down, Back — is the same as "Later"/"Done".
+    ThemedModalBottomSheet(
+        onDismissRequest = onFinish,
+        modifier = modifier.testTag("set_default_launcher_prompt"),
+        skipPartiallyExpanded = true,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
             if (isDefaultLauncher) {
                 AlreadyDefaultContent(onDone = onFinish)
             } else {

@@ -1021,11 +1021,8 @@ fun HomeDrawerRoute(
         // mocked-up preview card — see SetDefaultLauncherSheet's own doc for why this replaced
         // onboarding's old SET_DEFAULT step. Takes priority over the gesture hint below (both are
         // one-time and gated the same way; this one matters more and fires first in practice).
-        AnimatedVisibility(
-            visible = homeUiState.showSetDefaultPrompt && !isDrawerOpen && !isHubOpen && !isFacetOpen,
-            enter = fadeIn(animationSpec = tween(240)),
-            exit = fadeOut(animationSpec = tween(240)),
-        ) {
+        val homeAtRest = !isDrawerOpen && !isHubOpen && !isFacetOpen
+        if (homeUiState.showSetDefaultPrompt && homeAtRest) {
             SetDefaultLauncherSheet(
                 isDefaultLauncher = homeUiState.isDefaultLauncher,
                 requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,

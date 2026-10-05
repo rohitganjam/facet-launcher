@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -87,13 +88,13 @@ class SetDefaultLauncherSheetTest {
     }
 
     @Test
-    fun `tapping the scrim finishes the same as Later`() {
+    fun `pressing back finishes the same as Later`() {
         var finished = false
         setContent(isDefaultLauncher = false, onFinish = { finished = true })
 
-        composeRule.onNodeWithTag("set_default_launcher_scrim").performClick()
+        Espresso.pressBack()
 
-        assertTrue(finished)
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
     }
 
     @Test

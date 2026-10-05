@@ -193,8 +193,8 @@ that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anyth
 A downward drag from a closed drawer expands the notification shade on the same terms
 (`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height).
 
-Every Home action menu — `AppContextMenu`, `FolderTileContextMenu` and the clock adjust menu — is a
-`ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
+Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the clock adjust menu and the one-time
+"make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
 system bars and swipe-down and Back dismiss it the same way everywhere. While one is showing, Home's swipes
 are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
 behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
