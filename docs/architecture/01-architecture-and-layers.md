@@ -83,7 +83,8 @@ Concrete conventions the code actually follows:
 - **Writes are fire-and-forget suspend calls** launched in `viewModelScope`; the UI never awaits
   them — it sees the result when Room/DataStore re-emits.
 - **One-off events** use `MutableSharedFlow(extraBufferCapacity = 1)` (e.g.
-  `LauncherViewModel.homePressedEvent`, threaded to Home via `CompositionLocal LocalHomePressedEvent`).
+  `LauncherViewModel.homePressedEvent`, threaded to Home via `CompositionLocal LocalHomePressedEvent`;
+  sheets and dialogs subscribe through `DismissOnHomePress` — see `12 §4`).
 - **Threading**: Room and DataStore are main-safe; every blocking framework call is wrapped in
   `withContext(Dispatchers.IO)` (ContentResolver queries, file I/O) or `Dispatchers.Default`
   (`LauncherApps.getActivityList` + parallel icon decode via `async`/`awaitAll`).

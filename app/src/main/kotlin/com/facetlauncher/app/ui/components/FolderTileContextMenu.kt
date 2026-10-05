@@ -30,7 +30,6 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.home.FolderTileGlyph
-import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Scrim
@@ -69,10 +68,7 @@ fun FolderTileContextMenu(
     }
 
     BackHandler(enabled = expanded, onBack = onDismissRequest)
-    val homePressedEvent = LocalHomePressedEvent.current
-    LaunchedEffect(expanded, homePressedEvent) {
-        if (expanded) homePressedEvent?.collect { onDismissRequest() }
-    }
+    DismissOnHomePress(enabled = expanded, onDismiss = onDismissRequest)
 
     if (!expanded) return
 

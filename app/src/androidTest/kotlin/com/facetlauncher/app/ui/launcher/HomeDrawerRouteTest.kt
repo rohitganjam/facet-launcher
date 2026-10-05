@@ -20,6 +20,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -137,6 +138,8 @@ class HomeDrawerRouteTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private lateinit var launcherViewModel: LauncherViewModel
+
     /** Enough apps (one per letter) that the drawer list can actually scroll. */
     private val apps = ('A'..'Z').map { letter ->
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
@@ -253,7 +256,7 @@ class HomeDrawerRouteTest {
                     ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
                 )
             }
-            val launcherViewModel = remember {
+            launcherViewModel = remember {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveFacetUseCase(facetRepository, settingsRepository),
@@ -445,6 +448,50 @@ class HomeDrawerRouteTest {
     private fun settleAnimation() {
         composeRule.mainClock.advanceTimeBy(500)
         composeRule.waitForIdle()
+    }
+
+    @Test
+    fun homePressStillClosesTheDrawerAfterAnEarlierCloseWasInterruptedByADrag() {
+        // Given the drawer is open
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+
+        // When Home is pressed and a drag lands mid-close, interrupting the close animation
+        composeRule.mainClock.autoAdvance = false
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        composeRule.mainClock.advanceTimeBy(100)
+        composeRule.onRoot().performTouchInput { swipeDown() }
+        composeRule.mainClock.autoAdvance = true
+        settleAnimation()
+
+        // And the drawer is opened again and Home is pressed a second time
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        settleAnimation()
+
+        // Then the drawer closes — the interrupted close didn't end Home-press handling
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun homePressClosesTheClockAdjustSheet() {
+        // Given the clock adjust sheet is open
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+
+        // When Home is pressed
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        settleAnimation()
+
+        // Then the sheet closes
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
     }
 
     @Test

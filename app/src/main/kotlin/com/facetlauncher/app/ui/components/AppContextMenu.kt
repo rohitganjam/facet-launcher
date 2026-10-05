@@ -59,7 +59,6 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
-import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Faint
@@ -159,10 +158,7 @@ fun AppContextMenu(
     // page — mutually exclusive via `enabled` so which one fires never depends on registration order.
     BackHandler(enabled = expanded && !addingToFolder, onBack = onDismissRequest)
     BackHandler(enabled = expanded && addingToFolder) { addingToFolder = false }
-    val homePressedEvent = LocalHomePressedEvent.current
-    LaunchedEffect(expanded, homePressedEvent) {
-        if (expanded) homePressedEvent?.collect { onDismissRequest() }
-    }
+    DismissOnHomePress(enabled = expanded, onDismiss = onDismissRequest)
 
     if (!expanded) return
 

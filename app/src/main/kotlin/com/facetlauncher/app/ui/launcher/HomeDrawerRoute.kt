@@ -157,6 +157,8 @@ private class SwipeAxisState(private val containerSizePx: () -> Float, private v
     }
 
     suspend fun close() {
+        // Already closed and idle: skip the no-op tween, which would still tick the frame clock for its full duration.
+        if (progress.value == 0f && !progress.isRunning && !dragActive) return
         dragActive = false
         progress.animateTo(0f, DRAWER_SETTLE_SPEC)
     }
@@ -313,14 +315,6 @@ fun HomeDrawerRoute(
     val hubAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
     val facetAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
 
-    LaunchedEffect(launcherViewModel) {
-        launcherViewModel.homePressedEvent.collect {
-            focusManager.clearFocus()
-            drawerAxis.close()
-            hubAxis.close()
-            facetAxis.close()
-        }
-    }
     // Rendered in-place as an overlay below (not a NavHost destination — see chat history):
     // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
     // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
@@ -333,6 +327,19 @@ fun HomeDrawerRoute(
     var clockWidgetPickerFacetId by remember { mutableStateOf<Long?>(null) }
     var showPrivateSpaceDrawer by remember { mutableStateOf(false) }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    LaunchedEffect(launcherViewModel) {
+        launcherViewModel.homePressedEvent.collect {
+            focusManager.clearFocus()
+            clockAdjustMode = ClockAdjustMode.NONE
+            showClockWidgetPicker = false
+            // Each close in its own job: a drag that interrupts one animation throws a
+            // CancellationException, which must end that job only — inline, it escaped `collect`
+            // and silently unsubscribed this collector, so Home stopped closing anything.
+            coroutineScope.launch { drawerAxis.close() }
+            coroutineScope.launch { hubAxis.close() }
+            coroutineScope.launch { facetAxis.close() }
+        }
+    }
     var draggingHandle by remember { mutableStateOf(false) }
     var drawerQuery by remember { mutableStateOf("") }
     var homeDragStartedClosed by remember { mutableStateOf(false) }

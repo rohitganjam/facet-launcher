@@ -114,6 +114,7 @@ fun FolderContentsSheet(
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
 
+    DismissOnHomePress(onDismiss = onDismissRequest)
     Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         // Disable the platform Dialog's own default window dim — it would stack on top of the Scrim Box below.
         val view = LocalView.current

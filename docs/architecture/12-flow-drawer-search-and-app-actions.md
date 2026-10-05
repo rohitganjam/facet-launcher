@@ -198,7 +198,19 @@ off — otherwise the still-down finger that opened the sheet could go on to ope
 behind it. Each sheet calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
 `LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
 list's scroll handoff while the gate is non-zero, the same way it does for the clock adjust menu.
-System back is unaffected. Because the transition tracks the finger, none
+System back is unaffected.
+
+**Pressing Home** (`LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`) collapses
+everything back to bare Home, where Back only peels off the top layer. `HomeDrawerRoute`'s collector clears
+focus, resets the clock adjust sheet and the clock widget picker, and closes the Drawer, Hub and carousel
+axes — each close in its own `launch`, never inline: a drag landing on the same `Animatable` throws a
+`CancellationException`, and inline that escaped `collect` and unsubscribed the collector for good, so
+Home silently stopped working until the app restarted (`HomeDrawerRouteTest`). Every sheet, dialog and
+overlay that composes its own state subscribes with `DismissOnHomePress` (`AppContextMenu`,
+`FolderTileContextMenu`, `FolderContentsSheet`, the contact connections sheet); a new one must do the same.
+Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
+
+Because the transition tracks the finger, none
 of these can be `NavHost` transitions — Home, Drawer, Hub and Carousel are composed together
 under the single `HOME` destination, and the keyboard is dismissed on drawer close
 (`KeyboardDismissalTest`). Everything else (settings, pickers, facet settings) is a real
