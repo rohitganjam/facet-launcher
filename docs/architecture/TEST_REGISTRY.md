@@ -1750,7 +1750,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - tappingARowStillLaunchesTheAppUnderIconOnlyPresentation
 - rendersWithoutCrashingUnderDarkMode
 - adjustMenuSheetIsHiddenUntilTheClockIsLongPressed
-- tappingAwayFromTheRevealedSheetHidesItAgain
+- dismissingTheRevealedSheetHidesItAgain
 - longPressingEmptyHomeSpaceOpensTheSameAdjustMenuSheet
 - longPressingTheFreedStripBesideASingleColumnRowOpensTheAdjustMenuSheet
 - tappingAwayFromAdjustModeThenLongPressingEmptySpaceReopensTheMenu

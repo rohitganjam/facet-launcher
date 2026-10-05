@@ -193,11 +193,14 @@ that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anyth
 A downward drag from a closed drawer expands the notification shade on the same terms
 (`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height).
 
-While a long-press sheet (`AppContextMenu`, `FolderTileContextMenu`) is showing, Home's swipes are
-off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
-behind it. Each sheet calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
+Every Home action menu — `AppContextMenu`, `FolderTileContextMenu` and the clock adjust menu — is a
+`ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
+system bars and swipe-down and Back dismiss it the same way everywhere. While one is showing, Home's swipes
+are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
+behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
 `LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
-list's scroll handoff while the gate is non-zero, the same way it does for the clock adjust menu.
+list's scroll handoff while the gate is non-zero (clock *adjust mode*, with its drag handles and no sheet,
+is gated separately on `clockAdjustMode`).
 System back is unaffected.
 
 **Pressing Home** (`LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`) collapses
@@ -206,8 +209,9 @@ focus, resets the clock adjust sheet and the clock widget picker, and closes the
 axes — each close in its own `launch`, never inline: a drag landing on the same `Animatable` throws a
 `CancellationException`, and inline that escaped `collect` and unsubscribed the collector for good, so
 Home silently stopped working until the app restarted (`HomeDrawerRouteTest`). Every sheet, dialog and
-overlay that composes its own state subscribes with `DismissOnHomePress` (`AppContextMenu`,
-`FolderTileContextMenu`, `FolderContentsSheet`, the contact connections sheet); a new one must do the same.
+overlay that composes its own state subscribes with `DismissOnHomePress` — `ThemedModalBottomSheet` does it
+for every action menu, and `FolderContentsSheet` and the contact connections sheet call it directly; a new
+one must do the same.
 Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
 
 Because the transition tracks the finger, none

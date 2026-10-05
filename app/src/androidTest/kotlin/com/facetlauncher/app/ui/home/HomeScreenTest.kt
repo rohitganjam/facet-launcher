@@ -25,6 +25,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
+import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -627,15 +628,15 @@ class HomeScreenTest {
     }
 
     @Test
-    fun tappingAwayFromTheRevealedSheetHidesItAgain() {
+    fun dismissingTheRevealedSheetHidesItAgain() {
         // Given the sheet revealed via a long-press on the clock
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
         composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 
-        // When tapping the scrim (outside the sheet)
-        composeRule.onNodeWithTag("clock_adjust_scrim").performClick()
+        // When dismissing it with system back
+        Espresso.pressBack()
         composeRule.waitForIdle()
 
         // Then it's hidden again

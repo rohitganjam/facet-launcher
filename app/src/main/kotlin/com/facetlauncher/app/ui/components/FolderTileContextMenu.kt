@@ -11,9 +11,7 @@ import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,8 +30,6 @@ import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Scrim
-import com.facetlauncher.app.ui.theme.Surface
 
 /**
  * Long-pressing a folder *tile* itself (on Home, in the Dock, or in a Favorites list) — distinct
@@ -68,19 +64,12 @@ fun FolderTileContextMenu(
     }
 
     BackHandler(enabled = expanded, onBack = onDismissRequest)
-    DismissOnHomePress(enabled = expanded, onDismiss = onDismissRequest)
 
     if (!expanded) return
 
-    BlockHomeSwipesWhileShown()
-    ModalBottomSheet(
+    ThemedModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier.testTag("folder_tile_context_menu"),
-        sheetState = rememberModalBottomSheetState(),
-        shape = SHEET_SHAPE,
-        containerColor = Surface,
-        scrimColor = Scrim,
-        dragHandle = { AppContextMenuDragHandle() },
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
