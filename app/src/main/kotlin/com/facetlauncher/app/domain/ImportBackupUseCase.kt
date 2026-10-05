@@ -33,6 +33,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import javax.inject.Inject
@@ -159,6 +160,7 @@ class ImportBackupUseCase @Inject constructor(
             setShowAllDayEvents(settings.showAllDayEvents)
             setSearchContactsEnabled(settings.searchContactsEnabled)
             setThemeMode(settings.themeMode.toEnumOrDefault(ThemeMode.SYSTEM))
+            setSystemBarIconStyle(settings.systemBarIconStyle.toEnumOrDefault(SystemBarIconStyle.MATCH_THEME))
             setAccentFromSystem(settings.accentFromSystem)
             settings.customAccentSwatch?.let { setCustomAccentSwatch(it) }
             setWallpaperAccentRole(settings.wallpaperAccentRole.toEnumOrDefault(WallpaperAccentRole.PRIMARY))

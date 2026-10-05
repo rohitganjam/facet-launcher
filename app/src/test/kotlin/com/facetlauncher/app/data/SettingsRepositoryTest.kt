@@ -29,6 +29,7 @@ import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import kotlinx.coroutines.flow.first
@@ -356,6 +357,29 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.accentFromSystem)
         assertEquals(null, settings.customAccentSwatch)
         assertEquals(WallpaperAccentRole.PRIMARY, settings.wallpaperAccentRole)
+    }
+
+    @Test
+    fun `system bar icon style defaults to matching the theme`() = runTest {
+        // Given a fresh repository with nothing written yet
+        val repository = createRepository()
+
+        // Then the bar icons follow the theme
+        assertEquals(SystemBarIconStyle.MATCH_THEME, repository.settings.first().systemBarIconStyle)
+    }
+
+    @Test
+    fun `system bar icon style round-trips through the settings flow`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When forcing light icons, then dark icons
+        repository.setSystemBarIconStyle(SystemBarIconStyle.LIGHT)
+        assertEquals(SystemBarIconStyle.LIGHT, repository.settings.first().systemBarIconStyle)
+        repository.setSystemBarIconStyle(SystemBarIconStyle.DARK)
+
+        // Then each value comes back
+        assertEquals(SystemBarIconStyle.DARK, repository.settings.first().systemBarIconStyle)
     }
 
     @Test

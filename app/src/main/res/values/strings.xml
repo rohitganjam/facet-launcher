@@ -373,6 +373,9 @@
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
     <string name="theme_mode_system">System</string>
+    <string name="system_bar_icons_match_theme">Match theme</string>
+    <string name="system_bar_icons_light">Light</string>
+    <string name="system_bar_icons_dark">Dark</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Appearance</string>
@@ -380,6 +383,7 @@
     <string name="appearance_section_clock">CLOCK</string>
     <string name="appearance_section_general">GENERAL</string>
     <string name="appearance_launcher_theme">Launcher theme</string>
+    <string name="appearance_system_bar_icons">System bar icons</string>
     <string name="appearance_icon_style">Icon Style</string>
     <string name="appearance_launcher_font">Launcher Font</string>
     <string name="appearance_font_color">Font Color</string>

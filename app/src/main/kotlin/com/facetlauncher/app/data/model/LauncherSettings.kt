@@ -83,6 +83,18 @@ enum class ThemeMode(@param:StringRes val displayNameRes: Int) {
     SYSTEM(R.string.theme_mode_system),
 }
 
+/**
+ * Icon color for the status bar and 3-button nav bar while they sit over the wallpaper (Home, Hub,
+ * carousel, Drawer). `MATCH_THEME` (default) follows the launcher theme — light icons on a dark
+ * theme, dark on a light one; `LIGHT`/`DARK` force the icon color for a wallpaper that clashes with
+ * the theme. Every other screen always follows the theme. See `ui/theme/SystemBars.kt`.
+ */
+enum class SystemBarIconStyle(@param:StringRes val displayNameRes: Int) {
+    MATCH_THEME(R.string.system_bar_icons_match_theme),
+    LIGHT(R.string.system_bar_icons_light),
+    DARK(R.string.system_bar_icons_dark),
+}
+
 /** F13 — README specs a dot-only badge; `COUNT` is a deliberate departure from that, offered as a user choice rather than replacing the spec's default outright. */
 enum class NotificationBadgeStyle(@param:StringRes val displayNameRes: Int) {
     DOT(R.string.notification_badge_style_dot),
@@ -247,6 +259,8 @@ data class LauncherSettings(
     val searchSettingsEnabled: Boolean = false,
     /** F11 — Settings → Theme → "Select launcher theme". */
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** Settings → Appearance → "System bar icons" — see [SystemBarIconStyle]. Global, not facet-overridable. */
+    val systemBarIconStyle: SystemBarIconStyle = SystemBarIconStyle.MATCH_THEME,
     /** F11 — "Wallpaper colors" (Material You) by default; `false` selects "Basic colors" — [customAccentSwatch]'s fixed pick. */
     val accentFromSystem: Boolean = true,
     /** The user's "Basic colors" pick when [accentFromSystem] is `false`, as an `AccentSwatch` enum name (kept as a plain string here — the enum itself is a `ui/theme` type, out of reach for this data-layer class). `null` until they've picked one. */

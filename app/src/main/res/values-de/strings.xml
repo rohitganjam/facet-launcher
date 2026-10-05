@@ -344,10 +344,14 @@
     <string name="theme_mode_light">Hell</string>
     <string name="theme_mode_dark">Dunkel</string>
     <string name="theme_mode_system">System</string>
+    <string name="system_bar_icons_match_theme">Wie das Design</string>
+    <string name="system_bar_icons_light">Hell</string>
+    <string name="system_bar_icons_dark">Dunkel</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Design</string>
     <string name="appearance_launcher_theme">Launcher-Design</string>
+    <string name="appearance_system_bar_icons">Symbole der Systemleisten</string>
     <string name="appearance_icon_style">Symbolstil</string>
     <string name="appearance_launcher_font">Launcher-Schriftart</string>
     <string name="appearance_font_color">Schriftfarbe</string>

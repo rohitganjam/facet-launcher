@@ -36,6 +36,7 @@ import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import kotlinx.coroutines.flow.Flow
@@ -71,6 +72,7 @@ private object Keys {
     val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
     val THEME_MODE = stringPreferencesKey("theme_mode")
+    val SYSTEM_BAR_ICON_STYLE = stringPreferencesKey("system_bar_icon_style")
     val CALENDAR_PERMISSION_REQUESTED = booleanPreferencesKey("calendar_permission_requested")
     val CONTACTS_PERMISSION_REQUESTED = booleanPreferencesKey("contacts_permission_requested")
     val APP_ROW_POSITION = stringPreferencesKey("app_row_position")
@@ -153,6 +155,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.appLabelColorOption,
             themeMode = preferences[Keys.THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: defaults.themeMode,
+            systemBarIconStyle = preferences[Keys.SYSTEM_BAR_ICON_STYLE]?.let { runCatching { SystemBarIconStyle.valueOf(it) }.getOrNull() }
+                ?: defaults.systemBarIconStyle,
             calendarPermissionRequested = preferences[Keys.CALENDAR_PERMISSION_REQUESTED] ?: defaults.calendarPermissionRequested,
             contactsPermissionRequested = preferences[Keys.CONTACTS_PERMISSION_REQUESTED] ?: defaults.contactsPermissionRequested,
             appRowPosition = preferences[Keys.APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() }
@@ -303,6 +307,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { it[Keys.THEME_MODE] = mode.name }
+    }
+
+    suspend fun setSystemBarIconStyle(style: SystemBarIconStyle) {
+        dataStore.edit { it[Keys.SYSTEM_BAR_ICON_STYLE] = style.name }
     }
 
     suspend fun setCalendarPermissionRequested(requested: Boolean) {

@@ -141,6 +141,8 @@ class BackupRepositoryTest {
         assertEquals("BOTH_LEFT", readBack?.settings?.appListColumnAlignment)
         assertEquals("FOUR", readBack?.settings?.appListGridColumns)
         assertEquals("ICONS", readBack?.settings?.appListGridDisplayMode)
+        // ...and a backup from before system bar icons existed lands on matching the theme
+        assertEquals("MATCH_THEME", readBack?.settings?.systemBarIconStyle)
         assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListLayout)
         assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListColumnAlignment)
         assertEquals("LAUNCHER_DEFAULT", readBack?.facets?.single()?.appListGridColumns)

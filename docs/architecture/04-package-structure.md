@@ -22,10 +22,11 @@ app/src/main/kotlin/com/facetlauncher/app/
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
-    ├── theme/                     (10)  Color, Type, Theme, Motion, ClockFonts/Colors, AccentSwatch, ThemeLocals,
-    │                                    PrivateSpaceTheme — design tokens; FacetLauncherTheme wrapper
-    ├── components/                (26)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
-    │                                    DragReorderState, ThemedDropdownMenu, AppPickerScreen, FolderContentsSheet, …)
+    ├── theme/                     (11)  Color, Type, Theme, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
+    │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
+    ├── components/                (31)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    │                                    DragReorderState, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
+    │                                    AppPickerScreen, FolderContentsSheet, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (21 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)

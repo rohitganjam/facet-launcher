@@ -71,6 +71,7 @@ class ImportBackupUseCaseTest {
         showAllDayEvents = false,
         searchContactsEnabled = true,
         themeMode = "DARK",
+        systemBarIconStyle = "LIGHT",
         accentFromSystem = false,
         customAccentSwatch = "BLUE",
         wallpaperAccentRole = "SECONDARY",
@@ -180,6 +181,7 @@ class ImportBackupUseCaseTest {
         // ...every other setting field is applied...
         verify(settingsRepository).setUse24HourTime(true)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.DARK)
+        verify(settingsRepository).setSystemBarIconStyle(com.facetlauncher.app.data.model.SystemBarIconStyle.LIGHT)
         verify(settingsRepository).setAppListLayout(com.facetlauncher.app.data.model.AppListLayout.GRID)
         verify(settingsRepository).setAppListColumnAlignment(com.facetlauncher.app.data.model.AppListColumnAlignment.MIRRORED)
         verify(settingsRepository).setAppListGridColumns(com.facetlauncher.app.data.model.AppListGridColumns.SIX)

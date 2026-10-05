@@ -76,6 +76,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.ui.components.AppIcon
@@ -130,6 +131,7 @@ fun AppearanceSettingsScreen(
         onBack = onBack,
         onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
         onThemeModeChange = viewModel::setThemeMode,
+        onSystemBarIconStyleChange = viewModel::setSystemBarIconStyle,
         onAccentFromSystemChange = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
         onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
@@ -158,6 +160,7 @@ private fun AppearanceSettingsContent(
     onBack: () -> Unit,
     onNavigateToClockStyleGallery: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onSystemBarIconStyleChange: (SystemBarIconStyle) -> Unit,
     onAccentFromSystemChange: (Boolean) -> Unit,
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
@@ -355,6 +358,15 @@ private fun AppearanceSettingsContent(
                                 label = { stringResource(it.displayNameRes) },
                                 onSelect = onThemeModeChange,
                                 testTag = "theme_mode_dropdown",
+                            )
+                            CardDivider()
+                            LabeledDropdownRow(
+                                title = stringResource(R.string.appearance_system_bar_icons),
+                                options = SystemBarIconStyle.entries,
+                                selected = settings.systemBarIconStyle,
+                                label = { stringResource(it.displayNameRes) },
+                                onSelect = onSystemBarIconStyleChange,
+                                testTag = "appearance_system_bar_icons_row",
                             )
                             CardDivider()
                             AccentColorSection(
@@ -932,6 +944,7 @@ private fun AppearanceSettingsScreenPreview() {
             onBack = {},
             onNavigateToClockStyleGallery = {},
             onThemeModeChange = {},
+            onSystemBarIconStyleChange = {},
             onAccentFromSystemChange = {},
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
@@ -967,6 +980,7 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             onBack = {},
             onNavigateToClockStyleGallery = {},
             onThemeModeChange = {},
+            onSystemBarIconStyleChange = {},
             onAccentFromSystemChange = {},
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},

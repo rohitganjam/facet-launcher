@@ -172,6 +172,24 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
+    fun systemBarIconsDropdownDefaultsToMatchThemeAndSwitchesToDark() {
+        // Given the screen, "Match theme" selected by default, in the General card under "Launcher theme"
+        setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_system_bar_icons_row"))
+        composeRule.onNodeWithTag("appearance_system_bar_icons_row").assertTextContains("Match theme")
+
+        // When opening the dropdown and choosing "Dark"
+        composeRule.onNodeWithTag("appearance_system_bar_icons_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_system_bar_icons_row_option_DARK").performClick()
+
+        // Then the row's own current-value label reflects it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("appearance_system_bar_icons_row").assertTextContains("Dark") }.isSuccess
+        }
+    }
+
+    @Test
     fun accentSwatchGridOnlyAppearsWhenBasicColorsIsSelectedAndPickingOneShowsItChecked() {
         // Given the screen, "Wallpaper colors" selected by default — now in the "General" card,
         // below "Dock & Home"/"Clock" (see chat history), so it needs scrolling into view first.

@@ -382,6 +382,7 @@ erDiagram
         string dock_display_mode "DockDisplayMode, default ICONS"
         long active_facet_id "default 0 = NO_ACTIVE_FACET_ID"
         string theme_mode "ThemeMode, default SYSTEM"
+        string system_bar_icon_style "SystemBarIconStyle, default MATCH_THEME"
         boolean accent_from_system "default true"
         string custom_accent_swatch "AccentSwatch name, nullable"
         string wallpaper_accent_role "WallpaperAccentRole, default PRIMARY"
@@ -502,6 +503,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `DockSettingsViewModel` |
 | `setActiveFacetId(Long)` | `active_facet_id` | set | `FacetCarouselViewModel`, `ManageFacetsViewModel`, `EnsureActiveFacetUseCase`, `ImportBackupUseCase` |
 | `setThemeMode(ThemeMode)` | `theme_mode` | set | `AppearanceSettingsViewModel` |
+| `setSystemBarIconStyle(SystemBarIconStyle)` | `system_bar_icon_style` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setAccentFromSystem(Boolean)` | `accent_from_system` | set | `AppearanceSettingsViewModel` |
 | `setCustomAccentSwatch(String)` | `custom_accent_swatch` | set | `AppearanceSettingsViewModel` |
 | `setWallpaperAccentRole(WallpaperAccentRole)` | `wallpaper_accent_role` | set | `AppearanceSettingsViewModel` |
@@ -597,6 +599,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | Key | Type | Field | Default | Notes |
 |---|---|---|---|---|
 | `theme_mode` | String (`ThemeMode`) | `themeMode` | `SYSTEM` | |
+| `system_bar_icon_style` | String (`SystemBarIconStyle`) | `systemBarIconStyle` | `MATCH_THEME` | status + 3-button nav icon color over the wallpaper; global, not facet-overridable; see 13 §2 |
 | `accent_from_system` | Boolean | `accentFromSystem` | `true` | Material You / wallpaper accent when true |
 | `custom_accent_swatch` | String (`AccentSwatch.name`) | `customAccentSwatch` | `null` | nullable; parsed to enum in `LauncherActivity` |
 | `wallpaper_accent_role` | String (`WallpaperAccentRole`) | `wallpaperAccentRole` | `PRIMARY` | only meaningful when `accent_from_system` |
@@ -657,14 +660,14 @@ live from the OS on every check), the installed-app list, and notification count
 1. Add the `Keys.X = xPreferencesKey("snake_case")` constant and the `LauncherSettings` field with its default.
 2. Add the read line in `settings` (`?: defaults.x`, lenient enum parse) and the `setX()` writer.
 3. Decide whether it is facet-overridable; if so, add the `facets` column (+ migration, §4) and the gate.
-4. Decide whether it belongs in `BackupSettings` (+ `BackupMapping` both ways, bump `CURRENT_BACKUP_VERSION`).
+4. Decide whether it belongs in `BackupSettings` (+ `BackupMapping` both ways). Bump `CURRENT_BACKUP_VERSION` only for a breaking change — a defaulted additive field doesn't need one ([09 §4](09-flow-backup-restore.md)).
 5. Add a `SettingsRepositoryTest` case for default + round-trip, and a row in 5.3 and 5.4 here.
 
 ## 6. Backup file format (`BackupBundle`, `data/model/BackupBundle.kt`)
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 36 of the 50 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 37 of the 51 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,

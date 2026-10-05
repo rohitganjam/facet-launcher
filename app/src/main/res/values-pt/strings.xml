@@ -344,10 +344,14 @@
     <string name="theme_mode_light">Claro</string>
     <string name="theme_mode_dark">Escuro</string>
     <string name="theme_mode_system">Sistema</string>
+    <string name="system_bar_icons_match_theme">Igual ao tema</string>
+    <string name="system_bar_icons_light">Claro</string>
+    <string name="system_bar_icons_dark">Escuro</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Aparência</string>
     <string name="appearance_launcher_theme">Tema do launcher</string>
+    <string name="appearance_system_bar_icons">Ícones das barras do sistema</string>
     <string name="appearance_icon_style">Estilo de ícone</string>
     <string name="appearance_launcher_font">Fonte do launcher</string>
     <string name="appearance_font_color">Cor da fonte</string>

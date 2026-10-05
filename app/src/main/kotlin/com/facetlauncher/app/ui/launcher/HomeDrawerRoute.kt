@@ -89,6 +89,8 @@ import com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.resolve
+import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
+import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -327,6 +329,14 @@ fun HomeDrawerRoute(
     var clockWidgetPickerFacetId by remember { mutableStateOf<Long?>(null) }
     var showPrivateSpaceDrawer by remember { mutableStateOf(false) }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
+    SystemBarsBackdropEffect(
+        when {
+            showPrivateSpaceDrawer -> SystemBarsBackdrop.DARK_SURFACE
+            showWidgetPicker || showClockWidgetPicker -> SystemBarsBackdrop.THEME_SURFACE
+            else -> SystemBarsBackdrop.WALLPAPER
+        },
+    )
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
             focusManager.clearFocus()
