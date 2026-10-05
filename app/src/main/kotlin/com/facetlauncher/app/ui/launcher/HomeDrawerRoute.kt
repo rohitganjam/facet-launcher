@@ -69,6 +69,7 @@ import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.ui.components.GestureHintOverlay
+import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
@@ -97,14 +98,18 @@ private val DRAWER_SETTLE_SPEC = tween<Float>(durationMillis = FACET_TRANSITION_
 
 /** A drag needs to travel at least this fraction of the container size, in either direction, to commit open/closed. */
 private const val COMMIT_TRAVEL_FRACTION = 0.20f
-private const val VELOCITY_THRESHOLD_PX = 1000f
+private const val VELOCITY_THRESHOLD_PX = 1500f
+
+/** A Home drag must travel this far before it locks to an axis, and vertical must beat horizontal by [VERTICAL_DOMINANCE] to count as vertical. */
+private val HOME_SWIPE_SLOP = 16.dp
+private const val VERTICAL_DOMINANCE = 1.2f
 private const val HOME_FADE_SCALE_RANGE = 0.03f
 
 /** Home blurs behind the Hub/Switch Facets panels (not the Drawer — see README's "Not blurred"), scaling with whichever axis's progress is furthest open. */
 private val HOME_PANEL_BLUR_RADIUS = 24.dp
 
-/** README's swipe-up-opens-drawer distance (`>55px`), reused as the swipe-down-opens-shade distance — a downward swipe starting from a fully closed drawer that clears either this or [VELOCITY_THRESHOLD_PX] expands the notification shade instead of just springing back. */
-private val SWIPE_DOWN_SHADE_DISTANCE = 55.dp
+/** A downward swipe from a fully closed drawer that travels this fraction of the container height, or clears [VELOCITY_THRESHOLD_PX], expands the notification shade. */
+private const val SWIPE_DOWN_SHADE_FRACTION = 0.20f
 
 /**
  * One follow-finger open/close axis — [progress] is 0f (closed) to 1f (fully open), driven by
@@ -152,6 +157,8 @@ private class SwipeAxisState(private val containerSizePx: () -> Float, private v
     }
 
     suspend fun close() {
+        // Already closed and idle: skip the no-op tween, which would still tick the frame clock for its full duration.
+        if (progress.value == 0f && !progress.isRunning && !dragActive) return
         dragActive = false
         progress.animateTo(0f, DRAWER_SETTLE_SPEC)
     }
@@ -181,15 +188,18 @@ private suspend fun PointerInputScope.detectHomeSwipeGestures(
      * claiming, this function's original behavior.
      */
     shouldClaim: (Offset) -> Boolean = { true },
+    /** For a down position [shouldClaim] rejected: still watch it, but claim only a horizontally-dominant drag — a vertical one is left to the descendant's own scroll. */
+    claimHorizontalOnly: (Offset) -> Boolean = { false },
     onDragStart: () -> Unit,
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
     onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
 ) {
-    val slop = viewConfiguration.touchSlop
+    val slop = maxOf(viewConfiguration.touchSlop, HOME_SWIPE_SLOP.toPx())
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
-        if (!shouldClaim(down.position)) return@awaitEachGesture
+        val horizontalOnly = !shouldClaim(down.position)
+        if (horizontalOnly && !claimHorizontalOnly(down.position)) return@awaitEachGesture
         var accumulated = Offset.Zero
         var dragging = false
         var completedCleanly = true
@@ -204,6 +214,7 @@ private suspend fun PointerInputScope.detectHomeSwipeGestures(
             if (!dragging) {
                 accumulated += change.positionChange()
                 if (accumulated.getDistance() > slop) {
+                    if (horizontalOnly && abs(accumulated.y) > VERTICAL_DOMINANCE * abs(accumulated.x)) return@awaitEachGesture
                     dragging = true
                     change.consume()
                     onDragStart()
@@ -304,14 +315,6 @@ fun HomeDrawerRoute(
     val hubAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
     val facetAxis = remember { SwipeAxisState({ containerWidthPx }, coroutineScope) }
 
-    LaunchedEffect(launcherViewModel) {
-        launcherViewModel.homePressedEvent.collect {
-            focusManager.clearFocus()
-            drawerAxis.close()
-            hubAxis.close()
-            facetAxis.close()
-        }
-    }
     // Rendered in-place as an overlay below (not a NavHost destination — see chat history):
     // navigating away would tear down this whole composable, resetting hubAxis and losing Hub's
     // own open/scroll state, and would visually replace Hub entirely instead of loading over it.
@@ -324,6 +327,19 @@ fun HomeDrawerRoute(
     var clockWidgetPickerFacetId by remember { mutableStateOf<Long?>(null) }
     var showPrivateSpaceDrawer by remember { mutableStateOf(false) }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    LaunchedEffect(launcherViewModel) {
+        launcherViewModel.homePressedEvent.collect {
+            focusManager.clearFocus()
+            clockAdjustMode = ClockAdjustMode.NONE
+            showClockWidgetPicker = false
+            // Each close in its own job: a drag that interrupts one animation throws a
+            // CancellationException, which must end that job only — inline, it escaped `collect`
+            // and silently unsubscribed this collector, so Home stopped closing anything.
+            coroutineScope.launch { drawerAxis.close() }
+            coroutineScope.launch { hubAxis.close() }
+            coroutineScope.launch { facetAxis.close() }
+        }
+    }
     var draggingHandle by remember { mutableStateOf(false) }
     var drawerQuery by remember { mutableStateOf("") }
     var homeDragStartedClosed by remember { mutableStateOf(false) }
@@ -340,10 +356,13 @@ fun HomeDrawerRoute(
     // nestedScrollFlingHandledSettle's shape, just gating onHomeSwipeStart/onHomeSwipeSettle
     // instead of skipping a duplicate settle().
     var appListLeftoverDragActive by remember { mutableStateOf(false) }
+    // A long-press sheet (app/folder context menu) is open — Home's swipes must not act on the
+    // still-down finger that opened it, or on anything else, until it closes (back still works).
+    val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
     val velocityTracker = remember { VelocityTracker() }
     val context = LocalContext.current
     val density = LocalDensity.current
-    val swipeDownShadeDistancePx = with(density) { SWIPE_DOWN_SHADE_DISTANCE.toPx() }
+    val swipeDownShadeDistancePx = containerHeightPx * SWIPE_DOWN_SHADE_FRACTION
 
     val isDrawerSearching = drawerQuery.isNotBlank()
     val nestedScrollConnection = remember(listState, gridState, searchListState, drawerSettings.drawerPresentation, isDrawerSearching) {
@@ -512,7 +531,7 @@ fun HomeDrawerRoute(
     // passing it to dispatchNestedPreScroll).
     fun onHomeSwipeDrag(dx: Float, dy: Float) {
         if (homeDragAxis == null) {
-            homeDragAxis = if (abs(dx) > abs(dy)) Axis.HORIZONTAL else Axis.VERTICAL
+            homeDragAxis = if (abs(dy) > VERTICAL_DOMINANCE * abs(dx)) Axis.VERTICAL else Axis.HORIZONTAL
         }
         if (clockAdjustMode != ClockAdjustMode.NONE) {
             clockAdjustMode = ClockAdjustMode.NONE
@@ -582,7 +601,7 @@ fun HomeDrawerRoute(
     val appListNestedScrollConnection = object : NestedScrollConnection {
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
             android.util.Log.e("SCROLLPROBE", "onPostScroll: consumed=$consumed available=$available source=$source")
-            if (source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
+            if (homeSwipeBlocked || source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
             if (!appListLeftoverDragActive) {
                 appListLeftoverDragActive = true
                 onHomeSwipeStart()
@@ -761,10 +780,10 @@ fun HomeDrawerRoute(
                 // Receives the app list's own leftover vertical scroll once it bottoms/tops out —
                 // see appListNestedScrollConnection's own doc.
                 .nestedScroll(appListNestedScrollConnection)
-                .pointerInput(draggingHandle, clockAdjustMode) {
-                    // Suppress screen-wide gestures if we're in any adjustment mode
-                    // or actively dragging a handle.
-                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
+                .pointerInput(draggingHandle, clockAdjustMode, homeSwipeBlocked) {
+                    // Suppress screen-wide gestures if we're in any adjustment mode,
+                    // actively dragging a handle, or a long-press sheet is open.
+                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE || homeSwipeBlocked) return@pointerInput
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
@@ -773,6 +792,8 @@ fun HomeDrawerRoute(
                             android.util.Log.e("SCROLLPROBE", "shouldClaim: position=$position appListBounds=$appListBoundsInHomeRoot result=$result")
                             result
                         },
+                        // App list: vertical drags belong to its own scroll, horizontal ones to Hub/carousel.
+                        claimHorizontalOnly = { position -> appListBoundsInHomeRoot?.contains(position) == true },
                         onDragStart = {
                             nestedScrollFlingHandledSettle = false
                             onHomeSwipeStart()

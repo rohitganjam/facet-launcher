@@ -182,8 +182,39 @@ revisiting.
 | right | Hub | drag left on the Hub |
 | left | Facet carousel | drag right on the carousel (empty space or first card) |
 
-Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` of the container *from where
-that drag started*; anything short springs back. Because the transition tracks the finger, none
+A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and counts as vertical only
+if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
+horizontal. A touch that starts inside the app list's own region is still watched, but only a
+horizontal-dominant drag is claimed (so Hub/carousel work over the list); a vertical one is left to the
+list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`.
+
+Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
+that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
+A downward drag from a closed drawer expands the notification shade on the same terms
+(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height).
+
+Every Home action menu — `AppContextMenu`, `FolderTileContextMenu` and the clock adjust menu — is a
+`ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
+system bars and swipe-down and Back dismiss it the same way everywhere. While one is showing, Home's swipes
+are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
+behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
+`LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
+list's scroll handoff while the gate is non-zero (clock *adjust mode*, with its drag handles and no sheet,
+is gated separately on `clockAdjustMode`).
+System back is unaffected.
+
+**Pressing Home** (`LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`) collapses
+everything back to bare Home, where Back only peels off the top layer. `HomeDrawerRoute`'s collector clears
+focus, resets the clock adjust sheet and the clock widget picker, and closes the Drawer, Hub and carousel
+axes — each close in its own `launch`, never inline: a drag landing on the same `Animatable` throws a
+`CancellationException`, and inline that escaped `collect` and unsubscribed the collector for good, so
+Home silently stopped working until the app restarted (`HomeDrawerRouteTest`). Every sheet, dialog and
+overlay that composes its own state subscribes with `DismissOnHomePress` — `ThemedModalBottomSheet` does it
+for every action menu, and `FolderContentsSheet` and the contact connections sheet call it directly; a new
+one must do the same.
+Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
+
+Because the transition tracks the finger, none
 of these can be `NavHost` transitions — Home, Drawer, Hub and Carousel are composed together
 under the single `HOME` destination, and the keyboard is dismissed on drawer close
 (`KeyboardDismissalTest`). Everything else (settings, pickers, facet settings) is a real

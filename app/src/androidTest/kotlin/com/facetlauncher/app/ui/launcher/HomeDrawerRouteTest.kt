@@ -5,6 +5,7 @@ import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +20,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -29,6 +31,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.test.topCenter
 import androidx.compose.ui.test.up
@@ -109,6 +112,8 @@ import com.facetlauncher.app.ui.home.ClockWidgetFacetController
 import com.facetlauncher.app.ui.home.ClockWidgetHostController
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
+import com.facetlauncher.app.ui.components.HomeSwipeGate
+import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
@@ -132,6 +137,8 @@ class HomeDrawerRouteTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private lateinit var launcherViewModel: LauncherViewModel
 
     /** Enough apps (one per letter) that the drawer list can actually scroll. */
     private val apps = ('A'..'Z').map { letter ->
@@ -249,7 +256,7 @@ class HomeDrawerRouteTest {
                     ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
                 )
             }
-            val launcherViewModel = remember {
+            launcherViewModel = remember {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveFacetUseCase(facetRepository, settingsRepository),
@@ -398,23 +405,25 @@ class HomeDrawerRouteTest {
                 )
             }
 
-            FacetLauncherTheme {
-                HomeDrawerRoute(
-                    apps = apps,
-                    onAppClick = {},
-                    onNavigateToSettings = {},
-                    onNavigateToFacetSettings = onNavigateToFacetSettings,
-                    onNavigateToManageFacets = onNavigateToManageFacets,
-                    onNavigateToUsageAccessExplanation = {},
-                    homeViewModel = homeViewModel,
-                    drawerViewModel = drawerViewModel,
-                    privateSpaceViewModel = privateSpaceViewModel,
-                    hubViewModel = hubViewModel,
-                    widgetPickerViewModel = widgetPickerViewModel,
-                    clockWidgetPickerViewModel = clockWidgetPickerViewModel,
-                    facetViewModel = facetViewModel,
-                    launcherViewModel = launcherViewModel,
-                )
+            CompositionLocalProvider(LocalHomeSwipeGate provides remember { HomeSwipeGate() }) {
+                FacetLauncherTheme {
+                    HomeDrawerRoute(
+                        apps = apps,
+                        onAppClick = {},
+                        onNavigateToSettings = {},
+                        onNavigateToFacetSettings = onNavigateToFacetSettings,
+                        onNavigateToManageFacets = onNavigateToManageFacets,
+                        onNavigateToUsageAccessExplanation = {},
+                        homeViewModel = homeViewModel,
+                        drawerViewModel = drawerViewModel,
+                        privateSpaceViewModel = privateSpaceViewModel,
+                        hubViewModel = hubViewModel,
+                        widgetPickerViewModel = widgetPickerViewModel,
+                        clockWidgetPickerViewModel = clockWidgetPickerViewModel,
+                        facetViewModel = facetViewModel,
+                        launcherViewModel = launcherViewModel,
+                    )
+                }
             }
         }
         // HomeDrawerRoute renders nothing at all until HomeViewModel's first real state emission
@@ -439,6 +448,50 @@ class HomeDrawerRouteTest {
     private fun settleAnimation() {
         composeRule.mainClock.advanceTimeBy(500)
         composeRule.waitForIdle()
+    }
+
+    @Test
+    fun homePressStillClosesTheDrawerAfterAnEarlierCloseWasInterruptedByADrag() {
+        // Given the drawer is open
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+
+        // When Home is pressed and a drag lands mid-close, interrupting the close animation
+        composeRule.mainClock.autoAdvance = false
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        composeRule.mainClock.advanceTimeBy(100)
+        composeRule.onRoot().performTouchInput { swipeDown() }
+        composeRule.mainClock.autoAdvance = true
+        settleAnimation()
+
+        // And the drawer is opened again and Home is pressed a second time
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        settleAnimation()
+
+        // Then the drawer closes — the interrupted close didn't end Home-press handling
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun homePressClosesTheClockAdjustSheet() {
+        // Given the clock adjust sheet is open
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+
+        // When Home is pressed
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        settleAnimation()
+
+        // Then the sheet closes
+        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -788,6 +841,156 @@ class HomeDrawerRouteTest {
         // Then the Hub opened and the Drawer did not
         composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun draggingLeftAfterALongPressOpensTheContextSheetWithoutOpeningTheCarousel() {
+        // Given Home with a favorite app row
+        setContent()
+        val iconCenter = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .center
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When holding that row past the long-press threshold (its context sheet opens), then — finger
+        // still down — dragging left well past the swipe distance (regression: this used to also open
+        // the facet carousel behind the sheet)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onRoot().performTouchInput { down(iconCenter) }
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+        // The sheet is its own window (a second root), so continue the gesture through Home's own root.
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
+            moveTo(iconCenter - Offset(rootWidth * 0.6f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the sheet is still showing and neither the carousel nor the Hub opened
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun aSlowUpwardDragShortOfTwentyPercentDoesNotOpenTheDrawer() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up only 12% of the screen height and releasing slowly (under both the
+        // 20% commit distance and the 1500 px/s velocity threshold)
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = bottomCenter,
+                end = bottomCenter - Offset(0f, visibleSize.height * 0.12f),
+                endVelocity = 200f,
+                durationMillis = 600,
+            )
+        }
+        settleAnimation()
+
+        // Then it springs back closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun aSlowUpwardDragPastTwentyPercentOpensTheDrawer() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up 28% of the screen height, slowly
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = bottomCenter,
+                end = bottomCenter - Offset(0f, visibleSize.height * 0.28f),
+                endVelocity = 200f,
+                durationMillis = 600,
+            )
+        }
+        settleAnimation()
+
+        // Then it commits open
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+    }
+
+    @Test
+    fun aNearDiagonalDragWhereVerticalDoesNotBeatHorizontalByTwentyPercentDoesNotOpenTheDrawer() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up and left at 1.1x vertical-to-horizontal — under the 1.2x dominance
+        // needed to count as a vertical drag
+        composeRule.onRoot().performTouchInput {
+            val dx = visibleSize.width * 0.3f
+            swipeWithVelocity(
+                start = bottomCenter,
+                end = bottomCenter + Offset(-dx, -dx * 1.1f),
+                endVelocity = 200f,
+                durationMillis = 400,
+            )
+        }
+        settleAnimation()
+
+        // Then the drag was treated as horizontal — the Drawer stays closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun aDragSmallerThanTheSixteenDpSlopOpensNothing() {
+        // Given the launcher starts on Home
+        setContent()
+
+        // When dragging up a mere 12dp, then lifting — below the 16dp slop, so never a drag
+        composeRule.onRoot().performTouchInput {
+            down(bottomCenter)
+            moveTo(bottomCenter - Offset(0f, 12.dp.toPx()))
+            up()
+        }
+        settleAnimation()
+
+        // Then nothing opened
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingLeftStartingOnTheAppListOpensTheFacetCarousel() {
+        // Given Home with a favorite app list rendered
+        setContent()
+        val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When swiping left starting inside the app list (regression: the list's own region used
+        // to be excluded from the Home swipe detector, so horizontal swipes there did nothing)
+        composeRule.onRoot().performTouchInput {
+            down(listBounds.center)
+            moveTo(listBounds.center - Offset(rootWidth * 0.5f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the carousel opens
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipingRightStartingOnTheAppListOpensTheHub() {
+        // Given Home with a favorite app list rendered
+        setContent()
+        val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+
+        // When swiping right starting inside the app list
+        composeRule.onRoot().performTouchInput {
+            down(listBounds.center)
+            moveTo(listBounds.center + Offset(rootWidth * 0.5f, 0f))
+            up()
+        }
+        settleAnimation()
+
+        // Then the Hub opens
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
     }
 
     @Test

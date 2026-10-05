@@ -4,14 +4,9 @@ import android.appwidget.AppWidgetHostView
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Rect as AndroidRect
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +18,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -115,6 +109,7 @@ import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.FolderContentsSheet
+import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
@@ -123,11 +118,8 @@ import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.FolderGlyphBackground
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import com.facetlauncher.app.ui.theme.Ink
-import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 import com.facetlauncher.app.ui.theme.resolve
 import kotlin.math.abs
@@ -764,10 +756,18 @@ fun HomeScreen(
                                     labelColor = appLabelColor,
                                     labelFontWeight = appLabelFontWeight,
                                 )
-                                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> Column {
+                                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = when (appRowPosition) {
+                                        AppRowPosition.RIGHT -> Alignment.End
+                                        AppRowPosition.CENTER -> Alignment.CenterHorizontally
+                                        AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Alignment.Start
+                                    },
+                                ) {
                                     appListItems.forEach { item ->
                                         when (item) {
                                             is PlacedItem.SingleApp -> AppRow(
+                                                modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
                                                 app = item.app,
                                                 onClick = { onAppClick(item.app) },
                                                 badgeCount = badgeCounts[item.app.packageName],
@@ -790,6 +790,7 @@ fun HomeScreen(
                                                 iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
                                             )
                                             is PlacedItem.FolderItem -> FolderRow(
+                                                modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
                                                 folder = item.folder,
                                                 onAppClick = onAppClick,
                                                 onRequestShortcuts = onRequestShortcuts,
@@ -1112,56 +1113,34 @@ fun HomeScreen(
         }
 
         // Adjustment menu sheet
-        AnimatedVisibility(
-            visible = clockAdjustMode == ClockAdjustMode.MENU,
-            enter = fadeIn(tween(240)),
-            exit = fadeOut(tween(240)),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Scrim)
-                    .testTag("clock_adjust_scrim")
-                    .clickable { onAdjustModeChange(ClockAdjustMode.NONE) }
-            )
-        }
-
-        AnimatedVisibility(
-            visible = clockAdjustMode == ClockAdjustMode.MENU,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
-            ),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
-        ) {
-            ClockAdjustSheet(
-                onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },
-                onEditStylesClick = onEditClockStyles,
-                onFacetSettingsClick = {
-                    onAdjustModeChange(ClockAdjustMode.NONE)
-                    onNavigateToFacetSettings()
-                },
-                onLauncherSettingsClick = {
-                    onAdjustModeChange(ClockAdjustMode.NONE)
-                    onNavigateToSettings()
-                },
-                onUseCustomWidgetClick = {
-                    onAdjustModeChange(ClockAdjustMode.NONE)
-                    onUseCustomWidgetClick()
-                },
-                onSwitchToLauncherClockClick = {
-                    onAdjustModeChange(ClockAdjustMode.NONE)
-                    onSwitchToLauncherClockClick()
-                },
-                overrideFacetName = clockPositionOwnerFacetName,
-                hasCustomClockWidget = hasCustomClockWidget,
-            )
+        if (clockAdjustMode == ClockAdjustMode.MENU) {
+            ThemedModalBottomSheet(
+                onDismissRequest = { onAdjustModeChange(ClockAdjustMode.NONE) },
+                skipPartiallyExpanded = true,
+            ) {
+                ClockAdjustSheet(
+                    onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },
+                    onEditStylesClick = onEditClockStyles,
+                    onFacetSettingsClick = {
+                        onAdjustModeChange(ClockAdjustMode.NONE)
+                        onNavigateToFacetSettings()
+                    },
+                    onLauncherSettingsClick = {
+                        onAdjustModeChange(ClockAdjustMode.NONE)
+                        onNavigateToSettings()
+                    },
+                    onUseCustomWidgetClick = {
+                        onAdjustModeChange(ClockAdjustMode.NONE)
+                        onUseCustomWidgetClick()
+                    },
+                    onSwitchToLauncherClockClick = {
+                        onAdjustModeChange(ClockAdjustMode.NONE)
+                        onSwitchToLauncherClockClick()
+                    },
+                    overrideFacetName = clockPositionOwnerFacetName,
+                    hasCustomClockWidget = hasCustomClockWidget,
+                )
+            }
         }
     }
 }
@@ -1216,6 +1195,9 @@ private const val GEOMETRY_SETTLE_DEBOUNCE_MS = 150L
 private const val GEOMETRY_SETTLE_TIMEOUT_MS = 3_000L
 
 /** [AppRow]'s regular per-row vertical padding — Home's own default density. See [HOME_APP_ROW_COMPACT_VERTICAL_PADDING]. */
+/** Single-column rows are only this fraction of the list's width (tap target + ripple), anchored by the row position. */
+private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.8f
+
 internal val HOME_APP_ROW_REGULAR_VERTICAL_PADDING = 16.dp
 
 /**

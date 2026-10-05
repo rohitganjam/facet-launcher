@@ -124,6 +124,7 @@ import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.DismissOnHomePress
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
@@ -354,6 +355,7 @@ fun AppDrawerScreen(
     LaunchedEffect(isDrawerOpen) {
         if (!isDrawerOpen) connectionsSheetContact = null
     }
+    DismissOnHomePress(enabled = connectionsSheetContact != null) { connectionsSheetContact = null }
 
     // First back-press while searching clears the query and stays in the drawer (browse mode,
     // unfiltered); only a second, empty-query back-press falls through to the caller's own

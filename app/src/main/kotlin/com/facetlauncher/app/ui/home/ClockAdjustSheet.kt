@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Settings
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.FacetScopeBadge
-import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.InkInverted
@@ -81,19 +79,8 @@ fun ClockAdjustSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .testTag("clock_adjust_sheet")
-            .background(Surface, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-            .padding(bottom = 24.dp),
+            .testTag("clock_adjust_sheet"),
     ) {
-        // Drag affordance / handle
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 12.dp, bottom = 8.dp)
-                .size(width = 34.dp, height = 4.dp)
-                .background(color = Faint, shape = RoundedCornerShape(2.dp)),
-        )
-
         AdjustRow(
             icon = { Icon(painter = painterResource(R.drawable.open_in_full), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
             label = stringResource(R.string.clock_adjust_adjust_size_position),
@@ -217,6 +204,7 @@ private fun ClockAdjustSheetPreview() {
             onUseCustomWidgetClick = {},
             onSwitchToLauncherClockClick = {},
             overrideFacetName = null,
+            modifier = Modifier.background(Surface),
         )
     }
 }
@@ -234,6 +222,7 @@ private fun ClockAdjustSheetCustomWidgetPreview() {
             onSwitchToLauncherClockClick = {},
             overrideFacetName = null,
             hasCustomClockWidget = true,
+            modifier = Modifier.background(Surface),
         )
     }
 }

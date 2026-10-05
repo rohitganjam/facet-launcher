@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Parcel
 import android.os.UserHandle
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -43,7 +44,9 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
+import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -687,6 +690,47 @@ class AppDrawerScreenTest {
 
         // When tapping the scrim to dismiss
         composeRule.onNodeWithTag("contact_connections_scrim").performClick()
+
+        // Then the sheet closes
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist() }.isSuccess
+        }
+    }
+
+    @Test
+    fun homePressedEventClosesTheContactConnectionsSheet() {
+        // Given the connections sheet is open for a contact
+        var query by mutableStateOf("")
+        val homePressedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val contact = ContactInfo(id = "1", displayName = "Jane Doe", phoneNumber = "555-1234")
+        val callConnection = ContactConnection(
+            ContactConnectionType.CALL,
+            "Call",
+            null,
+            ConnectionDetail.Single("555-1234", "Mobile", Intent(Intent.ACTION_DIAL, Uri.parse("tel:555-1234"))),
+        )
+        composeRule.setContent {
+            FacetLauncherTheme {
+                CompositionLocalProvider(LocalHomePressedEvent provides homePressedEvent) {
+                    AppDrawerScreen(
+                        apps = apps,
+                        onAppClick = {},
+                        query = query,
+                        onQueryChange = { query = it },
+                        contacts = listOf(contact),
+                        onRequestConnections = { listOf(callConnection) },
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("Jane")
+        composeRule.onNodeWithTag("contact_row_1").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertIsDisplayed() }.isSuccess
+        }
+
+        // When Home is pressed
+        homePressedEvent.tryEmit(Unit)
 
         // Then the sheet closes
         composeRule.waitUntil(timeoutMillis = 3_000) {

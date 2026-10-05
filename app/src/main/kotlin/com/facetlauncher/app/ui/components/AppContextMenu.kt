@@ -35,9 +35,7 @@ import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,14 +57,11 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
-import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Scrim
-import com.facetlauncher.app.ui.theme.Surface
 
 /** At most this many of an app's own [AppShortcut]s are shown — a long-press sheet is a quick
  * action, not another drawer, so shortcuts beyond this many are simply dropped. */
@@ -159,21 +154,12 @@ fun AppContextMenu(
     // page — mutually exclusive via `enabled` so which one fires never depends on registration order.
     BackHandler(enabled = expanded && !addingToFolder, onBack = onDismissRequest)
     BackHandler(enabled = expanded && addingToFolder) { addingToFolder = false }
-    val homePressedEvent = LocalHomePressedEvent.current
-    LaunchedEffect(expanded, homePressedEvent) {
-        if (expanded) homePressedEvent?.collect { onDismissRequest() }
-    }
 
     if (!expanded) return
 
-    ModalBottomSheet(
+    ThemedModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier.testTag("app_context_menu"),
-        sheetState = rememberModalBottomSheetState(),
-        shape = SHEET_SHAPE,
-        containerColor = Surface,
-        scrimColor = Scrim,
-        dragHandle = { AppContextMenuDragHandle() },
     ) {
         AnimatedContent(
             targetState = addingToFolder,
