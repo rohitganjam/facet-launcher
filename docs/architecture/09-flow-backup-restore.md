@@ -114,6 +114,6 @@ file whose `backupVersion` is *greater* than the current constant is refused wit
 `UnsupportedVersion`; the constant only bumps for a non-additive/breaking change — a purely
 additive, defaulted, tolerant-reader field does **not** require a bump (established by
 `fontScaleOption`, reused for `appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
-`appListGridDisplayMode`, and `systemBarIconStyle` — see `BackupBundle.kt`'s own doc comment). `ExportBackupUseCaseTest` /
+`appListGridDisplayMode`, `systemBarIconStyle`, and `iconShape` — see `BackupBundle.kt`'s own doc comment). `ExportBackupUseCaseTest` /
 `ImportBackupUseCaseTest` round-trip the bundle and must be extended for every new field
 (see F11 for the fields currently missing).

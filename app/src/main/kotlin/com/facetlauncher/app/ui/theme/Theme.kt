@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
@@ -85,6 +86,7 @@ fun FacetLauncherTheme(
     customAccentSwatch: AccentSwatch? = null,
     wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    iconShape: IconShape = IconShape.SQUIRCLE,
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
@@ -109,6 +111,7 @@ fun FacetLauncherTheme(
         LocalWallpaperAccentRole provides wallpaperAccentRole,
         LocalDynamicColorRefreshSignal provides dynamicColorRefreshSignal,
         LocalIconRenderMode provides iconRenderMode,
+        LocalIconShape provides iconShape,
     ) {
         MaterialTheme(
             colorScheme = facetColorScheme(isDark),

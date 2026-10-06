@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Badge
@@ -13,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +31,7 @@ import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
+import com.facetlauncher.app.ui.theme.LocalIconShape
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 
@@ -40,7 +41,7 @@ private fun badgeLabel(count: Int): String = if (count > 9) "9+" else count.toSt
 /**
  * The app's full set of standard [AppIcon] sizes — every icon tile in the app should be one of
  * these rather than a bespoke `Dp` picked by eye (see chat history: this replaced ~9 slightly
- * different hand-picked radii/sizes across the app with 5 named sizes and 3 M3-derived radii).
+ * different hand-picked radii/sizes across the app with 5 named sizes).
  * [ROW_COMPACT]/[ROW_REGULAR]/[ROW_SPACIOUS] deliberately equal [DrawerListItemSize]'s own
  * `iconSizeDp` tiers (that enum is the one place a user actually chooses an icon size) rather than
  * repeating those numbers here.
@@ -65,19 +66,6 @@ object AppIconSize {
 }
 
 /**
- * [AppIcon]'s default corner radius, derived from [size] via the M3 shape scale (CLAUDE.md's
- * Material 3 shape section) rather than a hand-picked ratio — `extraSmall` (4dp) for
- * [AppIconSize.SHORTCUT]-scale icons, `small` (8dp) for row-scale icons, `medium` (12dp) for
- * tile-scale icons. A departure from this app's earlier convention of exempting icon/avatar tiles
- * from the M3 shape scale (decided explicitly by the user — see chat history).
- */
-private fun appIconCornerRadiusFor(size: Dp): Dp = when {
-    size <= 24.dp -> 4.dp
-    size <= 36.dp -> 8.dp
-    else -> 12.dp
-}
-
-/**
  * The single app-icon renderer used everywhere an [icon] bitmap is shown — Home's favorites/dock,
  * the App Drawer's List/Grid rows, the long-press context menu, and the facet carousel's
  * preview cards. Kept as one composable specifically so F11's icon-rendering mode only needs to
@@ -97,7 +85,6 @@ fun AppIcon(
     size: Dp,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = appIconCornerRadiusFor(size),
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     isWorkApp: Boolean = false,
@@ -110,10 +97,10 @@ fun AppIcon(
     Box(modifier = modifier) {
         if (notificationCount != null && notificationCount > 0) {
             BadgedBox(badge = { NotificationBadge(count = notificationCount, style = badgeStyle) }) {
-                AppIconGlyph(icon = icon, size = size, cornerRadius = cornerRadius, contentDescription = contentDescription)
+                AppIconGlyph(icon = icon, size = size, contentDescription = contentDescription)
             }
         } else {
-            AppIconGlyph(icon = icon, size = size, cornerRadius = cornerRadius, contentDescription = contentDescription)
+            AppIconGlyph(icon = icon, size = size, contentDescription = contentDescription)
         }
         // Bottom-start, not stacked with the notification dot above (top-end, via BadgedBox) —
         // matches every other Android launcher's own convention for where a Work Profile badge
@@ -173,8 +160,10 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
  * icon assets it happens to ship.
  */
 @Composable
-private fun AppIconGlyph(icon: ImageBitmap?, size: Dp, cornerRadius: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
+private fun AppIconGlyph(icon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
     val renderMode = LocalIconRenderMode.current
+    val shapeSetting = LocalIconShape.current
+    val iconShape = remember(shapeSetting) { shapeSetting.toComposeShape() }
     if (icon != null) {
         val tintColor = when (renderMode) {
             IconRenderMode.SYSTEM_DEFAULT -> null
@@ -185,13 +174,13 @@ private fun AppIconGlyph(icon: ImageBitmap?, size: Dp, cornerRadius: Dp, content
             bitmap = icon,
             contentDescription = contentDescription,
             colorFilter = tintColor?.let { ColorFilter.tint(it, BlendMode.Color) },
-            modifier = modifier.size(size).clip(RoundedCornerShape(cornerRadius)),
+            modifier = modifier.size(size).clip(iconShape),
         )
     } else {
         Box(
             modifier = modifier
                 .size(size)
-                .background(color = IconTile, shape = RoundedCornerShape(cornerRadius))
+                .background(color = IconTile, shape = iconShape)
                 .then(
                     if (contentDescription != null) {
                         Modifier.semantics { this.contentDescription = contentDescription }

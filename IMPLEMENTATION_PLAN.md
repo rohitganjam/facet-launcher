@@ -3630,3 +3630,51 @@ white), the big rail letter-indicator's font/pill fixed, and the on/off toggle e
   set-default sheet), `02` (key, writer, section), `04` (tree), `09` (backup field), `CAPABILITIES.md`,
   `ONBOARDING_FLOW.md`, `ONBOARDING_DESIGN_BRIEF.md`, design `README.md`/`PRD.md` revision notes, `CLAUDE.md`
   (sheet + Home-press conventions, test-name pitfall), `CLOCK_RESIZE_SPEC.md` (marked historical).
+
+## ✅ Icon shape — built (direct request)
+
+- [x] **`IconShape`** (Squircle n=4 default / Rounded n=2.6 / Circle / Square) — global, free, independent of `IconRenderMode`.
+  `icon_shape` DataStore key + `setIconShape`, `LocalIconShape`, `LauncherUiState.iconShape`, backed up (additive field,
+  no version bump). Rounded (n=2.6) matches One UI's icon mask, which measures n≈2.5–2.6 on a Galaxy S25 Ultra, and is visibly rounder than the textbook squircle.
+- [x] **M3 icon-radius tiers retired** — `AppIcon` has no `cornerRadius` param (nor its size-derived 4/8/12dp tiers);
+  CLAUDE.md carries an exception to the M3 shape rule for app icons. `AppIconGlyph` clips the icon *and* the no-icon
+  placeholder to the chosen shape; `ui/components/SuperellipseShape.kt` holds `SuperellipseShape(n)` (`SquircleShape` n=4, `RoundedShape` n=2.6) and `toComposeShape`.
+- [x] **Appearance → General → "Icon Shape"** — visual picker under Icon Style (each option drawn in its own shape,
+  selected one outlined in Accent); hidden on the facet-scoped screen like the other global rows.
+- [x] **Tests**: `SuperellipseShapeTest`, `SettingsRepositoryTest` (default + round-trip), `AppearanceSettingsViewModelTest`,
+  `AppearanceSettingsScreenTest` (picker persists; hidden when facet-scoped). `TEST_REGISTRY.md` regenerated.
+- [x] **Docs**: `02` (ER, writer, key table, counts), `09` (backup field), `13 §2` (theme locals), `README.md` counts.
+
+## 📝 Planned, not started — Facet automation rules (built-in scheduler)
+
+Built-in rules that switch the active facet automatically. Entry point: **Settings → Facets → "Facet automation"**, a row under "Manage facets". The screen lists rules and carries a card explaining that the per-facet "Switch to <name>" shortcuts work in Samsung Modes & Routines / Tasker for anything more advanced. Builds on `ActivateFacetByIdUseCase` and the shortcut/deep-link work above.
+
+**Decisions:**
+- **One trigger per rule, no AND/OR** in v1. Rule = target facet + trigger + end behavior + enabled.
+- **End behavior is per rule:** *Return to baseline* (default) / *Switch to facet X* / *Stay*.
+- **Level-based evaluation, not edge-triggered.** Overlapping rules must resolve to "back to the other rule", which an edge model can't express.
+- **Evaluated lazily** on screen-on, unlock, Home press and startup — no alarms, no `SCHEDULE_EXACT_ALARM`. A 9:00 rule applying at 9:03 on unlock is indistinguishable from exact timing, and it never switches under a user mid-use. Device state (Bluetooth, charging) is also read at startup, since a killed process misses broadcasts.
+- **Persisted state (DataStore):** `baselineFacetId`, `suppressedRuleIds`, last evaluated truth per rule.
+- **Manual wins.** Carousel, Facet settings "Activate", **shortcuts and deep links** all count as manual: set baseline = chosen facet and suppress every currently-true rule until it ends. Only the evaluator switches as `Automation` (baseline and suppressed untouched). The source is an explicit parameter at the single choke point, never inferred by watching the active facet.
+- **Evaluator:** drop suppressed rules that are now false → candidates = enabled, entitled, true, non-suppressed → most recently activated wins, else baseline. A rule's end behavior runs on true→false and is **skipped if the rule was suppressed**. A rule that becomes true after a manual switch applies normally.
+- **No toast** on automatic switches.
+- **Triggers** (each device trigger has a *while connected / while not connected* polarity):
+  - Free: schedule (weekdays + start/end).
+  - Pro: Bluetooth device, Wi-Fi (any network, or a specific SSID), headphones, charging, low battery (user threshold + hysteresis; ends on charge or a few points above).
+  - Out: calendar, Battery Saver (possible later).
+- **Permissions, all asked only when the user picks the trigger:** `BLUETOOTH_CONNECT` (runtime) for Bluetooth; `ACCESS_NETWORK_STATE` (normal) for any-Wi-Fi; location (runtime, system location toggle on) **only** to read a specific SSID. A revoked permission shows the rule as unavailable rather than failing silently (PRD revocation principle). Verify the merged manifest still has no `INTERNET`.
+- **Pro gating is one seam:** `CanUseTriggerUseCase(type)`, hardcoded `true` until billing lands. Existing Pro-trigger rules pause (not deleted) if entitlement is revoked. The 3→10 facet cap and billing are a separate plan.
+- **Rules cascade-delete with their target facet** (FK). A deleted baseline facet falls back through `EnsureActiveFacetUseCase`.
+
+**Phases (evaluator first — it is the riskiest logic):**
+
+- [ ] **1. Evaluator + tests, no UI.** `domain/EvaluateFacetAutomationUseCase` as a pure function over (rules, trigger truth, baseline, suppressed, last truth, now) → desired facet + new state. Scenario-table unit tests: baseline return, overlap (Work + Car, Car ends → Work), manual switch suppresses then clears, suppressed rule skips end behavior, switch-to-X and Stay endings, new rule after manual switch, deleted/disabled-while-active, first run.
+- [ ] **2. Switch source.** Add `FacetSwitchSource` (Manual default / Automation) to `ActivateFacetByIdUseCase`; route every in-app activation (carousel, Facet settings Activate) through it — verify none call `SettingsRepository.setActiveFacetId` directly. Manual path sets baseline + suppresses. Tests.
+- [ ] **3. Data.** `AutomationRuleEntity` (FK → facet, cascade), DAO, `AutomationRuleRepository`, `FacetDatabase.VERSION` bump + `Migration`, DataStore keys for baseline/suppressed/last truth. Check how `BackupBundle` remaps facet ids on import before deciding whether rules are backed up (runtime state — baseline, suppressed — is not).
+- [ ] **4. Schedule trigger + wiring.** Schedule truth source; collector in `LauncherViewModel.init` that runs the evaluator on screen-on/unlock/Home press/start. First end-to-end slice, free tier.
+- [ ] **5. Device triggers**, one `callbackFlow` source each: Bluetooth (connect state + startup query), Wi-Fi (`ConnectivityManager` callback; SSID path behind the location permission), headphones, charging, battery level. Dynamic registration vs manifest for `ACL_*` to be verified.
+- [ ] **6. UI.** `ui/settings/automation/`: `FacetAutomationScreen` (rule list + shortcuts card), rule editor sheet (`ThemedModalBottomSheet`; target facet, trigger, polarity, end behavior), permission request on trigger selection, unavailable/locked states, `@Preview`s light + dark, a11y labels. Strings in `values/` plus the four translations.
+- [ ] **7. Pro seam.** `CanUseTriggerUseCase` (always `true`); editor shows locked trigger types once it returns false.
+- [ ] **8. Docs + site.** `01`, `02` (entity, DAO matrix, migration row, DataStore keys), `03 §4` (startup collector) and `§5` (new reactive sources), `04`, `07`, `13`; new `NN-flow-facet-automation.md` + `docs/architecture/README.md` row; `CAPABILITIES.md`; `TEST_REGISTRY.md` via `scripts/gen-test-registry.py`; privacy policy in `../facet-launcher-site/build.py` (location use for Wi-Fi SSID, Bluetooth).
+
+**Tests:** evaluator scenario tests (phase 1), `AutomationRuleRepositoryTest` + migration test, `ActivateFacetByIdUseCaseTest` for source handling, ViewModel tests, Compose tests for the rule editor and permission prompts.

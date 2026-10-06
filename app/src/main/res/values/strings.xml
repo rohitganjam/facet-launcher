@@ -55,6 +55,10 @@
     <string name="icon_render_system_default">System default</string>
     <string name="icon_render_monochrome_black_white">Monochrome (Black &amp; white)</string>
     <string name="icon_render_monochrome_accent">Monochrome (Accent)</string>
+    <string name="icon_shape_squircle">Squircle</string>
+    <string name="icon_shape_rounded">Rounded</string>
+    <string name="icon_shape_circle">Circle</string>
+    <string name="icon_shape_square">Square</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Light stack</string>
@@ -386,6 +390,7 @@
     <string name="appearance_launcher_theme">Launcher theme</string>
     <string name="appearance_system_bar_icons">System bar icons</string>
     <string name="appearance_icon_style">Icon Style</string>
+    <string name="appearance_icon_shape">Icon Shape</string>
     <string name="appearance_launcher_font">Launcher Font</string>
     <string name="appearance_font_color">Font Color</string>
     <string name="appearance_font_size">Font Size</string>

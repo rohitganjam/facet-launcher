@@ -246,7 +246,7 @@ private fun MockFacetCard(facet: MockFacet, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(6.dp))
         facet.favorites.forEach { name ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 3.dp)) {
-                AppIcon(icon = null, size = 16.dp, cornerRadius = 5.dp, contentDescription = null)
+                AppIcon(icon = null, size = 16.dp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = name, style = MaterialTheme.typography.labelMedium, color = Ink)
             }
@@ -254,7 +254,7 @@ private fun MockFacetCard(facet: MockFacet, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             facet.dock.forEach { _ ->
-                AppIcon(icon = null, size = 20.dp, cornerRadius = 6.dp, contentDescription = null)
+                AppIcon(icon = null, size = 20.dp, contentDescription = null)
             }
         }
     }

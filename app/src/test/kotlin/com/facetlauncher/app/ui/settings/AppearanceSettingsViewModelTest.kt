@@ -22,6 +22,7 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
@@ -165,6 +166,17 @@ class AppearanceSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setIconRenderMode(IconRenderMode.MONOCHROME_BLACK_WHITE)
+    }
+
+    @Test
+    fun `changing icon shape calls the repository setter`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setIconShape(IconShape.CIRCLE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setIconShape(IconShape.CIRCLE)
     }
 
     @Test

@@ -56,6 +56,7 @@ class LauncherActivity : ComponentActivity() {
                     customAccentSwatch = uiState.customAccentSwatch?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
                     wallpaperAccentRole = uiState.wallpaperAccentRole,
                     iconRenderMode = uiState.iconRenderMode,
+                    iconShape = uiState.iconShape,
                     launcherFontOption = uiState.launcherFontOption,
                     homeAppsFontWeight = uiState.homeAppsFontWeight,
                     fontScaleOption = uiState.fontScaleOption,

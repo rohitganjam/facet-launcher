@@ -269,6 +269,8 @@ data class LauncherSettings(
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     /** F11 — Settings → Theme → "Icons"; global (not per-app) app-icon rendering mode. */
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    /** Settings → Appearance → "Icon shape" — see [IconShape]. Global, not facet-overridable. */
+    val iconShape: IconShape = IconShape.SQUIRCLE,
     /**
      * Settings → Appearance → "Font" — the base font for every text role app-wide except the
      * clock/calendar, which pick their own font independently (see [ClockFontOption]'s

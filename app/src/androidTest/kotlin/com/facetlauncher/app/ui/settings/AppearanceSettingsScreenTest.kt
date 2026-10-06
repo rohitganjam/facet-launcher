@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -281,6 +282,22 @@ class AppearanceSettingsScreenTest {
             composeRule.onAllNodesWithText("Monochrome (Accent)").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Monochrome (Accent)").assertExists()
+    }
+
+    @Test
+    fun iconShapePickerPersistsTheSelectedShape() {
+        // Given the screen, with the picker scrolled into view
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_icon_shape_row"))
+
+        // When picking Circle
+        composeRule.onNodeWithTag("icon_shape_CIRCLE").performClick()
+
+        // Then it's selected and persisted to the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().iconShape == com.facetlauncher.app.data.model.IconShape.CIRCLE }
+        }
+        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsSelected()
     }
 
     @Test
@@ -627,6 +644,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("clock_style_gallery_row").assertDoesNotExist()
         composeRule.onNodeWithTag("theme_mode_dropdown").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_icons_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_icon_shape_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_font_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_app_label_color_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_font_size_slider").assertDoesNotExist()

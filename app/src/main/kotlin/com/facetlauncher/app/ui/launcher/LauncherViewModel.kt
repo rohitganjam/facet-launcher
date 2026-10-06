@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
@@ -58,6 +59,7 @@ data class LauncherUiState(
     val customAccentSwatch: String? = null,
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    val iconShape: IconShape = IconShape.SQUIRCLE,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
@@ -127,6 +129,7 @@ class LauncherViewModel @Inject constructor(
                 customAccentSwatch = settings.customAccentSwatch,
                 wallpaperAccentRole = settings.wallpaperAccentRole,
                 iconRenderMode = settings.iconRenderMode,
+                iconShape = settings.iconShape,
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,

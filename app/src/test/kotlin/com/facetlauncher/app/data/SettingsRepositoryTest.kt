@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
@@ -65,6 +66,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerGridSize.FIVE_BY_SIX, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
+        assertEquals(IconShape.SQUIRCLE, settings.iconShape)
         assertEquals(0.6f, settings.drawerOpacity, 0.0001f)
         assertEquals(true, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
@@ -259,6 +261,7 @@ class SettingsRepositoryTest {
         repository.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
+        repository.setIconShape(IconShape.ROUNDED)
         repository.setLauncherFontOption(LauncherFontOption.MANROPE)
         repository.setFontScaleOption(FontScaleOption.LARGE)
         repository.setAppLabelColorOption(ClockColorOption.THEME_INVERTED)
@@ -293,6 +296,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerGridSize.FOUR_BY_FOUR, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
+        assertEquals(IconShape.ROUNDED, settings.iconShape)
         assertEquals(LauncherFontOption.MANROPE, settings.launcherFontOption)
         assertEquals(FontScaleOption.LARGE, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME_INVERTED, settings.appLabelColorOption)

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -72,6 +74,7 @@ import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -94,8 +97,11 @@ import com.facetlauncher.app.ui.home.ClockBlock
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
+import com.facetlauncher.app.ui.components.toComposeShape
+import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalDynamicColorRefreshSignal
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -136,6 +142,7 @@ fun AppearanceSettingsScreen(
         onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
         onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
         onIconRenderModeChange = viewModel::setIconRenderMode,
+        onIconShapeChange = viewModel::setIconShape,
         onLauncherFontOptionChange = viewModel::setLauncherFontOption,
         onAppLabelColorOptionChange = viewModel::setAppLabelColorOption,
         onHomeAppsFontWeightChange = viewModel::setHomeAppsFontWeight,
@@ -165,6 +172,7 @@ private fun AppearanceSettingsContent(
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
     onIconRenderModeChange: (IconRenderMode) -> Unit,
+    onIconShapeChange: (IconShape) -> Unit,
     onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
     onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
     onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
@@ -386,6 +394,8 @@ private fun AppearanceSettingsContent(
                                 onSelect = onIconRenderModeChange,
                                 testTag = "appearance_icons_row",
                             )
+                            CardDivider()
+                            IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
                             CardDivider()
                             LabeledDropdownRow(
                                 title = stringResource(R.string.appearance_launcher_font),
@@ -819,6 +829,50 @@ private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, te
     }
 }
 
+/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
+@Composable
+private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
+        Text(
+            text = stringResource(R.string.appearance_icon_shape),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            IconShape.entries.forEach { shape ->
+                val isSelected = shape == selected
+                val label = stringResource(shape.displayNameRes)
+                Column(
+                    modifier = Modifier
+                        .testTag("icon_shape_${shape.name}")
+                        .clip(MaterialTheme.shapes.small)
+                        .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(shape) })
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(AppIconSize.TILE)
+                            .background(IconTile, shape.toComposeShape())
+                            .border(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) Accent else Hairline,
+                                shape = shape.toComposeShape(),
+                            ),
+                    )
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isSelected) Ink else Muted,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
 private const val ACCENT_SWATCH_GRID_COLUMNS = 5
 
 @Composable
@@ -949,6 +1003,7 @@ private fun AppearanceSettingsScreenPreview() {
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
             onIconRenderModeChange = {},
+            onIconShapeChange = {},
             onLauncherFontOptionChange = {},
             onAppLabelColorOptionChange = {},
             onHomeAppsFontWeightChange = {},
@@ -985,6 +1040,7 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
             onIconRenderModeChange = {},
+            onIconShapeChange = {},
             onLauncherFontOptionChange = {},
             onAppLabelColorOptionChange = {},
             onHomeAppsFontWeightChange = {},

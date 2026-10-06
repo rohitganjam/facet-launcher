@@ -28,6 +28,7 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
@@ -187,6 +188,10 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     fun setIconRenderMode(mode: IconRenderMode) {
         viewModelScope.launch { settingsRepository.setIconRenderMode(mode) }
+    }
+
+    fun setIconShape(shape: IconShape) {
+        viewModelScope.launch { settingsRepository.setIconShape(shape) }
     }
 
     fun setLauncherFontOption(option: LauncherFontOption) {

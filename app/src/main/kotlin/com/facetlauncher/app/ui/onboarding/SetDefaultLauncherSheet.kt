@@ -102,7 +102,7 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            AppIcon(icon = null, size = 28.dp, cornerRadius = 8.dp, contentDescription = null)
+            AppIcon(icon = null, size = 28.dp, contentDescription = null)
             Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             Text(text = stringResource(R.string.set_default_launcher_home_app_badge), style = MaterialTheme.typography.bodySmall, color = Muted)
         }

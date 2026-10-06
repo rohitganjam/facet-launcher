@@ -30,6 +30,7 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -68,6 +69,7 @@ private object Keys {
     val CUSTOM_ACCENT_SWATCH = stringPreferencesKey("custom_accent_swatch")
     val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
+    val ICON_SHAPE = stringPreferencesKey("icon_shape")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
     val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
@@ -147,6 +149,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.wallpaperAccentRole,
             iconRenderMode = preferences[Keys.ICON_RENDER_MODE]?.let { runCatching { IconRenderMode.valueOf(it) }.getOrNull() }
                 ?: defaults.iconRenderMode,
+            iconShape = preferences[Keys.ICON_SHAPE]?.let { runCatching { IconShape.valueOf(it) }.getOrNull() }
+                ?: defaults.iconShape,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.launcherFontOption,
             fontScaleOption = preferences[Keys.FONT_SCALE_OPTION]?.let { runCatching { FontScaleOption.valueOf(it) }.getOrNull() }
@@ -291,6 +295,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setIconRenderMode(mode: IconRenderMode) {
         dataStore.edit { it[Keys.ICON_RENDER_MODE] = mode.name }
+    }
+
+    suspend fun setIconShape(shape: IconShape) {
+        dataStore.edit { it[Keys.ICON_SHAPE] = shape.name }
     }
 
     suspend fun setLauncherFontOption(option: LauncherFontOption) {
