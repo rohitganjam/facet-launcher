@@ -227,3 +227,10 @@ flowchart LR
 - "Set as default launcher" is a system action (`DefaultLauncherRepository.requestDefaultLauncherIntent()`
   → `RoleManager` request); Facet only prompts, and stops prompting once
   `isDefaultLauncher()` is true or the coach mark is dismissed.
+- The set-default prompt is a `ThemedModalBottomSheet` ([12 §4](12-flow-drawer-search-and-app-actions.md)): its content
+  clears the nav bar via the sheet's own inset plus 24dp under the button, and scrim / swipe-down / Back / Home all count
+  as "Later"/"Done".
+- `GestureHintOverlay` (coach mark `HOME_GESTURES`) shows four hints at proportional offsets, each on the side its
+  gesture starts from: clock hold (top-left, under the default clock), Switch facets (right edge), Widgets (left edge),
+  All your apps (bottom-right). Its "Got it" is a `SurfaceButton` with a 1.5dp `Muted` border and a soft shadow, because
+  the button's fill is nearly the overlay's color (a 1.05–1.3:1 difference) — the border keeps ≥3:1 in both themes.

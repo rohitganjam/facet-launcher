@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
@@ -1323,6 +1324,13 @@ class HomeDrawerRouteTest {
             composeRule.onAllNodesWithTag("gesture_hint_overlay").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("gesture_hint_overlay").assertIsDisplayed()
+
+        // ...with a hint for every gesture, including the clock long-press (the overlay is clickable, so
+        // its children's text merges into this one node — and the Hub's own "Widgets" header is composed
+        // behind it, so a global text lookup would be ambiguous)
+        listOf("Press and hold the clock to resize or move it", "Switch facets", "Widgets", "All your apps").forEach { hint ->
+            composeRule.onNodeWithTag("gesture_hint_overlay").assertTextContains(hint, substring = true)
+        }
 
         // When tapping "Got it"
         composeRule.onNodeWithTag("gesture_hint_got_it").performClick()

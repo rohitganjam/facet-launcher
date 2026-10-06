@@ -221,14 +221,18 @@ for a Success-colored check + *"Facet is already your home screen"* and a single
 
 Two primitives, no coordinate-anchored spotlighting:
 
-- **`GestureHintOverlay`** — light translucent layer over Home, three unanchored gesture
-  affordances + labels + "Got it". Auto-dismiss on first gesture.
+- **`GestureHintOverlay`** — translucent layer (90% `SurfaceContainer`) over Home with four labelled
+  gesture hints + "Got it", stacked top to bottom at proportional (not fixed) offsets, each on the side
+  its gesture starts from: clock hold (top-left, below the default clock), Switch facets (right edge),
+  Widgets (left edge), All your apps (bottom-right). "Got it" is a `SurfaceButton` with a 1.5dp `Muted`
+  border and a soft shadow — its fill is nearly the overlay's color, so the edge carries the contrast.
+  Auto-dismiss on first gesture.
 - **`FirstRunCallout`** — dismissible inline card (12dp corners, 1dp Hairline, `SettingsCard`
   styling) pinned to the top of a surface on its first open.
 
 | id | Trigger | Surface | Teaches |
 |---|---|---|---|
-| `HOME_GESTURES` | onboarding just completed | Home overlay | swipe up *("All your apps")* / swipe right *("Widgets")* / swipe left *("Switch profiles")* — corrected from an earlier long-press wording; matches `PRD.md` §5 |
+| `HOME_GESTURES` | onboarding just completed | Home overlay | swipe up *("All your apps")* / swipe right *("Widgets")* / swipe left *("Switch facets")* / press and hold the clock *("Press and hold the clock to resize or move it")* — the first three match `PRD.md` §5 |
 | `PROFILES_INTRO` | first carousel open | inline callout | **operational only** (concept already covered by step 3) — *"Swipe to browse · tap a card to switch · Reorder up top"* |
 | `HUB_INTRO` *(optional)* | first Hub open | inline callout | *"Your widgets live here · add up to 20 · swipe left for home"* — **deferred**, not built this pass (see §9) |
 
@@ -273,7 +277,9 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
   `subScreen: OnboardingSubScreen?` — `DOCK_PICKER` / `FAVORITES_PICKER` — both `rememberSaveable`),
   `OnboardingViewModel.kt`, `OnboardingUiState.kt`.
 - `OnboardingIntroPage.kt`, `OnboardingHomeSetupPage.kt`, `OnboardingProfilesPage.kt`,
-  `SetDefaultLauncherSheet.kt`, `OnboardingDots.kt`.
+  `SetDefaultLauncherSheet.kt` (a `ThemedModalBottomSheet` since the Home action menus were unified — content
+  carries its own 24dp under the button; dismissing by scrim/swipe/Back counts as "Later"/"Done"),
+  `OnboardingDots.kt`.
 - The home-setup step's dock/favorites *editing* is **not** a bespoke search list —
   `OnboardingHomeSetupPage.kt` renders `DockAppPickerScreen`/`FavoritesPickerScreen` (unmodified,
   reused from `ui/dock`/`ui/profiles`) full-screen when `subScreen` is set, exactly like Settings

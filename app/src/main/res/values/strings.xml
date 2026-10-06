@@ -173,6 +173,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">All your apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
+    <string name="gesture_hint_clock_hold">Press and hold the clock to resize or move it</string>
     <string name="gesture_hint_got_it">Got it</string>
 
     <!-- FacetScopeBadge -->

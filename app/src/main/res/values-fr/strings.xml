@@ -165,6 +165,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Toutes vos apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
+    <string name="gesture_hint_clock_hold">Appuyez longuement sur l\'horloge pour la redimensionner ou la déplacer</string>
     <string name="gesture_hint_got_it">Compris</string>
 
     <!-- FacetScopeBadge -->
