@@ -53,7 +53,7 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
-    private val isDefaultLauncher = MutableStateFlow(false)
+    private val isDefaultLauncher = MutableStateFlow<Boolean?>(null)
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -81,13 +81,19 @@ class HomeViewModel @Inject constructor(
             _uiState.update { if (it.isLoading) it.copy(isLoading = false) else it }
         }
 
-        viewModelScope.launch { isDefaultLauncher.value = defaultLauncherRepository.isDefaultLauncher() }
+        viewModelScope.launch {
+            val isDefault = defaultLauncherRepository.isDefaultLauncher()
+            isDefaultLauncher.value = isDefault
+            // Already the default: there's nothing to ask, so retire the prompt for good — otherwise it would first
+            // appear later if the user ever switched to another launcher and opened Facet from its drawer.
+            if (isDefault) settingsRepository.markCoachMarkSeen(HOME_SET_DEFAULT_PROMPT_ID)
+        }
     }
 
     /** [com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet]'s primary action target — see [DefaultLauncherRepository.requestDefaultLauncherIntent]. */
     fun requestDefaultLauncherIntent(): Intent = defaultLauncherRepository.requestDefaultLauncherIntent()
 
-    /** Dismisses [HomeUiState.showSetDefaultPrompt] for good — "Set as default"/"Later"/"Done", or tapping its scrim. */
+    /** Dismisses [HomeUiState.showSetDefaultPrompt] for good — "Set as default"/"Later", or tapping its scrim. */
     fun dismissSetDefaultPrompt() {
         viewModelScope.launch { settingsRepository.markCoachMarkSeen(HOME_SET_DEFAULT_PROMPT_ID) }
     }

@@ -49,6 +49,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -1139,17 +1140,23 @@ fun HomeScreen(
         }
 
         // Reports the app list's own scrollable viewport bounds — see onAppListBoundsChange's own
-        // doc. null whenever it hasn't been measured yet.
-        SideEffect {
-            val size = appListSize
-            val origin = appListOriginInRoot
-            val rootOrigin = rootOriginInRoot
-            val bounds = if (size != null && origin != null && rootOrigin != null) {
-                Rect(offset = origin - rootOrigin, size = size.toSize())
-            } else {
-                null
-            }
-            onAppListBoundsChange(bounds)
+        // doc. null whenever it hasn't been measured yet. A snapshotFlow, not a SideEffect: nothing in
+        // composition reads appListSize/appListOriginInRoot (onGloballyPositioned writes them after
+        // layout), so a SideEffect only ever saw what they held at the last unrelated recomposition —
+        // e.g. the empty list's zero height — and a drag inside the populated, overflowing list was
+        // claimed by the drawer instead of scrolling it.
+        val currentOnAppListBoundsChange by rememberUpdatedState(onAppListBoundsChange)
+        LaunchedEffect(Unit) {
+            snapshotFlow {
+                val size = appListSize
+                val origin = appListOriginInRoot
+                val rootOrigin = rootOriginInRoot
+                if (size != null && origin != null && rootOrigin != null) {
+                    Rect(offset = origin - rootOrigin, size = size.toSize())
+                } else {
+                    null
+                }
+            }.collect { currentOnAppListBoundsChange(it) }
         }
 
         // Adjustment menu sheet

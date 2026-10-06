@@ -213,8 +213,8 @@ still populated.
   *"Permissions come later, one at a time, only when a feature needs them."*
 - Pagination dots — 4/4 — on the sheet or on the screen behind (show one option).
 
-**Artboard 6 — already default:** the sheet swaps the row + primary button for a **Success**-colored
-check + *"Facet is already your home screen"* and a single **Done** button.
+**Artboard 6 — already default:** *(removed during implementation)* the sheet is skipped entirely when Facet already
+holds the home role — it would only have asked the user to acknowledge something — and the gesture hints follow directly.
 
 **Tone reference:** the app already has "special-permission explanation" screens (usage-access,
 notification-access) — same register: plain, reassuring, one clear primary, one "later".

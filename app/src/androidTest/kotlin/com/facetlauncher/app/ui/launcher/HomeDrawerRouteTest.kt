@@ -154,6 +154,8 @@ class HomeDrawerRouteTest {
         privateSpaceState: PrivateSpaceState = PrivateSpaceState.NotConfigured,
         /** How many of [apps] to seed as default favorites — more than a screen's worth forces the app list to overflow and scroll. */
         favoriteCount: Int = 1,
+        /** What the (mocked) home-role check reports — the prompt only shows when `false`; `true` skips straight to the hints. */
+        isDefaultLauncher: Boolean = false,
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -251,7 +253,9 @@ class HomeDrawerRouteTest {
                     NotificationShadeRepository(context),
                     settingsRepository,
                     facetRepository,
-                    DefaultLauncherRepository(context),
+                    mock(DefaultLauncherRepository::class.java).also { repo ->
+                        runBlocking { `when`(repo.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
+                    },
                     ObserveQuickAddStateUseCase(),
                     ClockWidgetHostController(appWidgetRepository),
                     ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
@@ -1256,22 +1260,14 @@ class HomeDrawerRouteTest {
     }
 
     /**
-     * Waits for the one-time "make Facet your home screen" prompt to render, then dismisses it —
-     * "Later" normally, or "Done" if this test APK happens to already hold the `HOME` role on
-     * this device/emulator (a real, async [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher]
-     * query, not reliably caught by a single `waitForIdle()`).
+     * Waits for the one-time "make Facet your home screen" prompt to render (the home-role check behind it is
+     * async, so a single `waitForIdle()` isn't reliable), then dismisses it with "Later".
      */
     private fun dismissSetDefaultPrompt() {
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("onboarding_later").fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodesWithTag("onboarding_done").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("onboarding_later").fetchSemanticsNodes().isNotEmpty()
         }
-        val laterExists = runCatching { composeRule.onNodeWithTag("onboarding_later").assertExists() }.isSuccess
-        if (laterExists) {
-            composeRule.onNodeWithTag("onboarding_later").performClick()
-        } else {
-            composeRule.onNodeWithTag("onboarding_done").performClick()
-        }
+        composeRule.onNodeWithTag("onboarding_later").performClick()
     }
 
     @Test
@@ -1290,6 +1286,8 @@ class HomeDrawerRouteTest {
             composeRule.onAllNodesWithTag("set_default_launcher_prompt").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("set_default_launcher_prompt").assertIsDisplayed()
+        // ...and the gesture hint waits behind it
+        composeRule.onNodeWithTag("gesture_hint_overlay").assertDoesNotExist()
 
         // When dismissed
         dismissSetDefaultPrompt()
@@ -1303,6 +1301,22 @@ class HomeDrawerRouteTest {
         composeRule.onRoot().performTouchInput { swipeLeft() }
         settleAnimation()
         composeRule.onNodeWithTag("set_default_launcher_prompt").assertDoesNotExist()
+    }
+
+    @Test
+    fun anAlreadyDefaultLauncherSkipsTheSetDefaultPromptAndShowsTheHintsStraightAway() {
+        // Given onboarding has just completed on a device where Facet already holds the home role
+        setContent(onboardingCompleted = true, isDefaultLauncher = true)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the gesture hint appears with no prompt in between — and the prompt never showed
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("gesture_hint_overlay").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("set_default_launcher_prompt").assertDoesNotExist()
+        composeRule.onNodeWithTag("onboarding_later").assertDoesNotExist()
     }
 
     @Test

@@ -159,17 +159,65 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `gesture hint shows once onboarding completes and hasn't been dismissed`() {
-        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = emptySet()))
+    fun `gesture hint shows right away when Facet already holds the home role`() {
+        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = emptySet()), isDefaultLauncher = true)
 
         assertEquals(true, state.showGestureHint)
     }
 
     @Test
-    fun `gesture hint stays hidden once its id is in coachMarksSeen`() {
-        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = setOf("HOME_GESTURES")))
+    fun `gesture hint shows once the set-default prompt has been dismissed`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = setOf("HOME_SET_DEFAULT_PROMPT")),
+            isDefaultLauncher = false,
+        )
+
+        assertEquals(true, state.showGestureHint)
+    }
+
+    @Test
+    fun `gesture hint waits while the set-default prompt is still pending`() {
+        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = emptySet()), isDefaultLauncher = false)
 
         assertEquals(false, state.showGestureHint)
+    }
+
+    @Test
+    fun `gesture hint waits while it's still unknown whether Facet is the default`() {
+        val state = HomeUiState(settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = emptySet()), isDefaultLauncher = null)
+
+        assertEquals(false, state.showGestureHint)
+    }
+
+    @Test
+    fun `gesture hint stays hidden once its id is in coachMarksSeen`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = setOf("HOME_GESTURES")),
+            isDefaultLauncher = true,
+        )
+
+        assertEquals(false, state.showGestureHint)
+    }
+
+    @Test
+    fun `set-default prompt shows only when Facet is confirmed not to be the default`() {
+        val settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = emptySet())
+
+        assertEquals(true, HomeUiState(settings = settings, isDefaultLauncher = false).showSetDefaultPrompt)
+        assertEquals(false, HomeUiState(settings = settings, isDefaultLauncher = true).showSetDefaultPrompt)
+        assertEquals(false, HomeUiState(settings = settings, isDefaultLauncher = null).showSetDefaultPrompt)
+    }
+
+    @Test
+    fun `set-default prompt stays hidden before onboarding completes and once dismissed`() {
+        assertEquals(false, HomeUiState(settings = LauncherSettings(onboardingCompleted = false), isDefaultLauncher = false).showSetDefaultPrompt)
+        assertEquals(
+            false,
+            HomeUiState(
+                settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = setOf("HOME_SET_DEFAULT_PROMPT")),
+                isDefaultLauncher = false,
+            ).showSetDefaultPrompt,
+        )
     }
 
     @Test

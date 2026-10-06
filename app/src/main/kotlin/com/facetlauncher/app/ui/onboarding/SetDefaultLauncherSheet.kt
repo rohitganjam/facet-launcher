@@ -38,7 +38,6 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.SuccessColor
 
 /**
  * First-launch "make Facet your home screen" prompt (`4h`) — shown once, as an overlay on top of
@@ -47,12 +46,12 @@ import com.facetlauncher.app.ui.theme.SuccessColor
  * a step inside [OnboardingScreen]'s own swipeable flow. It's a [ThemedModalBottomSheet] — the same
  * sheet every Home action menu uses — so the real Home stays visible behind its scrim. "Set as default" launches
  * [requestDefaultLauncherIntent] via [rememberLauncherForActivityResult]; **any** result (granted,
- * denied, or dismissed) — same as "Later" — calls [onFinish]. If Facet already holds the role
- * (reinstall), swaps in a Success-colored "already default" variant with a single Done button.
+ * denied, or dismissed) — same as "Later" — calls [onFinish], and the hints follow immediately. It's only
+ * ever shown when Facet doesn't hold the role: [com.facetlauncher.app.ui.home.HomeUiState.showSetDefaultPrompt]
+ * skips it entirely on a device that already does (a reinstall), going straight to the hints.
  */
 @Composable
 fun SetDefaultLauncherSheet(
-    isDefaultLauncher: Boolean,
     requestDefaultLauncherIntent: () -> Intent,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,27 +65,20 @@ fun SetDefaultLauncherSheet(
         skipPartiallyExpanded = true,
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
-            if (isDefaultLauncher) {
-                AlreadyDefaultContent(onDone = onFinish)
-            } else {
-                SetDefaultContent(onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) })
-            }
-
-            if (!isDefaultLauncher) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = stringResource(R.string.onboarding_later),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Muted,
-                    // 48dp minimum touch target (M3 guideline), centered on the text.
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .clickable(onClick = onFinish)
-                        .testTag("onboarding_later")
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center),
-                )
-            }
+            SetDefaultContent(onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) })
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = stringResource(R.string.onboarding_later),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Muted,
+                // 48dp minimum touch target (M3 guideline), centered on the text.
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clickable(onClick = onFinish)
+                    .testTag("onboarding_later")
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .wrapContentSize(Alignment.Center),
+            )
         }
     }
 }
@@ -136,48 +128,12 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
     }
 }
 
-@Composable
-private fun AlreadyDefaultContent(onDone: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = stringResource(R.string.set_default_launcher_checkmark), style = MaterialTheme.typography.titleMedium, color = SuccessColor)
-            Text(text = stringResource(R.string.set_default_launcher_already_default), style = MaterialTheme.typography.titleMedium, color = Ink)
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = stringResource(R.string.action_done),
-            style = MaterialTheme.typography.bodyLarge,
-            color = InkInverted,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Accent, CircleShape)
-                .clickable(onClick = onDone)
-                .testTag("onboarding_done")
-                .padding(vertical = 14.dp),
-        )
-    }
-}
-
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun SetDefaultLauncherSheetPreview() {
     FacetLauncherTheme {
         SetDefaultLauncherSheet(
-            isDefaultLauncher = false,
-            requestDefaultLauncherIntent = { Intent() },
-            onFinish = {},
-        )
-    }
-}
-
-@Preview(name = "AlreadyDefault", showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-private fun SetDefaultLauncherSheetAlreadyDefaultPreview() {
-    FacetLauncherTheme {
-        SetDefaultLauncherSheet(
-            isDefaultLauncher = true,
             requestDefaultLauncherIntent = { Intent() },
             onFinish = {},
         )

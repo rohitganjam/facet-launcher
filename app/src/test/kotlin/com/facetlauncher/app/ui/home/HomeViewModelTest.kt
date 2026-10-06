@@ -233,6 +233,33 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `an already-default launcher retires the set-default prompt on its own`() = runTest {
+        // Given Facet already holds the home role
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
+        `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(true)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository, defaultLauncherRepository = defaultLauncherRepository)
+
+        // When the check resolves
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the prompt is marked seen (so it never appears later) and the state reflects the answer
+        verify(settingsRepository).markCoachMarkSeen("HOME_SET_DEFAULT_PROMPT")
+        assertEquals(true, viewModel.uiState.value.isDefaultLauncher)
+    }
+
+    @Test
+    fun `a launcher that is not the default leaves the set-default prompt pending`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository, org.mockito.Mockito.never()).markCoachMarkSeen("HOME_SET_DEFAULT_PROMPT")
+        assertEquals(false, viewModel.uiState.value.isDefaultLauncher)
+    }
+
+    @Test
     fun `dismissGestureHint marks the HOME_GESTURES coach mark seen`() = runTest {
         // Given a HomeViewModel
         val settingsRepository = mock(SettingsRepository::class.java)

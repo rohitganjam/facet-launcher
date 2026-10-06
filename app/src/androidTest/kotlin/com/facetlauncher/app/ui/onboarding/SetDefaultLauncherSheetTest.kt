@@ -5,7 +5,6 @@ import android.app.Instrumentation
 import android.content.Intent
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.intent.Intents
@@ -41,11 +40,10 @@ class SetDefaultLauncherSheetTest {
         Intents.release()
     }
 
-    private fun setContent(isDefaultLauncher: Boolean = false, onFinish: () -> Unit = {}) {
+    private fun setContent(onFinish: () -> Unit = {}) {
         composeRule.setContent {
             FacetLauncherTheme {
                 SetDefaultLauncherSheet(
-                    isDefaultLauncher = isDefaultLauncher,
                     requestDefaultLauncherIntent = { Intent(requestIntentAction) },
                     onFinish = onFinish,
                 )
@@ -56,16 +54,15 @@ class SetDefaultLauncherSheetTest {
 
     @Test
     fun `not yet default shows the Set as default action`() {
-        setContent(isDefaultLauncher = false)
+        setContent()
 
         composeRule.onNodeWithTag("onboarding_set_default").assertExists()
         composeRule.onNodeWithTag("onboarding_later").assertExists()
-        composeRule.onNodeWithTag("onboarding_done").assertDoesNotExist()
     }
 
     @Test
     fun `tapping Set as default launches the request intent`() {
-        setContent(isDefaultLauncher = false)
+        setContent()
         // The request action is test-only and no real Activity handles it — stub a response so
         // Espresso-Intents short-circuits the launch instead of letting it actually resolve and
         // throw ActivityNotFoundException (same pattern as AppContextMenuTest).
@@ -80,7 +77,7 @@ class SetDefaultLauncherSheetTest {
     @Test
     fun `tapping Later finishes`() {
         var finished = false
-        setContent(isDefaultLauncher = false, onFinish = { finished = true })
+        setContent(onFinish = { finished = true })
 
         composeRule.onNodeWithTag("onboarding_later").performClick()
 
@@ -90,30 +87,10 @@ class SetDefaultLauncherSheetTest {
     @Test
     fun `pressing back finishes the same as Later`() {
         var finished = false
-        setContent(isDefaultLauncher = false, onFinish = { finished = true })
+        setContent(onFinish = { finished = true })
 
         Espresso.pressBack()
 
         composeRule.waitUntil(timeoutMillis = 3_000) { finished }
-    }
-
-    @Test
-    fun `already default shows the Done action instead`() {
-        setContent(isDefaultLauncher = true)
-
-        composeRule.onNodeWithText("Facet is already your home screen").assertExists()
-        composeRule.onNodeWithTag("onboarding_done").assertExists()
-        composeRule.onNodeWithTag("onboarding_set_default").assertDoesNotExist()
-        composeRule.onNodeWithTag("onboarding_later").assertDoesNotExist()
-    }
-
-    @Test
-    fun `tapping Done finishes`() {
-        var finished = false
-        setContent(isDefaultLauncher = true, onFinish = { finished = true })
-
-        composeRule.onNodeWithTag("onboarding_done").performClick()
-
-        assertTrue(finished)
     }
 }

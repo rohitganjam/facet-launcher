@@ -31,6 +31,7 @@ Naming:
 
 ## Compose conventions
 
+- **Reporting layout/measured state upward: never in a `SideEffect`.** A `SideEffect` body doesn't subscribe to the state it reads, so it only reruns on an unrelated recomposition and reports stale values (this made Home's app list claim drags it should have scrolled). Read the state in composition, or use `LaunchedEffect` + `snapshotFlow { ... }.collect { ... }` (with `rememberUpdatedState` for the callback).
 - **Stateless composables + state hoisting.** A screen composable (e.g. `HomeScreen`) takes an immutable `UiState` and event lambdas as parameters; its `ViewModel` (e.g. `HomeViewModel`) owns the actual state, exposes it as `StateFlow<HomeUiState>`, and is the only thing that talks to `data/`/`domain/`. One-off effects (navigation, snackbars) are modeled as a `UiEvent` emitted separately from state, not folded into it. This is what makes composables unit-testable without booting Android.
 - Every public composable that renders meaningful UI gets a `@Preview` (light + dark where the design spec defines both) — cheap to add, catches layout breakage immediately.
 - Use the design tokens from `ui/theme/` (`MaterialTheme.colorScheme`, `MaterialTheme.typography`) — never hardcode a color or text size that's already named in README.md's Design Tokens table.
@@ -75,7 +76,7 @@ Conventions:
 - Test class name mirrors the class under test: `AppRepository` → `AppRepositoryTest`.
 - Test method names describe behavior, not implementation: `` `swipe down at top closes drawer`() `` not `testSwipeDown()`.
 - Given/When/Then structure (as comments or blank-line sections) inside each test body.
-- Backtick test names must not contain `'` `.` `;` `[` `]` `/` `<` `>` `:` — the test APK then fails to dex ("cannot be represented in dex format") and *no* test in that run executes. If a run reports surprising counts, check the build actually succeeded.
+- Backtick test names in `androidTest` (instrumented) must not contain `'` `.` `;` `[` `]` `/` `<` `>` `:` — the test APK then fails to dex ("cannot be represented in dex format") and *no* test in that run executes. If a run reports surprising counts, check the build actually succeeded. (JVM unit tests under `src/test` don't have this limit.)
 - A task's "deliverable" in the implementation plan is not complete until its paired test(s) exist and pass — don't check off a box on green-code-with-no-tests.
 
 Run tests:

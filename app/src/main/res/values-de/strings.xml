@@ -496,8 +496,6 @@
     <string name="set_default_launcher_home_app_badge">Standard-App</string>
     <string name="set_default_launcher_cta">Als Standard festlegen</string>
     <string name="set_default_launcher_permissions_note">Berechtigungen kommen später, eine nach der anderen, nur wenn eine Funktion sie benötigt.</string>
-    <string name="set_default_launcher_checkmark">✓</string>
-    <string name="set_default_launcher_already_default">Facet ist bereits dein Startbildschirm</string>
 
     <!-- OnboardingDots -->
     <string name="onboarding_dots_step_content_description">Schritt %1$d von %2$d</string>
@@ -507,6 +505,7 @@
     <string name="drawer_search_more_options">Weitere Optionen</string>
     <string name="drawer_search_launcher_settings">Launcher-Einstellungen</string>
     <string name="drawer_search_open_secure_folder">Sicheren Ordner öffnen</string>
+    <string name="drawer_search_system_settings">Systemeinstellungen</string>
     <string name="drawer_search_private_space">Privater Bereich</string>
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">KONTAKTE</string>

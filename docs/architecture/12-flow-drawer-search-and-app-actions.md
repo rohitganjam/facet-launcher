@@ -186,7 +186,7 @@ A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and count
 if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
 horizontal. A touch that starts inside the app list's own region is still watched, but only a
 horizontal-dominant drag is claimed (so Hub/carousel work over the list); a vertical one is left to the
-list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`.
+list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`. The list's bounds reach the route through a `snapshotFlow` in `HomeScreen`, not a `SideEffect` (which would report stale bounds — the layout state is written after layout and read nowhere in composition — so the drawer would claim drags that should scroll the list).
 
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.

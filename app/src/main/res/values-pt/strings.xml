@@ -496,8 +496,6 @@
     <string name="set_default_launcher_home_app_badge">App padrão</string>
     <string name="set_default_launcher_cta">Definir como padrão</string>
     <string name="set_default_launcher_permissions_note">As permissões vêm depois, uma de cada vez, só quando um recurso precisar delas.</string>
-    <string name="set_default_launcher_checkmark">✓</string>
-    <string name="set_default_launcher_already_default">O Facet já é sua tela inicial</string>
 
     <!-- OnboardingDots -->
     <string name="onboarding_dots_step_content_description">Etapa %1$d de %2$d</string>
@@ -507,6 +505,7 @@
     <string name="drawer_search_more_options">Mais opções</string>
     <string name="drawer_search_launcher_settings">Configurações do launcher</string>
     <string name="drawer_search_open_secure_folder">Abrir Pasta Segura</string>
+    <string name="drawer_search_system_settings">Configurações do sistema</string>
     <string name="drawer_search_private_space">Espaço Privado</string>
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTATOS</string>

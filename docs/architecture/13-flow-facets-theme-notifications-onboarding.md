@@ -225,11 +225,14 @@ flowchart LR
 - The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at
   first launch regardless of onboarding, keyed on `defaults_seeded`.
 - "Set as default launcher" is a system action (`DefaultLauncherRepository.requestDefaultLauncherIntent()`
-  → `RoleManager` request); Facet only prompts, and stops prompting once
-  `isDefaultLauncher()` is true or the coach mark is dismissed.
+  → `RoleManager` request); Facet only prompts when it is confirmed *not* to hold the role. `HomeUiState.isDefaultLauncher`
+  is tri-state (`null` until the async `RoleManager` check resolves): an already-default device never shows the sheet —
+  `HomeViewModel` marks `HOME_SET_DEFAULT_PROMPT` seen for it — and goes straight to the gesture hint, which itself waits
+  for the check so the sheet can't flash up first. Not default: the sheet, then (after "Set as default" returns, or
+  "Later") the hint immediately.
 - The set-default prompt is a `ThemedModalBottomSheet` ([12 §4](12-flow-drawer-search-and-app-actions.md)): its content
   clears the nav bar via the sheet's own inset plus 24dp under the button, and scrim / swipe-down / Back / Home all count
-  as "Later"/"Done".
+  as "Later".
 - `GestureHintOverlay` (coach mark `HOME_GESTURES`) shows four hints at proportional offsets, each on the side its
   gesture starts from: clock hold (top-left, under the default clock), Switch facets (right edge), Widgets (left edge),
   All your apps (bottom-right). Its "Got it" is a `SurfaceButton` with a 1.5dp `Muted` border and a soft shadow, because

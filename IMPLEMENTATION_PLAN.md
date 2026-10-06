@@ -3606,11 +3606,20 @@ white), the big rail letter-indicator's font/pill fixed, and the on/off toggle e
   clock block is pinned only 24dp above it), dimmed to 25% and disabled during any handle/resize drag and held back
   ~200ms after, swallows its own taps even then (Home's root exits adjust mode on any unconsumed tap), no Done button. Writes through
   `HomeViewModel.onClockAlignmentCommit` with the same facet-or-global ownership as height/scale.
+- [x] **Set-default prompt skipped when already default** — no more "Facet is already your home screen" sheet:
+  `HomeUiState.isDefaultLauncher` is tri-state, the prompt shows only when confirmed `false`, the gesture hint waits
+  for the check, and `HomeViewModel` marks the prompt seen for an already-default device. Dropped `AlreadyDefaultContent`
+  and its two strings (all five languages).
 - [ ] **Evaluate on a real device:** is the 8dp gap (`CLOCK_ADJUST_TOOLBAR_GAP`, measured from the handle's 48dp touch
   strip) enough against accidental touches — the earlier recommendation was 16dp; does the pill covering the top of the
   app list bother; update the clock sheet row subtitle ("Resize or reposition the clock") to mention alignment.
-- [ ] **Pre-existing, unfixed:** `HomeDrawerRouteTest.swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer`
-  fails identically on a clean `master`.
+- [x] **Overflowing Home list opened the drawer instead of scrolling (real bug; its regression test had never passed)** —
+  `HomeScreen` reported the app list's bounds to `HomeDrawerRoute` from a `SideEffect`, which doesn't subscribe to the
+  state it reads: `appListSize`/`appListOriginInRoot` are written by `onGloballyPositioned` after layout and read nowhere
+  in composition, so the route kept a stale rectangle (in the test, the empty list's zero height) and its swipe detector
+  claimed drags that started on the list. Now a `snapshotFlow` in a `LaunchedEffect`, with no extra recompositions.
+  `HomeDrawerRouteTest.swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer` is the regression test
+  (also failed at its own introducing commit, so no bisect target).
 - [x] **Tests**: `HomeDrawerRouteTest` gains the regression test (fails on the original code at the final assertion) and
   Home-press cases for the clock sheet; `FolderContentsSheetTest`/`AppDrawerScreenTest` Home-press cases;
   `SystemBarsTest` (rule truth table) + `SystemBarsAppearanceTest` (real window flags); `SettingsRepositoryTest`,

@@ -496,8 +496,6 @@
     <string name="set_default_launcher_home_app_badge">App de inicio</string>
     <string name="set_default_launcher_cta">Establecer como predeterminado</string>
     <string name="set_default_launcher_permissions_note">Los permisos llegan después, uno a la vez, solo cuando una función los necesita.</string>
-    <string name="set_default_launcher_checkmark">✓</string>
-    <string name="set_default_launcher_already_default">Facet ya es tu pantalla de inicio</string>
 
     <!-- OnboardingDots -->
     <string name="onboarding_dots_step_content_description">Paso %1$d de %2$d</string>
@@ -507,6 +505,7 @@
     <string name="drawer_search_more_options">Más opciones</string>
     <string name="drawer_search_launcher_settings">Ajustes del launcher</string>
     <string name="drawer_search_open_secure_folder">Abrir carpeta segura</string>
+    <string name="drawer_search_system_settings">Ajustes del sistema</string>
     <string name="drawer_search_private_space">Espacio privado</string>
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTOS</string>

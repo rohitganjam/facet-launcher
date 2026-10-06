@@ -536,15 +536,13 @@
     <string name="onboarding_facets_body">\nFacets are separate home layouts, each with its own clock style, calendars, app list, favorites, and dock if needed. \n\nSwipe left from home to switch facets.\n\nCreate multiple facets for different occasions, like work, focus, personal etc.</string>
     <string name="onboarding_facets_mock_favorites_label">FAVORITES</string>
 
-    <!-- SetDefaultLauncherSheet (app row label reuses app_name; "Done" reuses action_done) -->
+    <!-- SetDefaultLauncherSheet (app row label reuses app_name) -->
     <string name="onboarding_later">Later</string>
     <string name="set_default_launcher_headline">Make Facet your home screen</string>
     <string name="set_default_launcher_body">Android will ask you to confirm. You can switch back to your old launcher any time from Settings.</string>
     <string name="set_default_launcher_home_app_badge">Home app</string>
     <string name="set_default_launcher_cta">Set as default</string>
     <string name="set_default_launcher_permissions_note">Permissions come later, one at a time, only when a feature needs them.</string>
-    <string name="set_default_launcher_checkmark">✓</string>
-    <string name="set_default_launcher_already_default">Facet is already your home screen</string>
 
     <!-- OnboardingDots -->
     <string name="onboarding_dots_step_content_description">Step %1$d of %2$d</string>
@@ -558,6 +556,7 @@
     <string name="drawer_search_more_options">More options</string>
     <string name="drawer_search_launcher_settings">Launcher settings</string>
     <string name="drawer_search_open_secure_folder">Open Secure Folder</string>
+    <string name="drawer_search_system_settings">System settings</string>
     <string name="drawer_search_private_space">Private Space</string>
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTS</string>

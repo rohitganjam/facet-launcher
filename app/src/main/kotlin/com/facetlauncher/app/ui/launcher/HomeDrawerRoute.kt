@@ -1025,7 +1025,6 @@ fun HomeDrawerRoute(
         val homeAtRest = !isDrawerOpen && !isHubOpen && !isFacetOpen
         if (homeUiState.showSetDefaultPrompt && homeAtRest) {
             SetDefaultLauncherSheet(
-                isDefaultLauncher = homeUiState.isDefaultLauncher,
                 requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,
                 onFinish = homeViewModel::dismissSetDefaultPrompt,
             )

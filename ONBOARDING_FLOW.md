@@ -212,8 +212,10 @@ Fired via `rememberLauncherForActivityResult(StartActivityForResult())`. **On an
 > resolves — a role-grant activity restart then re-reads `onboardingCompleted = true` and lands on
 > Home.
 
-**Already-default variant:** if Facet already holds `ROLE_HOME` (reinstall), swap the row + button
-for a Success-colored check + *"Facet is already your home screen"* and a single **Done**.
+**Already default** *(revised — was a Success-colored "Facet is already your home screen" variant with a single Done)*:
+if Facet already holds `ROLE_HOME` (reinstall) the sheet is skipped entirely and the coach marks start straight away.
+`HomeViewModel` retires the prompt on that device's behalf, and the hint waits for the async role check so the sheet
+never flashes up first.
 
 ---
 
@@ -333,7 +335,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 | Role grant restarts the activity | Flag already `true` → Home. |
 | User dismisses the role dialog / picks "Later" | `onFinish()` runs → Home. Not-default is allowed; Settings → System shows status + fix. Open question: post-onboarding Home nudge? |
 | `ROLE_HOME` unavailable | Fallback `Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)`. |
-| Facet already default (reinstall) | "Already default" sheet variant. |
+| Facet already default (reinstall) | Set-default sheet skipped; the gesture hint shows straight away (the prompt is retired automatically). |
 | No default apps resolvable (bare emulator) | Dock seed writes nothing; step 2 shows an empty dock row — "Manage dock apps" still opens the picker to add some. |
 | No launchable apps at all | Lists empty; Skip/Next still work. |
 | Large font scale / TalkBack | All steps scrollable; dots carry `contentDescription`; text are real nodes. |
@@ -424,8 +426,8 @@ history looks like it stalled, not because of anything in this feature's own cod
 2. **Screen 2 weight** — shipped combined (dock + favorites on one screen), matching what the
    design canvas (`Launcher.dc.html` turn 5, artboards `5c`–`5e`) had already mocked before this
    build started.
-3. **Already-default case** — shipped as a dedicated sheet variant (Success check + "Facet is
-   already your home screen" + single Done), not left to the Settings fallback.
+3. **Already-default case** — first shipped as a dedicated sheet variant (Success check + "Facet is
+   already your home screen" + single Done), since removed: the sheet is skipped and the hints show directly.
 4. **Intro concept lines** — shipped as swipe up / swipe right / swipe left, matching the corrected
    gesture map exactly (no long-press line — that gesture doesn't exist anymore).
 5. **Post-onboarding nudge** — nothing added for v1, per the original proposal; still open if
