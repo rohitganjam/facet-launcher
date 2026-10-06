@@ -88,6 +88,7 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     showAllDayEvents = showAllDayEvents,
     searchContactsEnabled = searchContactsEnabled,
     themeMode = themeMode.name,
+    systemBarIconStyle = systemBarIconStyle.name,
     accentFromSystem = accentFromSystem,
     customAccentSwatch = customAccentSwatch,
     wallpaperAccentRole = wallpaperAccentRole.name,

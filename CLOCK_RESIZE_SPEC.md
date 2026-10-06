@@ -1,5 +1,7 @@
 # Clock Widget Resize — Implementation Spec
 
+> **Historical spec — the code has moved on.** Shipped differently: a single `clockScale` (not `clockScaleX/Y`), `ClockAdjustSheet` is now a `ThemedModalBottomSheet`, and adjust mode also has an "Alignment" pill below the height handle. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` §4 and `CAPABILITIES.md` for current behavior.
+
 Freeform (independent X/Y) scaling of the Home clock+date widget, corner-drag interaction, global + per-profile override. Long-press on the clock now opens a bottom sheet ("Change widget position" / "Resize clock widget") instead of jumping straight into the existing move-handle drag mode.
 
 This spec assumes familiarity with the existing "move the clock block" feature (`clockZoneHeightDp`), which this builds directly on top of. It does not move — it's a vertical *offset*. This feature adds a second, independent axis: *scale*.

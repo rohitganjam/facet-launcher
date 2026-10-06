@@ -7,34 +7,70 @@ Launcher, Lawnchair, Niagara, etc. are all listed).
 
 ## Short description (max 80 characters)
 
-Option A (79 chars):
-> A minimalist launcher built around how you use your phone — work, personal, focus in one swipe.
+> A minimal home screen with switchable setups for work, personal and focus.
 
-Option B (77 chars):
-> Switch your whole home screen setup in one tap. Facets, done right.
+(74 chars)
 
-## Full description (max 4000 characters — this draft is ~1,750)
+## Full description (max 4000 characters — this draft is ~2,900)
 
 ```
-Facet Launcher is a fast, minimal Android home screen built around one idea: your phone isn't used the same way all day. Switch your whole setup — apps, dock, clock, calendar — in one swipe with Facets.
+Facet Launcher is a fast, minimal home screen built around one idea: your phone is not used the same way all day. Create separate setups, called facets, and switch between them in a single tap.
 
 FACETS
-Set up to 3 independent facets: a Work facet with only what you need at your desk, a Personal facet with everything else, a Focus facet with almost nothing at all. Long-press an empty part of the home screen to browse live previews and switch instantly, or head into Settings to fine-tune each one.
+Create up to three independent facets, for example Work, Personal and Focus. Each facet can have its own clock, calendar, favorite apps and dock, or inherit shared defaults. Swipe left on the home screen to preview every facet live and switch instantly.
 
-30+ CLOCK STYLES
-From clean typographic layouts to shape-based faceted marks, every clock template supports its own font, color, weight, and alignment. Drag to resize and reposition, or pick a different style per facet.
+HOME SCREEN
+- A clean home screen with a clock, date and your favorite apps
+- Show Favorites, Recents or Most Used apps in the home list
+- Choose left or right alignment, icons, text or both, and top or bottom placement
+- A dock of up to five apps, shared across facets or set per facet
+- Group apps into folders on the dock and in your favorites
+- Notification badges as a dot or a count
 
-SMART APP DRAWER
-Browse your apps as a letter-indexed list with quick search, or switch to a dense grid. Type to search across apps and, optionally your settings, and your contacts  — with quick actions like call or message right from the result.
+CLOCK AND CALENDAR
+- More than 30 clock styles, from clean typography to shape-based designs
+- Choose font, weight, color, alignment and date format for each style
+- Drag to move the clock and resize it directly on the home screen
+- Optionally show upcoming calendar events below the clock, with per-calendar colors
+
+APP DRAWER
+- List view with a letter index, or a grid in several sizes
+- Fast search across your apps, and optionally your contacts and system settings
+- Call, message or email a contact straight from the search results
+- Separate tabs for your Work Profile and Private Space apps
+- Long-press any app for app info, uninstall and its own app shortcuts
+- Adjustable drawer opacity and search bar position
 
 WIDGET HUB
-Widgets get their own dedicated space, a swipe away from your home screen, instead of crowding your app list. Add up to 20, drag to reposition, resize freely.
+Widgets get their own dedicated screen, one swipe from home, so they never crowd your apps. Add up to 20 widgets, drag to arrange them and resize them freely.
 
-BUILT FOR PRIVACY
-Facet Launcher doesn't request internet access at all. There's no account, no analytics, no ads — every feature runs entirely on your device.
+APPEARANCE
+- Light, dark or system theme
+- Accent color taken from your wallpaper, or a fixed color of your choice
+- Choice of launcher font and font weight
+- Optional monochrome icon style
+- Your wallpaper shows through everywhere
 
-Facet Launcher is in active development. Follow along or file feedback on GitHub: github.com/rohitganjam/facet-launcher-site
+BACKUP AND RESTORE
+Export your complete setup to a file and restore it on any device.
+
+PRIVACY
+Facet Launcher does not have internet access. There are no accounts, no analytics and no ads, and everything runs on your device. Optional features ask for permission only when you turn them on: Calendar for events on the clock, Contacts for contact search, Usage access for Recents and Most Used, and Notification access for badges. You can decline any of them and the rest of the launcher works normally.
+
+REQUIREMENTS
+Android 13 or later. Set Facet Launcher as your default home app from Settings to get the full experience.
+
+Questions or feedback: <support email or site — fill in before publishing>
 ```
 
-Note: the GitHub link in the description points at the public marketing-site repo, not the
-private source repo — swap it for whatever you want surfaced publicly.
+Verify before publishing: contact quick actions (call/message/email) and per-calendar colors
+match the current build; fill in the support contact (the old GitHub link pointed at the
+marketing-site repo and was dropped).
+
+## Screenshots (8 phone screenshots, 1080x1920)
+
+`screenshots/01`–`08`, in upload order: facets, home, clock styles, drawer, search, widgets,
+folders, appearance. Built from emulator captures in `raw/` (status bar cropped off) by
+`python3 build_screenshots.py` — edit the `SLIDES` list for copy changes, replace a `raw/*.png`
+to refresh a screen. The old resize slide was dropped to stay within Play's 8-shot limit
+(`raw/resize.png` is kept if you want it back).

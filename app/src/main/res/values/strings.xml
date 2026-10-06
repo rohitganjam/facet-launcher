@@ -173,6 +173,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">All your apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
+    <string name="gesture_hint_clock_hold">Press and hold the clock to resize or move it</string>
     <string name="gesture_hint_got_it">Got it</string>
 
     <!-- FacetScopeBadge -->
@@ -373,6 +374,9 @@
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
     <string name="theme_mode_system">System</string>
+    <string name="system_bar_icons_match_theme">Match theme</string>
+    <string name="system_bar_icons_light">Light</string>
+    <string name="system_bar_icons_dark">Dark</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Appearance</string>
@@ -380,6 +384,7 @@
     <string name="appearance_section_clock">CLOCK</string>
     <string name="appearance_section_general">GENERAL</string>
     <string name="appearance_launcher_theme">Launcher theme</string>
+    <string name="appearance_system_bar_icons">System bar icons</string>
     <string name="appearance_icon_style">Icon Style</string>
     <string name="appearance_launcher_font">Launcher Font</string>
     <string name="appearance_font_color">Font Color</string>
@@ -531,15 +536,13 @@
     <string name="onboarding_facets_body">\nFacets are separate home layouts, each with its own clock style, calendars, app list, favorites, and dock if needed. \n\nSwipe left from home to switch facets.\n\nCreate multiple facets for different occasions, like work, focus, personal etc.</string>
     <string name="onboarding_facets_mock_favorites_label">FAVORITES</string>
 
-    <!-- SetDefaultLauncherSheet (app row label reuses app_name; "Done" reuses action_done) -->
+    <!-- SetDefaultLauncherSheet (app row label reuses app_name) -->
     <string name="onboarding_later">Later</string>
     <string name="set_default_launcher_headline">Make Facet your home screen</string>
     <string name="set_default_launcher_body">Android will ask you to confirm. You can switch back to your old launcher any time from Settings.</string>
     <string name="set_default_launcher_home_app_badge">Home app</string>
     <string name="set_default_launcher_cta">Set as default</string>
     <string name="set_default_launcher_permissions_note">Permissions come later, one at a time, only when a feature needs them.</string>
-    <string name="set_default_launcher_checkmark">✓</string>
-    <string name="set_default_launcher_already_default">Facet is already your home screen</string>
 
     <!-- OnboardingDots -->
     <string name="onboarding_dots_step_content_description">Step %1$d of %2$d</string>
@@ -553,6 +556,7 @@
     <string name="drawer_search_more_options">More options</string>
     <string name="drawer_search_launcher_settings">Launcher settings</string>
     <string name="drawer_search_open_secure_folder">Open Secure Folder</string>
+    <string name="drawer_search_system_settings">System settings</string>
     <string name="drawer_search_private_space">Private Space</string>
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTS</string>
@@ -644,6 +648,10 @@
          facet_carousel_launcher_settings_subtitle; "Facet settings" reuses facet_carousel_facet_settings) -->
     <string name="clock_adjust_adjust_size_position">Adjust clock size &amp; position</string>
     <string name="clock_adjust_size_position_subtitle">Resize or reposition the clock</string>
+    <string name="clock_adjust_alignment_heading">Alignment</string>
+    <string name="clock_adjust_align_left">Align left</string>
+    <string name="clock_adjust_align_center">Align center</string>
+    <string name="clock_adjust_align_right">Align right</string>
     <string name="clock_adjust_edit_styles">Edit clock &amp; calendar styles</string>
     <string name="clock_adjust_edit_styles_subtitle">Templates, fonts, colors, and alignment</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>

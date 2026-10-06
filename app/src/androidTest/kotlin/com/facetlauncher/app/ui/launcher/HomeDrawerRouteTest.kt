@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
@@ -153,6 +154,8 @@ class HomeDrawerRouteTest {
         privateSpaceState: PrivateSpaceState = PrivateSpaceState.NotConfigured,
         /** How many of [apps] to seed as default favorites — more than a screen's worth forces the app list to overflow and scroll. */
         favoriteCount: Int = 1,
+        /** What the (mocked) home-role check reports — the prompt only shows when `false`; `true` skips straight to the hints. */
+        isDefaultLauncher: Boolean = false,
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -250,7 +253,9 @@ class HomeDrawerRouteTest {
                     NotificationShadeRepository(context),
                     settingsRepository,
                     facetRepository,
-                    DefaultLauncherRepository(context),
+                    mock(DefaultLauncherRepository::class.java).also { repo ->
+                        runBlocking { `when`(repo.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
+                    },
                     ObserveQuickAddStateUseCase(),
                     ClockWidgetHostController(appWidgetRepository),
                     ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
@@ -532,30 +537,6 @@ class HomeDrawerRouteTest {
 
         // Then the drawer still commits open
         composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
-    }
-
-    @Test
-    fun debugScrollProbe() {
-        setContent(favoriteCount = apps.size)
-        val listNode = composeRule.onNodeWithTag("home_app_list_scroll_region")
-        val listBounds = listNode.fetchSemanticsNode().boundsInRoot
-        fun dumpScroll(label: String) {
-            val config = listNode.fetchSemanticsNode().config
-            val key = androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange
-            val range = if (config.contains(key)) config[key] else null
-            android.util.Log.e("SCROLLPROBE", "$label: value=${range?.value?.invoke()} maxValue=${range?.maxValue?.invoke()} listBounds=$listBounds")
-        }
-        dumpScroll("before")
-        composeRule.onRoot().performTouchInput {
-            down(listBounds.center)
-            moveTo(listBounds.center - Offset(0f, listBounds.height * 0.6f))
-            up()
-        }
-        dumpScroll("immediately-after-touch")
-        settleAnimation()
-        dumpScroll("after-settle")
-        val aBounds = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-        android.util.Log.e("SCROLLPROBE", "aBounds=$aBounds")
     }
 
     @Test
@@ -1279,22 +1260,14 @@ class HomeDrawerRouteTest {
     }
 
     /**
-     * Waits for the one-time "make Facet your home screen" prompt to render, then dismisses it —
-     * "Later" normally, or "Done" if this test APK happens to already hold the `HOME` role on
-     * this device/emulator (a real, async [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher]
-     * query, not reliably caught by a single `waitForIdle()`).
+     * Waits for the one-time "make Facet your home screen" prompt to render (the home-role check behind it is
+     * async, so a single `waitForIdle()` isn't reliable), then dismisses it with "Later".
      */
     private fun dismissSetDefaultPrompt() {
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("onboarding_later").fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodesWithTag("onboarding_done").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("onboarding_later").fetchSemanticsNodes().isNotEmpty()
         }
-        val laterExists = runCatching { composeRule.onNodeWithTag("onboarding_later").assertExists() }.isSuccess
-        if (laterExists) {
-            composeRule.onNodeWithTag("onboarding_later").performClick()
-        } else {
-            composeRule.onNodeWithTag("onboarding_done").performClick()
-        }
+        composeRule.onNodeWithTag("onboarding_later").performClick()
     }
 
     @Test
@@ -1313,6 +1286,8 @@ class HomeDrawerRouteTest {
             composeRule.onAllNodesWithTag("set_default_launcher_prompt").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("set_default_launcher_prompt").assertIsDisplayed()
+        // ...and the gesture hint waits behind it
+        composeRule.onNodeWithTag("gesture_hint_overlay").assertDoesNotExist()
 
         // When dismissed
         dismissSetDefaultPrompt()
@@ -1326,6 +1301,22 @@ class HomeDrawerRouteTest {
         composeRule.onRoot().performTouchInput { swipeLeft() }
         settleAnimation()
         composeRule.onNodeWithTag("set_default_launcher_prompt").assertDoesNotExist()
+    }
+
+    @Test
+    fun anAlreadyDefaultLauncherSkipsTheSetDefaultPromptAndShowsTheHintsStraightAway() {
+        // Given onboarding has just completed on a device where Facet already holds the home role
+        setContent(onboardingCompleted = true, isDefaultLauncher = true)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the gesture hint appears with no prompt in between — and the prompt never showed
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("gesture_hint_overlay").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("set_default_launcher_prompt").assertDoesNotExist()
+        composeRule.onNodeWithTag("onboarding_later").assertDoesNotExist()
     }
 
     @Test
@@ -1347,6 +1338,13 @@ class HomeDrawerRouteTest {
             composeRule.onAllNodesWithTag("gesture_hint_overlay").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("gesture_hint_overlay").assertIsDisplayed()
+
+        // ...with a hint for every gesture, including the clock long-press (the overlay is clickable, so
+        // its children's text merges into this one node — and the Hub's own "Widgets" header is composed
+        // behind it, so a global text lookup would be ambiguous)
+        listOf("Press and hold the clock to resize or move it", "Switch facets", "Widgets", "All your apps").forEach { hint ->
+            composeRule.onNodeWithTag("gesture_hint_overlay").assertTextContains(hint, substring = true)
+        }
 
         // When tapping "Got it"
         composeRule.onNodeWithTag("gesture_hint_got_it").performClick()

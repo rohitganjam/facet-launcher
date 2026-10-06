@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.drawer
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.provider.Settings
 import android.os.UserHandle
 import android.net.Uri
 import android.provider.ContactsContract
@@ -825,27 +826,57 @@ private fun DrawerSearchBar(
             IconButton(onClick = { menuExpanded = true }, modifier = Modifier.testTag("drawer_search_overflow")) {
                 Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.drawer_search_more_options), tint = Muted)
             }
-            ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                ThemedDropdownMenuItem(
-                    label = stringResource(R.string.drawer_search_launcher_settings),
-                    onClick = { menuExpanded = false; onNavigateToSettings() },
-                    modifier = Modifier.testTag("drawer_search_overflow_settings"),
-                )
-                if (secureFolderIntent != null) {
-                    ThemedDropdownMenuItem(
-                        label = stringResource(R.string.drawer_search_open_secure_folder),
-                        onClick = { menuExpanded = false; onOpenSecureFolder(secureFolderIntent) },
-                        modifier = Modifier.testTag("drawer_search_overflow_secure_folder"),
-                    )
-                }
-                if (showPrivateSpaceRow) {
-                    ThemedDropdownMenuItem(
-                        label = stringResource(R.string.drawer_search_private_space),
-                        onClick = { menuExpanded = false; onPrivateSpaceRowClick() },
-                        modifier = Modifier.testTag("drawer_search_overflow_private_space"),
-                    )
-                }
-            }
+            DrawerSearchOverflowMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                onNavigateToSettings = onNavigateToSettings,
+                secureFolderIntent = secureFolderIntent,
+                onOpenSecureFolder = onOpenSecureFolder,
+                showPrivateSpaceRow = showPrivateSpaceRow,
+                onPrivateSpaceRowClick = onPrivateSpaceRowClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DrawerSearchOverflowMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    secureFolderIntent: Intent?,
+    onOpenSecureFolder: (Intent) -> Unit,
+    showPrivateSpaceRow: Boolean,
+    onPrivateSpaceRowClick: () -> Unit,
+) {
+    val context = LocalContext.current
+    ThemedDropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        ThemedDropdownMenuItem(
+            label = stringResource(R.string.drawer_search_launcher_settings),
+            onClick = { onDismiss(); onNavigateToSettings() },
+            modifier = Modifier.testTag("drawer_search_overflow_settings"),
+        )
+        ThemedDropdownMenuItem(
+            label = stringResource(R.string.drawer_search_system_settings),
+            onClick = {
+                onDismiss()
+                context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            },
+            modifier = Modifier.testTag("drawer_search_overflow_system_settings"),
+        )
+        if (secureFolderIntent != null) {
+            ThemedDropdownMenuItem(
+                label = stringResource(R.string.drawer_search_open_secure_folder),
+                onClick = { onDismiss(); onOpenSecureFolder(secureFolderIntent) },
+                modifier = Modifier.testTag("drawer_search_overflow_secure_folder"),
+            )
+        }
+        if (showPrivateSpaceRow) {
+            ThemedDropdownMenuItem(
+                label = stringResource(R.string.drawer_search_private_space),
+                onClick = { onDismiss(); onPrivateSpaceRowClick() },
+                modifier = Modifier.testTag("drawer_search_overflow_private_space"),
+            )
         }
     }
 }
@@ -1008,7 +1039,6 @@ private fun DrawerSearchResults(
                 SettingsResultRow(entry = entry, itemSize = itemSize, onClick = { onSettingsEntryClick(entry) })
             }
         }
-        item { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
 
@@ -1293,7 +1323,8 @@ private fun DrawerListContent(
         // right inset — this content already sits in a weight(1f) slot next to LetterJumpZone
         // (see chat history), so its own right edge already stops exactly at the rail's touch
         // zone; an extra end padding here just left an empty gap between the two.
-        modifier = modifier.padding(start = 48.dp, top = 4.dp, bottom = 40.dp),
+        modifier = modifier.padding(start = 48.dp, top = 4.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_FIRST) {
             item(key = "header_recently_installed") { DrawerRecentlyInstalledHeader() }
@@ -1686,7 +1717,7 @@ private fun DrawerAppRow(
 }
 
 private val GRID_CONTENT_TOP_PADDING = 4.dp
-private val GRID_CONTENT_BOTTOM_PADDING = 40.dp
+private val GRID_CONTENT_BOTTOM_PADDING = 16.dp
 private val GRID_VERTICAL_SPACING = 20.dp
 
 /**

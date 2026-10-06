@@ -32,6 +32,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.data.selectedCalendarIds
@@ -166,6 +167,10 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { settingsRepository.setThemeMode(mode) }
+    }
+
+    fun setSystemBarIconStyle(style: SystemBarIconStyle) {
+        viewModelScope.launch { settingsRepository.setSystemBarIconStyle(style) }
     }
 
     fun setAccentFromSystem(enabled: Boolean) {

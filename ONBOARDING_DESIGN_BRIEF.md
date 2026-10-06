@@ -213,8 +213,8 @@ still populated.
   *"Permissions come later, one at a time, only when a feature needs them."*
 - Pagination dots — 4/4 — on the sheet or on the screen behind (show one option).
 
-**Artboard 6 — already default:** the sheet swaps the row + primary button for a **Success**-colored
-check + *"Facet is already your home screen"* and a single **Done** button.
+**Artboard 6 — already default:** *(removed during implementation)* the sheet is skipped entirely when Facet already
+holds the home role — it would only have asked the user to acknowledge something — and the gesture hints follow directly.
 
 **Tone reference:** the app already has "special-permission explanation" screens (usage-access,
 notification-access) — same register: plain, reassuring, one clear primary, one "later".
@@ -236,6 +236,11 @@ first gesture, or via "Got it".
   *"Switch profiles"*.
 
 Bottom-center: **Got it** — text button, Ink, `500 14sp`.
+
+> **Revised during implementation:** four hints, not three — the long-press hint is now "Press and hold the clock to
+> resize or move it" (ring marker, top-left under the clock); "Switch facets" (the swipe-left hint) sits on the right
+> edge below it, "Widgets" on the left edge lower, "All your apps" bottom-right. The overlay is 90% opaque and
+> **Got it** is a bordered, shadowed button (a flat fill disappeared against the overlay in both themes).
 
 Airy, not a takeover. Arrows animate subtly on-device — mock a mid-motion frame, plus a second
 frame at ~50% fade (the dismiss transition). Glyphs decorative; labels carry meaning.

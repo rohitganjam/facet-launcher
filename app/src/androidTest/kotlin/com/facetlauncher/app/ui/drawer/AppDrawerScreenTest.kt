@@ -349,6 +349,20 @@ class AppDrawerScreenTest {
     }
 
     @Test
+    fun overflowMenuShowsSystemSettingsRow() {
+        // Given the drawer rendered
+        composeRule.setContent {
+            FacetLauncherTheme { AppDrawerScreen(apps = apps, onAppClick = {}) }
+        }
+
+        // When opening the overflow menu
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+
+        // Then a System settings row is offered
+        composeRule.onNodeWithTag("drawer_search_overflow_system_settings").assertExists()
+    }
+
+    @Test
     fun overflowMenuHasNoSecureFolderRowWhenItIsNotInstalled() {
         // Given Secure Folder isn't installed (no launch intent available)
         composeRule.setContent {

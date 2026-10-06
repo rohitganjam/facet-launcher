@@ -47,6 +47,8 @@
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** Which wallpaper-derived tonal role [Accent] resolves to when [LocalAccentFromSystem] is `true` — see [WallpaperAccentRole]. */ val LocalWallpaperAccentRole = staticCompositionLocalOf { WallpaperAccentRole.PRIMARY }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:val LocalCustomAccentSwatch = compositionLocalOf&lt;AccentSwatch?&gt; { null }</ID>
     <ID>CompositionLocalAllowlist:HomeSwipeGate.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests, like `LocalHomePressedEvent`. */ val LocalHomeSwipeGate = staticCompositionLocalOf&lt;HomeSwipeGate?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:SystemBars.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests. */ val LocalSystemBarsState = staticCompositionLocalOf&lt;SystemBarsState?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:SystemBars.kt:/** Whether the status bar currently shows light icons — read by sheet windows, which set their own bar appearance. Null outside `LauncherActivity`. */ val LocalLightStatusBarIcons = staticCompositionLocalOf&lt;Boolean?&gt; { null }</ID>
     <ID>CyclomaticComplexMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
@@ -57,13 +59,11 @@
     <ID>CyclomaticComplexMethod:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>CyclomaticComplexMethod:ImportBackupUseCase.kt:ImportBackupUseCase$suspend operator fun invoke: ImportBackupResult</ID>
     <ID>CyclomaticComplexMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
-    <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onDismissRequest: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestQuickAddState: suspend (AppInfo) -&gt; QuickAddState = { QuickAddState() }</ID>
     <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestShortcuts: suspend (AppInfo) -&gt; List&lt;AppShortcut&gt;</ID>
     <ID>LambdaParameterInRestartableEffect:AppDrawerScreen.kt:onRequestConnections: suspend (ContactInfo) -&gt; List&lt;ContactConnection&gt; = { emptyList() }</ID>
     <ID>LambdaParameterInRestartableEffect:AppPickerScreen.kt:onResume: () -&gt; Unit = {}</ID>
     <ID>LambdaParameterInRestartableEffect:ClockWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onDismissRequest: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onRequestQuickAddState: suspend (Folder) -&gt; QuickAddState = { QuickAddState() }</ID>
     <ID>LambdaParameterInRestartableEffect:HomeScreen.kt:/** Fired once, on release, by the clock's resize handles. */ onClockScaleCommit: (Float) -&gt; Unit = { _ -&gt; }</ID>
     <ID>LambdaParameterInRestartableEffect:HubWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>

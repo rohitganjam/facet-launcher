@@ -4,6 +4,9 @@ import android.appwidget.AppWidgetHostView
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Rect as AndroidRect
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -44,7 +47,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -127,6 +132,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** [MENU] shows the long-press bottom sheet; [ADJUST] shows the move handle *and* the resize handles together. */
@@ -177,6 +183,8 @@ fun HomeScreen(
     onClockZoneHeightCommit: (Float) -> Unit = {},
     /** Fired once, on release, by the clock's resize handles. */
     onClockScaleCommit: (Float) -> Unit = { _ -> },
+    /** Fired when the user picks left/center/right on the adjust-mode alignment toolbar. */
+    onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     /** Fired whenever the adjustment mode changes (e.g. via the bottom sheet or tap-away). */
     onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
     /** True when a handle is actively being dragged — used to suppress screen gestures. */
@@ -681,7 +689,6 @@ fun HomeScreen(
                         .onGloballyPositioned {
                             appListSize = it.size
                             appListOriginInRoot = it.positionInRoot()
-                            android.util.Log.e("SCROLLPROBE", "appList onGloballyPositioned: size=${it.size} origin=${it.positionInRoot()} handlePx=$handlePx contentHeightPx=$contentHeightPx t=${System.nanoTime()}")
                         }
                         // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
                         // second verticalScroll would double up the scroll gesture. Single-
@@ -881,6 +888,41 @@ fun HomeScreen(
                     // above sees the commit land, same reasoning as liveScale below.
                     if (effectiveClockScale < clockScale - 0.005f) onClockScaleCommit(effectiveClockScale)
                 },
+            )
+        }
+
+        // The alignment pill: below the height handle (its 48dp touch strip + a gap), not under the clock — the
+        // clock block is pinned only 24dp above the handle, too little room for it. During any handle/resize
+        // drag it dims to a ghost and its options are disabled, and it only becomes active again a moment after
+        // the drag ends, so a thumb that has just let go of the handle can't tap it. It stays composed (so it
+        // doesn't pop in and out) and keeps absorbing taps, which would otherwise reach the root and exit adjust mode.
+        val toolbarActive by produceState(initialValue = false, clockAdjustMode, draggingHandle) {
+            value = if (clockAdjustMode == ClockAdjustMode.ADJUST && !draggingHandle) {
+                delay(CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS)
+                true
+            } else {
+                false
+            }
+        }
+        // Not `by` — read .value only inside graphicsLayer below, so the fade runs in the draw phase.
+        val toolbarAlpha = animateFloatAsState(
+            targetValue = if (toolbarActive) 1f else CLOCK_ADJUST_TOOLBAR_DIMMED_ALPHA,
+            animationSpec = tween(if (toolbarActive) 150 else 120),
+            label = "clockAdjustToolbarAlpha",
+        )
+        AnimatedVisibility(
+            visible = clockAdjustMode == ClockAdjustMode.ADJUST,
+            enter = fadeIn(tween(120)),
+            exit = fadeOut(tween(80)),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset { IntOffset(0, (handlePx + with(density) { (CLOCK_ZONE_HANDLE_TOUCH_HEIGHT + CLOCK_ADJUST_TOOLBAR_GAP).toPx() }).roundToInt()) },
+        ) {
+            ClockAdjustToolbar(
+                alignment = clockAlignment,
+                onAlignmentChange = onClockAlignmentChange,
+                modifier = Modifier.graphicsLayer { alpha = toolbarAlpha.value },
+                enabled = toolbarActive,
             )
         }
 
@@ -1098,18 +1140,23 @@ fun HomeScreen(
         }
 
         // Reports the app list's own scrollable viewport bounds — see onAppListBoundsChange's own
-        // doc. null whenever it hasn't been measured yet.
-        SideEffect {
-            val size = appListSize
-            val origin = appListOriginInRoot
-            val rootOrigin = rootOriginInRoot
-            val bounds = if (size != null && origin != null && rootOrigin != null) {
-                Rect(offset = origin - rootOrigin, size = size.toSize())
-            } else {
-                null
-            }
-            android.util.Log.e("SCROLLPROBE", "onAppListBoundsChange SideEffect: bounds=$bounds t=${System.nanoTime()}")
-            onAppListBoundsChange(bounds)
+        // doc. null whenever it hasn't been measured yet. A snapshotFlow, not a SideEffect: nothing in
+        // composition reads appListSize/appListOriginInRoot (onGloballyPositioned writes them after
+        // layout), so a SideEffect only ever saw what they held at the last unrelated recomposition —
+        // e.g. the empty list's zero height — and a drag inside the populated, overflowing list was
+        // claimed by the drawer instead of scrolling it.
+        val currentOnAppListBoundsChange by rememberUpdatedState(onAppListBoundsChange)
+        LaunchedEffect(Unit) {
+            snapshotFlow {
+                val size = appListSize
+                val origin = appListOriginInRoot
+                val rootOrigin = rootOriginInRoot
+                if (size != null && origin != null && rootOrigin != null) {
+                    Rect(offset = origin - rootOrigin, size = size.toSize())
+                } else {
+                    null
+                }
+            }.collect { currentOnAppListBoundsChange(it) }
         }
 
         // Adjustment menu sheet
@@ -1179,6 +1226,15 @@ internal val HOME_CLOCK_DEFAULT_TOP_OFFSET = 52.dp
 
 /** Minimum gap always kept between the clock+calendar block's bottom edge and its grab handle. Not private — see [HOME_CLOCK_DEFAULT_TOP_OFFSET]'s own doc. */
 internal val HOME_CLOCK_MIN_GAP = 24.dp
+
+/** Visible gap between the height handle's touch strip and the alignment toolbar below it — Material's minimum between touch targets. */
+internal val CLOCK_ADJUST_TOOLBAR_GAP = 8.dp
+
+/** How long the toolbar stays dimmed and disabled after a drag ends — see its use in [HomeScreen]. */
+private const val CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS = 200L
+
+/** The toolbar's opacity while a drag is active or just ended — a visible ghost, not gone. */
+private const val CLOCK_ADJUST_TOOLBAR_DIMMED_ALPHA = 0.25f
 
 /** The grab handle's position (measured from the top of the content area) can never exceed this fraction of the content area's own height. */
 private const val HOME_CLOCK_ZONE_MAX_FRACTION = 0.5f

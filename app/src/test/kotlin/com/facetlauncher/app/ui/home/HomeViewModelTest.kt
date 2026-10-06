@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.PlacedItem
@@ -191,6 +192,71 @@ class HomeViewModelTest {
 
         // Then it writes to this facet's own override instead of the global setting
         verify(facetRepository).setClockZoneHeight(overridingFacet, 123.4f)
+    }
+
+    @Test
+    fun `onClockAlignmentCommit delegates to the settings repository when no facet is overriding`() = runTest {
+        // Given a HomeViewModel with no active facet overriding the clock bundle
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
+
+        // When the alignment toolbar picks center
+        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it writes the global default
+        verify(settingsRepository).setClockAlignment(ClockAlignment.CENTER)
+    }
+
+    @Test
+    fun `onClockAlignmentCommit delegates to the facet repository when the active facet overrides the clock bundle`() = runTest {
+        // Given a HomeViewModel whose active facet has overrideClock = true
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val facetRepository = mock(FacetRepository::class.java)
+        val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val viewModel = homeViewModel(
+            notificationShadeRepository = mock(NotificationShadeRepository::class.java),
+            settingsRepository = settingsRepository,
+            facetRepository = facetRepository,
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(overridingFacet),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When the alignment toolbar picks right
+        viewModel.onClockAlignmentCommit(ClockAlignment.RIGHT)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it writes this facet's own override, same as height and scale
+        verify(facetRepository).setClockAlignment(overridingFacet, ClockAlignment.RIGHT)
+        verify(settingsRepository, org.mockito.Mockito.never()).setClockAlignment(ClockAlignment.RIGHT)
+    }
+
+    @Test
+    fun `an already-default launcher retires the set-default prompt on its own`() = runTest {
+        // Given Facet already holds the home role
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
+        `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(true)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository, defaultLauncherRepository = defaultLauncherRepository)
+
+        // When the check resolves
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the prompt is marked seen (so it never appears later) and the state reflects the answer
+        verify(settingsRepository).markCoachMarkSeen("HOME_SET_DEFAULT_PROMPT")
+        assertEquals(true, viewModel.uiState.value.isDefaultLauncher)
+    }
+
+    @Test
+    fun `a launcher that is not the default leaves the set-default prompt pending`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository, org.mockito.Mockito.never()).markCoachMarkSeen("HOME_SET_DEFAULT_PROMPT")
+        assertEquals(false, viewModel.uiState.value.isDefaultLauncher)
     }
 
     @Test

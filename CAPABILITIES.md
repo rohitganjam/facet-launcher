@@ -46,8 +46,8 @@ starting at `HOME`.
 |---|---|---|
 | Custom clock widget | `ui/home/ClockBlock.kt`, `ui/home/clock/ClockTemplates.kt` | ~36 templates (`ClockTemplateId`) — typographic + shape-based. Ticks off `ACTION_TIME_TICK` (no polling). 12/24h. Per-template accent color, meridiem, date style (Full/Condensed). |
 | Clock style gallery | `ui/home/clock/ClockStyleGalleryScreen.kt` | Global + per-profile picker. Includes Phase 10 "advanced" templates (Roboto Flex Wide/Narrow/Tech). |
-| Clock position + size | `ui/home/ClockZoneHandle.kt`, `ClockCornerHandle.kt`, `ClockAdjustSheet.kt` | Long-press clock → bottom sheet: move handle (drag vertical zone), corner-drag resize (`clockScale` 0.5–2.0, default 0.8), "Edit styles". Global + per-profile. |
-| Clock alignment | `ClockAlignment` (LEFT/CENTER/RIGHT) | Independent for clock and calendar strip. Per-profile. |
+| Clock position + size | `ui/home/ClockZoneHandle.kt`, `ClockCornerHandle.kt`, `ClockAdjustSheet.kt`, `ClockAdjustToolbar.kt` | Long-press clock → bottom sheet (`ThemedModalBottomSheet`) → adjust mode: height handle (drag vertical zone), corner-drag resize (`clockScale` 0.5–2.0, default 0.8), and an "Alignment" pill (left / center / right) just below the handle — dims to 25% and disables while dragging, no Done button (tap the clock or empty space to exit). "Edit styles" stays in the sheet. Global + per-facet. |
+| Clock alignment | `ClockAlignment` (LEFT/CENTER/RIGHT) | One value governs the clock (or hosted widget) and the calendar strip. Per-facet override (`overrideClock`, with height + scale). Set from adjust mode's Alignment pill or Clock & Calendar Style. |
 | Calendar events on clock | `ClockBlock.kt` + `ui/home/clock/CalendarEventsBlock.kt` | Real `CalendarContract` query. Event rows below the date, accent rule on next upcoming, tap → opens calendar app at that event. All-day toggle, per-calendar accent colors, per-calendar selection. **Gated on `READ_CALENDAR`** — shows a dashed permission strip when denied. |
 | App list (Favorites / Recents / Most Used) | `ui/home/HomeScreen.kt`, `domain/ObserveHomeScreenStateUseCase.kt` | Per-profile `ListContentMode`. Section heading is dynamic (FAVORITES/RECENTS/MOST USED). |
 | — Favorites | `data/FavoriteAppRepository.kt`, `DefaultFavoriteAppRepository.kt` | Up to 8. Global **Default favorites** list + per-profile override (`overridingFavorites`). Uninstall-collapse + hard delete. Reorder in Settings, not the picker. |
@@ -58,10 +58,11 @@ starting at `HOME`.
 | App launch | `LauncherActivity.launchApp` | `ACTION_MAIN`/`CATEGORY_LAUNCHER` component intent. |
 | App long-press context menu | `ui/components/AppContextMenu.kt`, `data/AppShortcutRepository.kt` | App info, Uninstall (`REQUEST_DELETE_PACKAGES`), and the app's own published shortcuts (App Shortcuts API — requires Facet to be default launcher; silently omitted otherwise). Rename is **not** built (deferred to icon-pack work). |
 | Home ↔ Drawer gesture | `ui/launcher/HomeDrawerRoute.kt` | Swipe up opens drawer (follow-finger, velocity + distance commit). |
+| Home press / Home gesture | `LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`; `ui/components/DismissOnHomePress.kt`, `ThemedModalBottomSheet.kt` | Collapses everything to bare Home: Drawer/Hub/carousel close (each close in its own job — an interrupted animation must never end the collector), clock sheet + widget picker reset, every sheet/dialog dismisses. Samsung's swipe-up gesture injects `KEYCODE_HOME`, so it takes the same path. |
 | Swipe down → notification shade | `data/NotificationShadeRepository.kt` | Wired in `HomeDrawerRoute`; `EXPAND_STATUS_BAR`. Not fully verified on-device per the plan. |
 | Long-press empty space → profile switcher | `ui/profiles/ProfileCarouselScreen.kt` | Opens the Switch Profiles overlay directly (the old 4-row long-press sheet was **deleted**). |
 | Return-to-home on HOME intent | `LauncherActivity.onNewIntent` → `LauncherViewModel.onHomePressed` | Pops nav back to Home. Marked "not yet tested" in the plan (Phase 7). |
-| Live wallpaper behind UI | `res/values/themes.xml` | `windowShowWallpaper=true` + transparent window background — OS composites the real wallpaper. No `WallpaperManager` code. |
+| Live wallpaper behind UI | `res/values/themes.xml` | `windowShowWallpaper=true` + transparent window background — OS composites the real wallpaper. No `WallpaperManager` code. `values-v29/themes.xml` also turns off the system status/nav contrast scrims. |
 
 ---
 
@@ -124,6 +125,7 @@ starting at `HOME`.
 | Capability | Where | Notes |
 |---|---|---|
 | Light + dark scheme | `ui/theme/Theme.kt` | `ThemeMode` LIGHT / DARK / SYSTEM (default). |
+| System bar icons | `SystemBarIconStyle`, `ui/theme/SystemBars.kt` | Match theme (default) / Light / Dark for status + 3-button nav icon color over the wallpaper (Home, Hub, carousel, Drawer). Opaque screens always follow the theme; Private Space is always light. Global; in backups. The gesture pill adapts by itself. |
 | Accent color | `accentFromSystem` (default true) | Material You from wallpaper (`WallpaperAccentRole` primary/secondary/tertiary) OR a fixed `AccentSwatch` picker. |
 | Icon render mode | `IconRenderMode` | System default OR monochrome overlay (tints via `Icon.getMonochrome()` or a bitmap transform with the accent). Global, not per-app. |
 | Launcher font | `LauncherFontOption` | Base font for all text roles except clock/calendar (which have their own picker + a "Default launcher font" option). |

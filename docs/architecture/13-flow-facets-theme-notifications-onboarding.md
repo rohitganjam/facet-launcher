@@ -158,6 +158,28 @@ flowchart LR
   consolidation, which removed `calendarFontOption`/`calendarColorOption`/`calendarFontWeight`/
   `calendarAlignment`).
 
+### 2a. System bar icon color
+
+Status bar and 3-button nav bar icon color is *not* part of `MaterialTheme` — it's a window flag
+(`isAppearanceLightStatusBars` / `isAppearanceLightNavigationBars`, where "light" means **dark**
+icons), set by `ProvideSystemBars` (`ui/theme/SystemBars.kt`) inside `FacetLauncherTheme`, in
+`LauncherActivity`. The gesture pill adapts by itself, so the nav half only shows in 3-button mode.
+Which color stays legible depends on what's *behind* the bars, so the pure rule
+`useLightSystemBarIcons(style, backdrop, isDarkTheme)` takes a `SystemBarsBackdrop`:
+
+| Backdrop | Declared by | Icons |
+|---|---|---|
+| `WALLPAPER` | `HomeDrawerRoute` (Home, Hub, carousel, Drawer) | the `system_bar_icon_style` setting: `MATCH_THEME` (default) follows the theme, `LIGHT`/`DARK` force it |
+| `THEME_SURFACE` | the default; `HomeDrawerRoute` while a widget picker covers Home | always follow the theme (the setting is ignored — it could make icons invisible on an opaque screen) |
+| `DARK_SURFACE` | `HomeDrawerRoute` while Private Space shows | always light — `PrivateSpaceTheme` is fixed-dark regardless of theme |
+
+A screen only declares its backdrop (`SystemBarsBackdropEffect`); leaving composition falls back to
+`THEME_SURFACE`, so Settings and onboarding need no code. Bottom sheets are separate windows with
+their own bar appearance: `ThemedModalBottomSheet` sets nav icons from the theme (the sheet surface
+runs behind the nav bar) and keeps the status bar as Home has it (`LocalLightStatusBarIcons`).
+The setting is global, in Appearance → General, and is in `BackupSettings` (defaulted).
+`SystemBarsTest` covers the rule; `SystemBarsAppearanceTest` reads the real window flags.
+
 ## 3. Notification badges
 
 ```mermaid
@@ -203,5 +225,15 @@ flowchart LR
 - The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at
   first launch regardless of onboarding, keyed on `defaults_seeded`.
 - "Set as default launcher" is a system action (`DefaultLauncherRepository.requestDefaultLauncherIntent()`
-  → `RoleManager` request); Facet only prompts, and stops prompting once
-  `isDefaultLauncher()` is true or the coach mark is dismissed.
+  → `RoleManager` request); Facet only prompts when it is confirmed *not* to hold the role. `HomeUiState.isDefaultLauncher`
+  is tri-state (`null` until the async `RoleManager` check resolves): an already-default device never shows the sheet —
+  `HomeViewModel` marks `HOME_SET_DEFAULT_PROMPT` seen for it — and goes straight to the gesture hint, which itself waits
+  for the check so the sheet can't flash up first. Not default: the sheet, then (after "Set as default" returns, or
+  "Later") the hint immediately.
+- The set-default prompt is a `ThemedModalBottomSheet` ([12 §4](12-flow-drawer-search-and-app-actions.md)): its content
+  clears the nav bar via the sheet's own inset plus 24dp under the button, and scrim / swipe-down / Back / Home all count
+  as "Later".
+- `GestureHintOverlay` (coach mark `HOME_GESTURES`) shows four hints at proportional offsets, each on the side its
+  gesture starts from: clock hold (top-left, under the default clock), Switch facets (right edge), Widgets (left edge),
+  All your apps (bottom-right). Its "Got it" is a `SurfaceButton` with a 1.5dp `Muted` border and a soft shadow, because
+  the button's fill is nearly the overlay's color (a 1.05–1.3:1 difference) — the border keeps ≥3:1 in both themes.

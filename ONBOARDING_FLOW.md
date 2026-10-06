@@ -212,8 +212,10 @@ Fired via `rememberLauncherForActivityResult(StartActivityForResult())`. **On an
 > resolves — a role-grant activity restart then re-reads `onboardingCompleted = true` and lands on
 > Home.
 
-**Already-default variant:** if Facet already holds `ROLE_HOME` (reinstall), swap the row + button
-for a Success-colored check + *"Facet is already your home screen"* and a single **Done**.
+**Already default** *(revised — was a Success-colored "Facet is already your home screen" variant with a single Done)*:
+if Facet already holds `ROLE_HOME` (reinstall) the sheet is skipped entirely and the coach marks start straight away.
+`HomeViewModel` retires the prompt on that device's behalf, and the hint waits for the async role check so the sheet
+never flashes up first.
 
 ---
 
@@ -221,14 +223,18 @@ for a Success-colored check + *"Facet is already your home screen"* and a single
 
 Two primitives, no coordinate-anchored spotlighting:
 
-- **`GestureHintOverlay`** — light translucent layer over Home, three unanchored gesture
-  affordances + labels + "Got it". Auto-dismiss on first gesture.
+- **`GestureHintOverlay`** — translucent layer (90% `SurfaceContainer`) over Home with four labelled
+  gesture hints + "Got it", stacked top to bottom at proportional (not fixed) offsets, each on the side
+  its gesture starts from: clock hold (top-left, below the default clock), Switch facets (right edge),
+  Widgets (left edge), All your apps (bottom-right). "Got it" is a `SurfaceButton` with a 1.5dp `Muted`
+  border and a soft shadow — its fill is nearly the overlay's color, so the edge carries the contrast.
+  Auto-dismiss on first gesture.
 - **`FirstRunCallout`** — dismissible inline card (12dp corners, 1dp Hairline, `SettingsCard`
   styling) pinned to the top of a surface on its first open.
 
 | id | Trigger | Surface | Teaches |
 |---|---|---|---|
-| `HOME_GESTURES` | onboarding just completed | Home overlay | swipe up *("All your apps")* / swipe right *("Widgets")* / swipe left *("Switch profiles")* — corrected from an earlier long-press wording; matches `PRD.md` §5 |
+| `HOME_GESTURES` | onboarding just completed | Home overlay | swipe up *("All your apps")* / swipe right *("Widgets")* / swipe left *("Switch facets")* / press and hold the clock *("Press and hold the clock to resize or move it")* — the first three match `PRD.md` §5 |
 | `PROFILES_INTRO` | first carousel open | inline callout | **operational only** (concept already covered by step 3) — *"Swipe to browse · tap a card to switch · Reorder up top"* |
 | `HUB_INTRO` *(optional)* | first Hub open | inline callout | *"Your widgets live here · add up to 20 · swipe left for home"* — **deferred**, not built this pass (see §9) |
 
@@ -273,7 +279,9 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
   `subScreen: OnboardingSubScreen?` — `DOCK_PICKER` / `FAVORITES_PICKER` — both `rememberSaveable`),
   `OnboardingViewModel.kt`, `OnboardingUiState.kt`.
 - `OnboardingIntroPage.kt`, `OnboardingHomeSetupPage.kt`, `OnboardingProfilesPage.kt`,
-  `SetDefaultLauncherSheet.kt`, `OnboardingDots.kt`.
+  `SetDefaultLauncherSheet.kt` (a `ThemedModalBottomSheet` since the Home action menus were unified — content
+  carries its own 24dp under the button; dismissing by scrim/swipe/Back counts as "Later"/"Done"),
+  `OnboardingDots.kt`.
 - The home-setup step's dock/favorites *editing* is **not** a bespoke search list —
   `OnboardingHomeSetupPage.kt` renders `DockAppPickerScreen`/`FavoritesPickerScreen` (unmodified,
   reused from `ui/dock`/`ui/profiles`) full-screen when `subScreen` is set, exactly like Settings
@@ -327,7 +335,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 | Role grant restarts the activity | Flag already `true` → Home. |
 | User dismisses the role dialog / picks "Later" | `onFinish()` runs → Home. Not-default is allowed; Settings → System shows status + fix. Open question: post-onboarding Home nudge? |
 | `ROLE_HOME` unavailable | Fallback `Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)`. |
-| Facet already default (reinstall) | "Already default" sheet variant. |
+| Facet already default (reinstall) | Set-default sheet skipped; the gesture hint shows straight away (the prompt is retired automatically). |
 | No default apps resolvable (bare emulator) | Dock seed writes nothing; step 2 shows an empty dock row — "Manage dock apps" still opens the picker to add some. |
 | No launchable apps at all | Lists empty; Skip/Next still work. |
 | Large font scale / TalkBack | All steps scrollable; dots carry `contentDescription`; text are real nodes. |
@@ -418,8 +426,8 @@ history looks like it stalled, not because of anything in this feature's own cod
 2. **Screen 2 weight** — shipped combined (dock + favorites on one screen), matching what the
    design canvas (`Launcher.dc.html` turn 5, artboards `5c`–`5e`) had already mocked before this
    build started.
-3. **Already-default case** — shipped as a dedicated sheet variant (Success check + "Facet is
-   already your home screen" + single Done), not left to the Settings fallback.
+3. **Already-default case** — first shipped as a dedicated sheet variant (Success check + "Facet is
+   already your home screen" + single Done), since removed: the sheet is skipped and the hints show directly.
 4. **Intro concept lines** — shipped as swipe up / swipe right / swipe left, matching the corrected
    gesture map exactly (no long-press line — that gesture doesn't exist anymore).
 5. **Post-onboarding nudge** — nothing added for v1, per the original proposal; still open if

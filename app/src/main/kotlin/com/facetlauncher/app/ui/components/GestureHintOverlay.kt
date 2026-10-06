@@ -2,14 +2,19 @@ package com.facetlauncher.app.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +40,11 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  * any drag — that first swipe attempt just clears the hint rather than also completing the real
  * navigation underneath; a second swipe then behaves normally.
  */
+// Vertical rhythm of the hints, as Spacer weights: the clock hint starts clear of the default clock block (~33% down).
+private const val CLOCK_HINT_TOP_WEIGHT = 0.47f
+private const val HINT_GAP_WEIGHT = 0.07f
+private const val HINT_BOTTOM_GAP_WEIGHT = 0.3f
+
 @Composable
 fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Box(
@@ -50,32 +60,49 @@ fun GestureHintOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
             // else, while staying visually distinct from the "Got it" button's own Surface
             // background below rather than blending into an identical backdrop. High but not full
             // opacity keeps this reading as an overlay over Home rather than an opaque panel.
-            .background(SurfaceContainer.copy(alpha = 0.92f))
+            .background(SurfaceContainer.copy(alpha = 0.90f))
             .testTag("gesture_hint_overlay")
             .clickable(onClick = onDismiss)
             .pointerInput(Unit) { detectDragGestures(onDragStart = { onDismiss() }) { _, _ -> } },
     ) {
+        // Top to bottom: clock hold, Switch facets (right edge), Widgets (left edge), All your apps
+        // (bottom-right). Each sits on the side its gesture starts from. Spacer weights, not fixed
+        // paddings, so the hints keep their order on short screens and at large font sizes.
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp)) {
+            Spacer(modifier = Modifier.weight(CLOCK_HINT_TOP_WEIGHT))
             Row(
-                modifier = Modifier.padding(top = 96.dp).align(Alignment.End),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.size(16.dp).border(2.dp, Muted, CircleShape))
+                Text(
+                    text = stringResource(R.string.gesture_hint_clock_hold),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Ink,
+                    modifier = Modifier.widthIn(max = 280.dp),
+                )
+            }
+            Spacer(modifier = Modifier.weight(HINT_GAP_WEIGHT))
+            Row(
+                modifier = Modifier.align(Alignment.End),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = stringResource(R.string.gesture_hint_switch_facets), style = MaterialTheme.typography.headlineSmall, color = Ink)
                 Text(text = stringResource(R.string.gesture_hint_arrow_left), style = MaterialTheme.typography.headlineMedium, color = Muted)
             }
+            Spacer(modifier = Modifier.weight(HINT_GAP_WEIGHT))
             Row(
-                modifier = Modifier.padding(top = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = stringResource(R.string.gesture_hint_arrow_right), style = MaterialTheme.typography.headlineMedium, color = Muted)
                 Text(text = stringResource(R.string.gesture_hint_widgets), style = MaterialTheme.typography.headlineSmall, color = Ink)
             }
+            Spacer(modifier = Modifier.weight(HINT_BOTTOM_GAP_WEIGHT))
             Column(
-                modifier = Modifier.weight(1f).padding(bottom = 120.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.align(Alignment.End).padding(bottom = 120.dp),
+                horizontalAlignment = Alignment.End,
             ) {
                 Text(text = stringResource(R.string.gesture_hint_all_your_apps), style = MaterialTheme.typography.headlineSmall, color = Ink)
                 Text(text = stringResource(R.string.gesture_hint_arrow_up), style = MaterialTheme.typography.headlineMedium, color = Muted)

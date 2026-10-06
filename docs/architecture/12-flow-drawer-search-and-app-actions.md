@@ -186,15 +186,15 @@ A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and count
 if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
 horizontal. A touch that starts inside the app list's own region is still watched, but only a
 horizontal-dominant drag is claimed (so Hub/carousel work over the list); a vertical one is left to the
-list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`.
+list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`. The list's bounds reach the route through a `snapshotFlow` in `HomeScreen`, not a `SideEffect` (which would report stale bounds — the layout state is written after layout and read nowhere in composition — so the drawer would claim drags that should scroll the list).
 
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
 A downward drag from a closed drawer expands the notification shade on the same terms
 (`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height).
 
-Every Home action menu — `AppContextMenu`, `FolderTileContextMenu` and the clock adjust menu — is a
-`ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
+Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the clock adjust menu and the one-time
+"make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
 system bars and swipe-down and Back dismiss it the same way everywhere. While one is showing, Home's swipes
 are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
 behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
@@ -202,6 +202,19 @@ behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, pro
 list's scroll handoff while the gate is non-zero (clock *adjust mode*, with its drag handles and no sheet,
 is gated separately on `clockAdjustMode`).
 System back is unaffected.
+
+**Adjust mode** (`ClockAdjustMode.ADJUST`, entered from the clock menu) has no sheet: the clock or hosted widget
+gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp touch strip), and the
+`ClockAdjustToolbar` — an "Alignment" pill with left / center / right. The toolbar sits *below* the height
+handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp
+(`HOME_CLOCK_MIN_GAP`) above the handle, too little room for it. It writes through
+`HomeViewModel.onClockAlignmentCommit`, with the same facet-or-global ownership as height and scale
+(`clockPositionOwningFacet`; all three sit behind `overrideClock`) — the Clock & Calendar Style screen writes the same
+value. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
+toolbar dims to 25% and its options are disabled while any handle or resize drag is active, and becomes usable again
+~200ms after release, so a thumb coming off the handle can't tap it (it stays composed, so it doesn't pop in and out).
+It swallows taps on its own surface even when disabled, because Home's root exits adjust mode on any tap that reaches
+it unconsumed (empty space); there is no Done button — tapping the clock or empty space, Back and Home all exit.
 
 **Pressing Home** (`LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`) collapses
 everything back to bare Home, where Back only peels off the top layer. `HomeDrawerRoute`'s collector clears

@@ -165,6 +165,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Toutes vos apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
+    <string name="gesture_hint_clock_hold">Appuyez longuement sur l\'horloge pour la redimensionner ou la déplacer</string>
     <string name="gesture_hint_got_it">Compris</string>
 
     <!-- FacetScopeBadge -->
@@ -344,10 +345,14 @@
     <string name="theme_mode_light">Clair</string>
     <string name="theme_mode_dark">Sombre</string>
     <string name="theme_mode_system">Système</string>
+    <string name="system_bar_icons_match_theme">Comme le thème</string>
+    <string name="system_bar_icons_light">Clair</string>
+    <string name="system_bar_icons_dark">Sombre</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Apparence</string>
     <string name="appearance_launcher_theme">Thème du launcher</string>
+    <string name="appearance_system_bar_icons">Icônes des barres système</string>
     <string name="appearance_icon_style">Style d\'icône</string>
     <string name="appearance_launcher_font">Police du launcher</string>
     <string name="appearance_font_color">Couleur de police</string>
@@ -491,8 +496,6 @@
     <string name="set_default_launcher_home_app_badge">App d\'accueil</string>
     <string name="set_default_launcher_cta">Définir par défaut</string>
     <string name="set_default_launcher_permissions_note">Les autorisations viendront plus tard, une à la fois, seulement quand une fonctionnalité en a besoin.</string>
-    <string name="set_default_launcher_checkmark">✓</string>
-    <string name="set_default_launcher_already_default">Facet est déjà votre écran d\'accueil</string>
 
     <!-- OnboardingDots -->
     <string name="onboarding_dots_step_content_description">Étape %1$d sur %2$d</string>
@@ -502,6 +505,7 @@
     <string name="drawer_search_more_options">Plus d\'options</string>
     <string name="drawer_search_launcher_settings">Réglages du launcher</string>
     <string name="drawer_search_open_secure_folder">Ouvrir le dossier sécurisé</string>
+    <string name="drawer_search_system_settings">Paramètres système</string>
     <string name="drawer_search_private_space">Espace privé</string>
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTS</string>
@@ -585,6 +589,10 @@
     <!-- ClockAdjustSheet -->
     <string name="clock_adjust_adjust_size_position">Ajuster la taille et la position de l\'horloge</string>
     <string name="clock_adjust_size_position_subtitle">Redimensionner ou repositionner l\'horloge</string>
+    <string name="clock_adjust_alignment_heading">Alignement</string>
+    <string name="clock_adjust_align_left">Aligner à gauche</string>
+    <string name="clock_adjust_align_center">Centrer</string>
+    <string name="clock_adjust_align_right">Aligner à droite</string>
     <string name="clock_adjust_edit_styles">Modifier les styles d\'horloge et de calendrier</string>
     <string name="clock_adjust_edit_styles_subtitle">Modèles, polices, couleurs et alignement</string>
     <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>

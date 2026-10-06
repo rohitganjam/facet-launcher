@@ -86,6 +86,8 @@ data class BackupSettings(
     val showAllDayEvents: Boolean,
     val searchContactsEnabled: Boolean,
     val themeMode: String,
+    /** Purely additive and defaulted, so no version bump — backups from before it existed still import. */
+    val systemBarIconStyle: String = "MATCH_THEME",
     val accentFromSystem: Boolean,
     val customAccentSwatch: String?,
     val wallpaperAccentRole: String,

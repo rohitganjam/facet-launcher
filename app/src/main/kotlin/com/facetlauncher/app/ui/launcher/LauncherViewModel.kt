@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.LauncherFontOption
+import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.data.model.parseFacetIdFromDeepLink
@@ -51,6 +52,7 @@ data class LauncherUiState(
     val isLoading: Boolean = true,
     /** F11 — all threaded into [com.facetlauncher.app.ui.theme.FacetLauncherTheme] so it resolves correctly app-wide. */
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val systemBarIconStyle: SystemBarIconStyle = SystemBarIconStyle.MATCH_THEME,
     val accentFromSystem: Boolean = true,
     /** An `AccentSwatch` enum name — see [com.facetlauncher.app.data.model.LauncherSettings.customAccentSwatch]. */
     val customAccentSwatch: String? = null,
@@ -120,6 +122,7 @@ class LauncherViewModel @Inject constructor(
                 apps = apps,
                 isLoading = false,
                 themeMode = settings.themeMode,
+                systemBarIconStyle = settings.systemBarIconStyle,
                 accentFromSystem = settings.accentFromSystem,
                 customAccentSwatch = settings.customAccentSwatch,
                 wallpaperAccentRole = settings.wallpaperAccentRole,

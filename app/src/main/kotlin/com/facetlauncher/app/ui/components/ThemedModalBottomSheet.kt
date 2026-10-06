@@ -3,9 +3,13 @@ package com.facetlauncher.app.ui.components
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetDefaults
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
+import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
 
@@ -28,9 +32,21 @@ fun ThemedModalBottomSheet(
 ) {
     DismissOnHomePress(onDismiss = onDismissRequest)
     BlockHomeSwipesWhileShown()
+    // The sheet is its own window: its surface sits under the nav bar, so nav icons follow the theme;
+    // the status bar keeps whatever Home is showing (null outside LauncherActivity = inherit).
+    val statusIconsLight = LocalLightStatusBarIcons.current
+    val isDarkTheme = LocalIsDarkTheme.current
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
+        properties = if (statusIconsLight != null) {
+            ModalBottomSheetProperties(
+                isAppearanceLightStatusBars = !statusIconsLight,
+                isAppearanceLightNavigationBars = !isDarkTheme,
+            )
+        } else {
+            ModalBottomSheetDefaults.properties
+        },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded),
         shape = SHEET_SHAPE,
         containerColor = Surface,

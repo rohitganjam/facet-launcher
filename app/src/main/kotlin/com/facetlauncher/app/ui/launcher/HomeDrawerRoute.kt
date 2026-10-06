@@ -89,6 +89,8 @@ import com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.resolve
+import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
+import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -327,6 +329,14 @@ fun HomeDrawerRoute(
     var clockWidgetPickerFacetId by remember { mutableStateOf<Long?>(null) }
     var showPrivateSpaceDrawer by remember { mutableStateOf(false) }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
+    SystemBarsBackdropEffect(
+        when {
+            showPrivateSpaceDrawer -> SystemBarsBackdrop.DARK_SURFACE
+            showWidgetPicker || showClockWidgetPicker -> SystemBarsBackdrop.THEME_SURFACE
+            else -> SystemBarsBackdrop.WALLPAPER
+        },
+    )
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
             focusManager.clearFocus()
@@ -600,7 +610,6 @@ fun HomeDrawerRoute(
     // state existed on its first creation instead of always reading the live one.
     val appListNestedScrollConnection = object : NestedScrollConnection {
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-            android.util.Log.e("SCROLLPROBE", "onPostScroll: consumed=$consumed available=$available source=$source")
             if (homeSwipeBlocked || source != NestedScrollSource.Drag || available.y == 0f) return Offset.Zero
             if (!appListLeftoverDragActive) {
                 appListLeftoverDragActive = true
@@ -658,6 +667,7 @@ fun HomeDrawerRoute(
             draggingHandle = draggingHandle,
             onDraggingHandleChange = { draggingHandle = it },
             onClockScaleCommit = homeViewModel::onClockScaleCommit,
+            onClockAlignmentChange = homeViewModel::onClockAlignmentCommit,
             onEditClockStyles = {
                 clockAdjustMode = ClockAdjustMode.NONE
                 onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)
@@ -787,10 +797,8 @@ fun HomeDrawerRoute(
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
-                            val result = clockWidgetBoundsInHomeRoot?.contains(position) != true &&
+                            clockWidgetBoundsInHomeRoot?.contains(position) != true &&
                                 appListBoundsInHomeRoot?.contains(position) != true
-                            android.util.Log.e("SCROLLPROBE", "shouldClaim: position=$position appListBounds=$appListBoundsInHomeRoot result=$result")
-                            result
                         },
                         // App list: vertical drags belong to its own scroll, horizontal ones to Hub/carousel.
                         claimHorizontalOnly = { position -> appListBoundsInHomeRoot?.contains(position) == true },
@@ -1014,13 +1022,9 @@ fun HomeDrawerRoute(
         // mocked-up preview card — see SetDefaultLauncherSheet's own doc for why this replaced
         // onboarding's old SET_DEFAULT step. Takes priority over the gesture hint below (both are
         // one-time and gated the same way; this one matters more and fires first in practice).
-        AnimatedVisibility(
-            visible = homeUiState.showSetDefaultPrompt && !isDrawerOpen && !isHubOpen && !isFacetOpen,
-            enter = fadeIn(animationSpec = tween(240)),
-            exit = fadeOut(animationSpec = tween(240)),
-        ) {
+        val homeAtRest = !isDrawerOpen && !isHubOpen && !isFacetOpen
+        if (homeUiState.showSetDefaultPrompt && homeAtRest) {
             SetDefaultLauncherSheet(
-                isDefaultLauncher = homeUiState.isDefaultLauncher,
                 requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,
                 onFinish = homeViewModel::dismissSetDefaultPrompt,
             )

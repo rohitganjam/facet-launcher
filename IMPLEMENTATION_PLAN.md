@@ -3583,3 +3583,50 @@ white), the big rail letter-indicator's font/pill fixed, and the on/off toggle e
 3-way `SHOW_FIRST`/`SHOW_LAST`/`DO_NOT_SHOW` position setting with its own dedicated strings
 (sharing neither `DrawerFolderDisplayMode`'s "Show folders first/last" text nor
 `SearchBarPosition`'s generic "Top"/"Bottom" — direct feedback on each).
+
+## ✅ Home press reliability, one action sheet, system bar icons, gesture-hint refresh & clock Alignment pill — built; on-device evaluation open (direct request)
+
+- [x] **Home press stopped working after a while** — root cause: `HomeDrawerRoute`'s Home-press collector ran the
+  Drawer/Hub/carousel closes inline (~1 s); a drag landing on the same `Animatable` threw a `CancellationException` that
+  escaped `collect` and unsubscribed it for good. Each close now runs in its own `launch`, and an already-closed axis
+  returns immediately. Confirmed from phone logcat (`MutationInterruptedException` → collector gone → `subscribers=1`).
+- [x] **Every sheet closes on Home** — new `DismissOnHomePress`; added to `FolderContentsSheet` and the contact
+  connections sheet, clock sheet/clock widget picker reset in the route's own collector.
+- [x] **`ThemedModalBottomSheet`** — one themed M3 sheet (+ Home-swipe block + Home-press dismiss) for the app, folder
+  and clock menus and the set-default prompt; drops the clock menu's hand-rolled overlay and the set-default prompt's
+  fixed padding that ignored the nav bar inset. `skipPartiallyExpanded` for menus short enough to show whole.
+- [x] **Debug logging removed** — `SCROLLPROBE` `Log.e` calls (fired every scroll/layout pass, in release too), the
+  assertion-less `debugScrollProbe` test, and `WidgetGrabGesture`'s per-pointer-event `Log.d`s.
+- [x] **System bar icons setting** — `SystemBarIconStyle` (Match theme / Light / Dark), Appearance → General, global,
+  in backups (defaulted, no version bump). Rule in `ui/theme/SystemBars.kt`: wallpaper screens use the setting, opaque
+  screens follow the theme, Private Space always light; sheets set their own nav icons. Contrast scrims off on API 29+.
+- [x] **Gesture hint refresh** — four hints (new clock-hold hint) at proportional offsets on the side each gesture starts
+  from; overlay 90% opaque; "Got it" gets a 1.5dp `Muted` border + shadow (its fill was 1.05–1.3:1 against the overlay).
+- [x] **Clock adjust-mode Alignment pill** — `ClockAdjustToolbar`, left/center/right, below the height handle (the
+  clock block is pinned only 24dp above it), dimmed to 25% and disabled during any handle/resize drag and held back
+  ~200ms after, swallows its own taps even then (Home's root exits adjust mode on any unconsumed tap), no Done button. Writes through
+  `HomeViewModel.onClockAlignmentCommit` with the same facet-or-global ownership as height/scale.
+- [x] **Set-default prompt skipped when already default** — no more "Facet is already your home screen" sheet:
+  `HomeUiState.isDefaultLauncher` is tri-state, the prompt shows only when confirmed `false`, the gesture hint waits
+  for the check, and `HomeViewModel` marks the prompt seen for an already-default device. Dropped `AlreadyDefaultContent`
+  and its two strings (all five languages).
+- [ ] **Evaluate on a real device:** is the 8dp gap (`CLOCK_ADJUST_TOOLBAR_GAP`, measured from the handle's 48dp touch
+  strip) enough against accidental touches — the earlier recommendation was 16dp; does the pill covering the top of the
+  app list bother; update the clock sheet row subtitle ("Resize or reposition the clock") to mention alignment.
+- [x] **Overflowing Home list opened the drawer instead of scrolling (real bug; its regression test had never passed)** —
+  `HomeScreen` reported the app list's bounds to `HomeDrawerRoute` from a `SideEffect`, which doesn't subscribe to the
+  state it reads: `appListSize`/`appListOriginInRoot` are written by `onGloballyPositioned` after layout and read nowhere
+  in composition, so the route kept a stale rectangle (in the test, the empty list's zero height) and its swipe detector
+  claimed drags that started on the list. Now a `snapshotFlow` in a `LaunchedEffect`, with no extra recompositions.
+  `HomeDrawerRouteTest.swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer` is the regression test
+  (also failed at its own introducing commit, so no bisect target).
+- [x] **Tests**: `HomeDrawerRouteTest` gains the regression test (fails on the original code at the final assertion) and
+  Home-press cases for the clock sheet; `FolderContentsSheetTest`/`AppDrawerScreenTest` Home-press cases;
+  `SystemBarsTest` (rule truth table) + `SystemBarsAppearanceTest` (real window flags); `SettingsRepositoryTest`,
+  `BackupRepositoryTest`, `ImportBackupUseCaseTest` for the new key; `AppearanceSettingsScreenTest` row;
+  `ClockAdjustToolbarTest`, `HomeScreenTest` (toolbar visibility/placement/fade/taps), `HomeViewModelTest`
+  (`onClockAlignmentCommit` facet vs global); gesture-hint test asserts all four hints. `TEST_REGISTRY.md` regenerated.
+- [x] **Docs**: `12 §4` (adjust mode, Alignment pill, Home press, sheets), `13 §2a` + `§4` (system bar icons, hint,
+  set-default sheet), `02` (key, writer, section), `04` (tree), `09` (backup field), `CAPABILITIES.md`,
+  `ONBOARDING_FLOW.md`, `ONBOARDING_DESIGN_BRIEF.md`, design `README.md`/`PRD.md` revision notes, `CLAUDE.md`
+  (sheet + Home-press conventions, test-name pitfall), `CLOCK_RESIZE_SPEC.md` (marked historical).

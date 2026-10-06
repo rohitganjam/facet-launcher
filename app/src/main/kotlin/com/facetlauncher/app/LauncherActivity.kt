@@ -24,6 +24,8 @@ import com.facetlauncher.app.ui.navigation.FacetNavHost
 import com.facetlauncher.app.ui.onboarding.OnboardingScreen
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.ProvideSystemBars
+import com.facetlauncher.app.ui.theme.SystemBarsState
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -42,6 +44,7 @@ class LauncherActivity : ComponentActivity() {
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val homeSwipeGate = remember { HomeSwipeGate() }
+            val systemBarsState = remember { SystemBarsState() }
 
             CompositionLocalProvider(
                 LocalHomePressedEvent provides viewModel.homePressedEvent,
@@ -57,26 +60,28 @@ class LauncherActivity : ComponentActivity() {
                     homeAppsFontWeight = uiState.homeAppsFontWeight,
                     fontScaleOption = uiState.fontScaleOption,
                 ) {
-                    when {
-                        uiState.isLoading -> {
-                            // Real settings/apps haven't loaded yet — render nothing rather than a
-                            // frame styled with defaults that don't match the user's actual choices
-                            // (see chat history). The window already shows the wallpaper through it
-                            // (windowShowWallpaper + a transparent windowBackground in themes.xml), so
-                            // an empty Box is a blank Home, not a black/white flash.
-                            Box(modifier = Modifier.fillMaxSize())
-                        }
-                        !uiState.onboardingCompleted -> {
-                            // A top-level branch, outside FacetNavHost entirely — never lands on the
-                            // back stack, same isolation HomeDrawerRoute gets. See ONBOARDING_FLOW.md.
-                            OnboardingScreen(onFinish = viewModel::completeOnboarding)
-                        }
-                        else -> {
-                            FacetNavHost(
-                                apps = uiState.apps,
-                                onAppClick = { app -> launchApp(app) },
-                                launcherViewModel = viewModel,
-                            )
+                    ProvideSystemBars(uiState.systemBarIconStyle, systemBarsState) {
+                        when {
+                            uiState.isLoading -> {
+                                // Real settings/apps haven't loaded yet — render nothing rather than a
+                                // frame styled with defaults that don't match the user's actual choices
+                                // (see chat history). The window already shows the wallpaper through it
+                                // (windowShowWallpaper + a transparent windowBackground in themes.xml), so
+                                // an empty Box is a blank Home, not a black/white flash.
+                                Box(modifier = Modifier.fillMaxSize())
+                            }
+                            !uiState.onboardingCompleted -> {
+                                // A top-level branch, outside FacetNavHost entirely — never lands on the
+                                // back stack, same isolation HomeDrawerRoute gets. See ONBOARDING_FLOW.md.
+                                OnboardingScreen(onFinish = viewModel::completeOnboarding)
+                            }
+                            else -> {
+                                FacetNavHost(
+                                    apps = uiState.apps,
+                                    onAppClick = { app -> launchApp(app) },
+                                    launcherViewModel = viewModel,
+                                )
+                            }
                         }
                     }
                 }

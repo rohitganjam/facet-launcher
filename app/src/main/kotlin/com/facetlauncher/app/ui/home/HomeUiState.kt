@@ -45,8 +45,12 @@ data class HomeUiState(
      *  permission afterward, rather than reappearing every recomposition until [usageAccessGranted]
      *  catches up (see chat history). */
     val usageAccessPromptDismissed: Boolean = false,
-    /** Whether Facet currently holds the `HOME` role — see [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher]. */
-    val isDefaultLauncher: Boolean = false,
+    /**
+     * Whether Facet currently holds the `HOME` role — see [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher].
+     * `null` until that async check resolves; [showSetDefaultPrompt] and [showGestureHint] both wait for it, so an
+     * already-default device never flashes the prompt before the answer arrives.
+     */
+    val isDefaultLauncher: Boolean? = null,
 ) {
     val activeFacet: FacetEntity?
         get() = facets.find { it.id == settings.activeFacetId }
@@ -148,17 +152,23 @@ data class HomeUiState(
     val activeDockDisplayMode: DockDisplayMode
         get() = activeFacet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode)
 
-    /** Shown once, immediately after onboarding finishes — scoped by `onboardingCompleted &&` rather than a launch counter, so it never reappears once dismissed (persisted in [LauncherSettings.coachMarksSeen]). */
+    /**
+     * The "make Facet your home screen" step is out of the way: already dismissed, or Facet already holds the role
+     * (nothing to ask). Both [showGestureHint] and [showSetDefaultPrompt] key off it so the hints never show over,
+     * or before, a prompt that's still pending or still being checked.
+     */
+    private val setDefaultStepDone: Boolean
+        get() = HOME_SET_DEFAULT_PROMPT_ID in settings.coachMarksSeen || isDefaultLauncher == true
+
+    /** Shown once, immediately after onboarding finishes (and after the set-default step, if there is one) — scoped by `onboardingCompleted &&` rather than a launch counter, so it never reappears once dismissed (persisted in [LauncherSettings.coachMarksSeen]). */
     val showGestureHint: Boolean
-        get() = settings.onboardingCompleted && HOME_GESTURES_COACH_MARK_ID !in settings.coachMarksSeen
+        get() = settings.onboardingCompleted && HOME_GESTURES_COACH_MARK_ID !in settings.coachMarksSeen && setDefaultStepDone
 
     /**
-     * The "make Facet your home screen" prompt (formerly onboarding's own final step) — shown
-     * once, the first time real Home renders after onboarding completes, regardless of
-     * [isDefaultLauncher] (a reinstall that already holds the role still sees a one-time
-     * acknowledgement, see `SetDefaultLauncherSheet`'s "already default" variant). Mirrors
-     * [showGestureHint]'s exact shape.
+     * The "make Facet your home screen" prompt — shown once, the first time real Home renders after onboarding
+     * completes, and only when Facet is confirmed *not* to hold the role: a device that already does skips it
+     * entirely and goes straight to the hints ([HomeViewModel] marks the step seen on its behalf).
      */
     val showSetDefaultPrompt: Boolean
-        get() = settings.onboardingCompleted && HOME_SET_DEFAULT_PROMPT_ID !in settings.coachMarksSeen
+        get() = settings.onboardingCompleted && HOME_SET_DEFAULT_PROMPT_ID !in settings.coachMarksSeen && isDefaultLauncher == false
 }
