@@ -37,6 +37,8 @@ Naming:
 - **Theme every Material3 component explicitly — never let one fall back to stock Material defaults.**
   - `FacetLightColorScheme` (`ui/theme/Theme.kt`) only maps a handful of `ColorScheme` slots (`primary`, `surface`, `onSurface`, `onSurfaceVariant`, `error`, `outline`, ...) — a component reading an *unmapped* slot (e.g. `AlertDialog`'s default `containerColor` → `surfaceContainerHigh`; `OutlinedTextField`'s default border/label colors) silently renders with Material's baseline tones instead of this app's palette.
   - When touching `AlertDialog`, `DropdownMenu`, `TextField`/`OutlinedTextField`, `Dialog`, etc., always pass color/shape params explicitly (`containerColor`, `shape`, `colors = ...Defaults.colors(...)`) using this app's tokens (`Surface`, `Ink`, `Muted`, `Accent`, `ErrorColor`, `Hairline`, 14dp `RoundedCornerShape` for popups/dialogs) — see `ui/components/ConfirmDialog.kt`, `RenameDialog.kt`, `ThemedDropdownMenu.kt`.
+  - **Bottom sheets: use `ThemedModalBottomSheet`** (`ui/components/ThemedModalBottomSheet.kt`), never a raw `ModalBottomSheet` or a hand-rolled overlay. It's the themed sheet plus Home-swipe blocking and Home-press dismissal, and its surface runs behind the nav bar like every other sheet.
+  - **Anything that can be open over Home must close on Home press:** a new sheet/dialog/overlay either uses `ThemedModalBottomSheet` or calls `DismissOnHomePress` (see `12 §4`). The Home-press handler must never run animation inline in the `collect` body — an interrupted animation throws a `CancellationException` that silently unsubscribes it.
 - Use `LazyColumn`/`LazyVerticalGrid` for any list that can grow past a screenful (app drawer, contact list) — never a plain `Column` with `.verticalScroll()`.
 - Keep composable parameters side-effect-free to avoid unnecessary recomposition.
 - Gestures (swipe up/down, long-press, drag) are implemented with `pointerInput` / `detectDragGestures` etc. at the surface they're specified on in README.md — check the exact thresholds and easing named there (e.g. 420ms long-press, 55px swipe threshold, `cubic-bezier(.32,.72,0,1)`) rather than approximating.
@@ -73,6 +75,7 @@ Conventions:
 - Test class name mirrors the class under test: `AppRepository` → `AppRepositoryTest`.
 - Test method names describe behavior, not implementation: `` `swipe down at top closes drawer`() `` not `testSwipeDown()`.
 - Given/When/Then structure (as comments or blank-line sections) inside each test body.
+- Backtick test names must not contain `'` `.` `;` `[` `]` `/` `<` `>` `:` — the test APK then fails to dex ("cannot be represented in dex format") and *no* test in that run executes. If a run reports surprising counts, check the build actually succeeded.
 - A task's "deliverable" in the implementation plan is not complete until its paired test(s) exist and pass — don't check off a box on green-code-with-no-tests.
 
 Run tests:
@@ -150,7 +153,8 @@ app/build/outputs/bundle/release/app-release-<versionName>.aab
 | Change widget host lifecycle, add/move/resize/delete, or grid constants | `10` |
 | Change profile classification, Work Profile, Private Space, or Secure Folder handling | `11` |
 | Change drawer search, tabs, per-app actions, or Home gesture routing | `12` |
-| Change facet switching/overrides, theme resolution, notification badges, or onboarding | `13` |
+| Change facet switching/overrides, theme resolution, status/nav bar icon color, notification badges, or onboarding | `13` (`§2a` for the bars) |
+| Add a bottom sheet, dialog, or overlay reachable from Home, or change clock adjust mode (handles, Alignment pill) | `12 §4` — and make it close on Home press (`ThemedModalBottomSheet` / `DismissOnHomePress`) |
 | Add a new user-visible flow that none of `08`–`13` covers | new `NN-flow-<name>.md` + a row in `docs/architecture/README.md` |
 | Add a package under `ui/`, `data/`, or `domain/`, or a new test directory | `04` — tree, placement rules, test-tree mirror |
 | Add, rename, or remove any test | `python3 scripts/gen-test-registry.py` and commit `TEST_REGISTRY.md`; new harness/fixture pattern → `06` |

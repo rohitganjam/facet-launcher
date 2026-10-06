@@ -211,7 +211,7 @@ Three screens. Permissions are **not** requested here — they stay just-in-time
 
 1. **`4f` What this launcher is** — `200 44px/1.1` headline "A home screen that stays quiet.", `400 14px/1.65` body, then three icon+label lines. `padding: 96px 32px 0`.
 2. **`4g` Pick a few favorites** — `500 24px` title, `Up to 8. You can change them any time — 3 of 8 chosen.` Checkbox list, 30px icons, `400 15.5px` names. **Skip** beside **Next**.
-3. **`4h` Set as default** — bottom sheet over the dimmed home surface. `500 18px` title, explanation that Android will confirm and the choice is reversible, a bordered row showing this launcher as the home app, then **Set as default** / **Later**. Footnote: `Permissions come later, one at a time, only when a feature needs them.`
+3. **`4h` Set as default** — bottom sheet over the dimmed home surface *(revised: the shared themed modal bottom sheet, content padded 24dp under the buttons so it clears the nav bar)*. `500 18px` title, explanation that Android will confirm and the choice is reversible, a bordered row showing this launcher as the home app, then **Set as default** / **Later**. Footnote: `Permissions come later, one at a time, only when a feature needs them.`
 
 Pagination dots bottom-left, primary action bottom-right, `padding-bottom: 34px`.
 
