@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
@@ -135,6 +136,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+
+    /** Fired by the adjust-mode alignment toolbar — same facet-or-global ownership as [onClockZoneHeightCommit]/[onClockScaleCommit] (all three sit behind `overrideClock`). */
+    fun onClockAlignmentCommit(alignment: ClockAlignment) {
+        val owningFacet = _uiState.value.clockPositionOwningFacet
+        viewModelScope.launch {
+            owningFacet?.let { facetRepository.setClockAlignment(it, alignment) }
+                ?: settingsRepository.setClockAlignment(alignment)
+        }
+    }
 
     /**
      * Resolves the long-press menu's Add/Remove Favorites/Dock rows synchronously against this

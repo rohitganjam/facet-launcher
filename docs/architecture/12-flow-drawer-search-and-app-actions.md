@@ -203,6 +203,19 @@ list's scroll handoff while the gate is non-zero (clock *adjust mode*, with its 
 is gated separately on `clockAdjustMode`).
 System back is unaffected.
 
+**Adjust mode** (`ClockAdjustMode.ADJUST`, entered from the clock menu) has no sheet: the clock or hosted widget
+gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp touch strip), and the
+`ClockAdjustToolbar` — an "Alignment" pill with left / center / right. The toolbar sits *below* the height
+handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp
+(`HOME_CLOCK_MIN_GAP`) above the handle, too little room for it. It writes through
+`HomeViewModel.onClockAlignmentCommit`, with the same facet-or-global ownership as height and scale
+(`clockPositionOwningFacet`; all three sit behind `overrideClock`) — the Clock & Calendar Style screen writes the same
+value. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
+toolbar dims to 25% and its options are disabled while any handle or resize drag is active, and becomes usable again
+~200ms after release, so a thumb coming off the handle can't tap it (it stays composed, so it doesn't pop in and out).
+It swallows taps on its own surface even when disabled, because Home's root exits adjust mode on any tap that reaches
+it unconsumed (empty space); there is no Done button — tapping the clock or empty space, Back and Home all exit.
+
 **Pressing Home** (`LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`) collapses
 everything back to bare Home, where Back only peels off the top layer. `HomeDrawerRoute`'s collector clears
 focus, resets the clock adjust sheet and the clock widget picker, and closes the Drawer, Hub and carousel

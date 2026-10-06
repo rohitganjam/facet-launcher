@@ -10,13 +10,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -25,6 +29,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
+import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -69,6 +74,7 @@ class HomeScreenTest {
         onClockZoneHeightCommit: (Float) -> Unit = {},
         clockScale: Float = 0.8f,
         onClockScaleCommit: (Float) -> Unit = {},
+        onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
@@ -83,6 +89,7 @@ class HomeScreenTest {
                 onClockZoneHeightCommit = onClockZoneHeightCommit,
                 clockScale = clockScale,
                 onClockScaleCommit = onClockScaleCommit,
+                onClockAlignmentChange = onClockAlignmentChange,
                 clockAdjustMode = adjustMode,
                 onAdjustModeChange = { adjustMode = it },
                 draggingHandle = dragging,
@@ -674,6 +681,116 @@ class HomeScreenTest {
 
         // Then the same adjust menu sheet opens, rather than nothing (or an app's context menu)
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+    }
+
+    /**
+     * `present = true` waits for the toolbar to be *usable* — it exists from the moment adjust mode starts but stays
+     * dimmed and disabled for a short delay (see HomeScreen's CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS); `false` waits for it to be gone.
+     */
+    private fun waitForToolbar(present: Boolean = true) = composeRule.waitUntil(timeoutMillis = 3_000) {
+        if (present) {
+            runCatching { composeRule.onNodeWithTag("clock_align_center").assertIsEnabled() }.isSuccess
+        } else {
+            composeRule.onAllNodesWithTag("clock_adjust_toolbar").fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    @Test
+    fun alignmentToolbarShowsInAdjustModeOnly() {
+        // Given Home at rest, then the adjust menu
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
+
+        // When entering adjust mode, the toolbar shows
+        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        waitForToolbar()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+
+        // And leaving it (tap on empty space) removes it again
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
+            down(Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y))
+            up()
+        }
+        waitForToolbar(present = false)
+    }
+
+    @Test
+    fun tappingAnAlignmentOptionReportsItAndStaysInAdjustMode() {
+        // Given adjust mode with the toolbar showing
+        val picked = mutableListOf<ClockAlignment>()
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3), onClockAlignmentChange = { picked += it }) }
+        enterAdjustMode()
+        waitForToolbar()
+
+        // When picking Center
+        composeRule.onNodeWithTag("clock_align_center").performClick()
+        composeRule.waitForIdle()
+
+        // Then it's reported, and adjust mode is still active (handle and toolbar still there)
+        org.junit.Assert.assertEquals(listOf(ClockAlignment.CENTER), picked)
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+    }
+
+    @Test
+    fun tappingTheToolbarHeadingDoesNotExitAdjustMode() {
+        // Given adjust mode with the toolbar showing — Home's root exits on any tap that reaches it unconsumed
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        enterAdjustMode()
+        waitForToolbar()
+
+        // When tapping the non-interactive heading
+        composeRule.onNodeWithText("Alignment").performClick()
+        composeRule.waitForIdle()
+
+        // Then adjust mode survives
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+    }
+
+    @Test
+    fun alignmentToolbarSitsBelowTheHeightHandleWithTheGap() {
+        // Given adjust mode with the toolbar showing
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        enterAdjustMode()
+        waitForToolbar()
+
+        // Then its top is at least the gap below the handle's whole 48dp touch strip (not just the knob)
+        val handle = composeRule.onNodeWithTag("home_clock_zone_handle").getUnclippedBoundsInRoot()
+        val toolbar = composeRule.onNodeWithTag("clock_adjust_toolbar").getUnclippedBoundsInRoot()
+        val gap = toolbar.top - handle.bottom
+        assertTrue("gap was $gap, wanted >= $CLOCK_ADJUST_TOOLBAR_GAP", gap >= CLOCK_ADJUST_TOOLBAR_GAP - 0.5.dp)
+    }
+
+    @Test
+    fun alignmentToolbarDimsAndDisablesWhileADragIsActiveThenReturnsAfterRelease() {
+        // Given adjust mode with the toolbar usable
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
+        enterAdjustMode()
+        waitForToolbar()
+
+        // When a handle drag is in progress (finger down and moved past slop)
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 60f))
+        }
+        composeRule.waitForIdle()
+
+        // Then the toolbar stays on screen as a ghost but its options are disabled, so a thumb on the handle can't use it
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("clock_align_center").assertIsNotEnabled() }.isSuccess
+        }
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertExists()
+
+        // And once released it becomes usable again
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { up() }
+        waitForToolbar()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
     }
 
     @Test

@@ -667,6 +667,7 @@ fun HomeDrawerRoute(
             draggingHandle = draggingHandle,
             onDraggingHandleChange = { draggingHandle = it },
             onClockScaleCommit = homeViewModel::onClockScaleCommit,
+            onClockAlignmentChange = homeViewModel::onClockAlignmentCommit,
             onEditClockStyles = {
                 clockAdjustMode = ClockAdjustMode.NONE
                 onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)

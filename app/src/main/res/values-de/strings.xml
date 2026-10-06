@@ -590,6 +590,10 @@
     <!-- ClockAdjustSheet -->
     <string name="clock_adjust_adjust_size_position">Uhrgröße &amp; -position anpassen</string>
     <string name="clock_adjust_size_position_subtitle">Größe oder Position der Uhr ändern</string>
+    <string name="clock_adjust_alignment_heading">Ausrichtung</string>
+    <string name="clock_adjust_align_left">Linksbündig</string>
+    <string name="clock_adjust_align_center">Zentriert</string>
+    <string name="clock_adjust_align_right">Rechtsbündig</string>
     <string name="clock_adjust_edit_styles">Uhr- &amp; Kalenderstile bearbeiten</string>
     <string name="clock_adjust_edit_styles_subtitle">Vorlagen, Schriftarten, Farben und Ausrichtung</string>
     <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>

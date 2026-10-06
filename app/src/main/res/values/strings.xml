@@ -649,6 +649,10 @@
          facet_carousel_launcher_settings_subtitle; "Facet settings" reuses facet_carousel_facet_settings) -->
     <string name="clock_adjust_adjust_size_position">Adjust clock size &amp; position</string>
     <string name="clock_adjust_size_position_subtitle">Resize or reposition the clock</string>
+    <string name="clock_adjust_alignment_heading">Alignment</string>
+    <string name="clock_adjust_align_left">Align left</string>
+    <string name="clock_adjust_align_center">Align center</string>
+    <string name="clock_adjust_align_right">Align right</string>
     <string name="clock_adjust_edit_styles">Edit clock &amp; calendar styles</string>
     <string name="clock_adjust_edit_styles_subtitle">Templates, fonts, colors, and alignment</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>

@@ -590,6 +590,10 @@
     <!-- ClockAdjustSheet -->
     <string name="clock_adjust_adjust_size_position">Ajuster la taille et la position de l\'horloge</string>
     <string name="clock_adjust_size_position_subtitle">Redimensionner ou repositionner l\'horloge</string>
+    <string name="clock_adjust_alignment_heading">Alignement</string>
+    <string name="clock_adjust_align_left">Aligner à gauche</string>
+    <string name="clock_adjust_align_center">Centrer</string>
+    <string name="clock_adjust_align_right">Aligner à droite</string>
     <string name="clock_adjust_edit_styles">Modifier les styles d\'horloge et de calendrier</string>
     <string name="clock_adjust_edit_styles_subtitle">Modèles, polices, couleurs et alignement</string>
     <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>
