@@ -1008,7 +1008,6 @@ private fun DrawerSearchResults(
                 SettingsResultRow(entry = entry, itemSize = itemSize, onClick = { onSettingsEntryClick(entry) })
             }
         }
-        item { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
 
@@ -1293,7 +1292,8 @@ private fun DrawerListContent(
         // right inset — this content already sits in a weight(1f) slot next to LetterJumpZone
         // (see chat history), so its own right edge already stops exactly at the rail's touch
         // zone; an extra end padding here just left an empty gap between the two.
-        modifier = modifier.padding(start = 48.dp, top = 4.dp, bottom = 40.dp),
+        modifier = modifier.padding(start = 48.dp, top = 4.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_FIRST) {
             item(key = "header_recently_installed") { DrawerRecentlyInstalledHeader() }
@@ -1686,7 +1686,7 @@ private fun DrawerAppRow(
 }
 
 private val GRID_CONTENT_TOP_PADDING = 4.dp
-private val GRID_CONTENT_BOTTOM_PADDING = 40.dp
+private val GRID_CONTENT_BOTTOM_PADDING = 16.dp
 private val GRID_VERTICAL_SPACING = 20.dp
 
 /**
