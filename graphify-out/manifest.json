@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1791260982.2926693,
-    "seen": 1791305229.229918,
-    "ast_hash": "30d30aaec69e0bd33fe206f073a36d8c",
+    "mtime": 1791368568.6562672,
+    "seen": 1791369215.4696162,
+    "ast_hash": "0e646fb3c50bc27be774c01bc1d88884",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -36,15 +36,15 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1791308232.592791,
-    "seen": 1791308263.2874649,
-    "ast_hash": "a37f59f4f48f64e547074b3c0212e95e",
+    "mtime": 1791368972.4234297,
+    "seen": 1791369215.46994,
+    "ast_hash": "eeef3de7164e6bc3edb5487954485623",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1791368206.8869812,
-    "seen": 1791368516.806947,
-    "ast_hash": "f6079c6ad55170eaf383045b5d19abea",
+    "mtime": 1791368972.4264839,
+    "seen": 1791369215.469941,
+    "ast_hash": "741f6a98fece5900813f091b5af6f216",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/LauncherActivity.kt": {
-    "mtime": 1791305020.0013292,
-    "seen": 1791305229.229963,
-    "ast_hash": "93d619748fc0e0f7f595e71e514e2b76",
+    "mtime": 1791368694.1779091,
+    "seen": 1791369215.469663,
+    "ast_hash": "b15b0e16f06dbd63305f8b8550c74e1e",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppRepository.kt": {
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/DataStoreModule.kt": {
-    "mtime": 1791346122.4431632,
-    "seen": 1791346518.913898,
-    "ast_hash": "1e250471527d621290a5d2ebd0319e0d",
+    "mtime": 1791368658.6636086,
+    "seen": 1791369215.4696908,
+    "ast_hash": "250383573bae37029887e35dbe337ae3",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/DatabaseModule.kt": {
@@ -2670,27 +2670,27 @@
     "semantic_hash": ""
   },
   "docs/architecture/01-architecture-and-layers.md": {
-    "mtime": 1791368195.940773,
-    "seen": 1791368516.806954,
-    "ast_hash": "919dcc0878fa6a2959b44371b94a6cd6",
+    "mtime": 1791368972.4212427,
+    "seen": 1791369215.469949,
+    "ast_hash": "4e96bae767076b8f7f8175e0acb16f1d",
     "semantic_hash": ""
   },
   "docs/architecture/02-persistence-room.md": {
-    "mtime": 1791360756.4678802,
-    "seen": 1791361866.2069702,
-    "ast_hash": "51391f43f6a951ebec6a6186212a137d",
+    "mtime": 1791368972.421904,
+    "seen": 1791369215.469949,
+    "ast_hash": "faa332cd00199b162ea8326d5fa7fab1",
     "semantic_hash": ""
   },
   "docs/architecture/03-reactive-data-flow.md": {
-    "mtime": 1791360854.6526892,
-    "seen": 1791361866.206971,
-    "ast_hash": "aaf351a2fa13fa31555c374e0a3ce529",
+    "mtime": 1791368972.4222417,
+    "seen": 1791369215.46995,
+    "ast_hash": "952041cd6a18ccc85a997ceb2157b137",
     "semantic_hash": ""
   },
   "docs/architecture/04-package-structure.md": {
-    "mtime": 1791368195.9429739,
-    "seen": 1791368516.806956,
-    "ast_hash": "935a6d49c8610fe23b0f1d09fd255cda",
+    "mtime": 1791368972.422497,
+    "seen": 1791369215.46995,
+    "ast_hash": "71cdc01c5f2d88daf33e319fe09dd780",
     "semantic_hash": ""
   },
   "docs/architecture/05-findings.md": {
@@ -2700,9 +2700,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/README.md": {
-    "mtime": 1791360756.467162,
-    "seen": 1791361866.206978,
-    "ast_hash": "4f13948f0a7f227192631c3fac8dd021",
+    "mtime": 1791368972.422714,
+    "seen": 1791369215.469957,
+    "ast_hash": "c3678f19c4ee0759569f661493e5d48c",
     "semantic_hash": ""
   },
   "scripts/gen-test-registry.py": {
@@ -2718,9 +2718,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/07-registries.md": {
-    "mtime": 1791368195.9382887,
-    "seen": 1791368516.806957,
-    "ast_hash": "82f082038b28ea21b05c9409c14cf0d6",
+    "mtime": 1791368972.4230697,
+    "seen": 1791369215.469952,
+    "ast_hash": "f98bd202c0d2e01dc0f09a45db65aa8e",
     "semantic_hash": ""
   },
   "docs/architecture/08-flow-placements.md": {
@@ -2760,9 +2760,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791368324.0712357,
-    "seen": 1791368516.806964,
-    "ast_hash": "1e6454996ba9764d3f16e6f3435b943a",
+    "mtime": 1791368988.769672,
+    "seen": 1791369215.4699578,
+    "ast_hash": "38ede924f0300b95ff2a5f6a9fc66eaf",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -3666,9 +3666,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/EntitlementRepository.kt": {
-    "mtime": 1791359784.3442986,
-    "seen": 1791361866.206708,
-    "ast_hash": "842380ea43487718693310ed2a3d2b8d",
+    "mtime": 1791368689.978551,
+    "seen": 1791369215.469676,
+    "ast_hash": "5051244f3e8c53348f6b31cee852f19a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/CanUseTriggerUseCase.kt": {
@@ -3798,9 +3798,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/SelectableFacetsUseCase.kt": {
-    "mtime": 1791367166.108345,
-    "seen": 1791368516.8067682,
-    "ast_hash": "80c173ce916c61891d88c3fdaa10e305",
+    "mtime": 1791368690.0066667,
+    "seen": 1791369215.4697568,
+    "ast_hash": "2fd95a53b5a3aec879702ee6d08fa0a7",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/ProPill.kt": {
@@ -3831,6 +3831,54 @@
     "mtime": 1791367477.955327,
     "seen": 1791368516.806907,
     "ast_hash": "dc2937e28ce8501f315ac5c74b6fb5a4",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/BillingRepository.kt": {
+    "mtime": 1791368658.6683097,
+    "seen": 1791369215.469669,
+    "ast_hash": "96cf0ceb16cf371c6ceae4ff39391d88",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/PlayEntitlementRepository.kt": {
+    "mtime": 1791368773.6548953,
+    "seen": 1791369215.469682,
+    "ast_hash": "129f2f06b4eac2439ec7ea5c8f12941d",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/ProPurchaseMapping.kt": {
+    "mtime": 1791368658.6422336,
+    "seen": 1791369215.469684,
+    "ast_hash": "15a1363000b24695cc1cd1ec7d2020ca",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/di/EntitlementDataStore.kt": {
+    "mtime": 1791368658.6440992,
+    "seen": 1791369215.469692,
+    "ast_hash": "454e96e44b92eabf60b55161467dd807",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/di/EntitlementModule.kt": {
+    "mtime": 1791368689.9833632,
+    "seen": 1791369215.469693,
+    "ast_hash": "6e17eb104dcd14a2fcd397dfa74f2398",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/ProQueryResult.kt": {
+    "mtime": 1791368658.6400719,
+    "seen": 1791369215.469729,
+    "ast_hash": "0528c7448959f7892bcd18635eb197ae",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/PlayEntitlementRepositoryTest.kt": {
+    "mtime": 1791368735.8722184,
+    "seen": 1791369215.469862,
+    "ast_hash": "e4aecc71c9ed73696ae64ee3dac63df4",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/ProPurchaseMappingTest.kt": {
+    "mtime": 1791368773.6551442,
+    "seen": 1791369215.469864,
+    "ast_hash": "3c6f0ed0a263df020aa49ec61ae7a25b",
     "semantic_hash": ""
   }
 }

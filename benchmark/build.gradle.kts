@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.facetlauncher.app.benchmark"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 31
@@ -28,10 +28,10 @@ android {
 }
 
 dependencies {
-    implementation("androidx.benchmark:benchmark-macro-junit4:1.2.0-beta01")
+    implementation("androidx.benchmark:benchmark-macro-junit4:1.5.0")
     implementation("androidx.test.espresso:espresso-core:3.7.0")
     implementation("androidx.test.ext:junit:1.3.0")
-    implementation("androidx.test.uiautomator:uiautomator:2.2.0")
+    implementation("androidx.test.uiautomator:uiautomator:2.4.0")
 }
 
 androidComponents {

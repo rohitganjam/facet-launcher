@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -49,7 +50,6 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import java.time.DayOfWeek
 import java.time.format.TextStyle
-import java.util.Locale
 
 private const val MINUTES_PER_HOUR = 60
 
@@ -92,13 +92,14 @@ private fun DayChipRow(state: RuleEditorState, onChange: ((RuleEditorState) -> R
 /** An M3 filter chip (small shape, 8dp), themed explicitly. The visible letter is narrow; the full day name is announced. */
 @Composable
 private fun DayChip(day: DayOfWeek, selected: Boolean, onToggle: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    val fullName = day.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    val locale = LocalConfiguration.current.locales[0]
+    val fullName = day.getDisplayName(TextStyle.FULL, locale)
     FilterChip(
         selected = selected,
         onClick = { onToggle(!selected) },
         label = {
             Text(
-                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                text = day.getDisplayName(TextStyle.NARROW, locale),
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
