@@ -56,6 +56,7 @@ App names are invented. No real products are depicted.
 | `4n`–`4o` | Add facet: placeholder page, then created | |
 | `4p` | Permission-denied and empty states | |
 | `4q` | Search with no results | |
+| `fa1`–`fa9` | Facet automation: settings entry, rule list, rule editor, trigger types, permission and empty states | In `facet-automation.html` |
 
 ---
 
@@ -245,6 +246,29 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 | Home list, usage access missing | Most used needs usage access from system settings. | Open settings |
 | Fresh facet, no favorites | Nothing here yet — pick up to 8 apps. | Add apps |
 | Search, contacts denied | Contact results need contacts access. | Turn on |
+| Facet automation, no rules | Add a rule to switch facets automatically. | Add rule |
+| Facet automation, rule's permission revoked | Row subtitle: Needs Bluetooth access / Needs location access | Tap the row to allow |
+| Rule editor, permission refused | Bluetooth access is off, so this trigger can't be used. Allow it in Settings. | Open settings |
+
+---
+
+### Facet automation (`fa1`–`fa9`, `facet-automation.html`)
+
+Rules that switch the active facet by themselves. Entry: Settings → Facets → **Facet automation**, a row under *Manage facets* (subtitle: rule count or "No rules"). Open `facet-automation.html` in a browser for all nine screens in light and dark. Built as spec'd, with the deviations listed last.
+
+- **List (`fa2`).** A status line first, only when a rule is running: "Showing Work because of the rule …", or, after the user picks a facet by hand, "Showing Travel, the facet you chose. … is paused until it ends." Then a **Rules** card: one row per rule (trigger icon, derived title such as "Weekdays · 9:00–18:00" or "Car · connected", subtitle "Work, then previous facet", enable switch) and an accent **Add rule** row, hidden at the free limit. Then a **Use other apps** card explaining the per-facet "Switch to" shortcuts. Empty state is the dashed strip from `4p`.
+- **Rule editor (`fa3`, `fa5`, `fa9`).** A bottom sheet (closes on Home press): *Switch to* (facet dropdown), *When* (trigger dropdown), the trigger's own fields, *When it ends* (radios: Return to previous facet, Switch to a facet, Stay on the target), Cancel / Save, and a Delete action only when editing.
+  - **Schedule:** seven M3 filter chips (small shape, 8dp; selected = accent-tinted fill and accent border; full day names announced), From and Until time rows in the phone's 12/24-hour format. An Until before From shows "Ends the next day". No days selected blocks Save with "Pick at least one day".
+  - **Bluetooth:** while connected / while not connected, then a *Device* dropdown of paired devices. The device is picked, never typed; no device blocks Save.
+  - **Wi-Fi:** while connected / not connected, then *Any network* or *Named network*. Named reveals a *Network* dropdown of networks in range; no network blocks Save.
+  - **Headphones:** while plugged in / not plugged in.
+  - **Battery:** *Charging / Not charging*, *Below / Above*, and a 5% slider (Above stops at 95%).
+- **Permissions (`fa7`, `fa8`).** Asked when the choice that needs them is made (Bluetooth type; Named network). A refusal keeps the previous trigger and shows a note with **Open settings**. A saved rule whose permission was later revoked is dimmed with an error icon and "Needs … access"; tapping it asks for the permission.
+- **Pro states (`fa4`, `fa6`).** For a free user: device triggers carry a **Pro pill** in the *When* dropdown, and choosing one opens the upgrade sheet instead of asking for a permission; at the 2-rule limit the **Add rule** row carries a Pro pill and opens the upgrade sheet; a dashed strip under the Rules card reads "Free includes 2 schedule rules. Pro adds more rules and triggers…" with **See Pro**; rules that no longer qualify are dimmed with a lock and "Paused. Needs Pro" (tapping opens the upgrade sheet, they can still be deleted from the editor). Free keeps the first two schedule rules, in list order. The upgrade sheet only explains and dismisses until the billing plan adds the purchase action.
+- **Shape (M3 scale).** Sheet top corners 28dp (extra large), dialogs 28dp, cards and the status line 12dp (medium), dashed strips 12dp (medium), chips, Pro pill and menus 8dp (small), switches, radios and slider are stock M3. Buttons follow the app's existing square-button convention (`TonalButton` / `SurfaceButton`), a documented departure from M3's full-round buttons.
+- **Tokens.** `Surface` sheet, `Ink` / `Muted` text, `Accent` for selected chips, radios, slider and the Add rule row, `Hairline` for unselected chips and slider track, `ErrorColor` for inline errors and Delete. Dialogs 28dp (M3 extra large), buttons use `TonalButton` and `SurfaceButton`.
+
+**Deviations from the mockups.** The trigger picker (`fa4`) is a dropdown row in the editor, not a second sheet, and the Pro pills sit in that dropdown. Everyone is treated as entitled until billing exists, so the Pro states only appear for a free user once the billing plan lands. The mockup's radii were aligned with the M3 scale (strips 12, sheet 28). A Bluetooth rule whose device was unpaired is not yet flagged "Device not found".
 
 ---
 

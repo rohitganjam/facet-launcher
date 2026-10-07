@@ -98,7 +98,8 @@ fun PermissionsScreen(
     val requestBluetoothPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         viewModel.markBluetoothPermissionRequested()
     }
-    val requestLocationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+    // Android 12+ ignores a request for precise location alone, so both are asked for together.
+    val requestLocationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         viewModel.markLocationPermissionRequested()
     }
 
@@ -107,7 +108,9 @@ fun PermissionsScreen(
         PermissionKind.CALENDAR to RuntimePermissionRequest(Manifest.permission.READ_CALENDAR) { requestCalendarPermission.launch(it) },
         PermissionKind.CONTACTS to RuntimePermissionRequest(Manifest.permission.READ_CONTACTS) { requestContactsPermission.launch(it) },
         PermissionKind.BLUETOOTH to RuntimePermissionRequest(Manifest.permission.BLUETOOTH_CONNECT) { requestBluetoothPermission.launch(it) },
-        PermissionKind.LOCATION to RuntimePermissionRequest(Manifest.permission.ACCESS_FINE_LOCATION) { requestLocationPermission.launch(it) },
+        PermissionKind.LOCATION to RuntimePermissionRequest(Manifest.permission.ACCESS_FINE_LOCATION) {
+            requestLocationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        },
     )
 
     /**

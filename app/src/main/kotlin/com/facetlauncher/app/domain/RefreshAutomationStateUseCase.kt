@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.DeviceStateRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.isMetBy
@@ -30,6 +31,8 @@ class RefreshAutomationStateUseCase @Inject constructor(
     private val evaluate: EvaluateFacetAutomationUseCase,
     private val deviceStateRepository: DeviceStateRepository,
     private val permissionRepository: AutomationPermissionRepository,
+    private val entitlementRepository: EntitlementRepository,
+    private val canUseTrigger: CanUseTriggerUseCase,
     private val clock: Clock,
 ) {
     /** Null while there is no valid active facet yet (a fresh install before `EnsureActiveFacetUseCase` has run). */
@@ -41,10 +44,10 @@ class RefreshAutomationStateUseCase @Inject constructor(
         val rules = ruleRepository.getRules()
         val now = LocalDateTime.now(clock)
         val deviceState = deviceStateRepository.current()
-        // A rule is met only when it is usable (its permission is granted) and its condition holds now.
-        // The Pro gate (phase 7) will filter here too.
+        // A rule is met only when it is usable (entitled, permission granted) and its condition holds now.
+        val entitled = canUseTrigger.entitledRuleIds(rules, entitlementRepository.isPro.value)
         val conditionsMet = rules
-            .filter { permissionRepository.isUsable(it.trigger) && it.trigger.isMetBy(deviceState, now) }
+            .filter { it.id in entitled && permissionRepository.isUsable(it.trigger) && it.trigger.isMetBy(deviceState, now) }
             .map { it.id }
             .toSet()
         var desiredFacetId = currentFacetId

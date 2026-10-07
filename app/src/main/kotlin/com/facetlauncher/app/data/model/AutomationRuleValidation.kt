@@ -37,11 +37,17 @@ fun AutomationRule.validationErrors(): List<AutomationRuleError> = when (val t =
     is AutomationTrigger.Headphones -> emptyList()
 }
 
+/** Why Pro is needed: the rule uses a Pro trigger, or the free user already has [AutomationLimits.FREE_MAX_RULES] rules. */
+enum class ProReason { TRIGGER, RULE_LIMIT }
+
 sealed interface SaveRuleResult {
     data class Saved(val id: Long) : SaveRuleResult
 
     /** Nothing was written. */
     data class Invalid(val errors: List<AutomationRuleError>) : SaveRuleResult
+
+    /** Nothing was written: the free plan doesn't allow this rule. */
+    data class ProRequired(val reason: ProReason) : SaveRuleResult
 
     /** The rule's target facet, or its "switch to" facet, no longer exists. Nothing was written. */
     data object FacetMissing : SaveRuleResult

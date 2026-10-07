@@ -31,7 +31,7 @@
 <body>
 
 <h1>Facet Launcher — Privacy Policy</h1>
-<p class="updated">Last updated: September 12, 2026</p>
+<p class="updated">Last updated: October 7, 2026</p>
 
 <div class="summary">
   <strong>In short:</strong> Facet Launcher does not have internet access. Nothing you do in the app — your apps, contacts, calendar, usage patterns, notifications, or settings — ever leaves your device. There are no accounts, no ads, no analytics, and no third-party tracking of any kind.
@@ -51,10 +51,13 @@
   <li><strong>Notification access</strong> — powers optional app-icon notification badges. The app reads only which app a notification came from and how many are unread, never notification content, and never stores or transmits this beyond what's needed to draw the badge.</li>
   <li><strong>Uninstall shortcut</strong> (<code>REQUEST_DELETE_PACKAGES</code>) — lets you uninstall an app from its long-press menu. This opens Android's own uninstall confirmation dialog; the app never uninstalls anything without your explicit confirmation in that system dialog.</li>
   <li><strong>Expand notification shade</strong> (<code>EXPAND_STATUS_BAR</code>) — lets a swipe-down gesture on the home screen open your notification shade, the same way it would on any home screen.</li>
+    <li><strong>Bluetooth</strong> (<code>BLUETOOTH_CONNECT</code>) — used only by the optional facet automation rules, to list your paired devices and to notice when a device you picked connects or disconnects. Android asks you when you choose a Bluetooth rule. The device you pick is saved on your device inside that rule and never transmitted.</li>
+    <li><strong>Location</strong> (<code>ACCESS_FINE_LOCATION</code>) — Android requires this permission before an app can read the name of a Wi-Fi network. It is used only if you create a facet automation rule for a named Wi-Fi network, to list networks in range and to notice when you connect to the one you picked. Android asks for approximate location alongside it; the app only uses the permission for the network name. The app does not read, store, or transmit your location.</li>
+    <li><strong>Network and Wi-Fi state</strong> (<code>ACCESS_NETWORK_STATE</code>, <code>ACCESS_WIFI_STATE</code>) — lets Wi-Fi automation rules tell whether you are connected to Wi-Fi. These do not give the app internet access.</li>
 </ul>
 
 <h2>Data storage</h2>
-<p>Your settings, profiles, dock and favorites layout, and widget placements are stored in a local database on your device, using Android's standard app-private storage. This data is not accessible to other apps and is not transmitted anywhere. Uninstalling Facet Launcher removes it, following normal Android behavior.</p>
+<p>Your settings, profiles, dock and favorites layout, widget placements, and facet automation rules are stored in a local database on your device, using Android's standard app-private storage. This data is not accessible to other apps and is not transmitted anywhere. Uninstalling Facet Launcher removes it, following normal Android behavior.</p>
 
 <h2>Backup and restore</h2>
 <p>If you use the app's backup feature, it creates a JSON file containing your settings and layout, which you choose where to save using Android's own file picker (for example, to your device storage or a cloud storage app you've installed). Facet Launcher does not upload this file anywhere itself — where it ends up is entirely controlled by you, through the system file picker.</p>

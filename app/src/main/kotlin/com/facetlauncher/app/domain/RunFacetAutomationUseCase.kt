@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.DeviceStateRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +19,7 @@ import javax.inject.Inject
  *
  * Triggers: screen on / unlock / clock change, a Home press ([homePresses]), any rule change, a
  * change of the active facet (which also covers the first launch, once a facet exists), and any change
- * in the device state (battery, headphones, Wi-Fi, Bluetooth). Collecting the device state also keeps
+ * in the device state (battery, headphones, Wi-Fi, Bluetooth) or in the Pro entitlement. Collecting the device state also keeps
  * its receivers registered for the whole process. One sequential
  * collector, with bursts coalesced, so passes never overlap and no lock is needed. There are no
  * alarms: a schedule is applied when the user looks at the phone, never underneath them.
@@ -29,6 +30,7 @@ class RunFacetAutomationUseCase @Inject constructor(
     private val wakeEventsRepository: WakeEventsRepository,
     private val settingsRepository: SettingsRepository,
     private val deviceStateRepository: DeviceStateRepository,
+    private val entitlementRepository: EntitlementRepository,
 ) {
     suspend operator fun invoke(homePresses: Flow<Unit>) {
         merge(
@@ -37,6 +39,7 @@ class RunFacetAutomationUseCase @Inject constructor(
             ruleRepository.observeRules().map { },
             settingsRepository.settings.map { it.activeFacetId }.distinctUntilChanged().map { },
             deviceStateRepository.deviceState.map { },
+            entitlementRepository.isPro.map { },
         )
             .conflate()
             .collect { applyFacetAutomation() }

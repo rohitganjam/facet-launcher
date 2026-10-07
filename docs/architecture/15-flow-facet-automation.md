@@ -18,8 +18,8 @@ and [14](14-flow-deep-links-and-shortcuts.md); persistence is in [02 §5.7](02-p
 | 3 | `automation_rules` table (DB v26), `AutomationRuleDao`, `AutomationRuleRepository`, `AutomationTrigger`, `trigger` on `AutomationRule` | **Built**, unit-tested, migration tested on an emulator |
 | 4 | Schedule truth, `WakeEventsRepository`, `RefreshAutomationStateUseCase`, `ApplyFacetAutomationUseCase`, `RunFacetAutomationUseCase` started from `LauncherViewModel.init`, and the manual-switch re-sample | **Built**, unit-tested, and the touched screens' instrumented tests run on an emulator |
 | 5 | `DeviceState` and every trigger's truth (`isMetBy`), the Bluetooth, Wi-Fi, headphones and battery sources, `DeviceStateRepository`, `AutomationPermissionRepository`, the manifest permissions, and the picker lists | **Built**, unit-tested (Robolectric shadows for the Android glue); smoke-run on an emulator |
-| 6 | Automation screen, rule editor, trigger picker | Planned |
-| 7 | Pro gating seam (`CanUseTriggerUseCase`, the rule-limit enforcement). The 2-rule free limit itself, `AutomationLimits`, is already built | Planned |
+| 6 | `FacetAutomationScreen` (list, status line, shortcuts note), the rule editor sheet (schedule and all four device editors), the permission gate, unavailable-rule rows, the Settings entry row | **Built**, unit and emulator tested (§5d). The trigger picker is a dropdown in the editor, not a separate sheet; locked Pro rows come with phase 7 |
+| 7 | `EntitlementRepository` (the one Pro seam, constant `true` until billing), `CanUseTriggerUseCase`, `SaveAutomationRuleUseCase`, the entitlement filter in `RefreshAutomationStateUseCase`, and the Pro states in the UI: pills, upgrade sheet, paused rows, free-plan strip (§5d, §6) | **Built**, unit and emulator tested. The upgrade sheet only explains; the purchase action and the 3→10 facet cap belong to the billing plan |
 
 ## 1. Concepts
 
@@ -39,18 +39,21 @@ it, and a manual switch always wins over whatever overlay is active at that mome
 
 ## 2. Layers and components
 
-Blue boxes are built; grey dashed boxes are planned.
+Blue boxes are built; grey dashed boxes are planned (nothing is planned inside this framework any more; billing is a separate plan).
 
 ```mermaid
 flowchart TB
-    subgraph UI["ui/ (planned except the existing switch screens)"]
-        AUTO["FacetAutomationScreen + rule editor"]:::planned
+    subgraph UI["ui/"]
+        AUTO["FacetAutomationScreen\nFacetAutomationViewModel"]:::built
+        EDIT["Rule editor sheet\nRuleEditorViewModel"]:::built
         SW["Carousel / Manage facets / Facet settings"]
     end
     subgraph DOM["domain/"]
         EVAL["EvaluateFacetAutomationUseCase\npure function"]:::built
         ACT["ActivateFacetByIdUseCase\nsource = MANUAL or AUTOMATION"]:::built
-        CAN["CanUseTriggerUseCase\nPro gate"]:::planned
+        CAN["CanUseTriggerUseCase\nPro gate"]:::built
+        SAVE["SaveAutomationRuleUseCase\nPro gate then save"]:::built
+        OBS["ObserveFacetAutomationUseCase\nrows, status, availability"]:::built
         REF["RefreshAutomationStateUseCase\nsample rules, persist state"]:::built
         APPLY["ApplyFacetAutomationUseCase\none pass"]:::built
         RUN["RunFacetAutomationUseCase\ncollector started by LauncherViewModel"]:::built
@@ -62,9 +65,14 @@ flowchart TB
         DEV["DeviceStateRepository\nbattery, headphones, Wi-Fi, Bluetooth"]:::built
         PERM["AutomationPermissionRepository\nBLUETOOTH_CONNECT, location"]:::built
         SET["SettingsRepository\nactive facet id"]
+        ENT["EntitlementRepository\nisPro, constant true until billing"]:::built
     end
     SW --> ACT
+    AUTO --> OBS
     AUTO --> RR
+    EDIT --> RR
+    EDIT --> PERM
+    EDIT --> DEV
     RUN --> APPLY
     RUN --> WAKE
     RUN --> RR
@@ -76,7 +84,18 @@ flowchart TB
     REF --> DEV
     REF --> PERM
     RUN --> DEV
-    REF -.-> CAN
+    OBS --> RR
+    OBS --> SR
+    OBS --> PERM
+    REF --> CAN
+    REF --> ENT
+    RUN --> ENT
+    OBS --> CAN
+    OBS --> ENT
+    EDIT --> SAVE
+    SAVE --> CAN
+    SAVE --> RR
+    EDIT --> ENT
     ACT -- "MANUAL: re-sample first" --> REF
     ACT -- "MANUAL: afterManualSwitch" --> SR
     ACT --> SET
@@ -190,12 +209,12 @@ that points at the rule's own target facet, are allowed.
 evaluator only ever picks a facet from `existingFacetIds`, and a stored "switch to" ending whose facet was
 deleted is turned into `ReturnToBaseline` by the foreign key and the mapper.
 
-### Rule limit (built as a pure rule, enforced in phase 7)
+### Rule limit (built and enforced)
 
 `AutomationLimits.FREE_MAX_RULES = 2`, with `canAddRule(savedRuleCount, isPro)`. Every saved rule counts,
 enabled or not, and editing an existing rule is never "adding". Pro has no cap yet. The repository does
-not enforce it, because it knows nothing about entitlement; the phase 7 save use case will, and "Add
-rule" will open the upgrade sheet at the limit.
+not enforce it, because it knows nothing about entitlement: `SaveAutomationRuleUseCase` does (§6), and
+"Add rule" opens the upgrade sheet at the limit.
 
 ## 4. Switch sources and the manual-wins rule (built)
 
@@ -354,10 +373,137 @@ fire on a guess at startup. An empty Bluetooth set is a real answer, so a "not c
   the latest scan by signal strength (empty without location), and `BluetoothRepository.pairedDevices()`
   lists paired devices by name, falling back to the address. The user only ever picks from these lists.
 
-## 6. Planned: rules, triggers, and the runner
+## 5d. The UI (built)
 
-Recorded here so the framework reads end to end. The schedule trigger, the runner (§5b) and the device
-triggers (§5c) are built; the rest below is not.
+Settings → Facets → **Facet automation** (`FacetAutomationScreen`, route `facetAutomation`) is the only entry.
+The editor is a sheet inside that screen, not a route, so closing it never touches the back stack.
+
+| Piece | What it does |
+|---|---|
+| `ObserveFacetAutomationUseCase` | Combines rules, `AutomationState`, facets, the active facet and live permission grants into `FacetAutomationScreenState`: one row per rule (target and "switch to" facet names, `RuleAvailability`), the status line, and `canAddRule`. A refresh tick re-reads grants, which have no change callback, so the screen bumps it on every resume. |
+| Status line | `Driving` when the winning running rule's facet is showing; `ManualOverride` when the user's own choice has paused a running rule. It mirrors the evaluator's own winner rule and replaces the toast we decided against. |
+| `FacetAutomationViewModel` | The list: `uiState` (null until the first emission, so the empty state never flashes), `refresh()`, `setEnabled()`. |
+| `RuleEditorViewModel` | The draft (`RuleEditorState`): open new or existing, edit, save (`SaveRuleResult` → inline errors), delete; the permission gate; the picker lists (`DeviceChoices`). The sheet is `ThemedModalBottomSheet`, so Home press closes it ([12 §4](12-flow-drawer-search-and-app-actions.md)). |
+| `RuleEditorState` | Pure and immutable. `edited { }` clears the last save's errors and any permission refusal, so a message never outlives the field it was about. `withKind` starts a type from its defaults (a blank Bluetooth device and a blank named network are deliberately invalid until picked). |
+| Device pickers | Bluetooth devices come from `BluetoothRepository.pairedDevices()` and Wi-Fi networks from `WifiRepository.nearbyNetworkNames()`, both `suspend` on `Dispatchers.IO`. The user never types a name or address. |
+
+**Permission gate.** A trigger change goes through `RuleEditorViewModel.changeTrigger(candidate, request)`.
+The candidate is built purely in `RuleEditorState`; the ViewModel asks `candidate.trigger.requiredPermission()`:
+
+```mermaid
+sequenceDiagram
+    participant S as Editor sheet
+    participant VM as RuleEditorViewModel
+    participant L as Permission launcher
+    S->>VM: changeTrigger(candidate)
+    alt no permission needed or already granted
+        VM->>VM: apply candidate and load its picker lists
+    else permission missing
+        VM->>L: request(permission)
+        L-->>VM: granted or refused
+        VM->>VM: record that it was asked, DeviceStateRepository.onPermissionsChanged()
+        alt granted
+            VM->>VM: apply candidate and load its picker lists
+        else refused
+            VM->>VM: keep the old trigger, set permissionDenied
+            Note over S: note with Open settings under the When row
+        end
+    end
+```
+
+Location is requested together with approximate location (`RequestMultiplePermissions`), because Android 12+ silently ignores a request for precise location alone; only precise counts as granted, since an approximate fix cannot read a network name. The launcher is a Compose `ActivityResultLauncher` (`rememberPermissionRequest`), passed in as a plain
+callback so the ViewModel stays free of Activity types. A refusal keeps the trigger the rule already had
+(Schedule for a new rule), so the rest of the rule is never opened for a trigger that cannot run. An
+unavailable row in the list requests its permission when tapped; only a refusal opens the editor.
+
+**Pro states (free user).** `ObserveFacetAutomationUseCase` marks rules outside
+`CanUseTriggerUseCase.entitledRuleIds` as `NEEDS_PRO` (ahead of a missing permission): the row is dimmed
+with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the upgrade sheet. The *When*
+dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
+asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
+and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + See Pro) shows for the free
+plan. `UpgradeSheet` is a `ThemedModalBottomSheet`; it explains and dismisses, and the billing plan adds
+the purchase action.
+
+**Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
+
+## 6. Triggers, gating and the Pro seam
+
+Every piece below is built; the status of the Pro purchase flow is the billing plan's.
+
+**Rule usability.** A rule is met only when it is usable and its condition holds. The permission half of
+usability is built (§5c) and so is the Pro half (entitlement, below). An unusable rule is simply never true.
+
+| Trigger | Condition | Permission (requested when the type is chosen) |
+|---|---|---|
+| Schedule (free) | day of week and time window, to the minute (§3b); an Until before From means overnight | none |
+| Bluetooth device | connected, or not connected | `BLUETOOTH_CONNECT` (runtime, asked when chosen) |
+| Wi-Fi | "Any network" or "Named network" (a separate Network field picks it); connected or not | `ACCESS_NETWORK_STATE` (normal, no prompt) for any network; location, requested on choosing "Named network", to read and pick a network name |
+| Headphones | plugged in or not | none |
+| Battery | a charging state (Charging or Not charging) plus a strict above / below level that works in either state (5% stops; level and charging state come from the battery broadcast) | none |
+
+**When evaluation runs.** Lazily, when Home is about to be seen: screen on, unlock, Home press, app
+start. No alarms and no `SCHEDULE_EXACT_ALARM`; a 9:00 rule applying at 9:03 on unlock is
+indistinguishable from exact timing, and nothing switches under the user mid-use. Device state
+(Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
+sampling: a connection that came and went while the screen was off is never seen.
+
+**Pro gating (built).** `EntitlementRepository.isPro` is the single seam, a constant `true` until the billing
+plan replaces it. Free users get schedule rules only, and at most 2 rules in total (`AutomationLimits`,
+§3b); device triggers and more rules are Pro.
+
+| Where | What it does |
+|---|---|
+| `CanUseTriggerUseCase` | `invoke(trigger, isPro)`: schedule is free, every device trigger is Pro. `entitledRuleIds(rules, isPro)`: Pro keeps every rule; free keeps the first two *schedule* rules in list order. |
+| `RefreshAutomationStateUseCase` | A rule is in `conditionsMet` only if it is entitled, its permission is granted, and its condition holds. A paused rule is therefore treated by the evaluator like a rule that stopped being true (its end behavior runs), never deleted. |
+| `RunFacetAutomationUseCase` | Runs a pass when `isPro` changes, so a lapse or purchase takes effect without waiting for a wake event. |
+| `SaveAutomationRuleUseCase` | Refuses a Pro trigger for a free user (`ProRequired(TRIGGER)`), then a *new* rule past the free limit (`ProRequired(RULE_LIMIT)`); only then validates and writes. Editing never counts as adding. |
+| `ObserveFacetAutomationUseCase` / `RuleEditorViewModel` | Mark rows `NEEDS_PRO`, show pills, and route a refused pick or save to the upgrade sheet (§5d). |
+
+**Permission gate.** A trigger change goes through `RuleEditorViewModel.changeTrigger(candidate, request)`.
+The candidate is built purely in `RuleEditorState`; the ViewModel asks `candidate.trigger.requiredPermission()`:
+
+```mermaid
+sequenceDiagram
+    participant S as Editor sheet
+    participant VM as RuleEditorViewModel
+    participant L as Permission launcher
+    S->>VM: changeTrigger(candidate)
+    alt no permission needed or already granted
+        VM->>VM: apply candidate and load its picker lists
+    else permission missing
+        VM->>L: request(permission)
+        L-->>VM: granted or refused
+        VM->>VM: record that it was asked, DeviceStateRepository.onPermissionsChanged()
+        alt granted
+            VM->>VM: apply candidate and load its picker lists
+        else refused
+            VM->>VM: keep the old trigger, set permissionDenied
+            Note over S: note with Open settings under the When row
+        end
+    end
+```
+
+The launcher is a Compose `ActivityResultLauncher` (`rememberPermissionRequest`), passed in as a plain
+callback so the ViewModel stays free of Activity types. A refusal keeps the trigger the rule already had
+(Schedule for a new rule), so the rest of the rule is never opened for a trigger that cannot run. An
+unavailable row in the list requests its permission when tapped; only a refusal opens the editor.
+
+**Pro states (free user).** `ObserveFacetAutomationUseCase` marks rules outside
+`CanUseTriggerUseCase.entitledRuleIds` as `NEEDS_PRO` (ahead of a missing permission): the row is dimmed
+with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the upgrade sheet. The *When*
+dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
+asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
+and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + See Pro) shows for the free
+plan. `UpgradeSheet` is a `ThemedModalBottomSheet`; it explains and dismisses, and the billing plan adds
+the purchase action.
+
+**Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
+
+## 6. Triggers, gating and the Pro seam
+
+The schedule trigger, the runner (§5b), the device triggers (§5c) and the UI (§5d) are built; the Pro
+seam below is not.
 
 **Rule usability.** A rule is met only when it is usable and its condition holds. The permission half of
 usability is built (§5c); the Pro half arrives with phase 7. An unusable rule is simply never true.
@@ -376,7 +522,7 @@ indistinguishable from exact timing, and nothing switches under the user mid-use
 (Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
 sampling: a connection that came and went while the screen was off is never seen.
 
-**Pro gating.** `CanUseTriggerUseCase(type)` and the rule limit are the single seam. Free users get
+**Pro gating (built).** `EntitlementRepository.isPro` is the single seam; everything else reads it. `CanUseTriggerUseCase` and the rule limit decide what it allows. Free users get
 schedule rules only, and at most 2 rules in total (`AutomationLimits`, §3b); device triggers and more
 rules are Pro. Both return "allowed" until billing exists. When entitlement is lost, Pro-trigger rules
 and rules beyond the free 2 are paused (shown dimmed, never deleted) because the runner filters them out
@@ -389,21 +535,21 @@ type; for Wi-Fi it is choosing "Named network", because "Any network" needs only
 
 ```mermaid
 flowchart TB
-    A["User picks a trigger type"] --> B{"Pro type and not entitled?"}
+    A["User picks a trigger type"] --> B{"Pro type and not entitled?\n(never, until billing exists)"}
     B -- yes --> U["Upgrade sheet, no permission request"]
     B -- no --> C{"Type needs a permission\nnot yet granted?\n(Bluetooth)"}
     C -- no --> OK["Show that type's configuration"]
     C -- yes --> R["System permission request"]
     R -- granted --> OK
-    R -- denied --> S["Type reverts to Schedule\nthe denied type's configuration is never shown"]
+    R -- denied --> S["Previous trigger stays\nnote with Open settings\nthe denied type's configuration is never shown"]
     OK --> W{"Wi-Fi: user picks Named network?"}
     W -- yes --> L["Location permission request"]
     L -- granted --> N["Separate Network field is shown"]
     L -- denied --> AN["Stays on Any network"]
 ```
 
-When the system will not show the prompt again, the same revert happens with a one-line note and an
-"Open settings" action, so the revert is never silent.
+A refusal always shows a one-line note with an "Open settings" action (the system shows no prompt
+once a permission is permanently denied), so it is never silent.
 
 A permission revoked later in system settings leaves the saved rule in place but unavailable: the runner
 drops it from `conditionsMet`, and the list row reads "Needs Bluetooth access". Tapping that row requests
@@ -414,12 +560,12 @@ the permission first; the editor is never opened in an unpermitted state.
 1. Add the `AutomationTrigger` variant, its parameter columns on `AutomationRuleEntity` (+ a `Migration` and a bumped `FacetDatabase.VERSION`), and both directions in `AutomationRuleMapping`; add the round-trip case to `AutomationRuleRepositoryTest`.
 2. Add a source repository that exposes its reading as a `Flow` (emitting the current value on subscribe), add the field to `DeviceState` and the combine in `DeviceStateRepository`, and decide what "unknown" means for it.
 3. Add its branch to `AutomationTrigger.isMetBy` (a missing reading must not fire a rule, negated or not) and, if it needs a permission, to `requiredPermission()` and `AutomationPermissionRepository`. Add the cases to `DeviceStateTest`, and a scenario to `ApplyFacetAutomationUseCaseTest`.
-4. Add it to the trigger picker and rule editor; if it needs a permission, add it to the permission gate so the request runs on type change and a denial reverts to Schedule.
+4. Add its `TriggerKind`, default (`RuleEditorState.defaultTrigger`) and label, and its fields in `TriggerFields.kt`; if it needs a permission, `requiredPermission()` already routes it through the gate in `RuleEditorViewModel.changeTrigger`.
 5. Add evaluator-level scenario tests only if it introduces new *semantics*; most triggers need only source tests, since the evaluator sees a rule id and a boolean.
 
 ## 7. Invariants
 
-These hold for the built code and are covered by `EvaluateFacetAutomationUseCaseTest`,
+These hold for the built code and are covered by `CanUseTriggerUseCaseTest`, `SaveAutomationRuleUseCaseTest`, `EvaluateFacetAutomationUseCaseTest`,
 `AutomationStateTest`, `ActivateFacetByIdUseCaseTest` and `AutomationStateRepositoryTest`.
 
 1. A manual switch is never undone by a rule that was already active when it happened.
@@ -434,6 +580,9 @@ These hold for the built code and are covered by `EvaluateFacetAutomationUseCase
 10. A rule that can never work is never saved: a schedule with no days or minutes outside 0..1439, a named Wi-Fi network with no name, a Bluetooth rule with no device, a battery threshold off the 5% grid (and no "above 100%"). A rule for a facet that no longer exists is a no-op, not an error.
 11. Deleting a rule's target facet deletes the rule; deleting its "switch to" facet turns the ending into `ReturnToBaseline`. A stored rule this build can't interpret is skipped, never fatal.
 
+12. A free user never has a Pro rule running: `conditionsMet` only contains entitled rules, so lapsing from Pro pauses device rules and any schedule rule beyond the first two (list order) without deleting them, and regaining Pro resumes them.
+13. A save that the free plan refuses writes nothing: the trigger check runs before the limit check, and both run before validation.
+
 ## Where this lives
 
 | Concern | File |
@@ -446,6 +595,8 @@ These hold for the built code and are covered by `EvaluateFacetAutomationUseCase
 | Rule storage | `data/local/AutomationRuleEntity.kt`, `data/local/AutomationRuleDao.kt`, `data/AutomationRuleRepository.kt`, `data/AutomationRuleMapping.kt`, `Migrations.MIGRATION_25_26` |
 | Persisted state and `afterManualSwitch` | `data/model/AutomationState.kt` |
 | Who is switching | `data/model/FacetSwitchSource.kt` |
+| Pro gate | `data/EntitlementRepository.kt`, `domain/CanUseTriggerUseCase.kt`, `domain/SaveAutomationRuleUseCase.kt`, `ProReason` / `SaveRuleResult.ProRequired` in `data/model/AutomationRuleValidation.kt` |
+| UI | `ui/settings/automation/` (`FacetAutomationScreen`, `RuleEditorSheet`, `RuleEditorState`, `RuleEditorViewModel`, `TriggerFields`, `ScheduleFields`, `UpgradeSheet`, `ProPill`), `domain/ObserveFacetAutomationUseCase.kt`, `ui/navigation/FacetNavHost.kt` (`FACET_AUTOMATION`) |
 | Single switch choke point | `domain/ActivateFacetByIdUseCase.kt` |
 | State persistence | `data/AutomationStateRepository.kt`, `data/di/DataStoreModule.kt`, `data/di/AutomationDataStore.kt` |
 | Tests | `domain/EvaluateFacetAutomationUseCaseTest.kt`, `data/model/AutomationStateTest.kt`, `domain/ActivateFacetByIdUseCaseTest.kt`, `data/AutomationStateRepositoryTest.kt`, `data/AutomationRuleRepositoryTest.kt`, `data/local/AutomationRuleDaoTest.kt`, `data/model/AutomationTriggerTest.kt`, `data/model/AutomationRuleValidationTest.kt`, `data/model/DeviceStateTest.kt`, `data/HeadphonesRepositoryTest.kt`, `data/WifiRepositoryTest.kt`, `data/BluetoothRepositoryTest.kt`, `data/DeviceStateRepositoryTest.kt`, `data/AutomationPermissionRepositoryTest.kt`, instrumented `FacetDatabaseMigrationTest.migration25To26…` |

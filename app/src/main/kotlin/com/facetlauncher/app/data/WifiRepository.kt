@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val UNKNOWN_SSID = "<unknown ssid>"
 
@@ -68,13 +70,12 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
      * strongest first, without duplicates. Empty without the location permission. Android hides a user's
      * saved networks from apps, so only networks in range can be listed.
      */
-    fun nearbyNetworkNames(current: String?): List<String> {
-        val wifiManager = context.getSystemService(WifiManager::class.java)
+    suspend fun nearbyNetworkNames(current: String?): List<String> = withContext(Dispatchers.IO) {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (wifiManager == null || !granted) return emptyList()
+        val wifiManager = context.getSystemService(WifiManager::class.java)?.takeIf { granted }
         @Suppress("DEPRECATION")
-        val scanned = wifiManager.scanResults.sortedByDescending { it.level }.map { it.SSID }
-        return (listOfNotNull(current) + scanned).filter { it.isNotBlank() }.distinct()
+        val scanned = wifiManager?.scanResults.orEmpty().sortedByDescending { it.level }.map { it.SSID }
+        if (wifiManager == null) emptyList() else (listOfNotNull(current) + scanned).filter { it.isNotBlank() }.distinct()
     }
 }
 

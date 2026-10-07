@@ -63,6 +63,7 @@ private fun connectionText(name: String, negated: Boolean): String =
 /** What a rule does and how it ends, or what it needs when it can't run. */
 @Composable
 internal fun AutomationRuleItem.subtitleText(): String = when (availability) {
+    RuleAvailability.NEEDS_PRO -> stringResource(R.string.automation_paused_needs_pro)
     RuleAvailability.NEEDS_BLUETOOTH -> stringResource(R.string.automation_needs_bluetooth)
     RuleAvailability.NEEDS_LOCATION -> stringResource(R.string.automation_needs_location)
     RuleAvailability.AVAILABLE -> when (rule.endBehavior) {

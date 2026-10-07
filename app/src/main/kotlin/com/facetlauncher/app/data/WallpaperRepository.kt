@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -35,6 +36,7 @@ open class WallpaperRepository @Inject constructor(
      * `peekDrawable`/`builtInDrawable` need Facet to be the active launcher on API 33 — a denial
      * just advances the chain.
      */
+    @SuppressLint("MissingPermission") // a SecurityException is caught below and just advances the chain
     open suspend fun currentHomeWallpaper(): HomeWallpaper = withContext(Dispatchers.IO) {
         val drawable = runCatching { wallpaperManager.peekDrawable() }.getOrNull()
             ?: runCatching { wallpaperManager.builtInDrawable }.getOrNull()

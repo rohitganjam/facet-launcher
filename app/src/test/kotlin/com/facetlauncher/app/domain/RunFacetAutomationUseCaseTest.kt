@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AutomationRuleRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
@@ -32,12 +33,13 @@ class RunFacetAutomationUseCaseTest {
         val rules = MutableStateFlow<List<AutomationRule>>(emptyList())
         val settings = MutableStateFlow(LauncherSettings(activeFacetId = 1L))
         val deviceState = MutableStateFlow(DeviceState())
+        val entitlement = FakeEntitlementRepository()
 
         private val ruleRepository = mock(AutomationRuleRepository::class.java).also { `when`(it.observeRules()).thenReturn(rules) }
         private val wakeEvents = mock(WakeEventsRepository::class.java).also { `when`(it.observeWakeEvents()).thenReturn(wake) }
         private val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settings) }
         private val deviceStateRepository = mock(DeviceStateRepository::class.java).also { `when`(it.deviceState).thenReturn(deviceState) }
-        val useCase = RunFacetAutomationUseCase(apply, ruleRepository, wakeEvents, settingsRepository, deviceStateRepository)
+        val useCase = RunFacetAutomationUseCase(apply, ruleRepository, wakeEvents, settingsRepository, deviceStateRepository, entitlement)
 
         fun passes(): Int = mockingDetails(apply).invocations.count { it.method.name == "invoke" }
     }
@@ -78,6 +80,18 @@ class RunFacetAutomationUseCaseTest {
         val before = fixture.passes()
 
         fixture.homePresses.tryEmit(Unit)
+        runCurrent()
+
+        assertEquals(before + 1, fixture.passes())
+    }
+
+    @Test
+    fun `a change of entitlement triggers a pass`() = runTest {
+        val fixture = Fixture()
+        start(fixture)
+        val before = fixture.passes()
+
+        fixture.entitlement.proFlow.value = false
         runCurrent()
 
         assertEquals(before + 1, fixture.passes())

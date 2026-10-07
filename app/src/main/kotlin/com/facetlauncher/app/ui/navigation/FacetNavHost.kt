@@ -294,8 +294,6 @@ fun FacetNavHost(
         composable(FacetDestinations.FACET_AUTOMATION) {
             FacetAutomationScreen(
                 onBack = { navController.popBackStackSafely() },
-                onAddRule = { /* the rule editor sheet arrives in the next step */ },
-                onEditRule = { },
             )
         }
         composable(FacetDestinations.FACET_MANAGE) {

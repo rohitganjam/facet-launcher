@@ -206,6 +206,7 @@ sequenceDiagram
 | Wi-Fi | `WifiRepository.observeWifiState()` — synchronous read of current networks, then `ConnectivityManager` network callbacks | `DeviceStateRepository` |
 | Bluetooth connections | `BluetoothRepository.observeConnectedAddresses()` — ACL broadcasts + a one-time profile query; null until it answers | `DeviceStateRepository` |
 | Device state | `DeviceStateRepository.deviceState` — `combine` of battery, headphones, Wi-Fi and Bluetooth, shared with `stateIn(WhileSubscribed)` | `RefreshAutomationStateUseCase` (via `current()`), `RunFacetAutomationUseCase` |
+| Pro entitlement | `EntitlementRepository.isPro` — a `StateFlow<Boolean>`, constant `true` until billing exists | `RunFacetAutomationUseCase` (a pass on change), `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`; `RefreshAutomationStateUseCase` reads `.value` |
 | Wake events | `WakeEventsRepository.observeWakeEvents()` — `callbackFlow` over `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` | `RunFacetAutomationUseCase` (see [15](15-flow-facet-automation.md)) |
 | Next alarm | `callbackFlow` over `ACTION_NEXT_ALARM_CLOCK_CHANGED` + injected `Clock` | `ObserveClockAccessoriesUseCase` |
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |

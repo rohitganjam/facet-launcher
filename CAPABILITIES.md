@@ -118,6 +118,28 @@ starting at `HOME`.
 - Not yet verified against specific automation apps (Samsung Modes & Routines, Tasker); the code
   documents them as the intended targets.
 
+### Facet automation (built-in rules)
+
+`ui/settings/automation/` + `domain/` + `data/`. Settings → Facets → **Facet automation**. See
+[`docs/architecture/15-flow-facet-automation.md`](docs/architecture/15-flow-facet-automation.md).
+
+- **Rules switch the active facet by themselves.** A rule is a target facet, one trigger, and an end
+  behavior (return to the previous facet, switch to another, or stay). Triggers: a **schedule** (days and
+  a From/Until window, to the minute, overnight allowed) and, with Pro, **Bluetooth device**, **Wi-Fi**
+  (any network or a named one), **headphones**, and **battery** (charging or not, below or above a level in
+  5% steps). Device triggers can be "while connected" or "while not connected".
+- **Manual wins.** Choosing a facet yourself, or with a shortcut or deep link, pauses any rule that is
+  already running until it ends. The automation screen says why Home looks the way it does.
+- **Evaluated when you look at the phone** (screen on, unlock, Home press, startup, device changes),
+  never with alarms, so nothing switches under you mid-use. No toast on an automatic switch.
+- **Permissions only when needed:** `BLUETOOTH_CONNECT` when you pick a Bluetooth rule, location when you
+  pick a *named* Wi-Fi network (Android needs it to read a network name). Refusing keeps the previous
+  trigger and offers "Open settings". A rule whose permission is later revoked is paused, not deleted.
+- **Free vs Pro.** Free: 2 schedule rules. Pro: more rules and every device trigger. A lapsed plan pauses
+  the extra rules (first two schedule rules stay), never deletes them. Everyone is entitled until billing
+  exists; the upgrade sheet explains but cannot purchase yet.
+- Nothing leaves the device; rules are stored in the local database. Not included in backup/restore yet.
+
 ---
 
 ## 5. Launcher Hub (widgets)

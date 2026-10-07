@@ -171,7 +171,7 @@ class WifiRepositoryTest {
         shadowOf(context.getSystemService(WifiManager::class.java)).setScanResults(results.toList())
 
     @Test
-    fun `nearby networks list the current one first then the strongest scan results without duplicates`() {
+    fun `nearby networks list the current one first then the strongest scan results without duplicates`() = runTest {
         shadowOf(context as Application).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         setScanResults(scan("Weak", -80), scan("Home", -40), scan("Strong", -30), scan("Home", -45))
 
@@ -179,7 +179,7 @@ class WifiRepositoryTest {
     }
 
     @Test
-    fun `nearby networks skip hidden networks with a blank name`() {
+    fun `nearby networks skip hidden networks with a blank name`() = runTest {
         shadowOf(context as Application).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         setScanResults(scan("", -30), scan("Cafe", -50))
 
@@ -187,7 +187,7 @@ class WifiRepositoryTest {
     }
 
     @Test
-    fun `nearby networks are empty without the location permission`() {
+    fun `nearby networks are empty without the location permission`() = runTest {
         shadowOf(context as Application).denyPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         setScanResults(scan("Home", -40))
 

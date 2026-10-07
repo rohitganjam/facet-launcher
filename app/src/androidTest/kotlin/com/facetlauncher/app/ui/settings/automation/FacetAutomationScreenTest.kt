@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.settings.automation
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationTrigger
@@ -28,10 +29,11 @@ class FacetAutomationScreenTest {
         onToggle: (Long, Boolean) -> Unit = { _, _ -> },
         onAddRule: () -> Unit = {},
         onEditRule: (Long) -> Unit = {},
+        onSeePro: () -> Unit = {},
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
-                FacetAutomationContent(state = state, onBack = {}, onToggleRule = onToggle, onAddRule = onAddRule, onEditRule = onEditRule)
+                FacetAutomationContent(state = state, onBack = {}, onToggleRule = onToggle, onAddRule = onAddRule, onEditRule = onEditRule, onSeePro = onSeePro)
             }
         }
     }
@@ -90,10 +92,53 @@ class FacetAutomationScreenTest {
     }
 
     @Test
-    fun theAddRowIsHiddenWhenTheLimitIsReached() {
-        setContent(FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones())), canAddRule = false))
+    fun theAddRowStaysAtTheLimitAndCarriesAProPill() {
+        var added = false
+        setContent(
+            FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones())), canAddRule = false, isPro = false),
+            onAddRule = { added = true },
+        )
 
-        composeRule.onNodeWithTag("automation_add_rule_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("automation_add_rule_row").assertExists().performClick()
+
+        composeRule.onNodeWithText("Pro").assertExists()
+        assertEquals(true, added)
+    }
+
+    @Test
+    fun aProUserSeesNoFreePlanStrip() {
+        setContent(FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones()))))
+
+        composeRule.onNodeWithTag("automation_free_strip").assertDoesNotExist()
+    }
+
+    @Test
+    fun aFreeUserSeesTheStripAndSeeProOpensTheUpgrade() {
+        var opened = false
+        setContent(FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones())), isPro = false), onSeePro = { opened = true })
+
+        composeRule.onNodeWithTag("automation_free_strip").assertExists()
+        composeRule.onNodeWithTag("automation_see_pro").performClick()
+
+        assertEquals(true, opened)
+    }
+
+    @Test
+    fun aRulePausedForProIsLockedAndOpensTheUpgradeWhenTapped() {
+        var edited: Long? = null
+        setContent(
+            FacetAutomationScreenState(
+                items = listOf(item(4, AutomationTrigger.Bluetooth("AA:BB", "Car"), RuleAvailability.NEEDS_PRO)),
+                isPro = false,
+            ),
+            onEditRule = { edited = it },
+        )
+
+        composeRule.onNodeWithText("Paused. Needs Pro").assertExists()
+        composeRule.onNodeWithTag("automation_rule_switch_4").assertIsNotEnabled()
+        composeRule.onNodeWithTag("automation_rule_row_4").performClick()
+
+        assertEquals(4L, edited)
     }
 
     @Test

@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.AutomationPermissionRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.DeviceStateRepository
@@ -76,7 +77,8 @@ class ApplyFacetAutomationUseCaseTest {
         private val permissions = object : AutomationPermissionRepository(ApplicationProvider.getApplicationContext()) {
             override fun isGranted(permission: AutomationPermission) = permission !in denied
         }
-        private val refresh = RefreshAutomationStateUseCase(rules, state, facets, settings, EvaluateFacetAutomationUseCase(), devices, permissions, clock)
+        val entitlement = FakeEntitlementRepository()
+        private val refresh = RefreshAutomationStateUseCase(rules, state, facets, settings, EvaluateFacetAutomationUseCase(), devices, permissions, entitlement, CanUseTriggerUseCase(), clock)
         val activate = ActivateFacetByIdUseCase(facets, settings, state, refresh)
         val apply = ApplyFacetAutomationUseCase(refresh, activate, settings)
 
@@ -290,6 +292,36 @@ class ApplyFacetAutomationUseCaseTest {
         f.apply()
 
         assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a free user's device rule never applies and resumes when Pro returns`() = runTest {
+        val f = Fixture(tempFolder)
+        f.saveRule(f.bluetoothRule())
+        f.deviceState = DeviceState(connectedBluetoothAddresses = setOf("AA:BB"))
+        f.entitlement.proFlow.value = false
+
+        f.apply()
+        assertEquals("paused on the free plan", f.personal, f.activeFacet())
+
+        f.entitlement.proFlow.value = true
+        f.apply()
+        assertEquals("pro again", f.work, f.activeFacet())
+    }
+
+    @Test
+    fun `a free user keeps only the first two schedule rules running`() = runTest {
+        val f = Fixture(tempFolder)
+        f.clock.now = at(DayOfWeek.MONDAY, 10, 0)
+        f.entitlement.proFlow.value = false
+        f.saveRule(f.weekdaysNineToSix(), target = f.work)
+        f.saveRule(f.weekdaysNineToSix(), target = f.travel)
+        f.saveRule(f.weekdaysNineToSix(), target = f.personal)
+
+        f.apply()
+
+        // The second rule is the later of the two entitled ones, so it wins; the third is paused.
+        assertEquals(f.travel, f.activeFacet())
     }
 
     @Test

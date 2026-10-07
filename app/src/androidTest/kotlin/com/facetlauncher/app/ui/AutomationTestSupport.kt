@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.BatteryRepository
 import com.facetlauncher.app.data.BluetoothRepository
 import com.facetlauncher.app.data.DeviceStateRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.HeadphonesRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -16,6 +17,7 @@ import com.facetlauncher.app.data.WifiRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.ApplyFacetAutomationUseCase
+import com.facetlauncher.app.domain.CanUseTriggerUseCase
 import com.facetlauncher.app.domain.EvaluateFacetAutomationUseCase
 import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.domain.RunFacetAutomationUseCase
@@ -55,7 +57,7 @@ fun testAutomation(
     val devices = testDeviceStateRepository(context)
     val refresh = RefreshAutomationStateUseCase(
         rules, state, facetRepository, settingsRepository, EvaluateFacetAutomationUseCase(),
-        devices, AutomationPermissionRepository(context), Clock.systemDefaultZone(),
+        devices, AutomationPermissionRepository(context), EntitlementRepository(), CanUseTriggerUseCase(), Clock.systemDefaultZone(),
     )
     val activate = ActivateFacetByIdUseCase(facetRepository, settingsRepository, state, refresh)
     val run = RunFacetAutomationUseCase(
@@ -64,6 +66,7 @@ fun testAutomation(
         WakeEventsRepository(context),
         settingsRepository,
         devices,
+        EntitlementRepository(),
     )
     return TestAutomation(activate, run)
 }

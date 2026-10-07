@@ -47,10 +47,13 @@
          permission, requested when the user picks the Bluetooth trigger: it lists paired devices and
          delivers connect/disconnect broadcasts. ACCESS_FINE_LOCATION is a runtime permission requested
          only when the user picks "Named network" for Wi-Fi — Android gates reading a network name behind
-         it — and is used for nothing else. ACCESS_NETWORK_STATE and ACCESS_WIFI_STATE are normal-level
-         (auto-granted) and cover "any network" and listing scan results. None of these is INTERNET. -->
+         it — and is used for nothing else.
+         ACCESS_COARSE_LOCATION is declared only because Android 12+ ignores a request for fine location
+         unless coarse is requested with it; the app needs fine. ACCESS_NETWORK_STATE and ACCESS_WIFI_STATE
+         are normal-level (auto-granted) and cover "any network" and listing scan results. None of these is INTERNET. -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 

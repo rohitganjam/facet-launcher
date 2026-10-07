@@ -190,7 +190,7 @@ class BluetoothRepositoryTest {
     // --- paired devices for the picker ---
 
     @Test
-    fun `paired devices are listed by name, falling back to the address`() {
+    fun `paired devices are listed by name, falling back to the address`() = runTest {
         val zed = device("AA:BB:CC:DD:EE:0A")
         val car = device("AA:BB:CC:DD:EE:0B")
         val nameless = device("AA:BB:CC:DD:EE:0C")
@@ -209,7 +209,7 @@ class BluetoothRepositoryTest {
     }
 
     @Test
-    fun `no paired devices are listed without the permission`() {
+    fun `no paired devices are listed without the permission`() = runTest {
         adapterShadow.setBondedDevices(setOf(device("AA:BB:CC:DD:EE:0D")))
         shadowOf(context as Application).denyPermissions(Manifest.permission.BLUETOOTH_CONNECT)
 

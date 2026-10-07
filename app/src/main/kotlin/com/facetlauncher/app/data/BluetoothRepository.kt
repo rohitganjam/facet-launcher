@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val PROFILE_QUERY_TIMEOUT_MS = 1_500L
 
@@ -64,10 +66,9 @@ class BluetoothRepository @Inject constructor(@ApplicationContext private val co
 
     /** Paired devices, by name. Empty without the permission or without Bluetooth. */
     @SuppressLint("MissingPermission") // guarded by permissionGranted()
-    fun pairedDevices(): List<PairedBluetoothDevice> {
-        val adapter = bluetoothManager?.adapter
-        if (adapter == null || !permissionGranted()) return emptyList()
-        return adapter.bondedDevices.orEmpty()
+    suspend fun pairedDevices(): List<PairedBluetoothDevice> = withContext(Dispatchers.IO) {
+        val adapter = bluetoothManager?.adapter?.takeIf { permissionGranted() }
+        adapter?.bondedDevices.orEmpty()
             .map { PairedBluetoothDevice(address = it.address, name = it.name?.takeIf(String::isNotBlank) ?: it.address) }
             .sortedBy { it.name.lowercase() }
     }

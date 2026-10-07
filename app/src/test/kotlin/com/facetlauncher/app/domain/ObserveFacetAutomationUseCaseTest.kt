@@ -30,7 +30,8 @@ class ObserveFacetAutomationUseCaseTest {
         activeFacetId: Long = personal.id,
         granted: Set<AutomationPermission> = emptySet(),
         isPro: Boolean = true,
-    ) = buildFacetAutomationScreenState(rules, state, facets, activeFacetId, { it in granted }, isPro)
+        entitled: Set<Long> = rules.map { it.id }.toSet(),
+    ) = buildFacetAutomationScreenState(rules, state, facets, activeFacetId, { it in granted }, entitled, isPro)
 
     @Test
     fun `rows carry the target facet name and a switch-to ending's facet name`() {
@@ -144,5 +145,30 @@ class ObserveFacetAutomationUseCaseTest {
         val orphan = AutomationRule(13L, 99L, schedule)
 
         assertEquals("", build(rules = listOf(orphan)).items.single().targetFacetName)
+    }
+
+    @Test
+    fun `a rule outside the entitled set is paused for Pro even when its permission is granted`() {
+        val item = build(
+            rules = listOf(carRule),
+            granted = setOf(AutomationPermission.BLUETOOTH_CONNECT),
+            isPro = false,
+            entitled = emptySet(),
+        ).items.single()
+
+        assertEquals(RuleAvailability.NEEDS_PRO, item.availability)
+    }
+
+    @Test
+    fun `needing Pro is reported ahead of a missing permission`() {
+        val item = build(rules = listOf(carRule), granted = emptySet(), isPro = false, entitled = emptySet()).items.single()
+
+        assertEquals(RuleAvailability.NEEDS_PRO, item.availability)
+    }
+
+    @Test
+    fun `the state says whether the user is on the free plan`() {
+        assertTrue(build(isPro = true).isPro)
+        assertFalse(build(isPro = false, entitled = setOf(10L)).isPro)
     }
 }

@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AutomationPermission
@@ -11,6 +12,7 @@ import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationState
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.CanUseTriggerUseCase
 import com.facetlauncher.app.domain.ObserveFacetAutomationUseCase
 import com.facetlauncher.app.domain.RuleAvailability
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +28,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.time.DayOfWeek
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -41,11 +44,15 @@ class FacetAutomationViewModelTest {
 
     private val bluetoothRule = AutomationRule(5L, 1L, AutomationTrigger.Bluetooth("AA:BB", "Car"))
 
+    private val personal = FacetEntity(id = 1, name = "Personal", position = 0)
+    private val work = FacetEntity(id = 2, name = "Work", position = 1)
+    private val schedule = AutomationTrigger.Schedule(setOf(DayOfWeek.MONDAY), 540, 1080)
+
     private class Fixture(rules: List<AutomationRule>, var bluetoothGranted: Boolean = false) {
         val ruleRepository = mock(AutomationRuleRepository::class.java).also { `when`(it.observeRules()).thenReturn(flowOf(rules)) }
         private val stateRepository = mock(AutomationStateRepository::class.java).also { `when`(it.state).thenReturn(flowOf(AutomationState())) }
         private val facetRepository = mock(FacetRepository::class.java).also {
-            `when`(it.observeFacets()).thenReturn(flowOf(listOf(FacetEntity(id = 1, name = "Work", position = 0))))
+            `when`(it.observeFacets()).thenReturn(flowOf(listOf(FacetEntity(id = 1, name = "Personal", position = 0), FacetEntity(id = 2, name = "Work", position = 1))))
         }
         private val settingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(flowOf(LauncherSettings(activeFacetId = 1L)))
@@ -54,7 +61,7 @@ class FacetAutomationViewModelTest {
             `when`(it.isGranted(AutomationPermission.BLUETOOTH_CONNECT)).thenAnswer { bluetoothGranted }
         }
         val viewModel = FacetAutomationViewModel(
-            ObserveFacetAutomationUseCase(ruleRepository, stateRepository, facetRepository, settingsRepository, permissionRepository),
+            ObserveFacetAutomationUseCase(ruleRepository, stateRepository, facetRepository, settingsRepository, permissionRepository, FakeEntitlementRepository(), CanUseTriggerUseCase()),
             ruleRepository,
         )
     }
@@ -74,7 +81,7 @@ class FacetAutomationViewModelTest {
 
         val item = fixture.viewModel.uiState.value!!.items.single()
         assertEquals(5L, item.rule.id)
-        assertEquals("Work", item.targetFacetName)
+        assertEquals("Personal", item.targetFacetName)
     }
 
     @Test

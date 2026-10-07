@@ -3,6 +3,7 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
@@ -16,8 +17,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 
-/** Why a rule can't run right now. Shown on its row so the user can fix it. */
-enum class RuleAvailability { AVAILABLE, NEEDS_BLUETOOTH, NEEDS_LOCATION }
+/** Why a rule can't run right now. Shown on its row so the user can fix it. [NEEDS_PRO] wins over a missing permission. */
+enum class RuleAvailability { AVAILABLE, NEEDS_PRO, NEEDS_BLUETOOTH, NEEDS_LOCATION }
 
 /** One row of the automation screen: a rule plus the facet names it refers to. */
 data class AutomationRuleItem(
@@ -41,6 +42,8 @@ data class FacetAutomationScreenState(
     val items: List<AutomationRuleItem> = emptyList(),
     val status: AutomationStatus? = null,
     val canAddRule: Boolean = true,
+    /** False shows the free-plan strip and the Pro pills. */
+    val isPro: Boolean = true,
 )
 
 /**
@@ -54,27 +57,26 @@ class ObserveFacetAutomationUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val permissionRepository: AutomationPermissionRepository,
+    private val entitlementRepository: EntitlementRepository,
+    private val canUseTrigger: CanUseTriggerUseCase,
 ) {
     operator fun invoke(refresh: Flow<Int>): Flow<FacetAutomationScreenState> = combine(
         ruleRepository.observeRules(),
         stateRepository.state,
         facetRepository.observeFacets(),
         settingsRepository.settings,
+        entitlementRepository.isPro,
         refresh,
-    ) { rules, state, facets, settings, _ ->
+    ) { rules, state, facets, settings, isPro, _ ->
         buildFacetAutomationScreenState(
             rules = rules,
             state = state,
             facets = facets,
             activeFacetId = settings.activeFacetId,
             isGranted = permissionRepository::isGranted,
-            isPro = ENTITLED_UNTIL_BILLING,
+            entitledRuleIds = canUseTrigger.entitledRuleIds(rules, isPro),
+            isPro = isPro,
         )
-    }
-
-    private companion object {
-        /** Everyone counts as entitled until billing exists; phase 7 replaces this with the real entitlement. */
-        const val ENTITLED_UNTIL_BILLING = true
     }
 }
 
@@ -84,6 +86,7 @@ internal fun buildFacetAutomationScreenState(
     facets: List<FacetEntity>,
     activeFacetId: Long,
     isGranted: (AutomationPermission) -> Boolean,
+    entitledRuleIds: Set<Long>,
     isPro: Boolean,
 ): FacetAutomationScreenState {
     val facetNames = facets.associate { it.id to it.name }
@@ -92,20 +95,22 @@ internal fun buildFacetAutomationScreenState(
             rule = rule,
             targetFacetName = facetNames[rule.targetFacetId].orEmpty(),
             endFacetName = (rule.endBehavior as? RuleEndBehavior.SwitchTo)?.let { facetNames[it.facetId] },
-            availability = rule.availability(isGranted),
+            availability = rule.availability(isGranted, entitled = rule.id in entitledRuleIds),
         )
     }
     return FacetAutomationScreenState(
         items = items,
         status = items.status(state, facetNames[activeFacetId].orEmpty(), activeFacetId),
         canAddRule = AutomationLimits.canAddRule(rules.size, isPro),
+        isPro = isPro,
     )
 }
 
-private fun AutomationRule.availability(isGranted: (AutomationPermission) -> Boolean): RuleAvailability {
-    val needed = trigger.requiredPermission() ?: return RuleAvailability.AVAILABLE
+private fun AutomationRule.availability(isGranted: (AutomationPermission) -> Boolean, entitled: Boolean): RuleAvailability {
+    val needed = trigger.requiredPermission()
     return when {
-        isGranted(needed) -> RuleAvailability.AVAILABLE
+        !entitled -> RuleAvailability.NEEDS_PRO
+        needed == null || isGranted(needed) -> RuleAvailability.AVAILABLE
         needed == AutomationPermission.BLUETOOTH_CONNECT -> RuleAvailability.NEEDS_BLUETOOTH
         else -> RuleAvailability.NEEDS_LOCATION
     }
