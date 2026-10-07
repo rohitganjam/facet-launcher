@@ -6,6 +6,8 @@ enum class PermissionKind {
     CONTACTS,
     USAGE_ACCESS,
     NOTIFICATION_ACCESS,
+    BLUETOOTH,
+    LOCATION,
 }
 
 data class PermissionRowState(
@@ -14,7 +16,8 @@ data class PermissionRowState(
     val subtitle: String,
     val isGranted: Boolean,
     /**
-     * Only meaningful for [PermissionKind.CALENDAR]/[PermissionKind.CONTACTS] — whether the app
+     * Only meaningful for the runtime-permission rows ([PermissionKind.CALENDAR], [PermissionKind.CONTACTS],
+     * [PermissionKind.BLUETOOTH], [PermissionKind.LOCATION]) — whether the app
      * has already asked the system for this permission at least once. `checkSelfPermission`
      * alone can't tell "never asked" apart from "the user said no for good"; combined with
      * [android.app.Activity]'s own `shouldShowRequestPermissionRationale` at the call site, this

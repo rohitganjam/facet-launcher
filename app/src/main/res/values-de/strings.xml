@@ -402,6 +402,10 @@
     <string name="permission_usage_access_subtitle">Ermöglicht die Listen „Zuletzt verwendet“ und „Meistgenutzt“.</string>
     <string name="permission_notification_access_title">Benachrichtigungszugriff</string>
     <string name="permission_notification_access_subtitle">Zeigt ein Punkt- oder Zahlenabzeichen bei Apps mit aktiven Benachrichtigungen.</string>
+    <string name="permission_bluetooth_title">Bluetooth</string>
+    <string name="permission_bluetooth_subtitle">Lässt Automatisierungsregeln für Facetten auf ein gekoppeltes Bluetooth-Gerät reagieren, etwa das Auto, und listet gekoppelte Geräte beim Einrichten einer Regel auf.</string>
+    <string name="permission_location_title">Standort</string>
+    <string name="permission_location_subtitle">Android verlangt ihn, um den WLAN-Namen für Regeln zu einem bestimmten Netzwerk zu lesen. Facet nutzt ihn nur dafür, nie um den Aufenthaltsort zu ermitteln.</string>
 
     <!-- DockSettingsScreen -->
     <string name="dock_display_style">Anzeigestil</string>

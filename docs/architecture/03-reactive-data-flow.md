@@ -202,6 +202,10 @@ sequenceDiagram
 |---|---|---|
 | Notification badges | `FacetNotificationListenerService` (`@AndroidEntryPoint`) pushes `setActiveNotifications()` into `NotificationBadgeRepository`'s `MutableStateFlow` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
 | Battery | `callbackFlow` over `ACTION_BATTERY_CHANGED` sticky broadcast | `ObserveClockAccessoriesUseCase` |
+| Headphones | `HeadphonesRepository.observeHeadphonesPluggedIn()` — `callbackFlow` over `AudioDeviceCallback` | `DeviceStateRepository` |
+| Wi-Fi | `WifiRepository.observeWifiState()` — synchronous read of current networks, then `ConnectivityManager` network callbacks | `DeviceStateRepository` |
+| Bluetooth connections | `BluetoothRepository.observeConnectedAddresses()` — ACL broadcasts + a one-time profile query; null until it answers | `DeviceStateRepository` |
+| Device state | `DeviceStateRepository.deviceState` — `combine` of battery, headphones, Wi-Fi and Bluetooth, shared with `stateIn(WhileSubscribed)` | `RefreshAutomationStateUseCase` (via `current()`), `RunFacetAutomationUseCase` |
 | Wake events | `WakeEventsRepository.observeWakeEvents()` — `callbackFlow` over `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` | `RunFacetAutomationUseCase` (see [15](15-flow-facet-automation.md)) |
 | Next alarm | `callbackFlow` over `ACTION_NEXT_ALARM_CLOCK_CHANGED` + injected `Clock` | `ObserveClockAccessoriesUseCase` |
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |

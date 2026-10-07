@@ -417,4 +417,35 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.accentFromSystem)
         assertEquals(null, settings.customAccentSwatch)
     }
+
+    @Test
+    fun `the permission-requested flags all default to false`() = runTest {
+        val settings = createRepository().settings.first()
+
+        assertFalse(settings.calendarPermissionRequested)
+        assertFalse(settings.contactsPermissionRequested)
+        assertFalse(settings.bluetoothPermissionRequested)
+        assertFalse(settings.locationPermissionRequested)
+    }
+
+    @Test
+    fun `setBluetoothPermissionRequested and setLocationPermissionRequested round-trip independently`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When only the Bluetooth request is recorded
+        repository.setBluetoothPermissionRequested(true)
+
+        // Then it comes back without touching location or the other flags
+        val afterBluetooth = repository.settings.first()
+        assertEquals(true, afterBluetooth.bluetoothPermissionRequested)
+        assertEquals(false, afterBluetooth.locationPermissionRequested)
+        assertEquals(false, afterBluetooth.contactsPermissionRequested)
+
+        // And recording location then leaves Bluetooth set
+        repository.setLocationPermissionRequested(true)
+        val afterLocation = repository.settings.first()
+        assertEquals(true, afterLocation.bluetoothPermissionRequested)
+        assertEquals(true, afterLocation.locationPermissionRequested)
+    }
 }

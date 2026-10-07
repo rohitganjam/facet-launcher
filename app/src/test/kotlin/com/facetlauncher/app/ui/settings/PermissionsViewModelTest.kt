@@ -1,11 +1,14 @@
 package com.facetlauncher.app.ui.settings
 
 import android.content.Context
+import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
+import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,6 +26,8 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
@@ -49,6 +54,8 @@ class PermissionsViewModelTest {
         contactPermissionRepository: ContactPermissionRepository = mock(ContactPermissionRepository::class.java),
         usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
         notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
+        automationPermissionRepository: AutomationPermissionRepository = mock(AutomationPermissionRepository::class.java),
+        deviceStateRepository: DeviceStateRepository = mock(DeviceStateRepository::class.java),
     ): PermissionsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         // A mocked Context's getString(Int) otherwise returns null — fine for Java callers, but
@@ -63,6 +70,8 @@ class PermissionsViewModelTest {
             contactPermissionRepository,
             usageAccessRepository,
             notificationAccessRepository,
+            automationPermissionRepository,
+            deviceStateRepository,
         )
     }
 
@@ -76,18 +85,27 @@ class PermissionsViewModelTest {
         `when`(usageAccessRepository.isGranted()).thenReturn(false)
         val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
         `when`(notificationAccessRepository.isGranted()).thenReturn(true)
+        val automationPermissionRepository = mock(AutomationPermissionRepository::class.java)
+        `when`(automationPermissionRepository.isGranted(AutomationPermission.BLUETOOTH_CONNECT)).thenReturn(true)
+        `when`(automationPermissionRepository.isGranted(AutomationPermission.LOCATION)).thenReturn(false)
         val viewModel = createViewModel(
-            settings = LauncherSettings(calendarPermissionRequested = true, contactsPermissionRequested = false),
+            settings = LauncherSettings(
+                calendarPermissionRequested = true,
+                contactsPermissionRequested = false,
+                bluetoothPermissionRequested = true,
+                locationPermissionRequested = false,
+            ),
             calendarPermissionRepository = calendarPermissionRepository,
             contactPermissionRepository = contactPermissionRepository,
             usageAccessRepository = usageAccessRepository,
             notificationAccessRepository = notificationAccessRepository,
+            automationPermissionRepository = automationPermissionRepository,
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         val permissions = viewModel.uiState.value.permissions
-        assertEquals(4, permissions.size)
+        assertEquals(6, permissions.size)
 
         val calendar = permissions.single { it.kind == PermissionKind.CALENDAR }
         assertTrue(calendar.isGranted)
@@ -102,6 +120,33 @@ class PermissionsViewModelTest {
 
         val notificationAccess = permissions.single { it.kind == PermissionKind.NOTIFICATION_ACCESS }
         assertTrue(notificationAccess.isGranted)
+
+        val bluetooth = permissions.single { it.kind == PermissionKind.BLUETOOTH }
+        assertTrue(bluetooth.isGranted)
+        assertTrue(bluetooth.hasRequestedBefore)
+
+        val location = permissions.single { it.kind == PermissionKind.LOCATION }
+        assertFalse(location.isGranted)
+        assertFalse(location.hasRequestedBefore)
+    }
+
+    @Test
+    fun `the bluetooth and location rows come after the existing four`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                PermissionKind.CALENDAR,
+                PermissionKind.CONTACTS,
+                PermissionKind.USAGE_ACCESS,
+                PermissionKind.NOTIFICATION_ACCESS,
+                PermissionKind.BLUETOOTH,
+                PermissionKind.LOCATION,
+            ),
+            viewModel.uiState.value.permissions.map { it.kind },
+        )
     }
 
     @Test
@@ -116,6 +161,43 @@ class PermissionsViewModelTest {
 
         verify(settingsRepository).setCalendarPermissionRequested(true)
         verify(settingsRepository).setContactsPermissionRequested(true)
+    }
+
+    @Test
+    fun `answering the bluetooth or location request records it and wakes the automation sources`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val deviceStateRepository = mock(DeviceStateRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository, deviceStateRepository = deviceStateRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.markBluetoothPermissionRequested()
+        viewModel.markLocationPermissionRequested()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setBluetoothPermissionRequested(true)
+        verify(settingsRepository).setLocationPermissionRequested(true)
+        // Once per answer: a fresh grant must start the Bluetooth / Wi-Fi sources reading
+        verify(deviceStateRepository, times(2)).onPermissionsChanged()
+    }
+
+    @Test
+    fun `a grant changed outside the app wakes the automation sources on the next refresh`() = runTest {
+        // Given a first refresh that records the starting grants
+        var bluetoothGranted = false
+        val automationPermissionRepository = mock(AutomationPermissionRepository::class.java)
+        `when`(automationPermissionRepository.isGranted(AutomationPermission.BLUETOOTH_CONNECT)).thenAnswer { bluetoothGranted }
+        val deviceStateRepository = mock(DeviceStateRepository::class.java)
+        val viewModel = createViewModel(automationPermissionRepository = automationPermissionRepository, deviceStateRepository = deviceStateRepository)
+        viewModel.refresh()
+        verify(deviceStateRepository, never()).onPermissionsChanged()
+
+        // When the user grants Bluetooth in system Settings and returns, then a refresh with nothing new follows
+        bluetoothGranted = true
+        viewModel.refresh()
+        viewModel.refresh()
+
+        // Then the sources were woken exactly once, for the change
+        verify(deviceStateRepository, times(1)).onPermissionsChanged()
     }
 
     @Test

@@ -8,11 +8,11 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (35)  @Singleton Repositories — the only layer that touches
+├── data/                          (40)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (5)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule + the @AutomationDataStore qualifier
 │   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
-│   ├── model/                     (34)  Immutable value types & enums shared by every layer
+│   ├── model/                     (36)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
@@ -70,9 +70,9 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          28   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+├── data/          33   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     12   Converters, entities, DAO-level behaviour via in-memory Room
-│   ├── model/      4   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows), AutomationRuleValidationTest
+│   ├── model/      6   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
 ├── domain/        37   one test per use case (pure logic — no Android needed for most)
 └── ui/            31   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)

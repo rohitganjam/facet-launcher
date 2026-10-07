@@ -402,6 +402,10 @@
     <string name="permission_usage_access_subtitle">Alimente les listes d\'apps Récentes et Les plus utilisées.</string>
     <string name="permission_notification_access_title">Accès aux notifications</string>
     <string name="permission_notification_access_subtitle">Affiche un point ou un nombre sur les apps ayant des notifications actives.</string>
+    <string name="permission_bluetooth_title">Bluetooth</string>
+    <string name="permission_bluetooth_subtitle">Permet aux règles d\'automatisation des facettes de réagir à un appareil Bluetooth associé, comme la voiture, et liste les appareils associés lors de la création d\'une règle.</string>
+    <string name="permission_location_title">Localisation</string>
+    <string name="permission_location_subtitle">Android l\'exige pour lire le nom du réseau Wi-Fi dans les règles liées à un réseau précis. Facet ne l\'utilise que pour cela, jamais pour savoir où vous êtes.</string>
 
     <!-- DockSettingsScreen -->
     <string name="dock_display_style">Style d\'affichage</string>

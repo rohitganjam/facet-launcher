@@ -3,16 +3,22 @@ package com.facetlauncher.app.domain
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
+import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.data.model.BatteryDirection
 import com.facetlauncher.app.data.model.BatteryLevelCondition
+import com.facetlauncher.app.data.model.BatteryStatus
+import com.facetlauncher.app.data.model.DeviceState
 import com.facetlauncher.app.data.model.RuleEndBehavior
+import com.facetlauncher.app.data.model.WifiState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -60,7 +66,17 @@ class ApplyFacetAutomationUseCaseTest {
         val state = AutomationStateRepository(
             PreferenceDataStoreFactory.create(produceFile = { tempFolder.newFile("automation-${System.nanoTime()}.preferences_pb") }),
         )
-        private val refresh = RefreshAutomationStateUseCase(rules, state, facets, settings, EvaluateFacetAutomationUseCase(), clock)
+        /** What the device reports right now; tests assign it. */
+        var deviceState = DeviceState()
+
+        /** Permissions the fake permission check reports as not granted. */
+        val denied = mutableSetOf<AutomationPermission>()
+
+        private val devices = mock(DeviceStateRepository::class.java).also { `when`(it.current()).thenAnswer { deviceState } }
+        private val permissions = object : AutomationPermissionRepository(ApplicationProvider.getApplicationContext()) {
+            override fun isGranted(permission: AutomationPermission) = permission !in denied
+        }
+        private val refresh = RefreshAutomationStateUseCase(rules, state, facets, settings, EvaluateFacetAutomationUseCase(), devices, permissions, clock)
         val activate = ActivateFacetByIdUseCase(facets, settings, state, refresh)
         val apply = ApplyFacetAutomationUseCase(refresh, activate, settings)
 
@@ -246,14 +262,114 @@ class ApplyFacetAutomationUseCaseTest {
         assertEquals(f.personal, f.activeFacet())
     }
 
+    // --- device triggers ---
+
+    private fun Fixture.bluetoothRule(negated: Boolean = false) =
+        AutomationTrigger.Bluetooth(deviceAddress = "AA:BB", deviceName = "Car", negated = negated)
+
     @Test
-    fun `device triggers are never met until their sources exist`() = runTest {
+    fun `a bluetooth rule applies while its device is connected and ends when it disconnects`() = runTest {
         val f = Fixture(tempFolder)
-        f.saveRule(AutomationTrigger.Battery(whileCharging = false, level = BatteryLevelCondition(BatteryDirection.BELOW, 100)))
+        f.saveRule(f.bluetoothRule())
+
+        f.deviceState = DeviceState(connectedBluetoothAddresses = setOf("AA:BB"))
+        f.apply()
+        assertEquals(f.work, f.activeFacet())
+
+        f.deviceState = DeviceState(connectedBluetoothAddresses = emptySet())
+        f.apply()
+        assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a bluetooth rule never fires while the connection state is still unknown, negated or not`() = runTest {
+        val f = Fixture(tempFolder)
+        f.saveRule(f.bluetoothRule(negated = true), target = f.travel)
+        f.deviceState = DeviceState(connectedBluetoothAddresses = null)
 
         f.apply()
 
         assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a named wifi rule without its location permission is unusable and never applies`() = runTest {
+        val f = Fixture(tempFolder)
+        val trigger = AutomationTrigger.Wifi(ssid = "Home")
+        f.saveRule(trigger)
+        f.deviceState = DeviceState(wifi = WifiState(connected = true, ssid = "Home"))
+        f.denied += AutomationPermission.LOCATION
+
+        f.apply()
+        assertEquals("permission missing", f.personal, f.activeFacet())
+
+        f.denied -= AutomationPermission.LOCATION
+        f.apply()
+        assertEquals("permission granted", f.work, f.activeFacet())
+    }
+
+    @Test
+    fun `a revoked permission ends a running rule like its condition stopping`() = runTest {
+        val f = Fixture(tempFolder)
+        val trigger = f.bluetoothRule()
+        f.saveRule(trigger)
+        f.deviceState = DeviceState(connectedBluetoothAddresses = setOf("AA:BB"))
+        f.apply()
+        assertEquals(f.work, f.activeFacet())
+
+        f.denied += AutomationPermission.BLUETOOTH_CONNECT
+        f.apply()
+
+        assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a battery rule follows the level and the charging state`() = runTest {
+        val f = Fixture(tempFolder)
+        f.saveRule(AutomationTrigger.Battery(whileCharging = false, level = BatteryLevelCondition(BatteryDirection.BELOW, 20)))
+
+        f.deviceState = DeviceState(battery = BatteryStatus(percent = 50, isCharging = false))
+        f.apply()
+        assertEquals("above the threshold", f.personal, f.activeFacet())
+
+        f.deviceState = DeviceState(battery = BatteryStatus(percent = 19, isCharging = false))
+        f.apply()
+        assertEquals("below the threshold", f.work, f.activeFacet())
+
+        f.deviceState = DeviceState(battery = BatteryStatus(percent = 19, isCharging = true))
+        f.apply()
+        assertEquals("plugged in", f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a headphones rule applies while they are plugged in`() = runTest {
+        val f = Fixture(tempFolder)
+        f.saveRule(AutomationTrigger.Headphones())
+
+        f.deviceState = DeviceState(headphonesPluggedIn = true)
+        f.apply()
+        assertEquals(f.work, f.activeFacet())
+
+        f.deviceState = DeviceState(headphonesPluggedIn = false)
+        f.apply()
+        assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a manual switch also overrides a device rule that became true but was never evaluated`() = runTest {
+        // Given a pass while the device is idle, then the car connects with no pass in between
+        val f = Fixture(tempFolder)
+        f.saveRule(f.bluetoothRule())
+        f.deviceState = DeviceState(connectedBluetoothAddresses = emptySet())
+        f.apply()
+        f.deviceState = DeviceState(connectedBluetoothAddresses = setOf("AA:BB"))
+
+        // When the user switches by hand, and a later pass runs
+        f.activate(f.travel)
+        f.apply()
+
+        // Then their choice wins, exactly as for a schedule
+        assertEquals(f.travel, f.activeFacet())
     }
 
     @Test

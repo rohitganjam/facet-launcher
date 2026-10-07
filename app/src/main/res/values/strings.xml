@@ -442,6 +442,10 @@
     <string name="permission_usage_access_subtitle">Powers the Recents and Most used app lists.</string>
     <string name="permission_notification_access_title">Notification access</string>
     <string name="permission_notification_access_subtitle">Shows a dot or count badge on apps with active notifications.</string>
+    <string name="permission_bluetooth_title">Bluetooth</string>
+    <string name="permission_bluetooth_subtitle">Lets facet automation rules react to a paired Bluetooth device, such as your car, and lists paired devices when you set one up.</string>
+    <string name="permission_location_title">Location</string>
+    <string name="permission_location_subtitle">Android requires it to read the Wi-Fi network name for rules about a named network. Facet only uses it for that, never to find where you are.</string>
 
     <!-- DockSettingsScreen (header reuses settings_dock_title) -->
     <string name="dock_display_style">Show Dock apps as</string>

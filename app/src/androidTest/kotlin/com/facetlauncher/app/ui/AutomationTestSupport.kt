@@ -2,17 +2,26 @@ package com.facetlauncher.app.ui
 
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
+import com.facetlauncher.app.data.BatteryRepository
+import com.facetlauncher.app.data.BluetoothRepository
+import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.HeadphonesRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
+import com.facetlauncher.app.data.WifiRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.ApplyFacetAutomationUseCase
 import com.facetlauncher.app.domain.EvaluateFacetAutomationUseCase
 import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.domain.RunFacetAutomationUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.io.File
 import java.time.Clock
 
@@ -21,6 +30,15 @@ fun testAutomationStateRepository(context: Context) = AutomationStateRepository(
     PreferenceDataStoreFactory.create(
         produceFile = { File(context.cacheDir, "automation-test-${System.nanoTime()}.preferences_pb") },
     ),
+)
+
+/** A real [DeviceStateRepository] over the device's own sources, for hand-built ViewModels. */
+fun testDeviceStateRepository(context: Context) = DeviceStateRepository(
+    BatteryRepository(context),
+    HeadphonesRepository(context),
+    WifiRepository(context),
+    BluetoothRepository(context),
+    CoroutineScope(SupervisorJob() + Dispatchers.Default),
 )
 
 /** The automation use cases a hand-built ViewModel needs, wired over the test's own database and settings. */
@@ -34,13 +52,18 @@ fun testAutomation(
 ): TestAutomation {
     val rules = AutomationRuleRepository(database.automationRuleDao(), database.facetDao())
     val state = testAutomationStateRepository(context)
-    val refresh = RefreshAutomationStateUseCase(rules, state, facetRepository, settingsRepository, EvaluateFacetAutomationUseCase(), Clock.systemDefaultZone())
+    val devices = testDeviceStateRepository(context)
+    val refresh = RefreshAutomationStateUseCase(
+        rules, state, facetRepository, settingsRepository, EvaluateFacetAutomationUseCase(),
+        devices, AutomationPermissionRepository(context), Clock.systemDefaultZone(),
+    )
     val activate = ActivateFacetByIdUseCase(facetRepository, settingsRepository, state, refresh)
     val run = RunFacetAutomationUseCase(
         ApplyFacetAutomationUseCase(refresh, activate, settingsRepository),
         rules,
         WakeEventsRepository(context),
         settingsRepository,
+        devices,
     )
     return TestAutomation(activate, run)
 }

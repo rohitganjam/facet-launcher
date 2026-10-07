@@ -1,11 +1,12 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
+import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.model.AutomationRule
-import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.isMetBy
 import kotlinx.coroutines.flow.first
 import java.time.Clock
 import java.time.LocalDateTime
@@ -27,6 +28,8 @@ class RefreshAutomationStateUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val evaluate: EvaluateFacetAutomationUseCase,
+    private val deviceStateRepository: DeviceStateRepository,
+    private val permissionRepository: AutomationPermissionRepository,
     private val clock: Clock,
 ) {
     /** Null while there is no valid active facet yet (a fresh install before `EnsureActiveFacetUseCase` has run). */
@@ -37,7 +40,13 @@ class RefreshAutomationStateUseCase @Inject constructor(
 
         val rules = ruleRepository.getRules()
         val now = LocalDateTime.now(clock)
-        val conditionsMet = rules.filter { it.isConditionMet(now) }.map { it.id }.toSet()
+        val deviceState = deviceStateRepository.current()
+        // A rule is met only when it is usable (its permission is granted) and its condition holds now.
+        // The Pro gate (phase 7) will filter here too.
+        val conditionsMet = rules
+            .filter { permissionRepository.isUsable(it.trigger) && it.trigger.isMetBy(deviceState, now) }
+            .map { it.id }
+            .toSet()
         var desiredFacetId = currentFacetId
         stateRepository.update { state ->
             val result = evaluate(rules, conditionsMet, state, currentFacetId, existingFacetIds)
@@ -46,10 +55,4 @@ class RefreshAutomationStateUseCase @Inject constructor(
         }
         return AutomationDecision(desiredFacetId, currentFacetId)
     }
-}
-
-private fun AutomationRule.isConditionMet(now: LocalDateTime): Boolean = when (val t = trigger) {
-    is AutomationTrigger.Schedule -> t.isActiveAt(now)
-    // The device triggers arrive with their sources in phase 5; until then they are never met.
-    else -> false
 }

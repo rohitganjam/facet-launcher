@@ -435,6 +435,8 @@ erDiagram
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean calendar_permission_requested "default false"
         boolean contacts_permission_requested "default false"
+        boolean bluetooth_permission_requested "default false"
+        boolean location_permission_requested "default false"
         boolean onboarding_completed "default false"
         boolean defaults_seeded "default false"
         stringset coach_marks_seen "CoachMarkIds, default empty"
@@ -502,7 +504,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (49 functions)
+### 5.3 Write path — the complete writer API (51 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -557,6 +559,8 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
+| `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel` |
+| `setLocationPermissionRequested(Boolean)` | `location_permission_requested` | set | `PermissionsViewModel` |
 | `setOnboardingCompleted(Boolean)` | `onboarding_completed` | set | `LauncherViewModel.completeOnboarding()` |
 | `setDefaultsSeeded(Boolean)` | `defaults_seeded` | set | `SeedDefaultDockUseCase` |
 | `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel` |
@@ -674,6 +678,8 @@ its position (see chat history: calendar/appearance styling consolidation).
 |---|---|---|---|---|
 | `calendar_permission_requested` | Boolean | `calendarPermissionRequested` | `false` | "we already asked once" — the grant itself is read live from `CalendarPermissionRepository` |
 | `contacts_permission_requested` | Boolean | `contactsPermissionRequested` | `false` | same, for `ContactPermissionRepository` |
+| `bluetooth_permission_requested` | Boolean | `bluetoothPermissionRequested` | `false` | same, for `BLUETOOTH_CONNECT` (facet automation); grant read live from `AutomationPermissionRepository` |
+| `location_permission_requested` | Boolean | `locationPermissionRequested` | `false` | same, for `ACCESS_FINE_LOCATION` (named Wi-Fi networks) |
 
 #### First-run & coach marks
 
@@ -718,11 +724,11 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 38 of the 52 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 38 of the 54 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,
-`calendar_colors`, `search_settings_enabled`, both `*_permission_requested` flags,
+`calendar_colors`, `search_settings_enabled`, all four `*_permission_requested` flags,
 `onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.
 `BackupFacet` has the same six omissions per facet (`facets.clockAccentColorOption`,

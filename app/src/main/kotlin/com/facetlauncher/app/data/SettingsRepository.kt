@@ -77,6 +77,8 @@ private object Keys {
     val SYSTEM_BAR_ICON_STYLE = stringPreferencesKey("system_bar_icon_style")
     val CALENDAR_PERMISSION_REQUESTED = booleanPreferencesKey("calendar_permission_requested")
     val CONTACTS_PERMISSION_REQUESTED = booleanPreferencesKey("contacts_permission_requested")
+    val BLUETOOTH_PERMISSION_REQUESTED = booleanPreferencesKey("bluetooth_permission_requested")
+    val LOCATION_PERMISSION_REQUESTED = booleanPreferencesKey("location_permission_requested")
     val APP_ROW_POSITION = stringPreferencesKey("app_row_position")
     val APP_ROW_PRESENTATION = stringPreferencesKey("app_row_presentation")
     val LIST_CONTENT_MODE = stringPreferencesKey("list_content_mode")
@@ -163,6 +165,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.systemBarIconStyle,
             calendarPermissionRequested = preferences[Keys.CALENDAR_PERMISSION_REQUESTED] ?: defaults.calendarPermissionRequested,
             contactsPermissionRequested = preferences[Keys.CONTACTS_PERMISSION_REQUESTED] ?: defaults.contactsPermissionRequested,
+            bluetoothPermissionRequested = preferences[Keys.BLUETOOTH_PERMISSION_REQUESTED] ?: defaults.bluetoothPermissionRequested,
+            locationPermissionRequested = preferences[Keys.LOCATION_PERMISSION_REQUESTED] ?: defaults.locationPermissionRequested,
             appRowPosition = preferences[Keys.APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() }
                 ?: defaults.appRowPosition,
             appRowPresentation = preferences[Keys.APP_ROW_PRESENTATION]?.let { runCatching { AppRowPresentation.valueOf(it) }.getOrNull() }
@@ -327,6 +331,14 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setContactsPermissionRequested(requested: Boolean) {
         dataStore.edit { it[Keys.CONTACTS_PERMISSION_REQUESTED] = requested }
+    }
+
+    suspend fun setBluetoothPermissionRequested(requested: Boolean) {
+        dataStore.edit { it[Keys.BLUETOOTH_PERMISSION_REQUESTED] = requested }
+    }
+
+    suspend fun setLocationPermissionRequested(requested: Boolean) {
+        dataStore.edit { it[Keys.LOCATION_PERMISSION_REQUESTED] = requested }
     }
 
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appRowPosition]. */

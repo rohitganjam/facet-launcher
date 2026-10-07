@@ -1,10 +1,12 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AutomationRuleRepository
+import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.DeviceState
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,11 +31,13 @@ class RunFacetAutomationUseCaseTest {
         val homePresses = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
         val rules = MutableStateFlow<List<AutomationRule>>(emptyList())
         val settings = MutableStateFlow(LauncherSettings(activeFacetId = 1L))
+        val deviceState = MutableStateFlow(DeviceState())
 
         private val ruleRepository = mock(AutomationRuleRepository::class.java).also { `when`(it.observeRules()).thenReturn(rules) }
         private val wakeEvents = mock(WakeEventsRepository::class.java).also { `when`(it.observeWakeEvents()).thenReturn(wake) }
         private val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settings) }
-        val useCase = RunFacetAutomationUseCase(apply, ruleRepository, wakeEvents, settingsRepository)
+        private val deviceStateRepository = mock(DeviceStateRepository::class.java).also { `when`(it.deviceState).thenReturn(deviceState) }
+        val useCase = RunFacetAutomationUseCase(apply, ruleRepository, wakeEvents, settingsRepository, deviceStateRepository)
 
         fun passes(): Int = mockingDetails(apply).invocations.count { it.method.name == "invoke" }
     }
@@ -98,6 +102,18 @@ class RunFacetAutomationUseCaseTest {
         val before = fixture.passes()
 
         fixture.settings.value = LauncherSettings(activeFacetId = 2L)
+        runCurrent()
+
+        assertEquals(before + 1, fixture.passes())
+    }
+
+    @Test
+    fun `a change in the device state triggers a pass`() = runTest {
+        val fixture = Fixture()
+        start(fixture)
+        val before = fixture.passes()
+
+        fixture.deviceState.value = DeviceState(headphonesPluggedIn = true)
         runCurrent()
 
         assertEquals(before + 1, fixture.passes())

@@ -17,7 +17,7 @@ and [14](14-flow-deep-links-and-shortcuts.md); persistence is in [02 §5.7](02-p
 | 2 | `FacetSwitchSource`, manual-switch recording in `ActivateFacetByIdUseCase`, `AutomationStateRepository` | **Built**, unit-tested |
 | 3 | `automation_rules` table (DB v26), `AutomationRuleDao`, `AutomationRuleRepository`, `AutomationTrigger`, `trigger` on `AutomationRule` | **Built**, unit-tested, migration tested on an emulator |
 | 4 | Schedule truth, `WakeEventsRepository`, `RefreshAutomationStateUseCase`, `ApplyFacetAutomationUseCase`, `RunFacetAutomationUseCase` started from `LauncherViewModel.init`, and the manual-switch re-sample | **Built**, unit-tested, and the touched screens' instrumented tests run on an emulator |
-| 5 | Device trigger sources (Bluetooth, Wi-Fi, headphones, battery state and level) | Planned |
+| 5 | `DeviceState` and every trigger's truth (`isMetBy`), the Bluetooth, Wi-Fi, headphones and battery sources, `DeviceStateRepository`, `AutomationPermissionRepository`, the manifest permissions, and the picker lists | **Built**, unit-tested (Robolectric shadows for the Android glue); smoke-run on an emulator |
 | 6 | Automation screen, rule editor, trigger picker | Planned |
 | 7 | Pro gating seam (`CanUseTriggerUseCase`, the rule-limit enforcement). The 2-rule free limit itself, `AutomationLimits`, is already built | Planned |
 
@@ -59,7 +59,8 @@ flowchart TB
         RR["AutomationRuleRepository\nRoom rules"]:::built
         SR["AutomationStateRepository\nDataStore facet_automation"]:::built
         WAKE["WakeEventsRepository\nscreen on, unlock, clock change"]:::built
-        TS["Device trigger sources\nBluetooth, Wi-Fi, headphones, battery"]:::planned
+        DEV["DeviceStateRepository\nbattery, headphones, Wi-Fi, Bluetooth"]:::built
+        PERM["AutomationPermissionRepository\nBLUETOOTH_CONNECT, location"]:::built
         SET["SettingsRepository\nactive facet id"]
     end
     SW --> ACT
@@ -72,7 +73,9 @@ flowchart TB
     REF --> EVAL
     REF --> RR
     REF --> SR
-    REF -.-> TS
+    REF --> DEV
+    REF --> PERM
+    RUN --> DEV
     REF -.-> CAN
     ACT -- "MANUAL: re-sample first" --> REF
     ACT -- "MANUAL: afterManualSwitch" --> SR
@@ -309,14 +312,55 @@ true — is shown again; this is why evaluation is level-based and not edge-trig
 - **No alarms.** A schedule is applied when the user looks at the phone, never underneath them: a 9:00
   rule that applies at 9:03 on unlock is indistinguishable from exact timing.
 
+## 5c. Device triggers (built)
+
+Every trigger's truth is one pure function, `AutomationTrigger.isMetBy(state: DeviceState, now)`
+(`data/model/DeviceState.kt`), over a snapshot of the device:
+
+| `DeviceState` field | Source | Notes |
+|---|---|---|
+| `battery: BatteryStatus?` | `BatteryRepository` (sticky `ACTION_BATTERY_CHANGED`) | percent and charging; `FULL` counts as charging |
+| `headphonesPluggedIn` | `HeadphonesRepository` (`AudioDeviceCallback`) | wired headphones/headset, USB headset, Bluetooth A2DP/SCO, BLE headset. Android can't tell headphones from other Bluetooth audio, so a car stereo counts too; a Bluetooth rule matches one device precisely |
+| `wifi: WifiState` | `WifiRepository` (network callbacks with location info) | connected flag, and the network name when readable |
+| `connectedBluetoothAddresses: Set<String>?` | `BluetoothRepository` | **null until the first query answers**; see below |
+
+**Missing readings never fire a rule, negated or not.** An unknown Bluetooth state, a battery with no
+reading, and a *named* Wi-Fi network whose name is unreadable (no location permission, or location
+off) all make the rule "not met", even for "while not connected". A "not connected" rule therefore can't
+fire on a guess at startup. An empty Bluetooth set is a real answer, so a "not connected" rule is met.
+
+- **Wi-Fi** reads the current networks synchronously first, so there is no false "disconnected" at
+  startup, then follows network callbacks. The name has Android's quotes stripped, and the
+  `<unknown ssid>` placeholder is treated as unreadable. Names match exactly.
+- **Bluetooth** has no public "is this device connected" call, so it combines connect and disconnect
+  broadcasts (`ACTION_ACL_*`, registered dynamically while the process lives, which sidesteps the
+  manifest-registration question), a one-time query of the A2DP and headset profiles plus GATT, and a
+  1.5 s timeout after which the set is treated as known. Turning Bluetooth off clears it. Without
+  `BLUETOOTH_CONNECT` it stays unknown.
+- **Battery** rules need no source of their own: `Battery.isMetBy(charging, levelPercent)` over the
+  existing battery reading. There is no hysteresis; with strict thresholds and the level only moving
+  one percent at a time it isn't needed.
+- **Permissions.** The Bluetooth and Location rows on Settings → Permissions explain why each is needed and grant it (with an "asked before" flag each, so a permanent denial sends the user to App Info), and wake the sources after a grant. `AutomationPermissionRepository.isUsable(trigger)` reads the grant live on every
+  pass; a rule whose permission is missing is never met. `AutomationTrigger.requiredPermission()` maps
+  Bluetooth to `BLUETOOTH_CONNECT` and a *named* Wi-Fi network to `ACCESS_FINE_LOCATION` (the other
+  triggers need none). The manifest declares `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION`,
+  `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE`, and still no `INTERNET`.
+- **`DeviceStateRepository`** combines the four sources into one hot `StateFlow<DeviceState>`, shared
+  with `WhileSubscribed`. `RunFacetAutomationUseCase` collects it for the whole process (and treats every
+  change as a trigger), so `current()` is a cheap read and a manual switch samples real device state.
+  Wi-Fi and Bluetooth check their permission when they subscribe, so `onPermissionsChanged()`
+  re-subscribes them after a grant; the phase 6 permission gate calls it.
+- **Picker data.** `WifiRepository.nearbyNetworkNames(current)` lists the current network first, then
+  the latest scan by signal strength (empty without location), and `BluetoothRepository.pairedDevices()`
+  lists paired devices by name, falling back to the address. The user only ever picks from these lists.
+
 ## 6. Planned: rules, triggers, and the runner
 
-Recorded here so the framework reads end to end. The schedule trigger and the runner are built (§5b);
-the rest below is not.
+Recorded here so the framework reads end to end. The schedule trigger, the runner (§5b) and the device
+triggers (§5c) are built; the rest below is not.
 
-**Trigger sources (phases 4–5).** Each trigger type is a `Flow` or one-shot read of "does this condition
-hold now". The runner combines them into the `conditionsMet` set, dropping rules that are not usable
-(Pro-gated, or permission missing) — an unusable rule is simply never true.
+**Rule usability.** A rule is met only when it is usable and its condition holds. The permission half of
+usability is built (§5c); the Pro half arrives with phase 7. An unusable rule is simply never true.
 
 | Trigger | Condition | Permission (requested when the type is chosen) |
 |---|---|---|
@@ -331,10 +375,6 @@ start. No alarms and no `SCHEDULE_EXACT_ALARM`; a 9:00 rule applying at 9:03 on 
 indistinguishable from exact timing, and nothing switches under the user mid-use. Device state
 (Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
 sampling: a connection that came and went while the screen was off is never seen.
-
-**Device trigger truth.** Phase 5 replaces the "never met" branch in `RefreshAutomationStateUseCase` with
-one-shot reads of each device source ("does it hold now"), so both a pass and a manual switch sample real
-device state.
 
 **Pro gating.** `CanUseTriggerUseCase(type)` and the rule limit are the single seam. Free users get
 schedule rules only, and at most 2 rules in total (`AutomationLimits`, §3b); device triggers and more
@@ -369,11 +409,11 @@ A permission revoked later in system settings leaves the saved rule in place but
 drops it from `conditionsMet`, and the list row reads "Needs Bluetooth access". Tapping that row requests
 the permission first; the editor is never opened in an unpermitted state.
 
-### Adding a trigger type (checklist, once phases 3–5 land)
+### Adding a trigger type (checklist)
 
 1. Add the `AutomationTrigger` variant, its parameter columns on `AutomationRuleEntity` (+ a `Migration` and a bumped `FacetDatabase.VERSION`), and both directions in `AutomationRuleMapping`; add the round-trip case to `AutomationRuleRepositoryTest`.
-2. Add a source that exposes "does it hold now" as a `Flow`, reading initial state at startup.
-3. Include it in the runner's `conditionsMet` computation, behind `CanUseTriggerUseCase` and the permission check.
+2. Add a source repository that exposes its reading as a `Flow` (emitting the current value on subscribe), add the field to `DeviceState` and the combine in `DeviceStateRepository`, and decide what "unknown" means for it.
+3. Add its branch to `AutomationTrigger.isMetBy` (a missing reading must not fire a rule, negated or not) and, if it needs a permission, to `requiredPermission()` and `AutomationPermissionRepository`. Add the cases to `DeviceStateTest`, and a scenario to `ApplyFacetAutomationUseCaseTest`.
 4. Add it to the trigger picker and rule editor; if it needs a permission, add it to the permission gate so the request runs on type change and a denial reverts to Schedule.
 5. Add evaluator-level scenario tests only if it introduces new *semantics*; most triggers need only source tests, since the evaluator sees a rule id and a boolean.
 
@@ -390,14 +430,17 @@ These hold for the built code and are covered by `EvaluateFacetAutomationUseCase
 6. The evaluator is a pure function: same inputs, same outputs; no I/O, no clock, no Android types.
 7. Only a `MANUAL` switch touches the baseline or the suppressed set.
 8. A schedule's start minute is active from its first second and its end minute through its last; `start == end` is one minute; an overnight window belongs to the day it starts on.
-9. A rule that can never work is never saved: a schedule with no days or minutes outside 0..1439, a named Wi-Fi network with no name, a Bluetooth rule with no device, a battery threshold off the 5% grid (and no "above 100%"). A rule for a facet that no longer exists is a no-op, not an error.
-10. Deleting a rule's target facet deletes the rule; deleting its "switch to" facet turns the ending into `ReturnToBaseline`. A stored rule this build can't interpret is skipped, never fatal.
+9. A reading that can't be known yet never fires a rule: unknown Bluetooth, no battery reading, or an unreadable named Wi-Fi network is "not met", negated or not. A rule whose permission is missing is never met.
+10. A rule that can never work is never saved: a schedule with no days or minutes outside 0..1439, a named Wi-Fi network with no name, a Bluetooth rule with no device, a battery threshold off the 5% grid (and no "above 100%"). A rule for a facet that no longer exists is a no-op, not an error.
+11. Deleting a rule's target facet deletes the rule; deleting its "switch to" facet turns the ending into `ReturnToBaseline`. A stored rule this build can't interpret is skipped, never fatal.
 
 ## Where this lives
 
 | Concern | File |
 |---|---|
 | Pure evaluation | `domain/EvaluateFacetAutomationUseCase.kt` |
+| Trigger truth, `DeviceState`, required permissions | `data/model/DeviceState.kt` |
+| Device sources | `data/HeadphonesRepository.kt`, `data/WifiRepository.kt`, `data/BluetoothRepository.kt`, `data/BatteryRepository.kt`, `data/DeviceStateRepository.kt`, `data/AutomationPermissionRepository.kt` |
 | Rule, end-behavior and trigger types, schedule window logic | `data/model/AutomationRule.kt`, `data/model/AutomationTrigger.kt` |
 | Validation and save result | `data/model/AutomationRuleValidation.kt` |
 | Rule storage | `data/local/AutomationRuleEntity.kt`, `data/local/AutomationRuleDao.kt`, `data/AutomationRuleRepository.kt`, `data/AutomationRuleMapping.kt`, `Migrations.MIGRATION_25_26` |
@@ -405,5 +448,5 @@ These hold for the built code and are covered by `EvaluateFacetAutomationUseCase
 | Who is switching | `data/model/FacetSwitchSource.kt` |
 | Single switch choke point | `domain/ActivateFacetByIdUseCase.kt` |
 | State persistence | `data/AutomationStateRepository.kt`, `data/di/DataStoreModule.kt`, `data/di/AutomationDataStore.kt` |
-| Tests | `domain/EvaluateFacetAutomationUseCaseTest.kt`, `data/model/AutomationStateTest.kt`, `domain/ActivateFacetByIdUseCaseTest.kt`, `data/AutomationStateRepositoryTest.kt`, `data/AutomationRuleRepositoryTest.kt`, `data/local/AutomationRuleDaoTest.kt`, `data/model/AutomationTriggerTest.kt`, `data/model/AutomationRuleValidationTest.kt`, instrumented `FacetDatabaseMigrationTest.migration25To26…` |
+| Tests | `domain/EvaluateFacetAutomationUseCaseTest.kt`, `data/model/AutomationStateTest.kt`, `domain/ActivateFacetByIdUseCaseTest.kt`, `data/AutomationStateRepositoryTest.kt`, `data/AutomationRuleRepositoryTest.kt`, `data/local/AutomationRuleDaoTest.kt`, `data/model/AutomationTriggerTest.kt`, `data/model/AutomationRuleValidationTest.kt`, `data/model/DeviceStateTest.kt`, `data/HeadphonesRepositoryTest.kt`, `data/WifiRepositoryTest.kt`, `data/BluetoothRepositoryTest.kt`, `data/DeviceStateRepositoryTest.kt`, `data/AutomationPermissionRepositoryTest.kt`, instrumented `FacetDatabaseMigrationTest.migration25To26…` |
 | Design and phased plan | `IMPLEMENTATION_PLAN.md` ("Facet automation rules"), `…/design_handoff_minimal_launcher/facet-automation.html` |
