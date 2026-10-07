@@ -14,7 +14,8 @@ import javax.inject.Inject
  * use case, not the `Activity` or a `ViewModel`.
  *
  * A [FacetSwitchSource.MANUAL] switch (the default) makes [facetId] the automation baseline and
- * suppresses every rule active right now; only the automation evaluator passes
+ * suppresses every rule active right now — rules are re-sampled first ([RefreshAutomationStateUseCase])
+ * so one that became true since the last evaluation is covered too. Only the automation runner passes
  * [FacetSwitchSource.AUTOMATION], which changes the active facet and nothing else.
  *
  * A no-op when [facetId] doesn't resolve to a real facet — a stale shortcut for a since-deleted
@@ -26,11 +27,15 @@ class ActivateFacetByIdUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val automationStateRepository: AutomationStateRepository,
+    private val refreshAutomationState: RefreshAutomationStateUseCase,
 ) {
     suspend operator fun invoke(facetId: Long, source: FacetSwitchSource = FacetSwitchSource.MANUAL) {
         if (facetRepository.getById(facetId) == null) return
-        // State first: an evaluation between the two writes then sees the override, not a stale rule.
-        if (source == FacetSwitchSource.MANUAL) automationStateRepository.update { it.afterManualSwitch(facetId) }
+        if (source == FacetSwitchSource.MANUAL) {
+            refreshAutomationState()
+            // State first: an evaluation between the two writes then sees the override, not a stale rule.
+            automationStateRepository.update { it.afterManualSwitch(facetId) }
+        }
         settingsRepository.setActiveFacetId(facetId)
     }
 }

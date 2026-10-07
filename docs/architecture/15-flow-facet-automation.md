@@ -16,7 +16,7 @@ and [14](14-flow-deep-links-and-shortcuts.md); persistence is in [02 §5.7](02-p
 | 1 | `EvaluateFacetAutomationUseCase`, `AutomationRule`, `RuleEndBehavior`, `AutomationState` | **Built**, unit-tested |
 | 2 | `FacetSwitchSource`, manual-switch recording in `ActivateFacetByIdUseCase`, `AutomationStateRepository` | **Built**, unit-tested |
 | 3 | `automation_rules` table (DB v26), `AutomationRuleDao`, `AutomationRuleRepository`, `AutomationTrigger`, `trigger` on `AutomationRule` | **Built**, unit-tested, migration tested on an emulator |
-| 4 | Schedule trigger source + the collector that runs the evaluator | Planned |
+| 4 | Schedule truth, `WakeEventsRepository`, `RefreshAutomationStateUseCase`, `ApplyFacetAutomationUseCase`, `RunFacetAutomationUseCase` started from `LauncherViewModel.init`, and the manual-switch re-sample | **Built**, unit-tested, and the touched screens' instrumented tests run on an emulator |
 | 5 | Device trigger sources (Bluetooth, Wi-Fi, headphones, battery state and level) | Planned |
 | 6 | Automation screen, rule editor, trigger picker | Planned |
 | 7 | Pro gating seam (`CanUseTriggerUseCase`, the rule-limit enforcement). The 2-rule free limit itself, `AutomationLimits`, is already built | Planned |
@@ -51,22 +51,30 @@ flowchart TB
         EVAL["EvaluateFacetAutomationUseCase\npure function"]:::built
         ACT["ActivateFacetByIdUseCase\nsource = MANUAL or AUTOMATION"]:::built
         CAN["CanUseTriggerUseCase\nPro gate"]:::planned
-        RUN["Automation runner\ncollector in LauncherViewModel"]:::planned
+        REF["RefreshAutomationStateUseCase\nsample rules, persist state"]:::built
+        APPLY["ApplyFacetAutomationUseCase\none pass"]:::built
+        RUN["RunFacetAutomationUseCase\ncollector started by LauncherViewModel"]:::built
     end
     subgraph DATA["data/"]
         RR["AutomationRuleRepository\nRoom rules"]:::built
         SR["AutomationStateRepository\nDataStore facet_automation"]:::built
-        TS["Trigger sources\nschedule, Bluetooth, Wi-Fi,\nheadphones, battery"]:::planned
+        WAKE["WakeEventsRepository\nscreen on, unlock, clock change"]:::built
+        TS["Device trigger sources\nBluetooth, Wi-Fi, headphones, battery"]:::planned
         SET["SettingsRepository\nactive facet id"]
     end
     SW --> ACT
     AUTO --> RR
-    RUN --> EVAL
+    RUN --> APPLY
+    RUN --> WAKE
     RUN --> RR
-    RUN --> TS
-    RUN --> CAN
-    RUN --> SR
-    RUN -- "AUTOMATION" --> ACT
+    APPLY --> REF
+    APPLY -- "AUTOMATION" --> ACT
+    REF --> EVAL
+    REF --> RR
+    REF --> SR
+    REF -.-> TS
+    REF -.-> CAN
+    ACT -- "MANUAL: re-sample first" --> REF
     ACT -- "MANUAL: afterManualSwitch" --> SR
     ACT --> SET
     classDef built fill:#dbeafe,stroke:#2563eb,color:#0b1b3f
@@ -196,6 +204,7 @@ sequenceDiagram
     participant UI as Carousel / Manage / Facet settings / shortcut / deep link
     participant UC as ActivateFacetByIdUseCase
     participant FR as FacetRepository
+    participant RF as RefreshAutomationStateUseCase
     participant AS as AutomationStateRepository
     participant SR as SettingsRepository
     UI->>UC: invoke(facetId)   source defaults to MANUAL
@@ -203,14 +212,19 @@ sequenceDiagram
     alt facet does not exist
         UC-->>UI: no-op
     else facet exists
+        UC->>RF: invoke()   re-sample the rules against the clock
         UC->>AS: update { it.afterManualSwitch(facetId) }
         Note over UC,AS: state is written BEFORE the active facet
         UC->>SR: setActiveFacetId(facetId)
     end
 ```
 
-- **MANUAL** (the default): `afterManualSwitch` sets `baselineFacetId = facetId` and
-  `suppressedRuleIds = activeRuleIds.toSet()` — every rule active right now is overridden.
+- **MANUAL** (the default): the rules are re-sampled first, then `afterManualSwitch` sets
+  `baselineFacetId = facetId` and `suppressedRuleIds = activeRuleIds.toSet()` — every rule active right
+  now is overridden.
+- **Why re-sample first.** Evaluation is lazy, so a rule can be true without having been observed yet
+  (a schedule started while Home stayed visible). Without the re-sample it would not be suppressed, and
+  the next evaluation would override the user's choice. Re-sampling closes that gap for every trigger.
 - **AUTOMATION** (only the evaluator's runner passes it): changes the active facet and nothing else.
 - **State is written first.** If an evaluation runs between the two writes it sees the override and
   settles on the user's facet; the other order could let it switch back to a stale rule target.
@@ -269,9 +283,36 @@ With no manual switch at 11:00, the 18:05 evaluation would return to Personal. W
 (Work, then Car over Bluetooth), the later activation wins, and when it ends the earlier one — if still
 true — is shown again; this is why evaluation is level-based and not edge-triggered.
 
+## 5b. The runner (built)
+
+`RunFacetAutomationUseCase` is a long-running collector launched once from `LauncherViewModel.init`
+([03 §4](03-reactive-data-flow.md)), passing in `homePressedEvent`. It merges four triggers and runs one
+`ApplyFacetAutomationUseCase` pass for each:
+
+| Trigger | Source |
+|---|---|
+| Screen on, unlock, manual time or timezone change | `WakeEventsRepository` (dynamic receiver, `RECEIVER_NOT_EXPORTED`) |
+| Home press | `LauncherViewModel.homePressedEvent` |
+| Any rule added, edited, toggled or deleted | `AutomationRuleRepository.observeRules()` |
+| The active facet changed (also covers first launch, once a facet exists) | `SettingsRepository.settings` mapped to `activeFacetId`, distinct |
+
+- **One sequential collector with `conflate()`**, so passes never overlap and a burst collapses into
+  one pending pass. That makes a lock unnecessary; the atomic state `update` covers the state file.
+- **A pass** (`ApplyFacetAutomationUseCase`): `RefreshAutomationStateUseCase` reads the active facet,
+  the existing facets, the rules and the clock, runs the pure evaluator inside the atomic state update
+  and returns what the rules want. If that differs from what is showing, and the user has not switched
+  by hand in the meantime, it calls `ActivateFacetByIdUseCase(…, AUTOMATION)`.
+- **No valid active facet yet** (a fresh install before the first facet exists) means the pass does
+  nothing and writes nothing; the active-facet trigger re-runs it once a facet exists.
+- **Rule truth today.** A schedule is true when `Schedule.isActiveAt(now)` for the injected `Clock`. The
+  other trigger types are never met until their sources exist (phase 5).
+- **No alarms.** A schedule is applied when the user looks at the phone, never underneath them: a 9:00
+  rule that applies at 9:03 on unlock is indistinguishable from exact timing.
+
 ## 6. Planned: rules, triggers, and the runner
 
-Not built yet; recorded here so the framework reads end to end.
+Recorded here so the framework reads end to end. The schedule trigger and the runner are built (§5b);
+the rest below is not.
 
 **Trigger sources (phases 4–5).** Each trigger type is a `Flow` or one-shot read of "does this condition
 hold now". The runner combines them into the `conditionsMet` set, dropping rules that are not usable
@@ -291,11 +332,9 @@ indistinguishable from exact timing, and nothing switches under the user mid-use
 (Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
 sampling: a connection that came and went while the screen was off is never seen.
 
-**The runner.** A collector started from `LauncherViewModel.init` (so it belongs in the startup
-sequence, [03 §4](03-reactive-data-flow.md)): on each trigger event it gathers rules and condition
-truth, calls the evaluator, persists the new state, and calls `ActivateFacetByIdUseCase` with
-`AUTOMATION` when the desired facet differs. Evaluations must be serialized (a `Mutex`), because the
-atomic `update` on the state protects the state file but not the read-evaluate-write sequence.
+**Device trigger truth.** Phase 5 replaces the "never met" branch in `RefreshAutomationStateUseCase` with
+one-shot reads of each device source ("does it hold now"), so both a pass and a manual switch sample real
+device state.
 
 **Pro gating.** `CanUseTriggerUseCase(type)` and the rule limit are the single seam. Free users get
 schedule rules only, and at most 2 rules in total (`AutomationLimits`, §3b); device triggers and more

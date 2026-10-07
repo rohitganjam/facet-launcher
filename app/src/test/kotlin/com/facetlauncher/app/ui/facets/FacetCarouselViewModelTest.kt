@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +69,7 @@ class FacetCarouselViewModelTest {
             wallpaperRepository,
             DeleteFacetUseCase(facetRepository, mock(com.facetlauncher.app.data.widget.AppWidgetRepository::class.java)),
             observeFacetPreviews,
-            ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState),
+            ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState, mock(RefreshAutomationStateUseCase::class.java)),
         )
 
         // When the user picks it in the carousel

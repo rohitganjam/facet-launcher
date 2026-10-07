@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.facets
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
@@ -333,7 +334,7 @@ class FacetSettingsViewModelTest {
         defaultFavoriteAppRepository,
         facetDockAppRepository,
         dockAppRepository,
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationStateRepository),
+        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationStateRepository, mock(RefreshAutomationStateUseCase::class.java)),
     )
 
     /** In-memory fake — enough of [com.facetlauncher.app.data.local.FacetDao] for [FacetRepository]'s needs. */

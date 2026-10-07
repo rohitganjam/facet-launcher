@@ -101,7 +101,7 @@ flowchart TB
             DSM["DataStoreModule\n2 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
         end
-        REPOS["33 Repositories\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["34 Repositories\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -132,7 +132,7 @@ flowchart TB
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (12) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (2) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
-| Repositories (33) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| Repositories (34) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (27) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 

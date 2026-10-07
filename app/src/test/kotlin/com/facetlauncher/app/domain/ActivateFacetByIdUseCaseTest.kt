@@ -19,6 +19,9 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 
 /** In-memory fake — mirrors [com.facetlauncher.app.data.FacetRepositoryTest]'s. Named distinctly from
  *  [EnsureActiveFacetUseCaseTest]'s own private `FakeFacetDao` — top-level private classes are
@@ -63,6 +66,13 @@ class ActivateFacetByIdUseCaseTest {
         return SettingsRepository(dataStore)
     }
 
+    private fun activate(
+        facetRepository: FacetRepository,
+        settingsRepository: SettingsRepository,
+        automationState: AutomationStateRepository,
+        refresh: RefreshAutomationStateUseCase = mock(RefreshAutomationStateUseCase::class.java),
+    ) = ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState, refresh)
+
     private fun createAutomationStateRepository(): AutomationStateRepository {
         val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
             produceFile = { tempFolder.newFile("automation-${System.nanoTime()}.preferences_pb") },
@@ -80,7 +90,7 @@ class ActivateFacetByIdUseCaseTest {
         settingsRepository.setActiveFacetId(first.id)
 
         // When activating it by id (e.g. via a deep link or shortcut)
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository, createAutomationStateRepository())(second.id)
+        activate(facetRepository, settingsRepository, createAutomationStateRepository())(second.id)
 
         // Then it becomes the active facet
         assertEquals(second.id, settingsRepository.settings.first().activeFacetId)
@@ -96,12 +106,47 @@ class ActivateFacetByIdUseCaseTest {
         automationState.update { it.copy(baselineFacetId = first.id, activeRuleIds = listOf(10L, 11L)) }
 
         // When the user switches by id (the default source)
-        ActivateFacetByIdUseCase(facetRepository, createSettingsRepository(), automationState)(second.id)
+        activate(facetRepository, createSettingsRepository(), automationState)(second.id)
 
         // Then the choice becomes the baseline and both rules are overridden
         val state = automationState.get()
         assertEquals(second.id, state.baselineFacetId)
         assertEquals(setOf(10L, 11L), state.suppressedRuleIds)
+    }
+
+    @Test
+    fun `a manual switch re-samples the rules before recording itself`() = runTest {
+        // Given a facet to switch to
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val refresh = mock(RefreshAutomationStateUseCase::class.java)
+        val facet = facetRepository.addFacet()
+
+        // When switching by hand
+        activate(facetRepository, createSettingsRepository(), createAutomationStateRepository(), refresh)(facet.id)
+
+        // Then the rules were sampled, so one that became true since the last evaluation is suppressed too
+        verify(refresh).invoke()
+    }
+
+    @Test
+    fun `an automation switch does not re-sample the rules`() = runTest {
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val refresh = mock(RefreshAutomationStateUseCase::class.java)
+        val facet = facetRepository.addFacet()
+
+        activate(facetRepository, createSettingsRepository(), createAutomationStateRepository(), refresh)(facet.id, FacetSwitchSource.AUTOMATION)
+
+        verifyNoInteractions(refresh)
+    }
+
+    @Test
+    fun `a switch to a facet that does not exist does not re-sample the rules`() = runTest {
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val refresh = mock(RefreshAutomationStateUseCase::class.java)
+
+        activate(facetRepository, createSettingsRepository(), createAutomationStateRepository(), refresh)(999L)
+
+        verifyNoInteractions(refresh)
     }
 
     @Test
@@ -116,7 +161,7 @@ class ActivateFacetByIdUseCaseTest {
         automationState.update { before }
 
         // When the evaluator switches facets
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState)(second.id, FacetSwitchSource.AUTOMATION)
+        activate(facetRepository, settingsRepository, automationState)(second.id, FacetSwitchSource.AUTOMATION)
 
         // Then the facet changes but the baseline and suppressed rules are untouched
         assertEquals(second.id, settingsRepository.settings.first().activeFacetId)
@@ -135,7 +180,7 @@ class ActivateFacetByIdUseCaseTest {
         automationState.update { before }
 
         // When the evaluator asks to switch to the missing facet
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState)(facet.id + 999, FacetSwitchSource.AUTOMATION)
+        activate(facetRepository, settingsRepository, automationState)(facet.id + 999, FacetSwitchSource.AUTOMATION)
 
         // Then nothing changes and nothing throws
         assertEquals(facet.id, settingsRepository.settings.first().activeFacetId)
@@ -152,7 +197,7 @@ class ActivateFacetByIdUseCaseTest {
 
         // When activating an id that doesn't exist (stale shortcut, hand-typed bad id, deleted facet)
         val automationState = createAutomationStateRepository()
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState)(facet.id + 999)
+        activate(facetRepository, settingsRepository, automationState)(facet.id + 999)
 
         // Then the currently-active facet and the automation state are left untouched
         assertEquals(facet.id, settingsRepository.settings.first().activeFacetId)

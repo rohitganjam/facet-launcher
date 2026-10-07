@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,7 +82,7 @@ class ManageFacetsViewModelTest {
         facetRepository,
         settings,
         deleteFacetUseCase(facetRepository),
-        ActivateFacetByIdUseCase(facetRepository, settings, automationState),
+        ActivateFacetByIdUseCase(facetRepository, settings, automationState, mock(RefreshAutomationStateUseCase::class.java)),
     )
 
     @Test

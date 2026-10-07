@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.RunFacetAutomationUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
@@ -78,6 +79,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -116,6 +118,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -153,6 +156,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -191,6 +195,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(listOf(workProfile)),
         )
@@ -223,6 +228,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -255,6 +261,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -285,6 +292,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )
@@ -318,6 +326,7 @@ class LauncherViewModelTest {
             seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
+            mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
             fakeWorkProfileRepository(),
         )

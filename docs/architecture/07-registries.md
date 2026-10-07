@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories (33) — all `@Singleton`, all constructor-injected, no interfaces
+## 1. Repositories (34) — all `@Singleton`, all constructor-injected, no interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -38,6 +38,7 @@ dependency is not listed the class does not have it.
 | `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context` | `search(query)` (IO) | `DrawerViewModel` |
 | `UsageAccessRepository` | `AppOpsManager.unsafeCheckOpNoThrow(GET_USAGE_STATS)` | `AppOpsManager`, `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `PermissionsViewModel`, `UsageAccessExplanationViewModel` |
 | `UsageStatsRepository` | `UsageStatsManager.queryUsageStats` | `UsageStatsManager`, `AppRepository` | `getRecentApps(limit)`, `getMostUsedApps(limit)` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase` |
+| `WakeEventsRepository` | System broadcasts `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` (`RECEIVER_NOT_EXPORTED`) | `Context` | `observeWakeEvents(): Flow<Unit>` | `RunFacetAutomationUseCase` |
 | `WallpaperRepository` (`open`) | `WallpaperManager.peekDrawable` / `getWallpaperColors` | `WallpaperManager` | `currentHomeWallpaper(): HomeWallpaper` (`Image` / `Tones` / `Unavailable`, downscaled to 1080px) | `FacetCarouselViewModel`, `AppearanceSettingsViewModel`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel` |
 | `WidgetPlacementRepository` | Room `widget_placements` | `WidgetPlacementDao` | `observeAll()`, `getById`, `upsert`, `deleteById` (thin pass-through) | `HubViewModel`, `HubWidgetPickerViewModel`, `BackupRestoreViewModel`, `ObserveHubStateUseCase`, `DeleteWidgetUseCase`, `ExportBackupUseCase` |
 | `WorkProfileRepository` | `UserManager.userProfiles` + `isQuietModeEnabled` + `ACTION_MANAGED_PROFILE_*` | `UserManager`, `AppRepository`, `Context` | `observeWorkProfiles(): Flow<List<WorkProfileInfo>>` | `LauncherViewModel`, `SettingsViewModel` |
@@ -71,11 +72,12 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (34) — unscoped, constructor-injected unless noted
+## 2. Use cases (37) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
-| `ActivateFacetByIdUseCase` | write, no-op guard, `FacetSwitchSource` (manual records baseline + suppresses active rules) | `FacetRepository`, `SettingsRepository`, `AutomationStateRepository` | `LauncherViewModel` (deep link/shortcut ingestion, see [14](14-flow-deep-links-and-shortcuts.md)), `ManageFacetsViewModel`, `FacetCarouselViewModel`, `FacetSettingsViewModel` |
+| `ActivateFacetByIdUseCase` | write, no-op guard, `FacetSwitchSource` (manual re-samples the rules, then records baseline + suppresses active rules) | `FacetRepository`, `SettingsRepository`, `AutomationStateRepository`, `RefreshAutomationStateUseCase` | `LauncherViewModel` (deep link/shortcut ingestion, see [14](14-flow-deep-links-and-shortcuts.md)), `ManageFacetsViewModel`, `FacetCarouselViewModel`, `FacetSettingsViewModel` |
+| `ApplyFacetAutomationUseCase` | one automation pass: refresh, then an `AUTOMATION` switch if the rules want a different facet | `RefreshAutomationStateUseCase`, `ActivateFacetByIdUseCase`, `SettingsRepository` | `RunFacetAutomationUseCase` |
 | `AddAppToDockUseCase` | write, routes by `facet.overrideDock` | `SettingsRepository`, `FacetRepository`, `DockAppRepository`, `FacetDockAppRepository` | `DrawerViewModel` |
 | `RemoveAppFromDockUseCase` | write | same four | `DrawerViewModel` |
 | `AddFolderToDockUseCase` | write | same four | `DrawerViewModel` |
@@ -89,7 +91,7 @@ cycles; `AppRepository` is the single root.
 | `CompactWidgetsUseCase` | pure grid | — | `HubViewModel` |
 | `DeleteWidgetUseCase` | write | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
 | `EnsureActiveFacetUseCase` | startup write | `FacetRepository`, `SettingsRepository` | `LauncherViewModel` |
-| `EvaluateFacetAutomationUseCase` | pure (rules + trigger truth + `AutomationState` → desired facet + new state) | — | none yet (phase 4 wires it into `LauncherViewModel`) |
+| `EvaluateFacetAutomationUseCase` | pure (rules + trigger truth + `AutomationState` → desired facet + new state) | — | `RefreshAutomationStateUseCase` |
 | `ExportBackupUseCase` | one-shot read + file write | `SettingsRepository`, `FacetRepository`, `FavoriteAppRepository`, `DockAppRepository`, `FacetDockAppRepository`, `DefaultFavoriteAppRepository`, `WidgetPlacementRepository`, `FolderRepository`, `BackupRepository` | `BackupRestoreViewModel` |
 | `GetInstalledAppsUseCase` | read (`invoke()` one-shot / `observe()` live) | `AppRepository` | `LauncherViewModel`, 4 picker/settings ViewModels, `SeedDefaultDockUseCase` |
 | `GroupAppsByLetterUseCase` | pure (ICU `AlphabeticIndex`) | — (**constructed in `AppDrawerScreen` composable**, see F2) | `AppDrawerScreen` |
@@ -103,9 +105,11 @@ cycles; `AppRepository` is the single root.
 | `PlaceWidgetUseCase` | pure grid (`Placed` / `HubFull`) | — | `HubWidgetPickerViewModel`, `BackupRestoreViewModel` |
 | `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen`, F2) |
 | `RecentlyInstalledAppsUseCase` | pure (filters `firstInstallTime` within 72h) | — | `AppDrawerScreen` (inline `remember`), `PrivateSpaceViewModel` |
+| `RefreshAutomationStateUseCase` | samples every rule against the clock and persists the evaluator's state, without switching | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `EvaluateFacetAutomationUseCase`, `Clock` | `ApplyFacetAutomationUseCase`, `ActivateFacetByIdUseCase` |
 | `RepairOrphanedProfileRowsUseCase` | startup one-shot write | `AppRepository` + 5 placement/folder repositories | `LauncherViewModel` |
 | `ResolveWidgetDropUseCase` | pure grid | — | `HubViewModel` |
 | `ResolveWidgetResizeUseCase` | pure grid | — | `HubViewModel` |
+| `RunFacetAutomationUseCase` | long-running collector (wake events, Home presses, rule and active-facet changes → one pass each) | `ApplyFacetAutomationUseCase`, `AutomationRuleRepository`, `WakeEventsRepository`, `SettingsRepository` | `LauncherViewModel` (see [15](15-flow-facet-automation.md)) |
 | `SeedDefaultDockUseCase` | startup write (once, `defaults_seeded`) | `SettingsRepository`, `DefaultAppRepository`, `DockAppRepository`, `GetInstalledAppsUseCase` | `LauncherViewModel` |
 | `SelectPreviewAppsUseCase` | pure | — | `HomeAppsListSettingsViewModel` |
 | `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |

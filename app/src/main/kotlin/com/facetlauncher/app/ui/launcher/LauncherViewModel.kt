@@ -21,6 +21,7 @@ import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
+import com.facetlauncher.app.domain.RunFacetAutomationUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -84,6 +85,7 @@ class LauncherViewModel @Inject constructor(
     private val seedDefaultDock: SeedDefaultDockUseCase,
     private val syncFacetShortcuts: SyncFacetShortcutsUseCase,
     private val activateFacetById: ActivateFacetByIdUseCase,
+    private val runFacetAutomation: RunFacetAutomationUseCase,
     private val settingsRepository: SettingsRepository,
     private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
@@ -150,6 +152,9 @@ class LauncherViewModel @Inject constructor(
         // Runs for the app's whole lifetime, republishing the full dynamic-shortcut set on every
         // facet add/rename/reorder/delete — see SyncFacetShortcutsUseCase.
         viewModelScope.launch { syncFacetShortcuts() }
+        // Runs for the app's whole lifetime, applying automation rules whenever Home is about to be
+        // seen — see RunFacetAutomationUseCase.
+        viewModelScope.launch { runFacetAutomation(homePressedEvent) }
 
         viewModelScope.launch {
             delay(LOADING_TIMEOUT_MS)

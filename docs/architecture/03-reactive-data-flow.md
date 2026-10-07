@@ -184,6 +184,7 @@ sequenceDiagram
     LVM->>UC: CleanUpUninstalledAppsUseCase()   (collects for process lifetime)
     LVM->>UC: RepairOrphanedProfileRowsUseCase()   (one pass: userId = -1 rows)
     LVM->>UC: SeedDefaultDockUseCase()   (fresh install only)
+    LVM->>UC: RunFacetAutomationUseCase(homePressedEvent)   (collects for process lifetime, see 15)
     Act->>Act: setContent — uiState.isLoading → empty Box
     Repos-->>LVM: first LauncherUiState (apps + theme + onboardingCompleted)
     alt onboarding not completed
@@ -201,6 +202,7 @@ sequenceDiagram
 |---|---|---|
 | Notification badges | `FacetNotificationListenerService` (`@AndroidEntryPoint`) pushes `setActiveNotifications()` into `NotificationBadgeRepository`'s `MutableStateFlow` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
 | Battery | `callbackFlow` over `ACTION_BATTERY_CHANGED` sticky broadcast | `ObserveClockAccessoriesUseCase` |
+| Wake events | `WakeEventsRepository.observeWakeEvents()` — `callbackFlow` over `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` | `RunFacetAutomationUseCase` (see [15](15-flow-facet-automation.md)) |
 | Next alarm | `callbackFlow` over `ACTION_NEXT_ALARM_CLOCK_CHANGED` + injected `Clock` | `ObserveClockAccessoriesUseCase` |
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |
 | Work Profile state | `WorkProfileRepository.observeWorkProfiles()` — `callbackFlow` over profile broadcasts mapped through `UserManager.isQuietModeEnabled` | `LauncherViewModel`, `SettingsViewModel` |
