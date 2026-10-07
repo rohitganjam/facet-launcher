@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application") version "9.4.0" apply false
+    id("com.android.application") version "9.4.1" apply false
     // Pins the Kotlin compiler version explicitly rather than relying on AGP 9's built-in default.
     id("org.jetbrains.kotlin.android") version "2.3.10" apply false
     // Plain-JVM Kotlin, for :detekt-rules only — a custom Detekt rule has to be a separate,
@@ -13,7 +13,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10" apply false
     id("com.google.devtools.ksp") version "2.3.10" apply false
     id("com.google.dagger.hilt.android") version "2.60.1" apply false
-    id("com.android.test") version "9.4.0" apply false
+    id("com.android.test") version "9.4.1" apply false
 }
 
 // Self-installs the repo's tracked git hooks (.githooks/) into the real hooks directory on every
