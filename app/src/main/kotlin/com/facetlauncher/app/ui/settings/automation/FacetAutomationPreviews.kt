@@ -14,6 +14,7 @@ import com.facetlauncher.app.domain.AutomationRuleItem
 import com.facetlauncher.app.domain.AutomationStatus
 import com.facetlauncher.app.domain.FacetAutomationScreenState
 import com.facetlauncher.app.domain.RuleAvailability
+import com.facetlauncher.app.ui.components.ProUpgradeContent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Surface
 import java.time.DayOfWeek
@@ -91,5 +92,5 @@ private fun FacetAutomationFreePlanPreview() {
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun UpgradeSheetPreview() {
-    FacetLauncherTheme { UpgradeContent(reason = ProReason.RULE_LIMIT, onDismiss = {}, modifier = Modifier.background(Surface)) }
+    FacetLauncherTheme { ProUpgradeContent(reason = ProReason.RULE_LIMIT, onDismiss = {}, modifier = Modifier.background(Surface)) }
 }

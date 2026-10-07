@@ -26,6 +26,7 @@ import com.facetlauncher.app.data.model.BatteryLevelCondition
 import com.facetlauncher.app.data.model.PairedBluetoothDevice
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.PillTabPair
+import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Muted

@@ -36,6 +36,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.theme.Accent
@@ -68,7 +69,7 @@ internal fun RuleEditorSheet(
             onDeleteClick = { confirmingDelete = true },
         )
     }
-    state.proRequired?.let { reason -> UpgradeSheet(reason = reason, onDismiss = { onChange { it } }) }
+    state.proRequired?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { onChange { it } }) }
     if (confirmingDelete) {
         ConfirmDialog(
             title = stringResource(R.string.automation_delete_title),

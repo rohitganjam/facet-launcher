@@ -21,7 +21,7 @@ private const val SHORTCUT_LABEL_PREFIX = "Switch to "
  * (Samsung Modes & Routines, Tasker, etc.) can discover and trigger a facet switch without opening
  * Facet's own UI. Kept in lockstep with [FacetRepository]'s live state by
  * [com.facetlauncher.app.domain.SyncFacetShortcutsUseCase] — never hand-triggered from a single
- * add/rename/delete callsite. [FacetRepository.MAX_FACETS] (3) is well under
+ * add/rename/delete callsite. [com.facetlauncher.app.data.model.FacetLimits.PRO_MAX_FACETS] (10) is well under
  * [ShortcutManagerCompat]'s per-activity cap, so no eviction/capacity logic is needed here.
  *
  * The shortcut's *displayed* name and its *trigger* key are deliberately different fields: the

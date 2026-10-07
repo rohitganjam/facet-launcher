@@ -60,6 +60,8 @@ import com.facetlauncher.app.domain.FacetAutomationScreenState
 import com.facetlauncher.app.domain.RuleAvailability
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.ProPill
+import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.facets.SectionHeader
@@ -116,7 +118,7 @@ fun FacetAutomationScreen(
         onSeePro = { upgrade = ProReason.RULE_LIMIT },
         modifier = modifier,
     )
-    upgrade?.let { reason -> UpgradeSheet(reason = reason, onDismiss = { upgrade = null }) }
+    upgrade?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { upgrade = null }) }
     editor?.let { editing ->
         RuleEditorSheet(
             state = editing,

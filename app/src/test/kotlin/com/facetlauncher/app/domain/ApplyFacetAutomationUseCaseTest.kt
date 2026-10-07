@@ -4,11 +4,11 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.AutomationPermissionRepository
-import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AutomationPermission
@@ -20,6 +20,12 @@ import com.facetlauncher.app.data.model.BatteryStatus
 import com.facetlauncher.app.data.model.DeviceState
 import com.facetlauncher.app.data.model.RuleEndBehavior
 import com.facetlauncher.app.data.model.WifiState
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -29,17 +35,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
 
 private class MutableClock(var now: LocalDateTime) : Clock() {
     override fun getZone(): ZoneId = ZoneOffset.UTC
@@ -78,8 +78,9 @@ class ApplyFacetAutomationUseCaseTest {
             override fun isGranted(permission: AutomationPermission) = permission !in denied
         }
         val entitlement = FakeEntitlementRepository()
-        private val refresh = RefreshAutomationStateUseCase(rules, state, facets, settings, EvaluateFacetAutomationUseCase(), devices, permissions, entitlement, CanUseTriggerUseCase(), clock)
-        val activate = ActivateFacetByIdUseCase(facets, settings, state, refresh)
+        private val selectable = SelectableFacetsUseCase(facets, entitlement)
+        private val refresh = RefreshAutomationStateUseCase(rules, state, selectable, settings, EvaluateFacetAutomationUseCase(), devices, permissions, entitlement, CanUseTriggerUseCase(), clock)
+        val activate = ActivateFacetByIdUseCase(selectable, settings, state, refresh)
         val apply = ApplyFacetAutomationUseCase(refresh, activate, settings)
 
         val personal = runBlocking { facets.addFacet().id }
@@ -292,6 +293,34 @@ class ApplyFacetAutomationUseCaseTest {
         f.apply()
 
         assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `a rule aimed at a facet that is disabled on the free plan does nothing`() = runTest {
+        // Given a fourth facet, which a free user cannot use, and a schedule rule that targets it
+        val f = Fixture(tempFolder)
+        val fourth = f.facets.addFacet().id
+        f.entitlement.proFlow.value = false
+        f.saveRule(f.weekdaysNineToSix(), target = fourth)
+        f.clock.now = at(DayOfWeek.MONDAY, 10, 0)
+
+        // When the rules are applied
+        f.apply()
+
+        // Then the user stays on their facet
+        assertEquals(f.personal, f.activeFacet())
+    }
+
+    @Test
+    fun `the same rule applies once the user is pro`() = runTest {
+        val f = Fixture(tempFolder)
+        val fourth = f.facets.addFacet().id
+        f.saveRule(f.weekdaysNineToSix(), target = fourth)
+        f.clock.now = at(DayOfWeek.MONDAY, 10, 0)
+
+        f.apply()
+
+        assertEquals(fourth, f.activeFacet())
     }
 
     @Test

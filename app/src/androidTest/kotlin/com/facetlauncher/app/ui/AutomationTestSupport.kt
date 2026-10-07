@@ -21,11 +21,12 @@ import com.facetlauncher.app.domain.CanUseTriggerUseCase
 import com.facetlauncher.app.domain.EvaluateFacetAutomationUseCase
 import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.domain.RunFacetAutomationUseCase
+import com.facetlauncher.app.domain.SelectableFacetsUseCase
+import java.io.File
+import java.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import java.io.File
-import java.time.Clock
 
 /** A throwaway [AutomationStateRepository] for tests that hand-build ViewModels needing `ActivateFacetByIdUseCase`. */
 fun testAutomationStateRepository(context: Context) = AutomationStateRepository(
@@ -51,22 +52,24 @@ fun testAutomation(
     database: FacetDatabase,
     facetRepository: FacetRepository,
     settingsRepository: SettingsRepository,
+    entitlement: EntitlementRepository = EntitlementRepository(),
 ): TestAutomation {
     val rules = AutomationRuleRepository(database.automationRuleDao(), database.facetDao())
     val state = testAutomationStateRepository(context)
     val devices = testDeviceStateRepository(context)
+    val selectable = SelectableFacetsUseCase(facetRepository, entitlement)
     val refresh = RefreshAutomationStateUseCase(
-        rules, state, facetRepository, settingsRepository, EvaluateFacetAutomationUseCase(),
-        devices, AutomationPermissionRepository(context), EntitlementRepository(), CanUseTriggerUseCase(), Clock.systemDefaultZone(),
+        rules, state, selectable, settingsRepository, EvaluateFacetAutomationUseCase(),
+        devices, AutomationPermissionRepository(context), entitlement, CanUseTriggerUseCase(), Clock.systemDefaultZone(),
     )
-    val activate = ActivateFacetByIdUseCase(facetRepository, settingsRepository, state, refresh)
+    val activate = ActivateFacetByIdUseCase(selectable, settingsRepository, state, refresh)
     val run = RunFacetAutomationUseCase(
         ApplyFacetAutomationUseCase(refresh, activate, settingsRepository),
         rules,
         WakeEventsRepository(context),
         settingsRepository,
         devices,
-        EntitlementRepository(),
+        entitlement,
     )
     return TestAutomation(activate, run)
 }

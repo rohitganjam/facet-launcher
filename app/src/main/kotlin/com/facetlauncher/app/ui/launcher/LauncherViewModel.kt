@@ -139,7 +139,8 @@ class LauncherViewModel @Inject constructor(
                 workProfiles = workProfiles,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
-        viewModelScope.launch { ensureActiveFacet() }
+        // Not one-shot: the active facet must stay a usable one when facets or the entitlement change.
+        viewModelScope.launch { ensureActiveFacet.keepUsable() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }

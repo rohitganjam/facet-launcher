@@ -24,15 +24,15 @@ import javax.inject.Singleton
 
 /**
  * Wraps [FacetDao]. The launcher starts with exactly one facet (seeded by
- * [com.facetlauncher.app.domain.EnsureActiveFacetUseCase]) and allows up to [MAX_FACETS];
- * the last remaining facet can never be deleted ([MIN_FACETS]).
+ * [com.facetlauncher.app.domain.EnsureActiveFacetUseCase]); how many it may have is
+ * [com.facetlauncher.app.data.model.FacetLimits], enforced by [com.facetlauncher.app.domain.AddFacetUseCase].
+ * The last remaining facet can never be deleted ([MIN_FACETS]).
  */
 @Singleton
 class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
 
     companion object {
         const val MIN_FACETS = 1
-        const val MAX_FACETS = 3
         private const val DEFAULT_FACET_NAME_PREFIX = "Facet "
     }
 

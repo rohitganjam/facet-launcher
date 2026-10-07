@@ -5,7 +5,6 @@ import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.EntitlementRepository
-import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.isMetBy
 import kotlinx.coroutines.flow.first
@@ -26,7 +25,7 @@ data class AutomationDecision(val desiredFacetId: Long, val currentFacetId: Long
 class RefreshAutomationStateUseCase @Inject constructor(
     private val ruleRepository: AutomationRuleRepository,
     private val stateRepository: AutomationStateRepository,
-    private val facetRepository: FacetRepository,
+    private val selectableFacets: SelectableFacetsUseCase,
     private val settingsRepository: SettingsRepository,
     private val evaluate: EvaluateFacetAutomationUseCase,
     private val deviceStateRepository: DeviceStateRepository,
@@ -38,7 +37,8 @@ class RefreshAutomationStateUseCase @Inject constructor(
     /** Null while there is no valid active facet yet (a fresh install before `EnsureActiveFacetUseCase` has run). */
     suspend operator fun invoke(): AutomationDecision? {
         val currentFacetId = settingsRepository.settings.first().activeFacetId
-        val existingFacetIds = facetRepository.observeFacets().first().map { it.id }.toSet()
+        // Only facets the user may use count as existing, so a rule aimed at a disabled facet is a no-op.
+        val existingFacetIds = selectableFacets()
         if (currentFacetId !in existingFacetIds) return null
 
         val rules = ruleRepository.getRules()

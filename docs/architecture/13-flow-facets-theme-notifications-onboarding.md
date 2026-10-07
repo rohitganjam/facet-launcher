@@ -36,7 +36,7 @@ flowchart TB
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
     end
-    EAF["EnsureActiveFacetUseCase (startup)\nno facets → addFacet(); activeFacetId not found → first facet"] --> S1
+    EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```
 
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row plus one "HOME & APPS" card with
@@ -106,6 +106,27 @@ flowchart TB
   (dropped to 14 when calendar/appearance styling consolidation removed the four calendar-specific
   resolvers, then rose to 19 with the four `appListLayout`/`appListColumnAlignment`/
   `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added).
+
+### 1a. Facet limits and the free plan
+
+How many facets a user may have is `FacetLimits` (`data/model`): **3 free, 10 with Pro**. `AddFacetUseCase`
+enforces it (the repository does not, since it knows nothing about entitlement), and the add row and the
+carousel's add page show at the free limit with a Pro pill that opens the shared `ProUpgradeSheet`.
+
+A user who loses Pro keeps every facet, but only the **first 3 in list order are selectable**
+(`SelectableFacetsUseCase`); the rest are disabled until the count drops to 3 or Pro returns. Nothing is
+deleted for them, and a disabled facet can still be deleted (the last remaining facet cannot). Reordering
+chooses which three are usable. Disabled means:
+
+| Where | Behaviour |
+|---|---|
+| Carousel and Manage facets | Dimmed with a lock; tapping opens the upgrade sheet instead of applying or opening its settings. In Manage facets the overflow menu disables *Facet settings* and *Apply* but keeps *Delete*. |
+| `ActivateFacetByIdUseCase` | A no-op for a disabled facet, which covers shortcuts and deep links. |
+| `EnsureActiveFacetUseCase.keepUsable()` | Runs whenever the selectable set changes (an add, a delete, a reorder, a change of entitlement): if the active facet is missing or disabled, the first selectable facet takes over. |
+| Facet shortcuts | Published only for selectable facets (`SyncFacetShortcutsUseCase`). |
+| Facet automation | A rule aimed at a disabled facet is a no-op: `RefreshAutomationStateUseCase` passes only selectable ids as the evaluator's existing facets, so the existing "facet missing" fallback applies ([15](15-flow-facet-automation.md)). |
+
+Until billing exists `EntitlementRepository.isPro` is a constant `true`, so none of this is visible yet.
 
 ## 2. Theme resolution — from DataStore to `MaterialTheme`
 

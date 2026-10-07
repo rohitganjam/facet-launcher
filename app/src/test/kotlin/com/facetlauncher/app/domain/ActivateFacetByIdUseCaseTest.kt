@@ -1,10 +1,11 @@
 package com.facetlauncher.app.domain
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
@@ -71,7 +72,8 @@ class ActivateFacetByIdUseCaseTest {
         settingsRepository: SettingsRepository,
         automationState: AutomationStateRepository,
         refresh: RefreshAutomationStateUseCase = mock(RefreshAutomationStateUseCase::class.java),
-    ) = ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState, refresh)
+        entitlement: FakeEntitlementRepository = FakeEntitlementRepository(),
+    ) = ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, entitlement), settingsRepository, automationState, refresh)
 
     private fun createAutomationStateRepository(): AutomationStateRepository {
         val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
@@ -94,6 +96,45 @@ class ActivateFacetByIdUseCaseTest {
 
         // Then it becomes the active facet
         assertEquals(second.id, settingsRepository.settings.first().activeFacetId)
+    }
+
+    @Test
+    fun `a free user cannot switch to a facet past the third`() = runTest {
+        // Given five facets on the free plan, the fourth disabled
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val settingsRepository = createSettingsRepository()
+        val facets = List(5) { facetRepository.addFacet() }
+        settingsRepository.setActiveFacetId(facets[0].id)
+
+        // When activating the fourth (a stale shortcut, say)
+        activate(facetRepository, settingsRepository, createAutomationStateRepository(), entitlement = FakeEntitlementRepository(initial = false))(facets[3].id)
+
+        // Then nothing changes
+        assertEquals(facets[0].id, settingsRepository.settings.first().activeFacetId)
+    }
+
+    @Test
+    fun `a free user can still switch to one of the first three`() = runTest {
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val settingsRepository = createSettingsRepository()
+        val facets = List(5) { facetRepository.addFacet() }
+        settingsRepository.setActiveFacetId(facets[0].id)
+
+        activate(facetRepository, settingsRepository, createAutomationStateRepository(), entitlement = FakeEntitlementRepository(initial = false))(facets[2].id)
+
+        assertEquals(facets[2].id, settingsRepository.settings.first().activeFacetId)
+    }
+
+    @Test
+    fun `a pro user can switch to any of ten facets`() = runTest {
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val settingsRepository = createSettingsRepository()
+        val facets = List(10) { facetRepository.addFacet() }
+        settingsRepository.setActiveFacetId(facets[0].id)
+
+        activate(facetRepository, settingsRepository, createAutomationStateRepository())(facets[9].id)
+
+        assertEquals(facets[9].id, settingsRepository.settings.first().activeFacetId)
     }
 
     @Test

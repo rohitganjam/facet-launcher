@@ -76,9 +76,9 @@ sequenceDiagram
   existing `HOME` one — this is what lets an arbitrary external `Intent` (not just our own
   shortcuts, which target it explicitly by `ComponentName` regardless of any filter) reach the
   launcher.
-- **No-op on an unknown/deleted facet id**, by design — `ActivateFacetByIdUseCase` checks
-  `FacetRepository.getById` first, so a stale shortcut for a since-deleted facet, a hand-typed bad
-  id, or a race with a delete does nothing rather than crashing or silently creating a facet.
+- **No-op on an unknown/deleted facet id, or a facet disabled on the free plan**, by design — `ActivateFacetByIdUseCase` checks
+  `SelectableFacetsUseCase` first, so a stale shortcut for a since-deleted facet, a hand-typed bad
+  id, a race with a delete, or a facet past the free limit ([13 §1a](13-flow-facets-theme-notifications-onboarding.md)) does nothing rather than crashing or silently creating a facet.
 - **A shortcut or deep-link switch is a manual switch.** `ActivateFacetByIdUseCase` defaults to
   `FacetSwitchSource.MANUAL`: the chosen facet becomes the facet-automation baseline and every rule
   active at that moment is suppressed until it ends, so an external automation app wins over the

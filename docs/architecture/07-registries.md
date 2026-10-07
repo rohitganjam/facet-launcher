@@ -26,7 +26,7 @@ dependency is not listed the class does not have it.
 | `DefaultLauncherRepository` | `RoleManager` / `PackageManager` home-role query | `Context` | `isDefaultLauncher()`, `requestDefaultLauncherIntent()` | `HomeViewModel`, `SettingsViewModel` |
 | `DeviceStateRepository` | combines battery, headphones, Wi-Fi and Bluetooth into one hot `StateFlow<DeviceState>` | `BatteryRepository`, `HeadphonesRepository`, `WifiRepository`, `BluetoothRepository`, `@ApplicationScope CoroutineScope` | `deviceState`, `current()`, `onPermissionsChanged()` | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `PermissionsViewModel`, `RuleEditorViewModel` |
 | `DockAppRepository` | Room `dock_apps` + `dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | as `DefaultFavoriteAppRepository`, dock-named; `MAX_APPS` constant | 9 use cases, 6 ViewModels |
-| `EntitlementRepository` (`open`) | whether the user has Pro; a constant `true` until billing exists, the single seam every Pro gate reads | — | `isPro: StateFlow<Boolean>` | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `ObserveFacetAutomationUseCase`, `RuleEditorViewModel` |
+| `EntitlementRepository` (`open`) | whether the user has Pro; a constant `true` until billing exists, the single seam every Pro gate reads | — | `isPro: StateFlow<Boolean>` | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`, `AddFacetUseCase`, `SelectableFacetsUseCase`, `ManageFacetsViewModel`, `FacetCarouselViewModel` |
 | `FacetDockAppRepository` | Room `facet_dock_apps` + `facet_dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeDockItemsForFacets(ids)`, `replaceItems(facetId, items)` | 8 use cases, 4 ViewModels |
 | `FacetRepository` | Room `facets` | `FacetDao` | `observeFacets()`, `getById`, `addFacet()`, `renameFacet`, 28 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters (trimmed — `updateOverridingApps`/`updateOverridingDock` no longer take the look-field params, moved to `AppearanceSettingsViewModel`'s own per-column setters), `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 15 use cases, 9 ViewModels |
 | `FacetShortcutRepository` | `ShortcutManagerCompat` dynamic shortcuts | `Context` | `syncShortcuts(facets)` — full atomic replace, one `ShortcutInfoCompat` per facet | `SwitchFacetToNativeClockUseCase` | write (releases the clock widget id, then clears it) | `FacetRepository`, `AppWidgetRepository` | `ClockWidgetFacetController` |
@@ -79,13 +79,14 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (43) — unscoped, constructor-injected unless noted
+## 2. Use cases (45) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
-| `ActivateFacetByIdUseCase` | write, no-op guard, `FacetSwitchSource` (manual re-samples the rules, then records baseline + suppresses active rules) | `FacetRepository`, `SettingsRepository`, `AutomationStateRepository`, `RefreshAutomationStateUseCase` | `LauncherViewModel` (deep link/shortcut ingestion, see [14](14-flow-deep-links-and-shortcuts.md)), `ManageFacetsViewModel`, `FacetCarouselViewModel`, `FacetSettingsViewModel` |
+| `ActivateFacetByIdUseCase` | write, no-op guard (a facet that is missing or disabled on the free plan), `FacetSwitchSource` (manual re-samples the rules, then records baseline + suppresses active rules) | `SelectableFacetsUseCase`, `SettingsRepository`, `AutomationStateRepository`, `RefreshAutomationStateUseCase` | `LauncherViewModel` (deep link/shortcut ingestion, see [14](14-flow-deep-links-and-shortcuts.md)), `ManageFacetsViewModel`, `FacetCarouselViewModel`, `FacetSettingsViewModel` |
 | `ApplyFacetAutomationUseCase` | one automation pass: refresh, then an `AUTOMATION` switch if the rules want a different facet | `RefreshAutomationStateUseCase`, `ActivateFacetByIdUseCase`, `SettingsRepository` | `RunFacetAutomationUseCase` |
 | `CanUseTriggerUseCase` | pure Pro gate: `invoke(trigger, isPro)` (schedule free, device triggers Pro) and `entitledRuleIds(rules, isPro)` (free keeps the first two schedule rules in list order) | — | `RefreshAutomationStateUseCase`, `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`, `SaveAutomationRuleUseCase` |
+| `AddFacetUseCase` | write: adds a facet unless at the limit (3 free, 10 Pro); returns `AddFacetResult` (`Added` / `LimitReached`) | `FacetRepository`, `EntitlementRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
 | `AddAppToDockUseCase` | write, routes by `facet.overrideDock` | `SettingsRepository`, `FacetRepository`, `DockAppRepository`, `FacetDockAppRepository` | `DrawerViewModel` |
 | `RemoveAppFromDockUseCase` | write | same four | `DrawerViewModel` |
 | `AddFolderToDockUseCase` | write | same four | `DrawerViewModel` |
@@ -99,7 +100,7 @@ cycles; `AppRepository` is the single root.
 | `CompactWidgetsUseCase` | pure grid | — | `HubViewModel` |
 | `DeleteFacetUseCase` | write (releases the facet's clock widget id first) | `FacetRepository`, `AppWidgetRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
 | `DeleteWidgetUseCase` | write | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
-| `EnsureActiveFacetUseCase` | startup write | `FacetRepository`, `SettingsRepository` | `LauncherViewModel` |
+| `EnsureActiveFacetUseCase` | seeds the first facet, and (`keepUsable()`, a collector) keeps the active facet one the user may use: missing or disabled → the first selectable facet | `FacetRepository`, `SettingsRepository`, `SelectableFacetsUseCase` | `LauncherViewModel` |
 | `EvaluateFacetAutomationUseCase` | pure (rules + trigger truth + `AutomationState` → desired facet + new state) | — | `RefreshAutomationStateUseCase` |
 | `ExportBackupUseCase` | one-shot read + file write | `SettingsRepository`, `FacetRepository`, `FavoriteAppRepository`, `DockAppRepository`, `FacetDockAppRepository`, `DefaultFavoriteAppRepository`, `WidgetPlacementRepository`, `FolderRepository`, `BackupRepository` | `BackupRestoreViewModel` |
 | `GetInstalledAppsUseCase` | read (`invoke()` one-shot / `observe()` live) | `AppRepository` | `LauncherViewModel`, 4 picker/settings ViewModels, `SeedDefaultDockUseCase` |
@@ -115,7 +116,7 @@ cycles; `AppRepository` is the single root.
 | `PlaceWidgetUseCase` | pure grid (`Placed` / `HubFull`) | — | `HubWidgetPickerViewModel`, `BackupRestoreViewModel` |
 | `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen`, F2) |
 | `RecentlyInstalledAppsUseCase` | pure (filters `firstInstallTime` within 72h) | — | `AppDrawerScreen` (inline `remember`), `PrivateSpaceViewModel` |
-| `RefreshAutomationStateUseCase` | samples every rule against the clock and persists the evaluator's state, without switching | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `EvaluateFacetAutomationUseCase`, `DeviceStateRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase`, `Clock` | `ApplyFacetAutomationUseCase`, `ActivateFacetByIdUseCase` |
+| `RefreshAutomationStateUseCase` | samples every rule against the clock and persists the evaluator's state, without switching | `AutomationRuleRepository`, `AutomationStateRepository`, `SelectableFacetsUseCase`, `SettingsRepository`, `EvaluateFacetAutomationUseCase`, `DeviceStateRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase`, `Clock` | `ApplyFacetAutomationUseCase`, `ActivateFacetByIdUseCase` |
 | `RepairOrphanedProfileRowsUseCase` | startup one-shot write | `AppRepository` + 5 placement/folder repositories | `LauncherViewModel` |
 | `ResolveWidgetDropUseCase` | pure grid | — | `HubViewModel` |
 | `ResolveWidgetResizeUseCase` | pure grid | — | `HubViewModel` |
@@ -123,8 +124,9 @@ cycles; `AppRepository` is the single root.
 | `SaveAutomationRuleUseCase` | write: Pro gate (trigger type, then the free rule limit for a new rule) before `AutomationRuleRepository.save()`; returns `SaveRuleResult` incl. `ProRequired` | `AutomationRuleRepository`, `CanUseTriggerUseCase` | `RuleEditorViewModel` |
 | `SeedDefaultDockUseCase` | startup write (once, `defaults_seeded`) | `SettingsRepository`, `DefaultAppRepository`, `DockAppRepository`, `GetInstalledAppsUseCase` | `LauncherViewModel` |
 | `SelectPreviewAppsUseCase` | pure | — | `HomeAppsListSettingsViewModel` |
+| `SelectableFacetsUseCase` | the facets the user may switch to: all for Pro, the first 3 in list order for free (`FacetLimits.selectableIds`); `invoke()` ids and `observe()` entities | `FacetRepository`, `EntitlementRepository` | `ActivateFacetByIdUseCase`, `EnsureActiveFacetUseCase`, `RefreshAutomationStateUseCase`, `SyncFacetShortcutsUseCase` |
 | `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
-| `SyncFacetShortcutsUseCase` | long-running collector | `FacetRepository`, `FacetShortcutRepository` | `LauncherViewModel` (see [14](14-flow-deep-links-and-shortcuts.md)) |
+| `SyncFacetShortcutsUseCase` | long-running collector; publishes shortcuts only for selectable facets | `SelectableFacetsUseCase`, `FacetShortcutRepository` | `LauncherViewModel` (see [14](14-flow-deep-links-and-shortcuts.md)) |
 
 Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridConstants.kt`
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),

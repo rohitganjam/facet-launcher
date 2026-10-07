@@ -297,11 +297,11 @@ class RuleEditorSheetTest {
     fun theUpgradeSheetShowsWhenProIsRequiredAndDismissClearsIt() {
         pro = false
         show(current.copy(proRequired = ProReason.TRIGGER))
-        composeRule.onNodeWithTag("automation_upgrade_sheet").assertExists()
+        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
 
-        composeRule.onNodeWithTag("automation_upgrade_dismiss").performClick()
+        composeRule.onNodeWithTag("pro_upgrade_dismiss").performClick()
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("automation_upgrade_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("pro_upgrade_sheet").assertDoesNotExist()
     }
 }

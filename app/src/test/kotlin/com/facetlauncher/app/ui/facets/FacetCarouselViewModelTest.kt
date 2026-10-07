@@ -3,15 +3,18 @@ package com.facetlauncher.app.ui.facets
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
-import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
+import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
+import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +29,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FacetCarouselViewModelTest {
@@ -47,8 +50,7 @@ class FacetCarouselViewModelTest {
         // Given a second facet and a rule the evaluator has marked active
         val second = FacetEntity(id = 2L, name = "Work", position = 1)
         val facetRepository = mock(FacetRepository::class.java).also {
-            `when`(it.observeFacets()).thenReturn(flowOf(emptyList()))
-            `when`(it.getById(second.id)).thenReturn(second)
+            `when`(it.observeFacets()).thenReturn(flowOf(listOf(second)))
         }
         val settingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings()))
@@ -69,7 +71,9 @@ class FacetCarouselViewModelTest {
             wallpaperRepository,
             DeleteFacetUseCase(facetRepository, mock(com.facetlauncher.app.data.widget.AppWidgetRepository::class.java)),
             observeFacetPreviews,
-            ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState, mock(RefreshAutomationStateUseCase::class.java)),
+            ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()), settingsRepository, automationState, mock(RefreshAutomationStateUseCase::class.java)),
+            AddFacetUseCase(facetRepository, FakeEntitlementRepository()),
+            FakeEntitlementRepository(),
         )
 
         // When the user picks it in the carousel

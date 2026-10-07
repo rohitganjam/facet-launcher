@@ -18,10 +18,10 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -32,41 +32,44 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.test.topCenter
 import androidx.compose.ui.test.up
+import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.PrivateSpaceRepository
-import com.facetlauncher.app.data.PrivateSpaceState
-import com.facetlauncher.app.data.SecureFolderRepository
-import com.facetlauncher.app.data.WorkProfileRepository
-import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.BatteryRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
-import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.DefaultLauncherRepository
+import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
-import com.facetlauncher.app.data.NotificationAccessRepository
-import com.facetlauncher.app.data.NotificationBadgeRepository
-import com.facetlauncher.app.data.NextAlarmRepository
-import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
+import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.NextAlarmRepository
+import com.facetlauncher.app.data.NotificationAccessRepository
+import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.NotificationShadeRepository
+import com.facetlauncher.app.data.PrivateSpaceRepository
+import com.facetlauncher.app.data.PrivateSpaceState
+import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
@@ -76,46 +79,46 @@ import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
+import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.AddFolderToDockUseCase
 import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
+import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
+import com.facetlauncher.app.domain.CompactWidgetsUseCase
+import com.facetlauncher.app.domain.DeleteFacetUseCase
+import com.facetlauncher.app.domain.DeleteWidgetUseCase
+import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
+import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
+import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
+import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
+import com.facetlauncher.app.domain.ObserveHubStateUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
+import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
 import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
 import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
-import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
-import com.facetlauncher.app.domain.DeleteFacetUseCase
-import com.facetlauncher.app.domain.DeleteWidgetUseCase
-import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
-import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
-import com.facetlauncher.app.domain.GetInstalledAppsUseCase
-import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
-import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
-import com.facetlauncher.app.domain.ObserveHubStateUseCase
-import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
-import com.facetlauncher.app.domain.CompactWidgetsUseCase
-import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
-import com.facetlauncher.app.domain.PlaceWidgetUseCase
-import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
+import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
+import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
+import com.facetlauncher.app.domain.SelectableFacetsUseCase
+import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
-import com.facetlauncher.app.data.DefaultLauncherRepository
-import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.ui.testAutomation
-import com.facetlauncher.app.ui.drawer.DrawerViewModel
-import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
-import com.facetlauncher.app.ui.home.HomeViewModel
-import com.facetlauncher.app.ui.hub.HubViewModel
-import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
-import com.facetlauncher.app.ui.home.ClockWidgetFacetController
-import com.facetlauncher.app.ui.home.ClockWidgetHostController
-import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
-import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
+import com.facetlauncher.app.ui.drawer.DrawerViewModel
+import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
+import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
+import com.facetlauncher.app.ui.home.ClockWidgetFacetController
+import com.facetlauncher.app.ui.home.ClockWidgetHostController
+import com.facetlauncher.app.ui.home.HomeViewModel
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
+import com.facetlauncher.app.ui.hub.HubViewModel
+import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
@@ -125,8 +128,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 
 /**
  * Home and Drawer are one merged composable now ([HomeDrawerRoute]) rather than two NavHost
@@ -265,7 +268,7 @@ class HomeDrawerRouteTest {
             launcherViewModel = remember {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
-                    EnsureActiveFacetUseCase(facetRepository, settingsRepository),
+                    EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, EntitlementRepository())),
                     CleanUpUninstalledAppsUseCase(
                         appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
                         FolderRepository(database.folderDao(), appRepository),
@@ -275,7 +278,7 @@ class HomeDrawerRouteTest {
                         FolderRepository(database.folderDao(), appRepository),
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
-                    SyncFacetShortcutsUseCase(facetRepository, FacetShortcutRepository(context)),
+                    SyncFacetShortcutsUseCase(SelectableFacetsUseCase(facetRepository, EntitlementRepository()), FacetShortcutRepository(context)),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                     testAutomation(context, database, facetRepository, settingsRepository).run,
                     settingsRepository,
@@ -410,6 +413,8 @@ class HomeDrawerRouteTest {
                         CalendarRepository(context.contentResolver),
                     ),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
+                    AddFacetUseCase(facetRepository, EntitlementRepository()),
+                    EntitlementRepository(),
                 )
             }
 

@@ -1,4 +1,4 @@
-package com.facetlauncher.app.ui.settings.automation
+package com.facetlauncher.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
@@ -14,9 +14,9 @@ import com.facetlauncher.app.ui.theme.Accent
 
 /** Marks something that needs Pro. A small M3 shape (8dp), like a chip. */
 @Composable
-internal fun ProPill(modifier: Modifier = Modifier) {
+fun ProPill(modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(R.string.automation_pro_pill),
+        text = stringResource(R.string.pro_pill),
         style = MaterialTheme.typography.labelSmall,
         color = Accent,
         modifier = modifier

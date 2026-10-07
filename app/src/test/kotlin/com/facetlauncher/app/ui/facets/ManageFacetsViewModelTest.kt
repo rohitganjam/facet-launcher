@@ -3,14 +3,18 @@ package com.facetlauncher.app.ui.facets
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.FacetLimits
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
-import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
+import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
+import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -29,9 +33,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
 
 /** In-memory fake — enough of [FacetDao] for [FacetRepository]'s needs. */
 private class FakeFacetDao : FacetDao {
@@ -78,11 +82,14 @@ class ManageFacetsViewModelTest {
         facetRepository: FacetRepository,
         settings: SettingsRepository = fakeSettings(),
         automationState: AutomationStateRepository = mock(AutomationStateRepository::class.java),
+        entitlement: FakeEntitlementRepository = FakeEntitlementRepository(),
     ) = ManageFacetsViewModel(
         facetRepository,
         settings,
         deleteFacetUseCase(facetRepository),
-        ActivateFacetByIdUseCase(facetRepository, settings, automationState, mock(RefreshAutomationStateUseCase::class.java)),
+        ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, entitlement), settings, automationState, mock(RefreshAutomationStateUseCase::class.java)),
+        AddFacetUseCase(facetRepository, entitlement),
+        entitlement,
     )
 
     @Test
@@ -138,9 +145,9 @@ class ManageFacetsViewModelTest {
     }
 
     @Test
-    fun `addFacet is a no-op once the maximum is reached`() = runTest(dispatcher) {
+    fun `addFacet is a no-op once a pro user reaches the maximum`() = runTest(dispatcher) {
         val facetRepository = FacetRepository(FakeFacetDao())
-        repeat(FacetRepository.MAX_FACETS) { facetRepository.addFacet() }
+        repeat(FacetLimits.PRO_MAX_FACETS) { facetRepository.addFacet() }
         val viewModel = createViewModel(facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
@@ -149,7 +156,7 @@ class ManageFacetsViewModelTest {
         viewModel.addFacet()
         dispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(FacetRepository.MAX_FACETS, facetRepository.observeFacets().first().size)
+        assertEquals(FacetLimits.PRO_MAX_FACETS, facetRepository.observeFacets().first().size)
     }
 
     @Test
@@ -167,5 +174,70 @@ class ManageFacetsViewModelTest {
 
         assertEquals(listOf(second.id), facetRepository.observeFacets().first().map { it.id })
         verify(settings).setActiveFacetId(second.id)
+    }
+
+    @Test
+    fun `a free user with five facets can use the first three, and the add row shows with the limit reached`() = runTest(dispatcher) {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        val facets = List(5) { facetRepository.addFacet() }
+        val viewModel = createViewModel(facetRepository, entitlement = FakeEntitlementRepository(initial = false))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(facets.take(3).map { it.id }.toSet(), state.selectableFacetIds)
+        assertFalse(state.canAddFacet)
+        assertTrue("shown so the way to Pro is visible", state.showAddFacet)
+    }
+
+    @Test
+    fun `a pro user at ten facets sees no add row`() = runTest(dispatcher) {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        repeat(FacetLimits.PRO_MAX_FACETS) { facetRepository.addFacet() }
+        val viewModel = createViewModel(facetRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showAddFacet)
+        assertEquals(10, viewModel.uiState.value.selectableFacetIds.size)
+    }
+
+    @Test
+    fun `a free user at three facets cannot add one`() = runTest(dispatcher) {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        repeat(3) { facetRepository.addFacet() }
+        val viewModel = createViewModel(facetRepository, entitlement = FakeEntitlementRepository(initial = false))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.addFacet()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(3, facetRepository.observeFacets().first().size)
+    }
+
+    @Test
+    fun `losing pro disables facets past the third without deleting them, and deleting one brings the next back`() = runTest(dispatcher) {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        val facets = List(5) { facetRepository.addFacet() }
+        val entitlement = FakeEntitlementRepository(initial = true)
+        val viewModel = createViewModel(facetRepository, entitlement = entitlement)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(5, viewModel.uiState.value.selectableFacetIds.size)
+
+        entitlement.proFlow.value = false
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(facets.take(3).map { it.id }.toSet(), viewModel.uiState.value.selectableFacetIds)
+        assertEquals(5, viewModel.uiState.value.facets.size)
+
+        // Deleting a disabled facet is allowed, and the fourth is not selectable until a slot opens
+        viewModel.deleteFacet(facets[4])
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(facets.take(3).map { it.id }.toSet(), viewModel.uiState.value.selectableFacetIds)
+
+        viewModel.deleteFacet(facets[1])
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(setOf(facets[0].id, facets[2].id, facets[3].id), viewModel.uiState.value.selectableFacetIds)
     }
 }

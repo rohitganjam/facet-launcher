@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/README.md": {
-    "mtime": 1791360723.18499,
-    "seen": 1791361866.206959,
-    "ast_hash": "5651b46f415cd9df455c319a31fa1832",
+    "mtime": 1791362768.3817115,
+    "seen": 1791366201.415453,
+    "ast_hash": "4d6ba5ccac1744fd8e11aa19ffaaaf34",
     "semantic_hash": ""
   },
   "Android launcher design planning/github.md": {
@@ -1128,9 +1128,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/LabeledDropdownRow.kt": {
-    "mtime": 1791359863.450483,
-    "seen": 1791361866.206796,
-    "ast_hash": "87758ebf6f8269391c27eae1990798fe",
+    "mtime": 1791363364.8131375,
+    "seen": 1791366201.41528,
+    "ast_hash": "2b9d8b59e937a599bbbf1388d6993219",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/RenameDialog.kt": {
@@ -2760,9 +2760,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791361848.8872504,
-    "seen": 1791361866.206979,
-    "ast_hash": "dc9385b5b1fed5fb5156887d2b17da98",
+    "mtime": 1791365730.3106928,
+    "seen": 1791366201.415475,
+    "ast_hash": "5ae797720c55babad69038b73c1e4286",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -2802,9 +2802,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppPickerScreen.kt": {
-    "mtime": 1789799851.7983263,
-    "seen": 1789804989.0757709,
-    "ast_hash": "d5745421ae9906015d126f29355ef790",
+    "mtime": 1791362721.7370784,
+    "seen": 1791366201.4152699,
+    "ast_hash": "4b2d1d792a562e250b2e8bb9f9dbdf77",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppSortControl.kt": {
@@ -3630,9 +3630,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationScreen.kt": {
-    "mtime": 1791359971.7139666,
-    "seen": 1791361866.206858,
-    "ast_hash": "b8262d1bf8ec82b44778faec5c2d1f77",
+    "mtime": 1791365464.3934133,
+    "seen": 1791366201.415346,
+    "ast_hash": "9b45329994282922c6e352708658fc6e",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationViewModel.kt": {
@@ -3660,9 +3660,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorSheetTest.kt": {
-    "mtime": 1791360100.3406215,
-    "seen": 1791361866.2066932,
-    "ast_hash": "8f15d0b1e6192603bda8d840f3f169fa",
+    "mtime": 1791363168.1067111,
+    "seen": 1791366201.41517,
+    "ast_hash": "61f92a2c5720bb39cd15f454d91d29ac",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/EntitlementRepository.kt": {
@@ -3684,9 +3684,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/AutomationStrips.kt": {
-    "mtime": 1791359943.282732,
-    "seen": 1791361866.206856,
-    "ast_hash": "0bf198763a339fa30df79a6e9737c5fc",
+    "mtime": 1791365464.3590763,
+    "seen": 1791366201.4153442,
+    "ast_hash": "47b8c19dcb4c4a790d5fb715d48dec1a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/EditorControls.kt": {
@@ -3714,9 +3714,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorSheet.kt": {
-    "mtime": 1791359881.6809976,
-    "seen": 1791361866.206861,
-    "ast_hash": "3a45af336bc78a808b7ef09c23546b97",
+    "mtime": 1791365473.3874974,
+    "seen": 1791366201.415349,
+    "ast_hash": "ac4d6c77778afc9bb2abb9649ea06b8f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorState.kt": {
@@ -3738,9 +3738,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/TriggerFields.kt": {
-    "mtime": 1791359881.68052,
-    "seen": 1791361866.2068632,
-    "ast_hash": "3055abd69e8e69de914bd248fc8de6c8",
+    "mtime": 1791362741.4117227,
+    "seen": 1791366201.415352,
+    "ast_hash": "7dad604f305c05c09150973393b0208e",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/UpgradeSheet.kt": {
@@ -3777,6 +3777,12 @@
     "mtime": 1791361698.7466507,
     "seen": 1791361866.206943,
     "ast_hash": "5a1beb74cb2fc834090b4592601c5de1",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/components/PillTabPair.kt": {
+    "mtime": 1791362721.717411,
+    "seen": 1791366201.4152808,
+    "ast_hash": "39fc3957f440f67799a8d4a95ecbf283",
     "semantic_hash": ""
   }
 }

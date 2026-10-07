@@ -37,9 +37,6 @@ fun AutomationRule.validationErrors(): List<AutomationRuleError> = when (val t =
     is AutomationTrigger.Headphones -> emptyList()
 }
 
-/** Why Pro is needed: the rule uses a Pro trigger, or the free user already has [AutomationLimits.FREE_MAX_RULES] rules. */
-enum class ProReason { TRIGGER, RULE_LIMIT }
-
 sealed interface SaveRuleResult {
     data class Saved(val id: Long) : SaveRuleResult
 

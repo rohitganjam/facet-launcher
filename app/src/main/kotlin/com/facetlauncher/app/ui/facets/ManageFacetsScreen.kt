@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -48,17 +51,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.ConfirmDialog
+import com.facetlauncher.app.ui.components.ProPill
+import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.components.rememberDragReorderState
 import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
-import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
@@ -71,6 +77,9 @@ private val REORDER_ROW_SPACING = 10.dp
  * drag-to-reorder list of facets with add / per-facet-settings / delete. Reached both from
  * Settings and from the Switch Facets carousel's "Reorder" button.
  */
+/** How dim a facet that is disabled on the free plan is drawn. */
+private const val LOCKED_ROW_ALPHA = 0.5f
+
 @Composable
 fun ManageFacetsScreen(
     onBack: () -> Unit,
@@ -104,6 +113,7 @@ private fun ManageFacetsContent(
     modifier: Modifier = Modifier,
 ) {
     var deletingFacet by remember { mutableStateOf<FacetEntity?>(null) }
+    var upgrade by remember { mutableStateOf<ProReason?>(null) }
     // remember(facets): a committed reorder re-emits the list from Room; re-seeding the working
     // copy on identity keeps the drag state from fighting the fresh list (same pattern the
     // carousel used).
@@ -116,14 +126,17 @@ private fun ManageFacetsContent(
             FacetReorderList(
                 facets = workingList,
                 activeFacetId = uiState.activeFacetId,
-                canAddFacet = uiState.canAddFacet,
+                isFacetLocked = { it !in uiState.selectableFacetIds },
+                showAddFacet = uiState.showAddFacet,
+                addNeedsPro = !uiState.canAddFacet,
                 canDeleteFacet = uiState.canDeleteFacet,
                 onOrderChange = { workingList = it },
                 onCommit = { onReorder(workingList) },
                 onEditFacet = onEditFacet,
                 onApplyFacet = onApplyFacet,
                 onDeleteRequest = { deletingFacet = it },
-                onAddFacet = onAddFacet,
+                onAddFacet = { if (uiState.canAddFacet) onAddFacet() else upgrade = ProReason.FACET_LIMIT },
+                onLockedFacetClick = { upgrade = ProReason.FACET_LOCKED },
                 contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 12.dp, bottom = 24.dp),
                 modifier = Modifier
                     .fillMaxSize()
@@ -143,6 +156,7 @@ private fun ManageFacetsContent(
             onDismiss = { deletingFacet = null },
         )
     }
+    upgrade?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { upgrade = null }) }
 }
 
 @Composable
@@ -172,7 +186,9 @@ private fun ManageFacetsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
 private fun FacetReorderList(
     facets: List<FacetEntity>,
     activeFacetId: Long,
-    canAddFacet: Boolean,
+    isFacetLocked: (facetId: Long) -> Boolean,
+    showAddFacet: Boolean,
+    addNeedsPro: Boolean,
     canDeleteFacet: Boolean,
     onOrderChange: (List<FacetEntity>) -> Unit,
     onCommit: () -> Unit,
@@ -180,6 +196,7 @@ private fun FacetReorderList(
     onApplyFacet: (Long) -> Unit,
     onDeleteRequest: (FacetEntity) -> Unit,
     onAddFacet: () -> Unit,
+    onLockedFacetClick: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -211,7 +228,9 @@ private fun FacetReorderList(
             FacetReorderRow(
                 facet = facet,
                 isActive = facet.id == activeFacetId,
+                locked = isFacetLocked(facet.id),
                 canDelete = canDeleteFacet,
+                onLockedClick = onLockedFacetClick,
                 onEditFacetClick = { onEditFacet(facet.id) },
                 onApplyFacetClick = { onApplyFacet(facet.id) },
                 onDeleteClick = { onDeleteRequest(facet) },
@@ -232,7 +251,8 @@ private fun FacetReorderList(
         }
         item(key = "add_facet_row") {
             AddFacetRow(
-                enabled = canAddFacet,
+                visible = showAddFacet,
+                showProPill = addNeedsPro,
                 onClick = onAddFacet,
                 modifier = Modifier.fillMaxWidth().testTag("facet_reorder_add_row"),
             )
@@ -244,7 +264,9 @@ private fun FacetReorderList(
 private fun FacetReorderRow(
     facet: FacetEntity,
     isActive: Boolean,
+    locked: Boolean,
     canDelete: Boolean,
+    onLockedClick: () -> Unit,
     onEditFacetClick: () -> Unit,
     onApplyFacetClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -264,7 +286,8 @@ private fun FacetReorderRow(
             // actual movement (detectDragGestures consumes nothing on a motionless tap), so a
             // plain tap on the handle itself still falls through to this and opens settings too —
             // a harmless second way in, not a conflict with dragging.
-            .clickable(onClick = onEditFacetClick)
+            .clickable(onClick = if (locked) onLockedClick else onEditFacetClick)
+            .alpha(if (locked) LOCKED_ROW_ALPHA else 1f)
             .padding(horizontal = 12.dp)
             .testTag("facet_reorder_row_${facet.id}"),
         verticalAlignment = Alignment.CenterVertically,
@@ -279,6 +302,14 @@ private fun FacetReorderRow(
                 .then(dragHandleModifier),
         )
         Text(text = facet.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+        if (locked) {
+            Icon(
+                Icons.Default.Lock,
+                contentDescription = stringResource(R.string.facet_locked_content_description),
+                tint = Muted,
+                modifier = Modifier.size(18.dp).testTag("facet_reorder_lock_${facet.id}"),
+            )
+        }
         Box {
             IconButton(
                 onClick = { menuExpanded = true },
@@ -289,11 +320,12 @@ private fun FacetReorderRow(
             ThemedDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                 ThemedDropdownMenuItem(
                     label = stringResource(R.string.facet_carousel_facet_settings),
+                    enabled = !locked,
                     onClick = { menuExpanded = false; onEditFacetClick() },
                 )
                 ThemedDropdownMenuItem(
                     label = stringResource(R.string.manage_facets_apply_facet),
-                    enabled = !isActive,
+                    enabled = !isActive && !locked,
                     onClick = { menuExpanded = false; onApplyFacetClick() },
                 )
                 ThemedDropdownMenuItem(
@@ -308,8 +340,8 @@ private fun FacetReorderRow(
 }
 
 @Composable
-private fun AddFacetRow(enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    if (!enabled) return
+private fun AddFacetRow(visible: Boolean, showProPill: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    if (!visible) return
     Row(
         modifier = modifier
             .height(REORDER_ROW_HEIGHT)
@@ -323,6 +355,7 @@ private fun AddFacetRow(enabled: Boolean, onClick: () -> Unit, modifier: Modifie
     ) {
         Icon(Icons.Default.Add, contentDescription = null, tint = Accent)
         Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Accent, modifier = Modifier.padding(start = 8.dp))
+        if (showProPill) ProPill(modifier = Modifier.padding(start = 8.dp))
     }
 }
 

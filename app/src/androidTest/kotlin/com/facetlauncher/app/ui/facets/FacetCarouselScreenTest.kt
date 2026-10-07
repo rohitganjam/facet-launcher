@@ -4,12 +4,12 @@ import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -22,21 +22,25 @@ import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.FacetLimits
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
-import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
+import com.facetlauncher.app.ui.FakeEntitlementRepository
+import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -64,6 +68,7 @@ class FacetCarouselScreenTest {
         onDismissDrag: (Float) -> Unit = {},
         onDismissDragEnd: () -> Unit = {},
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
+        entitlement: EntitlementRepository = EntitlementRepository(),
         seedApps: suspend (AppRepository, FavoriteAppRepository, DockAppRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
@@ -123,7 +128,9 @@ class FacetCarouselScreenTest {
                         calendarPermissionRepository,
                         calendarRepository,
                     ),
-                    testAutomation(context, database, facetRepository, settingsRepository).activate,
+                    testAutomation(context, database, facetRepository, settingsRepository, entitlement).activate,
+                    AddFacetUseCase(facetRepository, entitlement),
+                    entitlement,
                 )
             }
             FacetLauncherTheme {
@@ -383,10 +390,10 @@ class FacetCarouselScreenTest {
 
     @Test
     fun addFacetPageIsHiddenOnceTheMaximumIsReached() {
-        // Given the maximum of 3 facets already exist
+        // Given the maximum of 10 facets already exist
         setContent(
             seed = { facetRepository, settings ->
-                repeat(FacetRepository.MAX_FACETS) { facetRepository.addFacet() }
+                repeat(FacetLimits.PRO_MAX_FACETS) { facetRepository.addFacet() }
                 settings.setActiveFacetId(1L)
             },
         )
@@ -727,5 +734,53 @@ class FacetCarouselScreenTest {
 
         // Then the caller is asked to navigate there
         assertEquals(true, navigatedToSettings)
+    }
+
+    @Test
+    fun aFreeUsersFourthFacetShowsALockAndTappingItOpensTheUpgradeWithoutApplyingIt() {
+        var applied = false
+        setContent(
+            onFacetApply = { applied = true },
+            seed = { facetRepository, settings ->
+                repeat(4) { facetRepository.addFacet() }
+                settings.setActiveFacetId(4L)
+            },
+            entitlement = FakeEntitlementRepository(initial = false),
+        )
+
+        composeRule.onNodeWithTag("facet_page_lock_4", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("facet_page_4").performClick()
+
+        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
+        assertEquals(false, applied)
+    }
+
+    @Test
+    fun aProUserSeesNoLockOnAFourthFacet() {
+        setContent(
+            seed = { facetRepository, settings ->
+                repeat(4) { facetRepository.addFacet() }
+                settings.setActiveFacetId(4L)
+            },
+        )
+
+        composeRule.onNodeWithTag("facet_page_lock_4", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun aFreeUserAtTheLimitStillGetsTheAddPageAndItOpensTheUpgrade() {
+        setContent(
+            seed = { facetRepository, settings ->
+                repeat(3) { facetRepository.addFacet() }
+                settings.setActiveFacetId(3L)
+            },
+            entitlement = FakeEntitlementRepository(initial = false),
+        )
+
+        swipeToNextPage()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("facet_carousel_add_page").assertExists().performClick()
+
+        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
     }
 }

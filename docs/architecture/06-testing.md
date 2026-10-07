@@ -14,8 +14,8 @@ Current counts (from the registry): **138 test classes, 1144 cases** — 669 uni
 flowchart LR
     subgraph UNIT["app/src/test — JVM, ./gradlew test"]
         direction TB
-        U1["data/ — 51 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
-        U2["domain/ — 40 classes\nEvery use case; pure ones need no Android"]
+        U1["data/ — 52 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
+        U2["domain/ — 42 classes\nEvery use case; pure ones need no Android"]
         U3["ui/ — 38 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
     end
     subgraph INST["app/src/androidTest — emulator, ./gradlew connectedDebugAndroidTest"]

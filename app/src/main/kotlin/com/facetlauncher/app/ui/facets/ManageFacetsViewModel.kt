@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.model.FacetLimits
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -18,8 +21,16 @@ import kotlinx.coroutines.launch
 data class ManageFacetsUiState(
     val facets: List<FacetEntity> = emptyList(),
     val activeFacetId: Long = 0L,
+    /** False for a free user: facets past the third are disabled and the add row opens the upgrade sheet. */
+    val isPro: Boolean = true,
 ) {
-    val canAddFacet: Boolean get() = facets.size < FacetRepository.MAX_FACETS
+    val canAddFacet: Boolean get() = FacetLimits.canAdd(facets.size, isPro)
+
+    /** The add row shows at the limit for a free user too, with a Pro pill, so the way up is visible. */
+    val showAddFacet: Boolean get() = canAddFacet || !isPro
+
+    /** The facets the user may switch to or edit; the rest are disabled on the free plan. */
+    val selectableFacetIds: Set<Long> get() = FacetLimits.selectableIds(facets.map { it.id }, isPro)
     val canDeleteFacet: Boolean get() = facets.size > FacetRepository.MIN_FACETS
 }
 
@@ -34,13 +45,16 @@ class ManageFacetsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val deleteFacetUseCase: DeleteFacetUseCase,
     private val activateFacetById: ActivateFacetByIdUseCase,
+    private val addFacetUseCase: AddFacetUseCase,
+    entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<ManageFacetsUiState> = combine(
         facetRepository.observeFacets(),
         settingsRepository.settings,
-    ) { facets, settings ->
-        ManageFacetsUiState(facets = facets, activeFacetId = settings.activeFacetId)
+        entitlementRepository.isPro,
+    ) { facets, settings, isPro ->
+        ManageFacetsUiState(facets = facets, activeFacetId = settings.activeFacetId, isPro = isPro)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ManageFacetsUiState())
 
     fun reorderFacets(orderedFacets: List<FacetEntity>) {
@@ -52,8 +66,7 @@ class ManageFacetsViewModel @Inject constructor(
     }
 
     fun addFacet() {
-        if (!uiState.value.canAddFacet) return
-        viewModelScope.launch { facetRepository.addFacet() }
+        viewModelScope.launch { addFacetUseCase() }
     }
 
     fun deleteFacet(facet: FacetEntity) {
@@ -61,8 +74,10 @@ class ManageFacetsViewModel @Inject constructor(
         viewModelScope.launch {
             deleteFacetUseCase(facet)
             if (uiState.value.activeFacetId == facet.id) {
-                uiState.value.facets.firstOrNull { it.id != facet.id }
-                    ?.let { settingsRepository.setActiveFacetId(it.id) }
+                // The next facet the user may actually use, judged on the list as it is after this delete.
+                val remaining = uiState.value.facets.filter { it.id != facet.id }
+                val usable = FacetLimits.selectableIds(remaining.map { it.id }, uiState.value.isPro)
+                remaining.firstOrNull { it.id in usable }?.let { settingsRepository.setActiveFacetId(it.id) }
             }
         }
     }

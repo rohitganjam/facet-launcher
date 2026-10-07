@@ -12,19 +12,19 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (5)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule + the @AutomationDataStore qualifier
 │   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
-│   ├── model/                     (36)  Immutable value types & enums shared by every layer
+│   ├── model/                     (38)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository
 │
-├── domain/                        (46)  43 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (48)  45 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
     ├── theme/                     (11)  Color, Type, Theme, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
-    ├── components/                (32)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    ├── components/                (35)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
     │                                    DragReorderState, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
     │                                    AppPickerScreen, FolderContentsSheet, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (23 routes) + popBackStackSafely
@@ -42,7 +42,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
     └── settings/                  (29)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
-        ├── automation/            (15)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews
+        ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (ProPill and the upgrade sheet live in `components/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```
 
@@ -72,11 +72,11 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          33   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+├── data/          34   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     12   Converters, entities, DAO-level behaviour via in-memory Room
-│   ├── model/      6   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
+│   ├── model/      7   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
-├── domain/        40   one test per use case (pure logic — no Android needed for most)
+├── domain/        42   one test per use case (pure logic — no Android needed for most)
 └── ui/            38   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) and the rule editor state/formatting tests
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)

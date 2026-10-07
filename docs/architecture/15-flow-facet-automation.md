@@ -422,7 +422,7 @@ with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the
 dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
 asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
 and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + See Pro) shows for the free
-plan. `UpgradeSheet` is a `ThemedModalBottomSheet`; it explains and dismisses, and the billing plan adds
+plan. `ProUpgradeSheet` (shared with the facet limits) is a `ThemedModalBottomSheet`; it explains and dismisses, and the billing plan adds
 the purchase action.
 
 **Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
@@ -495,7 +495,7 @@ with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the
 dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
 asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
 and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + See Pro) shows for the free
-plan. `UpgradeSheet` is a `ThemedModalBottomSheet`; it explains and dismisses, and the billing plan adds
+plan. `ProUpgradeSheet` (shared with the facet limits) is a `ThemedModalBottomSheet`; it explains and dismisses, and the billing plan adds
 the purchase action.
 
 **Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
@@ -596,7 +596,7 @@ These hold for the built code and are covered by `CanUseTriggerUseCaseTest`, `Sa
 | Persisted state and `afterManualSwitch` | `data/model/AutomationState.kt` |
 | Who is switching | `data/model/FacetSwitchSource.kt` |
 | Pro gate | `data/EntitlementRepository.kt`, `domain/CanUseTriggerUseCase.kt`, `domain/SaveAutomationRuleUseCase.kt`, `ProReason` / `SaveRuleResult.ProRequired` in `data/model/AutomationRuleValidation.kt` |
-| UI | `ui/settings/automation/` (`FacetAutomationScreen`, `RuleEditorSheet`, `RuleEditorState`, `RuleEditorViewModel`, `TriggerFields`, `ScheduleFields`, `UpgradeSheet`, `ProPill`), `domain/ObserveFacetAutomationUseCase.kt`, `ui/navigation/FacetNavHost.kt` (`FACET_AUTOMATION`) |
+| UI | `ui/settings/automation/` (`FacetAutomationScreen`, `RuleEditorSheet`, `RuleEditorState`, `RuleEditorViewModel`, `TriggerFields`, `ScheduleFields`, `ProUpgradeSheet` and `ProPill` in `ui/components/`), `domain/ObserveFacetAutomationUseCase.kt`, `ui/navigation/FacetNavHost.kt` (`FACET_AUTOMATION`) |
 | Single switch choke point | `domain/ActivateFacetByIdUseCase.kt` |
 | State persistence | `data/AutomationStateRepository.kt`, `data/di/DataStoreModule.kt`, `data/di/AutomationDataStore.kt` |
 | Tests | `domain/EvaluateFacetAutomationUseCaseTest.kt`, `data/model/AutomationStateTest.kt`, `domain/ActivateFacetByIdUseCaseTest.kt`, `data/AutomationStateRepositoryTest.kt`, `data/AutomationRuleRepositoryTest.kt`, `data/local/AutomationRuleDaoTest.kt`, `data/model/AutomationTriggerTest.kt`, `data/model/AutomationRuleValidationTest.kt`, `data/model/DeviceStateTest.kt`, `data/HeadphonesRepositoryTest.kt`, `data/WifiRepositoryTest.kt`, `data/BluetoothRepositoryTest.kt`, `data/DeviceStateRepositoryTest.kt`, `data/AutomationPermissionRepositoryTest.kt`, instrumented `FacetDatabaseMigrationTest.migration25To26…` |

@@ -2,12 +2,11 @@ package com.facetlauncher.app.ui.facets
 
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AutomationStateRepository
-import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
-import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
@@ -23,6 +22,9 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
+import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,9 +44,9 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -334,7 +336,7 @@ class FacetSettingsViewModelTest {
         defaultFavoriteAppRepository,
         facetDockAppRepository,
         dockAppRepository,
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationStateRepository, mock(RefreshAutomationStateUseCase::class.java)),
+        ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()), settingsRepository, automationStateRepository, mock(RefreshAutomationStateUseCase::class.java)),
     )
 
     /** In-memory fake — enough of [com.facetlauncher.app.data.local.FacetDao] for [FacetRepository]'s needs. */

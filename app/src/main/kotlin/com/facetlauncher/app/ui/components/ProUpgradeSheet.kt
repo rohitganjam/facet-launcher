@@ -1,4 +1,4 @@
-package com.facetlauncher.app.ui.settings.automation
+package com.facetlauncher.app.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,36 +14,36 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.ProReason
-import com.facetlauncher.app.ui.components.SurfaceButton
-import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 
 /**
- * What a free user sees on reaching a Pro feature of facet automation. Only explains and dismisses:
- * the purchase action arrives with the billing plan, which owns the real sheet.
+ * What a free user sees on reaching a Pro feature (more facets, or a Pro automation trigger or rule). Only
+ * explains and dismisses until billing lands, which adds the price and the purchase action here.
  */
 @Composable
-internal fun UpgradeSheet(reason: ProReason, onDismiss: () -> Unit) {
+fun ProUpgradeSheet(reason: ProReason, onDismiss: () -> Unit) {
     ThemedModalBottomSheet(onDismissRequest = onDismiss, skipPartiallyExpanded = true) {
-        UpgradeContent(reason = reason, onDismiss = onDismiss)
+        ProUpgradeContent(reason = reason, onDismiss = onDismiss)
     }
 }
 
 @Composable
-internal fun UpgradeContent(reason: ProReason, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp).testTag("automation_upgrade_sheet")) {
+fun ProUpgradeContent(reason: ProReason, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp).testTag("pro_upgrade_sheet")) {
         Text(
-            text = stringResource(R.string.automation_upgrade_title),
+            text = stringResource(R.string.pro_upgrade_title),
             style = MaterialTheme.typography.titleLarge,
             color = Ink,
             modifier = Modifier.semantics { heading() },
         )
         val body = when (reason) {
-            ProReason.TRIGGER -> R.string.automation_upgrade_trigger
-            ProReason.RULE_LIMIT -> R.string.automation_upgrade_limit
+            ProReason.TRIGGER -> R.string.pro_upgrade_trigger
+            ProReason.RULE_LIMIT -> R.string.pro_upgrade_rule_limit
+            ProReason.FACET_LIMIT -> R.string.pro_upgrade_facet_limit
+            ProReason.FACET_LOCKED -> R.string.pro_upgrade_facet_locked
         }
         Text(text = stringResource(body), style = MaterialTheme.typography.bodyLarge, color = Muted, modifier = Modifier.padding(top = 8.dp, bottom = 20.dp))
-        SurfaceButton(text = stringResource(R.string.automation_upgrade_dismiss), onClick = onDismiss, modifier = Modifier.testTag("automation_upgrade_dismiss"))
+        SurfaceButton(text = stringResource(R.string.pro_upgrade_dismiss), onClick = onDismiss, modifier = Modifier.testTag("pro_upgrade_dismiss"))
     }
 }
