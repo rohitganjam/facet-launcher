@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -26,6 +25,7 @@ import com.facetlauncher.app.data.model.BatteryDirection
 import com.facetlauncher.app.data.model.BatteryLevelCondition
 import com.facetlauncher.app.data.model.PairedBluetoothDevice
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.PillTabPair
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Muted
@@ -70,7 +70,7 @@ internal fun TriggerFields(
             is AutomationTrigger.Schedule -> ScheduleFields(state, onChange)
             is AutomationTrigger.Bluetooth -> BluetoothFields(state, trigger, choices, onChange)
             is AutomationTrigger.Wifi -> WifiFields(state, trigger, choices, onChange, onChangeTrigger)
-            is AutomationTrigger.Headphones -> PolarityRadios(
+            is AutomationTrigger.Headphones -> PolarityTabs(
                 negated = trigger.negated,
                 positive = stringResource(R.string.automation_while_plugged_in),
                 negative = stringResource(R.string.automation_while_not_plugged_in),
@@ -106,13 +106,18 @@ private fun PermissionNote(permission: AutomationPermission) {
     }
 }
 
-/** "While X" / "While not X" for a device condition. */
+/** "While X" / "While not X" for a device condition, as two pill tabs. */
 @Composable
-private fun PolarityRadios(negated: Boolean, positive: String, negative: String, tag: String, onSelect: (negated: Boolean) -> Unit) {
-    Column(modifier = Modifier.selectableGroup()) {
-        RadioRow(selected = !negated, text = positive, tag = "${tag}_on", onClick = { onSelect(false) })
-        RadioRow(selected = negated, text = negative, tag = "${tag}_off", onClick = { onSelect(true) })
-    }
+private fun PolarityTabs(negated: Boolean, positive: String, negative: String, tag: String, onSelect: (negated: Boolean) -> Unit) {
+    PillTabPair(
+        startLabel = positive,
+        endLabel = negative,
+        endSelected = negated,
+        onSelect = onSelect,
+        startTag = "${tag}_on",
+        endTag = "${tag}_off",
+        modifier = Modifier.padding(vertical = 6.dp),
+    )
 }
 
 @Composable
@@ -127,7 +132,7 @@ private fun BluetoothFields(
     // A device that was unpaired since the rule was saved stays selectable so the row still reads as it was.
     val options = if (current.address.isBlank() || paired.any { it.address == current.address }) paired else listOf(current) + paired
     Column {
-        PolarityRadios(
+        PolarityTabs(
             negated = trigger.negated,
             positive = stringResource(R.string.automation_while_connected),
             negative = stringResource(R.string.automation_while_not_connected),
@@ -160,15 +165,22 @@ private fun WifiFields(
     val networks = choices.networks
     val named = trigger.ssid != null
     Column {
-        PolarityRadios(
+        PolarityTabs(
             negated = trigger.negated,
             positive = stringResource(R.string.automation_while_connected),
             negative = stringResource(R.string.automation_while_not_connected),
             tag = "rule_editor_polarity",
             onSelect = { onChange { s -> s.withTrigger(trigger.copy(negated = it)) } },
         )
-        RadioRow(!named, stringResource(R.string.automation_wifi_scope_any), "rule_editor_wifi_any") { onChangeTrigger(state.withWifiScope(false)) }
-        RadioRow(named, stringResource(R.string.automation_wifi_scope_named), "rule_editor_wifi_named") { onChangeTrigger(state.withWifiScope(true)) }
+        PillTabPair(
+            startLabel = stringResource(R.string.automation_wifi_scope_any),
+            endLabel = stringResource(R.string.automation_wifi_scope_named),
+            endSelected = named,
+            onSelect = { onChangeTrigger(state.withWifiScope(it)) },
+            startTag = "rule_editor_wifi_any",
+            endTag = "rule_editor_wifi_named",
+            modifier = Modifier.padding(vertical = 6.dp),
+        )
         if (named) {
             val ssid = trigger.ssid.orEmpty()
             LabeledDropdownRow(
@@ -189,14 +201,14 @@ private fun BatteryFields(trigger: AutomationTrigger.Battery, onChange: ((RuleEd
     val level = trigger.level
     val stops = BatteryLevelCondition.stopsFor(level.direction)
     Column {
-        PolarityRadios(
+        PolarityTabs(
             negated = !trigger.whileCharging,
             positive = stringResource(R.string.automation_battery_charging),
             negative = stringResource(R.string.automation_battery_not_charging),
             tag = "rule_editor_charging",
             onSelect = { notCharging -> onChange { s -> s.withTrigger(trigger.copy(whileCharging = !notCharging)) } },
         )
-        PolarityRadios(
+        PolarityTabs(
             negated = level.direction == BatteryDirection.ABOVE,
             positive = stringResource(R.string.automation_battery_option_below),
             negative = stringResource(R.string.automation_battery_option_above),

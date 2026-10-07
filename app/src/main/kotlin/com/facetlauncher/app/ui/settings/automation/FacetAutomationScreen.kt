@@ -193,7 +193,11 @@ private fun RulesCard(
     onEditRule: (Long) -> Unit,
 ) {
     if (state.items.isEmpty()) {
-        EmptyStrip(onAddRule = onAddRule)
+        EmptyStrip()
+        // The same "Add rule" row as under a populated list, so the action looks identical either way.
+        SettingsCard(modifier = Modifier.padding(top = 10.dp)) {
+            AddRuleRow(showProPill = false, onClick = onAddRule, tag = "automation_empty_add")
+        }
         return
     }
     SettingsCard {
@@ -245,13 +249,13 @@ private fun RuleRow(item: AutomationRuleItem, onToggle: (Boolean) -> Unit, onCli
 }
 
 @Composable
-private fun AddRuleRow(showProPill: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun AddRuleRow(showProPill: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, tag: String = "automation_add_rule_row") {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp)
-            .testTag("automation_add_rule_row"),
+            .testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {

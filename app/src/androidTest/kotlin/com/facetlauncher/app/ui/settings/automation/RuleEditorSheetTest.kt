@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -92,14 +93,18 @@ class RuleEditorSheetTest {
     }
 
     @Test
-    fun choosingSwitchToRevealsTheFacetPicker() {
+    fun theSwitchToRowHoldsItsFacetDropdownAndPickingAFacetSelectsIt() {
         show()
-        composeRule.onNodeWithTag("rule_editor_end_facet").assertDoesNotExist()
-
-        composeRule.onNodeWithTag("rule_editor_end_SWITCH").performClick()
-
+        composeRule.onNodeWithTag("rule_editor_end_RETURN").assertIsSelected()
         composeRule.onNodeWithTag("rule_editor_end_facet").assertExists()
+
+        composeRule.onNodeWithTag("rule_editor_end_facet").performClick()
+        // The current value and the menu option both read "Personal"; the option is the last match.
+        composeRule.onAllNodesWithText("Personal").onLast().performClick()
+
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag("rule_editor_end_SWITCH").assertIsSelected()
+        assertEquals(EndKind.SWITCH, current.endKind)
     }
 
     @Test

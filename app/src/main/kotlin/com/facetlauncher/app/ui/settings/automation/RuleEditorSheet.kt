@@ -6,10 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -32,7 +36,6 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
-import com.facetlauncher.app.ui.components.SurfaceButton
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.theme.Accent
@@ -132,20 +135,35 @@ private fun EndBehaviorFields(state: RuleEditorState, onChange: ((RuleEditorStat
             modifier = Modifier.padding(top = 12.dp),
         )
         EndRadio(EndKind.RETURN, state.endKind, stringResource(R.string.automation_end_return), onChange)
-        EndRadio(EndKind.SWITCH, state.endKind, stringResource(R.string.automation_end_switch_to), onChange)
-        if (state.endKind == EndKind.SWITCH) {
-            val choices = facets.filter { it.id != state.targetFacetId }.ifEmpty { facets }
-            LabeledDropdownRow(
-                title = stringResource(R.string.automation_editor_facet),
-                options = choices,
-                selected = choices.firstOrNull { it.id == state.endFacetId } ?: choices.first(),
-                label = { it.name },
-                onSelect = { facet -> onChange { it.copy(endFacetId = facet.id) } },
-                testTag = "rule_editor_end_facet",
-            )
-        }
+        SwitchToRow(state, onChange)
         EndRadio(EndKind.STAY, state.endKind, stringResource(R.string.automation_end_stay, targetName), onChange)
     }
+}
+
+/** "Switch to <facet>" on one row: the radio and label on the left, the facet dropdown on the right. */
+@Composable
+private fun SwitchToRow(state: RuleEditorState, onChange: ((RuleEditorState) -> RuleEditorState) -> Unit) {
+    val choices = state.facets.filter { it.id != state.targetFacetId }.ifEmpty { state.facets }
+    val isSwitch = state.endKind == EndKind.SWITCH
+    LabeledDropdownRow(
+        title = stringResource(R.string.automation_end_switch_to),
+        options = choices,
+        selected = choices.firstOrNull { it.id == state.endFacetId } ?: choices.first(),
+        label = { it.name },
+        onSelect = { facet -> onChange { it.copy(endKind = EndKind.SWITCH, endFacetId = facet.id) } },
+        leading = {
+            RadioButton(
+                selected = isSwitch,
+                onClick = null,
+                colors = RadioButtonDefaults.colors(selectedColor = Accent, unselectedColor = Muted),
+                modifier = Modifier.padding(end = 12.dp),
+            )
+        },
+        titleModifier = Modifier
+            .selectable(selected = isSwitch, role = Role.RadioButton, onClick = { onChange { it.copy(endKind = EndKind.SWITCH) } })
+            .testTag("rule_editor_end_SWITCH"),
+        testTag = "rule_editor_end_facet",
+    )
 }
 
 @Composable
@@ -162,11 +180,19 @@ private fun EditorButtons(isNew: Boolean, onSave: () -> Unit, onCancel: () -> Un
     ) {
         if (!isNew) {
             TextButton(onClick = onDelete, modifier = Modifier.testTag("rule_editor_delete")) {
-                Text(text = stringResource(R.string.action_delete), style = MaterialTheme.typography.labelLarge, color = ErrorColor)
+                Icon(Icons.Default.Delete, contentDescription = null, tint = ErrorColor, modifier = Modifier.size(18.dp))
+                Text(
+                    text = stringResource(R.string.action_delete),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = ErrorColor,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
             }
         }
         Box(modifier = Modifier.weight(1f))
-        SurfaceButton(text = stringResource(R.string.action_cancel), onClick = onCancel, modifier = Modifier.testTag("rule_editor_cancel"))
+        TextButton(onClick = onCancel, modifier = Modifier.testTag("rule_editor_cancel")) {
+            Text(text = stringResource(R.string.action_cancel), style = MaterialTheme.typography.labelLarge, color = Muted)
+        }
         TonalButton(text = stringResource(R.string.action_save), onClick = onSave, modifier = Modifier.testTag("rule_editor_save"))
     }
 }

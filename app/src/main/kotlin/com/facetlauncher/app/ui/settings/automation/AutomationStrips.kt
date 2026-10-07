@@ -66,23 +66,17 @@ internal fun FreePlanStrip(onSeePro: () -> Unit, modifier: Modifier = Modifier) 
 }
 
 @Composable
-internal fun EmptyStrip(onAddRule: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
+internal fun EmptyStrip(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.automation_empty),
+        style = MaterialTheme.typography.bodyMedium,
+        color = Muted,
         modifier = modifier
             .fillMaxWidth()
             .dashedBorder(color = Ink.copy(alpha = 0.16f), cornerRadius = 12.dp)
             .padding(horizontal = 13.dp, vertical = 11.dp)
             .testTag("automation_empty"),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(text = stringResource(R.string.automation_empty), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        Text(
-            text = stringResource(R.string.automation_add_rule),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Accent,
-            modifier = Modifier.clickable(onClick = onAddRule).padding(vertical = 4.dp).testTag("automation_empty_add"),
-        )
-    }
+    )
 }
 
 @Composable

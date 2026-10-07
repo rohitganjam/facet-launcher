@@ -455,7 +455,6 @@
     <string name="automation_editor_until">Bis</string>
     <string name="automation_ends_next_day">Endet am nächsten Tag</string>
     <string name="automation_editor_when_it_ends">Am Ende</string>
-    <string name="automation_editor_facet">Facette</string>
     <string name="automation_end_return">Zur vorherigen Facette zurückkehren</string>
     <string name="automation_end_switch_to">Wechseln zu</string>
     <string name="automation_end_stay">Bei %1$s bleiben</string>

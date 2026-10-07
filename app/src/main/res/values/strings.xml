@@ -495,7 +495,6 @@
     <string name="automation_editor_until">Until</string>
     <string name="automation_ends_next_day">Ends the next day</string>
     <string name="automation_editor_when_it_ends">When it ends</string>
-    <string name="automation_editor_facet">Facet</string>
     <string name="automation_end_return">Return to previous facet</string>
     <string name="automation_end_switch_to">Switch to</string>
     <string name="automation_end_stay">Stay on %1$s</string>
