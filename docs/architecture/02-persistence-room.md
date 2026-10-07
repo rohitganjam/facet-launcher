@@ -6,6 +6,7 @@
 |---|---|---|---|---|
 | Room `FacetDatabase` | `facet.db` (schema **v23**, `exportSchema = true` → `app/schemas/.../1.json … 23.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 47 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
 | Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v3: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
@@ -665,6 +666,24 @@ live from the OS on every check), the installed-app list, and notification count
 3. Decide whether it is facet-overridable; if so, add the `facets` column (+ migration, §4) and the gate.
 4. Decide whether it belongs in `BackupSettings` (+ `BackupMapping` both ways). Bump `CURRENT_BACKUP_VERSION` only for a breaking change — a defaulted additive field doesn't need one ([09 §4](09-flow-backup-restore.md)).
 5. Add a `SettingsRepositoryTest` case for default + round-trip, and a row in 5.3 and 5.4 here.
+
+### 5.7 `facet_automation` (`AutomationStateRepository`)
+
+A separate DataStore file, provided by `DataStoreModule` under the `@AutomationDataStore` qualifier. It
+is not part of `LauncherSettings` (so its writes don't re-emit every settings collector) and not in
+`BackupBundle` (automation state is runtime bookkeeping, and facet ids change on import). Read through
+`state: Flow<AutomationState>`; written only through `update { }`, an atomic read-modify-write.
+
+| Key | Type | `AutomationState` field | Meaning |
+|---|---|---|---|
+| `baseline_facet_id` | Long (absent = null) | `baselineFacetId` | The facet the user last chose by hand; what a rule returns to |
+| `active_rule_ids` | String (`"10,11"`, activation order) | `activeRuleIds` | The last evaluated set of true rules; the last one wins |
+| `suppressed_rule_ids` | Set<String> | `suppressedRuleIds` | Active rules the user overrode; ignored until they stop being true |
+
+Written by `ActivateFacetByIdUseCase` on every manual switch (`AutomationState.afterManualSwitch`), and
+by the automation evaluator once it is wired in (see `IMPLEMENTATION_PLAN.md`, "Facet automation rules").
+Stale ids are tolerated: the evaluator drops rule ids that no longer exist and falls back when the
+baseline facet was deleted.
 
 ## 6. Backup file format (`BackupBundle`, `data/model/BackupBundle.kt`)
 

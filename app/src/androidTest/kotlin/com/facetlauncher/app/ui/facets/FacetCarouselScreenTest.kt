@@ -33,7 +33,9 @@ import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
+import com.facetlauncher.app.ui.testAutomationStateRepository
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -121,6 +123,7 @@ class FacetCarouselScreenTest {
                         calendarPermissionRepository,
                         calendarRepository,
                     ),
+                    ActivateFacetByIdUseCase(facetRepository, settingsRepository, testAutomationStateRepository(context)),
                 )
             }
             FacetLauncherTheme {

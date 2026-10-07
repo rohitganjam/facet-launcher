@@ -28,7 +28,7 @@ flowchart TB
 
     subgraph SRC["Sources"]
         DAO["data/local — Room DAOs\nFacetDatabase v23"]
-        DS["DataStore of Preferences\nfacet_settings"]
+        DS["DataStore of Preferences\nfacet_settings, facet_automation"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end
 
@@ -98,10 +98,10 @@ flowchart TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
             AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver\n(all @Singleton)"]
             DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 11 DAO @Provides (unscoped)"]
-            DSM["DataStoreModule\nDataStore of Preferences @Singleton\n('facet_settings')"]
+            DSM["DataStoreModule\n2 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
         end
-        REPOS["30 Repositories\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["32 Repositories\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -131,8 +131,8 @@ flowchart TB
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (11) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
-| `DataStore<Preferences>` | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` delegate | DataStore requires exactly one instance per file. |
-| Repositories (30) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| `DataStore<Preferences>` (2) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
+| Repositories (32) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (27) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,6 +33,7 @@ class ManageFacetsViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val deleteFacetUseCase: DeleteFacetUseCase,
+    private val activateFacetById: ActivateFacetByIdUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<ManageFacetsUiState> = combine(
@@ -46,7 +48,7 @@ class ManageFacetsViewModel @Inject constructor(
     }
 
     fun applyFacet(facetId: Long) {
-        viewModelScope.launch { settingsRepository.setActiveFacetId(facetId) }
+        viewModelScope.launch { activateFacetById(facetId) }
     }
 
     fun addFacet() {

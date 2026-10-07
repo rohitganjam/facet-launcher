@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.resolveSentinel
@@ -121,6 +122,7 @@ class FacetSettingsViewModel @Inject constructor(
     private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
     private val facetDockAppRepository: FacetDockAppRepository,
     private val dockAppRepository: DockAppRepository,
+    private val activateFacetById: ActivateFacetByIdUseCase,
 ) : ViewModel() {
 
     val facetId: Long = checkNotNull(savedStateHandle["facetId"])
@@ -179,6 +181,6 @@ class FacetSettingsViewModel @Inject constructor(
     /** The header's "Apply facet" button — mirrors `ManageFacetsViewModel.applyFacet`. A no-op if already active (button is disabled in that state, but guard here too since it's cheap). */
     fun applyFacet() {
         if (uiState.value.isActive) return
-        viewModelScope.launch { settingsRepository.setActiveFacetId(facetId) }
+        viewModelScope.launch { activateFacetById(facetId) }
     }
 }

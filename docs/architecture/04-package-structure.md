@@ -8,11 +8,11 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (31)  @Singleton Repositories — the only layer that touches
+├── data/                          (32)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
-│   ├── di/                        (4)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule
+│   ├── di/                        (5)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule + the @AutomationDataStore qualifier
 │   ├── local/                     (26)  Room: FacetDatabase, 12 entities, 11 DAOs, Converters, Migrations
-│   ├── model/                     (31)  Immutable value types & enums shared by every layer
+│   ├── model/                     (32)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
@@ -70,7 +70,7 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          25   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+├── data/          26   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     11   Converters, entities, DAO-level behaviour via in-memory Room
 │   ├── model/      2   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest
 │   └── widget/     1

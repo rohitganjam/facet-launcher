@@ -19,7 +19,9 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
+import com.facetlauncher.app.ui.testAutomationStateRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -63,7 +65,12 @@ class ManageFacetsScreenTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ManageFacetsViewModel(facetRepository, settingsRepository, DeleteFacetUseCase(facetRepository, appWidgetRepository))
+                ManageFacetsViewModel(
+                    facetRepository,
+                    settingsRepository,
+                    DeleteFacetUseCase(facetRepository, appWidgetRepository),
+                    ActivateFacetByIdUseCase(facetRepository, settingsRepository, testAutomationStateRepository(context)),
+                )
             }
             FacetLauncherTheme {
                 ManageFacetsScreen(

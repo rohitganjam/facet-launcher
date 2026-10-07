@@ -3,10 +3,13 @@ package com.facetlauncher.app.domain
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.AutomationState
+import com.facetlauncher.app.data.model.FacetSwitchSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -60,6 +63,13 @@ class ActivateFacetByIdUseCaseTest {
         return SettingsRepository(dataStore)
     }
 
+    private fun createAutomationStateRepository(): AutomationStateRepository {
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            produceFile = { tempFolder.newFile("automation-${System.nanoTime()}.preferences_pb") },
+        )
+        return AutomationStateRepository(dataStore)
+    }
+
     @Test
     fun `invoke activates a facet that exists`() = runTest {
         // Given a second facet that isn't currently active
@@ -70,10 +80,47 @@ class ActivateFacetByIdUseCaseTest {
         settingsRepository.setActiveFacetId(first.id)
 
         // When activating it by id (e.g. via a deep link or shortcut)
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository)(second.id)
+        ActivateFacetByIdUseCase(facetRepository, settingsRepository, createAutomationStateRepository())(second.id)
 
         // Then it becomes the active facet
         assertEquals(second.id, settingsRepository.settings.first().activeFacetId)
+    }
+
+    @Test
+    fun `a manual switch makes the facet the baseline and suppresses every active rule`() = runTest {
+        // Given two rules the evaluator has marked active
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val automationState = createAutomationStateRepository()
+        val first = facetRepository.addFacet()
+        val second = facetRepository.addFacet()
+        automationState.update { it.copy(baselineFacetId = first.id, activeRuleIds = listOf(10L, 11L)) }
+
+        // When the user switches by id (the default source)
+        ActivateFacetByIdUseCase(facetRepository, createSettingsRepository(), automationState)(second.id)
+
+        // Then the choice becomes the baseline and both rules are overridden
+        val state = automationState.get()
+        assertEquals(second.id, state.baselineFacetId)
+        assertEquals(setOf(10L, 11L), state.suppressedRuleIds)
+    }
+
+    @Test
+    fun `an automation switch changes the active facet but leaves the automation state alone`() = runTest {
+        // Given an active rule and a baseline
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val settingsRepository = createSettingsRepository()
+        val automationState = createAutomationStateRepository()
+        val first = facetRepository.addFacet()
+        val second = facetRepository.addFacet()
+        val before = AutomationState(baselineFacetId = first.id, activeRuleIds = listOf(10L))
+        automationState.update { before }
+
+        // When the evaluator switches facets
+        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState)(second.id, FacetSwitchSource.AUTOMATION)
+
+        // Then the facet changes but the baseline and suppressed rules are untouched
+        assertEquals(second.id, settingsRepository.settings.first().activeFacetId)
+        assertEquals(before, automationState.get())
     }
 
     @Test
@@ -85,10 +132,12 @@ class ActivateFacetByIdUseCaseTest {
         settingsRepository.setActiveFacetId(facet.id)
 
         // When activating an id that doesn't exist (stale shortcut, hand-typed bad id, deleted facet)
-        ActivateFacetByIdUseCase(facetRepository, settingsRepository)(facet.id + 999)
+        val automationState = createAutomationStateRepository()
+        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState)(facet.id + 999)
 
-        // Then the currently-active facet is left untouched
+        // Then the currently-active facet and the automation state are left untouched
         assertEquals(facet.id, settingsRepository.settings.first().activeFacetId)
         assertNotEquals(facet.id + 999, settingsRepository.settings.first().activeFacetId)
+        assertEquals(AutomationState(), automationState.get())
     }
 }

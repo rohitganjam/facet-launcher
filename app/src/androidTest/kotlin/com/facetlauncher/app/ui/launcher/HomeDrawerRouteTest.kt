@@ -104,6 +104,7 @@ import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.ui.testAutomationStateRepository
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.HomeViewModel
@@ -275,7 +276,7 @@ class HomeDrawerRouteTest {
                     ),
                     SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
                     SyncFacetShortcutsUseCase(facetRepository, FacetShortcutRepository(context)),
-                    ActivateFacetByIdUseCase(facetRepository, settingsRepository),
+                    ActivateFacetByIdUseCase(facetRepository, settingsRepository, testAutomationStateRepository(context)),
                     settingsRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
@@ -407,6 +408,7 @@ class HomeDrawerRouteTest {
                         CalendarPermissionRepository(context),
                         CalendarRepository(context.contentResolver),
                     ),
+                    ActivateFacetByIdUseCase(facetRepository, settingsRepository, testAutomationStateRepository(context)),
                 )
             }
 

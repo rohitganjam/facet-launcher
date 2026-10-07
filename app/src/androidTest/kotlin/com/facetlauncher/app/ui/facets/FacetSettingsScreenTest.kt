@@ -27,6 +27,8 @@ import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.ui.testAutomationStateRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -81,6 +83,7 @@ class FacetSettingsScreenTest {
                     DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    ActivateFacetByIdUseCase(facetRepository, settingsRepository, testAutomationStateRepository(context)),
                 )
             }
             FacetLauncherTheme {

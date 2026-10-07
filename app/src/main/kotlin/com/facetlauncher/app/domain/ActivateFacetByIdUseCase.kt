@@ -1,15 +1,21 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.FacetSwitchSource
 import javax.inject.Inject
 
 /**
- * Switches the active facet from an externally-supplied [facetId] — a deep link
- * (`facetlauncher://facet/{id}`) or a dynamic shortcut's launch `Intent`, both funneled here by
- * [com.facetlauncher.app.LauncherActivity]. Spans [FacetRepository] (existence check) and
- * [SettingsRepository] (`setActiveFacetId`), so per CLAUDE.md's layering rule this is a use case
- * rather than either the `Activity` or a `ViewModel` calling both directly.
+ * Switches the active facet to [facetId] — the single choke point for switches. It serves deep
+ * links (`facetlauncher://facet/{id}`) and shortcut intents (via [com.facetlauncher.app.LauncherActivity])
+ * as well as the in-app carousel and Facet settings. Spans [FacetRepository] (existence check),
+ * [AutomationStateRepository] and [SettingsRepository], so per CLAUDE.md's layering rule this is a
+ * use case, not the `Activity` or a `ViewModel`.
+ *
+ * A [FacetSwitchSource.MANUAL] switch (the default) makes [facetId] the automation baseline and
+ * suppresses every rule active right now; only the automation evaluator passes
+ * [FacetSwitchSource.AUTOMATION], which changes the active facet and nothing else.
  *
  * A no-op when [facetId] doesn't resolve to a real facet — a stale shortcut for a since-deleted
  * facet, a hand-typed bad id, or a race with a delete must do nothing rather than crash or
@@ -19,9 +25,12 @@ import javax.inject.Inject
 class ActivateFacetByIdUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
+    private val automationStateRepository: AutomationStateRepository,
 ) {
-    suspend operator fun invoke(facetId: Long) {
+    suspend operator fun invoke(facetId: Long, source: FacetSwitchSource = FacetSwitchSource.MANUAL) {
         if (facetRepository.getById(facetId) == null) return
+        // State first: an evaluation between the two writes then sees the override, not a stale rule.
+        if (source == FacetSwitchSource.MANUAL) automationStateRepository.update { it.afterManualSwitch(facetId) }
         settingsRepository.setActiveFacetId(facetId)
     }
 }

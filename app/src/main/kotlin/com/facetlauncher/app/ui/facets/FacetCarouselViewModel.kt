@@ -24,6 +24,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.FacetPreviewData
@@ -116,6 +117,7 @@ class FacetCarouselViewModel @Inject constructor(
     private val wallpaperRepository: WallpaperRepository,
     private val deleteFacetUseCase: DeleteFacetUseCase,
     observeFacetPreviews: ObserveFacetPreviewsUseCase,
+    private val activateFacetById: ActivateFacetByIdUseCase,
 ) : ViewModel() {
 
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
@@ -141,7 +143,7 @@ class FacetCarouselViewModel @Inject constructor(
 
     /** Applies the given facet as active — the carousel's browse position never persists on its own. */
     fun selectFacet(facetId: Long) {
-        viewModelScope.launch { settingsRepository.setActiveFacetId(facetId) }
+        viewModelScope.launch { activateFacetById(facetId) }
     }
 
     fun addFacet() {

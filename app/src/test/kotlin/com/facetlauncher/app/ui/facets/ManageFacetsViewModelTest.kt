@@ -1,11 +1,14 @@
 package com.facetlauncher.app.ui.facets
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,7 +25,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -51,6 +56,9 @@ private class FakeFacetDao : FacetDao {
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManageFacetsViewModelTest {
 
+    @get:Rule
+    val tempFolder = TemporaryFolder()
+
     private val dispatcher = StandardTestDispatcher()
 
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
@@ -65,12 +73,44 @@ class ManageFacetsViewModelTest {
     private fun deleteFacetUseCase(facetRepository: FacetRepository) =
         DeleteFacetUseCase(facetRepository, mock(AppWidgetRepository::class.java))
 
+    private fun createViewModel(
+        facetRepository: FacetRepository,
+        settings: SettingsRepository = fakeSettings(),
+        automationState: AutomationStateRepository = mock(AutomationStateRepository::class.java),
+    ) = ManageFacetsViewModel(
+        facetRepository,
+        settings,
+        deleteFacetUseCase(facetRepository),
+        ActivateFacetByIdUseCase(facetRepository, settings, automationState),
+    )
+
+    @Test
+    fun `applyFacet activates the facet and records it as a manual switch`() = runTest(dispatcher) {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        facetRepository.addFacet()
+        val second = facetRepository.addFacet()
+        val settings = fakeSettings()
+        val automationState = AutomationStateRepository(
+            // The test's own scope keeps DataStore's IO on the virtual scheduler, so advanceUntilIdle() finishes it.
+            PreferenceDataStoreFactory.create(scope = backgroundScope, produceFile = { tempFolder.newFile("automation-${System.nanoTime()}.preferences_pb") }),
+        )
+        automationState.update { it.copy(activeRuleIds = listOf(10L)) }
+        val viewModel = createViewModel(facetRepository, settings, automationState)
+
+        viewModel.applyFacet(second.id)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        verify(settings).setActiveFacetId(second.id)
+        assertEquals(second.id, automationState.get().baselineFacetId)
+        assertEquals(setOf(10L), automationState.get().suppressedRuleIds)
+    }
+
     @Test
     fun `uiState reflects the observed facets and the add-max rule`() = runTest(dispatcher) {
         val facetRepository = FacetRepository(FakeFacetDao())
         facetRepository.addFacet()
         facetRepository.addFacet()
-        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings(), deleteFacetUseCase(facetRepository))
+        val viewModel = createViewModel(facetRepository)
 
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
@@ -85,7 +125,7 @@ class ManageFacetsViewModelTest {
         val facetRepository = FacetRepository(FakeFacetDao())
         facetRepository.addFacet()
         facetRepository.addFacet()
-        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings(), deleteFacetUseCase(facetRepository))
+        val viewModel = createViewModel(facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -100,7 +140,7 @@ class ManageFacetsViewModelTest {
     fun `addFacet is a no-op once the maximum is reached`() = runTest(dispatcher) {
         val facetRepository = FacetRepository(FakeFacetDao())
         repeat(FacetRepository.MAX_FACETS) { facetRepository.addFacet() }
-        val viewModel = ManageFacetsViewModel(facetRepository, fakeSettings(), deleteFacetUseCase(facetRepository))
+        val viewModel = createViewModel(facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
         assertFalse(viewModel.uiState.value.canAddFacet)
@@ -117,7 +157,7 @@ class ManageFacetsViewModelTest {
         val first = facetRepository.addFacet()
         val second = facetRepository.addFacet()
         val settings = fakeSettings(activeFacetId = first.id)
-        val viewModel = ManageFacetsViewModel(facetRepository, settings, deleteFacetUseCase(facetRepository))
+        val viewModel = createViewModel(facetRepository, settings)
         backgroundScope.launch { viewModel.uiState.collect {} }
         dispatcher.scheduler.advanceUntilIdle()
 
