@@ -56,6 +56,7 @@ class SettingsViewModelTest {
         isDefaultLauncher: Boolean = false,
         settings: LauncherSettings = LauncherSettings(),
         workProfiles: List<WorkProfileInfo> = emptyList(),
+        automationRuleCount: Int = 0,
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
@@ -70,7 +71,20 @@ class SettingsViewModelTest {
         val workProfileRepository = mock(WorkProfileRepository::class.java)
         `when`(workProfileRepository.observeWorkProfiles()).thenReturn(flowOf(workProfiles))
         val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository)
-        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository)
+        val automationRuleRepository = mock(com.facetlauncher.app.data.AutomationRuleRepository::class.java)
+        `when`(automationRuleRepository.observeRules()).thenReturn(
+            flowOf((1..automationRuleCount).map { com.facetlauncher.app.data.model.AutomationRule(it.toLong(), 1L, com.facetlauncher.app.data.model.AutomationTrigger.Headphones()) }),
+        )
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository)
+    }
+
+    @Test
+    fun `uiState carries how many automation rules exist`() = runTest {
+        val viewModel = createViewModel(automationRuleCount = 3)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(3, viewModel.uiState.value.automationRuleCount)
     }
 
     @Test

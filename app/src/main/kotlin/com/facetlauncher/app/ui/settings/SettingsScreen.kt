@@ -68,6 +68,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 fun SettingsScreen(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
+    onViewFacetAutomation: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
@@ -87,6 +88,7 @@ fun SettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onViewFacets = onViewFacets,
+        onViewFacetAutomation = onViewFacetAutomation,
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToDockSettings = onNavigateToDockSettings,
@@ -108,6 +110,7 @@ private fun SettingsContent(
     uiState: SettingsUiState,
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
+    onViewFacetAutomation: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
@@ -152,6 +155,18 @@ private fun SettingsContent(
                             subtitle = stringResource(R.string.settings_facets_subtitle),
                             onClick = onViewFacets,
                             testTag = "view_facets_row",
+                            trailing = { NavigationChevron() },
+                        )
+                        CardDivider()
+                        ClickableRow(
+                            title = stringResource(R.string.settings_facet_automation_title),
+                            subtitle = if (uiState.automationRuleCount == 0) {
+                                stringResource(R.string.settings_facet_automation_none)
+                            } else {
+                                pluralStringResource(R.plurals.settings_facet_automation_rules, uiState.automationRuleCount, uiState.automationRuleCount)
+                            },
+                            onClick = onViewFacetAutomation,
+                            testTag = "facet_automation_row",
                             trailing = { NavigationChevron() },
                         )
                     }
@@ -434,6 +449,7 @@ private fun SettingsScreenPreview() {
             ),
             onBack = {},
             onViewFacets = {},
+            onViewFacetAutomation = {},
             onNavigateToAppearance = {},
             onNavigateToCalendarSettings = {},
             onNavigateToDockSettings = {},

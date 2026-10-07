@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
@@ -40,6 +41,7 @@ class SettingsScreenTest {
     private fun setContent(
         onBack: () -> Unit = {},
         onViewFacets: () -> Unit = {},
+        onViewFacetAutomation: () -> Unit = {},
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToCalendarSettings: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
@@ -69,12 +71,14 @@ class SettingsScreenTest {
                     ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
+                    AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                 )
             }
             FacetLauncherTheme {
                 SettingsScreen(
                     onBack = onBack,
                     onViewFacets = onViewFacets,
+                    onViewFacetAutomation = onViewFacetAutomation,
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
@@ -301,6 +305,20 @@ class SettingsScreenTest {
         assertEquals(true, viewFacetsClicked)
     }
 
+
+    @Test
+    fun facetAutomationRowShowsNoRulesAndIsClickable() {
+        // Given the settings screen with no automation rules yet
+        var navigated = false
+        setContent(onViewFacetAutomation = { navigated = true })
+
+        // Then the row says there are no rules
+        composeRule.onNodeWithTag("facet_automation_row").assertTextContains("No rules", substring = true)
+
+        // When tapping it, then its callback fires
+        composeRule.onNodeWithTag("facet_automation_row").performClick()
+        assertEquals(true, navigated)
+    }
 
     @Test
     fun permissionsRowIsClickable() {

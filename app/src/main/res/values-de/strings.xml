@@ -407,6 +407,41 @@
     <string name="permission_location_title">Standort</string>
     <string name="permission_location_subtitle">Android verlangt ihn, um den WLAN-Namen für Regeln zu einem bestimmten Netzwerk zu lesen. Facet nutzt ihn nur dafür, nie um den Aufenthaltsort zu ermitteln.</string>
 
+    <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
+    <string name="settings_facet_automation_title">Facetten-Automatisierung</string>
+    <string name="settings_facet_automation_none">Keine Regeln</string>
+    <plurals name="settings_facet_automation_rules">
+        <item quantity="one">%d Regel</item>
+        <item quantity="other">%d Regeln</item>
+    </plurals>
+    <string name="automation_header_title">Facetten-Automatisierung</string>
+    <string name="automation_section_rules">Regeln</string>
+    <string name="automation_add_rule">Regel hinzufügen</string>
+    <string name="automation_section_other_apps">Andere Apps verwenden</string>
+    <string name="automation_other_apps_note">Jede Facette hat eine Verknüpfung „Wechseln zu“ für Tasker, Samsung Modi und Routinen und ähnliche Apps. Wird eine Facette von Hand oder per Verknüpfung gewählt, pausiert jede bereits aktive Regel, bis sie endet.</string>
+    <string name="automation_empty">Mit einer Regel lassen sich Facetten automatisch wechseln.</string>
+    <string name="automation_status_driving">%1$s wird angezeigt wegen der Regel %2$s</string>
+    <string name="automation_status_override">%1$s wird angezeigt, die gewählte Facette. %2$s pausiert, bis sie endet.</string>
+    <string name="automation_days_weekdays">Werktage</string>
+    <string name="automation_days_weekends">Wochenenden</string>
+    <string name="automation_days_every_day">Jeden Tag</string>
+    <string name="automation_schedule_title">%1$s · %2$s–%3$s</string>
+    <string name="automation_bluetooth_connected">%1$s · verbunden</string>
+    <string name="automation_bluetooth_not_connected">%1$s · getrennt</string>
+    <string name="automation_wifi_any">Beliebiges WLAN</string>
+    <string name="automation_headphones_in">Kopfhörer · angeschlossen</string>
+    <string name="automation_headphones_out">Kopfhörer · nicht angeschlossen</string>
+    <string name="automation_battery_charging">Lädt</string>
+    <string name="automation_battery_not_charging">Lädt nicht</string>
+    <string name="automation_level_below">unter</string>
+    <string name="automation_level_above">über</string>
+    <string name="automation_battery_title">%1$s · %2$s %3$d%%</string>
+    <string name="automation_subtitle_return">%1$s, dann vorherige Facette</string>
+    <string name="automation_subtitle_switch_to">%1$s, dann %2$s</string>
+    <string name="automation_subtitle_stay">%1$s, dann bleiben</string>
+    <string name="automation_needs_bluetooth">Bluetooth-Zugriff nötig</string>
+    <string name="automation_needs_location">Standortzugriff nötig</string>
+
     <!-- DockSettingsScreen -->
     <string name="dock_display_style">Anzeigestil</string>
     <string name="dock_select_apps">Dock-Apps auswählen</string>

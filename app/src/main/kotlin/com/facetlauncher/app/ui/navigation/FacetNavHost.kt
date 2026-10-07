@@ -22,6 +22,7 @@ import com.facetlauncher.app.ui.home.clock.FacetClockStyleGalleryScreen
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
+import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
 import com.facetlauncher.app.ui.facets.ManageFacetsScreen
 import com.facetlauncher.app.ui.facets.FacetSettingsScreen
 import com.facetlauncher.app.ui.settings.AboutScreen
@@ -47,6 +48,7 @@ object FacetDestinations {
     const val SETTINGS = "settings"
     const val DOCK_PICKER = "dockPicker?facetId={facetId}"
     const val FACET_MANAGE = "facetManage"
+    const val FACET_AUTOMATION = "facetAutomation"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
     const val FAVORITES_PICKER = "favoritesPicker?facetId={facetId}"
     const val CALENDAR_SETTINGS = "calendarSettings?facetId={facetId}"
@@ -171,6 +173,7 @@ fun FacetNavHost(
             SettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.appearanceSettings()) },
                 onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings()) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
@@ -286,6 +289,13 @@ fun FacetNavHost(
             DockAppPickerScreen(
                 onDone = { navController.popBackStackSafely() },
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+            )
+        }
+        composable(FacetDestinations.FACET_AUTOMATION) {
+            FacetAutomationScreen(
+                onBack = { navController.popBackStackSafely() },
+                onAddRule = { /* the rule editor sheet arrives in the next step */ },
+                onEditRule = { },
             )
         }
         composable(FacetDestinations.FACET_MANAGE) {

@@ -9,6 +9,8 @@ data class SettingsUiState(
     val dockItems: List<PlacedItem> = emptyList(),
     val defaultFavorites: List<PlacedItem> = emptyList(),
     val folderCount: Int = 0,
+    /** How many facet automation rules exist; drives the entry row's subtitle. */
+    val automationRuleCount: Int = 0,
     val isDefaultLauncher: Boolean = false,
     val isLoading: Boolean = true,
     /** Every genuine Work Profile on this device — one settings row per entry; empty hides the section entirely. See [WorkProfileInfo]'s own doc. */

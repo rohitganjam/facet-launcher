@@ -407,6 +407,41 @@
     <string name="permission_location_title">Ubicación</string>
     <string name="permission_location_subtitle">Android lo exige para leer el nombre de la red Wi-Fi en las reglas de una red concreta. Facet solo lo usa para eso, nunca para saber dónde estás.</string>
 
+    <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
+    <string name="settings_facet_automation_title">Automatización de facetas</string>
+    <string name="settings_facet_automation_none">Sin reglas</string>
+    <plurals name="settings_facet_automation_rules">
+        <item quantity="one">%d regla</item>
+        <item quantity="other">%d reglas</item>
+    </plurals>
+    <string name="automation_header_title">Automatización de facetas</string>
+    <string name="automation_section_rules">Reglas</string>
+    <string name="automation_add_rule">Añadir regla</string>
+    <string name="automation_section_other_apps">Usar otras apps</string>
+    <string name="automation_other_apps_note">Cada faceta tiene un acceso directo «Cambiar a» para Tasker, Modos y rutinas de Samsung y apps similares. Elegir una faceta manualmente, o con un acceso directo, pausa cualquier regla que ya esté activa hasta que termine.</string>
+    <string name="automation_empty">Añade una regla para cambiar de faceta automáticamente.</string>
+    <string name="automation_status_driving">Mostrando %1$s por la regla %2$s</string>
+    <string name="automation_status_override">Mostrando %1$s, la faceta elegida. %2$s está en pausa hasta que termine.</string>
+    <string name="automation_days_weekdays">Días laborables</string>
+    <string name="automation_days_weekends">Fines de semana</string>
+    <string name="automation_days_every_day">Todos los días</string>
+    <string name="automation_schedule_title">%1$s · %2$s–%3$s</string>
+    <string name="automation_bluetooth_connected">%1$s · conectado</string>
+    <string name="automation_bluetooth_not_connected">%1$s · desconectado</string>
+    <string name="automation_wifi_any">Cualquier Wi-Fi</string>
+    <string name="automation_headphones_in">Auriculares · conectados</string>
+    <string name="automation_headphones_out">Auriculares · desconectados</string>
+    <string name="automation_battery_charging">Cargando</string>
+    <string name="automation_battery_not_charging">Sin cargar</string>
+    <string name="automation_level_below">por debajo de</string>
+    <string name="automation_level_above">por encima de</string>
+    <string name="automation_battery_title">%1$s · %2$s %3$d%%</string>
+    <string name="automation_subtitle_return">%1$s, luego la faceta anterior</string>
+    <string name="automation_subtitle_switch_to">%1$s, luego %2$s</string>
+    <string name="automation_subtitle_stay">%1$s, luego se queda</string>
+    <string name="automation_needs_bluetooth">Requiere acceso a Bluetooth</string>
+    <string name="automation_needs_location">Requiere acceso a la ubicación</string>
+
     <!-- DockSettingsScreen -->
     <string name="dock_display_style">Estilo de visualización</string>
     <string name="dock_select_apps">Seleccionar apps del Dock</string>

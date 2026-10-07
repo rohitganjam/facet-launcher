@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.settings
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
@@ -26,6 +27,7 @@ class SettingsViewModel @Inject constructor(
     observeSettingsScreenState: ObserveSettingsScreenStateUseCase,
     private val defaultLauncherRepository: DefaultLauncherRepository,
     private val workProfileRepository: WorkProfileRepository,
+    automationRuleRepository: AutomationRuleRepository,
 ) : ViewModel() {
 
     private val isDefaultLauncher = MutableStateFlow(false)
@@ -34,7 +36,8 @@ class SettingsViewModel @Inject constructor(
         observeSettingsScreenState(),
         isDefaultLauncher,
         workProfileRepository.observeWorkProfiles(),
-    ) { screenState, isDefaultLauncher, workProfiles ->
+        automationRuleRepository.observeRules(),
+    ) { screenState, isDefaultLauncher, workProfiles, automationRules ->
         SettingsUiState(
             settings = screenState.settings,
             dockItems = screenState.dockItems,
@@ -43,6 +46,7 @@ class SettingsViewModel @Inject constructor(
             isDefaultLauncher = isDefaultLauncher,
             isLoading = false,
             workProfiles = workProfiles,
+            automationRuleCount = automationRules.size,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
