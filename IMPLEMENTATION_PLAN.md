@@ -3709,6 +3709,41 @@ Built-in rules that switch the active facet automatically. Entry point: **Settin
 
 **Tests:** evaluator scenario tests (phase 1), `AutomationRuleRepositoryTest` + migration test, `ActivateFacetByIdUseCaseTest` for source handling, ViewModel tests, Compose tests for the rule editor and permission prompts.
 
+## 📝 Planned, not started — Billing: one-time "Facet Pro" purchase
+
+A single one-time Google Play purchase, no subscription. It replaces the constant-`true` `EntitlementRepository` and adds the facet cap (3 free, 10 with Pro). Everything that gates automation already reads `EntitlementRepository.isPro`, so billing only has to make that value real. Play Store only.
+
+**Decisions:**
+- **One product** (`pro`, non-consumable). Pro covers *both* more facets (up to 10) and automation (device triggers, more than 2 rules). The **price is never in the code**: it is a Play Console setting and the app shows whatever Play returns for the product.
+- **Entitlement is three-valued internally:** granted, not granted, unknown. **Only an explicit "no purchase" answer from Play turns Pro off.** Play being unavailable, offline or slow keeps the last known value (cached in DataStore), so Pro works offline and at cold start. With no cache and no answer yet, the user is Free (nothing proves otherwise). A *pending* purchase is not Pro until it completes.
+- **A lapse is only a refund or revocation** (or a different Google account on the phone). It cannot be expiry. When it happens:
+  - **Facets:** the first 3 by list order stay selectable; the rest are **disabled** (dimmed, lock, tap opens the upgrade sheet) until the count drops to 3 or below. **A disabled facet can still be deleted** (the existing rule that the last remaining facet cannot be deleted still applies), which is how the user gets back under the limit. Nothing is deleted for them. Adding is blocked.
+  - **Automation:** unchanged and already built: Pro-trigger rules and rules beyond the first two schedule rules **pause**.
+- **Facet cap:** `FacetLimits.FREE_MAX_FACETS = 3`, `PRO_MAX_FACETS = 10`. Today `FacetRepository.MAX_FACETS = 3` is a constant checked in `ManageFacetsViewModel`, `FacetCarouselViewModel` and the repository; it becomes entitlement-aware. Nothing above 3 has shipped, so no grandfathering.
+- **No `INTERNET` permission.** Play Billing talks to the Play Store app over IPC. Verify against the merged manifest when the library is added; the privacy policy gets a line that purchases are handled by Google Play.
+
+**Design:**
+- **`BillingRepository`** wraps `BillingClient` (kept thin and `open` so tests can substitute it): connect, query owned purchases, product details (price), launch the purchase flow (needs an `Activity`, so the ViewModel emits a `UiEvent` and the screen launches it), acknowledge within 3 days, and a `PurchasesUpdatedListener` that is always registered so a purchase or promo code redeemed outside the app is picked up. It re-queries at startup and on every resume.
+- **`EntitlementRepository`** (becomes real): combines the cached value in DataStore with `BillingRepository`. `isPro: StateFlow<Boolean>` keeps its shape.
+- **`FacetLimits` + `SelectableFacetsUseCase`** (pure): `maxFor(isPro)`, `canAdd(count, isPro)`, and `selectableFacetIds(facets, isPro)` (Pro: all; Free: first 3 by position).
+- **Single choke point for selection:** `ActivateFacetByIdUseCase` refuses a facet that is not selectable, which covers the carousel, shortcuts and deep links. `EnsureActiveFacetUseCase` falls back to the first selectable facet if the active one is disabled. Automation receives only selectable ids as `existingFacetIds`, so a rule targeting a disabled facet is a no-op through the existing "facet missing" fallback. `SyncFacetShortcutsUseCase` publishes shortcuts only for selectable facets.
+- **UI:**
+  - Carousel and Manage facets show disabled facets dimmed with a lock; tapping opens the upgrade sheet. Add facet at the limit carries a Pro pill and opens the same sheet.
+  - **One shared `ProUpgradeSheet`** in `ui/components` (the automation `UpgradeSheet` moves there) with a reason line (more facets, automation trigger, automation rule limit), the Play price, **Buy**, **Restore purchases**, and states for loading, unavailable, pending and error.
+  - **Settings → "Facet Pro" row:** shows Pro or Free, with Buy and Restore, so restoring is discoverable without hitting a limit.
+- **Backup/import:** imports all facets as they are; the lapse rule above handles a free user who imports more than 3.
+- **Debug only:** an entitlement override in the `debug` source set so every Pro state can be tested without Play. Release builds cannot reach it.
+
+**Phases (limits first: everything in 1 is testable with a fake entitlement, no Play needed):**
+
+- [ ] **1. Facet limits and gates.** `FacetLimits`, `SelectableFacetsUseCase`, entitlement-aware add/activate/ensure-active/shortcut sync, disabled facets in the carousel and Manage facets, the add-facet Pro pill. Move `UpgradeSheet` to a shared `ProUpgradeSheet` with a facets reason. Tests: use cases, ViewModels, Compose (disabled rows, add at limit), and `FakeEntitlementRepository` flips.
+- [ ] **2. Billing and entitlement.** Add the Play Billing library, `BillingRepository`, the real `EntitlementRepository` with the DataStore cache and the three-valued rules, startup and resume refresh. Verify the merged manifest has no `INTERNET`. Tests: cache semantics (offline keeps Pro, explicit none turns it off, pending does not grant), refund handling.
+- [ ] **3. Purchase UI.** Buy and Restore in `ProUpgradeSheet`, the Settings "Facet Pro" row, price display, and pending/error/unavailable states; the debug override.
+- [ ] **4. Docs, policy, release.** New `16-flow-billing.md` plus updates to `01`, `02` (DataStore keys), `03`, `07`, `13`, `15`; `CAPABILITIES.md`; the privacy policy line; the design handoff (upgrade sheet, disabled facets, Settings row, with M3 shapes). Add mockups for the new states first if you want them.
+- [ ] **5. Play Console and testing (yours, with a checklist from me).** Create the `pro` product and price, add licence testers, upload to an internal testing track, run purchase, restore, refund and offline cases on a real device, and complete the Data safety form.
+
+**Open:** the price (Play Console), the copy for the upgrade sheet, and whether to add mockups before phase 4.
+
 ## ✅ Facet clock row moved into Appearance; two stale tests fixed (direct request)
 
 - [x] **Facet-scoped Appearance** now shows the clock preview and a "Clock" section with the Clock & calendar style row
