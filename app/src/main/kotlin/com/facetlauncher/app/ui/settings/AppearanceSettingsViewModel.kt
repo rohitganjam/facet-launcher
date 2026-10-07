@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -83,6 +84,18 @@ data class AppearanceSettingsUiState(
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overrideApps == true) facetFavorites else globalFavorites
     /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
     val effectiveDockItems: List<PlacedItem> get() = if (facet?.overrideDock == true) facetDockItems else globalDockItems
+
+    /** [settings] with the clock block resolved for this scope: the facet's own when `overrideClock`, else global. */
+    val clockSettings: LauncherSettings get() = settings.copy(
+        clockTemplateId = facet.resolveOverride({ it.overrideClock }, { it.clockTemplateId }, settings.clockTemplateId),
+        clockFontOption = facet.resolveOverride({ it.overrideClock }, { it.clockFontOption }, settings.clockFontOption),
+        clockColorOption = facet.resolveOverride({ it.overrideClock }, { it.clockColorOption }, settings.clockColorOption),
+        clockAccentColorOption = facet.resolveOverride({ it.overrideClock }, { it.clockAccentColorOption }, settings.clockAccentColorOption),
+        use24HourTime = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime),
+        clockShowMeridiem = facet.resolveOverride({ it.overrideClock }, { it.clockShowMeridiem }, settings.clockShowMeridiem),
+        clockDateStyle = facet.resolveOverride({ it.overrideClock }, { it.clockDateStyle }, settings.clockDateStyle),
+        clockAlignment = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment),
+    )
 }
 
 /**

@@ -72,6 +72,14 @@ class AppearanceSettingsScreenTest {
      * data via [FakeCalendarPermissionRepository]/[FakeCalendarRepository] — no real OS-level
      * grant needed (see that fake's own doc for why).
      */
+    private lateinit var screenViewModel: AppearanceSettingsViewModel
+
+    /** The `facets` flow is a real Room query, so a facet-scoped screen first renders unscoped until it emits. */
+    private fun awaitFacetScoped() {
+        composeRule.waitUntil(timeoutMillis = 5_000) { screenViewModel.uiState.value.isFacetScoped }
+        composeRule.waitForIdle()
+    }
+
     private fun setContent(
         onBack: () -> Unit = {},
         onNavigateToClockStyleGallery: () -> Unit = {},
@@ -117,7 +125,7 @@ class AppearanceSettingsScreenTest {
                     FakeCalendarRepository(context.contentResolver, calendarEvents),
                     FakeCalendarPermissionRepository(context, granted = calendarGranted),
                     wallpaperRepository,
-                )
+                ).also { screenViewModel = it }
             }
             FacetLauncherTheme {
                 AppearanceSettingsScreen(onBack = onBack, onNavigateToClockStyleGallery = onNavigateToClockStyleGallery, viewModel = viewModel)
@@ -623,14 +631,12 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField() {
+    fun facetScopedModeKeepsClockRowAndPreviewButHidesEveryGlobalOnlyField() {
         // Given a facet-scoped entry point — waited for the facet-scoped combine() to settle first
         // (the `facets` flow is a real Room query; the screen briefly renders as global/unscoped on
         // its very first composition until it emits — see chat history).
         setContent(facetId = 1L)
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("clock_style_gallery_row").fetchSemanticsNodes().isEmpty()
-        }
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_vertical_alignment_row"))
 
         // Then the four moved-in look fields are still here...
@@ -638,10 +644,13 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_app_row_position_row").assertExists()
         composeRule.onNodeWithTag("appearance_app_row_presentation_row").assertExists()
         composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row").assertExists()
-        // ...but the Clock style row and every purely-global field (theme, accent, icon, font,
-        // app label color, size/weight sliders) are gone — no per-facet override exists for those
-        // yet (see this screen's own doc comment)
-        composeRule.onNodeWithTag("clock_style_gallery_row").assertDoesNotExist()
+        // ...the clock preview and the Clock row (into this facet's own clock style screen) are
+        // here too...
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
+        composeRule.onNodeWithTag("clock_style_gallery_row").assertExists()
+        // ...but every purely-global field (theme, accent, icon, font, app label color,
+        // size/weight sliders) is gone — no per-facet override exists for those yet (see this
+        // screen's own doc comment)
         composeRule.onNodeWithTag("theme_mode_dropdown").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_icons_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_icon_shape_row").assertDoesNotExist()
@@ -649,9 +658,37 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_app_label_color_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_font_size_slider").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_font_weight_slider").assertDoesNotExist()
-        // ...and this screen's own preview has no clock (a facet's own clock look/preview lives on
-        // its separate "Clock style" screen instead)
-        composeRule.onNodeWithTag("appearance_preview_clock").assertDoesNotExist()
+    }
+
+    @Test
+    fun facetScopedClockRowReflectsTheFacetsOwnClockOverride() {
+        // Given a facet overriding the clock with a different template than the global default
+        setContent(facetId = 1L, seed = { facetRepository, facetId ->
+            val facet = com.facetlauncher.app.data.local.FacetEntity(id = requireNotNull(facetId), name = "P", position = 0)
+            facetRepository.setOverrideClock(facet, true)
+            facetRepository.setClockTemplateId(facet.copy(overrideClock = true), com.facetlauncher.app.data.model.ClockTemplateId.RULE_MERIDIEM)
+        })
+        awaitFacetScoped()
+
+        // Then the preview clock is shown and the Clock row names the facet's own template, not the global one
+        composeRule.onNodeWithTag("appearance_preview_clock").assertExists()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
+        composeRule.onNodeWithTag("clock_style_gallery_row").assertTextContains("Ruler", substring = true)
+    }
+
+    @Test
+    fun facetScopedClockRowOpensTheClockStyleGallery() {
+        // Given a facet-scoped screen
+        var navigated = false
+        setContent(facetId = 1L, onNavigateToClockStyleGallery = { navigated = true })
+        awaitFacetScoped()
+
+        // When tapping the Clock row
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
+        composeRule.onNodeWithTag("clock_style_gallery_row").performClick()
+
+        // Then it navigates
+        composeRule.waitUntil(timeoutMillis = 3_000) { navigated }
     }
 
     @Test
@@ -728,13 +765,11 @@ class AppearanceSettingsScreenTest {
     @Test
     fun facetScopedDockDisplayStyleRowOffersLauncherDefaultAndWritesToThatFacet() {
         // Given a facet-scoped entry point, Icons inherited by default — waited for facet-scoped
-        // settle first (see facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField's own comment)
+        // settle first (see facetScopedModeKeepsClockRowAndPreviewButHidesEveryGlobalOnlyField's own comment)
         // so the dropdown's option list isn't read mid-transition from the global option set.
         val facetId = 1L
         setContent(facetId = facetId)
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("clock_style_gallery_row").fetchSemanticsNodes().isEmpty()
-        }
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
         composeRule.onNodeWithTag("appearance_dock_display_style_row").assertTextContains("Icons")
 

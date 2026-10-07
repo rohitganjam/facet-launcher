@@ -38,7 +38,7 @@ flowchart TB
 ```
 
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row plus one "HOME & APPS" card with
-  Apps list / Dock / Appearance / Clock style / Calendars rows, mirroring `SettingsScreen`'s own
+  Apps list / Dock / Appearance / Calendars rows, mirroring `SettingsScreen`'s own
   layout. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
   own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle
   sits on the same screen as the controls it gates, and `setOverriding*` calls now live in that
@@ -46,8 +46,11 @@ flowchart TB
   exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
   switch of its own (see the `LOOK` subgraph above).
 - **`AppearanceSettingsScreen` is three separate cards**, not one — "DOCK & HOME" (the `LOOK`
-  fields above, always shown), then (global mode only) "CLOCK" (just the Clock style nav
-  row) and "GENERAL" (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
+  fields above, always shown), "CLOCK" (just the Clock & calendar style nav row, shown in both
+  scopes — in facet scope it opens that facet's own `FacetClockStyleGalleryScreen`, and its
+  subtitle and the preview clock resolve through `overrideClock` via
+  `AppearanceSettingsUiState.clockSettings`), and (global mode only) "GENERAL"
+  (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
   position". Within "DOCK & HOME", `appListLayout` ("App list layout" — always visible) then gates

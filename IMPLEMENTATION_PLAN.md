@@ -3666,6 +3666,25 @@ Built-in rules that switch the active facet automatically. Entry point: **Settin
 - **Pro gating is one seam:** `CanUseTriggerUseCase(type)`, hardcoded `true` until billing lands. Existing Pro-trigger rules pause (not deleted) if entitlement is revoked. The 3→10 facet cap and billing are a separate plan.
 - **Rules cascade-delete with their target facet** (FK). A deleted baseline facet falls back through `EnsureActiveFacetUseCase`.
 
+**Design — visual reference: [`facet-automation.html`](<Android launcher design planning/design_handoff_minimal_launcher/facet-automation.html>)** (six screens, light + dark toggle: Settings entry, automation list, schedule editor, trigger picker, Wi-Fi editor, free-user state). Open it in a browser and build phase 6 against it. Built from `SettingsCard`, `StickyHeaderLayout`, the `4p` dashed strip and `ThemedModalBottomSheet`.
+- **Entry:** a second row, "Facet automation", under "Manage facets" in Settings' FACETS card. Subtitle is the live count ("2 rules active") or "No rules".
+- **Automation screen** (`StickyHeaderLayout` + back button, `SurfaceContainer` page, 24dp gutter):
+  - **Status line** at the top, only when at least one rule exists. It replaces the toast we decided against and answers "why does Home look like this?". Rule-driven: "Showing Work because of the rule Weekdays 9:00–18:00". Manual: "Showing Travel, the facet you chose. <rule> resumes when it ends".
+  - **RULES card:** one row per rule — trigger icon, derived title, subtitle ("Work, then previous facet"), enable switch — then an accent "Add rule" row, shown only when allowed.
+  - **Rule titles are derived from the trigger** ("Weekdays · 9:00–18:00", "Car · connected"); rules have no name field.
+  - **USE OTHER APPS card:** plain text — every facet has a "Switch to" shortcut for Tasker, Samsung Modes and Routines and similar apps; choosing a facet yourself, or with a shortcut, pauses any rule that is already active until it ends. This is the only place the user learns the manual-wins rule, so it stays visible.
+  - **Empty state:** dashed strip, "Add a rule to switch facets automatically", action "Add rule".
+- **Rule editor** is a `ThemedModalBottomSheet` (so it also closes on Home press): Switch to (facet dropdown) / When (trigger) / trigger parameters / When it ends (radio: Return to previous facet · Switch to a facet [dropdown] · Stay on <target>) / Cancel + Save. "Delete rule" shows only when editing.
+  - **Schedule:** day chips (announce full day names) + From/Until time rows. Until earlier than From means an overnight rule, with a helper line "Ends next day".
+  - **Device triggers:** a "While connected / While not connected" segmented control. Bluetooth adds a device picker. Wi-Fi adds Any network / a named network. Headphones and Charging have no parameters. Low battery adds a threshold slider.
+- **Trigger picker** is a second sheet: Schedule (free) then a PRO group (Bluetooth, Wi-Fi, Headphones, Charging, Low battery), each with a Pro pill. While `CanUseTriggerUseCase` is hardcoded `true` the pills and locks are not shown.
+- **Pro states** (once billing lands): tapping a locked trigger opens the upgrade sheet from the billing plan. A paused rule is dimmed with a lock and the subtitle "Paused. Needs Pro", and can still be deleted. A free user with only schedule rules sees a quiet dashed strip ("Rules that react to Bluetooth, Wi-Fi, charging, headphones or battery are part of Facet Pro" + "See Pro"), not a banner.
+- **Permissions are inline dashed strips** in the editor, not a takeover: Wi-Fi network name → "Naming a network needs location access. Facet only reads the network name, on your device." + "Allow location"; Bluetooth → `BLUETOOTH_CONNECT`. **Save stays enabled** (no disabled buttons). A saved rule that lacks its permission, or whose Bluetooth device is gone, renders in the list as "Needs location access" / "Device not found" with the same inline strip and fix action, and is not evaluated until fixed.
+- **Accessibility:** rows ≥48dp, switches labelled with the rule summary, radio group with proper roles, chips with full day names, strips and status line readable as plain text.
+- **Theming:** all colors from `ui/theme/` tokens (`Surface`, `Ink`, `Muted`, `Hairline`, `Accent`, `ErrorColor`); light + dark `@Preview` per composable; shapes from `MaterialTheme.shapes` (cards `.medium`, chips/segments per the shape table).
+- **Copy rules:** sentence case, no terminal punctuation on labels, no "please"/"successfully"; all strings in `values/` plus the four translations (also update the string-resource `ComposeHardcodedText` Detekt rule's expectations if it flags anything).
+- **Design handoff:** add a "Facet automation" section and the new `4p` rows (empty list, location needed, device missing) to the design `README.md` when phase 6 lands.
+
 **Phases (evaluator first — it is the riskiest logic):**
 
 - [ ] **1. Evaluator + tests, no UI.** `domain/EvaluateFacetAutomationUseCase` as a pure function over (rules, trigger truth, baseline, suppressed, last truth, now) → desired facet + new state. Scenario-table unit tests: baseline return, overlap (Work + Car, Car ends → Work), manual switch suppresses then clears, suppressed rule skips end behavior, switch-to-X and Stay endings, new rule after manual switch, deleted/disabled-while-active, first run.
@@ -3673,8 +3692,20 @@ Built-in rules that switch the active facet automatically. Entry point: **Settin
 - [ ] **3. Data.** `AutomationRuleEntity` (FK → facet, cascade), DAO, `AutomationRuleRepository`, `FacetDatabase.VERSION` bump + `Migration`, DataStore keys for baseline/suppressed/last truth. Check how `BackupBundle` remaps facet ids on import before deciding whether rules are backed up (runtime state — baseline, suppressed — is not).
 - [ ] **4. Schedule trigger + wiring.** Schedule truth source; collector in `LauncherViewModel.init` that runs the evaluator on screen-on/unlock/Home press/start. First end-to-end slice, free tier.
 - [ ] **5. Device triggers**, one `callbackFlow` source each: Bluetooth (connect state + startup query), Wi-Fi (`ConnectivityManager` callback; SSID path behind the location permission), headphones, charging, battery level. Dynamic registration vs manifest for `ACL_*` to be verified.
-- [ ] **6. UI.** `ui/settings/automation/`: `FacetAutomationScreen` (rule list + shortcuts card), rule editor sheet (`ThemedModalBottomSheet`; target facet, trigger, polarity, end behavior), permission request on trigger selection, unavailable/locked states, `@Preview`s light + dark, a11y labels. Strings in `values/` plus the four translations.
+- [ ] **6. UI**, per the Design block above and the mockups in `Android launcher design planning/design_handoff_minimal_launcher/facet-automation.html`. `ui/settings/automation/`: `FacetAutomationScreen` (status line, rules card, shortcuts card, empty state), rule editor sheet, trigger picker sheet, inline permission strips, unavailable states, Settings entry row with live count. `@Preview`s light + dark, a11y labels, strings in `values/` plus the four translations. Compose tests: add a rule, toggle a rule, delete, status line states, permission strip, editor Home-press dismissal. Update the design handoff `README.md`.
 - [ ] **7. Pro seam.** `CanUseTriggerUseCase` (always `true`); editor shows locked trigger types once it returns false.
 - [ ] **8. Docs + site.** `01`, `02` (entity, DAO matrix, migration row, DataStore keys), `03 §4` (startup collector) and `§5` (new reactive sources), `04`, `07`, `13`; new `NN-flow-facet-automation.md` + `docs/architecture/README.md` row; `CAPABILITIES.md`; `TEST_REGISTRY.md` via `scripts/gen-test-registry.py`; privacy policy in `../facet-launcher-site/build.py` (location use for Wi-Fi SSID, Bluetooth).
 
 **Tests:** evaluator scenario tests (phase 1), `AutomationRuleRepositoryTest` + migration test, `ActivateFacetByIdUseCaseTest` for source handling, ViewModel tests, Compose tests for the rule editor and permission prompts.
+
+## ✅ Facet clock row moved into Appearance; two stale tests fixed (direct request)
+
+- [x] **Facet-scoped Appearance** now shows the clock preview and a "Clock" section with the Clock & calendar style row
+  (opens that facet's own clock style screen), both resolved through the facet's `overrideClock`
+  (`AppearanceSettingsUiState.clockSettings`). The row is gone from Facet settings; `FacetNavHost` routes the Appearance
+  row to the facet gallery when a `facetId` is present.
+- [x] **Tests**: `AppearanceSettingsScreenTest` (facet scope keeps clock row/preview, hides global-only rows, reflects an
+  override, row navigates; scope settle now waits on the view model instead of the clock row), `FacetSettingsScreenTest`
+  (clock row removed), `FavoritesPickerScreenTest` (cap test searches for the overflow app before waiting for its row —
+  the cap is 12, so it sits below the lazy list's fold).
+- [x] **Docs**: `13` (nav list + Appearance cards), `CAPABILITIES.md`.

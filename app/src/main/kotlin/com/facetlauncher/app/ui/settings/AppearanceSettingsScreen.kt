@@ -214,8 +214,7 @@ private fun AppearanceSettingsContent(
             ) {
                 item {
                     AppearancePreviewCard(
-                        settings = settings,
-                        isFacetScoped = isFacetScoped,
+                        settings = uiState.clockSettings,
                         appRowPosition = uiState.appRowPosition,
                         appRowPresentation = uiState.appRowPresentation,
                         appListLayout = uiState.appListLayout,
@@ -336,26 +335,24 @@ private fun AppearanceSettingsContent(
                         )
                     }
                 }
-                // Every card below is global only — no per-facet override exists for these fields
-                // yet (see this screen's own doc comment) — so they're simply absent in facet mode,
-                // same reasoning Calendar/Clock use for their own global-only fields.
-                if (!isFacetScoped) {
-                    item { AppearanceSectionHeader(stringResource(R.string.appearance_section_clock)) }
-                    item {
-                        SettingsCard {
-                            ClickableRow(
-                                title = stringResource(R.string.settings_clock_calendar_title),
-                                subtitle = stringResource(
-                                    R.string.dot_join_2,
-                                    stringResource(settings.clockTemplateId.displayNameRes),
-                                    stringResource(if (settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                                ),
-                                onClick = onNavigateToClockStyleGallery,
-                                testTag = "clock_style_gallery_row",
-                                trailing = { NavigationChevron() },
-                            )
-                        }
+                item { AppearanceSectionHeader(stringResource(R.string.appearance_section_clock)) }
+                item {
+                    SettingsCard {
+                        ClickableRow(
+                            title = stringResource(R.string.settings_clock_calendar_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                stringResource(uiState.clockSettings.clockTemplateId.displayNameRes),
+                                stringResource(if (uiState.clockSettings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+                            ),
+                            onClick = onNavigateToClockStyleGallery,
+                            testTag = "clock_style_gallery_row",
+                            trailing = { NavigationChevron() },
+                        )
                     }
+                }
+                // The cards below are global only — no per-facet override exists for these fields yet.
+                if (!isFacetScoped) {
                     item { AppearanceSectionHeader(stringResource(R.string.appearance_section_general)) }
                     item {
                         SettingsCard {
@@ -499,13 +496,11 @@ private fun AppearanceSectionHeader(title: String, modifier: Modifier = Modifier
  * facet scope shows the resolved facet-or-default output, exactly like `HomeAppsListSettingsScreen`/
  * `DockSettingsScreen`'s own preview cards and Home itself. The clock uses the real system clock
  * (its own default), not a fixed reference instant, so real calendar events read sensibly against
- * it. Facet-scoped mode omits the clock+calendar entirely — a facet's own clock look/preview lives
- * on its separate "Clock style" screen instead.
+ * it. In facet scope the clock shows the facet's own override when it has one, else the global clock.
  */
 @Composable
 private fun AppearancePreviewCard(
     settings: LauncherSettings,
-    isFacetScoped: Boolean,
     appRowPosition: AppRowPosition,
     appRowPresentation: AppRowPresentation,
     appListLayout: AppListLayout,
@@ -548,25 +543,23 @@ private fun AppearancePreviewCard(
                 modifier = Modifier.fillMaxSize().padding(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (!isFacetScoped) {
-                    ClockBlock(
-                        use24HourTime = settings.use24HourTime,
-                        templateId = settings.clockTemplateId,
-                        fontOption = settings.clockFontOption,
-                        colorOption = settings.clockColorOption,
-                        accentColorOption = settings.clockAccentColorOption,
-                        showMeridiem = settings.clockShowMeridiem,
-                        dateStyle = settings.clockDateStyle,
-                        clockAlignment = settings.clockAlignment,
-                        events = calendarEvents,
-                        calendarColors = settings.calendarColors,
-                        homeAppsFontWeight = settings.homeAppsFontWeight,
-                        appLabelColorOption = settings.appLabelColorOption,
-                        launcherFontOption = settings.launcherFontOption,
-                        clockScale = 1f,
-                        modifier = Modifier.testTag("appearance_preview_clock"),
-                    )
-                }
+                ClockBlock(
+                    use24HourTime = settings.use24HourTime,
+                    templateId = settings.clockTemplateId,
+                    fontOption = settings.clockFontOption,
+                    colorOption = settings.clockColorOption,
+                    accentColorOption = settings.clockAccentColorOption,
+                    showMeridiem = settings.clockShowMeridiem,
+                    dateStyle = settings.clockDateStyle,
+                    clockAlignment = settings.clockAlignment,
+                    events = calendarEvents,
+                    calendarColors = settings.calendarColors,
+                    homeAppsFontWeight = settings.homeAppsFontWeight,
+                    appLabelColorOption = settings.appLabelColorOption,
+                    launcherFontOption = settings.launcherFontOption,
+                    clockScale = 1f,
+                    modifier = Modifier.testTag("appearance_preview_clock"),
+                )
 
                 Spacer(modifier = Modifier.weight(1f))
 
