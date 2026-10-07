@@ -12,13 +12,13 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (4)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule
 │   ├── local/                     (26)  Room: FacetDatabase, 12 entities, 11 DAOs, Converters, Migrations
-│   ├── model/                     (26)  Immutable value types & enums shared by every layer
+│   ├── model/                     (31)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository
 │
-├── domain/                        (39)  36 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (40)  37 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -72,9 +72,9 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
 ├── data/          25   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     11   Converters, entities, DAO-level behaviour via in-memory Room
-│   ├── model/      1   FacetDeepLinkTest (build/parse round-trip + rejection cases)
+│   ├── model/      2   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest
 │   └── widget/     1
-├── domain/        34   one test per use case (pure logic — no Android needed for most)
+├── domain/        35   one test per use case (pure logic — no Android needed for most)
 └── ui/            31   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)

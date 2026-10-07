@@ -42,9 +42,9 @@
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1791337625.562932,
-    "seen": 1791337637.737707,
-    "ast_hash": "74bd88d05a6787962152b7a98b07b3ed",
+    "mtime": 1791344161.1879208,
+    "seen": 1791344175.809045,
+    "ast_hash": "22fb95507c4fd0e330e7c53f98864584",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -2688,9 +2688,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/04-package-structure.md": {
-    "mtime": 1791260971.003854,
-    "seen": 1791305229.230211,
-    "ast_hash": "efff32590f94eb5dc99241e4c39b55e8",
+    "mtime": 1791344156.6180432,
+    "seen": 1791344175.809054,
+    "ast_hash": "10a48f9bfe299896d6e782cfcc5fcd1d",
     "semantic_hash": ""
   },
   "docs/architecture/05-findings.md": {
@@ -2700,9 +2700,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/README.md": {
-    "mtime": 1791305192.7282562,
-    "seen": 1791305229.230217,
-    "ast_hash": "6077996f81c2d278b24c36f1e7141a7a",
+    "mtime": 1791344156.6629922,
+    "seen": 1791344175.80906,
+    "ast_hash": "251df723b9ffbe96e10349ced3eba9ee",
     "semantic_hash": ""
   },
   "scripts/gen-test-registry.py": {
@@ -2712,15 +2712,15 @@
     "semantic_hash": ""
   },
   "docs/architecture/06-testing.md": {
-    "mtime": 1790615917.8759234,
-    "seen": 1790615922.0776331,
-    "ast_hash": "6cc0d70a5ec314baf3fb93f54060d884",
+    "mtime": 1791344156.6793885,
+    "seen": 1791344175.809055,
+    "ast_hash": "a6409d47a323cdbac203cf786ec49f49",
     "semantic_hash": ""
   },
   "docs/architecture/07-registries.md": {
-    "mtime": 1790655527.643366,
-    "seen": 1790733449.4772239,
-    "ast_hash": "d1417108ac7dec0dc311a7840b4a5406",
+    "mtime": 1791344156.648776,
+    "seen": 1791344175.809055,
+    "ast_hash": "512f9ed35fda43e5566897f1a937e4f7",
     "semantic_hash": ""
   },
   "docs/architecture/08-flow-placements.md": {
@@ -2760,9 +2760,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791337679.3974316,
-    "seen": 1791337703.5561888,
-    "ast_hash": "06b02ecdc598d9972fee2332443ef859",
+    "mtime": 1791344161.156678,
+    "seen": 1791344175.80906,
+    "ast_hash": "91e0eae42c88e51ddfa5cf501f026494",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -3333,6 +3333,36 @@
     "mtime": 1791308682.6674998,
     "seen": 1791337637.737704,
     "ast_hash": "c881369aa1672e4e9eecedc89a036367",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/AutomationRule.kt": {
+    "mtime": 1791344076.7634737,
+    "seen": 1791344175.8088489,
+    "ast_hash": "f73aac3973f58c459730a39b5b67cde7",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/AutomationState.kt": {
+    "mtime": 1791344076.7739358,
+    "seen": 1791344175.8088498,
+    "ast_hash": "d106b73e25f47b5fdbc7538cfb5b5d2d",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/EvaluateFacetAutomationUseCase.kt": {
+    "mtime": 1791344082.3188019,
+    "seen": 1791344175.808872,
+    "ast_hash": "198adcdfdd969c2b2d3792af7d064380",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/AutomationStateTest.kt": {
+    "mtime": 1791344115.260334,
+    "seen": 1791344175.8089821,
+    "ast_hash": "af8ab5e9c5f5518e910dd8a101033d3e",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/EvaluateFacetAutomationUseCaseTest.kt": {
+    "mtime": 1791344115.2431371,
+    "seen": 1791344175.8089972,
+    "ast_hash": "46b8c4b1e8cd14ed07f992d3919daa77",
     "semantic_hash": ""
   }
 }
