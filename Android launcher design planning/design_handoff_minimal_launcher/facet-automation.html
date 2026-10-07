@@ -59,6 +59,13 @@ body.dk h1{color:#e7eaf0}body.dk .sub{color:#9aa3b2}
 .pk{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--hl)}
 .pk i{font-size:18px;color:var(--mu)}.pk .t{flex:1}.pk b{font-weight:400;display:block;font-size:13px}.pk span{font-size:11px;color:var(--mu)}
 .pk .ck{color:var(--ac)}
+.sl{margin:14px 0 6px}
+.sl .tr{position:relative;height:4px;border-radius:2px;background:var(--hl)}
+.sl .fill{position:absolute;left:0;top:0;height:4px;border-radius:2px;background:var(--ac)}
+.sl .th{position:absolute;top:-7px;width:18px;height:18px;border-radius:50%;background:var(--ac);margin-left:-9px}
+.sl .ticks{display:flex;justify-content:space-between;margin-top:10px}
+.sl .ticks i{width:1px;height:6px;background:var(--fa)}
+.sl .lb{display:flex;justify-content:space-between;font-size:11px;color:var(--mu);margin-top:4px}
 .tg{display:flex;justify-content:flex-end;margin:0 0 10px}
 .tg button{font:inherit;font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid #b7bdc8;background:transparent;cursor:pointer;color:inherit}
 </style>
@@ -122,38 +129,76 @@ body.dk h1{color:#e7eaf0}body.dk .sub{color:#9aa3b2}
 <div class="pk"><i class="ti ti-bluetooth"></i><div class="t"><b>Bluetooth device</b><span>Car, headset, watch</span></div><span class="pro">Pro</span></div>
 <div class="pk"><i class="ti ti-wifi"></i><div class="t"><b>Wi-Fi</b><span>Any network or a named one</span></div><span class="pro">Pro</span></div>
 <div class="pk"><i class="ti ti-headphones"></i><div class="t"><b>Headphones</b><span>Wired or wireless plugged in</span></div><span class="pro">Pro</span></div>
-<div class="pk"><i class="ti ti-bolt"></i><div class="t"><b>Charging</b><span>Plugged in or not</span></div><span class="pro">Pro</span></div>
-<div class="pk"><i class="ti ti-battery-2"></i><div class="t"><b>Low battery</b><span>Below a level you choose</span></div><span class="pro">Pro</span></div>
+<div class="pk"><i class="ti ti-battery-2"></i><div class="t"><b>Battery</b><span>Charging state and a level</span></div><span class="pro">Pro</span></div>
 </div></div></div>
 
-<div><p class="cap">5 · Rule editor, Wi-Fi</p>
+<div><p class="cap">5 · Wi-Fi, Named network (shown once location is allowed)</p>
 <div class="ph"><div class="in" style="opacity:.5"><div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div></div>
 <div class="scrim"></div>
 <div class="sh"><div class="grab"></div><h4>New rule</h4>
 <div class="fl"><span>Switch to</span><span>Home <i class="ti ti-chevron-down"></i></span></div>
 <div class="fl"><span>When</span><span>Wi-Fi <i class="ti ti-chevron-down"></i></span></div>
 <div class="seg"><div class="s">While connected</div><div>While not connected</div></div>
+<div class="seg" style="margin-top:0"><div>Any network</div><div class="s">Named network</div></div>
 <div class="fl" style="border-top:0"><span>Network</span><span>HomeNet-5G <i class="ti ti-chevron-down"></i></span></div>
-<div class="strip">Naming a network needs location access. Facet only reads the network name, on your device.<a>Allow location</a></div>
-<div class="sec" style="margin-top:12px">When it ends</div>
-<div class="rd s"><i></i>Return to previous facet</div>
-<div class="rd"><i></i>Switch to a facet</div>
-<div class="rd"><i></i>Stay on Home</div>
+<div class="fl"><span>When it ends</span><span>Previous facet <i class="ti ti-chevron-down"></i></span></div>
 <div class="bt"><div class="g">Cancel</div><div class="p">Save</div></div>
 </div></div></div>
 
-<div><p class="cap">6 · Free user, locked trigger</p>
+<div><p class="cap">6 · Free user at the 2-rule limit</p>
 <div class="ph"><div class="in">
 <div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div>
 <div class="stat"><i class="ti ti-point-filled"></i><div>Showing <b style="font-weight:500">Travel</b>, the facet you chose. Weekdays 9:00–18:00 resumes when it ends</div></div>
 <div class="sec">Rules</div>
 <div class="cd">
 <div class="rw"><i class="ti ti-clock"></i><div class="t"><b>Weekdays · 9:00–18:00</b><span>Work, then previous facet</span></div><div class="sw on"></div></div>
-<div class="rw add"><i class="ti ti-plus" style="color:var(--ac)"></i><span style="color:var(--ac)">Add rule</span></div>
+<div class="rw"><i class="ti ti-clock"></i><div class="t"><b>Weekends · 10:00–22:00</b><span>Home, then previous facet</span></div><div class="sw on"></div></div>
+<div class="rw add"><i class="ti ti-plus" style="color:var(--ac)"></i><span style="color:var(--ac)">Add rule</span><span class="pro">Pro</span></div>
 </div>
-<div class="strip" style="margin-top:12px">Rules that react to Bluetooth, Wi-Fi, charging, headphones or battery are part of Facet Pro.<a>See Pro</a></div>
+<div class="strip" style="margin-top:12px">Free includes 2 schedule rules. Pro adds more rules and triggers for Bluetooth, Wi-Fi, charging, headphones and battery.<a>See Pro</a></div>
 <div class="sec">Use other apps</div>
 <div class="cd"><div class="note">Every facet has a “Switch to” shortcut for Tasker, Samsung Modes and Routines, and similar apps. Choosing a facet yourself, or with a shortcut, pauses any rule that is already active until it ends.</div></div>
+</div></div></div>
+
+<div><p class="cap">7 · Permission denied: back to Schedule, with a note</p>
+<div class="ph"><div class="in" style="opacity:.5"><div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div></div>
+<div class="scrim"></div>
+<div class="sh"><div class="grab"></div><h4>New rule</h4>
+<div class="fl"><span>Switch to</span><span>Work <i class="ti ti-chevron-down"></i></span></div>
+<div class="fl"><span>When</span><span>Schedule <i class="ti ti-chevron-down"></i></span></div>
+<div class="strip" style="margin:0 0 8px">Bluetooth rules need Bluetooth access. Allow it in system settings.<a>Open settings</a></div>
+<div class="chips"><u class="s">M</u><u class="s">T</u><u class="s">W</u><u class="s">T</u><u class="s">F</u><u>S</u><u>S</u></div>
+<div class="tm"><div><small>From</small>9:00</div><div><small>Until</small>18:00</div></div>
+<div class="fl" style="margin-top:8px"><span>When it ends</span><span>Previous facet <i class="ti ti-chevron-down"></i></span></div>
+<div class="bt"><div class="g">Cancel</div><div class="p">Save</div></div>
+</div></div></div>
+
+<div><p class="cap">8 · Rule unavailable (permission revoked later)</p>
+<div class="ph"><div class="in">
+<div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div>
+<div class="sec">Rules</div>
+<div class="cd">
+<div class="rw"><i class="ti ti-clock"></i><div class="t"><b>Weekdays · 9:00–18:00</b><span>Work, then previous facet</span></div><div class="sw on"></div></div>
+<div class="rw"><i class="ti ti-alert-circle"></i><div class="t"><b>Car · connected</b><span>Needs Bluetooth access</span></div><span style="color:var(--ac);font-size:12px;font-weight:500">Allow</span></div>
+<div class="rw add"><i class="ti ti-plus" style="color:var(--ac)"></i><span style="color:var(--ac)">Add rule</span></div>
+</div>
+<div class="note">Tapping an unavailable rule asks for the permission first. The editor only opens once it is granted.</div>
+</div></div></div>
+
+<div><p class="cap">9 · Battery: charging state plus a level, below or above</p>
+<div class="ph"><div class="in" style="opacity:.5"><div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div></div>
+<div class="scrim"></div>
+<div class="sh"><div class="grab"></div><h4>New rule</h4>
+<div class="fl"><span>Switch to</span><span>Low power <i class="ti ti-chevron-down"></i></span></div>
+<div class="fl"><span>When</span><span>Battery <i class="ti ti-chevron-down"></i></span></div>
+<div class="seg"><div>Charging</div><div class="s">Not charging</div></div>
+<div class="seg" style="margin-top:0"><div class="s">Below</div><div>Above</div></div>
+<div class="fl" style="border-top:0;border-bottom:0"><span>Below</span><span style="color:var(--ac);font-weight:500">20%</span></div>
+<div class="sl"><div class="tr"><div class="fill" style="width:15.8%"></div><div class="th" style="left:15.8%"></div></div>
+<div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="lb"><span>5%</span><span>100%</span></div></div>
+<div class="fl"><span>When it ends</span><span>Previous facet <i class="ti ti-chevron-down"></i></span></div>
+<div class="bt"><div class="g">Cancel</div><div class="p">Save</div></div>
 </div></div></div>
 
 </div></div>

@@ -2,6 +2,7 @@ package com.facetlauncher.app.data.di
 
 import android.content.Context
 import androidx.room.Room
+import com.facetlauncher.app.data.local.AutomationRuleDao
 import com.facetlauncher.app.data.local.DefaultFavoriteAppDao
 import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementDao
 import com.facetlauncher.app.data.local.DockAppDao
@@ -75,4 +76,7 @@ object DatabaseModule {
 
     @Provides
     fun provideDefaultFavoriteFolderPlacementDao(database: FacetDatabase): DefaultFavoriteFolderPlacementDao = database.defaultFavoriteFolderPlacementDao()
+
+    @Provides
+    fun provideAutomationRuleDao(database: FacetDatabase): AutomationRuleDao = database.automationRuleDao()
 }

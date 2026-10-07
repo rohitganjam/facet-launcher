@@ -2,6 +2,9 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationState
+import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.BatteryDirection
+import com.facetlauncher.app.data.model.BatteryLevelCondition
 import com.facetlauncher.app.data.model.RuleEndBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,10 +41,13 @@ private class Sim(
     }
 }
 
-private fun workRule(end: RuleEndBehavior = RuleEndBehavior.ReturnToBaseline, enabled: Boolean = true) =
-    AutomationRule(WORK_RULE, WORK, end, enabled)
+// The evaluator never reads the trigger; it only sees which rule ids have their condition met.
+private val ANY_TRIGGER = AutomationTrigger.Battery(whileCharging = false, level = BatteryLevelCondition(BatteryDirection.BELOW, 20))
 
-private fun carRule() = AutomationRule(CAR_RULE, DRIVE)
+private fun workRule(end: RuleEndBehavior = RuleEndBehavior.ReturnToBaseline, enabled: Boolean = true) =
+    AutomationRule(WORK_RULE, WORK, ANY_TRIGGER, end, enabled)
+
+private fun carRule() = AutomationRule(CAR_RULE, DRIVE, ANY_TRIGGER)
 
 class EvaluateFacetAutomationUseCaseTest {
 

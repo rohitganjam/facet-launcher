@@ -8,11 +8,11 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (32)  @Singleton Repositories — the only layer that touches
+├── data/                          (34)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (5)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule + the @AutomationDataStore qualifier
-│   ├── local/                     (26)  Room: FacetDatabase, 12 entities, 11 DAOs, Converters, Migrations
-│   ├── model/                     (32)  Immutable value types & enums shared by every layer
+│   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
+│   ├── model/                     (34)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
@@ -70,9 +70,9 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          26   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
-│   ├── local/     11   Converters, entities, DAO-level behaviour via in-memory Room
-│   ├── model/      2   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest
+├── data/          27   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+│   ├── local/     12   Converters, entities, DAO-level behaviour via in-memory Room
+│   ├── model/      4   FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows), AutomationRuleValidationTest
 │   └── widget/     1
 ├── domain/        35   one test per use case (pure logic — no Android needed for most)
 └── ui/            31   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)

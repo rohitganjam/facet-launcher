@@ -11,11 +11,14 @@ import androidx.room.TypeConverters
         FolderEntity::class, FolderAppEntity::class,
         DockFolderPlacementEntity::class, FacetDockFolderPlacementEntity::class,
         FavoriteFolderPlacementEntity::class, DefaultFavoriteFolderPlacementEntity::class,
+        AutomationRuleEntity::class,
     ],
     version = FacetDatabase.VERSION,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
+// One abstract accessor per DAO, so the count grows with every table.
+@Suppress("TooManyFunctions")
 abstract class FacetDatabase : RoomDatabase() {
     abstract fun facetDao(): FacetDao
     abstract fun favoriteAppDao(): FavoriteAppDao
@@ -28,10 +31,11 @@ abstract class FacetDatabase : RoomDatabase() {
     abstract fun facetDockFolderPlacementDao(): FacetDockFolderPlacementDao
     abstract fun favoriteFolderPlacementDao(): FavoriteFolderPlacementDao
     abstract fun defaultFavoriteFolderPlacementDao(): DefaultFavoriteFolderPlacementDao
+    abstract fun automationRuleDao(): AutomationRuleDao
 
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 25
+        const val VERSION = 26
     }
 }

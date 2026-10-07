@@ -124,6 +124,25 @@ class ActivateFacetByIdUseCaseTest {
     }
 
     @Test
+    fun `an automation switch to a deleted facet is a no-op`() = runTest {
+        // Given a facet showing, and a rule that wants a facet which has since been deleted
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val settingsRepository = createSettingsRepository()
+        val automationState = createAutomationStateRepository()
+        val facet = facetRepository.addFacet()
+        settingsRepository.setActiveFacetId(facet.id)
+        val before = AutomationState(baselineFacetId = facet.id, activeRuleIds = listOf(10L))
+        automationState.update { before }
+
+        // When the evaluator asks to switch to the missing facet
+        ActivateFacetByIdUseCase(facetRepository, settingsRepository, automationState)(facet.id + 999, FacetSwitchSource.AUTOMATION)
+
+        // Then nothing changes and nothing throws
+        assertEquals(facet.id, settingsRepository.settings.first().activeFacetId)
+        assertEquals(before, automationState.get())
+    }
+
+    @Test
     fun `invoke is a no-op for an id that doesn't resolve to a real facet`() = runTest {
         // Given a facet that's currently active
         val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())

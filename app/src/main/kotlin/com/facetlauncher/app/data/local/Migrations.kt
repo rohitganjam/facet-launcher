@@ -478,9 +478,27 @@ object Migrations {
         }
     }
 
+    /** Adds `automation_rules` (facet automation). A brand-new table, so no existing data to carry over. */
+    val MIGRATION_25_26: Migration = object : Migration(25, 26) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `automation_rules` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `targetFacetId` INTEGER NOT NULL, " +
+                    "`endBehavior` TEXT NOT NULL, `endFacetId` INTEGER, `triggerType` TEXT NOT NULL, " +
+                    "`negated` INTEGER NOT NULL, `scheduleDays` INTEGER NOT NULL, `scheduleStartMinute` INTEGER NOT NULL, " +
+                    "`scheduleEndMinute` INTEGER NOT NULL, `deviceAddress` TEXT, `deviceName` TEXT, `wifiSsid` TEXT, " +
+                    "`batteryThreshold` INTEGER, `batteryDirection` TEXT, " +
+                    "FOREIGN KEY(`targetFacetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , " +
+                    "FOREIGN KEY(`endFacetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_automation_rules_targetFacetId` ON `automation_rules` (`targetFacetId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_automation_rules_endFacetId` ON `automation_rules` (`endFacetId`)")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25,
+        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26,
     )
 }

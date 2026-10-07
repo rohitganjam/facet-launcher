@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v23**, `exportSchema = true` → `app/schemas/.../1.json … 23.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v26**, `exportSchema = true` → `app/schemas/.../1.json … 26.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 47 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -74,6 +74,25 @@ erDiagram
         int position
         string profile "PERSONAL default"
         int userId "-1 = unresolved"
+    }
+
+    automation_rules {
+        long id PK "autoGenerate"
+        int position "list order and evaluator tie-break"
+        boolean enabled
+        long targetFacetId FK "CASCADE"
+        string endBehavior "RETURN_TO_BASELINE / SWITCH_TO / STAY (plain string)"
+        long endFacetId FK "nullable, SET NULL"
+        string triggerType "SCHEDULE / BLUETOOTH / WIFI / HEADPHONES / BATTERY (plain string)"
+        boolean negated "while not connected / not charging"
+        int scheduleDays "bitmask, Monday = bit 0"
+        int scheduleStartMinute
+        int scheduleEndMinute
+        string deviceAddress "nullable, Bluetooth"
+        string deviceName "nullable, Bluetooth"
+        string wifiSsid "nullable, null = any network"
+        int batteryThreshold "nullable, required for a battery rule"
+        string batteryDirection "nullable, BELOW or ABOVE (plain string), required with the threshold for a battery rule"
     }
 
     facet_dock_apps {
@@ -157,6 +176,8 @@ erDiagram
         int userId
     }
 
+    facets ||--o{ automation_rules : "rule target (CASCADE)"
+    facets |o--o{ automation_rules : "switch-to end facet (SET NULL)"
     facets ||--o{ favorite_apps : "per-facet favorites"
     facets ||--o{ facet_dock_apps : "per-facet dock"
     facets ||--o{ favorite_folder_placements : "folder in favorites"
@@ -206,6 +227,7 @@ flowchart LR
         DFFPD[DefaultFavoriteFolderPlacementDao]
         FOD["FolderDao\n(@Transaction FolderWithApps)"]
         WPD[WidgetPlacementDao]
+        ARD[AutomationRuleDao]
     end
 
     subgraph REPO["data/ repositories"]
@@ -216,6 +238,7 @@ flowchart LR
         DFAR[DefaultFavoriteAppRepository]
         FOR[FolderRepository]
         WPR[WidgetPlacementRepository]
+        ARR["AutomationRuleRepository\n(maps rows to AutomationRule)"]
         AR["AppRepository\n(LauncherApps, not Room)"]
     end
 
@@ -230,6 +253,8 @@ flowchart LR
     DFFPD --> DFAR
     FOD --> FOR
     WPD --> WPR
+    ARD --> ARR
+    FD -. "facet exists check on save" .-> ARR
 
     AR -. "observeInstalledApps()" .-> FOR
     AR -. "observeInstalledApps()" .-> FAR
@@ -248,6 +273,7 @@ flowchart LR
     DFAR -- "Flow of List PlacedItem" --> OUT
     FOR -- "Flow of List Folder" --> OUT
     WPR -- "Flow of List WidgetPlacementEntity" --> OUT
+    ARR -- "Flow of List AutomationRule" --> OUT
 ```
 
 ### The DAO contract
@@ -276,6 +302,7 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | `DockFolderPlacementDao` | `observeAll()` | `upsert` | `deleteByFolderId(folderId)`, `deleteAll()` | — |
 | `DefaultFavoriteFolderPlacementDao` | `observeAll()` | `upsert` | `deleteByFolderId(folderId)`, `deleteAll()` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
+| `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
 | `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`) | `deleteById(appWidgetId)`, `delete(placement)` | `getById(appWidgetId)` |
 
 Exceptions to the common shape, all deliberate:
@@ -284,6 +311,7 @@ Exceptions to the common shape, all deliberate:
 - **`FacetDao` has no `deleteByUserId`/`getOrphaned`** — facets are not profile-scoped.
 - **Folder placement DAOs have no `getOrphaned`** — they reference folders by id, not apps by component; profile repair happens on `folder_apps` instead.
 - **`WidgetPlacementDao` has no profile-scoped deletes.** A removed Work Profile's widgets are handled by `ObserveHubStateUseCase` flagging them `isOrphaned` (provider info gone) rather than a DAO sweep.
+- **`AutomationRuleDao` rows are addressed by `id` all the way up.** Rule ids are public: `AutomationState` stores them (`activeRuleIds`, `suppressedRuleIds`) and the evaluator matches on them. `AutomationRuleRepository` also skips rows it can't interpret (unknown `triggerType`, or a missing required parameter) instead of failing the whole list.
 - **Every `delete*` for a placement is by component/user, never by row `id`** except `@Delete(entity)` — repositories always resolve the row from an `AppInfo`, so `id` never leaks above `data/`.
 
 `FolderDao` is the one relational DAO: `observeAllWithApps()` is a `@Transaction` query returning
@@ -342,6 +370,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 22→23 | Recreate `facets` (create-copy-drop-rename, same pattern as 16→17) dropping `calendarFontOption`, `calendarColorOption`, `calendarFontWeight`, `calendarAlignment` — calendar/appearance styling consolidation |
 | 23→24 | No column change (`LAUNCHER_DEFAULT` is just a new valid string for the already-`TEXT NOT NULL` `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` columns) — data-only `UPDATE` resetting those four columns to `'LAUNCHER_DEFAULT'` on every facet row where the matching `overrideApps`/`overrideDock` flag is `0` (a stale, previously-unread value would otherwise start "overriding" silently); a row where the flag is `1` keeps its real value untouched |
 | 24→25 | `facets.appListLayout`, `appListColumnAlignment`, `appListGridColumns`, `appListGridDisplayMode` — Home app list two-column/grid layouts; brand-new columns (`DEFAULT 'LAUNCHER_DEFAULT'`), no data-reset step needed |
+| 25→26 | New table `automation_rules` (facet automation rules) with two foreign keys to `facets` (`targetFacetId` CASCADE, `endFacetId` SET NULL) and an index on each; DDL copied from the exported `26.json`, no data to carry over. Tested by `FacetDatabaseMigrationTest.migration25To26…` (schema validation plus both FK actions) |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -709,3 +738,9 @@ Then
 one-by-one through the picker flow, see [09-flow-backup-restore.md](09-flow-backup-restore.md)).
 Folder references are by *index into `folders`*, facet references by *index into `facets`*, because
 Room ids are regenerated on restore.
+
+**Automation rules are not exported.** `automation_rules` has no field in `BackupBundle`, and import
+calls `deleteAllFacets()` first, so the foreign-key cascade deletes every rule on restore. The
+`facet_automation` state is not exported either ([§5.7](#57-facet_automation-automationstaterepository));
+it holds stale ids after a restore, which the evaluator tolerates. Backing rules up would need
+`BackupBundle` fields (facet references by index, like placements) and a version decision.

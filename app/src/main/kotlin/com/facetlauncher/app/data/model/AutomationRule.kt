@@ -11,10 +11,11 @@ sealed interface RuleEndBehavior {
     data object Stay : RuleEndBehavior
 }
 
-/** A rule's trigger is evaluated elsewhere; the evaluator only needs to know whether it holds. */
+/** A new rule has `id = 0` until it is saved. */
 data class AutomationRule(
     val id: Long,
     val targetFacetId: Long,
+    val trigger: AutomationTrigger,
     val endBehavior: RuleEndBehavior = RuleEndBehavior.ReturnToBaseline,
     val enabled: Boolean = true,
 )
