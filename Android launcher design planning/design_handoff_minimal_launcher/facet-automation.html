@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facet automation — mockups</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+body{margin:0;padding:24px;background:#e4e7ec;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#020817}
+body.dk{background:#0a0c10}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}
+.sub{font-size:12px;color:#5b6472;margin:0 0 14px}
+body.dk h1{color:#e7eaf0}body.dk .sub{color:#9aa3b2}
+.fx{--bg:#eef1f5;--sf:#fff;--ink:#020817;--mu:rgba(2,8,23,.45);--fa:rgba(2,8,23,.3);--hl:rgba(2,8,23,.07);--ac:#2563eb;--acbg:rgba(37,99,235,.1);--er:#dc2626;--sc:rgba(2,8,23,.28);--dash:rgba(2,8,23,.16)}
+.fx.dk{--bg:#101319;--sf:#171a21;--ink:#e7eaf0;--mu:rgba(226,232,240,.5);--fa:rgba(226,232,240,.3);--hl:rgba(226,232,240,.07);--ac:#a8c7fa;--acbg:rgba(168,199,250,.14);--er:#f2857f;--sc:rgba(0,0,0,.58);--dash:rgba(226,232,240,.18)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;justify-items:center}
+.cap{font-size:12px;color:#5b6472;margin:0 0 6px;text-align:center}
+.fx.dk .cap{color:#9aa3b2}
+.ph{position:relative;width:300px;height:560px;background:var(--bg);border:1px solid var(--hl);border-radius:28px;overflow:hidden;color:var(--ink);font-size:13px;box-shadow:0 0 0 6px rgba(128,128,128,.12)}
+.in{padding:22px 16px 0}
+.hd{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
+.hd i{font-size:20px}.hd b{font-weight:500;font-size:19px;letter-spacing:-.4px}
+.sec{font-size:10px;letter-spacing:.14em;color:var(--mu);text-transform:uppercase;font-weight:500;margin:14px 0 6px}
+.cd{background:var(--sf);border:1px solid var(--hl);border-radius:12px;padding:0 14px}
+.rw{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hl)}
+.rw:first-child{border-top:0}
+.rw .t{flex:1;min-width:0}.rw .t b{display:block;font-weight:400;font-size:13px}.rw .t span{display:block;font-size:11px;color:var(--mu);line-height:1.35}
+.rw>i{font-size:18px;color:var(--mu)}
+.sw{width:34px;height:20px;border-radius:10px;background:var(--hl);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--fa)}
+.sw.on{background:var(--ac)}.sw.on::after{left:16px;background:var(--sf)}
+.pro{font-size:10px;font-weight:500;color:var(--ac);background:var(--acbg);border-radius:8px;padding:1px 7px;flex:none}
+.stat{display:flex;gap:8px;align-items:flex-start;background:var(--acbg);border-radius:10px;padding:10px 12px;font-size:11.5px;line-height:1.4}
+.stat i{color:var(--ac);font-size:16px;margin-top:1px}
+.strip{border:1px dashed var(--dash);border-radius:10px;padding:10px 12px;font-size:11.5px;line-height:1.4;color:var(--mu);margin-top:10px}
+.strip a{color:var(--ac);font-weight:500;display:block;margin-top:4px}
+.add{display:flex;justify-content:center;gap:6px;align-items:center;color:var(--ac);padding:12px 0;font-size:13px}
+.note{font-size:11.5px;line-height:1.5;color:var(--mu);padding:12px 0}
+.scrim{position:absolute;inset:0;background:var(--sc)}
+.sh{position:absolute;left:0;right:0;bottom:0;background:var(--sf);border-radius:20px 20px 0 0;padding:8px 16px 16px;box-shadow:0 -8px 24px rgba(2,8,23,.1)}
+.grab{width:32px;height:4px;border-radius:2px;margin:0 auto 10px;background:var(--fa)}
+.sh h4{font-size:16px;font-weight:500;margin:0 0 6px}
+.fl{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--hl)}
+.fl span:first-child{color:var(--mu);font-size:12px}.fl span:last-child{font-size:13px}
+.chips{display:flex;gap:5px;padding:8px 0}
+.chips u{text-decoration:none;flex:1;text-align:center;border:1px solid var(--hl);border-radius:8px;padding:5px 0;font-size:11.5px;color:var(--mu)}
+.chips u.s{border-color:var(--ac);color:var(--ac);background:var(--acbg)}
+.tm{display:flex;gap:8px}.tm div{flex:1;border:1px solid var(--hl);border-radius:8px;padding:6px 10px;font-size:13px}
+.tm small{display:block;font-size:10.5px;color:var(--mu)}
+.rd{display:flex;gap:9px;align-items:center;padding:7px 0;font-size:13px}
+.rd i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--fa);flex:none;box-sizing:border-box}
+.rd.s i{border-color:var(--ac);box-shadow:inset 0 0 0 3px var(--sf);background:var(--ac)}
+.bt{display:flex;gap:8px;margin-top:10px}
+.bt div{flex:1;text-align:center;padding:9px 0;border-radius:18px;font-size:13px}
+.bt .g{color:var(--mu)}.bt .p{background:var(--ac);color:var(--sf);font-weight:500}
+.seg{display:flex;border:1px solid var(--hl);border-radius:18px;padding:2px;margin:8px 0}
+.seg div{flex:1;text-align:center;padding:6px 0;border-radius:16px;font-size:12px;color:var(--mu)}
+.seg .s{background:var(--acbg);color:var(--ac);font-weight:500}
+.pk{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--hl)}
+.pk i{font-size:18px;color:var(--mu)}.pk .t{flex:1}.pk b{font-weight:400;display:block;font-size:13px}.pk span{font-size:11px;color:var(--mu)}
+.pk .ck{color:var(--ac)}
+.tg{display:flex;justify-content:flex-end;margin:0 0 10px}
+.tg button{font:inherit;font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid #b7bdc8;background:transparent;cursor:pointer;color:inherit}
+</style>
+</head>
+<body>
+<h1>Facet automation</h1>
+<p class="sub">Mockups for the built-in facet rules. Spec lives in IMPLEMENTATION_PLAN.md, section "Facet automation rules". Tokens match the app's light and dark palettes.</p>
+<div class="fx" id="fx">
+<div class="tg"><button onclick="document.getElementById('fx').classList.toggle('dk');document.body.classList.toggle('dk')">Toggle dark theme</button></div>
+<div class="grid">
+
+<div><p class="cap">1 · Settings entry</p>
+<div class="ph"><div class="in">
+<div class="hd"><i class="ti ti-arrow-left"></i><b>Settings</b></div>
+<div class="sec">Facets</div>
+<div class="cd">
+<div class="rw"><div class="t"><b>Manage facets</b><span>Reorder, add and remove</span></div><i class="ti ti-chevron-right"></i></div>
+<div class="rw"><div class="t"><b>Facet automation</b><span>2 rules active</span></div><i class="ti ti-chevron-right"></i></div>
+</div>
+<div class="sec">Appearance</div>
+<div class="cd"><div class="rw"><div class="t"><b>Change wallpaper</b><span>Opens system picker</span></div><i class="ti ti-chevron-right"></i></div>
+<div class="rw"><div class="t"><b>Appearance</b><span>Icons, clock, theme</span></div><i class="ti ti-chevron-right"></i></div></div>
+</div></div></div>
+
+<div><p class="cap">2 · Facet automation</p>
+<div class="ph"><div class="in">
+<div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div>
+<div class="stat"><i class="ti ti-point-filled"></i><div>Showing <b style="font-weight:500">Work</b> because of the rule Weekdays 9:00–18:00</div></div>
+<div class="sec">Rules</div>
+<div class="cd">
+<div class="rw"><i class="ti ti-clock"></i><div class="t"><b>Weekdays · 9:00–18:00</b><span>Work, then previous facet</span></div><div class="sw on"></div></div>
+<div class="rw"><i class="ti ti-bluetooth"></i><div class="t"><b>Car · connected</b><span>Drive, then previous facet</span></div><div class="sw on"></div></div>
+<div class="rw" style="opacity:.55"><i class="ti ti-lock"></i><div class="t"><b>Home Wi-Fi · connected</b><span>Paused. Needs Pro</span></div><span class="pro">Pro</span></div>
+<div class="rw add"><i class="ti ti-plus" style="color:var(--ac)"></i><span style="color:var(--ac)">Add rule</span></div>
+</div>
+<div class="sec">Use other apps</div>
+<div class="cd"><div class="note">Every facet has a “Switch to” shortcut for Tasker, Samsung Modes and Routines, and similar apps. Choosing a facet yourself, or with a shortcut, pauses any rule that is already active until it ends.</div></div>
+</div></div></div>
+
+<div><p class="cap">3 · Rule editor, schedule</p>
+<div class="ph"><div class="in" style="opacity:.5"><div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div></div>
+<div class="scrim"></div>
+<div class="sh"><div class="grab"></div><h4>New rule</h4>
+<div class="fl"><span>Switch to</span><span>Work <i class="ti ti-chevron-down"></i></span></div>
+<div class="fl"><span>When</span><span>Schedule <i class="ti ti-chevron-down"></i></span></div>
+<div class="chips"><u class="s">M</u><u class="s">T</u><u class="s">W</u><u class="s">T</u><u class="s">F</u><u>S</u><u>S</u></div>
+<div class="tm"><div><small>From</small>9:00</div><div><small>Until</small>18:00</div></div>
+<div class="sec" style="margin-top:12px">When it ends</div>
+<div class="rd s"><i></i>Return to previous facet</div>
+<div class="rd"><i></i>Switch to <span style="color:var(--mu)">Personal <i class="ti ti-chevron-down"></i></span></div>
+<div class="rd"><i></i>Stay on Work</div>
+<div class="bt"><div class="g">Cancel</div><div class="p">Save</div></div>
+</div></div></div>
+
+<div><p class="cap">4 · Trigger picker</p>
+<div class="ph"><div class="in" style="opacity:.5"><div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div></div>
+<div class="scrim"></div>
+<div class="sh"><div class="grab"></div><h4>When</h4>
+<div class="pk"><i class="ti ti-clock"></i><div class="t"><b>Schedule</b><span>Days and times</span></div><i class="ti ti-check ck"></i></div>
+<div class="sec" style="margin:10px 0 0">Pro</div>
+<div class="pk"><i class="ti ti-bluetooth"></i><div class="t"><b>Bluetooth device</b><span>Car, headset, watch</span></div><span class="pro">Pro</span></div>
+<div class="pk"><i class="ti ti-wifi"></i><div class="t"><b>Wi-Fi</b><span>Any network or a named one</span></div><span class="pro">Pro</span></div>
+<div class="pk"><i class="ti ti-headphones"></i><div class="t"><b>Headphones</b><span>Wired or wireless plugged in</span></div><span class="pro">Pro</span></div>
+<div class="pk"><i class="ti ti-bolt"></i><div class="t"><b>Charging</b><span>Plugged in or not</span></div><span class="pro">Pro</span></div>
+<div class="pk"><i class="ti ti-battery-2"></i><div class="t"><b>Low battery</b><span>Below a level you choose</span></div><span class="pro">Pro</span></div>
+</div></div></div>
+
+<div><p class="cap">5 · Rule editor, Wi-Fi</p>
+<div class="ph"><div class="in" style="opacity:.5"><div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div></div>
+<div class="scrim"></div>
+<div class="sh"><div class="grab"></div><h4>New rule</h4>
+<div class="fl"><span>Switch to</span><span>Home <i class="ti ti-chevron-down"></i></span></div>
+<div class="fl"><span>When</span><span>Wi-Fi <i class="ti ti-chevron-down"></i></span></div>
+<div class="seg"><div class="s">While connected</div><div>While not connected</div></div>
+<div class="fl" style="border-top:0"><span>Network</span><span>HomeNet-5G <i class="ti ti-chevron-down"></i></span></div>
+<div class="strip">Naming a network needs location access. Facet only reads the network name, on your device.<a>Allow location</a></div>
+<div class="sec" style="margin-top:12px">When it ends</div>
+<div class="rd s"><i></i>Return to previous facet</div>
+<div class="rd"><i></i>Switch to a facet</div>
+<div class="rd"><i></i>Stay on Home</div>
+<div class="bt"><div class="g">Cancel</div><div class="p">Save</div></div>
+</div></div></div>
+
+<div><p class="cap">6 · Free user, locked trigger</p>
+<div class="ph"><div class="in">
+<div class="hd"><i class="ti ti-arrow-left"></i><b>Facet automation</b></div>
+<div class="stat"><i class="ti ti-point-filled"></i><div>Showing <b style="font-weight:500">Travel</b>, the facet you chose. Weekdays 9:00–18:00 resumes when it ends</div></div>
+<div class="sec">Rules</div>
+<div class="cd">
+<div class="rw"><i class="ti ti-clock"></i><div class="t"><b>Weekdays · 9:00–18:00</b><span>Work, then previous facet</span></div><div class="sw on"></div></div>
+<div class="rw add"><i class="ti ti-plus" style="color:var(--ac)"></i><span style="color:var(--ac)">Add rule</span></div>
+</div>
+<div class="strip" style="margin-top:12px">Rules that react to Bluetooth, Wi-Fi, charging, headphones or battery are part of Facet Pro.<a>See Pro</a></div>
+<div class="sec">Use other apps</div>
+<div class="cd"><div class="note">Every facet has a “Switch to” shortcut for Tasker, Samsung Modes and Routines, and similar apps. Choosing a facet yourself, or with a shortcut, pauses any rule that is already active until it ends.</div></div>
+</div></div></div>
+
+</div></div>
+</body>
+</html>
