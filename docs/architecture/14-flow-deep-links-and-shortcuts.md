@@ -19,7 +19,7 @@ sequenceDiagram
     LVM->>UC: invoke()   (launched once, runs for the app's lifetime)
     UC->>FR: observeFacets()
     loop every emission (add / rename / reorder / delete)
-        FR-->>UC: List&lt;FacetEntity&gt;
+        FR-->>UC: List of FacetEntity
         UC->>SR: syncShortcuts(facets)
         SR->>SM: setDynamicShortcuts(context, shortcuts)   (full atomic replace)
     end
