@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1791368568.6562672,
-    "seen": 1791369215.4696162,
-    "ast_hash": "0e646fb3c50bc27be774c01bc1d88884",
+    "mtime": 1791369281.0472054,
+    "seen": 1791370387.727506,
+    "ast_hash": "434fac8d6770ab017a65122121b25aa2",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -42,9 +42,9 @@
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1791368972.4264839,
-    "seen": 1791369215.469941,
-    "ast_hash": "741f6a98fece5900813f091b5af6f216",
+    "mtime": 1791370134.4838386,
+    "seen": 1791370387.727835,
+    "ast_hash": "7f95b62eebf445eb03a5aed027344291",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -2760,8 +2760,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791368988.769672,
-    "seen": 1791369215.4699578,
+    "mtime": 1791370382.445496,
+    "seen": 1791370387.727852,
     "ast_hash": "38ede924f0300b95ff2a5f6a9fc66eaf",
     "semantic_hash": ""
   },
@@ -2892,9 +2892,9 @@
     "semantic_hash": ""
   },
   "benchmark/build.gradle.kts": {
-    "mtime": 1789820251.2517028,
-    "seen": 1789820648.7875898,
-    "ast_hash": "525f588ab8970b299e0f27a50f1857b2",
+    "mtime": 1791369281.0476415,
+    "seen": 1791370387.727818,
+    "ast_hash": "10cfdd744f26803db773c36157dd3be4",
     "semantic_hash": ""
   },
   "benchmark/src/main/java/com/facetlauncher/app/benchmark/StartupBenchmark.kt": {
@@ -3726,9 +3726,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/ScheduleFields.kt": {
-    "mtime": 1791359881.6801775,
-    "seen": 1791361866.206862,
-    "ast_hash": "5aef948a0796aafcee06d792a99b0e66",
+    "mtime": 1791369559.3019588,
+    "seen": 1791370387.727731,
+    "ast_hash": "12973014a100ca3b150257a76ab86ce2",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/TriggerFields.kt": {
