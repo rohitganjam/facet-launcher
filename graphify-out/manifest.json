@@ -42,9 +42,9 @@
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1791308232.6024888,
-    "seen": 1791308263.287466,
-    "ast_hash": "ce9addccdc3cc5940dac66939b57bf9c",
+    "mtime": 1791337625.562932,
+    "seen": 1791337637.737707,
+    "ast_hash": "74bd88d05a6787962152b7a98b07b3ed",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "CAPABILITIES.md": {
-    "mtime": 1791303453.9074557,
-    "seen": 1791305229.2302,
-    "ast_hash": "07750d0c358bfa4d970cd9ef49166adf",
+    "mtime": 1791337618.2847044,
+    "seen": 1791337637.737706,
+    "ast_hash": "1ef5ae3cbf07e2556458b10bae835c44",
     "semantic_hash": ""
   },
   "ONBOARDING_DESIGN_BRIEF.md": {
@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsScreenTest.kt": {
-    "mtime": 1791305130.7986503,
-    "seen": 1791305229.229952,
-    "ast_hash": "1edad8ef90d102f30070e8696483a24d",
+    "mtime": 1791337323.0597723,
+    "seen": 1791337637.737476,
+    "ast_hash": "87743c649b97f55c16667e878eb0d101",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/CalendarSettingsScreenTest.kt": {
@@ -1416,9 +1416,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/navigation/FacetNavHost.kt": {
-    "mtime": 1791171643.4876468,
-    "seen": 1791172799.5779378,
-    "ast_hash": "35cd3f048bcba85798bad3faadd9900e",
+    "mtime": 1791337275.1643987,
+    "seen": 1791337637.7376041,
+    "ast_hash": "7045a18fc284e79f8aa3c58e5f96b5ff",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingDots.kt": {
@@ -1476,15 +1476,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsScreen.kt": {
-    "mtime": 1791307648.4152462,
-    "seen": 1791308159.682658,
-    "ast_hash": "5f6a808f70ab91295f3cb7924145cdb2",
+    "mtime": 1791337275.1632483,
+    "seen": 1791337637.737611,
+    "ast_hash": "fdeeffbdeba848b88494686b9e90ec68",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsViewModel.kt": {
-    "mtime": 1791305020.026178,
-    "seen": 1791305229.230102,
-    "ast_hash": "73e5e2a31237718e226e92a674923e65",
+    "mtime": 1791337265.1284633,
+    "seen": 1791337637.737611,
+    "ast_hash": "cd52093b52373ad1b8af9db2fe14f947",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/CalendarSettingsScreen.kt": {
@@ -2106,15 +2106,15 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsScreenTest.kt": {
-    "mtime": 1790608688.8007672,
-    "seen": 1790608692.445239,
-    "ast_hash": "e56250d31f0b758881f28a26df9af334",
+    "mtime": 1791337285.4941022,
+    "seen": 1791337637.7374651,
+    "ast_hash": "c6f45d4ecbc4f6a0829308f49683ab44",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/FavoritesPickerScreenTest.kt": {
-    "mtime": 1789568888.408152,
-    "seen": 1789573168.273708,
-    "ast_hash": "b439e32f775d2530d2203325e4fb9098",
+    "mtime": 1791337331.5883482,
+    "seen": 1791337637.737466,
+    "ast_hash": "793effa5144e9b24c493e8d77c81770a",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/ManageFacetsScreenTest.kt": {
@@ -2190,9 +2190,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsScreen.kt": {
-    "mtime": 1790608688.8050723,
-    "seen": 1790608692.445339,
-    "ast_hash": "bf2a1eb67c1165e7c8e22dc44a0e68a9",
+    "mtime": 1791337275.1639166,
+    "seen": 1791337637.73758,
+    "ast_hash": "b48c4087cc8bf46a2456f38d60b03c49",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsViewModel.kt": {
@@ -2754,15 +2754,15 @@
     "semantic_hash": ""
   },
   "docs/architecture/13-flow-facets-theme-notifications-onboarding.md": {
-    "mtime": 1791305192.7284214,
-    "seen": 1791305229.230216,
-    "ast_hash": "af0a463b1153650487a4a44cec23365e",
+    "mtime": 1791337618.2844903,
+    "seen": 1791337637.7377212,
+    "ast_hash": "753f8f2edfdaf939625d57b767bf9d1e",
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791308232.8555245,
-    "seen": 1791308263.287482,
-    "ast_hash": "4664e07baf3b6aec4e7e509bff956ec6",
+    "mtime": 1791337331.843121,
+    "seen": 1791337637.7377229,
+    "ast_hash": "06b02ecdc598d9972fee2332443ef859",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -3327,6 +3327,12 @@
     "mtime": 1791308232.5908606,
     "seen": 1791308263.287431,
     "ast_hash": "549b60d602a0ae16641cae7e18037906",
+    "semantic_hash": ""
+  },
+  "Android launcher design planning/design_handoff_minimal_launcher/facet-automation.html": {
+    "mtime": 1791308682.6674998,
+    "seen": 1791337637.737704,
+    "ast_hash": "c881369aa1672e4e9eecedc89a036367",
     "semantic_hash": ""
   }
 }
