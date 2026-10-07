@@ -57,6 +57,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- Facet makes no network requests. Google's Play Billing library drags in its data-transport telemetry
+         (transport-backend-cct), which merges INTERNET into the manifest; removing it keeps the "no internet"
+         promise in the privacy policy. Purchases go through the Play Store app over IPC and don't need it.
+         The verifyNoInternetPermission Gradle task fails the build if INTERNET ever comes back. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+
     <application
         android:name=".FacetApplication"
         android:allowBackup="true"

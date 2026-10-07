@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
@@ -28,6 +30,7 @@ import com.facetlauncher.app.ui.theme.ProvideSystemBars
 import com.facetlauncher.app.ui.theme.SystemBarsState
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class LauncherActivity : ComponentActivity() {
@@ -35,6 +38,8 @@ class LauncherActivity : ComponentActivity() {
     private val viewModel: LauncherViewModel by viewModels()
 
     @Inject lateinit var launcherApps: LauncherApps
+
+    @Inject lateinit var entitlementRepository: EntitlementRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +93,12 @@ class LauncherActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // A refund, a purchase on another device or a redeemed code shows up here without a restart.
+        lifecycleScope.launch { entitlementRepository.refresh() }
     }
 
     override fun onNewIntent(intent: Intent) {

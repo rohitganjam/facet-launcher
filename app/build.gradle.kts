@@ -171,6 +171,9 @@ dependencies {
     // resolutionStrategy.force() override.
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
+    // Google Play Billing for the one-time Facet Pro purchase (docs/architecture/16-flow-billing.md)
+    implementation("com.android.billingclient:billing-ktx:9.1.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
@@ -222,4 +225,29 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 }
 tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
     jvmTarget = "17"
+}
+
+// The privacy policy promises the app cannot reach the network. Libraries can merge INTERNET back in
+// (Play Billing's telemetry does), so check the merged manifest of both variants.
+val verifyNoInternetPermission = tasks.register("verifyNoInternetPermission") {
+    group = "verification"
+    description = "Fails if the merged debug or release manifest declares android.permission.INTERNET."
+    val merged = listOf("debug", "release").map { variant ->
+        layout.buildDirectory.file("intermediates/merged_manifests/$variant/process${variant.replaceFirstChar(Char::uppercase)}Manifest/AndroidManifest.xml")
+    }
+    inputs.files(merged)
+    doLast {
+        merged.forEach { file ->
+            val manifest = file.get().asFile
+            check(manifest.exists()) { "Missing merged manifest: $manifest" }
+            check(!manifest.readText().contains("android.permission.INTERNET")) {
+                "android.permission.INTERNET is in $manifest, which breaks the no-internet promise. Find the library that adds it in the manifest merger report."
+            }
+        }
+    }
+}
+tasks.named("check") { dependsOn(verifyNoInternetPermission) }
+afterEvaluate {
+    verifyNoInternetPermission.configure { dependsOn("processDebugManifest", "processReleaseManifest") }
+    listOf("assembleRelease", "bundleRelease").forEach { name -> tasks.findByName(name)?.dependsOn(verifyNoInternetPermission) }
 }

@@ -8,11 +8,11 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (41)  @Singleton Repositories — the only layer that touches
+├── data/                          (44)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
-│   ├── di/                        (5)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule + the @AutomationDataStore qualifier
+│   ├── di/                        (7)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
-│   ├── model/                     (38)  Immutable value types & enums shared by every layer
+│   ├── model/                     (39)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)

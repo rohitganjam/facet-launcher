@@ -4,7 +4,7 @@ Native Android launcher app.
 - Kotlin-only, Jetpack Compose (no XML layouts), single `:app` module — plus `:detekt-rules`, a plain-JVM module for custom Detekt rules (e.g. `ComposeHardcodedText`), kept separate since a rule must compile before the module it checks, and `:benchmark`, a `com.android.test` module for Macrobenchmark tests (`androidx.benchmark`) against `:app`'s `benchmark` build type. Don't add app code to either or create further modules.
 - MVVM throughout: composables → `ViewModel`s → `Repository`s → `domain/` use cases, strictly layered.
 - Hilt for DI, Room + DataStore for persistence, Coroutines + `Flow` for async state (no `LiveData`).
-- No network layer — no Retrofit/OkHttp dependency, no `INTERNET` permission — unless a feature explicitly needs it.
+- No network layer — no Retrofit/OkHttp dependency, no `INTERNET` permission — unless a feature explicitly needs it. The Play Billing library merges `INTERNET` in through its telemetry, so the manifest removes it (`tools:node="remove"`) and the `verifyNoInternetPermission` Gradle task (run by `check` and the release build) fails if it ever returns.
 
 Architecture blueprint: [`docs/architecture/README.md`](docs/architecture/README.md) — living docs, updated in the same change as the code they describe (see [Living architecture docs](#living-architecture-docs)).
 Requirements: [`Android launcher design planning/design_handoff_minimal_launcher/PRD.md`](<Android launcher design planning/design_handoff_minimal_launcher/PRD.md>).
