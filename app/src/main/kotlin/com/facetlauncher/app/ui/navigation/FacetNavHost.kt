@@ -153,6 +153,9 @@ fun FacetNavHost(
         exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec) },
         popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
         popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
+        // Back gesture: without these Navigation defaults to a scale-down "zoom out" for every screen.
+        predictivePopEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
+        predictivePopExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
     ) {
         composable(FacetDestinations.HOME) {
             HomeDrawerRoute(
