@@ -1,10 +1,12 @@
 package com.facetlauncher.app.ui.facets
 
 import androidx.lifecycle.SavedStateHandle
+import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
@@ -20,6 +22,9 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
+import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,17 +39,22 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class FacetSettingsViewModelTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     // --- FacetSettingsUiState: pure derived-state logic, no ViewModel/repositories involved ---
 
@@ -317,6 +327,7 @@ class FacetSettingsViewModelTest {
         dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java).also {
             `when`(it.observeDockItems()).thenReturn(flowOf(emptyList()))
         },
+        automationStateRepository: AutomationStateRepository = mock(AutomationStateRepository::class.java),
     ) = FacetSettingsViewModel(
         SavedStateHandle(mapOf("facetId" to facetId)),
         facetRepository,
@@ -325,6 +336,7 @@ class FacetSettingsViewModelTest {
         defaultFavoriteAppRepository,
         facetDockAppRepository,
         dockAppRepository,
+        ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()), settingsRepository, automationStateRepository, mock(RefreshAutomationStateUseCase::class.java)),
     )
 
     /** In-memory fake — enough of [com.facetlauncher.app.data.local.FacetDao] for [FacetRepository]'s needs. */
@@ -375,6 +387,37 @@ class FacetSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(settingsRepository).setActiveFacetId(facet.id)
+    }
+
+    @Test
+    fun `applyFacet records a manual switch in the automation state`() = runTest {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        val facet = facetRepository.addFacet()
+        val automationState = AutomationStateRepository(
+            androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(
+                // Same dispatcher as the ViewModel's Main, so advanceUntilIdle() also finishes DataStore's IO.
+                scope = kotlinx.coroutines.CoroutineScope(testDispatcher + kotlinx.coroutines.SupervisorJob()),
+                produceFile = { tempFolder.newFile("automation-${System.nanoTime()}.preferences_pb") },
+            ),
+        )
+        automationState.update { it.copy(activeRuleIds = listOf(10L)) }
+        val settingsRepository = mock(SettingsRepository::class.java).also {
+            `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings(activeFacetId = 0L)))
+        }
+        val viewModel = createViewModel(
+            facetId = facet.id,
+            facetRepository = facetRepository,
+            settingsRepository = settingsRepository,
+            automationStateRepository = automationState,
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.applyFacet()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(facet.id, automationState.get().baselineFacetId)
+        assertEquals(setOf(10L), automationState.get().suppressedRuleIds)
     }
 
     @Test

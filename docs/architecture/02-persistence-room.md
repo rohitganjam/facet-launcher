@@ -4,8 +4,10 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v23**, `exportSchema = true` → `app/schemas/.../1.json … 23.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 46 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v26**, `exportSchema = true` → `app/schemas/.../1.json … 26.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 47 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
+| `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
 | Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v3: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
@@ -73,6 +75,25 @@ erDiagram
         int position
         string profile "PERSONAL default"
         int userId "-1 = unresolved"
+    }
+
+    automation_rules {
+        long id PK "autoGenerate"
+        int position "list order and evaluator tie-break"
+        boolean enabled
+        long targetFacetId FK "CASCADE"
+        string endBehavior "RETURN_TO_BASELINE / SWITCH_TO / STAY (plain string)"
+        long endFacetId FK "nullable, SET NULL"
+        string triggerType "SCHEDULE / BLUETOOTH / WIFI / HEADPHONES / BATTERY (plain string)"
+        boolean negated "while not connected / not charging"
+        int scheduleDays "bitmask, Monday = bit 0"
+        int scheduleStartMinute
+        int scheduleEndMinute
+        string deviceAddress "nullable, Bluetooth"
+        string deviceName "nullable, Bluetooth"
+        string wifiSsid "nullable, null = any network"
+        int batteryThreshold "nullable, required for a battery rule"
+        string batteryDirection "nullable, BELOW or ABOVE (plain string), required with the threshold for a battery rule"
     }
 
     facet_dock_apps {
@@ -156,6 +177,8 @@ erDiagram
         int userId
     }
 
+    facets ||--o{ automation_rules : "rule target (CASCADE)"
+    facets |o--o{ automation_rules : "switch-to end facet (SET NULL)"
     facets ||--o{ favorite_apps : "per-facet favorites"
     facets ||--o{ facet_dock_apps : "per-facet dock"
     facets ||--o{ favorite_folder_placements : "folder in favorites"
@@ -205,6 +228,7 @@ flowchart LR
         DFFPD[DefaultFavoriteFolderPlacementDao]
         FOD["FolderDao\n(@Transaction FolderWithApps)"]
         WPD[WidgetPlacementDao]
+        ARD[AutomationRuleDao]
     end
 
     subgraph REPO["data/ repositories"]
@@ -215,6 +239,7 @@ flowchart LR
         DFAR[DefaultFavoriteAppRepository]
         FOR[FolderRepository]
         WPR[WidgetPlacementRepository]
+        ARR["AutomationRuleRepository\n(maps rows to AutomationRule)"]
         AR["AppRepository\n(LauncherApps, not Room)"]
     end
 
@@ -229,6 +254,8 @@ flowchart LR
     DFFPD --> DFAR
     FOD --> FOR
     WPD --> WPR
+    ARD --> ARR
+    FD -. "facet exists check on save" .-> ARR
 
     AR -. "observeInstalledApps()" .-> FOR
     AR -. "observeInstalledApps()" .-> FAR
@@ -247,6 +274,7 @@ flowchart LR
     DFAR -- "Flow of List PlacedItem" --> OUT
     FOR -- "Flow of List Folder" --> OUT
     WPR -- "Flow of List WidgetPlacementEntity" --> OUT
+    ARR -- "Flow of List AutomationRule" --> OUT
 ```
 
 ### The DAO contract
@@ -275,6 +303,7 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | `DockFolderPlacementDao` | `observeAll()` | `upsert` | `deleteByFolderId(folderId)`, `deleteAll()` | — |
 | `DefaultFavoriteFolderPlacementDao` | `observeAll()` | `upsert` | `deleteByFolderId(folderId)`, `deleteAll()` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
+| `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
 | `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`) | `deleteById(appWidgetId)`, `delete(placement)` | `getById(appWidgetId)` |
 
 Exceptions to the common shape, all deliberate:
@@ -283,6 +312,7 @@ Exceptions to the common shape, all deliberate:
 - **`FacetDao` has no `deleteByUserId`/`getOrphaned`** — facets are not profile-scoped.
 - **Folder placement DAOs have no `getOrphaned`** — they reference folders by id, not apps by component; profile repair happens on `folder_apps` instead.
 - **`WidgetPlacementDao` has no profile-scoped deletes.** A removed Work Profile's widgets are handled by `ObserveHubStateUseCase` flagging them `isOrphaned` (provider info gone) rather than a DAO sweep.
+- **`AutomationRuleDao` rows are addressed by `id` all the way up.** Rule ids are public: `AutomationState` stores them (`activeRuleIds`, `suppressedRuleIds`) and the evaluator matches on them. `AutomationRuleRepository` also skips rows it can't interpret (unknown `triggerType`, or a missing required parameter) instead of failing the whole list.
 - **Every `delete*` for a placement is by component/user, never by row `id`** except `@Delete(entity)` — repositories always resolve the row from an `AppInfo`, so `id` never leaks above `data/`.
 
 `FolderDao` is the one relational DAO: `observeAllWithApps()` is a `@Transaction` query returning
@@ -312,7 +342,7 @@ null converter result. Renaming an enum constant therefore never needs a migrati
 
 ```kotlin
 Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
-    .addMigrations(*Migrations.ALL)                       // 10→11 … 19→20, explicit SQL
+    .addMigrations(*Migrations.ALL)                       // 10→11 … 25→26, explicit SQL
     .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
     .build()
 ```
@@ -341,6 +371,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 22→23 | Recreate `facets` (create-copy-drop-rename, same pattern as 16→17) dropping `calendarFontOption`, `calendarColorOption`, `calendarFontWeight`, `calendarAlignment` — calendar/appearance styling consolidation |
 | 23→24 | No column change (`LAUNCHER_DEFAULT` is just a new valid string for the already-`TEXT NOT NULL` `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` columns) — data-only `UPDATE` resetting those four columns to `'LAUNCHER_DEFAULT'` on every facet row where the matching `overrideApps`/`overrideDock` flag is `0` (a stale, previously-unread value would otherwise start "overriding" silently); a row where the flag is `1` keeps its real value untouched |
 | 24→25 | `facets.appListLayout`, `appListColumnAlignment`, `appListGridColumns`, `appListGridDisplayMode` — Home app list two-column/grid layouts; brand-new columns (`DEFAULT 'LAUNCHER_DEFAULT'`), no data-reset step needed |
+| 25→26 | New table `automation_rules` (facet automation rules) with two foreign keys to `facets` (`targetFacetId` CASCADE, `endFacetId` SET NULL) and an index on each; DDL copied from the exported `26.json`, no data to carry over. Tested by `FacetDatabaseMigrationTest.migration25To26…` (schema validation plus both FK actions) |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -387,6 +418,7 @@ erDiagram
         string custom_accent_swatch "AccentSwatch name, nullable"
         string wallpaper_accent_role "WallpaperAccentRole, default PRIMARY"
         string icon_render_mode "IconRenderMode, default SYSTEM_DEFAULT"
+        string icon_shape "IconShape, default SQUIRCLE"
         string launcher_font_option "LauncherFontOption, default SYSTEM"
         string font_scale_option "FontScaleOption, default DEFAULT"
         string drawer_presentation "DrawerPresentation, default LIST"
@@ -404,6 +436,8 @@ erDiagram
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean calendar_permission_requested "default false"
         boolean contacts_permission_requested "default false"
+        boolean bluetooth_permission_requested "default false"
+        boolean location_permission_requested "default false"
         boolean onboarding_completed "default false"
         boolean defaults_seeded "default false"
         stringset coach_marks_seen "CoachMarkIds, default empty"
@@ -471,7 +505,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (48 functions)
+### 5.3 Write path — the complete writer API (51 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -508,6 +542,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setCustomAccentSwatch(String)` | `custom_accent_swatch` | set | `AppearanceSettingsViewModel` |
 | `setWallpaperAccentRole(WallpaperAccentRole)` | `wallpaper_accent_role` | set | `AppearanceSettingsViewModel` |
 | `setIconRenderMode(IconRenderMode)` | `icon_render_mode` | set | `AppearanceSettingsViewModel` |
+| `setIconShape(IconShape)` | `icon_shape` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setLauncherFontOption(LauncherFontOption)` | `launcher_font_option` | set | `AppearanceSettingsViewModel` |
 | `setFontScaleOption(FontScaleOption)` | `font_scale_option` | set | `AppearanceSettingsViewModel` |
 | `setDrawerPresentation(DrawerPresentation)` | `drawer_presentation` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel` |
@@ -525,6 +560,8 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
+| `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel` |
+| `setLocationPermissionRequested(Boolean)` | `location_permission_requested` | set | `PermissionsViewModel` |
 | `setOnboardingCompleted(Boolean)` | `onboarding_completed` | set | `LauncherViewModel.completeOnboarding()` |
 | `setDefaultsSeeded(Boolean)` | `defaults_seeded` | set | `SeedDefaultDockUseCase` |
 | `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel` |
@@ -535,7 +572,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-Same 46 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+Same 47 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock design (global; overridden per facet when `facets.overrideClock`)
@@ -604,6 +641,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `custom_accent_swatch` | String (`AccentSwatch.name`) | `customAccentSwatch` | `null` | nullable; parsed to enum in `LauncherActivity` |
 | `wallpaper_accent_role` | String (`WallpaperAccentRole`) | `wallpaperAccentRole` | `PRIMARY` | only meaningful when `accent_from_system` |
 | `icon_render_mode` | String (`IconRenderMode`) | `iconRenderMode` | `SYSTEM_DEFAULT` | |
+| `icon_shape` | String (`IconShape`) | `iconShape` | `SQUIRCLE` | icon outline (Squircle n=4 / Rounded n=2.6 / Circle / Square); global, not facet-overridable; backed up |
 | `launcher_font_option` | String (`LauncherFontOption`) | `launcherFontOption` | `SYSTEM` | also styles the calendar events strip |
 | `font_scale_option` | String (`FontScaleOption`) | `fontScaleOption` | `DEFAULT` | multiplies every `MaterialTheme.typography` role's `fontSize`/`lineHeight` app-wide except the clock |
 
@@ -641,6 +679,8 @@ its position (see chat history: calendar/appearance styling consolidation).
 |---|---|---|---|---|
 | `calendar_permission_requested` | Boolean | `calendarPermissionRequested` | `false` | "we already asked once" — the grant itself is read live from `CalendarPermissionRepository` |
 | `contacts_permission_requested` | Boolean | `contactsPermissionRequested` | `false` | same, for `ContactPermissionRepository` |
+| `bluetooth_permission_requested` | Boolean | `bluetoothPermissionRequested` | `false` | same, for `BLUETOOTH_CONNECT` (facet automation); grant read live from `AutomationPermissionRepository` |
+| `location_permission_requested` | Boolean | `locationPermissionRequested` | `false` | same, for `ACCESS_FINE_LOCATION` (named Wi-Fi networks) |
 
 #### First-run & coach marks
 
@@ -663,15 +703,33 @@ live from the OS on every check), the installed-app list, and notification count
 4. Decide whether it belongs in `BackupSettings` (+ `BackupMapping` both ways). Bump `CURRENT_BACKUP_VERSION` only for a breaking change — a defaulted additive field doesn't need one ([09 §4](09-flow-backup-restore.md)).
 5. Add a `SettingsRepositoryTest` case for default + round-trip, and a row in 5.3 and 5.4 here.
 
+### 5.7 `facet_automation` (`AutomationStateRepository`)
+
+A separate DataStore file, provided by `DataStoreModule` under the `@AutomationDataStore` qualifier. It
+is not part of `LauncherSettings` (so its writes don't re-emit every settings collector) and not in
+`BackupBundle` (automation state is runtime bookkeeping, and facet ids change on import). Read through
+`state: Flow<AutomationState>`; written only through `update { }`, an atomic read-modify-write.
+
+| Key | Type | `AutomationState` field | Meaning |
+|---|---|---|---|
+| `baseline_facet_id` | Long (absent = null) | `baselineFacetId` | The facet the user last chose by hand; what a rule returns to |
+| `active_rule_ids` | String (`"10,11"`, activation order) | `activeRuleIds` | The last evaluated set of true rules; the last one wins |
+| `suppressed_rule_ids` | Set<String> | `suppressedRuleIds` | Active rules the user overrode; ignored until they stop being true |
+
+Written by `ActivateFacetByIdUseCase` on every manual switch (`AutomationState.afterManualSwitch`), and
+by the automation evaluator once it is wired in (see `IMPLEMENTATION_PLAN.md`, "Facet automation rules").
+Stale ids are tolerated: the evaluator drops rule ids that no longer exist and falls back when the
+baseline facet was deleted.
+
 ## 6. Backup file format (`BackupBundle`, `data/model/BackupBundle.kt`)
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 37 of the 51 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 38 of the 54 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,
-`calendar_colors`, `search_settings_enabled`, both `*_permission_requested` flags,
+`calendar_colors`, `search_settings_enabled`, all four `*_permission_requested` flags,
 `onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.
 `BackupFacet` has the same six omissions per facet (`facets.clockAccentColorOption`,
@@ -687,3 +745,9 @@ Then
 one-by-one through the picker flow, see [09-flow-backup-restore.md](09-flow-backup-restore.md)).
 Folder references are by *index into `folders`*, facet references by *index into `facets`*, because
 Room ids are regenerated on restore.
+
+**Automation rules are not exported.** `automation_rules` has no field in `BackupBundle`, and import
+calls `deleteAllFacets()` first, so the foreign-key cascade deletes every rule on restore. The
+`facet_automation` state is not exported either ([§5.7](#57-facet_automation-automationstaterepository));
+it holds stale ids after a restore, which the evaluator tolerates. Backing rules up would need
+`BackupBundle` fields (facet references by index, like placements) and a version decision.

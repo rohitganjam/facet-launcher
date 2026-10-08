@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -72,6 +74,7 @@ import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -94,8 +97,11 @@ import com.facetlauncher.app.ui.home.ClockBlock
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
+import com.facetlauncher.app.ui.components.toComposeShape
+import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalDynamicColorRefreshSignal
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -136,6 +142,7 @@ fun AppearanceSettingsScreen(
         onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
         onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
         onIconRenderModeChange = viewModel::setIconRenderMode,
+        onIconShapeChange = viewModel::setIconShape,
         onLauncherFontOptionChange = viewModel::setLauncherFontOption,
         onAppLabelColorOptionChange = viewModel::setAppLabelColorOption,
         onHomeAppsFontWeightChange = viewModel::setHomeAppsFontWeight,
@@ -165,6 +172,7 @@ private fun AppearanceSettingsContent(
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
     onIconRenderModeChange: (IconRenderMode) -> Unit,
+    onIconShapeChange: (IconShape) -> Unit,
     onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
     onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
     onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
@@ -206,8 +214,7 @@ private fun AppearanceSettingsContent(
             ) {
                 item {
                     AppearancePreviewCard(
-                        settings = settings,
-                        isFacetScoped = isFacetScoped,
+                        settings = uiState.clockSettings,
                         appRowPosition = uiState.appRowPosition,
                         appRowPresentation = uiState.appRowPresentation,
                         appListLayout = uiState.appListLayout,
@@ -328,26 +335,24 @@ private fun AppearanceSettingsContent(
                         )
                     }
                 }
-                // Every card below is global only — no per-facet override exists for these fields
-                // yet (see this screen's own doc comment) — so they're simply absent in facet mode,
-                // same reasoning Calendar/Clock use for their own global-only fields.
-                if (!isFacetScoped) {
-                    item { AppearanceSectionHeader(stringResource(R.string.appearance_section_clock)) }
-                    item {
-                        SettingsCard {
-                            ClickableRow(
-                                title = stringResource(R.string.settings_clock_calendar_title),
-                                subtitle = stringResource(
-                                    R.string.dot_join_2,
-                                    stringResource(settings.clockTemplateId.displayNameRes),
-                                    stringResource(if (settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                                ),
-                                onClick = onNavigateToClockStyleGallery,
-                                testTag = "clock_style_gallery_row",
-                                trailing = { NavigationChevron() },
-                            )
-                        }
+                item { AppearanceSectionHeader(stringResource(R.string.appearance_section_clock)) }
+                item {
+                    SettingsCard {
+                        ClickableRow(
+                            title = stringResource(R.string.settings_clock_calendar_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                stringResource(uiState.clockSettings.clockTemplateId.displayNameRes),
+                                stringResource(if (uiState.clockSettings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+                            ),
+                            onClick = onNavigateToClockStyleGallery,
+                            testTag = "clock_style_gallery_row",
+                            trailing = { NavigationChevron() },
+                        )
                     }
+                }
+                // The cards below are global only — no per-facet override exists for these fields yet.
+                if (!isFacetScoped) {
                     item { AppearanceSectionHeader(stringResource(R.string.appearance_section_general)) }
                     item {
                         SettingsCard {
@@ -386,6 +391,8 @@ private fun AppearanceSettingsContent(
                                 onSelect = onIconRenderModeChange,
                                 testTag = "appearance_icons_row",
                             )
+                            CardDivider()
+                            IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
                             CardDivider()
                             LabeledDropdownRow(
                                 title = stringResource(R.string.appearance_launcher_font),
@@ -489,13 +496,11 @@ private fun AppearanceSectionHeader(title: String, modifier: Modifier = Modifier
  * facet scope shows the resolved facet-or-default output, exactly like `HomeAppsListSettingsScreen`/
  * `DockSettingsScreen`'s own preview cards and Home itself. The clock uses the real system clock
  * (its own default), not a fixed reference instant, so real calendar events read sensibly against
- * it. Facet-scoped mode omits the clock+calendar entirely — a facet's own clock look/preview lives
- * on its separate "Clock style" screen instead.
+ * it. In facet scope the clock shows the facet's own override when it has one, else the global clock.
  */
 @Composable
 private fun AppearancePreviewCard(
     settings: LauncherSettings,
-    isFacetScoped: Boolean,
     appRowPosition: AppRowPosition,
     appRowPresentation: AppRowPresentation,
     appListLayout: AppListLayout,
@@ -538,25 +543,23 @@ private fun AppearancePreviewCard(
                 modifier = Modifier.fillMaxSize().padding(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (!isFacetScoped) {
-                    ClockBlock(
-                        use24HourTime = settings.use24HourTime,
-                        templateId = settings.clockTemplateId,
-                        fontOption = settings.clockFontOption,
-                        colorOption = settings.clockColorOption,
-                        accentColorOption = settings.clockAccentColorOption,
-                        showMeridiem = settings.clockShowMeridiem,
-                        dateStyle = settings.clockDateStyle,
-                        clockAlignment = settings.clockAlignment,
-                        events = calendarEvents,
-                        calendarColors = settings.calendarColors,
-                        homeAppsFontWeight = settings.homeAppsFontWeight,
-                        appLabelColorOption = settings.appLabelColorOption,
-                        launcherFontOption = settings.launcherFontOption,
-                        clockScale = 1f,
-                        modifier = Modifier.testTag("appearance_preview_clock"),
-                    )
-                }
+                ClockBlock(
+                    use24HourTime = settings.use24HourTime,
+                    templateId = settings.clockTemplateId,
+                    fontOption = settings.clockFontOption,
+                    colorOption = settings.clockColorOption,
+                    accentColorOption = settings.clockAccentColorOption,
+                    showMeridiem = settings.clockShowMeridiem,
+                    dateStyle = settings.clockDateStyle,
+                    clockAlignment = settings.clockAlignment,
+                    events = calendarEvents,
+                    calendarColors = settings.calendarColors,
+                    homeAppsFontWeight = settings.homeAppsFontWeight,
+                    appLabelColorOption = settings.appLabelColorOption,
+                    launcherFontOption = settings.launcherFontOption,
+                    clockScale = 1f,
+                    modifier = Modifier.testTag("appearance_preview_clock"),
+                )
 
                 Spacer(modifier = Modifier.weight(1f))
 
@@ -819,6 +822,50 @@ private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, te
     }
 }
 
+/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
+@Composable
+private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
+        Text(
+            text = stringResource(R.string.appearance_icon_shape),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            IconShape.entries.forEach { shape ->
+                val isSelected = shape == selected
+                val label = stringResource(shape.displayNameRes)
+                Column(
+                    modifier = Modifier
+                        .testTag("icon_shape_${shape.name}")
+                        .clip(MaterialTheme.shapes.small)
+                        .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(shape) })
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(AppIconSize.TILE)
+                            .background(IconTile, shape.toComposeShape())
+                            .border(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) Accent else Hairline,
+                                shape = shape.toComposeShape(),
+                            ),
+                    )
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isSelected) Ink else Muted,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
 private const val ACCENT_SWATCH_GRID_COLUMNS = 5
 
 @Composable
@@ -949,6 +996,7 @@ private fun AppearanceSettingsScreenPreview() {
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
             onIconRenderModeChange = {},
+            onIconShapeChange = {},
             onLauncherFontOptionChange = {},
             onAppLabelColorOptionChange = {},
             onHomeAppsFontWeightChange = {},
@@ -985,6 +1033,7 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
             onIconRenderModeChange = {},
+            onIconShapeChange = {},
             onLauncherFontOptionChange = {},
             onAppLabelColorOptionChange = {},
             onHomeAppsFontWeightChange = {},

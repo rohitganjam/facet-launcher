@@ -1,14 +1,14 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1790827706.009679,
-    "seen": 1790827864.271759,
-    "ast_hash": "f16cbebe78fcacce58abab41c9f41751",
+    "mtime": 1791369281.0472054,
+    "seen": 1791370387.727506,
+    "ast_hash": "434fac8d6770ab017a65122121b25aa2",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
-    "mtime": 1789802522.383591,
-    "seen": 1789804989.075891,
-    "ast_hash": "bdc10382276e223fe33f3dfe6b3af85f",
+    "mtime": 1791386419.0384386,
+    "seen": 1791387758.2981188,
+    "ast_hash": "a7f2c91fdad234a1a9c39c42673aa4ef",
     "semantic_hash": ""
   },
   "gradlew": {
@@ -36,15 +36,15 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1791260480.6019518,
-    "seen": 1791260688.104316,
-    "ast_hash": "4d002b2e93ac3c6515c38ba56da7070e",
+    "mtime": 1791394143.9151502,
+    "seen": 1791424133.1172538,
+    "ast_hash": "4feed34983655ec19dc9a2f0f5dde1e2",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1791260480.5967896,
-    "seen": 1791260688.104317,
-    "ast_hash": "1906236f5dd54815b9672d7d87cdbb78",
+    "mtime": 1791426878.0701785,
+    "seen": 1791429444.752268,
+    "ast_hash": "83cc868a9e3e4a2409ad96717b559b83",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -102,27 +102,27 @@
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/Launcher Dark.dc.html": {
-    "mtime": 1789190111.3873541,
-    "seen": 1789191916.66683,
-    "ast_hash": "d3fcaf0f1a4e166571331a27b28acfa8",
+    "mtime": 1791392102.780811,
+    "seen": 1791424133.117249,
+    "ast_hash": "c5462dca00cd99fd8df58dc24321049a",
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/Launcher.dc.html": {
-    "mtime": 1789190111.3915548,
-    "seen": 1789191916.66683,
-    "ast_hash": "1af9517e1c90646210ee52fc35c69e8c",
+    "mtime": 1791392102.7736742,
+    "seen": 1791424133.11725,
+    "ast_hash": "5cc6a1a2081aa37980806acb7582edf0",
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/PRD.md": {
-    "mtime": 1791254645.8538885,
-    "seen": 1791258531.431469,
+    "mtime": 1791260970.9825368,
+    "seen": 1791305229.230198,
     "ast_hash": "a9874d5a4bd46594f17046acbb28de50",
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/README.md": {
-    "mtime": 1791258814.8610508,
-    "seen": 1791259227.2988002,
-    "ast_hash": "b944fa8794fae53f79ea029ac7a237d1",
+    "mtime": 1791426878.066322,
+    "seen": 1791429444.752264,
+    "ast_hash": "9de4465272db13d10bcc2cda411d8053",
     "semantic_hash": ""
   },
   "Android launcher design planning/github.md": {
@@ -186,26 +186,26 @@
     "semantic_hash": ""
   },
   "CLOCK_RESIZE_SPEC.md": {
-    "mtime": 1791254645.854013,
-    "seen": 1791258531.431472,
+    "mtime": 1791260970.9844556,
+    "seen": 1791305229.230201,
     "ast_hash": "1c099e75c02ae4f64c71dc2345a6c617",
     "semantic_hash": ""
   },
   "CAPABILITIES.md": {
-    "mtime": 1791257284.4289012,
-    "seen": 1791258531.431471,
-    "ast_hash": "38cc81807f7499b5b947e4c820536487",
+    "mtime": 1791424651.8948436,
+    "seen": 1791429444.752266,
+    "ast_hash": "86727e8d562b0b26d58529996c6f6cff",
     "semantic_hash": ""
   },
   "ONBOARDING_DESIGN_BRIEF.md": {
-    "mtime": 1791258814.858978,
-    "seen": 1791259227.298804,
+    "mtime": 1791260970.9863594,
+    "seen": 1791305229.2302022,
     "ast_hash": "e65989005d8b50286683f0e4746c13f3",
     "semantic_hash": ""
   },
   "ONBOARDING_FLOW.md": {
-    "mtime": 1791258814.8600938,
-    "seen": 1791259227.298805,
+    "mtime": 1791260970.98688,
+    "seen": 1791305229.230203,
     "ast_hash": "ea0b232618782053e66394f479050a52",
     "semantic_hash": ""
   },
@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/data/local/FacetDatabaseMigrationTest.kt": {
-    "mtime": 1790615917.8613544,
-    "seen": 1790615922.077375,
-    "ast_hash": "60c8d4a5e0cf9844011e315833fa5179",
+    "mtime": 1791349614.632899,
+    "seen": 1791349798.117227,
+    "ast_hash": "bf5068ba058356a0cfadcc5e4aeb8826",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/components/AppContextMenuTest.kt": {
@@ -396,8 +396,8 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/drawer/AppDrawerScreenTest.kt": {
-    "mtime": 1791259889.3932943,
-    "seen": 1791260688.1040692,
+    "mtime": 1791260970.9880502,
+    "seen": 1791305229.22994,
     "ast_hash": "5d40f0f9d5d968b9f494dfe573b9bf75",
     "semantic_hash": ""
   },
@@ -414,8 +414,8 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/HomeScreenTest.kt": {
-    "mtime": 1791257268.8169174,
-    "seen": 1791258531.431232,
+    "mtime": 1791260970.9887285,
+    "seen": 1791305229.2299452,
     "ast_hash": "f7da50a0a4547f6d6f2ad14ca8a7570f",
     "semantic_hash": ""
   },
@@ -450,15 +450,15 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRouteTest.kt": {
-    "mtime": 1791259874.5385962,
-    "seen": 1791260688.104078,
-    "ast_hash": "82537faf35864f3ad99c973d87d64d04",
+    "mtime": 1791424585.8318462,
+    "seen": 1791429444.751956,
+    "ast_hash": "d1e924dd870f62bc6749576ad1dda8bf",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/launcher/KeyboardDismissalTest.kt": {
-    "mtime": 1790655357.171534,
-    "seen": 1790733449.476973,
-    "ast_hash": "f498ef07e7f4038aff72695a16519b19",
+    "mtime": 1791424585.8321874,
+    "seen": 1791429444.751957,
+    "ast_hash": "dea863cdbea80558030cae7362d9cc4b",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingScreenTest.kt": {
@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsScreenTest.kt": {
-    "mtime": 1791219684.2462802,
-    "seen": 1791219718.966657,
-    "ast_hash": "235d1c4da6bbb735380d5ac3b8d3ebfc",
+    "mtime": 1791337323.0597723,
+    "seen": 1791337637.737476,
+    "ast_hash": "87743c649b97f55c16667e878eb0d101",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/CalendarSettingsScreenTest.kt": {
@@ -516,15 +516,15 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/PermissionsScreenTest.kt": {
-    "mtime": 1789752034.1785548,
-    "seen": 1789753136.0991309,
-    "ast_hash": "b7b4e2227224975f15255f604640cc1b",
+    "mtime": 1791352525.5528216,
+    "seen": 1791356501.8481438,
+    "ast_hash": "991cbb072d9ad15155448ea2f7b4c2ed",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/SettingsScreenTest.kt": {
-    "mtime": 1790176617.358288,
-    "seen": 1790264486.313157,
-    "ast_hash": "f7c5e4e432df0eae6c36f85191ca1a96",
+    "mtime": 1791393275.4840558,
+    "seen": 1791424133.116974,
+    "ast_hash": "d1562c8f18409ca39a9f0670a10f4bed",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/backup/BackupRestoreScreenTest.kt": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/LauncherActivity.kt": {
-    "mtime": 1791219572.842715,
-    "seen": 1791219718.966667,
-    "ast_hash": "8ea9bf8e0cb0455bbf3c5f904dcc1bfa",
+    "mtime": 1791389812.3280423,
+    "seen": 1791424133.116981,
+    "ast_hash": "3accad8bdb52b1c852f05db99efe3bf1",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/AppRepository.kt": {
@@ -660,9 +660,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/SettingsRepository.kt": {
-    "mtime": 1791219525.0900261,
-    "seen": 1791219718.9666822,
-    "ast_hash": "6e30b4e1877f452fe555e881189902d0",
+    "mtime": 1791352469.4078789,
+    "seen": 1791356501.848167,
+    "ast_hash": "d4601c8146072e47b59afb7e0ba4893f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/UsageAccessRepository.kt": {
@@ -678,9 +678,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/WallpaperRepository.kt": {
-    "mtime": 1789191962.829371,
-    "seen": 1789191966.558667,
-    "ast_hash": "02d98ad5f42e36426f4254a4f517def3",
+    "mtime": 1791361638.02654,
+    "seen": 1791361866.206718,
+    "ast_hash": "9370aa739fc2d31e6503e20cfd724099",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/WidgetPlacementRepository.kt": {
@@ -696,15 +696,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/DataStoreModule.kt": {
-    "mtime": 1789191962.8307064,
-    "seen": 1789191966.5586681,
-    "ast_hash": "8ccd3e088218aaeb583b9399204a2a7b",
+    "mtime": 1791368658.6636086,
+    "seen": 1791369215.4696908,
+    "ast_hash": "250383573bae37029887e35dbe337ae3",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/DatabaseModule.kt": {
-    "mtime": 1789385411.945798,
-    "seen": 1789385415.400254,
-    "ast_hash": "73c6de966303ceae60c8a76391ac1c94",
+    "mtime": 1791347263.7917747,
+    "seen": 1791347604.599016,
+    "ast_hash": "ffdb930eb9c18a7a76b9cd9a3ccd7afc",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/WidgetModule.kt": {
@@ -744,9 +744,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FacetDatabase.kt": {
-    "mtime": 1790615917.863552,
-    "seen": 1790615922.077426,
-    "ast_hash": "df3927c29b00db339de4606d44ce891a",
+    "mtime": 1791347367.567976,
+    "seen": 1791347604.599024,
+    "ast_hash": "5d66fa4cb0878e18aa95a724cd323656",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FavoriteAppDao.kt": {
@@ -762,9 +762,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/Migrations.kt": {
-    "mtime": 1790615917.8641322,
-    "seen": 1790615922.077433,
-    "ast_hash": "d3a66350d0e19e50f5ecc9cd49929893",
+    "mtime": 1791349614.6140912,
+    "seen": 1791349798.11729,
+    "ast_hash": "d8827bed10694557de215569686a3c88",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/WidgetPlacementDao.kt": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/BackupBundle.kt": {
-    "mtime": 1791219724.3048732,
-    "seen": 1791221426.450058,
-    "ast_hash": "972aeb135a61bb78011f8be3b724eaa7",
+    "mtime": 1791307648.4228287,
+    "seen": 1791308159.682567,
+    "ast_hash": "6460c5606ab9d92d5f917b3b3a647801",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/BatteryStatus.kt": {
@@ -876,9 +876,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/LauncherSettings.kt": {
-    "mtime": 1791219525.0886383,
-    "seen": 1791219718.9667141,
-    "ast_hash": "8da864539f0f38c7225b4cb52f8597fa",
+    "mtime": 1791352469.4055634,
+    "seen": 1791356501.848207,
+    "ast_hash": "ae534c1965b9038d1ab8b4c18afc8ad5",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/ListContentMode.kt": {
@@ -960,9 +960,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ExportBackupUseCase.kt": {
-    "mtime": 1791219525.0911307,
-    "seen": 1791219718.9667258,
-    "ast_hash": "8baa4bd5a1634b275df06a8a6a864efa",
+    "mtime": 1791305001.1294122,
+    "seen": 1791305229.230025,
+    "ast_hash": "210b1f47f7587f319110bc17edac2f70",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/FlowCombine.kt": {
@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ImportBackupUseCase.kt": {
-    "mtime": 1791219525.0916483,
-    "seen": 1791219718.966728,
-    "ast_hash": "35d279237fd131c45f3d5263a20f0f52",
+    "mtime": 1791307648.424404,
+    "seen": 1791308159.682592,
+    "ast_hash": "92f5afc55d6b60ca3270c5f67afa8307",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ObserveClockAccessoriesUseCase.kt": {
@@ -1068,9 +1068,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppIcon.kt": {
-    "mtime": 1789531919.9135814,
-    "seen": 1789532716.02769,
-    "ast_hash": "1e342344346623d523f806d6b9c0e417",
+    "mtime": 1791307657.8939843,
+    "seen": 1791308159.682604,
+    "ast_hash": "1d6a8c00a8fe81cee9fdebbf78d4d2c3",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/BackButton.kt": {
@@ -1110,8 +1110,8 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/GestureHintOverlay.kt": {
-    "mtime": 1791251186.2394114,
-    "seen": 1791258531.4313312,
+    "mtime": 1791260970.9937208,
+    "seen": 1791305229.23005,
     "ast_hash": "6b13121eb3cdbadc5771097395b3208e",
     "semantic_hash": ""
   },
@@ -1128,9 +1128,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/LabeledDropdownRow.kt": {
-    "mtime": 1789799851.798584,
-    "seen": 1789804989.075779,
-    "ast_hash": "980dbc71b2196a4b80ec0ca390fa6fc4",
+    "mtime": 1791363364.8131375,
+    "seen": 1791366201.41528,
+    "ast_hash": "2b9d8b59e937a599bbbf1388d6993219",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/RenameDialog.kt": {
@@ -1164,15 +1164,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/SurfaceButton.kt": {
-    "mtime": 1791250788.7186775,
-    "seen": 1791258531.4313369,
+    "mtime": 1791260970.9939823,
+    "seen": 1791305229.230057,
     "ast_hash": "f0720a25d6786a9b8c70c1d1aecc06fe",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/ThemedDropdownMenu.kt": {
-    "mtime": 1789569491.5995984,
-    "seen": 1789573168.273813,
-    "ast_hash": "fa42680455d46d46005082744332d25f",
+    "mtime": 1791359863.4498758,
+    "seen": 1791361866.206801,
+    "ast_hash": "9c1ca63fede4d97861621f66a0ace911",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/TonalButton.kt": {
@@ -1206,8 +1206,8 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/drawer/AppDrawerScreen.kt": {
-    "mtime": 1791259985.3183315,
-    "seen": 1791260688.104183,
+    "mtime": 1791260970.9949343,
+    "seen": 1791305229.230062,
     "ast_hash": "ef7150178fa9514e9f4b01402893459b",
     "semantic_hash": ""
   },
@@ -1224,9 +1224,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockAdjustSheet.kt": {
-    "mtime": 1791218429.1238656,
-    "seen": 1791218630.7931662,
-    "ast_hash": "50fc8f81cbf01eb214de294944d520c1",
+    "mtime": 1791424577.1960688,
+    "seen": 1791429444.7521,
+    "ast_hash": "9adf754c8b02da87281bb7183db3254a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockBlock.kt": {
@@ -1242,26 +1242,26 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockZoneHandle.kt": {
-    "mtime": 1791258025.206013,
-    "seen": 1791258531.431353,
+    "mtime": 1791260970.9955342,
+    "seen": 1791305229.230075,
     "ast_hash": "a3dc122ab6fc5552fa5d9c663a02300a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1791259906.0593734,
-    "seen": 1791260688.104196,
-    "ast_hash": "d8c78826dd069bd325d57fb00276dac7",
+    "mtime": 1791424577.1969385,
+    "seen": 1791429444.752105,
+    "ast_hash": "ec6ef940174b65dc69bba0f806c9976c",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeUiState.kt": {
-    "mtime": 1791258662.5103865,
-    "seen": 1791259227.298678,
+    "mtime": 1791260970.996645,
+    "seen": 1791305229.2300758,
     "ast_hash": "a0c1457763e6936014f8e84f19968475",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeViewModel.kt": {
-    "mtime": 1791258662.5113654,
-    "seen": 1791259227.298678,
+    "mtime": 1791260970.9968936,
+    "seen": 1791305229.230077,
     "ast_hash": "b9d0eb54b46abf64f33e5a734494df38",
     "semantic_hash": ""
   },
@@ -1368,8 +1368,8 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/hub/WidgetGrabGesture.kt": {
-    "mtime": 1791219369.9261813,
-    "seen": 1791219434.068081,
+    "mtime": 1791260970.997455,
+    "seen": 1791305229.23009,
     "ast_hash": "d85fc348667c06a28f8041c45a5eeecf",
     "semantic_hash": ""
   },
@@ -1398,9 +1398,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRoute.kt": {
-    "mtime": 1791259874.5571268,
-    "seen": 1791260688.10421,
-    "ast_hash": "0281ba45c754bd72851e4b307b34a35e",
+    "mtime": 1791424585.8307428,
+    "seen": 1791429444.75212,
+    "ast_hash": "8dc02ecbeee1298301c6aa87e8d93a61",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/LauncherLocals.kt": {
@@ -1410,15 +1410,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/LauncherViewModel.kt": {
-    "mtime": 1791219572.8420944,
-    "seen": 1791219718.96679,
-    "ast_hash": "1eb2a5674c63c7e33b1375149c132083",
+    "mtime": 1791367194.1268718,
+    "seen": 1791368516.806821,
+    "ast_hash": "ffc156ecf3aeec4b629b7941a842fa5d",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/navigation/FacetNavHost.kt": {
-    "mtime": 1791171643.4876468,
-    "seen": 1791172799.5779378,
-    "ast_hash": "35cd3f048bcba85798bad3faadd9900e",
+    "mtime": 1791429209.0753908,
+    "seen": 1791429444.7521222,
+    "ast_hash": "e5f7fadcc3e24db1fe0213b6367c03b3",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingDots.kt": {
@@ -1428,9 +1428,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingHomeSetupPage.kt": {
-    "mtime": 1789805555.446869,
-    "seen": 1789806148.331831,
-    "ast_hash": "86493499dfa2d1af42e89476f657b381",
+    "mtime": 1791307648.411787,
+    "seen": 1791308159.682653,
+    "ast_hash": "bcf952e75ff1e7a3f584f360f21117f5",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingIntroPage.kt": {
@@ -1458,9 +1458,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/SetDefaultLauncherSheet.kt": {
-    "mtime": 1791258688.726919,
-    "seen": 1791259227.298699,
-    "ast_hash": "60520f45d1b871cab7919d8d758e32a0",
+    "mtime": 1791394140.0740645,
+    "seen": 1791424133.117124,
+    "ast_hash": "666f3528ab2ba507f107cb8ff7438e68",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppDrawerSettingsScreen.kt": {
@@ -1476,15 +1476,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsScreen.kt": {
-    "mtime": 1791219537.6819339,
-    "seen": 1791219718.966798,
-    "ast_hash": "5c2266f10f377404515f2c469aa9ca84",
+    "mtime": 1791337275.1632483,
+    "seen": 1791337637.737611,
+    "ast_hash": "fdeeffbdeba848b88494686b9e90ec68",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsViewModel.kt": {
-    "mtime": 1791219537.6802247,
-    "seen": 1791219718.966798,
-    "ast_hash": "2f09f982f06d6be1fa22cc0d2e930059",
+    "mtime": 1791337265.1284633,
+    "seen": 1791337637.737611,
+    "ast_hash": "cd52093b52373ad1b8af9db2fe14f947",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/CalendarSettingsScreen.kt": {
@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/NotificationAccessExplanationScreen.kt": {
-    "mtime": 1789752554.1624722,
-    "seen": 1789753136.099261,
-    "ast_hash": "2a633239db12e40e726a304fffd65691",
+    "mtime": 1791394140.0723524,
+    "seen": 1791424133.117138,
+    "ast_hash": "58c411136bcefa69c3001a76330667fd",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/NotificationAccessExplanationViewModel.kt": {
@@ -1548,45 +1548,45 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/PermissionsScreen.kt": {
-    "mtime": 1789751978.912088,
-    "seen": 1789753136.099263,
-    "ast_hash": "f54d05e15a7ead8eded7f9726f4f45d0",
+    "mtime": 1791361587.7481146,
+    "seen": 1791361866.206851,
+    "ast_hash": "bd6bc6067526c66a7e20056f0a5f0ab9",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/PermissionsScreenState.kt": {
-    "mtime": 1789191962.8779342,
-    "seen": 1789191966.558742,
-    "ast_hash": "faadafa691a45d398c8979e6c1caa4ad",
+    "mtime": 1791352469.4107752,
+    "seen": 1791356501.848306,
+    "ast_hash": "4167e4f7a9f8a6b08f6997c7f8c82f4c",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/PermissionsViewModel.kt": {
-    "mtime": 1789751966.0031254,
-    "seen": 1789753136.099264,
-    "ast_hash": "b4bee4d7b57bdeb4ccaafce9eb5a3a8e",
+    "mtime": 1791352486.9705138,
+    "seen": 1791356501.848307,
+    "ast_hash": "c340e3d60e0df877378ce3b8fafb64ec",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/SettingsScreen.kt": {
-    "mtime": 1790824726.4731786,
-    "seen": 1790825722.164295,
-    "ast_hash": "c2651b81b44479226bf4c52520c9c370",
+    "mtime": 1791391910.3588758,
+    "seen": 1791424133.117142,
+    "ast_hash": "3af8b4e074b31fdc2c6bcc8979417776",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/SettingsUiState.kt": {
-    "mtime": 1789531919.9158208,
-    "seen": 1789532716.0277581,
-    "ast_hash": "29fccd036a4738e7397725504415009e",
+    "mtime": 1791391910.3585358,
+    "seen": 1791424133.117142,
+    "ast_hash": "b578c28d8acfe152db29fe7fcae57e90",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/SettingsViewModel.kt": {
-    "mtime": 1789531919.9159489,
-    "seen": 1789532716.0277581,
-    "ast_hash": "fd109692205ef77dd5403d20448f5fd3",
+    "mtime": 1791391910.35865,
+    "seen": 1791424133.1171432,
+    "ast_hash": "f727967ff22e660ed9d722ebb89a549a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/UsageAccessExplanationScreen.kt": {
-    "mtime": 1789752541.5219843,
-    "seen": 1789753136.099266,
-    "ast_hash": "722edf10940c72c79fc5d7f2cc0b4a5c",
+    "mtime": 1791394140.0721993,
+    "seen": 1791424133.1171432,
+    "ast_hash": "ee3d385b01841307d4dd57fb584ed45b",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel.kt": {
@@ -1638,9 +1638,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/Color.kt": {
-    "mtime": 1790509287.1120195,
-    "seen": 1790509782.654436,
-    "ast_hash": "c13a8755683426284ef22d37f2079e8d",
+    "mtime": 1791387284.5862055,
+    "seen": 1791387758.2979681,
+    "ast_hash": "85bfab49fb4d57162b1a89d6aa4eea57",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/Motion.kt": {
@@ -1650,15 +1650,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/Theme.kt": {
-    "mtime": 1789746246.0371857,
-    "seen": 1789746695.794647,
-    "ast_hash": "7416877d43fc57d770b9d15e220cb094",
+    "mtime": 1791307648.4218032,
+    "seen": 1791308159.682678,
+    "ast_hash": "bce5a221a898b0ac53b77aaf79ec0db0",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/ThemeLocals.kt": {
-    "mtime": 1789191962.881155,
-    "seen": 1789191966.55875,
-    "ast_hash": "65bd4560c8ffadcb87ea2049162a4680",
+    "mtime": 1791307648.420773,
+    "seen": 1791308159.682679,
+    "ast_hash": "db62d085ac0e250f52ee9118e4a27c2d",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/Type.kt": {
@@ -1680,8 +1680,8 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/BackupRepositoryTest.kt": {
-    "mtime": 1791219644.7918658,
-    "seen": 1791219718.9668212,
+    "mtime": 1791260971.002024,
+    "seen": 1791305229.2301261,
     "ast_hash": "acce8e3ea857a301329f766a85698fd9",
     "semantic_hash": ""
   },
@@ -1752,9 +1752,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/SettingsRepositoryTest.kt": {
-    "mtime": 1791219644.7909927,
-    "seen": 1791219718.9668312,
-    "ast_hash": "ec813de6e3763f04a54a9a986e21ac62",
+    "mtime": 1791352535.750102,
+    "seen": 1791356501.848332,
+    "ast_hash": "4fce8d28fb90d9e06072408b6aa93f78",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/UsageStatsRepositoryTest.kt": {
@@ -1854,8 +1854,8 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/ImportBackupUseCaseTest.kt": {
-    "mtime": 1791219644.791559,
-    "seen": 1791219718.96685,
+    "mtime": 1791260971.0025346,
+    "seen": 1791305229.230155,
     "ast_hash": "a3ee101b42b39e72338c8e13cd8fef32",
     "semantic_hash": ""
   },
@@ -1926,14 +1926,14 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/home/HomeUiStateTest.kt": {
-    "mtime": 1791258713.2902422,
-    "seen": 1791259227.298774,
+    "mtime": 1791260971.0027738,
+    "seen": 1791305229.2301729,
     "ast_hash": "fe348bf80b4c4cdcdc07d5390b86e3ee",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/home/HomeViewModelTest.kt": {
-    "mtime": 1791258713.2910542,
-    "seen": 1791259227.298775,
+    "mtime": 1791260971.0030208,
+    "seen": 1791305229.2301729,
     "ast_hash": "f82b078a78366b1fe89fe14bb496bfb0",
     "semantic_hash": ""
   },
@@ -1962,9 +1962,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/launcher/LauncherViewModelTest.kt": {
-    "mtime": 1790608688.8115354,
-    "seen": 1790608692.44543,
-    "ast_hash": "7927e8acec1967d6a896d3b8e98fe11d",
+    "mtime": 1791350369.9790676,
+    "seen": 1791351595.7459462,
+    "ast_hash": "1f384012aca799966a071b4b456c23f9",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingViewModelTest.kt": {
@@ -1980,9 +1980,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsViewModelTest.kt": {
-    "mtime": 1790259080.2973745,
-    "seen": 1790264486.3133461,
-    "ast_hash": "2b3eb52cfc17b067b687cd8bc372c4ba",
+    "mtime": 1791305126.6679347,
+    "seen": 1791305229.230178,
+    "ast_hash": "391d91f14f7284392f7ecf5a1f77a764",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/settings/CalendarSettingsViewModelTest.kt": {
@@ -2004,15 +2004,15 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/settings/PermissionsViewModelTest.kt": {
-    "mtime": 1789752108.9367394,
-    "seen": 1789753136.0993228,
-    "ast_hash": "dafffa729e300cfcb1987e107bab8f0d",
+    "mtime": 1791352506.926256,
+    "seen": 1791356501.848385,
+    "ast_hash": "b2e6a41ab2064ff34ec4e9d663da8adc",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/settings/SettingsViewModelTest.kt": {
-    "mtime": 1789531919.9208126,
-    "seen": 1789532716.027817,
-    "ast_hash": "4041a7f654dbe98f588c27c2112e0bef",
+    "mtime": 1791392077.3671844,
+    "seen": 1791424133.1172328,
+    "ast_hash": "6d72f6d8fb3e6cab81aa2ac570991d93",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/settings/backup/BackupRestoreViewModelTest.kt": {
@@ -2040,9 +2040,9 @@
     "semantic_hash": ""
   },
   "docs/privacy-policy.html": {
-    "mtime": 1789201518.8678288,
-    "seen": 1789204710.0512252,
-    "ast_hash": "5065f853683ced7590efdd4c8d1da052",
+    "mtime": 1791361698.7474022,
+    "seen": 1791361866.20698,
+    "ast_hash": "a80289859621be208b6806ffb08b6880",
     "semantic_hash": ""
   },
   "play-store-assets/feature-graphic-1024x500.png": {
@@ -2082,14 +2082,14 @@
     "semantic_hash": ""
   },
   "play-store-assets/store-listing.md": {
-    "mtime": 1791174541.4050562,
-    "seen": 1791215738.27669,
-    "ast_hash": "812d08dbd41d7faa625e2d64d46d73bc",
+    "mtime": 1791303472.6604326,
+    "seen": 1791305229.23022,
+    "ast_hash": "e27d739c7e789db41afdf3e6e3902685",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/03_clock_styles.png": {
-    "mtime": 1791174525.0137582,
-    "seen": 1791215738.276711,
+    "mtime": 1791260971.0853882,
+    "seen": 1791305229.230241,
     "ast_hash": "b17c9d8399a6119926b51a1b6fe4d2f9",
     "semantic_hash": ""
   },
@@ -2100,27 +2100,27 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/FacetCarouselScreenTest.kt": {
-    "mtime": 1790615917.8617392,
-    "seen": 1790615922.0773811,
-    "ast_hash": "e3d6b6b8db78b8236d6032ff08c8080c",
+    "mtime": 1791389986.9524593,
+    "seen": 1791424133.1169548,
+    "ast_hash": "198f0a8cf2c22caecc6f190008d3fef6",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsScreenTest.kt": {
-    "mtime": 1790608688.8007672,
-    "seen": 1790608692.445239,
-    "ast_hash": "e56250d31f0b758881f28a26df9af334",
+    "mtime": 1791350601.7265906,
+    "seen": 1791351595.745713,
+    "ast_hash": "065fa6f215a1e5f6a2e105a9636def01",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/FavoritesPickerScreenTest.kt": {
-    "mtime": 1789568888.408152,
-    "seen": 1789573168.273708,
-    "ast_hash": "b439e32f775d2530d2203325e4fb9098",
+    "mtime": 1791337331.5883482,
+    "seen": 1791337637.737466,
+    "ast_hash": "793effa5144e9b24c493e8d77c81770a",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/facets/ManageFacetsScreenTest.kt": {
-    "mtime": 1790608688.801045,
-    "seen": 1790608692.445241,
-    "ast_hash": "99d860a2240ffdcd3e2aa6eff65a9baa",
+    "mtime": 1791389986.9518785,
+    "seen": 1791424133.116957,
+    "ast_hash": "d21c1a335ac5cb7ee19694b539d9ffcc",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/FacetDockAppRepository.kt": {
@@ -2130,9 +2130,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/FacetRepository.kt": {
-    "mtime": 1790615917.862918,
-    "seen": 1790615922.077408,
-    "ast_hash": "f8e0b45d40fe80802c2b426ff4ee27c1",
+    "mtime": 1791367166.125813,
+    "seen": 1791368516.806693,
+    "ast_hash": "2130881245bc2d0ecb9e7863132b7a6b",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FacetDao.kt": {
@@ -2160,9 +2160,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/EnsureActiveFacetUseCase.kt": {
-    "mtime": 1789218020.7302353,
-    "seen": 1789218587.050067,
-    "ast_hash": "2ae29b5ce179d7be33002daa2e78e67a",
+    "mtime": 1791367194.1263018,
+    "seen": 1791368516.806752,
+    "ast_hash": "8835dcdc4e38b2f3cb641f8c1b2d84d7",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ObserveFacetPreviewsUseCase.kt": {
@@ -2172,15 +2172,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetCarouselScreen.kt": {
-    "mtime": 1790615917.8666904,
-    "seen": 1790615922.077491,
-    "ast_hash": "6ed68fa0e7d0c8ccdb490b15cc77f1fe",
+    "mtime": 1791389794.3830564,
+    "seen": 1791424133.1170921,
+    "ast_hash": "89d3169337e2f92d8bd8daf8d9fac79e",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetCarouselViewModel.kt": {
-    "mtime": 1790615917.8669794,
-    "seen": 1790615922.077492,
-    "ast_hash": "3114fe2f1f511ee7717dc1ed91e8e739",
+    "mtime": 1791367217.958686,
+    "seen": 1791368516.806796,
+    "ast_hash": "c9f83f409bcc4fb7c101c2af46f48b1e",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsComponents.kt": {
@@ -2190,15 +2190,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsScreen.kt": {
-    "mtime": 1790608688.8050723,
-    "seen": 1790608692.445339,
-    "ast_hash": "bf2a1eb67c1165e7c8e22dc44a0e68a9",
+    "mtime": 1791337275.1639166,
+    "seen": 1791337637.73758,
+    "ast_hash": "b48c4087cc8bf46a2456f38d60b03c49",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsViewModel.kt": {
-    "mtime": 1790615917.8672414,
-    "seen": 1790615922.077493,
-    "ast_hash": "066fe58e98e03cf6dc5c302bf9fc7c9c",
+    "mtime": 1791346142.7028885,
+    "seen": 1791346518.913984,
+    "ast_hash": "a0bf46f066adf9ad61af44cc141a8017",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/FavoritesPickerScreen.kt": {
@@ -2214,21 +2214,21 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/ManageFacetsScreen.kt": {
-    "mtime": 1790608688.805667,
-    "seen": 1790608692.4453409,
-    "ast_hash": "e5fc57859882eac97b277016673cb65f",
+    "mtime": 1791389840.8666303,
+    "seen": 1791424133.117096,
+    "ast_hash": "51997d3733d7303d85d51130cb51a1b1",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/facets/ManageFacetsViewModel.kt": {
-    "mtime": 1789959256.7085447,
-    "seen": 1790049899.857331,
-    "ast_hash": "eb61a32a02babfe0ca7b693c7024a3bb",
+    "mtime": 1791367217.957994,
+    "seen": 1791368516.8067992,
+    "ast_hash": "a68f51ee8f5d219fe739750824300f36",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingFacetsPage.kt": {
-    "mtime": 1789782988.6891682,
-    "seen": 1789783248.4749599,
-    "ast_hash": "cd85e335d7ce0ae835021873642203c4",
+    "mtime": 1791307648.4054446,
+    "seen": 1791308159.682652,
+    "ast_hash": "cf50a9a12a3ee230df92346ae421d349",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/FacetDockAppRepositoryTest.kt": {
@@ -2262,9 +2262,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/EnsureActiveFacetUseCaseTest.kt": {
-    "mtime": 1789218020.7173193,
-    "seen": 1789218587.050153,
-    "ast_hash": "43598d08dfcc4dd922a9a9ce53594a5b",
+    "mtime": 1791367490.387343,
+    "seen": 1791368516.806894,
+    "ast_hash": "69089c007be6468ba8e02107cc74b086",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/ObserveFacetPreviewsUseCaseTest.kt": {
@@ -2280,9 +2280,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/facets/ManageFacetsViewModelTest.kt": {
-    "mtime": 1789959916.6640897,
-    "seen": 1790049899.8574321,
-    "ast_hash": "4673138899c0e11f262f68418823f7b4",
+    "mtime": 1791367520.5655625,
+    "seen": 1791368516.806915,
+    "ast_hash": "f93a2593012c96e844256af73c31aa5c",
     "semantic_hash": ""
   },
   "scripts/release.sh": {
@@ -2292,14 +2292,14 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/onboarding/SetDefaultLauncherSheetTest.kt": {
-    "mtime": 1791258713.2920034,
-    "seen": 1791259227.298558,
+    "mtime": 1791260970.9897382,
+    "seen": 1791305229.22995,
     "ast_hash": "c94f8fdc51eb0c5851e76113bd973f4f",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/06_widgets.png": {
-    "mtime": 1791174525.3235161,
-    "seen": 1791215738.276713,
+    "mtime": 1791260971.097694,
+    "seen": 1791305229.230242,
     "ast_hash": "1a7fdc584d181a0b90f47504ea7993c4",
     "semantic_hash": ""
   },
@@ -2316,9 +2316,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/ClockAdjustSheetTest.kt": {
-    "mtime": 1789960186.2298021,
-    "seen": 1790049899.857215,
-    "ast_hash": "d8e4ca4d14759e98478d9c9b9a25e206",
+    "mtime": 1791424997.1833062,
+    "seen": 1791429444.7519512,
+    "ast_hash": "7ea29f0133c8abbf3306d412d551053a",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/FolderAppPickerScreenTest.kt": {
@@ -2670,27 +2670,27 @@
     "semantic_hash": ""
   },
   "docs/architecture/01-architecture-and-layers.md": {
-    "mtime": 1791172771.0595863,
-    "seen": 1791172799.5780559,
-    "ast_hash": "a559327a0dc8d94d128d8e1e3dc307f1",
+    "mtime": 1791390037.0617933,
+    "seen": 1791424133.1172621,
+    "ast_hash": "17d8b12b7bf49002da2ca9fecfb4747f",
     "semantic_hash": ""
   },
   "docs/architecture/02-persistence-room.md": {
-    "mtime": 1791219724.3062534,
-    "seen": 1791221426.450249,
-    "ast_hash": "49592c8c0544c43786567a6a689bd460",
+    "mtime": 1791389633.53203,
+    "seen": 1791424133.117263,
+    "ast_hash": "f9d7018f4530c570229f75922b54ef71",
     "semantic_hash": ""
   },
   "docs/architecture/03-reactive-data-flow.md": {
-    "mtime": 1790615917.875415,
-    "seen": 1790615922.077631,
-    "ast_hash": "7481b05de14d6069008a7d6b25033880",
+    "mtime": 1791389633.5313885,
+    "seen": 1791424133.117263,
+    "ast_hash": "1796d2a7ca697a525f6412afb07527ac",
     "semantic_hash": ""
   },
   "docs/architecture/04-package-structure.md": {
-    "mtime": 1791253012.4924052,
-    "seen": 1791258531.431482,
-    "ast_hash": "efff32590f94eb5dc99241e4c39b55e8",
+    "mtime": 1791392119.527995,
+    "seen": 1791424133.1172638,
+    "ast_hash": "5a7901f4836de7f8faeeed632e576de4",
     "semantic_hash": ""
   },
   "docs/architecture/05-findings.md": {
@@ -2700,9 +2700,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/README.md": {
-    "mtime": 1790608688.8131487,
-    "seen": 1790608692.445466,
-    "ast_hash": "3800ab0eb8fa40d5f04e69691a77040b",
+    "mtime": 1791424209.76299,
+    "seen": 1791424225.201632,
+    "ast_hash": "660629a32d8b967c470fde85d6ff0c81",
     "semantic_hash": ""
   },
   "scripts/gen-test-registry.py": {
@@ -2712,15 +2712,15 @@
     "semantic_hash": ""
   },
   "docs/architecture/06-testing.md": {
-    "mtime": 1790615917.8759234,
-    "seen": 1790615922.0776331,
-    "ast_hash": "6cc0d70a5ec314baf3fb93f54060d884",
+    "mtime": 1791368195.9445088,
+    "seen": 1791368516.806957,
+    "ast_hash": "6baa44f0b91e3cff515d1745953614fe",
     "semantic_hash": ""
   },
   "docs/architecture/07-registries.md": {
-    "mtime": 1790655527.643366,
-    "seen": 1790733449.4772239,
-    "ast_hash": "d1417108ac7dec0dc311a7840b4a5406",
+    "mtime": 1791390037.0578296,
+    "seen": 1791424133.117266,
+    "ast_hash": "732743dd3a3b32a91b220aae5116d0be",
     "semantic_hash": ""
   },
   "docs/architecture/08-flow-placements.md": {
@@ -2730,9 +2730,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/09-flow-backup-restore.md": {
-    "mtime": 1791219724.3063724,
-    "seen": 1791221426.450253,
-    "ast_hash": "4443ffe2a7233cec7c256110a5dccf41",
+    "mtime": 1791305192.7285137,
+    "seen": 1791305229.2302139,
+    "ast_hash": "1c43803dc6804fe4cd8ae14e5d9955ab",
     "semantic_hash": ""
   },
   "docs/architecture/10-flow-hub-widgets.md": {
@@ -2748,27 +2748,27 @@
     "semantic_hash": ""
   },
   "docs/architecture/12-flow-drawer-search-and-app-actions.md": {
-    "mtime": 1791260486.7017593,
-    "seen": 1791260688.10433,
-    "ast_hash": "a9ce2b014807dd39715d7bdc517cb1c6",
+    "mtime": 1791359511.438223,
+    "seen": 1791361866.206976,
+    "ast_hash": "6723c12f229eb75e31dcd8ab910e9d3f",
     "semantic_hash": ""
   },
   "docs/architecture/13-flow-facets-theme-notifications-onboarding.md": {
-    "mtime": 1791258814.8607059,
-    "seen": 1791259227.298818,
-    "ast_hash": "303203d4870de7c3b332bad60fec70f2",
+    "mtime": 1791424206.3216789,
+    "seen": 1791424225.201629,
+    "ast_hash": "f0214c1329376c2922b96f91e42db883",
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791260658.760054,
-    "seen": 1791260688.1043332,
-    "ast_hash": "8a98e9e179627f8822e9ae1e8e1c4d83",
+    "mtime": 1791429444.3728976,
+    "seen": 1791429444.752285,
+    "ast_hash": "c61817d62b4fe66b8dbbe4fe55e96f3d",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1790827824.8119876,
-    "seen": 1790827864.272187,
-    "ast_hash": "a172b7cec45bf4d142f4cb5808e58996",
+    "mtime": 1791261068.9662216,
+    "seen": 1791305229.2301922,
+    "ast_hash": "b30e049ad77a03c24be6de41d9b18228",
     "semantic_hash": ""
   },
   "scripts/gen-release-notes.py": {
@@ -2778,9 +2778,9 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1790827824.7990513,
-    "seen": 1790827864.272208,
-    "ast_hash": "56372356431750b07ba09c0b41d009eb",
+    "mtime": 1791261068.94628,
+    "seen": 1791305229.230203,
+    "ast_hash": "173f1fdb4bb23d5a44b067342cfcb790",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {
@@ -2802,9 +2802,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppPickerScreen.kt": {
-    "mtime": 1789799851.7983263,
-    "seen": 1789804989.0757709,
-    "ast_hash": "d5745421ae9906015d126f29355ef790",
+    "mtime": 1791362721.7370784,
+    "seen": 1791366201.4152699,
+    "ast_hash": "4b2d1d792a562e250b2e8bb9f9dbdf77",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/AppSortControl.kt": {
@@ -2892,9 +2892,9 @@
     "semantic_hash": ""
   },
   "benchmark/build.gradle.kts": {
-    "mtime": 1789820251.2517028,
-    "seen": 1789820648.7875898,
-    "ast_hash": "525f588ab8970b299e0f27a50f1857b2",
+    "mtime": 1791369281.0476415,
+    "seen": 1791370387.727818,
+    "ast_hash": "10cfdd744f26803db773c36157dd3be4",
     "semantic_hash": ""
   },
   "benchmark/src/main/java/com/facetlauncher/app/benchmark/StartupBenchmark.kt": {
@@ -2946,9 +2946,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockWidgetFacetController.kt": {
-    "mtime": 1789962100.153637,
-    "seen": 1790049899.857333,
-    "ast_hash": "246839506a14cc3dfc2d3acab2db7a28",
+    "mtime": 1791424577.1939023,
+    "seen": 1791429444.7521029,
+    "ast_hash": "187e807524f3ba72e6d0529fc062ebae",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockWidgetHostController.kt": {
@@ -2994,9 +2994,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/home/ClockWidgetFacetControllerTest.kt": {
-    "mtime": 1789962520.8897886,
-    "seen": 1790049899.857433,
-    "ast_hash": "2d685cf8978909c32b5257ea3b7d709f",
+    "mtime": 1791424597.2516565,
+    "seen": 1791429444.752233,
+    "ast_hash": "e669c4803c33c603d70266bfdb721071",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/home/ClockWidgetHostControllerTest.kt": {
@@ -3054,9 +3054,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/FacetShortcutRepository.kt": {
-    "mtime": 1790608688.8029647,
-    "seen": 1790613212.9711318,
-    "ast_hash": "ea73adfcce6a52133f096f40468cbca8",
+    "mtime": 1791367178.6363587,
+    "seen": 1791368516.8066938,
+    "ast_hash": "f0e851eda4086a3ec89b2778bc4079db",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/FacetDeepLink.kt": {
@@ -3066,15 +3066,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ActivateFacetByIdUseCase.kt": {
-    "mtime": 1790608688.8034942,
-    "seen": 1790613212.971174,
-    "ast_hash": "9bf45d00e56e7fc0346f108efec7d946",
+    "mtime": 1791367178.6370125,
+    "seen": 1791368516.806744,
+    "ast_hash": "fa9cdacfb9254520135d7e4db9d8d67f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/SyncFacetShortcutsUseCase.kt": {
-    "mtime": 1790608688.803678,
-    "seen": 1790613212.971194,
-    "ast_hash": "f8816941397bf40aa790427694818396",
+    "mtime": 1791367178.638398,
+    "seen": 1791368516.806771,
+    "ast_hash": "f5385b88d9a3f9dca379c1c962daf682",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/data/FacetShortcutRepositoryTest.kt": {
@@ -3090,27 +3090,27 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/ActivateFacetByIdUseCaseTest.kt": {
-    "mtime": 1790608688.8106534,
-    "seen": 1790613212.971286,
-    "ast_hash": "23d0e7ca12b582be4f0dd909c9ae856a",
+    "mtime": 1791367477.9547698,
+    "seen": 1791368516.806886,
+    "ast_hash": "e392dee815558bb5dd3678bd536e808a",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/SyncFacetShortcutsUseCaseTest.kt": {
-    "mtime": 1790608688.8109045,
-    "seen": 1790613212.971303,
-    "ast_hash": "f55a6f37794cc182f90926c35151f5bf",
+    "mtime": 1791367477.9550896,
+    "seen": 1791368516.8069088,
+    "ast_hash": "7b907705c2596b9f906b1ab72a99a2bb",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/facets/FacetSettingsViewModelTest.kt": {
-    "mtime": 1790615917.8746576,
-    "seen": 1790615922.077588,
-    "ast_hash": "7f0b4323bb088bb14fd447e3a4516a6d",
+    "mtime": 1791367373.220121,
+    "seen": 1791368516.8069131,
+    "ast_hash": "737c0093cc355bb2c6c100754f159c02",
     "semantic_hash": ""
   },
   "docs/architecture/14-flow-deep-links-and-shortcuts.md": {
-    "mtime": 1790608688.812899,
-    "seen": 1790613212.97135,
-    "ast_hash": "00d85bffadf0930a751a396fbd5f5474",
+    "mtime": 1791368195.9454582,
+    "seen": 1791368516.806962,
+    "ast_hash": "c1087abcc34d6cee6cf51f7aa088d9ea",
     "semantic_hash": ""
   },
   "app/schemas/com.facetlauncher.app.data.local.FacetDatabase/25.json": {
@@ -3168,141 +3168,801 @@
     "semantic_hash": ""
   },
   "play-store-assets/build_screenshots.py": {
-    "mtime": 1791215366.0805748,
-    "seen": 1791215738.276659,
+    "mtime": 1791260971.0244284,
+    "seen": 1791305229.23019,
     "ast_hash": "bae95f0e6b7a8d5e5cf246a46c576a80",
     "semantic_hash": ""
   },
   "play-store-assets/raw/appearance.png": {
-    "mtime": 1791215495.099368,
-    "seen": 1791215738.276705,
+    "mtime": 1791260971.0258396,
+    "seen": 1791305229.2302349,
     "ast_hash": "d0db43db53dad51f168e9078ec30b2a9",
     "semantic_hash": ""
   },
   "play-store-assets/raw/appearance_wallpaper_colors.png": {
-    "mtime": 1791215334.9022784,
-    "seen": 1791215738.276706,
+    "mtime": 1791260971.0273988,
+    "seen": 1791305229.2302349,
     "ast_hash": "f6801b67887c6ae9992d1e35e837a1b5",
     "semantic_hash": ""
   },
   "play-store-assets/raw/clock_styles.png": {
-    "mtime": 1791174500.4557257,
-    "seen": 1791215738.276706,
+    "mtime": 1791260971.0289927,
+    "seen": 1791305229.2302358,
     "ast_hash": "1e2a5c4cb8051ce3ef33f385a9d28efa",
     "semantic_hash": ""
   },
   "play-store-assets/raw/drawer.png": {
-    "mtime": 1791174500.4616349,
-    "seen": 1791215738.2767072,
+    "mtime": 1791260971.0337095,
+    "seen": 1791305229.2302358,
     "ast_hash": "9d307221f77c86af04a8a9e8ee870aa7",
     "semantic_hash": ""
   },
   "play-store-assets/raw/facets.png": {
-    "mtime": 1791174500.446636,
-    "seen": 1791215738.2767072,
+    "mtime": 1791260971.0413704,
+    "seen": 1791305229.230237,
     "ast_hash": "35e028c08538a780749a24358dee9437",
     "semantic_hash": ""
   },
   "play-store-assets/raw/folders.png": {
-    "mtime": 1791174500.4754524,
-    "seen": 1791215738.2767081,
+    "mtime": 1791260971.045763,
+    "seen": 1791305229.230237,
     "ast_hash": "6ae3aad8572b45d5a030e1db3105c1b3",
     "semantic_hash": ""
   },
   "play-store-assets/raw/home.png": {
-    "mtime": 1791174500.4529026,
-    "seen": 1791215738.2767081,
+    "mtime": 1791260971.0532818,
+    "seen": 1791305229.230238,
     "ast_hash": "d47e425061065d6d35378f404a2e6b95",
     "semantic_hash": ""
   },
   "play-store-assets/raw/resize.png": {
-    "mtime": 1791174500.4815242,
-    "seen": 1791215738.276709,
+    "mtime": 1791260971.0611706,
+    "seen": 1791305229.230238,
     "ast_hash": "ac82d8741eebafddd3ba671cd852935f",
     "semantic_hash": ""
   },
   "play-store-assets/raw/search.png": {
-    "mtime": 1791174500.4671402,
-    "seen": 1791215738.276709,
+    "mtime": 1791260971.0669143,
+    "seen": 1791305229.230239,
     "ast_hash": "a204aa2128a9e74de07667e6d70a2b0f",
     "semantic_hash": ""
   },
   "play-store-assets/raw/widgets.png": {
-    "mtime": 1791174500.4726486,
-    "seen": 1791215738.2767098,
+    "mtime": 1791260971.0730946,
+    "seen": 1791305229.230239,
     "ast_hash": "ceaa245135240ced346e683d885e20cd",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/01_facets.png": {
-    "mtime": 1791174524.8025565,
-    "seen": 1791215738.2767098,
+    "mtime": 1791260971.0777335,
+    "seen": 1791305229.23024,
     "ast_hash": "2b9ca89d4e8fe6d3bcb3042c4ba7d3c6",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/02_home.png": {
-    "mtime": 1791174524.936914,
-    "seen": 1791215738.276711,
+    "mtime": 1791260971.0827692,
+    "seen": 1791305229.23024,
     "ast_hash": "f32cdc23cdbe36a2134acf660f530a10",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/04_drawer.png": {
-    "mtime": 1791174525.1236007,
-    "seen": 1791215738.276712,
+    "mtime": 1791260971.0890133,
+    "seen": 1791305229.230241,
     "ast_hash": "47cfb272436e654534113e1a6ac4cb23",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/05_search.png": {
-    "mtime": 1791174525.218656,
-    "seen": 1791215738.276713,
+    "mtime": 1791260971.093079,
+    "seen": 1791305229.230242,
     "ast_hash": "a40cfd891abf6e2c0db20594f316f940",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/07_folders.png": {
-    "mtime": 1791174525.3994188,
-    "seen": 1791215738.276714,
+    "mtime": 1791260971.1008422,
+    "seen": 1791305229.230243,
     "ast_hash": "b933caafdc5286a49c9893308bf6aa49",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/08_appearance.png": {
-    "mtime": 1791215495.2266731,
-    "seen": 1791215738.276714,
+    "mtime": 1791260971.1037583,
+    "seen": 1791305229.230243,
     "ast_hash": "ac75f46ed1218563e95b04d599b02de9",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/ThemedModalBottomSheet.kt": {
-    "mtime": 1791219586.9311717,
-    "seen": 1791219718.966759,
+    "mtime": 1791260970.9943082,
+    "seen": 1791305229.230059,
     "ast_hash": "82c91f82e0c6062a0047953e682f53b5",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/theme/SystemBarsAppearanceTest.kt": {
-    "mtime": 1791219684.2303693,
-    "seen": 1791219718.966665,
+    "mtime": 1791260970.990494,
+    "seen": 1791305229.2299619,
     "ast_hash": "5416bf78e5de765b6c71eae5c2855ed2",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/theme/SystemBars.kt": {
-    "mtime": 1791219572.6482308,
-    "seen": 1791219718.966818,
-    "ast_hash": "56fe00f1c08e819845235c8ecc8b8135",
+    "mtime": 1791391738.2357645,
+    "seen": 1791424133.117158,
+    "ast_hash": "d34aa0a1f655034e88f111b52e2fb2d7",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/theme/SystemBarsTest.kt": {
-    "mtime": 1791219644.7985573,
-    "seen": 1791219718.966879,
-    "ast_hash": "b33796d5ec993f728aa4698b2e3f86cb",
+    "mtime": 1791391743.1773272,
+    "seen": 1791424133.117236,
+    "ast_hash": "0f34908571598db23e63c32ca23c05c8",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/ClockAdjustToolbarTest.kt": {
-    "mtime": 1791257268.8176196,
-    "seen": 1791258531.43123,
+    "mtime": 1791260970.988404,
+    "seen": 1791305229.229944,
     "ast_hash": "ec7ac031dd6d79035c6ba7d1c3a6f26a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockAdjustToolbar.kt": {
-    "mtime": 1791257244.4972107,
-    "seen": 1791258531.431349,
+    "mtime": 1791260970.995287,
+    "seen": 1791305229.230071,
     "ast_hash": "e864f3c9e397bdfecb32a1d5a2f82a3a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/IconShape.kt": {
+    "mtime": 1791308109.7604856,
+    "seen": 1791308159.682576,
+    "ast_hash": "99b18f9d92c1213608969d53c759a588",
+    "semantic_hash": ""
+  },
+  "release_notes/0.1.17.md": {
+    "mtime": 1791261068.946815,
+    "seen": 1791305229.230224,
+    "ast_hash": "173f1fdb4bb23d5a44b067342cfcb790",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/components/SuperellipseShape.kt": {
+    "mtime": 1791308109.7601824,
+    "seen": 1791308263.287327,
+    "ast_hash": "3efcb318db0f3758814aa6f38d3141f0",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/components/SuperellipseShapeTest.kt": {
+    "mtime": 1791308232.5908606,
+    "seen": 1791308263.287431,
+    "ast_hash": "549b60d602a0ae16641cae7e18037906",
+    "semantic_hash": ""
+  },
+  "Android launcher design planning/design_handoff_minimal_launcher/facet-automation.html": {
+    "mtime": 1791360714.7876105,
+    "seen": 1791361866.206959,
+    "ast_hash": "1c037c9fe9e980292a0f89f03d21a45e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/AutomationRule.kt": {
+    "mtime": 1791347257.9435306,
+    "seen": 1791347604.5990348,
+    "ast_hash": "55ee4474c21846c3bc72fbeb61d05d02",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/AutomationState.kt": {
+    "mtime": 1791344076.7739358,
+    "seen": 1791344175.8088498,
+    "ast_hash": "d106b73e25f47b5fdbc7538cfb5b5d2d",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/EvaluateFacetAutomationUseCase.kt": {
+    "mtime": 1791344203.6182365,
+    "seen": 1791346066.244523,
+    "ast_hash": "f691729c00f0097509b39592bd66d5c7",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/AutomationStateTest.kt": {
+    "mtime": 1791344115.260334,
+    "seen": 1791344175.8089821,
+    "ast_hash": "af8ab5e9c5f5518e910dd8a101033d3e",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/EvaluateFacetAutomationUseCaseTest.kt": {
+    "mtime": 1791350042.5157669,
+    "seen": 1791350109.1149518,
+    "ast_hash": "4de4edb1edf34949e8905c3ee35bca8b",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/AutomationTestSupport.kt": {
+    "mtime": 1791367351.9596117,
+    "seen": 1791368516.8066502,
+    "ast_hash": "d6302e072516f6c24dfe4d90da57a90f",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/AutomationStateRepository.kt": {
+    "mtime": 1791346122.4526055,
+    "seen": 1791346518.91388,
+    "ast_hash": "26877b20eec9a8b01ef811e5ea65d446",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/di/AutomationDataStore.kt": {
+    "mtime": 1791346122.4170845,
+    "seen": 1791346518.913897,
+    "ast_hash": "ec170f25653348173924117ea88ffef9",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/FacetSwitchSource.kt": {
+    "mtime": 1791346122.4005494,
+    "seen": 1791346518.913926,
+    "ast_hash": "8a13e4e009c746910c97c02d285ab57a",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/AutomationStateRepositoryTest.kt": {
+    "mtime": 1791346183.5697155,
+    "seen": 1791346518.914038,
+    "ast_hash": "05c07f77c9f3a452bf722b7792c343fb",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/facets/FacetCarouselViewModelTest.kt": {
+    "mtime": 1791367417.7514083,
+    "seen": 1791368516.8069131,
+    "ast_hash": "e3b8bb63028fc1971e278d6477ca0e4e",
+    "semantic_hash": ""
+  },
+  "docs/architecture/15-flow-facet-automation.md": {
+    "mtime": 1791429176.768216,
+    "seen": 1791429444.7522829,
+    "ast_hash": "d050005e8a08e9fd99fe44b843fbcd92",
+    "semantic_hash": ""
+  },
+  "app/schemas/com.facetlauncher.app.data.local.FacetDatabase/26.json": {
+    "mtime": 1791349607.5086157,
+    "seen": 1791349798.1172218,
+    "ast_hash": "bca6ebcbbb3d70c710b3a53d2bc9f560",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/AutomationRuleMapping.kt": {
+    "mtime": 1791350026.6366637,
+    "seen": 1791350109.1147678,
+    "ast_hash": "976c68eabac3806d0791c1dd82beda55",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/AutomationRuleRepository.kt": {
+    "mtime": 1791349410.2528563,
+    "seen": 1791349531.834549,
+    "ast_hash": "3493b8c9417759a3da6860b6e2f3a846",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/local/AutomationRuleDao.kt": {
+    "mtime": 1791347257.9699423,
+    "seen": 1791347604.599017,
+    "ast_hash": "3ec69e0fcb94e36d7b67569e70f96b15",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/local/AutomationRuleEntity.kt": {
+    "mtime": 1791350026.6368718,
+    "seen": 1791350109.11479,
+    "ast_hash": "0da300ef2d9c6a7f59f1738c2d28a12c",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/AutomationTrigger.kt": {
+    "mtime": 1791350026.6364744,
+    "seen": 1791350109.114809,
+    "ast_hash": "ea026f39df05d915090683c8ee7c1255",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/AutomationRuleRepositoryTest.kt": {
+    "mtime": 1791350042.5161402,
+    "seen": 1791350109.114922,
+    "ast_hash": "d029836945713b96f94ed7413b289aa2",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/local/AutomationRuleDaoTest.kt": {
+    "mtime": 1791349857.107374,
+    "seen": 1791350004.9280498,
+    "ast_hash": "0a2aa890336d60fe4698cd60f4095d25",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/AutomationRuleValidation.kt": {
+    "mtime": 1791367166.1002567,
+    "seen": 1791368516.806726,
+    "ast_hash": "efc81af26baed9092af7cf915723d924",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/AutomationRuleValidationTest.kt": {
+    "mtime": 1791350042.516784,
+    "seen": 1791350109.114943,
+    "ast_hash": "f08b09e4cb376e4c819775037b8c235c",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/AutomationTriggerTest.kt": {
+    "mtime": 1791350042.5164776,
+    "seen": 1791350109.114944,
+    "ast_hash": "ee5e0bdccce44e9c4c9eb1add6698da1",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/AutomationLimitsTest.kt": {
+    "mtime": 1791349391.3869436,
+    "seen": 1791349531.8347251,
+    "ast_hash": "0cbfadaef1da2952ea1809180068132a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/WakeEventsRepository.kt": {
+    "mtime": 1791350308.8585463,
+    "seen": 1791351595.745749,
+    "ast_hash": "1137aa93c6a1d0b09c9c18bb2c9ad695",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/ApplyFacetAutomationUseCase.kt": {
+    "mtime": 1791350331.3232787,
+    "seen": 1791351595.745792,
+    "ast_hash": "36d3420f05a1d23683e73057ff0122a4",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/RefreshAutomationStateUseCase.kt": {
+    "mtime": 1791367178.6383257,
+    "seen": 1791368516.806762,
+    "ast_hash": "86e12b379d71a35a7207ec90b071511a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/RunFacetAutomationUseCase.kt": {
+    "mtime": 1791359807.3903022,
+    "seen": 1791361866.2067819,
+    "ast_hash": "f3d31ad254508efc8666390668a317bf",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/WakeEventsRepositoryTest.kt": {
+    "mtime": 1791350460.2227018,
+    "seen": 1791351595.745903,
+    "ast_hash": "8da2b4fc5ee0f1aed79ae05c89b5d776",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/ApplyFacetAutomationUseCaseTest.kt": {
+    "mtime": 1791367502.071412,
+    "seen": 1791368516.80689,
+    "ast_hash": "3ff4a1e70053a9c61c08ed47f90de63e",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/RunFacetAutomationUseCaseTest.kt": {
+    "mtime": 1791360031.1202521,
+    "seen": 1791361866.20692,
+    "ast_hash": "5df9e8e0aa2c1892d9c753f2e6231ace",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/FakeAutomationPermissionRepository.kt": {
+    "mtime": 1791352525.5296988,
+    "seen": 1791356501.848139,
+    "ast_hash": "9bdcf8588381f1aaa3a1a610c72a7f33",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/AutomationPermissionRepository.kt": {
+    "mtime": 1791351885.2704353,
+    "seen": 1791356501.84815,
+    "ast_hash": "ba3469a9bcb5d64b2457a86bbc48052d",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/BluetoothRepository.kt": {
+    "mtime": 1791358642.1966698,
+    "seen": 1791361866.206702,
+    "ast_hash": "c6640948f1a5a774781d1eb1a9dfe66e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/DeviceStateRepository.kt": {
+    "mtime": 1791352184.7200956,
+    "seen": 1791356501.848158,
+    "ast_hash": "5bff8da5a0c63a8e20fa7879d9b09107",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/HeadphonesRepository.kt": {
+    "mtime": 1791351936.5022616,
+    "seen": 1791356501.8481631,
+    "ast_hash": "8204c8bde93833078ab40e826674938c",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/WifiRepository.kt": {
+    "mtime": 1791358642.1967883,
+    "seen": 1791361866.20672,
+    "ast_hash": "44eefbc05a9dd1aa304b40700dfc3c7f",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/DeviceState.kt": {
+    "mtime": 1791351851.3169973,
+    "seen": 1791356501.848201,
+    "ast_hash": "a3150675cc1c3f79710249d8b4547047",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/PairedBluetoothDevice.kt": {
+    "mtime": 1791352064.05334,
+    "seen": 1791356501.848208,
+    "ast_hash": "1c773a90f71b4401d7d4ae9e289061f2",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/AutomationPermissionRepositoryTest.kt": {
+    "mtime": 1791351885.288191,
+    "seen": 1791356501.8483179,
+    "ast_hash": "5ac768fcc0fd44d43b5879b59fb0ea29",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/BluetoothRepositoryTest.kt": {
+    "mtime": 1791358646.9197483,
+    "seen": 1791361866.2068758,
+    "ast_hash": "034871635e4eff886b709f5beaba5d24",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/DeviceStateRepositoryTest.kt": {
+    "mtime": 1791352184.7368145,
+    "seen": 1791356501.848325,
+    "ast_hash": "ab68bfa03a167805b28d2e1b45e6b250",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/HeadphonesRepositoryTest.kt": {
+    "mtime": 1791351936.5193627,
+    "seen": 1791356501.848329,
+    "ast_hash": "e2d24e3a607eec9bf0c1598c2c336258",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/WifiRepositoryTest.kt": {
+    "mtime": 1791358646.919037,
+    "seen": 1791361866.2068899,
+    "ast_hash": "a9118b0d1384c89f2463a57eaf839f94",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/DeviceStateTest.kt": {
+    "mtime": 1791351851.335663,
+    "seen": 1791356501.848345,
+    "ast_hash": "02b1cf78bdebb2b57334c723c5ae6500",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationScreenTest.kt": {
+    "mtime": 1791429092.5360637,
+    "seen": 1791429444.751969,
+    "ast_hash": "42fbba351d6cc10aff024f6f83925e87",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/ObserveFacetAutomationUseCase.kt": {
+    "mtime": 1791359826.706984,
+    "seen": 1791361866.2067719,
+    "ast_hash": "a745aa266effa9093ed9f10d403f359a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/AutomationRuleFormatting.kt": {
+    "mtime": 1791359905.702314,
+    "seen": 1791361866.206856,
+    "ast_hash": "329a7c3f633c05772d0b5d2f59cc77f2",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationPreviews.kt": {
+    "mtime": 1791389812.3278854,
+    "seen": 1791424133.117146,
+    "ast_hash": "2cc76861ec7036b4baecbfa0103709b3",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationScreen.kt": {
+    "mtime": 1791429092.5334425,
+    "seen": 1791429444.7521589,
+    "ast_hash": "cda9231b43185891f48bc266f1856548",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationViewModel.kt": {
+    "mtime": 1791358446.0658877,
+    "seen": 1791361866.206859,
+    "ast_hash": "e59731113becbcff74ac2ec6bb1bafab",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/ObserveFacetAutomationUseCaseTest.kt": {
+    "mtime": 1791360011.1867273,
+    "seen": 1791361866.206913,
+    "ast_hash": "2c10041acec74aadfe5969298f5d55de",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/automation/AutomationRuleFormattingTest.kt": {
+    "mtime": 1791356810.8644454,
+    "seen": 1791357544.348638,
+    "ast_hash": "860b6013ab316530f58904ebd9ca485c",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/automation/FacetAutomationViewModelTest.kt": {
+    "mtime": 1791360011.1891253,
+    "seen": 1791361866.2069418,
+    "ast_hash": "f8c9d36648af86e992f49269280a3b46",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorSheetTest.kt": {
+    "mtime": 1791389986.953101,
+    "seen": 1791424133.116976,
+    "ast_hash": "ed5ed43c8c7f04e02bfec4cc35111df9",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/EntitlementRepository.kt": {
+    "mtime": 1791388711.7274134,
+    "seen": 1791424133.116993,
+    "ast_hash": "f568cc3055b71de5caed64035fe2b9cc",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/CanUseTriggerUseCase.kt": {
+    "mtime": 1791359784.347242,
+    "seen": 1791361866.206764,
+    "ast_hash": "1ac4923e077d98bd72b7de3023ef1c2e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/SaveAutomationRuleUseCase.kt": {
+    "mtime": 1791359784.3495827,
+    "seen": 1791361866.2067819,
+    "ast_hash": "7bf94127b2db3d002577c179c758eb4a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/AutomationStrips.kt": {
+    "mtime": 1791429095.8904543,
+    "seen": 1791429444.752157,
+    "ast_hash": "38e4de49b6f8de414131c031dc45a33e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/EditorControls.kt": {
+    "mtime": 1791358489.539555,
+    "seen": 1791361866.206857,
+    "ast_hash": "c759ab68ffc7cb95607dd5dc6eba257a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/PermissionRequest.kt": {
+    "mtime": 1791361587.7482672,
+    "seen": 1791361866.206859,
+    "ast_hash": "fdc9883910633fa242bdf2ad24252613",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorPreviews.kt": {
+    "mtime": 1791359881.6817088,
+    "seen": 1791361866.20686,
+    "ast_hash": "23f628986305b0450ccafc3e4e7ebb68",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorSheet.kt": {
+    "mtime": 1791389862.3660443,
+    "seen": 1791424133.1171489,
+    "ast_hash": "541ccb129a2a767cf206bcb2034a8e3f",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorState.kt": {
+    "mtime": 1791359847.781802,
+    "seen": 1791361866.206861,
+    "ast_hash": "bfd3c9744c2187c40d455965e7a44fe2",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorViewModel.kt": {
+    "mtime": 1791359847.7823262,
+    "seen": 1791361866.206862,
+    "ast_hash": "04c6b030c7b83632186f52acc86eda0e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/ScheduleFields.kt": {
+    "mtime": 1791369559.3019588,
+    "seen": 1791370387.727731,
+    "ast_hash": "12973014a100ca3b150257a76ab86ce2",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/automation/TriggerFields.kt": {
+    "mtime": 1791367242.587127,
+    "seen": 1791368516.806849,
+    "ast_hash": "6e00f32b9069c3b565793ba452862bfb",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/FakeEntitlementRepository.kt": {
+    "mtime": 1791388982.8366966,
+    "seen": 1791424133.1171699,
+    "ast_hash": "5a11dee0efdce03f554791e8d844a635",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/CanUseTriggerUseCaseTest.kt": {
+    "mtime": 1791360011.193356,
+    "seen": 1791361866.206906,
+    "ast_hash": "c6a2d4d1bb6297a0551140231eab437c",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/SaveAutomationRuleUseCaseTest.kt": {
+    "mtime": 1791361698.7467992,
+    "seen": 1791361866.2069209,
+    "ast_hash": "aa7e7c61d5c1c48dbe90528f4240d213",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorStateTest.kt": {
+    "mtime": 1791358614.5055861,
+    "seen": 1791361866.2069418,
+    "ast_hash": "3fc47fdda8867466f5afecc4aa382fe4",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/automation/RuleEditorViewModelTest.kt": {
+    "mtime": 1791361698.7466507,
+    "seen": 1791361866.206943,
+    "ast_hash": "5a1beb74cb2fc834090b4592601c5de1",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/components/PillTabPair.kt": {
+    "mtime": 1791362721.717411,
+    "seen": 1791366201.4152808,
+    "ast_hash": "39fc3957f440f67799a8d4a95ecbf283",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/FakeEntitlementRepository.kt": {
+    "mtime": 1791367351.938012,
+    "seen": 1791368516.8066518,
+    "ast_hash": "aa85d05a7f43ae3d150d40bdae185416",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/FacetLimits.kt": {
+    "mtime": 1791367166.1065714,
+    "seen": 1791368516.806734,
+    "ast_hash": "efdcf1317aa30e12e4cbd678376f35bb",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/ProReason.kt": {
+    "mtime": 1791424577.194504,
+    "seen": 1791429444.7520409,
+    "ast_hash": "2b9a30eb0f4f7fa02fb43d4c6e039d7b",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/AddFacetUseCase.kt": {
+    "mtime": 1791367166.110166,
+    "seen": 1791368516.806746,
+    "ast_hash": "a3fdf05becccb477009f5c1f78d89385",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/SelectableFacetsUseCase.kt": {
+    "mtime": 1791368690.0066667,
+    "seen": 1791369215.4697568,
+    "ast_hash": "2fd95a53b5a3aec879702ee6d08fa0a7",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/components/ProPill.kt": {
+    "mtime": 1791367233.5581908,
+    "seen": 1791368516.806784,
+    "ast_hash": "9d61a4f9353d619eff1488e5291f7cf6",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/model/FacetLimitsTest.kt": {
+    "mtime": 1791367477.9552455,
+    "seen": 1791368516.806885,
+    "ast_hash": "badc7a6dd0a1d2c9bc5fe65c6f119252",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/AddFacetUseCaseTest.kt": {
+    "mtime": 1791367477.955391,
+    "seen": 1791368516.8068879,
+    "ast_hash": "3f99942cc974d66c51ee2a921e75c7e5",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/SelectableFacetsUseCaseTest.kt": {
+    "mtime": 1791367477.955327,
+    "seen": 1791368516.806907,
+    "ast_hash": "dc2937e28ce8501f315ac5c74b6fb5a4",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/BillingRepository.kt": {
+    "mtime": 1791368658.6683097,
+    "seen": 1791369215.469669,
+    "ast_hash": "96cf0ceb16cf371c6ceae4ff39391d88",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/PlayEntitlementRepository.kt": {
+    "mtime": 1791388711.7578332,
+    "seen": 1791424133.116999,
+    "ast_hash": "5ac77c53eba23bb82287123a4ceae229",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/ProPurchaseMapping.kt": {
+    "mtime": 1791368658.6422336,
+    "seen": 1791369215.469684,
+    "ast_hash": "15a1363000b24695cc1cd1ec7d2020ca",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/di/EntitlementDataStore.kt": {
+    "mtime": 1791368658.6440992,
+    "seen": 1791369215.469692,
+    "ast_hash": "454e96e44b92eabf60b55161467dd807",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/di/EntitlementModule.kt": {
+    "mtime": 1791388711.758028,
+    "seen": 1791424133.117009,
+    "ast_hash": "7ce8cfa9fcf772220c3d3d2bede343c9",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/ProQueryResult.kt": {
+    "mtime": 1791368658.6400719,
+    "seen": 1791369215.469729,
+    "ast_hash": "0528c7448959f7892bcd18635eb197ae",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/PlayEntitlementRepositoryTest.kt": {
+    "mtime": 1791389007.9837682,
+    "seen": 1791424133.117175,
+    "ast_hash": "5ea5d07b80facef45a1de86481a3603d",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/ProPurchaseMappingTest.kt": {
+    "mtime": 1791368773.6551442,
+    "seen": 1791369215.469864,
+    "ast_hash": "3c6f0ed0a263df020aa49ec61ae7a25b",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/pro/FacetProContentTest.kt": {
+    "mtime": 1791426862.6008866,
+    "seen": 1791429444.751959,
+    "ast_hash": "8244a3380de22f68df6d6c5f25be2367",
+    "semantic_hash": ""
+  },
+  "app/src/debug/kotlin/com/facetlauncher/app/debug/DebugBindingsModule.kt": {
+    "mtime": 1791388727.447505,
+    "seen": 1791424133.116978,
+    "ast_hash": "4a38b4a2a4d5a2d0150e3f0aa61f4183",
+    "semantic_hash": ""
+  },
+  "app/src/debug/kotlin/com/facetlauncher/app/debug/DebugEntitlementOverride.kt": {
+    "mtime": 1791388727.4434385,
+    "seen": 1791424133.116979,
+    "ast_hash": "53ee79869d5d032e73076efc2995fa7c",
+    "semantic_hash": ""
+  },
+  "app/src/debug/kotlin/com/facetlauncher/app/debug/DebugSettingsEntryImpl.kt": {
+    "mtime": 1791388727.445624,
+    "seen": 1791424133.11698,
+    "ast_hash": "37fe789d8f43e0e22c4beb7f9d045ab2",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/EntitlementOverride.kt": {
+    "mtime": 1791388711.7240167,
+    "seen": 1791424133.116992,
+    "ast_hash": "87a06bec29e6c5260001bc5804f06efa",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/pro/FacetProPreviews.kt": {
+    "mtime": 1791391933.1244748,
+    "seen": 1791424133.117124,
+    "ast_hash": "f7114eaec92db65f89a5ea0a47dcb6f4",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/pro/FacetProScreen.kt": {
+    "mtime": 1791426858.5618005,
+    "seen": 1791429444.752128,
+    "ast_hash": "81663385a81d5b1478c3c09b58d511c6",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/pro/FacetProUnlocked.kt": {
+    "mtime": 1791391949.4448829,
+    "seen": 1791424133.117125,
+    "ast_hash": "7e0852b6bf4f48eab2dbac0514c8cf1e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/pro/FacetProViewModel.kt": {
+    "mtime": 1791389753.419967,
+    "seen": 1791424133.117126,
+    "ast_hash": "107aa28d8f3c50140929c85ae38b45f3",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/pro/ProComponents.kt": {
+    "mtime": 1791393834.1805255,
+    "seen": 1791424133.117127,
+    "ast_hash": "fd686b1f5ad3934b6334ffc5bd0a109f",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/pro/ProSettingsCard.kt": {
+    "mtime": 1791393834.1809473,
+    "seen": 1791424133.117127,
+    "ast_hash": "1728a01242b213190d1702cc5585ccc0",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/DebugSettingsEntry.kt": {
+    "mtime": 1791388879.0723257,
+    "seen": 1791424133.117132,
+    "ast_hash": "34e22ead860020551f5a3d01250e6ff8",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/pro/FacetProViewModelTest.kt": {
+    "mtime": 1791389948.3233461,
+    "seen": 1791424133.117227,
+    "ast_hash": "c8e8c89322de1368656a784bbedbedcd",
+    "semantic_hash": ""
+  },
+  "app/src/testDebug/kotlin/com/facetlauncher/app/debug/DebugEntitlementOverrideTest.kt": {
+    "mtime": 1791389007.991833,
+    "seen": 1791424133.117238,
+    "ast_hash": "ce4ea2b851a01fd703fe008fcd4a3d73",
+    "semantic_hash": ""
+  },
+  "docs/architecture/16-flow-billing.md": {
+    "mtime": 1791424651.8950186,
+    "seen": 1791429444.7522838,
+    "ast_hash": "8c238ef6fe43aa837d9daac3b1f6efe7",
     "semantic_hash": ""
   }
 }

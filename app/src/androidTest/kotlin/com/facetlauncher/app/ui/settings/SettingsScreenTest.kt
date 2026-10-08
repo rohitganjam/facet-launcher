@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -16,15 +17,19 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.WorkProfileRepository
-import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
+import com.facetlauncher.app.ui.FakeEntitlementRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -40,6 +45,9 @@ class SettingsScreenTest {
     private fun setContent(
         onBack: () -> Unit = {},
         onViewFacets: () -> Unit = {},
+        onViewFacetAutomation: () -> Unit = {},
+        onViewFacetPro: () -> Unit = {},
+        entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToCalendarSettings: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
@@ -69,12 +77,17 @@ class SettingsScreenTest {
                     ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
+                    AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
+                    entitlement,
+                    FacetRepository(database.facetDao()),
                 )
             }
             FacetLauncherTheme {
                 SettingsScreen(
                     onBack = onBack,
                     onViewFacets = onViewFacets,
+                    onViewFacetAutomation = onViewFacetAutomation,
+                    onViewFacetPro = onViewFacetPro,
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
@@ -303,6 +316,20 @@ class SettingsScreenTest {
 
 
     @Test
+    fun facetAutomationRowShowsNoRulesAndIsClickable() {
+        // Given the settings screen with no automation rules yet
+        var navigated = false
+        setContent(onViewFacetAutomation = { navigated = true })
+
+        // Then the row says there are no rules
+        composeRule.onNodeWithTag("facet_automation_row").assertTextContains("No rules", substring = true)
+
+        // When tapping it, then its callback fires
+        composeRule.onNodeWithTag("facet_automation_row").performClick()
+        assertEquals(true, navigated)
+    }
+
+    @Test
     fun permissionsRowIsClickable() {
         // Given the settings screen, scrolled to the Permissions row (now under SYSTEM)
         var navigated = false
@@ -350,5 +377,30 @@ class SettingsScreenTest {
 
         // Then it's genuinely interactive
         composeRule.onNodeWithTag("change_wallpaper_row").assertHasClickAction()
+    }
+
+    @Test
+    fun theProCardShowsTheActiveSummaryForAProUser() {
+        setContent(entitlement = FakeEntitlementRepository(initial = true))
+
+        composeRule.onNodeWithTag("facet_pro_row").assertExists()
+        // The state flow starts as the free default and settles on the entitlement a moment later.
+        composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodesWithText("Pro is active").fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onNodeWithTag("facet_pro_summary", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("You're on the Free plan").assertDoesNotExist()
+    }
+
+    @Test
+    fun theProCardShowsTheUpsellForAFreeUserAndOpensTheProScreen() {
+        var opened = false
+        setContent(onViewFacetPro = { opened = true }, entitlement = FakeEntitlementRepository(initial = false))
+
+        composeRule.onNodeWithText("You're on the Free plan").assertExists()
+        composeRule.onNodeWithText("PAY ONCE").assertDoesNotExist()
+        composeRule.onNodeWithText("The complete Facet experience, fully unlocked.").assertExists()
+        composeRule.onNodeWithText("Upgrade to Pro").assertExists()
+        composeRule.onNodeWithTag("facet_pro_row").performClick()
+
+        assertEquals(true, opened)
     }
 }

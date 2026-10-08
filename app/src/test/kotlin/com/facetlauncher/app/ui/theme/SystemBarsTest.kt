@@ -36,4 +36,26 @@ class SystemBarsTest {
             }
         }
     }
+
+    @Test
+    fun `a dark top keeps status icons light but lets the navigation bar follow the theme`() {
+        for (style in SystemBarIconStyle.entries) {
+            for (isDark in listOf(true, false)) {
+                assertEquals(true, useLightSystemBarIcons(style, SystemBarsBackdrop.DARK_TOP, isDark))
+                assertEquals(isDark, useLightNavigationBarIcons(style, SystemBarsBackdrop.DARK_TOP, isDark))
+            }
+        }
+    }
+
+    @Test
+    fun `every other backdrop uses the same icons for the navigation bar`() {
+        for (backdrop in SystemBarsBackdrop.entries.filter { it != SystemBarsBackdrop.DARK_TOP }) {
+            for (isDark in listOf(true, false)) {
+                assertEquals(
+                    useLightSystemBarIcons(SystemBarIconStyle.MATCH_THEME, backdrop, isDark),
+                    useLightNavigationBarIcons(SystemBarIconStyle.MATCH_THEME, backdrop, isDark),
+                )
+            }
+        }
+    }
 }

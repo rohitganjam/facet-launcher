@@ -4,7 +4,7 @@ Native Android launcher app.
 - Kotlin-only, Jetpack Compose (no XML layouts), single `:app` module — plus `:detekt-rules`, a plain-JVM module for custom Detekt rules (e.g. `ComposeHardcodedText`), kept separate since a rule must compile before the module it checks, and `:benchmark`, a `com.android.test` module for Macrobenchmark tests (`androidx.benchmark`) against `:app`'s `benchmark` build type. Don't add app code to either or create further modules.
 - MVVM throughout: composables → `ViewModel`s → `Repository`s → `domain/` use cases, strictly layered.
 - Hilt for DI, Room + DataStore for persistence, Coroutines + `Flow` for async state (no `LiveData`).
-- No network layer — no Retrofit/OkHttp dependency, no `INTERNET` permission — unless a feature explicitly needs it.
+- No network layer — no Retrofit/OkHttp dependency, no `INTERNET` permission — unless a feature explicitly needs it. The Play Billing library merges `INTERNET` in through its telemetry, so the manifest removes it (`tools:node="remove"`) and the `verifyNoInternetPermission` Gradle task (run by `check` and the release build) fails if it ever returns.
 
 Architecture blueprint: [`docs/architecture/README.md`](docs/architecture/README.md) — living docs, updated in the same change as the code they describe (see [Living architecture docs](#living-architecture-docs)).
 Requirements: [`Android launcher design planning/design_handoff_minimal_launcher/PRD.md`](<Android launcher design planning/design_handoff_minimal_launcher/PRD.md>).
@@ -56,12 +56,13 @@ Every component's corner radius must come from Material 3's real shape scale and
 | Medium | 12dp | `.medium` | Cards, small FABs                                      |
 | Large | 16dp | `.large` | FABs, extended FABs, navigation drawers                |
 | Extra large | 28dp | `.extraLarge` | Dialogs, large FABs, modal bottom sheets (top corners) |
-| Full | fully rounded | `CircleShape` | Buttons, search bars, segmented buttons, switches      |
+| Full | fully rounded | `CircleShape` | Search bars, segmented/tab controls, switches, icon-style circles |
 
 - Look up a component's category on the [Compose Material3 component list](https://developer.android.com/develop/ui/compose/components) or [API reference](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary) and use its real default shape (verify against the library's own tokens when in doubt — `ShapeTokens.kt`/`MenuTokens.kt`/`DialogTokens.kt`/etc. under `androidx.compose.material3.tokens`) rather than guessing a dp value.
 - A "top corners only" variant (e.g. a bottom sheet) is a literal `RoundedCornerShape(topStart = ..., topEnd = ..., bottomEnd = 0.dp, bottomStart = 0.dp)` using the matching token's dp value — `MaterialTheme.shapes` has no per-corner variant.
 
- `AppIcon`'s `cornerRadius` parameter defaults to a size-derived M3 tier — `extraSmall`/4dp for icons ≤24dp, `small`/8dp for 25–36dp, `medium`/12dp for 37dp+ 
+- **Buttons are square, not Full:** every text button uses `MaterialTheme.shapes.medium` (12dp; `TonalButton`, `ProGradientButton`) or `.large` (`SurfaceButton`) — a deliberate project choice over M3's round default. Don't add a `CircleShape` button.
+- **Exception — app icons.** `AppIcon` is outlined by the user's `IconShape` setting (`ui/components/SuperellipseShape.kt`: a superellipse by default, n=4), not the M3 shape scale, and takes no corner-radius parameter. Don't give an icon a bespoke radius.
 
 ## Testing — needed for every capability
 

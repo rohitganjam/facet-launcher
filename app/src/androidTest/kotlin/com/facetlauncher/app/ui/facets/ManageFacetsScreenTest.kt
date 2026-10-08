@@ -1,25 +1,35 @@
 package com.facetlauncher.app.ui.facets
 
+import android.appwidget.AppWidgetManager
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import android.appwidget.AppWidgetManager
-import android.os.UserManager
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.data.model.FacetLimits
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
+import com.facetlauncher.app.ui.FakeEntitlementRepository
+import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -38,6 +48,8 @@ class ManageFacetsScreenTest {
         onEditFacet: (Long) -> Unit = {},
         onFacetApply: () -> Unit = {},
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
+        entitlement: EntitlementRepository = EntitlementRepository(),
+        onOpenFacetPro: (ProReason) -> Unit = {},
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -63,13 +75,21 @@ class ManageFacetsScreenTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ManageFacetsViewModel(facetRepository, settingsRepository, DeleteFacetUseCase(facetRepository, appWidgetRepository))
+                ManageFacetsViewModel(
+                    facetRepository,
+                    settingsRepository,
+                    DeleteFacetUseCase(facetRepository, appWidgetRepository),
+                    testAutomation(context, database, facetRepository, settingsRepository, entitlement).activate,
+                    AddFacetUseCase(facetRepository, entitlement),
+                    entitlement,
+                )
             }
             FacetLauncherTheme {
                 ManageFacetsScreen(
                     onBack = onBack,
                     onEditFacet = onEditFacet,
                     onFacetApply = onFacetApply,
+                    onOpenFacetPro = onOpenFacetPro,
                     viewModel = viewModel,
                 )
             }
@@ -101,7 +121,7 @@ class ManageFacetsScreenTest {
     fun addRowIsHiddenOnceTheMaximumIsReached() {
         setContent(
             seed = { facetRepository, _ ->
-                repeat(FacetRepository.MAX_FACETS) { facetRepository.addFacet() }
+                repeat(FacetLimits.PRO_MAX_FACETS) { facetRepository.addFacet() }
             },
         )
 
@@ -224,5 +244,66 @@ class ManageFacetsScreenTest {
         composeRule.onNodeWithTag("back_button").performClick()
 
         assertEquals(true, backPressed)
+    }
+
+    private fun freeWith(count: Int, onOpenFacetPro: (ProReason) -> Unit = {}) = setContent(
+        onOpenFacetPro = onOpenFacetPro,
+        seed = { facetRepository, settings ->
+            repeat(count) { facetRepository.addFacet() }
+            settings.setActiveFacetId(1L)
+        },
+        entitlement = FakeEntitlementRepository(initial = false),
+    )
+
+    @Test
+    fun aFreeUsersFourthFacetIsLockedAndTappingItOpensTheUpgradeInsteadOfItsSettings() {
+        var edited: Long? = null
+        var opened: ProReason? = null
+        setContent(
+            onEditFacet = { edited = it },
+            onOpenFacetPro = { opened = it },
+            seed = { facetRepository, settings ->
+                repeat(4) { facetRepository.addFacet() }
+                settings.setActiveFacetId(1L)
+            },
+            entitlement = FakeEntitlementRepository(initial = false),
+        )
+
+        composeRule.onNodeWithTag("facet_reorder_lock_4", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("facet_reorder_lock_1", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag("facet_reorder_row_4").performClick()
+
+        assertEquals(ProReason.FACET_LOCKED, opened)
+        assertEquals(null, edited)
+    }
+
+    @Test
+    fun aProUserSeesNoLocks() {
+        setContent(seed = { facetRepository, _ -> repeat(4) { facetRepository.addFacet() } })
+
+        composeRule.onNodeWithTag("facet_reorder_lock_4", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun theAddRowStaysAtTheFreeLimitWithAProPillAndOpensTheUpgrade() {
+        var opened: ProReason? = null
+        freeWith(3) { opened = it }
+
+        composeRule.onNodeWithTag("facet_reorder_add_row").assertExists().performClick()
+
+        assertEquals(ProReason.FACET_LIMIT, opened)
+        composeRule.onAllNodesWithText("Pro").assertCountEquals(1)
+    }
+
+    @Test
+    fun aLockedFacetCannotBeAppliedOrOpenedButCanStillBeDeleted() {
+        freeWith(4)
+
+        composeRule.onNodeWithTag("facet_reorder_menu_4").performClick()
+        composeRule.onNode(hasText("Facet settings")).assertIsNotEnabled()
+        composeRule.onNode(hasText("Apply facet")).assertIsNotEnabled()
+        composeRule.onNode(hasText("Delete")).assertIsEnabled().performClick()
+
+        composeRule.onNodeWithTag("confirm_dialog").assertExists()
     }
 }

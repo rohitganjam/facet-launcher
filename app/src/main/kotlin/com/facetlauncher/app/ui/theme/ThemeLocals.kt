@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.theme
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 
 /**
@@ -42,3 +43,6 @@ val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }
  * Dock, context menu, pickers) — can read it without every call site threading it through.
  */
 val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAULT }
+
+/** Global app-icon outline, provided alongside [LocalIconRenderMode] for the same reason. */
+val LocalIconShape = staticCompositionLocalOf { IconShape.SQUIRCLE }

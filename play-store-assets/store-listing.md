@@ -11,16 +11,21 @@ Launcher, Lawnchair, Niagara, etc. are all listed).
 
 (74 chars)
 
-## Full description (max 4000 characters — this draft is ~2,900)
+## Full description (max 4000 characters — this draft is ~3,100)
 
 ```
 Facet Launcher is a fast, minimal home screen built around one idea: your phone is not used the same way all day. Create separate setups, called facets, and switch between them in a single tap.
 
 FACETS
-Create up to three independent facets, for example Work, Personal and Focus. Each facet can have its own clock, calendar, favorite apps and dock, or inherit shared defaults. Swipe left on the home screen to preview every facet live and switch instantly.
+Create up to three independent facets, for example Work, Personal and Focus, and switch between them in a single tap. Swipe left on the home screen to preview every facet live and switch instantly.
+- Each facet can have its own favorite apps, dock, clock style and calendar, or a widget in place of the clock
+- New facets inherit your shared defaults, so you only change what differs
+- Reorder, rename or remove facets at any time
+- Every facet is also an app shortcut ("Switch to Work"), so automation apps can switch it for you
 
 HOME SCREEN
 - A clean home screen with a clock, date and your favorite apps
+- Swap the clock for any widget of your choice, per facet
 - Show Favorites, Recents or Most Used apps in the home list
 - Choose left or right alignment, icons, text or both, and top or bottom placement
 - A dock of up to five apps, shared across facets or set per facet

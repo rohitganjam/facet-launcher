@@ -68,32 +68,33 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.GestureHintOverlay
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
+import com.facetlauncher.app.ui.facets.FacetCarouselScreen
+import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
-import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
-import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
-import com.facetlauncher.app.ui.facets.FacetCarouselScreen
-import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
-import com.facetlauncher.app.ui.theme.resolve
 import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
 import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
+import com.facetlauncher.app.ui.theme.resolve
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 /** README's drawer-transform timing/easing (`.34s cubic-bezier(.32,.72,0,1)`), reused for the settle animation. */
 private val DRAWER_SETTLE_SPEC = tween<Float>(durationMillis = FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
@@ -260,6 +261,7 @@ fun HomeDrawerRoute(
     onNavigateToSettings: () -> Unit,
     onNavigateToFacetSettings: (facetId: Long) -> Unit,
     onNavigateToManageFacets: () -> Unit,
+    onNavigateToFacetPro: (ProReason) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
     onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
@@ -274,6 +276,7 @@ fun HomeDrawerRoute(
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val clockWidgetIsPro by homeViewModel.clockWidgetFacet.isPro.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val drawerSettings by drawerViewModel.settings.collectAsStateWithLifecycle()
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
@@ -677,10 +680,15 @@ fun HomeDrawerRoute(
                 homeUiState.activeFacet?.let { onNavigateToFacetSettings(it.id) }
             },
             hasCustomClockWidget = homeUiState.clockWidgetAppWidgetId != null,
+            isPro = clockWidgetIsPro,
             onUseCustomWidgetClick = {
-                homeUiState.activeFacet?.let { facet ->
-                    clockWidgetPickerFacetId = facet.id
-                    showClockWidgetPicker = true
+                if (!clockWidgetIsPro) {
+                    onNavigateToFacetPro(ProReason.CUSTOM_WIDGET)
+                } else {
+                    homeUiState.activeFacet?.let { facet ->
+                        clockWidgetPickerFacetId = facet.id
+                        showClockWidgetPicker = true
+                    }
                 }
             },
             onSwitchToLauncherClockClick = {
@@ -993,6 +1001,7 @@ fun HomeDrawerRoute(
                 onEditFacet = onNavigateToFacetSettings,
                 onReorderFacets = onNavigateToManageFacets,
                 onNavigateToSettings = onNavigateToSettings,
+                onOpenFacetPro = onNavigateToFacetPro,
                 onDismissDrag = { deltaPx -> facetAxis.dragBy(-deltaPx) },
                 onDismissDragEnd = { facetAxis.settle() },
                 modifier = Modifier.fillMaxSize(),

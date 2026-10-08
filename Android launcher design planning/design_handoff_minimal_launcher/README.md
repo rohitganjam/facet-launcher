@@ -56,6 +56,7 @@ App names are invented. No real products are depicted.
 | `4n`–`4o` | Add facet: placeholder page, then created | |
 | `4p` | Permission-denied and empty states | |
 | `4q` | Search with no results | |
+| `fa1`–`fa9` | Facet automation: settings entry, rule list, rule editor, trigger types, permission and empty states | In `facet-automation.html` |
 
 ---
 
@@ -245,6 +246,42 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 | Home list, usage access missing | Most used needs usage access from system settings. | Open settings |
 | Fresh facet, no favorites | Nothing here yet — pick up to 8 apps. | Add apps |
 | Search, contacts denied | Contact results need contacts access. | Turn on |
+| Facet automation, no rules | Add a rule to switch facets automatically. | Add rule |
+| Facet automation, rule's permission revoked | Row subtitle: Needs Bluetooth access / Needs location access | Tap the row to allow |
+| Rule editor, permission refused | Bluetooth access is off, so this trigger can't be used. Allow it in Settings. | Open settings |
+
+---
+
+### Facet automation (`fa1`–`fa9`, `facet-automation.html`)
+
+Rules that switch the active facet by themselves. Entry: Settings → Facets → **Facet automation**, a row under *Manage facets* (subtitle: rule count or "No rules"). Open `facet-automation.html` in a browser for all nine screens in light and dark. Built as spec'd, with the deviations listed last.
+
+- **List (`fa2`).** A status line first, only when a rule is running: "Showing Work because of the rule …", or, after the user picks a facet by hand, "Showing Travel, the facet you chose. … is paused until it ends." Then a **Rules** card: one row per rule (trigger icon, derived title such as "Weekdays · 9:00–18:00" or "Car · connected", subtitle "Work, then previous facet", enable switch) and an accent **Add rule** row, hidden at the free limit. Then a **Use other apps** card explaining the per-facet "Switch to" shortcuts. Empty state is the dashed strip from `4p`.
+- **Rule editor (`fa3`, `fa5`, `fa9`).** A bottom sheet (closes on Home press): *Switch to* (facet dropdown), *When* (trigger dropdown), the trigger's own fields, *When it ends* (radios: Return to previous facet, Stay on the target, and "Switch to" with its facet dropdown on the same row), Cancel / Save, and a Delete action only when editing.
+  - **Schedule:** seven M3 filter chips (small shape, 8dp; selected = accent-tinted fill and accent border; full day names announced), From and Until time rows in the phone's 12/24-hour format. An Until before From shows "Ends the next day". No days selected blocks Save with "Pick at least one day".
+  - **Bluetooth:** a two-tab pill (the Apps/Folders tab component) for while connected / while not connected, then a *Device* dropdown of paired devices. The device is picked, never typed; no device blocks Save.
+  - **Wi-Fi:** a pill tab for while connected / not connected, then another for *Any network* / *Named network*. Named reveals a *Network* dropdown of networks in range; no network blocks Save.
+  - **Headphones:** a pill tab for while plugged in / not plugged in.
+  - **Battery:** pill tabs for *Charging / Not charging* and *Below / Above*, and a 5% slider (Above stops at 95%).
+- **Permissions (`fa7`, `fa8`).** Asked when the choice that needs them is made (Bluetooth type; Named network). A refusal keeps the previous trigger and shows a note with **Open settings**. A saved rule whose permission was later revoked is dimmed with an error icon and "Needs … access"; tapping it asks for the permission.
+- **Pro states (`fa4`, `fa6`).** For a free user: device triggers carry a **Pro pill** in the *When* dropdown, and choosing one opens the **Facet Pro screen** (see below) instead of asking for a permission; at the 2-rule limit the **Add rule** row carries a Pro pill and opens the same screen; a dashed strip under the Rules card reads "Free includes 2 schedule rules. Pro adds more rules and triggers…" with **Upgrade to Pro**; rules that no longer qualify are dimmed with a lock and "Paused. Needs Pro" (tapping opens the Facet Pro screen). Free keeps the first two schedule rules, in list order.
+- **Shape (M3 scale).** Sheet top corners 28dp (extra large), dialogs 28dp, cards and the status line 12dp (medium), dashed strips 12dp (medium), chips, Pro pill and menus 8dp (small), switches, radios and slider are stock M3. Buttons follow the app's existing square-button convention (`TonalButton` / `SurfaceButton`), a documented departure from M3's full-round buttons.
+- **Tokens.** `Surface` sheet, `Ink` / `Muted` text, `Accent` for selected chips, radios, slider and the Add rule row, `Hairline` for unselected chips and slider track, `ErrorColor` for inline errors and Delete. Dialogs 28dp (M3 extra large), buttons use `TonalButton` and `SurfaceButton`.
+
+**Deviations from the mockups.** The trigger picker (`fa4`) is a dropdown row in the editor, not a second sheet, and the Pro pills sit in that dropdown. Everyone is treated as entitled until billing exists, so the Pro states only appear for a free user once the billing plan lands. The mockup's radii were aligned with the M3 scale (strips 12, sheet 28). A Bluetooth rule whose device was unpaired is not yet flagged "Device not found".
+
+### Facet Pro (design turn 12, `12a`-`12d`)
+
+Source: turn 12 of `Launcher.dc.html` and `Launcher Dark.dc.html` ("Pro, fancier"). The only new colour is **dark ink `#0A0F1D`**; the glows, the PRO mark and the primary button follow the accent, so they follow the wallpaper or swatch accent the user picked. Section 11 (including the gate sheet `11c`) is not built: every Pro limit goes straight to this screen.
+
+- **`12a` Settings, free.** A dark card above the sections (M3 large shape, 16dp): two accent radial glows over the ink, a three-card facet fan peeking out of the top-right corner (26×44dp cards at -9°, 0°, +9°), the gradient **PRO** mark with "You're on the Free plan" beside it (so the card says where the user stands; the mockup's "PAY ONCE" is dropped), the evergreen headline "The complete Facet experience, fully unlocked." (no numbers or feature names, so it never needs editing as Pro grows), an open-lock icon and an **Upgrade to Pro** frosted button (the mockup says "See Pro"). It has the most contrast on the page so it reads first. In dark theme it gains a 1dp light inset border and a deeper shadow to separate from the page.
+- **`12d` Settings, Pro.** The card shrinks to one dark row: PRO mark, "Pro is active", and a live summary ("3 facets · 2 triggers running"; just the facet count when no rule is on).
+- **`12b` Upgrade.** A dark hero (two accent glows) with a back arrow (Restore purchases sits under the unlock button instead); three illustrative mini home screens fanned (Weekend, Drive, Work, each in a different clock style; the side two at 55% before purchase); two frosted trigger pills ("Office → Work", "Car → Drive"); the PRO mark and the headline "More facets, more automation, more customization" The limit that sent the user here shows as a short line under the headline (not in the mockup; kept so a gated tap explains itself). Below the hero, four feature rows (36dp icon tile on the M3 medium shape): More facets, Wi-Fi/Bluetooth/headphones/battery triggers, Custom Widgets on home screen, Future Pro features included. Pinned at the bottom on the page colour: a full-width accent-gradient **Unlock Lifetime Pro · {Play price}** button (48dp, 12dp corners, glow) with Restore purchases beneath; "Lifetime" carries the one-time, no-subscription message, so there is no separate price row. The hero is compacted (fan at 82%) so about three feature rows show above the bar, which has a soft top shadow.
+- **`12c` Post-purchase.** The whole screen dark ink. The same fan fully lit with a check badge over the centre card, "You're on Pro", "Unlocked on every phone signed in to this Google account.", four rows tagged UNLOCKED (facets, Wi-Fi, Bluetooth, headphones and battery), and pinned buttons **Set up a trigger** (opens Facet automation) and **Add a facet** (opens Manage facets). "Done" top right.
+- **Where the app differs from the mockup copy.** "Unlimited facets" / "Free stops at two" become "More facets" / "Free includes 3. Pro goes up to 10", because those are the app's real limits; the triggers row names all four triggers; the price is whatever Google Play returns, so the mockup's `$4.99` is a placeholder (without a price the label reads "One-time purchase · no subscription"). The mini home screens are fixed examples, not the user's facets.
+- **Shapes follow the app, not the mockup.** The mockup draws its buttons and chips as full pills; the app's buttons are square (M3 medium, 12dp, as `TonalButton`), so the Unlock Pro, Set up a trigger and Upgrade to Pro buttons use that shape (keeping the accent gradient and glow), and the trigger pills use the M3 chip shape (small, 8dp). Round buttons would be a decision for every button in the app, not just these.
+- **System bars.** Before purchase the status bar sits over the dark hero (light icons) while the navigation bar sits over the page-coloured bottom bar (icons follow the theme); after purchase both are over dark ink.
+- Debug builds add a **DEBUG** card at the bottom of Settings to force Pro or Free; release builds never contain it.
 
 ---
 

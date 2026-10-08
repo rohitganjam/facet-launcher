@@ -29,6 +29,7 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -165,6 +166,7 @@ class ImportBackupUseCase @Inject constructor(
             settings.customAccentSwatch?.let { setCustomAccentSwatch(it) }
             setWallpaperAccentRole(settings.wallpaperAccentRole.toEnumOrDefault(WallpaperAccentRole.PRIMARY))
             setIconRenderMode(settings.iconRenderMode.toEnumOrDefault(IconRenderMode.SYSTEM_DEFAULT))
+            setIconShape(settings.iconShape.toEnumOrDefault(IconShape.SQUIRCLE))
             setLauncherFontOption(settings.launcherFontOption.toEnumOrDefault(LauncherFontOption.SYSTEM))
             setFontScaleOption(settings.fontScaleOption.toEnumOrDefault(FontScaleOption.DEFAULT))
             setAppLabelColorOption(settings.appLabelColorOption.toEnumOrDefault(ClockColorOption.THEME))

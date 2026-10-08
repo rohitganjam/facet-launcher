@@ -30,6 +30,7 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -68,6 +69,7 @@ private object Keys {
     val CUSTOM_ACCENT_SWATCH = stringPreferencesKey("custom_accent_swatch")
     val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
+    val ICON_SHAPE = stringPreferencesKey("icon_shape")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
     val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
@@ -75,6 +77,8 @@ private object Keys {
     val SYSTEM_BAR_ICON_STYLE = stringPreferencesKey("system_bar_icon_style")
     val CALENDAR_PERMISSION_REQUESTED = booleanPreferencesKey("calendar_permission_requested")
     val CONTACTS_PERMISSION_REQUESTED = booleanPreferencesKey("contacts_permission_requested")
+    val BLUETOOTH_PERMISSION_REQUESTED = booleanPreferencesKey("bluetooth_permission_requested")
+    val LOCATION_PERMISSION_REQUESTED = booleanPreferencesKey("location_permission_requested")
     val APP_ROW_POSITION = stringPreferencesKey("app_row_position")
     val APP_ROW_PRESENTATION = stringPreferencesKey("app_row_presentation")
     val LIST_CONTENT_MODE = stringPreferencesKey("list_content_mode")
@@ -147,6 +151,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.wallpaperAccentRole,
             iconRenderMode = preferences[Keys.ICON_RENDER_MODE]?.let { runCatching { IconRenderMode.valueOf(it) }.getOrNull() }
                 ?: defaults.iconRenderMode,
+            iconShape = preferences[Keys.ICON_SHAPE]?.let { runCatching { IconShape.valueOf(it) }.getOrNull() }
+                ?: defaults.iconShape,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.launcherFontOption,
             fontScaleOption = preferences[Keys.FONT_SCALE_OPTION]?.let { runCatching { FontScaleOption.valueOf(it) }.getOrNull() }
@@ -159,6 +165,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.systemBarIconStyle,
             calendarPermissionRequested = preferences[Keys.CALENDAR_PERMISSION_REQUESTED] ?: defaults.calendarPermissionRequested,
             contactsPermissionRequested = preferences[Keys.CONTACTS_PERMISSION_REQUESTED] ?: defaults.contactsPermissionRequested,
+            bluetoothPermissionRequested = preferences[Keys.BLUETOOTH_PERMISSION_REQUESTED] ?: defaults.bluetoothPermissionRequested,
+            locationPermissionRequested = preferences[Keys.LOCATION_PERMISSION_REQUESTED] ?: defaults.locationPermissionRequested,
             appRowPosition = preferences[Keys.APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() }
                 ?: defaults.appRowPosition,
             appRowPresentation = preferences[Keys.APP_ROW_PRESENTATION]?.let { runCatching { AppRowPresentation.valueOf(it) }.getOrNull() }
@@ -293,6 +301,10 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.ICON_RENDER_MODE] = mode.name }
     }
 
+    suspend fun setIconShape(shape: IconShape) {
+        dataStore.edit { it[Keys.ICON_SHAPE] = shape.name }
+    }
+
     suspend fun setLauncherFontOption(option: LauncherFontOption) {
         dataStore.edit { it[Keys.LAUNCHER_FONT_OPTION] = option.name }
     }
@@ -319,6 +331,14 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setContactsPermissionRequested(requested: Boolean) {
         dataStore.edit { it[Keys.CONTACTS_PERMISSION_REQUESTED] = requested }
+    }
+
+    suspend fun setBluetoothPermissionRequested(requested: Boolean) {
+        dataStore.edit { it[Keys.BLUETOOTH_PERMISSION_REQUESTED] = requested }
+    }
+
+    suspend fun setLocationPermissionRequested(requested: Boolean) {
+        dataStore.edit { it[Keys.LOCATION_PERMISSION_REQUESTED] = requested }
     }
 
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appRowPosition]. */

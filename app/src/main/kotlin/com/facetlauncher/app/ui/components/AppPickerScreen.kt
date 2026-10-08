@@ -313,55 +313,15 @@ private fun AppPickerFoldersList(
 
 @Composable
 private fun AppPickerTabRow(selected: AppPickerTab, onSelect: (AppPickerTab) -> Unit, tagPrefix: String, modifier: Modifier = Modifier) {
-    val tabs = AppPickerTab.entries
-    val selectedIndex = tabs.indexOf(selected)
-    val density = LocalDensity.current
-    var rowSizePx by remember { mutableStateOf(IntSize.Zero) }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(CircleShape)
-            .background(SurfaceContainer)
-            .padding(4.dp)
-            .onSizeChanged { rowSizePx = it },
-    ) {
-        if (rowSizePx.width > 0) {
-            val tabWidth = with(density) { (rowSizePx.width / tabs.size).toDp() }
-            val tabHeight = with(density) { rowSizePx.height.toDp() }
-            val indicatorOffset by animateDpAsState(
-                targetValue = tabWidth * selectedIndex,
-                animationSpec = tween(TAB_TRANSITION_DURATION_MS),
-                label = "app_picker_tab_indicator",
-            )
-            Box(
-                modifier = Modifier
-                    .offset(x = indicatorOffset)
-                    .size(width = tabWidth, height = tabHeight)
-                    .clip(CircleShape)
-                    .background(Accent),
-            )
-        }
-        Row {
-            tabs.forEach { tab ->
-                val isSelected = tab == selected
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = { onSelect(tab) })
-                        .testTag("${tagPrefix}_tab_${tab.name.lowercase()}")
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(if (tab == AppPickerTab.APPS) R.string.app_picker_tab_apps else R.string.app_picker_tab_folders),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) Surface else Ink,
-                    )
-                }
-            }
-        }
-    }
+    PillTabPair(
+        startLabel = stringResource(R.string.app_picker_tab_apps),
+        endLabel = stringResource(R.string.app_picker_tab_folders),
+        endSelected = selected == AppPickerTab.FOLDERS,
+        onSelect = { onSelect(if (it) AppPickerTab.FOLDERS else AppPickerTab.APPS) },
+        startTag = "${tagPrefix}_tab_apps",
+        endTag = "${tagPrefix}_tab_folders",
+        modifier = modifier,
+    )
 }
 
 /** The Folders tab's own row — checking places this folder in the current list (capacity-gated, same as an app); unchecking removes the placement only, never deletes the folder itself. */

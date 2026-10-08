@@ -33,3 +33,6 @@ keystore.properties
 *.keystore
 
 __pycache__/
+
+# Promo screenshots and collages (generated, not shipped)
+/promo-screenshots/

@@ -95,6 +95,23 @@ fun PermissionsScreen(
     val requestContactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         viewModel.markContactsPermissionRequested()
     }
+    val requestBluetoothPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        viewModel.markBluetoothPermissionRequested()
+    }
+    // Android 12+ ignores a request for precise location alone, so both are asked for together.
+    val requestLocationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        viewModel.markLocationPermissionRequested()
+    }
+
+    // The rows backed by a real runtime-permission dialog; usage and notification access use special-access screens.
+    val runtimePermissions = mapOf(
+        PermissionKind.CALENDAR to RuntimePermissionRequest(Manifest.permission.READ_CALENDAR) { requestCalendarPermission.launch(it) },
+        PermissionKind.CONTACTS to RuntimePermissionRequest(Manifest.permission.READ_CONTACTS) { requestContactsPermission.launch(it) },
+        PermissionKind.BLUETOOTH to RuntimePermissionRequest(Manifest.permission.BLUETOOTH_CONNECT) { requestBluetoothPermission.launch(it) },
+        PermissionKind.LOCATION to RuntimePermissionRequest(Manifest.permission.ACCESS_FINE_LOCATION) {
+            requestLocationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        },
+    )
 
     /**
      * `shouldShowRequestPermissionRationale` is `false` both *before ever asking* and *after the
@@ -106,17 +123,11 @@ fun PermissionsScreen(
         when (permission.kind) {
             PermissionKind.USAGE_ACCESS -> onNavigateToUsageAccessExplanation()
             PermissionKind.NOTIFICATION_ACCESS -> onNavigateToNotificationAccessExplanation()
-            PermissionKind.CALENDAR -> {
+            else -> runtimePermissions[permission.kind]?.let { request ->
                 val canAskAgain = !permission.hasRequestedBefore ||
                     activity == null ||
-                    ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_CALENDAR)
-                if (canAskAgain) requestCalendarPermission.launch(Manifest.permission.READ_CALENDAR) else openAppInfo()
-            }
-            PermissionKind.CONTACTS -> {
-                val canAskAgain = !permission.hasRequestedBefore ||
-                    activity == null ||
-                    ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_CONTACTS)
-                if (canAskAgain) requestContactsPermission.launch(Manifest.permission.READ_CONTACTS) else openAppInfo()
+                    ActivityCompat.shouldShowRequestPermissionRationale(activity, request.manifestName)
+                if (canAskAgain) request.launch(request.manifestName) else openAppInfo()
             }
         }
     }
@@ -128,6 +139,9 @@ fun PermissionsScreen(
         modifier = modifier,
     )
 }
+
+/** A runtime permission's manifest name and the system-dialog launcher for it. */
+private class RuntimePermissionRequest(val manifestName: String, val launch: (String) -> Unit)
 
 @Composable
 private fun PermissionsContent(
@@ -245,6 +259,18 @@ private fun PermissionsScreenPreview() {
                     title = "Notification access",
                     subtitle = "Shows a dot or count badge on apps with active notifications.",
                     isGranted = false,
+                ),
+                PermissionRowState(
+                    kind = PermissionKind.BLUETOOTH,
+                    title = stringResource(R.string.permission_bluetooth_title),
+                    subtitle = stringResource(R.string.permission_bluetooth_subtitle),
+                    isGranted = false,
+                ),
+                PermissionRowState(
+                    kind = PermissionKind.LOCATION,
+                    title = stringResource(R.string.permission_location_title),
+                    subtitle = stringResource(R.string.permission_location_subtitle),
+                    isGranted = true,
                 ),
             ),
             onBack = {},

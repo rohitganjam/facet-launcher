@@ -37,7 +37,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  * Per-facet settings (`3d`), reached from the long-press sheet's "Edit facet" or the carousel's
  * gear. Purely a directory of navigation rows now (see chat history) — mirrors the main
  * `SettingsScreen`'s own layout: no `InheritOverrideCard`s here any more, each destination screen
- * (Apps list / Dock / Clock style / Calendars) now owns its own Inherit/Override switch, sitting
+ * (Apps list / Dock / Appearance / Calendars) now owns its own Inherit/Override switch, sitting
  * on the same screen as the controls it gates rather than one screen removed from them.
  */
 @Composable
@@ -46,7 +46,6 @@ fun FacetSettingsScreen(
     onNavigateToAppsList: (facetId: Long) -> Unit,
     onNavigateToDockSettings: (facetId: Long) -> Unit,
     onNavigateToCalendarSettings: (facetId: Long) -> Unit,
-    onNavigateToClockStyleGallery: (facetId: Long) -> Unit,
     onNavigateToAppearance: (facetId: Long) -> Unit,
     onFacetApply: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,7 +59,6 @@ fun FacetSettingsScreen(
         onAppsListClick = { onNavigateToAppsList(viewModel.facetId) },
         onDockClick = { onNavigateToDockSettings(viewModel.facetId) },
         onCalendarClick = { onNavigateToCalendarSettings(viewModel.facetId) },
-        onClockStyleClick = { onNavigateToClockStyleGallery(viewModel.facetId) },
         onAppearanceClick = { onNavigateToAppearance(viewModel.facetId) },
         onRename = viewModel::renameFacet,
         onApplyFacet = { viewModel.applyFacet(); onFacetApply() },
@@ -75,7 +73,6 @@ private fun FacetSettingsContent(
     onAppsListClick: () -> Unit,
     onDockClick: () -> Unit,
     onCalendarClick: () -> Unit,
-    onClockStyleClick: () -> Unit,
     onAppearanceClick: () -> Unit,
     onRename: (String) -> Unit,
     onApplyFacet: () -> Unit,
@@ -141,18 +138,6 @@ private fun FacetSettingsContent(
                         )
                         CardDivider()
                         FacetSettingsRow(
-                            title = stringResource(R.string.settings_clock_calendar_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_2,
-                                stringResource(uiState.clockTemplateId.displayNameRes),
-                                stringResource(if (uiState.effectiveUse24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                            ),
-                            onClick = onClockStyleClick,
-                            testTag = "facet_clock_style_gallery_row",
-                            trailing = { NavigationChevron() },
-                        )
-                        CardDivider()
-                        FacetSettingsRow(
                             title = stringResource(R.string.facet_settings_appearance_title),
                             subtitle = stringResource(R.string.dot_join_2, uiState.dockDisplayMode.displayLabel(), uiState.appRowPresentation.displayLabel()),
                             onClick = onAppearanceClick,
@@ -209,7 +194,6 @@ private fun FacetSettingsScreenPreview() {
             onAppsListClick = {},
             onDockClick = {},
             onCalendarClick = {},
-            onClockStyleClick = {},
             onAppearanceClick = {},
             onRename = {},
             onApplyFacet = {},

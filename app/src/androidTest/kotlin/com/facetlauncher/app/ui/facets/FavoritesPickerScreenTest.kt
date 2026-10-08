@@ -160,13 +160,15 @@ class FavoritesPickerScreenTest {
         }
         val rowTag = "favorites_picker_row_${app.packageName}"
 
-        // See checkingAnAppAddsItToFavorites — wait for the real installed-apps fetch to land
-        // before interacting, rather than trusting a single waitForIdle() caught it.
+        // The overflow app sits past the cap (13th+), i.e. below the fold of the lazy list, so
+        // search for it first and only then wait for its row to be composed.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("favorites_picker_search").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("favorites_picker_search").performTextInput(app.label)
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertExists() }.isSuccess
         }
-        composeRule.onNodeWithTag("favorites_picker_search").performTextInput(app.label)
-        composeRule.waitForIdle()
         composeRule.onNodeWithTag(rowTag).assertIsOff()
 
         // When trying to check one more app past the cap

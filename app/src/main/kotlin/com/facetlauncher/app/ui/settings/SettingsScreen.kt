@@ -29,9 +29,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -42,16 +45,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
-import com.facetlauncher.app.ui.theme.Ink
+import com.facetlauncher.app.ui.pro.ProSettingsCard
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
@@ -68,6 +72,8 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 fun SettingsScreen(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
+    onViewFacetAutomation: () -> Unit,
+    onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
@@ -87,6 +93,8 @@ fun SettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onViewFacets = onViewFacets,
+        onViewFacetAutomation = onViewFacetAutomation,
+        onViewFacetPro = onViewFacetPro,
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToDockSettings = onNavigateToDockSettings,
@@ -108,6 +116,8 @@ private fun SettingsContent(
     uiState: SettingsUiState,
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
+    onViewFacetAutomation: () -> Unit,
+    onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
@@ -123,6 +133,7 @@ private fun SettingsContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val debugEntry = LocalDebugSettingsEntry.current
     // RoleManager's request-role intent must be launched for a result — some OEM
     // PermissionController builds (see DefaultLauncherRepository) silently self-finish the
     // RequestRoleActivity if it's started with a plain startActivity() instead, so this can't
@@ -144,6 +155,7 @@ private fun SettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
+                item { ProSettingsCard(isPro = uiState.isPro, facetCount = uiState.facetCount, triggersRunning = uiState.triggersRunning, onClick = onViewFacetPro) }
                 item { SectionHeader(stringResource(R.string.settings_section_facets)) }
                 item {
                     SettingsCard {
@@ -152,6 +164,18 @@ private fun SettingsContent(
                             subtitle = stringResource(R.string.settings_facets_subtitle),
                             onClick = onViewFacets,
                             testTag = "view_facets_row",
+                            trailing = { NavigationChevron() },
+                        )
+                        CardDivider()
+                        ClickableRow(
+                            title = stringResource(R.string.settings_facet_automation_title),
+                            subtitle = if (uiState.automationRuleCount == 0) {
+                                stringResource(R.string.settings_facet_automation_none)
+                            } else {
+                                pluralStringResource(R.plurals.settings_facet_automation_rules, uiState.automationRuleCount, uiState.automationRuleCount)
+                            },
+                            onClick = onViewFacetAutomation,
+                            testTag = "facet_automation_row",
                             trailing = { NavigationChevron() },
                         )
                     }
@@ -292,6 +316,8 @@ private fun SettingsContent(
                         )
                     }
                 }
+
+                debugEntry?.let { entry -> item { entry.Content() } }
 
                 item { Spacer(modifier = Modifier.height(24.dp)) }
             }
@@ -434,6 +460,7 @@ private fun SettingsScreenPreview() {
             ),
             onBack = {},
             onViewFacets = {},
+            onViewFacetAutomation = {},
             onNavigateToAppearance = {},
             onNavigateToCalendarSettings = {},
             onNavigateToDockSettings = {},
@@ -444,6 +471,7 @@ private fun SettingsScreenPreview() {
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
             onNavigateToAbout = {},
+            onViewFacetPro = {},
             onRequestDefaultLauncherIntent = { Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS) },
             onRequestWorkProfileSettingsIntent = { Intent(Settings.ACTION_SETTINGS) },
         )

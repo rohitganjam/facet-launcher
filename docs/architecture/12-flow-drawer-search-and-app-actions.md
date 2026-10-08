@@ -223,8 +223,9 @@ axes — each close in its own `launch`, never inline: a drag landing on the sam
 `CancellationException`, and inline that escaped `collect` and unsubscribed the collector for good, so
 Home silently stopped working until the app restarted (`HomeDrawerRouteTest`). Every sheet, dialog and
 overlay that composes its own state subscribes with `DismissOnHomePress` — `ThemedModalBottomSheet` does it
-for every action menu, and `FolderContentsSheet` and the contact connections sheet call it directly; a new
-one must do the same.
+for every action menu and for the facet automation rule editor (a settings sheet, so a Home press while it is
+open closes it and drops the draft), and `FolderContentsSheet` and the contact connections sheet call it
+directly; a new one must do the same.
 Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
 
 Because the transition tracks the finger, none

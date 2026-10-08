@@ -43,6 +43,26 @@
          set as the default launcher (see DefaultLauncherRepository) — no separate role request. -->
     <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
 
+    <!-- Facet automation device triggers (see docs/architecture/15). BLUETOOTH_CONNECT is a runtime
+         permission, requested when the user picks the Bluetooth trigger: it lists paired devices and
+         delivers connect/disconnect broadcasts. ACCESS_FINE_LOCATION is a runtime permission requested
+         only when the user picks "Named network" for Wi-Fi — Android gates reading a network name behind
+         it — and is used for nothing else.
+         ACCESS_COARSE_LOCATION is declared only because Android 12+ ignores a request for fine location
+         unless coarse is requested with it; the app needs fine. ACCESS_NETWORK_STATE and ACCESS_WIFI_STATE
+         are normal-level (auto-granted) and cover "any network" and listing scan results. None of these is INTERNET. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Facet makes no network requests. Google's Play Billing library drags in its data-transport telemetry
+         (transport-backend-cct), which merges INTERNET into the manifest; removing it keeps the "no internet"
+         promise in the privacy policy. Purchases go through the Play Store app over IPC and don't need it.
+         The verifyNoInternetPermission Gradle task fails the build if INTERNET ever comes back. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+
     <application
         android:name=".FacetApplication"
         android:allowBackup="true"

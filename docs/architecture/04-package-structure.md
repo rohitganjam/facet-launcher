@@ -8,31 +8,33 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (31)  @Singleton Repositories — the only layer that touches
+├── data/                          (45)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
-│   ├── di/                        (4)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule
-│   ├── local/                     (26)  Room: FacetDatabase, 12 entities, 11 DAOs, Converters, Migrations
-│   ├── model/                     (26)  Immutable value types & enums shared by every layer
+│   ├── di/                        (7)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
+│   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
+│   ├── model/                     (39)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository
 │
-├── domain/                        (39)  36 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (48)  45 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
     ├── theme/                     (11)  Color, Type, Theme, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
-    ├── components/                (31)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    ├── pro/                       (6)   FacetProScreen (before purchase) / FacetProUnlocked (after) / FacetProViewModel, ProComponents (ink panel, PRO mark, facet fans, trigger pills, gradient button), ProSettingsCard (Settings), previews
+    ├── components/                (34)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
     │                                    DragReorderState, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
     │                                    AppPickerScreen, FolderContentsSheet, …)
-    ├── navigation/                (1)   FacetNavHost + FacetDestinations (21 routes) + popBackStackSafely
+    ├── navigation/                (1)   FacetNavHost + FacetDestinations (23 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)
     ├── home/                      (13)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
     │                                    ClockAdjustToolbar, hosted-clock-widget controllers/tile, TimeTick
-    │   └── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
+    │   ├── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
+    │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel
     ├── hub/                       (11)  HubScreen / HubViewModel / HubUiState, HubGrid, widget tiles, resize/grab gestures
@@ -40,7 +42,8 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (29)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
+    └── settings/                  (30)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
+        ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```
 
@@ -60,8 +63,10 @@ app/src/main/kotlin/com/facetlauncher/app/
 | A colour/typography/motion token | `ui/theme/` | — | `Color.kt`, `Motion.kt` |
 | A `NavHost` route | `ui/navigation/FacetNavHost.kt` | `FacetDestinations.X` constant | `FOLDER_DETAIL = "folderDetail/{folderId}"` |
 
+`app/src/debug/` holds debug-only code (the entitlement override and its Settings row), reached through optional Hilt bindings so release and benchmark builds contain none of it; its tests live in `app/src/testDebug/`.
+
 Settings screens are the main exception to "one package per surface": all 13 live flat in
-`ui/settings/` (only `backup/` has its own sub-package). Clock styling is split between
+`ui/settings/` (only `backup/` and `automation/` have their own sub-package). Clock styling is split between
 `ui/home/clock/` (rendering + gallery) and `data/model/Clock*Option.kt` (choices).
 
 ## Test tree mirror
@@ -70,16 +75,16 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          25   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
-│   ├── local/     11   Converters, entities, DAO-level behaviour via in-memory Room
-│   ├── model/      1   FacetDeepLinkTest (build/parse round-trip + rejection cases)
+├── data/          36   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+│   ├── local/     12   Converters, entities, DAO-level behaviour via in-memory Room
+│   ├── model/      7   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
-├── domain/        34   one test per use case (pure logic — no Android needed for most)
-└── ui/            31   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/backup, theme)
+├── domain/        42   one test per use case (pure logic — no Android needed for most)
+└── ui/            39   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) and the rule editor state/formatting tests
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/            38   one *ScreenTest per screen + component/route/theme tests
+└── ui/            46   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
@@ -20,6 +21,7 @@ import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
+import com.facetlauncher.app.domain.RunFacetAutomationUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -58,6 +60,7 @@ data class LauncherUiState(
     val customAccentSwatch: String? = null,
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    val iconShape: IconShape = IconShape.SQUIRCLE,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
@@ -82,6 +85,7 @@ class LauncherViewModel @Inject constructor(
     private val seedDefaultDock: SeedDefaultDockUseCase,
     private val syncFacetShortcuts: SyncFacetShortcutsUseCase,
     private val activateFacetById: ActivateFacetByIdUseCase,
+    private val runFacetAutomation: RunFacetAutomationUseCase,
     private val settingsRepository: SettingsRepository,
     private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
@@ -127,6 +131,7 @@ class LauncherViewModel @Inject constructor(
                 customAccentSwatch = settings.customAccentSwatch,
                 wallpaperAccentRole = settings.wallpaperAccentRole,
                 iconRenderMode = settings.iconRenderMode,
+                iconShape = settings.iconShape,
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,
@@ -134,7 +139,8 @@ class LauncherViewModel @Inject constructor(
                 workProfiles = workProfiles,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
-        viewModelScope.launch { ensureActiveFacet() }
+        // Not one-shot: the active facet must stay a usable one when facets or the entitlement change.
+        viewModelScope.launch { ensureActiveFacet.keepUsable() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }
@@ -147,6 +153,9 @@ class LauncherViewModel @Inject constructor(
         // Runs for the app's whole lifetime, republishing the full dynamic-shortcut set on every
         // facet add/rename/reorder/delete — see SyncFacetShortcutsUseCase.
         viewModelScope.launch { syncFacetShortcuts() }
+        // Runs for the app's whole lifetime, applying automation rules whenever Home is about to be
+        // seen — see RunFacetAutomationUseCase.
+        viewModelScope.launch { runFacetAutomation(homePressedEvent) }
 
         viewModelScope.launch {
             delay(LOADING_TIMEOUT_MS)

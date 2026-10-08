@@ -14,6 +14,7 @@ import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.ui.testDeviceStateRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -44,6 +45,8 @@ class PermissionsScreenTest {
                     ContactPermissionRepository(context),
                     UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                     NotificationAccessRepository(context),
+                    FakeAutomationPermissionRepository(context, granted = false),
+                    testDeviceStateRepository(context),
                 )
             }
             FacetLauncherTheme {
@@ -70,8 +73,8 @@ class PermissionsScreenTest {
     }
 
     @Test
-    fun rendersAllFourPermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
-        // Given none of the four permissions are granted (fake Calendar repository, real
+    fun rendersAllSixPermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
+        // Given none of the six permissions are granted (fake Calendar repository, real
         // ungranted defaults for the other three — a fresh test/emulator instance never has
         // notification listener access granted either)
         setContent()
@@ -94,6 +97,19 @@ class PermissionsScreenTest {
         composeRule.onNodeWithText("Notification access").assertExists()
         composeRule.onNodeWithText("Shows a dot or count badge on apps with active notifications.").assertExists()
         composeRule.onNodeWithTag("permission_turn_on_NOTIFICATION_ACCESS").assertExists().assertHasClickAction()
+
+        // The two facet-automation permissions, each saying what it is for
+        composeRule.onNodeWithText("Bluetooth").assertExists()
+        composeRule.onNodeWithText(
+            "Lets facet automation rules react to a paired Bluetooth device, such as your car, and lists paired devices when you set one up.",
+        ).assertExists()
+        composeRule.onNodeWithTag("permission_turn_on_BLUETOOTH").assertExists().assertHasClickAction()
+
+        composeRule.onNodeWithText("Location").assertExists()
+        composeRule.onNodeWithText(
+            "Android requires it to read the Wi-Fi network name for rules about a named network. Facet only uses it for that, never to find where you are.",
+        ).assertExists()
+        composeRule.onNodeWithTag("permission_turn_on_LOCATION").assertExists().assertHasClickAction()
     }
 
     @Test
@@ -149,6 +165,8 @@ class PermissionsScreenGrantedTest {
                     ContactPermissionRepository(context),
                     UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                     NotificationAccessRepository(context),
+                    FakeAutomationPermissionRepository(context, granted = true),
+                    testDeviceStateRepository(context),
                 )
             }
             FacetLauncherTheme {
@@ -164,5 +182,11 @@ class PermissionsScreenGrantedTest {
         // Then its row shows "On" rather than a "Turn on" action
         composeRule.onNodeWithTag("permission_status_CALENDAR").assertExists()
         composeRule.onNodeWithTag("permission_turn_on_CALENDAR").assertDoesNotExist()
+
+        // And the Bluetooth and location rows (fake automation grants reporting granted) show "On" too
+        composeRule.onNodeWithTag("permission_status_BLUETOOTH").assertExists()
+        composeRule.onNodeWithTag("permission_turn_on_BLUETOOTH").assertDoesNotExist()
+        composeRule.onNodeWithTag("permission_status_LOCATION").assertExists()
+        composeRule.onNodeWithTag("permission_turn_on_LOCATION").assertDoesNotExist()
     }
 }

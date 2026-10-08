@@ -269,6 +269,8 @@ data class LauncherSettings(
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     /** F11 — Settings → Theme → "Icons"; global (not per-app) app-icon rendering mode. */
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
+    /** Settings → Appearance → "Icon shape" — see [IconShape]. Global, not facet-overridable. */
+    val iconShape: IconShape = IconShape.SQUIRCLE,
     /**
      * Settings → Appearance → "Font" — the base font for every text role app-wide except the
      * clock/calendar, which pick their own font independently (see [ClockFontOption]'s
@@ -298,6 +300,9 @@ data class LauncherSettings(
      */
     val calendarPermissionRequested: Boolean = false,
     val contactsPermissionRequested: Boolean = false,
+    /** Same "asked once" signal for the facet-automation permissions (Bluetooth, and location for named Wi-Fi networks). */
+    val bluetoothPermissionRequested: Boolean = false,
+    val locationPermissionRequested: Boolean = false,
     /** Settings → "Apps list" section — every facet's own [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]
      * inherits [appRowPosition], [appRowPresentation], and [listContentMode] unless it sets its own override. */
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,

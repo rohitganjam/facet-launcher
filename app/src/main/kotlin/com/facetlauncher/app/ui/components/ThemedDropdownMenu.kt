@@ -61,6 +61,7 @@ fun ThemedDropdownMenuItem(
     enabled: Boolean = true,
     destructive: Boolean = false,
     leadingIcon: (@Composable () -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
 ) {
     DropdownMenuItem(
@@ -75,6 +76,7 @@ fun ThemedDropdownMenuItem(
         modifier = modifier,
         enabled = enabled,
         leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
         contentPadding = contentPadding,
     )
 }

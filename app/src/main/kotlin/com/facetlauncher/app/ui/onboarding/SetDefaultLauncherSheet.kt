@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -102,7 +101,7 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            AppIcon(icon = null, size = 28.dp, cornerRadius = 8.dp, contentDescription = null)
+            AppIcon(icon = null, size = 28.dp, contentDescription = null)
             Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             Text(text = stringResource(R.string.set_default_launcher_home_app_badge), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
@@ -114,7 +113,7 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Accent, CircleShape)
+                .background(Accent, MaterialTheme.shapes.medium)
                 .clickable(onClick = onSetDefault)
                 .testTag("onboarding_set_default")
                 .padding(vertical = 14.dp),

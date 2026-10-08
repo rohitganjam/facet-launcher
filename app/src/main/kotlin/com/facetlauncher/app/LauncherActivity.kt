@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
@@ -22,12 +24,16 @@ import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.navigation.FacetNavHost
 import com.facetlauncher.app.ui.onboarding.OnboardingScreen
+import com.facetlauncher.app.ui.settings.DebugSettingsEntry
+import com.facetlauncher.app.ui.settings.LocalDebugSettingsEntry
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.ProvideSystemBars
 import com.facetlauncher.app.ui.theme.SystemBarsState
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Optional
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class LauncherActivity : ComponentActivity() {
@@ -35,6 +41,11 @@ class LauncherActivity : ComponentActivity() {
     private val viewModel: LauncherViewModel by viewModels()
 
     @Inject lateinit var launcherApps: LauncherApps
+
+    @Inject lateinit var entitlementRepository: EntitlementRepository
+
+    /** Only a debug build provides one (see `EntitlementModule`): the extra Settings rows it adds. */
+    @Inject lateinit var debugSettingsEntry: Optional<DebugSettingsEntry>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +60,7 @@ class LauncherActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalHomePressedEvent provides viewModel.homePressedEvent,
                 LocalHomeSwipeGate provides homeSwipeGate,
+                LocalDebugSettingsEntry provides debugSettingsEntry.orElse(null),
             ) {
                 FacetLauncherTheme(
                     themeMode = uiState.themeMode,
@@ -56,6 +68,7 @@ class LauncherActivity : ComponentActivity() {
                     customAccentSwatch = uiState.customAccentSwatch?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
                     wallpaperAccentRole = uiState.wallpaperAccentRole,
                     iconRenderMode = uiState.iconRenderMode,
+                    iconShape = uiState.iconShape,
                     launcherFontOption = uiState.launcherFontOption,
                     homeAppsFontWeight = uiState.homeAppsFontWeight,
                     fontScaleOption = uiState.fontScaleOption,
@@ -87,6 +100,12 @@ class LauncherActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // A refund, a purchase on another device or a redeemed code shows up here without a restart.
+        lifecycleScope.launch { entitlementRepository.refresh() }
     }
 
     override fun onNewIntent(intent: Intent) {

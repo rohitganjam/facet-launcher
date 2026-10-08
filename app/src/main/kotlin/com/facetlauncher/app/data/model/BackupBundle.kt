@@ -92,6 +92,8 @@ data class BackupSettings(
     val customAccentSwatch: String?,
     val wallpaperAccentRole: String,
     val iconRenderMode: String,
+    /** Purely additive and defaulted, so no version bump. */
+    val iconShape: String = IconShape.SQUIRCLE.name,
     val launcherFontOption: String,
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment. */
     val fontScaleOption: String = FontScaleOption.DEFAULT.name,

@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.home
 
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -21,6 +24,7 @@ class ClockAdjustSheetTest {
         hasCustomClockWidget: Boolean = false,
         onUseCustomWidgetClick: () -> Unit = {},
         onSwitchToLauncherClockClick: () -> Unit = {},
+        isPro: Boolean = true,
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
@@ -33,6 +37,7 @@ class ClockAdjustSheetTest {
                     onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
                     overrideFacetName = overrideFacetName,
                     hasCustomClockWidget = hasCustomClockWidget,
+                    isPro = isPro,
                 )
             }
         }
@@ -108,6 +113,32 @@ class ClockAdjustSheetTest {
         setContent(overrideFacetName = null, onUseCustomWidgetClick = { clicked = true })
 
         composeRule.onNodeWithTag("clock_adjust_use_custom_widget").performClick()
+
+        assert(clicked)
+    }
+
+    @Test
+    fun useCustomWidgetRowShowsAProPillOnlyOnTheFreePlan() {
+        // Given a free user
+        setContent(overrideFacetName = null, isPro = false)
+
+        // Then the row is marked Pro, and still reports its click so the caller can open Facet Pro
+        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").assertTextContains("Pro")
+    }
+
+    @Test
+    fun useCustomWidgetRowHasNoProPillForAProUser() {
+        setContent(overrideFacetName = null, isPro = true)
+
+        composeRule.onAllNodesWithText("Pro").assertCountEquals(0)
+    }
+
+    @Test
+    fun aFreeUserCanStillSwitchBackToTheLauncherClock() {
+        var clicked = false
+        setContent(overrideFacetName = null, hasCustomClockWidget = true, isPro = false, onSwitchToLauncherClockClick = { clicked = true })
+
+        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
 
         assert(clicked)
     }

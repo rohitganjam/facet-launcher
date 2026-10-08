@@ -535,6 +535,58 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration25To26CreatesAutomationRulesTableWithItsForeignKeys() {
+        // Given a v25 database with two facets
+        val dbV25 = helper.createDatabase(TEST_DB, 25)
+        insertFacetV25(dbV25, id = 1, name = "Work")
+        insertFacetV25(dbV25, id = 2, name = "Home")
+        dbV25.close()
+
+        // When migrating to v26 (Room also validates the result against the exported v26 schema)
+        val dbV26 = helper.runMigrationsAndValidate(TEST_DB, 26, true, Migrations.MIGRATION_25_26)
+
+        // Then the existing facets survived and the new table accepts a rule that references them
+        val facets = dbV26.query("SELECT COUNT(*) FROM facets")
+        assertTrue(facets.moveToFirst())
+        assertEquals(2, facets.getInt(0))
+        facets.close()
+        dbV26.execSQL(
+            "INSERT INTO automation_rules (id, position, enabled, targetFacetId, endBehavior, endFacetId, triggerType, " +
+                "negated, scheduleDays, scheduleStartMinute, scheduleEndMinute, deviceAddress, deviceName, wifiSsid, batteryThreshold, " +
+                "batteryDirection) " +
+                "VALUES (1, 0, 1, 1, 'SWITCH_TO', 2, 'SCHEDULE', 0, 31, 540, 1080, NULL, NULL, NULL, NULL, NULL)",
+        )
+
+        // And deleting the end facet clears it, while deleting the target facet removes the rule
+        // (MigrationTestHelper's database leaves foreign keys off, unlike the Room-built one)
+        dbV26.execSQL("PRAGMA foreign_keys = ON")
+        dbV26.execSQL("DELETE FROM facets WHERE id = 2")
+        val afterEndFacetDelete = dbV26.query("SELECT endFacetId FROM automation_rules WHERE id = 1")
+        assertTrue(afterEndFacetDelete.moveToFirst())
+        assertTrue(afterEndFacetDelete.isNull(0))
+        afterEndFacetDelete.close()
+        dbV26.execSQL("DELETE FROM facets WHERE id = 1")
+        val remaining = dbV26.query("SELECT COUNT(*) FROM automation_rules")
+        assertTrue(remaining.moveToFirst())
+        assertEquals(0, remaining.getInt(0))
+        remaining.close()
+    }
+
+    private fun insertFacetV25(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
+        db.execSQL(
+            "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
+                "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, clockAlignment, clockZoneHeightDp, " +
+                "clockScale, clockWidgetAppWidgetId, clockWidgetWidthDp, clockWidgetHeightDp, overrideApps, appRowPosition, " +
+                "appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment, overridingFavorites, " +
+                "overrideDock, dockDisplayMode, overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv, appListLayout, " +
+                "appListColumnAlignment, appListGridColumns, appListGridDisplayMode) VALUES " +
+                "($id, '$name', $id, 0, 'LIGHT_STACK', 'SYSTEM', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LEFT', NULL, " +
+                "0.8, NULL, NULL, NULL, 0, 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'FAVORITES', 6, 'LAUNCHER_DEFAULT', 0, 0, " +
+                "'LAUNCHER_DEFAULT', 0, 1, NULL, 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT')",
+        )
+    }
+
     private companion object {
         const val TEST_DB = "facet-migration-test.db"
     }

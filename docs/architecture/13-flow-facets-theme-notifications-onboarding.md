@@ -11,8 +11,10 @@ defaults or override a whole block at a time.
 ```mermaid
 flowchart TB
     subgraph SWITCH["Switch / manage"]
-        CAR["FacetCarouselScreen\n(drag-left from Home)"] -- "selectFacet(id)" --> S1["settingsRepository.setActiveFacetId(id)"]
-        EXT["Deep link / dynamic shortcut\n(external trigger — see 14)"] -- "ActivateFacetByIdUseCase(id)\n(no-op if id doesn't resolve)" --> S1
+        CAR["FacetCarouselScreen\n(drag-left from Home)"] -- "selectFacet(id)" --> UC["ActivateFacetByIdUseCase(id)\nmanual: baseline = id, active rules suppressed\n(no-op if id doesn't resolve)"]
+        EXT["Deep link / dynamic shortcut\n(external trigger — see 14)"] --> UC
+        MANA["ManageFacetsScreen / FacetSettingsScreen\n(Apply facet)"] --> UC
+        UC --> S1["settingsRepository.setActiveFacetId(id)"]
         CAR -- "addFacet()" --> S2["facetRepository.addFacet()\n(name 'Facet N', position = count)"]
         MAN["ManageFacetsScreen"] -- "reorderFacets / deleteFacet / rename" --> S3["FacetRepository update/delete\n(delete cascades all per-facet placements)"]
         S1 --> HOME["ObserveHomeScreenStateUseCase\nactiveFacet = facets.first { id == activeFacetId }\n→ flatMapLatest re-subscribes every facet-scoped flow"]
@@ -34,11 +36,11 @@ flowchart TB
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
     end
-    EAF["EnsureActiveFacetUseCase (startup)\nno facets → addFacet(); activeFacetId not found → first facet"] --> S1
+    EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```
 
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row plus one "HOME & APPS" card with
-  Apps list / Dock / Appearance / Clock style / Calendars rows, mirroring `SettingsScreen`'s own
+  Apps list / Dock / Appearance / Calendars rows, mirroring `SettingsScreen`'s own
   layout. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
   own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle
   sits on the same screen as the controls it gates, and `setOverriding*` calls now live in that
@@ -46,8 +48,11 @@ flowchart TB
   exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
   switch of its own (see the `LOOK` subgraph above).
 - **`AppearanceSettingsScreen` is three separate cards**, not one — "DOCK & HOME" (the `LOOK`
-  fields above, always shown), then (global mode only) "CLOCK" (just the Clock style nav
-  row) and "GENERAL" (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
+  fields above, always shown), "CLOCK" (just the Clock & calendar style nav row, shown in both
+  scopes — in facet scope it opens that facet's own `FacetClockStyleGalleryScreen`, and its
+  subtitle and the preview clock resolve through `overrideClock` via
+  `AppearanceSettingsUiState.clockSettings`), and (global mode only) "GENERAL"
+  (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
   position". Within "DOCK & HOME", `appListLayout` ("App list layout" — always visible) then gates
@@ -102,13 +107,34 @@ flowchart TB
   resolvers, then rose to 19 with the four `appListLayout`/`appListColumnAlignment`/
   `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added).
 
+### 1a. Facet limits and the free plan
+
+How many facets a user may have is `FacetLimits` (`data/model`): **3 free, 10 with Pro**. `AddFacetUseCase`
+enforces it (the repository does not, since it knows nothing about entitlement), and the add row and the
+carousel's add page show at the free limit with a Pro pill that opens the Facet Pro screen (`ui/pro`).
+
+A user who loses Pro keeps every facet, but only the **first 3 in list order are selectable**
+(`SelectableFacetsUseCase`); the rest are disabled until the count drops to 3 or Pro returns. Nothing is
+deleted for them, and a disabled facet can still be deleted (the last remaining facet cannot). Reordering
+chooses which three are usable. Disabled means:
+
+| Where | Behaviour |
+|---|---|
+| Carousel and Manage facets | Dimmed with a lock; tapping opens the Facet Pro screen instead of applying or opening its settings. In Manage facets the overflow menu disables *Facet settings* and *Apply* but keeps *Delete*. |
+| `ActivateFacetByIdUseCase` | A no-op for a disabled facet, which covers shortcuts and deep links. |
+| `EnsureActiveFacetUseCase.keepUsable()` | Runs whenever the selectable set changes (an add, a delete, a reorder, a change of entitlement): if the active facet is missing or disabled, the first selectable facet takes over. |
+| Facet shortcuts | Published only for selectable facets (`SyncFacetShortcutsUseCase`). |
+| Facet automation | A rule aimed at a disabled facet is a no-op: `RefreshAutomationStateUseCase` passes only selectable ids as the evaluator's existing facets, so the existing "facet missing" fallback applies ([15](15-flow-facet-automation.md)). |
+
+`EntitlementRepository.isPro` comes from Google Play ([16](16-flow-billing.md)). A debug or sideloaded build is Free unless the debug override forces Pro.
+
 ## 2. Theme resolution — from DataStore to `MaterialTheme`
 
 ```mermaid
 flowchart LR
-    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, launcher_font_option,\nhome_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState"]
+    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_shape, launcher_font_option,\nhome_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState"]
     LVM --> ACT["LauncherActivity.setContent"]
-    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
+    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
     T --> DARK{"themeMode"}
     DARK -- LIGHT --> L[light]
     DARK -- DARK --> D[dark]
@@ -120,7 +146,7 @@ flowchart LR
     SW --> CS
     T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
     CS --> MT["MaterialTheme(colorScheme, typography, shapes = M3 defaults)"]
-    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode"]
+    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape"]
     MT --> APP[every screen]
     LOCALS --> APP
 ```
@@ -172,6 +198,7 @@ Which color stays legible depends on what's *behind* the bars, so the pure rule
 | `WALLPAPER` | `HomeDrawerRoute` (Home, Hub, carousel, Drawer) | the `system_bar_icon_style` setting: `MATCH_THEME` (default) follows the theme, `LIGHT`/`DARK` force it |
 | `THEME_SURFACE` | the default; `HomeDrawerRoute` while a widget picker covers Home | always follow the theme (the setting is ignored — it could make icons invisible on an opaque screen) |
 | `DARK_SURFACE` | `HomeDrawerRoute` while Private Space shows | always light — `PrivateSpaceTheme` is fixed-dark regardless of theme |
+| `DARK_TOP` | `FacetProScreen` before purchase: a dark hero over a normal page | status bar icons always light; the navigation bar follows the theme (`useLightNavigationBarIcons`), since it sits over the page-coloured bottom bar |
 
 A screen only declares its backdrop (`SystemBarsBackdropEffect`); leaving composition falls back to
 `THEME_SURFACE`, so Settings and onboarding need no code. Bottom sheets are separate windows with

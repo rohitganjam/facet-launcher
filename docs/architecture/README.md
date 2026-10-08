@@ -8,13 +8,13 @@ checked against source, not against planning docs; where the code diverges from
 | Doc | What it covers |
 |---|---|
 | [01-architecture-and-layers.md](01-architecture-and-layers.md) | Layer boundaries, unidirectional data flow, Hilt components/scopes/modules, entry points |
-| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (12 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v23, the complete DataStore key registry (46 keys, read/write paths, all 48 writers), backup file format |
+| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (13 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v23, the complete DataStore key registry (47 keys, read/write paths, all 49 writers), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
 | [05-findings.md](05-findings.md) | Architect's review: 12 findings ranked by severity with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
 | [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (137 classes / 1104 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 31 repositories (deps, source wrapped, API, consumers), 33 use cases, 27 ViewModels |
+| [07-registries.md](07-registries.md) | Complete inventories: 41 repositories (deps, source wrapped, API, consumers), 43 use cases, 30 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder; override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -22,6 +22,8 @@ checked against source, not against planning docs; where the code diverges from
 | [12-flow-drawer-search-and-app-actions.md](12-flow-drawer-search-and-app-actions.md) | Flow: drawer data-in, search pipeline (apps/contacts/settings), per-app actions, Home gesture routing |
 | [13-flow-facets-theme-notifications-onboarding.md](13-flow-facets-theme-notifications-onboarding.md) | Flows: facet switch/preview/override, theme resolution, notification badges, onboarding |
 | [14-flow-deep-links-and-shortcuts.md](14-flow-deep-links-and-shortcuts.md) | Flow: facet deep links (`facetlauncher://facet/{id}`), dynamic-shortcut sync, external-trigger ingestion |
+| [15-flow-facet-automation.md](15-flow-facet-automation.md) | Framework: rules that switch the active facet — concepts, baseline/overlay state model, the pure evaluator, manual-wins enforcement, planned triggers and runner, invariants. Mixes built and planned (labelled) |
+| [16-flow-billing.md](16-flow-billing.md) | Flow: the one-time `facet_pro` Google Play purchase, the cached entitlement and its offline rules, Buy/Restore, what a lapse does, the debug override, and why there is still no `INTERNET` |
 
 ## Stack at a glance
 

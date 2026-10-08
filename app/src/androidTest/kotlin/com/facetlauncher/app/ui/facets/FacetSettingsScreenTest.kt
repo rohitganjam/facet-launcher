@@ -27,6 +27,8 @@ import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -37,7 +39,7 @@ import org.junit.Test
 
 /**
  * The top-level per-facet screen is now a short nav list — Rename, then one "HOME & APPS" card
- * with a plain row into each area's own settings screen (Apps list / Dock / Clock style /
+ * with a plain row into each area's own settings screen (Apps list / Dock / Appearance /
  * Calendars), mirroring `SettingsScreen`'s own layout. No Inherit/Override switches here any
  * more — each destination screen now owns its own (see chat history), exercised by
  * `com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreenTest` / `DockSettingsScreenTest` /
@@ -56,7 +58,6 @@ class FacetSettingsScreenTest {
         onNavigateToAppsList: (Long) -> Unit = {},
         onNavigateToDockSettings: (Long) -> Unit = {},
         onNavigateToCalendarSettings: (Long) -> Unit = {},
-        onNavigateToClockStyleGallery: (Long) -> Unit = {},
         onNavigateToAppearance: (Long) -> Unit = {},
         onFacetApply: () -> Unit = {},
     ): FacetRepository {
@@ -82,6 +83,7 @@ class FacetSettingsScreenTest {
                     DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    testAutomation(context, database, facetRepository, settingsRepository).activate,
                 )
             }
             FacetLauncherTheme {
@@ -90,7 +92,6 @@ class FacetSettingsScreenTest {
                     onNavigateToAppsList = onNavigateToAppsList,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToCalendarSettings = onNavigateToCalendarSettings,
-                    onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
                     onNavigateToAppearance = onNavigateToAppearance,
                     onFacetApply = onFacetApply,
                     viewModel = viewModel,
@@ -166,17 +167,9 @@ class FacetSettingsScreenTest {
     }
 
     @Test
-    fun clockStyleAndCalendarRowsNavigateWithTheFacetsId() {
-        var navigatedFromClock: Long? = null
+    fun calendarRowNavigatesWithTheFacetsId() {
         var navigatedFromCalendar: Long? = null
-        setContent(
-            onNavigateToClockStyleGallery = { navigatedFromClock = it },
-            onNavigateToCalendarSettings = { navigatedFromCalendar = it },
-        )
-
-        scrollToRow("facet_clock_style_gallery_row")
-        composeRule.onNodeWithTag("facet_clock_style_gallery_row").performClick()
-        assertEquals(true, navigatedFromClock != null)
+        setContent(onNavigateToCalendarSettings = { navigatedFromCalendar = it })
 
         scrollToRow("facet_calendar_settings_row")
         composeRule.onNodeWithTag("facet_calendar_settings_row").performClick()

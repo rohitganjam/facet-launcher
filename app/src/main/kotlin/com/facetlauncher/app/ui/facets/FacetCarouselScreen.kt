@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
@@ -81,18 +82,20 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
-import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerPresentation
-import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.ConfirmDialog
+import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.ScreenHeader
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.WallpaperBackground
@@ -104,11 +107,11 @@ import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
 import com.facetlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.FacetType
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
-import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import com.facetlauncher.app.ui.theme.FacetType
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
@@ -151,12 +154,16 @@ private const val CAROUSEL_SCRIM_ALPHA = 0.6f
  * a swipe in empty space would), and [onDismissDragEnd] tells it the gesture ended so it can
  * settle open/closed. Swiping right from any *other* page still just browses backward.
  */
+/** How dim a facet card that is disabled on the free plan is drawn. */
+private const val LOCKED_CARD_ALPHA = 0.5f
+
 @Composable
 fun FacetCarouselScreen(
     onFacetApply: () -> Unit,
     onEditFacet: (facetId: Long) -> Unit,
     onReorderFacets: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     onDismissDrag: (deltaPx: Float) -> Unit,
     onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
@@ -167,7 +174,8 @@ fun FacetCarouselScreen(
         uiState = uiState,
         onSelect = { facetId -> viewModel.selectFacet(facetId); onFacetApply() },
         onEditFacet = onEditFacet,
-        onAddFacet = viewModel::addFacet,
+        onAddFacet = { if (uiState.canAddFacet) viewModel.addFacet() else onOpenFacetPro(ProReason.FACET_LIMIT) },
+        onLockedFacetClick = { onOpenFacetPro(ProReason.FACET_LOCKED) },
         onDeleteFacet = viewModel::deleteFacet,
         onReorderFacets = onReorderFacets,
         onNavigateToSettings = onNavigateToSettings,
@@ -183,6 +191,7 @@ private fun FacetCarouselContent(
     onSelect: (Long) -> Unit,
     onEditFacet: (Long) -> Unit,
     onAddFacet: () -> Unit,
+    onLockedFacetClick: () -> Unit,
     onDeleteFacet: (FacetEntity) -> Unit,
     onReorderFacets: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -203,7 +212,7 @@ private fun FacetCarouselContent(
         return
     }
 
-    val pageCount = facets.size + if (uiState.canAddFacet) 1 else 0
+    val pageCount = facets.size + if (uiState.showAddFacet) 1 else 0
     val initialPage = facets.indexOfFirst { it.id == uiState.activeFacetId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
     var deletingFacet by remember { mutableStateOf<FacetEntity?>(null) }
@@ -281,9 +290,11 @@ private fun FacetCarouselContent(
                 val facet = facets[page]
                 // Recent-apps style: tapping any visible card — centered or peeking —
                 // applies it immediately. Browsing (without applying) is swipe-only.
+                val locked = facet.id !in uiState.selectableFacetIds
                 FacetPreviewPage(
                     facet = facet,
                     isActive = facet.id == uiState.activeFacetId,
+                    locked = locked,
                     favorites = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
                     clockTemplateId = uiState.clockTemplateId(facet.id),
                     clockFontOption = uiState.clockFontOption(facet.id),
@@ -309,9 +320,9 @@ private fun FacetCarouselContent(
                     dockApps = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
                     dockDisplayMode = uiState.dockDisplayMode(facet.id),
                     canDelete = uiState.canDeleteFacet,
-                    onEditFacetClick = { onEditFacet(facet.id) },
+                    onEditFacetClick = if (locked) onLockedFacetClick else ({ onEditFacet(facet.id) }),
                     onDeleteClick = { deletingFacet = facet },
-                    onCardClick = { onSelect(facet.id) },
+                    onCardClick = if (locked) onLockedFacetClick else ({ onSelect(facet.id) }),
                     homeWallpaper = uiState.homeWallpaper,
                     screenAspectRatio = screenAspectRatio,
                     modifier = Modifier
@@ -321,6 +332,7 @@ private fun FacetCarouselContent(
             } else {
                 AddFacetPage(
                     onClick = onAddFacet,
+                    showProPill = !uiState.canAddFacet,
                     modifier = Modifier.fillMaxSize().testTag("facet_carousel_add_page"),
                 )
             }
@@ -438,6 +450,8 @@ private fun FacetPreviewPage(
     facet: FacetEntity,
     /** Whether this is the facet currently applied to Home — distinct from which page the pager is centered on. */
     isActive: Boolean,
+    /** Disabled on the free plan: dimmed with a lock, and tapping it opens the upgrade sheet instead of applying it. */
+    locked: Boolean,
     favorites: List<PlacedItem>,
     clockTemplateId: ClockTemplateId,
     clockFontOption: ClockFontOption,
@@ -498,6 +512,14 @@ private fun FacetPreviewPage(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false).testTag("facet_page_name_${facet.id}"),
             )
+            if (locked) {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = stringResource(R.string.facet_locked_content_description),
+                    tint = Muted,
+                    modifier = Modifier.padding(start = 6.dp).size(20.dp).testTag("facet_page_lock_${facet.id}"),
+                )
+            }
             if (isActive) {
                 Icon(
                     Icons.Default.Check,
@@ -517,6 +539,7 @@ private fun FacetPreviewPage(
                 // Locked to the real screen's proportions — a genuine scale model, not a card
                 // shape that happens to fall out of the surrounding layout.
                 .aspectRatio(screenAspectRatio)
+                .alpha(if (locked) LOCKED_CARD_ALPHA else 1f)
                 // Shadow + hairline border to lift it off the page, same as SettingsCard —
                 // the Surface/SurfaceContainer tone step alone is too small to read as raised.
                 .shadow(elevation = 4.dp, shape = cardShape)
@@ -819,7 +842,7 @@ private fun AppListLayout.previewItemCap(gridColumns: Int): Int = when (this) {
 }
 
 @Composable
-private fun AddFacetPage(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun AddFacetPage(onClick: () -> Unit, showProPill: Boolean, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize()) {
         // Invisible stand-in for FacetPreviewPage's own name row — same Text structure so it
         // measures to the exact same height, without hardcoding a dp guess. Without this, the
@@ -854,7 +877,10 @@ private fun AddFacetPage(onClick: () -> Unit, modifier: Modifier = Modifier) {
             ) {
                 Text(text = stringResource(R.string.facet_carousel_add_glyph), style = FacetType.clock.copy(fontSize = 34.sp), color = Faint)
             }
-            Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
+            Row(modifier = Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Ink)
+                if (showProPill) ProPill(modifier = Modifier.padding(start = 8.dp))
+            }
             Text(
                 text = stringResource(R.string.facet_carousel_add_facet_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
@@ -898,6 +924,7 @@ private fun FacetCarouselScreenPreview() {
             onSelect = {},
             onEditFacet = {},
             onAddFacet = {},
+            onLockedFacetClick = {},
             onDeleteFacet = {},
             onReorderFacets = {},
             onNavigateToSettings = {},

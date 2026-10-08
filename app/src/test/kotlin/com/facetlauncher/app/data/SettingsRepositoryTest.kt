@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
@@ -65,6 +66,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerGridSize.FIVE_BY_SIX, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
+        assertEquals(IconShape.SQUIRCLE, settings.iconShape)
         assertEquals(0.6f, settings.drawerOpacity, 0.0001f)
         assertEquals(true, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
@@ -259,6 +261,7 @@ class SettingsRepositoryTest {
         repository.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
+        repository.setIconShape(IconShape.ROUNDED)
         repository.setLauncherFontOption(LauncherFontOption.MANROPE)
         repository.setFontScaleOption(FontScaleOption.LARGE)
         repository.setAppLabelColorOption(ClockColorOption.THEME_INVERTED)
@@ -293,6 +296,7 @@ class SettingsRepositoryTest {
         assertEquals(DrawerGridSize.FOUR_BY_FOUR, settings.drawerGridSize)
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
+        assertEquals(IconShape.ROUNDED, settings.iconShape)
         assertEquals(LauncherFontOption.MANROPE, settings.launcherFontOption)
         assertEquals(FontScaleOption.LARGE, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME_INVERTED, settings.appLabelColorOption)
@@ -412,5 +416,36 @@ class SettingsRepositoryTest {
         assertEquals(WallpaperAccentRole.SECONDARY, settings.wallpaperAccentRole)
         assertEquals(true, settings.accentFromSystem)
         assertEquals(null, settings.customAccentSwatch)
+    }
+
+    @Test
+    fun `the permission-requested flags all default to false`() = runTest {
+        val settings = createRepository().settings.first()
+
+        assertFalse(settings.calendarPermissionRequested)
+        assertFalse(settings.contactsPermissionRequested)
+        assertFalse(settings.bluetoothPermissionRequested)
+        assertFalse(settings.locationPermissionRequested)
+    }
+
+    @Test
+    fun `setBluetoothPermissionRequested and setLocationPermissionRequested round-trip independently`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When only the Bluetooth request is recorded
+        repository.setBluetoothPermissionRequested(true)
+
+        // Then it comes back without touching location or the other flags
+        val afterBluetooth = repository.settings.first()
+        assertEquals(true, afterBluetooth.bluetoothPermissionRequested)
+        assertEquals(false, afterBluetooth.locationPermissionRequested)
+        assertEquals(false, afterBluetooth.contactsPermissionRequested)
+
+        // And recording location then leaves Bluetooth set
+        repository.setLocationPermissionRequested(true)
+        val afterLocation = repository.settings.first()
+        assertEquals(true, afterLocation.bluetoothPermissionRequested)
+        assertEquals(true, afterLocation.locationPermissionRequested)
     }
 }

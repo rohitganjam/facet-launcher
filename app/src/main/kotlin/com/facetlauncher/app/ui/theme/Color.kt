@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 
 // Light/dark pairs — transcribed from design_handoff_minimal_launcher/README.md's Design
@@ -185,61 +186,37 @@ val SuccessColor: Color @Composable get() = if (LocalIsDarkTheme.current) Succes
  * shared legibility treatment every Home composable already reaches for — tuning it here
  * upgrades every widget at once, not just one.
  *
- * "Crisp" treatment (see chat history — a comparative audit against two real third-party
- * launchers, Slate and Niagara): a symmetric, un-offset blur reads as a tight, high-contrast
- * edge around each glyph — closer to an outline than a drop shadow — and holds up even at a
- * light font weight, unlike the previous `1f`-blur/`50%`-opacity/`(0,2)`-offset shadow, which
- * was too small to read as either a soft glow or a crisp edge. Kept at max opacity (fully
- * opaque) since no Home widget currently needs a directional offset; if one ever does, cap its
- * opacity no lower than 85% rather than reintroducing a weak, barely-visible shadow.
+ * The treatment is a soft drop shadow offset down and right, in a translucent ink tone that
+ * contrasts with the text. A wallpaper-derived tone or a zero-offset blur vanished on light
+ * wallpapers; this matches Niagara's clock and labels.
  */
 val HomeAppTextColor: Color @Composable get() = Ink
 val HomeAppTextColorFaint: Color @Composable get() = HomeAppTextColor.copy(alpha = 0.3f)
 
-/** [homeTextShadow]'s default blur, for the clock's own large (60–80sp) digits. */
+/** [homeTextShadow]'s default blur, in dp, for the clock's large (60–80sp) digits. */
 private const val CLOCK_SHADOW_BLUR_RADIUS = 2f
 
-/**
- * The blur every *other* Home-surface shadow uses — [homeAppLabelShadow] (app-list/dock labels)
- * and [homeTextShadow]'s calendar callers (`CalendarEventsBlock`, passed explicitly). These all
- * render far smaller than the clock's own digits (11–16sp vs. 60–80sp), so [CLOCK_SHADOW_BLUR_RADIUS] —
- * tuned for those much thicker glyph strokes — covers a proportionally much larger share of these
- * thinner strokes and reads as genuinely blurred rather than a crisp edge (see chat history). Not
- * `private` — read from `ui/home/clock/CalendarEventsBlock.kt` too.
- */
-const val SMALL_TEXT_SHADOW_BLUR_RADIUS = 0.6f
+/** Blur in dp for text of 11–16sp (app labels, calendar) — wider than the clock's, since thin strokes need more spread. */
+const val SMALL_TEXT_SHADOW_BLUR_RADIUS = 4f
 
-/**
- * Clock/calendar text only ([ClockTemplates][com.facetlauncher.app.ui.home.clock.ClockTemplates]/
- * [CalendarEventsBlock][com.facetlauncher.app.ui.home.clock.CalendarEventsBlock]) — for Home's
- * app-list labels and dock text, use [homeAppLabelShadow] instead (see chat history: the
- * wallpaper-accent tone this function draws from was reported as looking out of place on plain
- * app labels — it's meant specifically for the surfaces that offer `ACCENT_PRIMARY`/
- * `ACCENT_SECONDARY` as an explicit text-color choice).
- *
- * A fixed dark shadow only reads as a crisp edge when the text itself is light — around dark
- * text (light theme's [Ink], [InkInverted] in dark theme, or a wallpaper/accent tone that happens
- * to resolve dark) the same dark shadow just blurs into the glyphs instead (see chat history).
- * Rather than falling back to a neutral [Ink] tone, the glow is drawn from
- * [wallpaperPrimaryAndSecondary] — picking whichever of the two contrasts against [textColor]
- * (always the actual wallpaper's tones, never a Basic-colors swatch — see that function's own
- * doc). Resolving via [textColor]'s own [Color.luminance] (WCAG relative luminance, ignores alpha
- * — so a muted/alpha variant of a color always agrees with its opaque base here), rather than
- * just following the current theme mode, keeps it correct even for an explicit
- * [com.facetlauncher.app.data.model.ClockColorOption.THEME_INVERTED]/accent override that doesn't
- * track the theme mode the same way [Ink] itself does.
- */
+private const val HOME_SHADOW_ALPHA = 0.5f
+
+/** Drop shadow tinted against [textColor]'s luminance, so dark text gets a light shadow. [blurRadius] is in dp. */
 @Composable
-fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow {
-    val (wallpaperPrimary, wallpaperSecondary) = wallpaperPrimaryAndSecondary()
-    val (darkerTone, lighterTone) = if (wallpaperPrimary.luminance() <= wallpaperSecondary.luminance()) {
-        wallpaperPrimary to wallpaperSecondary
-    } else {
-        wallpaperSecondary to wallpaperPrimary
-    }
-    val shadowColor = if (textColor.luminance() > 0.5f) darkerTone else lighterTone
-    return Shadow(color = shadowColor, offset = Offset.Zero, blurRadius = blurRadius)
+private fun homeShadow(textColor: Color, blurRadius: Float): Shadow {
+    val density = LocalDensity.current.density
+    val tone = if (textColor.luminance() > 0.5f) InkLight else InkDark
+    return Shadow(
+        color = tone.copy(alpha = HOME_SHADOW_ALPHA),
+        offset = Offset(blurRadius / 4f * density, blurRadius / 2f * density),
+        blurRadius = blurRadius * density,
+    )
 }
+
+/** Clock, calendar and accessory text. For app-list and dock labels use [homeAppLabelShadow]. */
+@Composable
+fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow =
+    homeShadow(textColor, blurRadius)
 
 /**
  * The knocked-out content color for text/icons painted directly on a solid, non-wallpaper panel
@@ -253,16 +230,9 @@ fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIU
  */
 fun contentColorFor(background: Color): Color = if (background.luminance() > 0.5f) InkLight else InkDark
 
-/**
- * Home's app-list labels and dock text (not clock/calendar — see [homeTextShadow]'s doc). Always
- * a plain [Ink] tone — [InkLight] for light text, [InkDark] for dark text — never the wallpaper's
- * accent tones, unlike [homeTextShadow] (see chat history).
- */
+/** Home's app-list labels and dock text. */
 @Composable
-fun homeAppLabelShadow(textColor: Color): Shadow {
-    val shadowColor = if (textColor.luminance() > 0.5f) InkLight else InkDark
-    return Shadow(color = shadowColor, offset = Offset.Zero, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)
-}
+fun homeAppLabelShadow(textColor: Color): Shadow = homeShadow(textColor, SMALL_TEXT_SHADOW_BLUR_RADIUS)
 
 /**
  * App Drawer text colors — independent knobs from Home's, even though [DrawerAppTextColor]

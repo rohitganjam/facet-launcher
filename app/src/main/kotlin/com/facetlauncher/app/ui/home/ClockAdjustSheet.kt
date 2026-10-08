@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.FacetScopeBadge
+import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.InkInverted
@@ -75,6 +76,8 @@ fun ClockAdjustSheet(
     modifier: Modifier = Modifier,
     /** Whether the active facet currently has a hosted `AppWidget` bound as its clock (PRD F15) — see this composable's own doc. */
     hasCustomClockWidget: Boolean = false,
+    /** `false` marks "Use custom widget" as Pro; the click is still reported so the caller can open Facet Pro. */
+    isPro: Boolean = true,
 ) {
     Column(
         modifier = modifier
@@ -95,6 +98,7 @@ fun ClockAdjustSheet(
             onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
             overrideFacetName = overrideFacetName,
             hasCustomClockWidget = hasCustomClockWidget,
+            isPro = isPro,
         )
         AdjustRow(
             icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
@@ -126,6 +130,7 @@ private fun ClockWidgetChoiceRows(
     onSwitchToLauncherClockClick: () -> Unit,
     overrideFacetName: String?,
     hasCustomClockWidget: Boolean,
+    isPro: Boolean,
 ) = Column {
     if (!hasCustomClockWidget) {
         AdjustRow(
@@ -144,6 +149,7 @@ private fun ClockWidgetChoiceRows(
         subtitle = stringResource(R.string.clock_adjust_use_custom_widget_subtitle),
         onClick = onUseCustomWidgetClick,
         testTag = "clock_adjust_use_custom_widget",
+        trailingContent = if (isPro) null else ({ ProPill() }),
     )
     CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
     if (hasCustomClockWidget) {

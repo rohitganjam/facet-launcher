@@ -12,6 +12,8 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_settings")
+private val Context.automationDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_automation")
+private val Context.entitlementDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_entitlement")
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -21,4 +23,16 @@ object DataStoreModule {
     @Singleton
     fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         context.settingsDataStore
+
+    @Provides
+    @Singleton
+    @AutomationDataStore
+    fun provideAutomationDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.automationDataStore
+
+    @Provides
+    @Singleton
+    @EntitlementDataStore
+    fun provideEntitlementDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.entitlementDataStore
 }

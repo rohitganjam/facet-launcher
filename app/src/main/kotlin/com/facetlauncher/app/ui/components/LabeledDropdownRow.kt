@@ -54,7 +54,12 @@ fun <T> LabeledDropdownRow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     optionEnabled: (T) -> Boolean = { true },
+    /** Optional content after an option's label in the menu, such as a Pro pill. */
+    optionTrailing: (@Composable (T) -> Unit)? = null,
     testTag: String? = null,
+    /** Optional content before the title, such as a radio button; [titleModifier] makes that title area clickable or selectable. */
+    leading: (@Composable () -> Unit)? = null,
+    titleModifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var anchorWidthPx by remember { mutableIntStateOf(0) }
@@ -66,7 +71,13 @@ fun <T> LabeledDropdownRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
+        Row(
+            modifier = titleModifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            leading?.invoke()
+            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
+        }
         Box(modifier = Modifier.onGloballyPositioned { anchorWidthPx = it.size.width }) {
             Row(
                 modifier = Modifier
@@ -90,6 +101,7 @@ fun <T> LabeledDropdownRow(
                     ThemedDropdownMenuItem(
                         label = label(option),
                         enabled = optionEnabled(option),
+                        trailingIcon = optionTrailing?.let { trailing -> { trailing(option) } },
                         onClick = {
                             expanded = false
                             onSelect(option)
