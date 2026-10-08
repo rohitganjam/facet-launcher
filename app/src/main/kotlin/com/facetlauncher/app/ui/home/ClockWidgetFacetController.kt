@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
@@ -17,7 +18,11 @@ import javax.inject.Inject
 class ClockWidgetFacetController @Inject constructor(
     private val facetRepository: FacetRepository,
     private val switchFacetToNativeClock: SwitchFacetToNativeClockUseCase,
+    entitlementRepository: EntitlementRepository,
 ) {
+    /** Picking a hosted widget for the clock slot is Pro; a facet that already hosts one keeps it after a lapse. */
+    val isPro = entitlementRepository.isPro
+
     /** PRD F15's "Switch to launcher clock widget" row — see [SwitchFacetToNativeClockUseCase]'s own doc. */
     suspend fun switchToNativeClock(facet: FacetEntity) = switchFacetToNativeClock(facet)
 

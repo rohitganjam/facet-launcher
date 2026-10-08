@@ -397,7 +397,7 @@ class SettingsScreenTest {
 
         composeRule.onNodeWithText("You're on the Free plan").assertExists()
         composeRule.onNodeWithText("PAY ONCE").assertDoesNotExist()
-        composeRule.onNodeWithText("Up to 10 facets that switch themselves").assertExists()
+        composeRule.onNodeWithText("The complete Facet experience, fully unlocked.").assertExists()
         composeRule.onNodeWithText("Upgrade to Pro").assertExists()
         composeRule.onNodeWithTag("facet_pro_row").performClick()
 

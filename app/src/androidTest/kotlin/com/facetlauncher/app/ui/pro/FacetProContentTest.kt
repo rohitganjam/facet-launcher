@@ -51,7 +51,7 @@ class FacetProContentTest {
         show(reason = ProReason.FACET_LIMIT)
 
         composeRule.onNodeWithTag("facet_pro_screen").assertExists()
-        composeRule.onNodeWithText("More facets.\nSwitching on its own.").assertExists()
+        composeRule.onNodeWithText("More facets, more automation, more customization").assertExists()
         composeRule.onNodeWithTag("facet_pro_reason").assertExists()
         composeRule.onNodeWithText("Free includes 3. Pro goes up to 10", substring = true).assertExists()
         composeRule.onNodeWithText("Wi-Fi, Bluetooth, headphones and battery triggers").assertExists()
@@ -74,18 +74,24 @@ class FacetProContentTest {
     }
 
     @Test
-    fun thePriceAndTheOneTimeLabelAreShownWhenPlayKnowsThePrice() {
+    fun theUnlockButtonCarriesLifetimeAndThePriceWhenPlayKnowsIt() {
         show(state = FacetProUiState(price = "$9.99"))
 
-        composeRule.onNodeWithText("$9.99").assertExists()
-        composeRule.onNodeWithText("once · no subscription").assertExists()
+        composeRule.onNodeWithText("Unlock Lifetime Pro · $9.99").assertExists()
     }
 
     @Test
-    fun withoutAPriceTheLabelStandsAlone() {
+    fun withoutAPriceTheUnlockButtonStandsAlone() {
         show(state = FacetProUiState(price = null))
 
-        composeRule.onNodeWithText("One-time purchase · no subscription").assertExists()
+        composeRule.onNodeWithText("Unlock Lifetime Pro").assertExists()
+    }
+
+    @Test
+    fun theFeatureListNamesCustomWidgets() {
+        show(state = FacetProUiState())
+
+        composeRule.onNodeWithText("Custom Widgets on home screen").assertExists()
     }
 
     @Test
@@ -147,7 +153,6 @@ class FacetProContentTest {
         composeRule.onNodeWithText("Wi-Fi triggers").performScrollTo().assertExists()
         composeRule.onNodeWithText("Headphones and battery triggers").performScrollTo().assertExists()
         composeRule.onNodeWithTag("facet_pro_buy").assertDoesNotExist()
-        composeRule.onNodeWithTag("facet_pro_price").assertDoesNotExist()
         composeRule.onNodeWithTag("facet_pro_reason").assertDoesNotExist()
     }
 

@@ -14,9 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,7 +35,7 @@ import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
 
 /**
  * Settings' Facet Pro entry: a dark ink card at the top of the page (the most contrast on it, so it reads
- * first). Free: the facet fan, the PRO mark, a "You're on the Free plan" line, a headline and an "Upgrade to Pro" pill. Pro: shrinks to one row with a
+ * first). Free: the facet fan, the PRO mark, a "You're on the Free plan" line, an evergreen headline ("The complete Facet experience, fully unlocked.", no numbers or feature names so it never needs editing), an open-lock icon and an "Upgrade to Pro" button. Pro: shrinks to one row with a
  * live summary. In dark theme it gets a hairline inset and a deeper shadow so it separates from the page.
  */
 @Composable
@@ -88,9 +86,7 @@ private fun ProUpsell() {
                 modifier = Modifier.padding(top = 12.dp).widthIn(max = 200.dp),
             )
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                listOf(Icons.Default.Layers, Icons.Default.Wifi, Icons.Default.Bluetooth).forEach { icon ->
-                    Icon(icon, contentDescription = null, tint = Color.White.copy(alpha = 0.75f), modifier = Modifier.size(14.dp))
-                }
+                Icon(Icons.Default.LockOpen, contentDescription = null, tint = Color.White.copy(alpha = 0.75f), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.weight(1f))
                 val buttonShape = MaterialTheme.shapes.medium
                 Text(

@@ -264,7 +264,7 @@ class HomeDrawerRouteTest {
                     },
                     ObserveQuickAddStateUseCase(),
                     ClockWidgetHostController(appWidgetRepository),
-                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository)),
+                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository), EntitlementRepository()),
                 )
             }
             launcherViewModel = remember {

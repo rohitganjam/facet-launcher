@@ -447,7 +447,7 @@
     <string name="automation_paused_needs_pro">En pause. Nécessite Pro</string>
     <string name="automation_free_strip">L\'offre gratuite inclut 2 règles horaires. Pro ajoute des règles et des déclencheurs pour le Bluetooth, le Wi-Fi, la charge, les écouteurs et la batterie.</string>
     <string name="automation_see_pro">Passer à Pro</string>
-    <string name="pro_hero_title">Plus de facettes.\nQui changent seules.</string>
+    <string name="pro_hero_title">Plus de facettes, plus d\'automatisation, plus de personnalisation</string>
     <string name="pro_hero_trigger_office">Bureau</string>
     <string name="pro_hero_trigger_work">Travail</string>
     <string name="pro_hero_trigger_car">Voiture</string>
@@ -457,11 +457,12 @@
     <string name="pro_feature_facets_body">L\'offre gratuite en inclut 3. Pro va jusqu\'à 10. Chacune a ses propres apps d\'accueil et son horloge.</string>
     <string name="pro_feature_triggers_title">Déclencheurs Wi-Fi, Bluetooth, écouteurs et batterie</string>
     <string name="pro_feature_triggers_body">Rejoignez le réseau du bureau ou connectez-vous à la voiture, et la facette change.</string>
+    <string name="pro_feature_widgets_title">Widgets personnalisés sur l\'écran d\'accueil</string>
+    <string name="pro_feature_widgets_body">Remplacez l\'horloge par n\'importe quel widget de votre téléphone. L\'offre gratuite inclut les horloges du lanceur.</string>
     <string name="pro_feature_future_title">Futures fonctions Pro incluses</string>
     <string name="pro_feature_future_body">Tout ce qui sera ajouté à Pro plus tard est à vous.</string>
-    <string name="pro_price_label">une fois · sans abonnement</string>
-    <string name="pro_price_label_no_price">Achat unique · sans abonnement</string>
-    <string name="pro_unlock">Débloquer Pro</string>
+    <string name="pro_unlock">Débloquer Pro à vie</string>
+    <string name="pro_unlock_price">Débloquer Pro à vie · %1$s</string>
     <string name="pro_on_pro_title">Vous avez Pro</string>
     <string name="pro_on_pro_body">Débloqué sur chaque téléphone connecté à ce compte Google.</string>
     <string name="pro_unlocked">DÉBLOQUÉ</string>
@@ -475,7 +476,7 @@
     <string name="pro_owned_more_body">Change au branchement ou à la charge</string>
     <string name="pro_set_up_trigger">Configurer un déclencheur</string>
     <string name="pro_add_facet">Ajouter une facette</string>
-    <string name="pro_card_headline">Jusqu\'à 10 facettes qui changent seules</string>
+    <string name="pro_card_headline">L\'expérience Facet complète, entièrement débloquée.</string>
     <string name="settings_pro_free_plan">Vous êtes sur l\'offre gratuite</string>
     <string name="pro_upgrade_to_pro">Passer à Pro</string>
     <string name="pro_active_title">Pro est actif</string>
@@ -496,6 +497,7 @@
     <string name="pro_upgrade_facet_limit">L\'offre gratuite inclut 3 facettes. Pro vous permet d\'en avoir jusqu\'à 10.</string>
     <string name="pro_upgrade_facet_locked">Cette facette est en pause dans l\'offre gratuite. Supprimez une facette pour revenir à 3, ou passez à Pro pour en utiliser jusqu\'à 10.</string>
     <string name="facet_locked_content_description">Désactivée dans l\'offre gratuite</string>
+    <string name="pro_upgrade_custom_widget">Utiliser votre propre widget à la place de l\'horloge est une fonction Pro. L\'offre gratuite inclut les horloges du lanceur.</string>
     <string name="pro_upgrade_about">Un seul achat débloque plus de facettes et tous les déclencheurs d\'automatisation. Sans abonnement.</string>
     <string name="pro_message_unavailable">Google Play n\'est pas disponible pour le moment. Réessayez plus tard.</string>
     <string name="pro_message_no_purchase">Aucun achat Pro trouvé pour ce compte Google.</string>
@@ -515,7 +517,7 @@
     <string name="automation_section_rules">Règles</string>
     <string name="automation_add_rule">Ajouter une règle</string>
     <string name="automation_section_other_apps">Utiliser d\'autres apps</string>
-    <string name="automation_other_apps_note">Chaque facette a un raccourci « Passer à » pour Tasker, Modes et routines Samsung et des apps similaires. Choisir une facette soi-même, ou avec un raccourci, met en pause toute règle déjà active jusqu\'à sa fin.</string>
+    <string name="automation_other_apps_note">Chaque facette a un raccourci « Passer à » pour les apps d\'automatisation comme Modes et routines Samsung, Tasker, MacroDroid et d\'autres.\n\nSi vous choisissez une facette vous-même, ou qu\'une app la change pour vous, ce choix l\'emporte sur celle de vos règles d\'automatisation ci-dessus qui est active. Vos règles reprennent la main quand cette règle se termine.</string>
     <string name="automation_empty">Ajoutez une règle pour changer de facette automatiquement.</string>
     <string name="automation_status_driving">Affichage de %1$s à cause de la règle %2$s</string>
     <string name="automation_status_override">Affichage de %1$s, la facette choisie. %2$s est en pause jusqu\'à sa fin.</string>

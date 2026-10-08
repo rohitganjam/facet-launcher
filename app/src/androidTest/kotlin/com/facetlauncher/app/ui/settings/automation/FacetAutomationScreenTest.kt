@@ -113,9 +113,16 @@ class FacetAutomationScreenTest {
     }
 
     @Test
+    fun aFreeUserBelowTheRuleLimitSeesNoStrip() {
+        setContent(FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones())), isPro = false, canAddRule = true))
+
+        composeRule.onNodeWithTag("automation_free_strip").assertDoesNotExist()
+    }
+
+    @Test
     fun aFreeUserSeesTheStripAndSeeProOpensTheUpgrade() {
         var opened = false
-        setContent(FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones())), isPro = false), onSeePro = { opened = true })
+        setContent(FacetAutomationScreenState(items = listOf(item(1, AutomationTrigger.Headphones())), isPro = false, canAddRule = false), onSeePro = { opened = true })
 
         composeRule.onNodeWithTag("automation_free_strip").assertExists()
         composeRule.onNodeWithTag("automation_see_pro").performClick()

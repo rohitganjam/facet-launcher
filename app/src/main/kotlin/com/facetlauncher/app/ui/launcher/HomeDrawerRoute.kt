@@ -276,6 +276,7 @@ fun HomeDrawerRoute(
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val clockWidgetIsPro by homeViewModel.clockWidgetFacet.isPro.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val drawerSettings by drawerViewModel.settings.collectAsStateWithLifecycle()
     val contactResults by drawerViewModel.contactResults.collectAsStateWithLifecycle()
@@ -679,10 +680,15 @@ fun HomeDrawerRoute(
                 homeUiState.activeFacet?.let { onNavigateToFacetSettings(it.id) }
             },
             hasCustomClockWidget = homeUiState.clockWidgetAppWidgetId != null,
+            isPro = clockWidgetIsPro,
             onUseCustomWidgetClick = {
-                homeUiState.activeFacet?.let { facet ->
-                    clockWidgetPickerFacetId = facet.id
-                    showClockWidgetPicker = true
+                if (!clockWidgetIsPro) {
+                    onNavigateToFacetPro(ProReason.CUSTOM_WIDGET)
+                } else {
+                    homeUiState.activeFacet?.let { facet ->
+                        clockWidgetPickerFacetId = facet.id
+                        showClockWidgetPicker = true
+                    }
                 }
             },
             onSwitchToLauncherClockClick = {

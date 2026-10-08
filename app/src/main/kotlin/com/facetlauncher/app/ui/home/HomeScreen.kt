@@ -205,6 +205,8 @@ fun HomeScreen(
     onNavigateToFacetSettings: () -> Unit = {},
     /** PRD F15 — whether the active facet currently has a hosted `AppWidget` bound as its clock. */
     hasCustomClockWidget: Boolean = false,
+    /** Whether picking a custom clock widget is allowed; `false` marks the sheet row as Pro. */
+    isPro: Boolean = true,
     /** Fired when the user selects "Use custom widget" from the clock's adjustment menu. */
     onUseCustomWidgetClick: () -> Unit = {},
     /** Fired when the user selects "Switch to launcher clock widget" from the clock's adjustment menu. */
@@ -1186,6 +1188,7 @@ fun HomeScreen(
                     },
                     overrideFacetName = clockPositionOwnerFacetName,
                     hasCustomClockWidget = hasCustomClockWidget,
+                    isPro = isPro,
                 )
             }
         }

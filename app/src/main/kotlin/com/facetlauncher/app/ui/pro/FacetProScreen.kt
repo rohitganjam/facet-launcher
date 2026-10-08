@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -127,6 +129,7 @@ private fun UpgradeScreen(
             Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 6.dp, bottom = 16.dp)) {
                 FeatureRow(Icons.Default.Layers, R.string.pro_feature_facets_title, R.string.pro_feature_facets_body)
                 FeatureRow(Icons.Default.Sensors, R.string.pro_feature_triggers_title, R.string.pro_feature_triggers_body)
+                FeatureRow(Icons.Default.Widgets, R.string.pro_feature_widgets_title, R.string.pro_feature_widgets_body)
                 FeatureRow(Icons.Default.AutoAwesome, R.string.pro_feature_future_title, R.string.pro_feature_future_body)
             }
         }
@@ -143,21 +146,21 @@ private fun UpgradeHero(reason: ProReason, state: FacetProUiState, onBack: () ->
             .statusBarsPadding(),
     ) {
         HeroHeader(onBack = onBack, trailing = {})
-        ProHeroFan(lit = false, modifier = Modifier.padding(top = 4.dp))
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+        ProHeroFan(lit = false, modifier = Modifier.padding(top = 2.dp), scale = 0.82f)
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
             TriggerPill(Icons.Default.Wifi, stringResource(R.string.pro_hero_trigger_office), stringResource(R.string.pro_hero_trigger_work))
             TriggerPill(Icons.Default.Bluetooth, stringResource(R.string.pro_hero_trigger_car), stringResource(R.string.pro_hero_trigger_drive))
         }
-        Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 26.dp)) {
+        Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 22.dp, bottom = 20.dp)) {
             ProBadge()
             Text(
                 text = stringResource(R.string.pro_hero_title),
                 color = Color.White,
-                fontSize = 30.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Light,
-                lineHeight = 33.sp,
+                lineHeight = 31.sp,
                 letterSpacing = (-0.02).em,
-                modifier = Modifier.padding(top = 12.dp).semantics { heading() },
+                modifier = Modifier.padding(top = 8.dp).semantics { heading() },
             )
             if (reason != ProReason.ABOUT) {
                 Text(
@@ -222,29 +225,15 @@ private fun FeatureRow(icon: ImageVector, titleRes: Int, bodyRes: Int) {
 
 @Composable
 private fun UpgradeBottomBar(state: FacetProUiState, onBuy: (() -> Unit)?, onRestore: (() -> Unit)?) {
-    Column(modifier = Modifier.fillMaxWidth().background(Surface).navigationBarsPadding().padding(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 22.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).testTag("facet_pro_price"),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            state.price?.let { price -> Text(text = price, color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Medium) }
-            Text(
-                text = stringResource(if (state.price != null) R.string.pro_price_label else R.string.pro_price_label_no_price),
-                color = Muted,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 2.dp),
-            )
-        }
+    Column(modifier = Modifier.fillMaxWidth().shadow(10.dp).background(Surface).navigationBarsPadding().padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 6.dp)) {
         if (onBuy != null) {
-            ProGradientButton(text = stringResource(R.string.pro_unlock), onClick = onBuy, enabled = !state.busy, tag = "facet_pro_buy")
+            ProGradientButton(text = state.price?.let { stringResource(R.string.pro_unlock_price, it) } ?: stringResource(R.string.pro_unlock), onClick = onBuy, enabled = !state.busy, tag = "facet_pro_buy")
         }
         if (onRestore != null) {
-            // Restore is also at the top right (as designed); this one is easy to find for someone who already bought.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
+                    .height(38.dp)
                     .padding(top = 2.dp)
                     .clip(MaterialTheme.shapes.small)
                     .clickable(enabled = !state.busy, onClick = onRestore)
@@ -262,6 +251,7 @@ private fun ProReason.noteRes(): Int = when (this) {
     ProReason.RULE_LIMIT -> R.string.pro_upgrade_rule_limit
     ProReason.FACET_LIMIT -> R.string.pro_upgrade_facet_limit
     ProReason.FACET_LOCKED -> R.string.pro_upgrade_facet_locked
+    ProReason.CUSTOM_WIDGET -> R.string.pro_upgrade_custom_widget
     ProReason.ABOUT -> R.string.pro_upgrade_about
 }
 

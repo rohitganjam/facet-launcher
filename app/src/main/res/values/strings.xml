@@ -487,7 +487,7 @@
     <string name="automation_paused_needs_pro">Paused. Needs Pro</string>
     <string name="automation_free_strip">Free includes 2 schedule rules. Pro adds more rules and triggers for Bluetooth, Wi-Fi, charging, headphones and battery.</string>
     <string name="automation_see_pro">Upgrade to Pro</string>
-    <string name="pro_hero_title">More facets.\nSwitching on its own.</string>
+    <string name="pro_hero_title">More facets, more automation, more customization</string>
     <string name="pro_hero_trigger_office">Office</string>
     <string name="pro_hero_trigger_work">Work</string>
     <string name="pro_hero_trigger_car">Car</string>
@@ -497,11 +497,12 @@
     <string name="pro_feature_facets_body">Free includes 3. Pro goes up to 10. Each one gets its own home apps and clock.</string>
     <string name="pro_feature_triggers_title">Wi-Fi, Bluetooth, headphones and battery triggers</string>
     <string name="pro_feature_triggers_body">Join the office network or connect to the car, and the facet changes.</string>
+    <string name="pro_feature_widgets_title">Custom Widgets on home screen</string>
+    <string name="pro_feature_widgets_body">Replace the clock with any widget on your phone. Free includes the launcher\'s own clocks.</string>
     <string name="pro_feature_future_title">Future Pro features included</string>
     <string name="pro_feature_future_body">Anything added to Pro later is yours.</string>
-    <string name="pro_price_label">once · no subscription</string>
-    <string name="pro_price_label_no_price">One-time purchase · no subscription</string>
-    <string name="pro_unlock">Unlock Pro</string>
+    <string name="pro_unlock">Unlock Lifetime Pro</string>
+    <string name="pro_unlock_price">Unlock Lifetime Pro · %1$s</string>
     <string name="pro_on_pro_title">You\'re on Pro</string>
     <string name="pro_on_pro_body">Unlocked on every phone signed in to this Google account.</string>
     <string name="pro_unlocked">UNLOCKED</string>
@@ -515,7 +516,7 @@
     <string name="pro_owned_more_body">Switch on plugging in or charging</string>
     <string name="pro_set_up_trigger">Set up a trigger</string>
     <string name="pro_add_facet">Add a facet</string>
-    <string name="pro_card_headline">Up to 10 facets that switch themselves</string>
+    <string name="pro_card_headline">The complete Facet experience, fully unlocked.</string>
     <string name="settings_pro_free_plan">You\'re on the Free plan</string>
     <string name="pro_upgrade_to_pro">Upgrade to Pro</string>
     <string name="pro_active_title">Pro is active</string>
@@ -536,6 +537,7 @@
     <string name="pro_upgrade_facet_limit">The free plan includes 3 facets. Pro lets you have up to 10.</string>
     <string name="pro_upgrade_facet_locked">This facet is paused on the free plan. Delete a facet to get back to 3, or go Pro to use up to 10.</string>
     <string name="facet_locked_content_description">Disabled on the free plan</string>
+    <string name="pro_upgrade_custom_widget">Using your own widget in place of the clock is a Pro feature. The free plan includes the launcher\'s own clocks.</string>
     <string name="pro_upgrade_about">One purchase unlocks more facets and every automation trigger. No subscription.</string>
     <string name="pro_message_unavailable">Google Play isn\'t available right now. Try again later.</string>
     <string name="pro_message_no_purchase">No Pro purchase found for this Google account.</string>
@@ -555,7 +557,7 @@
     <string name="automation_section_rules">Rules</string>
     <string name="automation_add_rule">Add rule</string>
     <string name="automation_section_other_apps">Use other apps</string>
-    <string name="automation_other_apps_note">Every facet has a “Switch to” shortcut for Tasker, Samsung Modes and Routines, and similar apps. Choosing a facet yourself, or with a shortcut, pauses any rule that is already active until it ends.</string>
+    <string name="automation_other_apps_note">Every facet has a “Switch to” shortcut for automation apps like Samsung Modes and Routines, Tasker, MacroDroid and more.\n\nIf you pick a facet yourself, or an app switches it for you, that choice overrides whichever of your automation rules above is active. Your rules take over again when that rule ends.</string>
     <string name="automation_empty">Add a rule to switch facets automatically.</string>
     <string name="automation_status_driving">Showing %1$s because of the rule %2$s</string>
     <string name="automation_status_override">Showing %1$s, the facet you chose. %2$s is paused until it ends.</string>

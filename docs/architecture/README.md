@@ -23,6 +23,7 @@ checked against source, not against planning docs; where the code diverges from
 | [13-flow-facets-theme-notifications-onboarding.md](13-flow-facets-theme-notifications-onboarding.md) | Flows: facet switch/preview/override, theme resolution, notification badges, onboarding |
 | [14-flow-deep-links-and-shortcuts.md](14-flow-deep-links-and-shortcuts.md) | Flow: facet deep links (`facetlauncher://facet/{id}`), dynamic-shortcut sync, external-trigger ingestion |
 | [15-flow-facet-automation.md](15-flow-facet-automation.md) | Framework: rules that switch the active facet — concepts, baseline/overlay state model, the pure evaluator, manual-wins enforcement, planned triggers and runner, invariants. Mixes built and planned (labelled) |
+| [16-flow-billing.md](16-flow-billing.md) | Flow: the one-time `facet_pro` Google Play purchase, the cached entitlement and its offline rules, Buy/Restore, what a lapse does, the debug override, and why there is still no `INTERNET` |
 
 ## Stack at a glance
 

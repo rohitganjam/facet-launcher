@@ -447,7 +447,7 @@
     <string name="automation_paused_needs_pro">En pausa. Requiere Pro</string>
     <string name="automation_free_strip">El plan gratuito incluye 2 reglas de horario. Pro añade más reglas y disparadores para Bluetooth, Wi-Fi, carga, auriculares y batería.</string>
     <string name="automation_see_pro">Pasar a Pro</string>
-    <string name="pro_hero_title">Más facetas.\nCambian solas.</string>
+    <string name="pro_hero_title">Más facetas, más automatización, más personalización</string>
     <string name="pro_hero_trigger_office">Oficina</string>
     <string name="pro_hero_trigger_work">Trabajo</string>
     <string name="pro_hero_trigger_car">Coche</string>
@@ -457,11 +457,12 @@
     <string name="pro_feature_facets_body">El plan gratuito incluye 3. Pro llega a 10. Cada una tiene sus propias apps de inicio y su reloj.</string>
     <string name="pro_feature_triggers_title">Disparadores de Wi-Fi, Bluetooth, auriculares y batería</string>
     <string name="pro_feature_triggers_body">Conéctate a la red de la oficina o al coche y la faceta cambia.</string>
+    <string name="pro_feature_widgets_title">Widgets personalizados en la pantalla de inicio</string>
+    <string name="pro_feature_widgets_body">Sustituye el reloj por cualquier widget de tu teléfono. El plan gratuito incluye los relojes del launcher.</string>
     <string name="pro_feature_future_title">Futuras funciones Pro incluidas</string>
     <string name="pro_feature_future_body">Todo lo que se añada a Pro más adelante es tuyo.</string>
-    <string name="pro_price_label">pago único · sin suscripción</string>
-    <string name="pro_price_label_no_price">Compra única · sin suscripción</string>
-    <string name="pro_unlock">Desbloquear Pro</string>
+    <string name="pro_unlock">Desbloquear Pro de por vida</string>
+    <string name="pro_unlock_price">Desbloquear Pro de por vida · %1$s</string>
     <string name="pro_on_pro_title">Tienes Pro</string>
     <string name="pro_on_pro_body">Desbloqueado en todos los teléfonos con esta cuenta de Google.</string>
     <string name="pro_unlocked">DESBLOQUEADO</string>
@@ -475,7 +476,7 @@
     <string name="pro_owned_more_body">Cambia al enchufar o cargar</string>
     <string name="pro_set_up_trigger">Configurar un disparador</string>
     <string name="pro_add_facet">Añadir una faceta</string>
-    <string name="pro_card_headline">Hasta 10 facetas que cambian solas</string>
+    <string name="pro_card_headline">La experiencia completa de Facet, totalmente desbloqueada.</string>
     <string name="settings_pro_free_plan">Estás en el plan gratuito</string>
     <string name="pro_upgrade_to_pro">Pasar a Pro</string>
     <string name="pro_active_title">Pro está activo</string>
@@ -496,6 +497,7 @@
     <string name="pro_upgrade_facet_limit">El plan gratuito incluye 3 facetas. Con Pro puedes tener hasta 10.</string>
     <string name="pro_upgrade_facet_locked">Esta faceta está en pausa en el plan gratuito. Elimina una faceta para volver a 3, o pásate a Pro para usar hasta 10.</string>
     <string name="facet_locked_content_description">Desactivada en el plan gratuito</string>
+    <string name="pro_upgrade_custom_widget">Usar tu propio widget en lugar del reloj es una función Pro. El plan gratuito incluye los relojes del launcher.</string>
     <string name="pro_upgrade_about">Una compra desbloquea más facetas y todos los disparadores de automatización. Sin suscripción.</string>
     <string name="pro_message_unavailable">Google Play no está disponible ahora. Inténtalo más tarde.</string>
     <string name="pro_message_no_purchase">No se encontró ninguna compra de Pro en esta cuenta de Google.</string>
@@ -515,7 +517,7 @@
     <string name="automation_section_rules">Reglas</string>
     <string name="automation_add_rule">Añadir regla</string>
     <string name="automation_section_other_apps">Usar otras apps</string>
-    <string name="automation_other_apps_note">Cada faceta tiene un acceso directo «Cambiar a» para Tasker, Modos y rutinas de Samsung y apps similares. Elegir una faceta manualmente, o con un acceso directo, pausa cualquier regla que ya esté activa hasta que termine.</string>
+    <string name="automation_other_apps_note">Cada faceta tiene un acceso directo «Cambiar a» para apps de automatización como Modos y rutinas de Samsung, Tasker, MacroDroid y más.\n\nSi eliges una faceta tú mismo, o una app la cambia por ti, esa elección anula la que esté activa de tus reglas de automatización de arriba. Tus reglas vuelven a actuar cuando esa regla termina.</string>
     <string name="automation_empty">Añade una regla para cambiar de faceta automáticamente.</string>
     <string name="automation_status_driving">Mostrando %1$s por la regla %2$s</string>
     <string name="automation_status_override">Mostrando %1$s, la faceta elegida. %2$s está en pausa hasta que termine.</string>

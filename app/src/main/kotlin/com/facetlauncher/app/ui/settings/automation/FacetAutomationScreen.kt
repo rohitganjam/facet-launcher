@@ -159,7 +159,7 @@ internal fun FacetAutomationContent(
                     state.status?.let { status -> item { StatusLine(status) } }
                     item { SectionHeader(stringResource(R.string.automation_section_rules)) }
                     item { RulesCard(state, onToggleRule, onAddRule, onEditRule) }
-                    if (!state.isPro) item { FreePlanStrip(onSeePro) }
+                    if (!state.canAddRule) item { FreePlanStrip(onSeePro) }
                     item { SectionHeader(stringResource(R.string.automation_section_other_apps), modifier = Modifier.padding(top = 20.dp)) }
                     item { OtherAppsCard() }
                     item { Spacer(modifier = Modifier.height(24.dp)) }

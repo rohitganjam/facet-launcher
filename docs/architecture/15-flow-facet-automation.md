@@ -19,7 +19,7 @@ and [14](14-flow-deep-links-and-shortcuts.md); persistence is in [02 §5.7](02-p
 | 4 | Schedule truth, `WakeEventsRepository`, `RefreshAutomationStateUseCase`, `ApplyFacetAutomationUseCase`, `RunFacetAutomationUseCase` started from `LauncherViewModel.init`, and the manual-switch re-sample | **Built**, unit-tested, and the touched screens' instrumented tests run on an emulator |
 | 5 | `DeviceState` and every trigger's truth (`isMetBy`), the Bluetooth, Wi-Fi, headphones and battery sources, `DeviceStateRepository`, `AutomationPermissionRepository`, the manifest permissions, and the picker lists | **Built**, unit-tested (Robolectric shadows for the Android glue); smoke-run on an emulator |
 | 6 | `FacetAutomationScreen` (list, status line, shortcuts note), the rule editor sheet (schedule and all four device editors), the permission gate, unavailable-rule rows, the Settings entry row | **Built**, unit and emulator tested (§5d). The trigger picker is a dropdown in the editor, not a separate sheet; locked Pro rows come with phase 7 |
-| 7 | `EntitlementRepository` (the one Pro seam, constant `true` until billing), `CanUseTriggerUseCase`, `SaveAutomationRuleUseCase`, the entitlement filter in `RefreshAutomationStateUseCase`, and the Pro states in the UI: pills, Facet Pro screen, paused rows, free-plan strip (§5d, §6) | **Built**, unit and emulator tested. The Facet Pro screen only explains; the purchase action and the 3→10 facet cap belong to the billing plan |
+| 7 | `EntitlementRepository` (the one Pro seam, answered by Google Play, see [16](16-flow-billing.md)), `CanUseTriggerUseCase`, `SaveAutomationRuleUseCase`, the entitlement filter in `RefreshAutomationStateUseCase`, and the Pro states in the UI: pills, Facet Pro screen, paused rows, free-plan strip (§5d, §6) | **Built**, unit and emulator tested. The Facet Pro screen only explains; the purchase action and the 3→10 facet cap belong to the billing plan |
 
 ## 1. Concepts
 
@@ -65,7 +65,7 @@ flowchart TB
         DEV["DeviceStateRepository\nbattery, headphones, Wi-Fi, Bluetooth"]:::built
         PERM["AutomationPermissionRepository\nBLUETOOTH_CONNECT, location"]:::built
         SET["SettingsRepository\nactive facet id"]
-        ENT["EntitlementRepository\nisPro, constant true until billing"]:::built
+        ENT["EntitlementRepository\nisPro, from Google Play"]:::built
     end
     SW --> ACT
     AUTO --> OBS
@@ -421,8 +421,8 @@ unavailable row in the list requests its permission when tapped; only a refusal 
 with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the Facet Pro screen. The *When*
 dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
 asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
-and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + Upgrade to Pro) shows for the free
-plan. the shared Facet Pro screen (`ui/pro/FacetProScreen`, also used by the facet limits and Settings) explains what Pro gives and holds Buy and Restore; it replaced an earlier bottom sheet. The editor sends the user there through `onOpenFacetPro` and keeps the draft; the billing plan added
+and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + Upgrade to Pro, right-aligned) shows once a free user has reached the 2-rule limit
+(not before). The shared Facet Pro screen (`ui/pro/FacetProScreen`, also used by the facet limits and Settings) explains what Pro gives and holds Buy and Restore; it replaced an earlier bottom sheet. The editor sends the user there through `onOpenFacetPro` and keeps the draft; the billing plan added
 the purchase action.
 
 **Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
@@ -448,8 +448,7 @@ indistinguishable from exact timing, and nothing switches under the user mid-use
 (Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
 sampling: a connection that came and went while the screen was off is never seen.
 
-**Pro gating (built).** `EntitlementRepository.isPro` is the single seam, a constant `true` until the billing
-plan replaces it. Free users get schedule rules only, and at most 2 rules in total (`AutomationLimits`,
+**Pro gating (built).** `EntitlementRepository.isPro` is the single seam, answered by Google Play ([16](16-flow-billing.md)). Free users get schedule rules only, and at most 2 rules in total (`AutomationLimits`,
 §3b); device triggers and more rules are Pro.
 
 | Where | What it does |
@@ -494,8 +493,8 @@ unavailable row in the list requests its permission when tapped; only a refusal 
 with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the Facet Pro screen. The *When*
 dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
 asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
-and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + Upgrade to Pro) shows for the free
-plan. the shared Facet Pro screen (`ui/pro/FacetProScreen`, also used by the facet limits and Settings) explains what Pro gives and holds Buy and Restore; it replaced an earlier bottom sheet. The editor sends the user there through `onOpenFacetPro` and keeps the draft; the billing plan added
+and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + Upgrade to Pro, right-aligned) shows once a free user has reached the 2-rule limit
+(not before). The shared Facet Pro screen (`ui/pro/FacetProScreen`, also used by the facet limits and Settings) explains what Pro gives and holds Buy and Restore; it replaced an earlier bottom sheet. The editor sends the user there through `onOpenFacetPro` and keeps the draft; the billing plan added
 the purchase action.
 
 **Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
@@ -524,9 +523,9 @@ sampling: a connection that came and went while the screen was off is never seen
 
 **Pro gating (built).** `EntitlementRepository.isPro` is the single seam; everything else reads it. `CanUseTriggerUseCase` and the rule limit decide what it allows. Free users get
 schedule rules only, and at most 2 rules in total (`AutomationLimits`, §3b); device triggers and more
-rules are Pro. Both return "allowed" until billing exists. When entitlement is lost, Pro-trigger rules
+rules are Pro. When entitlement is lost, Pro-trigger rules
 and rules beyond the free 2 are paused (shown dimmed, never deleted) because the runner filters them out
-of `conditionsMet`; the proposal is that the first two by list order stay active.
+of `conditionsMet`; the first two schedule rules by list order stay active.
 
 **Permission gate.** The permission is requested at the moment the user makes the choice that needs it
 (after the Pro check), so a rule can never be configured without it. For Bluetooth that is choosing the
@@ -535,7 +534,7 @@ type; for Wi-Fi it is choosing "Named network", because "Any network" needs only
 
 ```mermaid
 flowchart TB
-    A["User picks a trigger type"] --> B{"Pro type and not entitled?\n(never, until billing exists)"}
+    A["User picks a trigger type"] --> B{"Pro type and not entitled?\n(a free user)"}
     B -- yes --> U["Facet Pro screen, no permission request"]
     B -- no --> C{"Type needs a permission\nnot yet granted?\n(Bluetooth)"}
     C -- no --> OK["Show that type's configuration"]

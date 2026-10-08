@@ -126,7 +126,7 @@ chooses which three are usable. Disabled means:
 | Facet shortcuts | Published only for selectable facets (`SyncFacetShortcutsUseCase`). |
 | Facet automation | A rule aimed at a disabled facet is a no-op: `RefreshAutomationStateUseCase` passes only selectable ids as the evaluator's existing facets, so the existing "facet missing" fallback applies ([15](15-flow-facet-automation.md)). |
 
-Until billing exists `EntitlementRepository.isPro` is a constant `true`, so none of this is visible yet.
+`EntitlementRepository.isPro` comes from Google Play ([16](16-flow-billing.md)). A debug or sideloaded build is Free unless the debug override forces Pro.
 
 ## 2. Theme resolution — from DataStore to `MaterialTheme`
 

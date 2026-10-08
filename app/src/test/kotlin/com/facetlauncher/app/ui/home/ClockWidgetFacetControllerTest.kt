@@ -1,9 +1,13 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -14,7 +18,7 @@ class ClockWidgetFacetControllerTest {
     fun `switchToNativeClock delegates to the use case with the given facet`() = runTest {
         val facetRepository = mock(FacetRepository::class.java)
         val switchFacetToNativeClock = mock(SwitchFacetToNativeClockUseCase::class.java)
-        val controller = ClockWidgetFacetController(facetRepository, switchFacetToNativeClock)
+        val controller = ClockWidgetFacetController(facetRepository, switchFacetToNativeClock, EntitlementRepository())
         val facet = FacetEntity(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
 
         controller.switchToNativeClock(facet)
@@ -26,11 +30,21 @@ class ClockWidgetFacetControllerTest {
     fun `commitSize delegates straight to the repository`() = runTest {
         val facetRepository = mock(FacetRepository::class.java)
         val switchFacetToNativeClock = mock(SwitchFacetToNativeClockUseCase::class.java)
-        val controller = ClockWidgetFacetController(facetRepository, switchFacetToNativeClock)
+        val controller = ClockWidgetFacetController(facetRepository, switchFacetToNativeClock, EntitlementRepository())
         val facet = FacetEntity(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
 
         controller.commitSize(facet, 180, 90)
 
         verify(facetRepository).setClockWidgetSize(facet, 180, 90)
+    }
+
+    @Test
+    fun `isPro follows the entitlement`() {
+        val entitlement = FakeEntitlementRepository(initial = false)
+        val controller = ClockWidgetFacetController(mock(FacetRepository::class.java), mock(SwitchFacetToNativeClockUseCase::class.java), entitlement)
+
+        assertFalse(controller.isPro.value)
+        entitlement.proFlow.value = true
+        assertTrue(controller.isPro.value)
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -98,7 +100,7 @@ internal fun ProBadge(modifier: Modifier = Modifier, textSize: Float = 10f) {
 }
 
 /**
- * A full-width button with the accent gradient and glow: the one primary action of the Pro screens. It keeps the
+ * A full-width button with the accent gradient and glow, its label in `onPrimary` (white in light, dark in dark theme, where the accent is lighter): the one primary action of the Pro screens. It keeps the
  * app's button shape (M3 medium, 12dp, like [com.facetlauncher.app.ui.components.TonalButton]), not a pill.
  */
 @Composable
@@ -117,7 +119,7 @@ internal fun ProGradientButton(text: String, onClick: () -> Unit, enabled: Boole
             .testTag(tag),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(text = text, color = MaterialTheme.colorScheme.onPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -226,10 +228,17 @@ private fun MiniHome(spec: MiniHomeSpec, modifier: Modifier = Modifier) {
  * are fully lit and a check badge sits over the centre one. Decorative, so hidden from accessibility.
  */
 @Composable
-internal fun ProHeroFan(lit: Boolean, modifier: Modifier = Modifier) {
+internal fun ProHeroFan(lit: Boolean, modifier: Modifier = Modifier, scale: Float = 1f) {
     val accent = Accent
     val sideAlpha = if (lit) 1f else 0.55f
-    Box(modifier = modifier.fillMaxWidth().height(236.dp).clearAndSetSemantics { }, contentAlignment = Alignment.TopCenter) {
+    Box(modifier = modifier.fillMaxWidth().height(FAN_HEIGHT * scale).clearAndSetSemantics { }, contentAlignment = Alignment.TopCenter) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .requiredHeight(FAN_HEIGHT)
+                .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0.5f, 0f) },
+            contentAlignment = Alignment.TopCenter,
+        ) {
         MiniHome(WeekendSpec, Modifier.offset(x = (-96).dp, y = 26.dp).graphicsLayer { rotationZ = -11f }.alpha(sideAlpha))
         MiniHome(DriveSpec, Modifier.offset(x = 94.dp, y = 26.dp).graphicsLayer { rotationZ = 11f }.alpha(sideAlpha))
         MiniHome(WorkSpec, Modifier.offset(y = 6.dp))
@@ -249,8 +258,11 @@ internal fun ProHeroFan(lit: Boolean, modifier: Modifier = Modifier) {
                 Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
             }
         }
+        }
     }
 }
+
+private val FAN_HEIGHT = 236.dp
 
 /** A frosted chip showing what a trigger does: an icon, then "from → to". M3 chip shape (small, 8dp). */
 @Composable

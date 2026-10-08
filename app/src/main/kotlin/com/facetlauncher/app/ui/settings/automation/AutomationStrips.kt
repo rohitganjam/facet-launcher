@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -54,8 +55,9 @@ internal fun FreePlanStrip(onSeePro: () -> Unit, modifier: Modifier = Modifier) 
             .padding(horizontal = 13.dp, vertical = 11.dp)
             .testTag("automation_free_strip"),
         verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.End,
     ) {
-        Text(text = stringResource(R.string.automation_free_strip), style = MaterialTheme.typography.bodyMedium, color = Muted)
+        Text(text = stringResource(R.string.automation_free_strip), modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, color = Muted)
         Text(
             text = stringResource(R.string.automation_see_pro),
             style = MaterialTheme.typography.bodyMedium,
