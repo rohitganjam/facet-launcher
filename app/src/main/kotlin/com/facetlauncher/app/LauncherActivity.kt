@@ -24,11 +24,14 @@ import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.navigation.FacetNavHost
 import com.facetlauncher.app.ui.onboarding.OnboardingScreen
+import com.facetlauncher.app.ui.settings.DebugSettingsEntry
+import com.facetlauncher.app.ui.settings.LocalDebugSettingsEntry
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.ProvideSystemBars
 import com.facetlauncher.app.ui.theme.SystemBarsState
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Optional
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -40,6 +43,9 @@ class LauncherActivity : ComponentActivity() {
     @Inject lateinit var launcherApps: LauncherApps
 
     @Inject lateinit var entitlementRepository: EntitlementRepository
+
+    /** Only a debug build provides one (see `EntitlementModule`): the extra Settings rows it adds. */
+    @Inject lateinit var debugSettingsEntry: Optional<DebugSettingsEntry>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +60,7 @@ class LauncherActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalHomePressedEvent provides viewModel.homePressedEvent,
                 LocalHomeSwipeGate provides homeSwipeGate,
+                LocalDebugSettingsEntry provides debugSettingsEntry.orElse(null),
             ) {
                 FacetLauncherTheme(
                     themeMode = uiState.themeMode,

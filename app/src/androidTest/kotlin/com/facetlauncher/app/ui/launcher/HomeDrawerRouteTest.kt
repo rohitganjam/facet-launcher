@@ -74,6 +74,7 @@ import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
@@ -154,6 +155,7 @@ class HomeDrawerRouteTest {
         seedHubWithOneWidget: Boolean = false,
         onNavigateToFacetSettings: (Long) -> Unit = {},
         onNavigateToManageFacets: () -> Unit = {},
+        onNavigateToFacetPro: (ProReason) -> Unit = {},
         onboardingCompleted: Boolean = false,
         privateSpaceState: PrivateSpaceState = PrivateSpaceState.NotConfigured,
         /** How many of [apps] to seed as default favorites — more than a screen's worth forces the app list to overflow and scroll. */
@@ -426,6 +428,7 @@ class HomeDrawerRouteTest {
                         onNavigateToSettings = {},
                         onNavigateToFacetSettings = onNavigateToFacetSettings,
                         onNavigateToManageFacets = onNavigateToManageFacets,
+                        onNavigateToFacetPro = onNavigateToFacetPro,
                         onNavigateToUsageAccessExplanation = {},
                         homeViewModel = homeViewModel,
                         drawerViewModel = drawerViewModel,

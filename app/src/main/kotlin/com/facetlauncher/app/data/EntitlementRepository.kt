@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.ProQueryResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -14,6 +15,6 @@ open class EntitlementRepository {
     /** Suspends until the stored value has been read, so a cold start never decides anything from a placeholder. */
     open suspend fun awaitLoaded() = Unit
 
-    /** Asks Play again (startup, every resume, Restore purchases). */
-    open suspend fun refresh() = Unit
+    /** Asks Play again (startup, every resume, Restore purchases) and returns what Play said. */
+    open suspend fun refresh(): ProQueryResult = ProQueryResult.Owned
 }

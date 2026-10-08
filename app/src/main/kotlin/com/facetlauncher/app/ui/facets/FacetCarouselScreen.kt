@@ -96,7 +96,6 @@ import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.ProPill
-import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.ScreenHeader
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.WallpaperBackground
@@ -164,19 +163,19 @@ fun FacetCarouselScreen(
     onEditFacet: (facetId: Long) -> Unit,
     onReorderFacets: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     onDismissDrag: (deltaPx: Float) -> Unit,
     onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FacetCarouselViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var upgrade by remember { mutableStateOf<ProReason?>(null) }
     FacetCarouselContent(
         uiState = uiState,
         onSelect = { facetId -> viewModel.selectFacet(facetId); onFacetApply() },
         onEditFacet = onEditFacet,
-        onAddFacet = { if (uiState.canAddFacet) viewModel.addFacet() else upgrade = ProReason.FACET_LIMIT },
-        onLockedFacetClick = { upgrade = ProReason.FACET_LOCKED },
+        onAddFacet = { if (uiState.canAddFacet) viewModel.addFacet() else onOpenFacetPro(ProReason.FACET_LIMIT) },
+        onLockedFacetClick = { onOpenFacetPro(ProReason.FACET_LOCKED) },
         onDeleteFacet = viewModel::deleteFacet,
         onReorderFacets = onReorderFacets,
         onNavigateToSettings = onNavigateToSettings,
@@ -184,7 +183,6 @@ fun FacetCarouselScreen(
         onDismissDragEnd = onDismissDragEnd,
         modifier = modifier,
     )
-    upgrade?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { upgrade = null }) }
 }
 
 @Composable

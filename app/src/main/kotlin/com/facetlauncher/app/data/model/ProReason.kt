@@ -13,4 +13,7 @@ enum class ProReason {
 
     /** The user tapped a facet that is disabled on the free plan. */
     FACET_LOCKED,
+
+    /** The user opened Facet Pro from Settings, not from a limit. */
+    ABOUT,
 }

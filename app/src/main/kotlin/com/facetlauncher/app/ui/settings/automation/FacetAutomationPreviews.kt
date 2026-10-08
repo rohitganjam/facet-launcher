@@ -1,22 +1,17 @@
 package com.facetlauncher.app.ui.settings.automation
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.data.model.BatteryDirection
 import com.facetlauncher.app.data.model.BatteryLevelCondition
-import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.domain.AutomationRuleItem
 import com.facetlauncher.app.domain.AutomationStatus
 import com.facetlauncher.app.domain.FacetAutomationScreenState
 import com.facetlauncher.app.domain.RuleAvailability
-import com.facetlauncher.app.ui.components.ProUpgradeContent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import com.facetlauncher.app.ui.theme.Surface
 import java.time.DayOfWeek
 
 private fun previewItem(id: Long, trigger: AutomationTrigger, availability: RuleAvailability = RuleAvailability.AVAILABLE) =
@@ -86,11 +81,4 @@ private fun FacetAutomationFreePlanPreview() {
             onSeePro = {},
         )
     }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 300)
-@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun UpgradeSheetPreview() {
-    FacetLauncherTheme { ProUpgradeContent(reason = ProReason.RULE_LIMIT, onDismiss = {}, modifier = Modifier.background(Surface)) }
 }

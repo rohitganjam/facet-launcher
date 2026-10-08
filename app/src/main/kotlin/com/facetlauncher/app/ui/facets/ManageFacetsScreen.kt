@@ -55,7 +55,6 @@ import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.ProPill
-import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
@@ -85,6 +84,7 @@ fun ManageFacetsScreen(
     onBack: () -> Unit,
     onEditFacet: (facetId: Long) -> Unit,
     onFacetApply: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ManageFacetsViewModel = hiltViewModel(),
 ) {
@@ -97,6 +97,7 @@ fun ManageFacetsScreen(
         onApplyFacet = { facetId -> viewModel.applyFacet(facetId); onFacetApply() },
         onDeleteFacet = viewModel::deleteFacet,
         onAddFacet = viewModel::addFacet,
+        onOpenFacetPro = onOpenFacetPro,
         modifier = modifier,
     )
 }
@@ -110,10 +111,10 @@ private fun ManageFacetsContent(
     onApplyFacet: (Long) -> Unit,
     onDeleteFacet: (FacetEntity) -> Unit,
     onAddFacet: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var deletingFacet by remember { mutableStateOf<FacetEntity?>(null) }
-    var upgrade by remember { mutableStateOf<ProReason?>(null) }
     // remember(facets): a committed reorder re-emits the list from Room; re-seeding the working
     // copy on identity keeps the drag state from fighting the fresh list (same pattern the
     // carousel used).
@@ -135,8 +136,8 @@ private fun ManageFacetsContent(
                 onEditFacet = onEditFacet,
                 onApplyFacet = onApplyFacet,
                 onDeleteRequest = { deletingFacet = it },
-                onAddFacet = { if (uiState.canAddFacet) onAddFacet() else upgrade = ProReason.FACET_LIMIT },
-                onLockedFacetClick = { upgrade = ProReason.FACET_LOCKED },
+                onAddFacet = { if (uiState.canAddFacet) onAddFacet() else onOpenFacetPro(ProReason.FACET_LIMIT) },
+                onLockedFacetClick = { onOpenFacetPro(ProReason.FACET_LOCKED) },
                 contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 12.dp, bottom = 24.dp),
                 modifier = Modifier
                     .fillMaxSize()
@@ -156,7 +157,6 @@ private fun ManageFacetsContent(
             onDismiss = { deletingFacet = null },
         )
     }
-    upgrade?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { upgrade = null }) }
 }
 
 @Composable
@@ -378,6 +378,7 @@ private fun ManageFacetsScreenPreview() {
             onApplyFacet = {},
             onDeleteFacet = {},
             onAddFacet = {},
+            onOpenFacetPro = {},
         )
     }
 }

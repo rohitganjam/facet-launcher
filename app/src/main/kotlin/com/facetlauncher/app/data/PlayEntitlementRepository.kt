@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,29 +29,38 @@ class PlayEntitlementRepository @Inject constructor(
     private val billingRepository: BillingRepository,
     @EntitlementDataStore private val dataStore: DataStore<Preferences>,
     @ApplicationScope scope: CoroutineScope,
+    entitlementOverride: Optional<EntitlementOverride>,
 ) : EntitlementRepository() {
 
     private val state = MutableStateFlow(false)
     private val loaded = MutableStateFlow(false)
+    private var playPro = false
+    private var forced: Boolean? = null
 
-    override val isPro: StateFlow<Boolean> = state
+    /** What the rest of the app sees: Play's answer, unless a debug override forces it. */
+    private val effective = MutableStateFlow(false)
+
+    override val isPro: StateFlow<Boolean> = effective
 
     init {
         scope.launch {
-            state.value = dataStore.data.first()[PRO_KEY] ?: false
+            setPlayPro(dataStore.data.first()[PRO_KEY] ?: false)
             loaded.value = true
             refresh()
         }
         scope.launch { billingRepository.updates.collect { apply(it) } }
+        entitlementOverride.ifPresent { override ->
+            scope.launch { override.forced.collect { setForced(it) } }
+        }
     }
 
     override suspend fun awaitLoaded() {
         loaded.first { it }
     }
 
-    override suspend fun refresh() {
+    override suspend fun refresh(): ProQueryResult {
         awaitLoaded()
-        apply(billingRepository.queryPro())
+        return billingRepository.queryPro().also { apply(it) }
     }
 
     private suspend fun apply(result: ProQueryResult) {
@@ -65,7 +75,20 @@ class PlayEntitlementRepository @Inject constructor(
         if (state.value == pro) return
         // Persist first, then publish, so what the rest of the app sees is always what survives a restart.
         dataStore.edit { it[PRO_KEY] = pro }
+        setPlayPro(pro)
+    }
+
+    @Synchronized
+    private fun setPlayPro(pro: Boolean) {
+        playPro = pro
         state.value = pro
+        effective.value = forced ?: playPro
+    }
+
+    @Synchronized
+    private fun setForced(value: Boolean?) {
+        forced = value
+        effective.value = forced ?: playPro
     }
 
     private companion object {

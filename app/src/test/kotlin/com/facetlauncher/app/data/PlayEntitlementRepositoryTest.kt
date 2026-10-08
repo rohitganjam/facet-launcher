@@ -16,6 +16,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.util.Optional
 
 class PlayEntitlementRepositoryTest {
 
@@ -35,7 +36,7 @@ class PlayEntitlementRepositoryTest {
 
     /** A fresh repository over the same DataStore, like a new process start; [answer] is what Play says when asked. */
     private fun TestScope.start(answer: ProQueryResult): PlayEntitlementRepository =
-        PlayEntitlementRepository(billing(answer), dataStore, CoroutineScope(backgroundScope.coroutineContext))
+        PlayEntitlementRepository(billing(answer), dataStore, CoroutineScope(backgroundScope.coroutineContext), Optional.empty())
 
     private suspend fun PlayEntitlementRepository.settled(): Boolean {
         awaitLoaded()
@@ -106,5 +107,43 @@ class PlayEntitlementRepositoryTest {
         repository.isPro.first { it }
 
         assertEquals(true, start(ProQueryResult.Unavailable).settled())
+    }
+
+    private val forced = kotlinx.coroutines.flow.MutableStateFlow<Boolean?>(null)
+
+    private fun TestScope.startWithOverride(answer: ProQueryResult): PlayEntitlementRepository =
+        PlayEntitlementRepository(
+            billing(answer),
+            dataStore,
+            CoroutineScope(backgroundScope.coroutineContext),
+            Optional.of(object : EntitlementOverride { override val forced = this@PlayEntitlementRepositoryTest.forced }),
+        )
+
+    @Test
+    fun `refresh returns what play said so restore can report it`() = runTest {
+        val repository = start(ProQueryResult.NotOwned)
+
+        assertEquals(ProQueryResult.NotOwned, repository.refresh())
+    }
+
+    @Test
+    fun `a debug override can force pro on a free user`() = runTest {
+        forced.value = true
+        val repository = startWithOverride(ProQueryResult.NotOwned)
+
+        assertEquals(true, repository.settled())
+    }
+
+    @Test
+    fun `a debug override can force free on a pro user without forgetting the purchase`() = runTest {
+        start(ProQueryResult.Owned).settled()
+        forced.value = false
+        val repository = startWithOverride(ProQueryResult.Unavailable)
+
+        assertEquals("forced free", false, repository.settled())
+
+        forced.value = null
+        repository.isPro.first { it }
+        assertEquals("following play again", true, repository.isPro.value)
     }
 }

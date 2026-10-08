@@ -111,7 +111,7 @@ flowchart TB
 
 How many facets a user may have is `FacetLimits` (`data/model`): **3 free, 10 with Pro**. `AddFacetUseCase`
 enforces it (the repository does not, since it knows nothing about entitlement), and the add row and the
-carousel's add page show at the free limit with a Pro pill that opens the shared `ProUpgradeSheet`.
+carousel's add page show at the free limit with a Pro pill that opens the Facet Pro screen (`ui/pro`).
 
 A user who loses Pro keeps every facet, but only the **first 3 in list order are selectable**
 (`SelectableFacetsUseCase`); the rest are disabled until the count drops to 3 or Pro returns. Nothing is
@@ -120,7 +120,7 @@ chooses which three are usable. Disabled means:
 
 | Where | Behaviour |
 |---|---|
-| Carousel and Manage facets | Dimmed with a lock; tapping opens the upgrade sheet instead of applying or opening its settings. In Manage facets the overflow menu disables *Facet settings* and *Apply* but keeps *Delete*. |
+| Carousel and Manage facets | Dimmed with a lock; tapping opens the Facet Pro screen instead of applying or opening its settings. In Manage facets the overflow menu disables *Facet settings* and *Apply* but keeps *Delete*. |
 | `ActivateFacetByIdUseCase` | A no-op for a disabled facet, which covers shortcuts and deep links. |
 | `EnsureActiveFacetUseCase.keepUsable()` | Runs whenever the selectable set changes (an add, a delete, a reorder, a change of entitlement): if the active facet is missing or disabled, the first selectable facet takes over. |
 | Facet shortcuts | Published only for selectable facets (`SyncFacetShortcutsUseCase`). |
@@ -198,6 +198,7 @@ Which color stays legible depends on what's *behind* the bars, so the pure rule
 | `WALLPAPER` | `HomeDrawerRoute` (Home, Hub, carousel, Drawer) | the `system_bar_icon_style` setting: `MATCH_THEME` (default) follows the theme, `LIGHT`/`DARK` force it |
 | `THEME_SURFACE` | the default; `HomeDrawerRoute` while a widget picker covers Home | always follow the theme (the setting is ignored — it could make icons invisible on an opaque screen) |
 | `DARK_SURFACE` | `HomeDrawerRoute` while Private Space shows | always light — `PrivateSpaceTheme` is fixed-dark regardless of theme |
+| `DARK_TOP` | `FacetProScreen` before purchase: a dark hero over a normal page | status bar icons always light; the navigation bar follows the theme (`useLightNavigationBarIcons`), since it sits over the page-coloured bottom bar |
 
 A screen only declares its backdrop (`SystemBarsBackdropEffect`); leaving composition falls back to
 `THEME_SURFACE`, so Settings and onboarding need no code. Bottom sheets are separate windows with

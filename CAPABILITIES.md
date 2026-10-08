@@ -137,7 +137,7 @@ starting at `HOME`.
   trigger and offers "Open settings". A rule whose permission is later revoked is paused, not deleted.
 - **Free vs Pro.** Free: 2 schedule rules. Pro: more rules and every device trigger. A lapsed plan pauses
   the extra rules (first two schedule rules stay), never deletes them. Everyone is entitled until billing
-  exists; the upgrade sheet explains but cannot purchase yet.
+  exists; the Facet Pro screen (Settings → Facets → Facet Pro, and wherever a Pro limit is hit) shows what Pro gives, the Play price, Buy and Restore purchases. Purchases need a Google Play build; a debug build has a Force Pro / Force Free switch in Settings.
 - Nothing leaves the device; rules are stored in the local database. Not included in backup/restore yet.
 
 ---

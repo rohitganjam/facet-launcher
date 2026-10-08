@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -114,7 +113,7 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Accent, CircleShape)
+                .background(Accent, MaterialTheme.shapes.medium)
                 .clickable(onClick = onSetDefault)
                 .testTag("onboarding_set_default")
                 .padding(vertical = 14.dp),

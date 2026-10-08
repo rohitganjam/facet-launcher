@@ -26,9 +26,9 @@ dependency is not listed the class does not have it.
 | `DefaultLauncherRepository` | `RoleManager` / `PackageManager` home-role query | `Context` | `isDefaultLauncher()`, `requestDefaultLauncherIntent()` | `HomeViewModel`, `SettingsViewModel` |
 | `DeviceStateRepository` | combines battery, headphones, Wi-Fi and Bluetooth into one hot `StateFlow<DeviceState>` | `BatteryRepository`, `HeadphonesRepository`, `WifiRepository`, `BluetoothRepository`, `@ApplicationScope CoroutineScope` | `deviceState`, `current()`, `onPermissionsChanged()` | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `PermissionsViewModel`, `RuleEditorViewModel` |
 | `DockAppRepository` | Room `dock_apps` + `dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | as `DefaultFavoriteAppRepository`, dock-named; `MAX_APPS` constant | 9 use cases, 6 ViewModels |
-| `EntitlementRepository` (`open`) | the Pro seam: the base class is "everyone is Pro" (tests, previews); the app injects `PlayEntitlementRepository` via `EntitlementModule` | — | `isPro: StateFlow<Boolean>`, `awaitLoaded()`, `refresh()` | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `ObserveFacetAutomationUseCase`, `SelectableFacetsUseCase`, `AddFacetUseCase`, `RuleEditorViewModel`, `ManageFacetsViewModel`, `FacetCarouselViewModel`, `LauncherActivity` (refresh on resume) |
-| `PlayEntitlementRepository` | Pro from Google Play, cached in the `facet_entitlement` DataStore; only an explicit "owned" or "no purchase" answer changes it (a pending purchase or an unreachable Play keeps the last value) | `BillingRepository`, `@EntitlementDataStore DataStore<Preferences>`, `@ApplicationScope CoroutineScope` | overrides `isPro`, `awaitLoaded()`, `refresh()` | `EntitlementModule` (bound as `EntitlementRepository`) |
-| `BillingRepository` (`open`) | Google Play Billing client over IPC, the one-time `facet_pro` product; no network permission needed | `Context`, `@ApplicationScope CoroutineScope` | `suspend queryPro(): ProQueryResult`, `suspend priceText()`, `suspend launchPurchase(activity)`, `updates: Flow<ProQueryResult>`; acknowledges purchases | `PlayEntitlementRepository` |
+| `EntitlementRepository` (`open`) | the Pro seam: the base class is "everyone is Pro" (tests, previews); the app injects `PlayEntitlementRepository` via `EntitlementModule` | — | `isPro: StateFlow<Boolean>`, `awaitLoaded()`, `suspend refresh(): ProQueryResult` (what Play said, so Restore can report it) | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `ObserveFacetAutomationUseCase`, `SelectableFacetsUseCase`, `AddFacetUseCase`, `RuleEditorViewModel`, `ManageFacetsViewModel`, `FacetCarouselViewModel`, `LauncherActivity` (refresh on resume), `FacetProViewModel`, `SettingsViewModel` |
+| `PlayEntitlementRepository` | Pro from Google Play, cached in the `facet_entitlement` DataStore; only an explicit "owned" or "no purchase" answer changes it (a pending purchase or an unreachable Play keeps the last value) | `BillingRepository`, `@EntitlementDataStore DataStore<Preferences>`, `@ApplicationScope CoroutineScope` | overrides `isPro`, `awaitLoaded()`, `refresh()`; applies an optional debug `EntitlementOverride` on top of Play's answer (the cache keeps Play's answer only) | `EntitlementModule` (bound as `EntitlementRepository`) |
+| `BillingRepository` (`open`) | Google Play Billing client over IPC, the one-time `facet_pro` product; no network permission needed | `Context`, `@ApplicationScope CoroutineScope` | `suspend queryPro(): ProQueryResult`, `suspend priceText()`, `suspend launchPurchase(activity)`, `updates: Flow<ProQueryResult>`; acknowledges purchases | `PlayEntitlementRepository`, `FacetProViewModel` (price, purchase flow, pending updates) |
 | `FacetDockAppRepository` | Room `facet_dock_apps` + `facet_dock_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeDockItemsForFacets(ids)`, `replaceItems(facetId, items)` | 8 use cases, 4 ViewModels |
 | `FacetRepository` | Room `facets` | `FacetDao` | `observeFacets()`, `getById`, `addFacet()`, `renameFacet`, 28 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters (trimmed — `updateOverridingApps`/`updateOverridingDock` no longer take the look-field params, moved to `AppearanceSettingsViewModel`'s own per-column setters), `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 15 use cases, 9 ViewModels |
 | `FacetShortcutRepository` | `ShortcutManagerCompat` dynamic shortcuts | `Context` | `syncShortcuts(facets)` — full atomic replace, one `ShortcutInfoCompat` per facet | `SwitchFacetToNativeClockUseCase` | write (releases the clock widget id, then clears it) | `FacetRepository`, `AppWidgetRepository` | `ClockWidgetFacetController` |
@@ -134,7 +134,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (30) — `@HiltViewModel`, one per screen
+## 3. ViewModels (31) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -155,6 +155,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `ClockStyleGalleryViewModel` | `ClockStyleGalleryScreen` | `facetId?` |
 | `OnboardingViewModel` | `OnboardingScreen` | — |
 | `SettingsViewModel` | `SettingsScreen` | — |
+| `FacetProViewModel` | `FacetProScreen` (Settings → Facet Pro, and every Pro limit): Buy, Restore, the Play price and messages | `reason` (`ProReason`) |
 | `AppearanceSettingsViewModel` | `AppearanceSettingsScreen` | `facetId?` |
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |

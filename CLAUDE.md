@@ -56,11 +56,12 @@ Every component's corner radius must come from Material 3's real shape scale and
 | Medium | 12dp | `.medium` | Cards, small FABs                                      |
 | Large | 16dp | `.large` | FABs, extended FABs, navigation drawers                |
 | Extra large | 28dp | `.extraLarge` | Dialogs, large FABs, modal bottom sheets (top corners) |
-| Full | fully rounded | `CircleShape` | Buttons, search bars, segmented buttons, switches      |
+| Full | fully rounded | `CircleShape` | Search bars, segmented/tab controls, switches, icon-style circles |
 
 - Look up a component's category on the [Compose Material3 component list](https://developer.android.com/develop/ui/compose/components) or [API reference](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary) and use its real default shape (verify against the library's own tokens when in doubt — `ShapeTokens.kt`/`MenuTokens.kt`/`DialogTokens.kt`/etc. under `androidx.compose.material3.tokens`) rather than guessing a dp value.
 - A "top corners only" variant (e.g. a bottom sheet) is a literal `RoundedCornerShape(topStart = ..., topEnd = ..., bottomEnd = 0.dp, bottomStart = 0.dp)` using the matching token's dp value — `MaterialTheme.shapes` has no per-corner variant.
 
+- **Buttons are square, not Full:** every text button uses `MaterialTheme.shapes.medium` (12dp; `TonalButton`, `ProGradientButton`) or `.large` (`SurfaceButton`) — a deliberate project choice over M3's round default. Don't add a `CircleShape` button.
 - **Exception — app icons.** `AppIcon` is outlined by the user's `IconShape` setting (`ui/components/SuperellipseShape.kt`: a superellipse by default, n=4), not the M3 shape scale, and takes no corner-radius parameter. Don't give an icon a bespoke radius.
 
 ## Testing — needed for every capability

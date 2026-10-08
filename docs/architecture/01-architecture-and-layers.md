@@ -107,7 +107,7 @@ flowchart TB
 
     subgraph VMC["ViewModelComponent — one per ViewModel instance"]
         UCS["Use cases\nclass X @Inject constructor(...)\nunscoped: new instance per injection"]
-        VMS["30 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
+        VMS["31 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
         UCS --> VMS
     end
 
@@ -132,9 +132,10 @@ flowchart TB
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (12) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
+| `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; release and benchmark builds leave them empty, so the override and its Settings row exist only in debug. |
 | Repositories (41) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
-| ViewModels (30) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
+| ViewModels (31) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
 There are **no interface-to-implementation `@Binds` modules**: every repository is a concrete
 `@Singleton class`, and tests substitute them with hand-written DAO fakes (`FolderTestFakes.kt`)
@@ -158,6 +159,6 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 - runs `RepairOrphanedProfileRowsUseCase` once (backfills `userId = -1` rows left by pre-profile schemas);
 - runs `SeedDefaultDockUseCase` on fresh installs.
 
-`FacetNavHost` owns 23 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
+`FacetNavHost` owns 24 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
 nav transition — `HomeDrawerRoute` handles it as a follow-finger gesture inside the `HOME`
 destination, while `Hub`/`Facets`/settings screens are ordinary destinations.

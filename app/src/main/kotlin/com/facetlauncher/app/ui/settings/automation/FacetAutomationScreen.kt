@@ -61,7 +61,6 @@ import com.facetlauncher.app.domain.RuleAvailability
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.ProPill
-import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.facets.SectionHeader
@@ -78,6 +77,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 @Composable
 fun FacetAutomationScreen(
     onBack: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FacetAutomationViewModel = hiltViewModel(),
     editorViewModel: RuleEditorViewModel = hiltViewModel(),
@@ -87,7 +87,6 @@ fun FacetAutomationScreen(
     val choices by editorViewModel.choices.collectAsStateWithLifecycle()
     val isPro by editorViewModel.isPro.collectAsStateWithLifecycle()
     val requestPermission = rememberPermissionRequest()
-    var upgrade by remember { mutableStateOf<ProReason?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -100,14 +99,14 @@ fun FacetAutomationScreen(
         state = uiState,
         onBack = onBack,
         onToggleRule = viewModel::setEnabled,
-        onAddRule = { if (uiState?.canAddRule == false) upgrade = ProReason.RULE_LIMIT else editorViewModel.openNewRule() },
+        onAddRule = { if (uiState?.canAddRule == false) onOpenFacetPro(ProReason.RULE_LIMIT) else editorViewModel.openNewRule() },
         onEditRule = { ruleId ->
             // A paused rule opens the upgrade sheet. A rule whose permission is missing asks for it first;
             // only a refusal opens the editor.
             val item = uiState?.items?.firstOrNull { it.rule.id == ruleId }
             val needed = item?.missingPermission()
             when {
-                item?.availability == RuleAvailability.NEEDS_PRO -> upgrade = item.upgradeReason()
+                item?.availability == RuleAvailability.NEEDS_PRO -> onOpenFacetPro(item.upgradeReason())
                 needed == null -> editorViewModel.openRule(ruleId)
                 else -> requestPermission(needed) { granted ->
                     editorViewModel.onPermissionResult(needed, granted)
@@ -115,15 +114,15 @@ fun FacetAutomationScreen(
                 }
             }
         },
-        onSeePro = { upgrade = ProReason.RULE_LIMIT },
+        onSeePro = { onOpenFacetPro(ProReason.RULE_LIMIT) },
         modifier = modifier,
     )
-    upgrade?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { upgrade = null }) }
     editor?.let { editing ->
         RuleEditorSheet(
             state = editing,
             choices = choices,
             isPro = isPro,
+            onOpenFacetPro = onOpenFacetPro,
             onChange = { transform -> editorViewModel.editRule { transform(this) } },
             onChangeTrigger = { candidate -> editorViewModel.changeTrigger(candidate, requestPermission) },
             onSave = editorViewModel::saveRule,

@@ -352,6 +352,7 @@ class KeyboardDismissalTest {
                     onNavigateToSettings = {},
                     onNavigateToFacetSettings = {},
                     onNavigateToManageFacets = {},
+                    onNavigateToFacetPro = {},
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     drawerViewModel = drawerViewModel,

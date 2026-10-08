@@ -8,7 +8,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (44)  @Singleton Repositories — the only layer that touches
+├── data/                          (45)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (7)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
@@ -24,7 +24,8 @@ app/src/main/kotlin/com/facetlauncher/app/
 └── ui/
     ├── theme/                     (11)  Color, Type, Theme, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
-    ├── components/                (35)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    ├── pro/                       (6)   FacetProScreen (before purchase) / FacetProUnlocked (after) / FacetProViewModel, ProComponents (ink panel, PRO mark, facet fans, trigger pills, gradient button), ProSettingsCard (Settings), previews
+    ├── components/                (34)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
     │                                    DragReorderState, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
     │                                    AppPickerScreen, FolderContentsSheet, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (23 routes) + popBackStackSafely
@@ -41,8 +42,8 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (29)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
-        ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (ProPill and the upgrade sheet live in `components/`)
+    └── settings/                  (30)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
+        ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```
 
@@ -62,6 +63,8 @@ app/src/main/kotlin/com/facetlauncher/app/
 | A colour/typography/motion token | `ui/theme/` | — | `Color.kt`, `Motion.kt` |
 | A `NavHost` route | `ui/navigation/FacetNavHost.kt` | `FacetDestinations.X` constant | `FOLDER_DETAIL = "folderDetail/{folderId}"` |
 
+`app/src/debug/` holds debug-only code (the entitlement override and its Settings row), reached through optional Hilt bindings so release and benchmark builds contain none of it; its tests live in `app/src/testDebug/`.
+
 Settings screens are the main exception to "one package per surface": all 13 live flat in
 `ui/settings/` (only `backup/` and `automation/` have their own sub-package). Clock styling is split between
 `ui/home/clock/` (rendering + gallery) and `data/model/Clock*Option.kt` (choices).
@@ -72,16 +75,16 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          34   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
+├── data/          36   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt, …)
 │   ├── local/     12   Converters, entities, DAO-level behaviour via in-memory Room
 │   ├── model/      7   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
 ├── domain/        42   one test per use case (pure logic — no Android needed for most)
-└── ui/            38   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) and the rule editor state/formatting tests
+└── ui/            39   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) and the rule editor state/formatting tests
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/            45   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
+└── ui/            46   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

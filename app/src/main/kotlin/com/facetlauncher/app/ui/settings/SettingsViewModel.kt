@@ -5,14 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
+import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
+import com.facetlauncher.app.domain.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -28,6 +30,8 @@ class SettingsViewModel @Inject constructor(
     private val defaultLauncherRepository: DefaultLauncherRepository,
     private val workProfileRepository: WorkProfileRepository,
     automationRuleRepository: AutomationRuleRepository,
+    entitlementRepository: EntitlementRepository,
+    facetRepository: FacetRepository,
 ) : ViewModel() {
 
     private val isDefaultLauncher = MutableStateFlow(false)
@@ -37,7 +41,9 @@ class SettingsViewModel @Inject constructor(
         isDefaultLauncher,
         workProfileRepository.observeWorkProfiles(),
         automationRuleRepository.observeRules(),
-    ) { screenState, isDefaultLauncher, workProfiles, automationRules ->
+        entitlementRepository.isPro,
+        facetRepository.observeFacets(),
+    ) { screenState, isDefaultLauncher, workProfiles, automationRules, isPro, facets ->
         SettingsUiState(
             settings = screenState.settings,
             dockItems = screenState.dockItems,
@@ -47,6 +53,9 @@ class SettingsViewModel @Inject constructor(
             isLoading = false,
             workProfiles = workProfiles,
             automationRuleCount = automationRules.size,
+            isPro = isPro,
+            facetCount = facets.size,
+            triggersRunning = automationRules.count { it.enabled },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 

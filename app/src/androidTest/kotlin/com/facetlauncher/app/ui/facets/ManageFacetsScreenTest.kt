@@ -22,6 +22,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.FacetLimits
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
@@ -48,6 +49,7 @@ class ManageFacetsScreenTest {
         onFacetApply: () -> Unit = {},
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
         entitlement: EntitlementRepository = EntitlementRepository(),
+        onOpenFacetPro: (ProReason) -> Unit = {},
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -87,6 +89,7 @@ class ManageFacetsScreenTest {
                     onBack = onBack,
                     onEditFacet = onEditFacet,
                     onFacetApply = onFacetApply,
+                    onOpenFacetPro = onOpenFacetPro,
                     viewModel = viewModel,
                 )
             }
@@ -243,7 +246,8 @@ class ManageFacetsScreenTest {
         assertEquals(true, backPressed)
     }
 
-    private fun freeWith(count: Int) = setContent(
+    private fun freeWith(count: Int, onOpenFacetPro: (ProReason) -> Unit = {}) = setContent(
+        onOpenFacetPro = onOpenFacetPro,
         seed = { facetRepository, settings ->
             repeat(count) { facetRepository.addFacet() }
             settings.setActiveFacetId(1L)
@@ -254,8 +258,10 @@ class ManageFacetsScreenTest {
     @Test
     fun aFreeUsersFourthFacetIsLockedAndTappingItOpensTheUpgradeInsteadOfItsSettings() {
         var edited: Long? = null
+        var opened: ProReason? = null
         setContent(
             onEditFacet = { edited = it },
+            onOpenFacetPro = { opened = it },
             seed = { facetRepository, settings ->
                 repeat(4) { facetRepository.addFacet() }
                 settings.setActiveFacetId(1L)
@@ -267,7 +273,7 @@ class ManageFacetsScreenTest {
         composeRule.onNodeWithTag("facet_reorder_lock_1", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithTag("facet_reorder_row_4").performClick()
 
-        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
+        assertEquals(ProReason.FACET_LOCKED, opened)
         assertEquals(null, edited)
     }
 
@@ -280,11 +286,12 @@ class ManageFacetsScreenTest {
 
     @Test
     fun theAddRowStaysAtTheFreeLimitWithAProPillAndOpensTheUpgrade() {
-        freeWith(3)
+        var opened: ProReason? = null
+        freeWith(3) { opened = it }
 
         composeRule.onNodeWithTag("facet_reorder_add_row").assertExists().performClick()
 
-        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
+        assertEquals(ProReason.FACET_LIMIT, opened)
         composeRule.onAllNodesWithText("Pro").assertCountEquals(1)
     }
 

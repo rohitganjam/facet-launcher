@@ -16,15 +16,16 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.dock.DockAppPickerScreen
+import com.facetlauncher.app.ui.facets.FacetSettingsScreen
+import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
+import com.facetlauncher.app.ui.facets.ManageFacetsScreen
 import com.facetlauncher.app.ui.home.clock.ClockStyleGalleryRoute
 import com.facetlauncher.app.ui.home.clock.FacetClockStyleGalleryScreen
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
-import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
-import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
-import com.facetlauncher.app.ui.facets.ManageFacetsScreen
-import com.facetlauncher.app.ui.facets.FacetSettingsScreen
+import com.facetlauncher.app.ui.pro.FacetProScreen
 import com.facetlauncher.app.ui.settings.AboutScreen
 import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
@@ -34,12 +35,13 @@ import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
 import com.facetlauncher.app.ui.settings.FolderDetailScreen
 import com.facetlauncher.app.ui.settings.FoldersSettingsScreen
 import com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreen
-import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.facetlauncher.app.ui.settings.NotificationAccessExplanationScreen
 import com.facetlauncher.app.ui.settings.NotificationSettingsScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
 import com.facetlauncher.app.ui.settings.UsageAccessExplanationScreen
+import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
+import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 
@@ -49,6 +51,7 @@ object FacetDestinations {
     const val DOCK_PICKER = "dockPicker?facetId={facetId}"
     const val FACET_MANAGE = "facetManage"
     const val FACET_AUTOMATION = "facetAutomation"
+    const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
     const val FAVORITES_PICKER = "favoritesPicker?facetId={facetId}"
     const val CALENDAR_SETTINGS = "calendarSettings?facetId={facetId}"
@@ -71,6 +74,8 @@ object FacetDestinations {
     fun facetClockStyleGallery(facetId: Long) = "facetClockStyleGallery/$facetId"
 
     fun facetSettings(facetId: Long) = "facetSettings/$facetId"
+
+    fun facetPro(reason: ProReason) = "facetPro/${reason.name}"
 
     fun folderDetail(folderId: Long) = "folderDetail/$folderId"
 
@@ -156,6 +161,7 @@ fun FacetNavHost(
                 onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
                 onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
                 onNavigateToUsageAccessExplanation = {
                     navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION)
                 },
@@ -174,6 +180,7 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
                 onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.appearanceSettings()) },
                 onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings()) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
@@ -294,6 +301,19 @@ fun FacetNavHost(
         composable(FacetDestinations.FACET_AUTOMATION) {
             FacetAutomationScreen(
                 onBack = { navController.popBackStackSafely() },
+                onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+            )
+        }
+        composable(
+            FacetDestinations.FACET_PRO,
+            arguments = listOf(navArgument("reason") { type = NavType.StringType }),
+        ) { entry ->
+            val reason = entry.arguments?.getString("reason")?.let { name -> ProReason.entries.firstOrNull { it.name == name } } ?: ProReason.ABOUT
+            FacetProScreen(
+                reason = reason,
+                onBack = { navController.popBackStackSafely() },
+                onSetUpTrigger = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
             )
         }
         composable(FacetDestinations.FACET_MANAGE) {
@@ -302,6 +322,7 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onEditFacet = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
+                onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
             )
         }
         composable(

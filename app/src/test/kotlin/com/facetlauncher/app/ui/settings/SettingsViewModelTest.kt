@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.settings
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileInfo
@@ -26,8 +27,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 
 /** [SettingsViewModel] is purely observational now — every mutable section lives in its own screen/ViewModel — so this only exercises the summary state it composes for the main list's rows. */
@@ -57,6 +58,9 @@ class SettingsViewModelTest {
         settings: LauncherSettings = LauncherSettings(),
         workProfiles: List<WorkProfileInfo> = emptyList(),
         automationRuleCount: Int = 0,
+        isPro: Boolean = true,
+        facetCount: Int = 0,
+        enabledRuleCount: Int = automationRuleCount,
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
@@ -73,9 +77,15 @@ class SettingsViewModelTest {
         val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository)
         val automationRuleRepository = mock(com.facetlauncher.app.data.AutomationRuleRepository::class.java)
         `when`(automationRuleRepository.observeRules()).thenReturn(
-            flowOf((1..automationRuleCount).map { com.facetlauncher.app.data.model.AutomationRule(it.toLong(), 1L, com.facetlauncher.app.data.model.AutomationTrigger.Headphones()) }),
+            flowOf(
+                (1..automationRuleCount).map {
+                    com.facetlauncher.app.data.model.AutomationRule(it.toLong(), 1L, com.facetlauncher.app.data.model.AutomationTrigger.Headphones(), enabled = it <= enabledRuleCount)
+                },
+            ),
         )
-        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository)
+        val facetRepository = mock(com.facetlauncher.app.data.FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf((1..facetCount).map { com.facetlauncher.app.data.local.FacetEntity(id = it.toLong(), name = "F$it", position = it) }))
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository)
     }
 
     @Test
@@ -158,5 +168,28 @@ class SettingsViewModelTest {
 
         assertEquals(listOf(workProfile), viewModel.uiState.value.workProfiles)
         assertEquals(true, viewModel.uiState.value.workProfiles.single().isPaused)
+    }
+
+    @Test
+    fun `uiState says whether the user has pro`() = runTest {
+        val pro = createViewModel(isPro = true)
+        val free = createViewModel(isPro = false)
+        backgroundScope.launch { pro.uiState.collect {} }
+        backgroundScope.launch { free.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(true, pro.uiState.value.isPro)
+        assertEquals(false, free.uiState.value.isPro)
+    }
+
+    @Test
+    fun `uiState carries the facet count and how many automation rules are switched on`() = runTest {
+        val viewModel = createViewModel(automationRuleCount = 3, enabledRuleCount = 2, facetCount = 4)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(4, viewModel.uiState.value.facetCount)
+        assertEquals(2, viewModel.uiState.value.triggersRunning)
+        assertEquals(3, viewModel.uiState.value.automationRuleCount)
     }
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Example content for the Facet Pro screen's illustrative mini home screens. Not translated: it only stands in for a home screen. -->
+<resources>
+    <string name="pro_sample_time_weekend" translatable="false">7:40</string>
+    <string name="pro_sample_date_weekend" translatable="false">Sat 12 Oct</string>
+    <string name="pro_sample_time_drive" translatable="false">18:05</string>
+    <string name="pro_sample_date_drive" translatable="false">Fri 11 Oct</string>
+    <string name="pro_sample_time_work" translatable="false">9:41</string>
+    <string name="pro_sample_date_work" translatable="false">Mon 14 Oct</string>
+    <string name="pro_sample_app_camera" translatable="false">Camera</string>
+    <string name="pro_sample_app_maps" translatable="false">Maps</string>
+    <string name="pro_sample_app_music" translatable="false">Music</string>
+    <string name="pro_sample_app_spotify" translatable="false">Spotify</string>
+    <string name="pro_sample_app_phone" translatable="false">Phone</string>
+    <string name="pro_sample_app_slack" translatable="false">Slack</string>
+    <string name="pro_sample_app_calendar" translatable="false">Calendar</string>
+    <string name="pro_sample_app_mail" translatable="false">Mail</string>
+    <string name="pro_sample_arrow" translatable="false">→</string>
+    <string name="settings_pro_summary" translatable="false">%1$s · %2$s</string>
+</resources>

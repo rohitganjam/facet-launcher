@@ -26,19 +26,26 @@ enum class SystemBarsBackdrop {
 
     /** A surface that's always dark regardless of theme (Private Space). */
     DARK_SURFACE,
+
+    /** Dark behind the status bar but the theme's surface behind the navigation bar (the Facet Pro screen's hero over a pinned bar). */
+    DARK_TOP,
 }
 
 /** `true` for light (white) bar icons. Only [SystemBarsBackdrop.WALLPAPER] honors [style]; the other backdrops have a known color. */
 fun useLightSystemBarIcons(style: SystemBarIconStyle, backdrop: SystemBarsBackdrop, isDarkTheme: Boolean): Boolean =
     when (backdrop) {
         SystemBarsBackdrop.THEME_SURFACE -> isDarkTheme
-        SystemBarsBackdrop.DARK_SURFACE -> true
+        SystemBarsBackdrop.DARK_SURFACE, SystemBarsBackdrop.DARK_TOP -> true
         SystemBarsBackdrop.WALLPAPER -> when (style) {
             SystemBarIconStyle.MATCH_THEME -> isDarkTheme
             SystemBarIconStyle.LIGHT -> true
             SystemBarIconStyle.DARK -> false
         }
     }
+
+/** Like [useLightSystemBarIcons], but for the navigation bar, which [SystemBarsBackdrop.DARK_TOP] leaves on the theme's surface. */
+fun useLightNavigationBarIcons(style: SystemBarIconStyle, backdrop: SystemBarsBackdrop, isDarkTheme: Boolean): Boolean =
+    if (backdrop == SystemBarsBackdrop.DARK_TOP) isDarkTheme else useLightSystemBarIcons(style, backdrop, isDarkTheme)
 
 /** The current screen's [SystemBarsBackdrop], written by whichever screen knows what's behind the bars. */
 @Stable
@@ -77,13 +84,14 @@ fun ProvideSystemBars(
     content: @Composable () -> Unit,
 ) {
     val lightIcons = useLightSystemBarIcons(style, state.backdrop, LocalIsDarkTheme.current)
+    val lightNavIcons = useLightNavigationBarIcons(style, state.backdrop, LocalIsDarkTheme.current)
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = view.context.findActivity()?.window ?: return@SideEffect
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !lightIcons
-            controller.isAppearanceLightNavigationBars = !lightIcons
+            controller.isAppearanceLightNavigationBars = !lightNavIcons
         }
     }
     CompositionLocalProvider(

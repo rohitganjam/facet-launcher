@@ -20,9 +20,11 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +36,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
-import com.facetlauncher.app.ui.components.ProUpgradeSheet
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.theme.Accent
@@ -50,6 +52,7 @@ internal fun RuleEditorSheet(
     state: RuleEditorState,
     choices: DeviceChoices,
     isPro: Boolean,
+    onOpenFacetPro: (ProReason) -> Unit,
     onChange: ((RuleEditorState) -> RuleEditorState) -> Unit,
     onChangeTrigger: (RuleEditorState) -> Unit,
     onSave: () -> Unit,
@@ -69,7 +72,15 @@ internal fun RuleEditorSheet(
             onDeleteClick = { confirmingDelete = true },
         )
     }
-    state.proRequired?.let { reason -> ProUpgradeSheet(reason = reason, onDismiss = { onChange { it } }) }
+    // A Pro pick or save sends the user to the Facet Pro screen; clearing the flag keeps the draft for when they return.
+    val currentOpenFacetPro by rememberUpdatedState(onOpenFacetPro)
+    val currentOnChange by rememberUpdatedState(onChange)
+    LaunchedEffect(state.proRequired) {
+        state.proRequired?.let { reason ->
+            currentOpenFacetPro(reason)
+            currentOnChange { it }
+        }
+    }
     if (confirmingDelete) {
         ConfirmDialog(
             title = stringResource(R.string.automation_delete_title),

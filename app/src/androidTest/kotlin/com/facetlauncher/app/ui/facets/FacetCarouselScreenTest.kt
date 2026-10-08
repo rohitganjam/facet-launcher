@@ -33,6 +33,7 @@ import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.FacetLimits
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
@@ -69,6 +70,7 @@ class FacetCarouselScreenTest {
         onDismissDragEnd: () -> Unit = {},
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
         entitlement: EntitlementRepository = EntitlementRepository(),
+        onOpenFacetPro: (ProReason) -> Unit = {},
         seedApps: suspend (AppRepository, FavoriteAppRepository, DockAppRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
@@ -139,6 +141,7 @@ class FacetCarouselScreenTest {
                     onEditFacet = onEditFacet,
                     onReorderFacets = onReorderFacets,
                     onNavigateToSettings = onNavigateToSettings,
+                    onOpenFacetPro = onOpenFacetPro,
                     onDismissDrag = onDismissDrag,
                     onDismissDragEnd = onDismissDragEnd,
                     viewModel = viewModel,
@@ -739,8 +742,10 @@ class FacetCarouselScreenTest {
     @Test
     fun aFreeUsersFourthFacetShowsALockAndTappingItOpensTheUpgradeWithoutApplyingIt() {
         var applied = false
+        var opened: ProReason? = null
         setContent(
             onFacetApply = { applied = true },
+            onOpenFacetPro = { opened = it },
             seed = { facetRepository, settings ->
                 repeat(4) { facetRepository.addFacet() }
                 settings.setActiveFacetId(4L)
@@ -751,7 +756,7 @@ class FacetCarouselScreenTest {
         composeRule.onNodeWithTag("facet_page_lock_4", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag("facet_page_4").performClick()
 
-        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
+        assertEquals(ProReason.FACET_LOCKED, opened)
         assertEquals(false, applied)
     }
 
@@ -769,7 +774,9 @@ class FacetCarouselScreenTest {
 
     @Test
     fun aFreeUserAtTheLimitStillGetsTheAddPageAndItOpensTheUpgrade() {
+        var opened: ProReason? = null
         setContent(
+            onOpenFacetPro = { opened = it },
             seed = { facetRepository, settings ->
                 repeat(3) { facetRepository.addFacet() }
                 settings.setActiveFacetId(3L)
@@ -781,6 +788,6 @@ class FacetCarouselScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("facet_carousel_add_page").assertExists().performClick()
 
-        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
+        assertEquals(ProReason.FACET_LIMIT, opened)
     }
 }

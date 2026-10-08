@@ -40,6 +40,7 @@ class RuleEditorSheetTest {
     private var choices = DeviceChoices(bluetooth = listOf(PairedBluetoothDevice("AA:BB", "Car")), networks = listOf("Home", "Cafe"))
     private var changedTrigger: RuleEditorState? = null
     private var pro = true
+    private var openedPro: ProReason? = null
 
     private fun show(state: RuleEditorState = current) {
         current = state
@@ -49,6 +50,7 @@ class RuleEditorSheetTest {
                     state = current,
                     choices = choices,
                     isPro = pro,
+                    onOpenFacetPro = { openedPro = it },
                     onChange = { transform -> current = current.edited { transform(this) } },
                     onChangeTrigger = { candidate ->
                         changedTrigger = candidate
@@ -294,14 +296,14 @@ class RuleEditorSheetTest {
     }
 
     @Test
-    fun theUpgradeSheetShowsWhenProIsRequiredAndDismissClearsIt() {
+    fun aProRequestSendsTheUserToTheProScreenAndKeepsTheDraft() {
         pro = false
         show(current.copy(proRequired = ProReason.TRIGGER))
-        composeRule.onNodeWithTag("pro_upgrade_sheet").assertExists()
-
-        composeRule.onNodeWithTag("pro_upgrade_dismiss").performClick()
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("pro_upgrade_sheet").assertDoesNotExist()
+
+        assertEquals(ProReason.TRIGGER, openedPro)
+        assertEquals("the flag is cleared so it fires once", null, current.proRequired)
+        composeRule.onNodeWithTag("rule_editor").assertExists()
     }
 }

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -132,8 +131,7 @@ private fun NotificationAccessExplanationContent(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // M3's Button shapes default to CornerFull — see CLAUDE.md's Material 3 shape section.
-                    .background(color = Accent.copy(alpha = 0.1f), shape = CircleShape)
+                    .background(color = Accent.copy(alpha = 0.1f), shape = MaterialTheme.shapes.medium)
                     .clickable(onClick = onOpenSettingsClick)
                     .testTag("open_notification_access_settings_button")
                     .padding(vertical = 14.dp),

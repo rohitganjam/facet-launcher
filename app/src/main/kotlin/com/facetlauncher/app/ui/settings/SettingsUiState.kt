@@ -11,6 +11,11 @@ data class SettingsUiState(
     val folderCount: Int = 0,
     /** How many facet automation rules exist; drives the entry row's subtitle. */
     val automationRuleCount: Int = 0,
+    /** Drives the Facet Pro card: the upsell for a free user, the live summary for a Pro user. */
+    val isPro: Boolean = false,
+    val facetCount: Int = 0,
+    /** Automation rules that are switched on. */
+    val triggersRunning: Int = 0,
     val isDefaultLauncher: Boolean = false,
     val isLoading: Boolean = true,
     /** Every genuine Work Profile on this device — one settings row per entry; empty hides the section entirely. See [WorkProfileInfo]'s own doc. */
