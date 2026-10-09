@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -829,11 +830,13 @@ private fun AddFacetPage(onClick: () -> Unit, showProPill: Boolean, modifier: Mo
         // Invisible stand-in for FacetPreviewPage's own name row — same Text structure so it
         // measures to the exact same height, without hardcoding a dp guess. Without this, the
         // Add-facet card (which has no header of its own) would start higher up than its
-        // neighboring facet cards and read as a different, taller size (see chat history).
+        // neighboring facet cards and read as a different, taller size (see chat history). Any
+        // single line of this style measures the same; it's hidden and cleared from accessibility.
         Text(
-            text = "",
+            text = stringResource(R.string.facet_carousel_add_facet),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f),
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f).clearAndSetSemantics { },
         )
         Column(
             modifier = Modifier

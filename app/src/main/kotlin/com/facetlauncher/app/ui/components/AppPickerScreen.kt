@@ -420,7 +420,7 @@ private fun AppPickerRow(app: AppInfo, checked: Boolean, enabled: Boolean, tagPr
 private fun AppPickerScreenPreview() {
     FacetLauncherTheme {
         AppPickerScreen(
-            title = "Favorites",
+            title = stringResource(R.string.list_content_mode_favorites),
             query = "",
             selectedResults = (1..3).map { AppInfo("com.example.$it", ".Main", "App $it", null) },
             otherResults = (4..8).map { AppInfo("com.example.$it", ".Main", "App $it", null) },

@@ -557,6 +557,10 @@ class HomeDrawerRouteTest {
         // opened the Drawer/shade, so an overflowing favorites list could never actually be
         // scrolled; see appListNestedScrollConnection's own doc)
         setContent(favoriteCount = apps.size)
+        // The favorites list fills in asynchronously, so poll for the first row instead of asserting at once.
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
         val listBounds = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot
         composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).assertExists()
 

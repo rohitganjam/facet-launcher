@@ -3895,3 +3895,19 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] Export backup (`Icons.Outlined.FileUpload`) and Import backup (`FileDownload`) rows use `SettingsIconBadge` in the System (slate)
   hue like the Backup & restore row on Settings; the badge dims with the row while a backup is busy; divider inset past it.
+
+## ✅ No inline strings, including preview sample text (direct request)
+
+- [x] The eight `ComposeHardcodedText` entries in `app/detekt-baseline.xml` are gone: `PermissionsScreen`, `AppPickerScreen` and
+  `ScreenHeader` previews now use real string resources (the actual permission titles/subtitles, `list_content_mode_favorites`,
+  `settings_header_title`, `settings_facets_subtitle`, `action_save`), and `FacetCarouselScreen`'s invisible height-measuring `Text("")`
+  uses `facet_carousel_add_facet` with `alpha(0f)` + `clearAndSetSemantics`. No new sample-only strings were needed.
+
+## ✅ Full test run: results and fixes
+
+- [x] Full run on the emulator: 1,021 unit tests passed; 579 instrumented tests, 574 passed and 5 failed on the first pass.
+- [x] Three `AppearanceSettingsScreenTest` failures were caused by moving the Clock card above Dock & home (the Dock & home rows are now
+  off-screen at rest): the tests now scroll to each row before using it.
+- [x] `HomeDrawerRouteTest.swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer` asserted a Home row existed immediately
+  after `setContent` (a race; it passed on master by luck): it now polls with `waitUntil`. `systemBackClosesAnOpenFacetCarousel` passed
+  on its own re-run (timing flake under the full suite), no change.

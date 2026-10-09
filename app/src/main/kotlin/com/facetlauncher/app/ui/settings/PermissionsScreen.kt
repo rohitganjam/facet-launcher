@@ -239,26 +239,26 @@ private fun PermissionsScreenPreview() {
             permissions = listOf(
                 PermissionRowState(
                     kind = PermissionKind.CALENDAR,
-                    title = "Calendar",
-                    subtitle = "Shows calendar events on the clock widget.",
+                    title = stringResource(R.string.permission_calendar_title),
+                    subtitle = stringResource(R.string.permission_calendar_subtitle),
                     isGranted = true,
                 ),
                 PermissionRowState(
                     kind = PermissionKind.CONTACTS,
-                    title = "Contacts",
-                    subtitle = "Lets Drawer search show matching contacts with quick actions.",
+                    title = stringResource(R.string.permission_contacts_title),
+                    subtitle = stringResource(R.string.permission_contacts_subtitle),
                     isGranted = false,
                 ),
                 PermissionRowState(
                     kind = PermissionKind.USAGE_ACCESS,
-                    title = "Usage access",
-                    subtitle = "Needed to show Recent and Most Used apps.",
+                    title = stringResource(R.string.permission_usage_access_title),
+                    subtitle = stringResource(R.string.permission_usage_access_subtitle),
                     isGranted = false,
                 ),
                 PermissionRowState(
                     kind = PermissionKind.NOTIFICATION_ACCESS,
-                    title = "Notification access",
-                    subtitle = "Shows a dot or count badge on apps with active notifications.",
+                    title = stringResource(R.string.permission_notification_access_title),
+                    subtitle = stringResource(R.string.permission_notification_access_subtitle),
                     isGranted = false,
                 ),
                 PermissionRowState(
