@@ -191,18 +191,17 @@
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Einstellungen</string>
-    <string name="settings_section_facets">FACETTEN</string>
-    <string name="settings_section_appearance">DESIGN</string>
-    <string name="settings_section_clock_calendar">UHR &amp; KALENDER</string>
-    <string name="settings_section_home_apps">START &amp; APPS</string>
-    <string name="settings_section_system">SYSTEM</string>
+    <string name="settings_section_facets">Facetten</string>
+    <string name="settings_section_appearance">Design</string>
+    <string name="settings_section_home_apps">Start &amp; Apps</string>
+    <string name="settings_section_system">System</string>
     <string name="settings_facets_title">Facetten</string>
     <string name="settings_facets_subtitle">Facettenspezifische Einstellungen erstellen und verwalten</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
     <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
     <string name="settings_appearance_title">Launcher-Design</string>
     <string name="settings_appearance_subtitle">Design, Akzent, Symbole, Schriftarten</string>
-    <string name="settings_clock_calendar_title">Uhr- &amp; Kalenderstil</string>
+    <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
     <string name="settings_time_format_12h">12-Stunden-Format</string>
     <string name="settings_calendars_title">Anzuzeigende Kalender</string>
@@ -695,24 +694,18 @@
     <string name="facet_settings_active">Aktiv</string>
     <string name="facet_settings_activate_facet">Aktivieren</string>
     <string name="facet_settings_rename_facet">Facette umbenennen</string>
-    <string name="facet_settings_section_apps_list">APP-LISTE</string>
     <plurals name="format_count_apps">
         <item quantity="one">%1$d App</item>
         <item quantity="other">%1$d Apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock-Einstellungen</string>
-    <string name="facet_settings_clock_overriding">Standard überschrieben · zum Bearbeiten tippen</string>
-    <string name="facet_settings_clock_inherits">Übernimmt Standard · Leichter Stapel · zum Anzeigen tippen</string>
     <string name="facet_settings_rename_explanation">Benenne diese Facette um.</string>
 
     <!-- HomeScreen -->
     <string name="home_usage_access_needed">„Meistgenutzt“ benötigt Nutzungszugriff über die Systemeinstellungen.</string>
 
     <!-- ClockStyleGalleryScreen -->
-    <string name="clock_style_calendar_section">KALENDER</string>
     <string name="clock_style_font_label">Schriftart</string>
-    <string name="clock_style_color_label">Farbe</string>
-    <string name="clock_style_calendar_alignment">Kalenderausrichtung</string>
     <string name="clock_style_clock_section">UHR</string>
     <string name="clock_style_primary_font_color">Primäre Schriftfarbe</string>
     <string name="clock_style_show_meridiem">Vormittag/Nachmittag anzeigen (AM/PM)</string>
@@ -731,7 +724,7 @@
     <string name="clock_adjust_align_left">Linksbündig</string>
     <string name="clock_adjust_align_center">Zentriert</string>
     <string name="clock_adjust_align_right">Rechtsbündig</string>
-    <string name="clock_adjust_edit_styles">Uhr- &amp; Kalenderstile bearbeiten</string>
+    <string name="clock_adjust_edit_styles">Uhrstile bearbeiten</string>
     <string name="clock_adjust_edit_styles_subtitle">Vorlagen, Schriftarten, Farben und Ausrichtung</string>
     <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>
 
@@ -798,9 +791,9 @@
     <string name="app_list_column_alignment_launcher_default">Standardausrichtung des Launchers</string>
     <string name="app_list_grid_columns_launcher_default">Standardspalten des Launchers</string>
     <string name="app_list_grid_display_mode_launcher_default">Standardstil des Launchers</string>
-    <string name="appearance_section_dock_home">DOCK &amp; STARTSEITE</string>
-    <string name="appearance_section_clock">UHR</string>
-    <string name="appearance_section_general">ALLGEMEIN</string>
+    <string name="appearance_section_dock_home">Dock &amp; Startseite</string>
+    <string name="appearance_section_clock">Uhr</string>
+    <string name="appearance_section_general">Allgemein</string>
     <string name="appearance_icon_shape">Symbolform</string>
     <string name="facet_settings_appearance_title">Darstellung</string>
     <string name="clock_adjust_use_custom_widget">Eigenes Widget verwenden</string>

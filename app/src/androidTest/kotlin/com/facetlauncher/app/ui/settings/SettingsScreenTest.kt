@@ -4,9 +4,11 @@ import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -388,6 +390,17 @@ class SettingsScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodesWithText("Pro is active").fetchSemanticsNodes().isNotEmpty() }
         composeRule.onNodeWithTag("facet_pro_summary", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithText("You're on the Free plan").assertDoesNotExist()
+    }
+
+    @Test
+    fun topLevelNavRowsShowALeadingIconBadge() {
+        setContent()
+
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_row"))
+
+        // Unmerged: the row merges its children into one node, hiding the badge from the merged tree.
+        composeRule.onNodeWithTag("about_row", useUnmergedTree = true).assert(hasAnyDescendant(hasTestTag("settings_icon_badge")))
+        composeRule.onNodeWithTag("view_permissions_row", useUnmergedTree = true).assert(hasAnyDescendant(hasTestTag("settings_icon_badge")))
     }
 
     @Test

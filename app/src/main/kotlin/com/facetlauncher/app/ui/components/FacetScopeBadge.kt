@@ -37,7 +37,7 @@ private fun ScopeBadge(label: String, color: Color, modifier: Modifier = Modifie
  * [facetName] is non-null (decided explicitly by the user, to distinguish the facet-override case
  * from the plain default without folding it into the row's own label text — see chat history).
  * Shared by [QuickPlacementBadge] (the app/folder context menu's Favorites/Dock rows) and the
- * clock long-press menu's "Edit clock & calendar styles" row.
+ * clock long-press menu's "Edit clock styles" row.
  */
 @Composable
 fun FacetScopeBadge(facetName: String?, modifier: Modifier = Modifier) {

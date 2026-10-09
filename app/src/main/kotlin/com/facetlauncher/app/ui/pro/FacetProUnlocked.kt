@@ -1,9 +1,7 @@
 package com.facetlauncher.app.ui.pro
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Accent
 
 /** The post-purchase screen (design 12c): the whole page dark, the hero lit, what is unlocked, and where to go next. */
@@ -49,11 +47,11 @@ internal fun UnlockedScreen(onBack: () -> Unit, onSetUpTrigger: () -> Unit, onAd
     Column(modifier = modifier.fillMaxSize().background(ProInk).testTag("facet_pro_screen")) {
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).statusBarsPadding()) {
             HeroHeader(onBack = onBack, trailing = {
-                Text(
+                TextActionButton(
                     text = stringResource(R.string.pro_done),
+                    onClick = onBack,
                     color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 12.sp,
-                    modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(onClick = onBack).padding(horizontal = 10.dp, vertical = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                 )
             })
             ProHeroFan(lit = true, modifier = Modifier.padding(top = 4.dp))
@@ -85,17 +83,13 @@ internal fun UnlockedScreen(onBack: () -> Unit, onSetUpTrigger: () -> Unit, onAd
         }
         Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 22.dp)) {
             ProGradientButton(text = stringResource(R.string.pro_set_up_trigger), onClick = onSetUpTrigger, enabled = true, tag = "facet_pro_set_up_trigger")
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable(onClick = onAddFacet)
-                    .testTag("facet_pro_add_facet"),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.pro_add_facet), color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            }
+            TextActionButton(
+                text = stringResource(R.string.pro_add_facet),
+                onClick = onAddFacet,
+                color = Color.White.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                modifier = Modifier.fillMaxWidth().testTag("facet_pro_add_facet"),
+            )
         }
     }
 }

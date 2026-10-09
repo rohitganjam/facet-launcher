@@ -209,18 +209,17 @@
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Settings</string>
-    <string name="settings_section_facets">FACETS</string>
-    <string name="settings_section_appearance">APPEARANCE</string>
-    <string name="settings_section_clock_calendar">CLOCK &amp; CALENDAR</string>
-    <string name="settings_section_home_apps">HOME &amp; APPS</string>
-    <string name="settings_section_system">SYSTEM</string>
+    <string name="settings_section_facets">Facets</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_home_apps">Home &amp; apps</string>
+    <string name="settings_section_system">System</string>
     <string name="settings_facets_title">Facets</string>
     <string name="settings_facets_subtitle">Create and manage facet-specific settings</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>
     <string name="settings_change_wallpaper_subtitle">Change your system wallpaper</string>
     <string name="settings_appearance_title">Launcher Appearance</string>
     <string name="settings_appearance_subtitle">Theme, accent, icons, fonts</string>
-    <string name="settings_clock_calendar_title">Clock &amp; Calendar Style</string>
+    <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
     <string name="settings_time_format_12h">12-hour time</string>
     <string name="settings_calendars_title">Calendars to display</string>
@@ -384,9 +383,9 @@
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Appearance</string>
-    <string name="appearance_section_dock_home">DOCK &amp; HOME</string>
-    <string name="appearance_section_clock">CLOCK</string>
-    <string name="appearance_section_general">GENERAL</string>
+    <string name="appearance_section_dock_home">Dock &amp; home</string>
+    <string name="appearance_section_clock">Clock</string>
+    <string name="appearance_section_general">General</string>
     <string name="appearance_launcher_theme">Launcher theme</string>
     <string name="appearance_system_bar_icons">System bar icons</string>
     <string name="appearance_icon_style">Icon Style</string>
@@ -756,15 +755,12 @@
     <string name="facet_settings_active">Active</string>
     <string name="facet_settings_activate_facet">Activate</string>
     <string name="facet_settings_rename_facet">Rename facet</string>
-    <string name="facet_settings_section_apps_list">APPS LIST</string>
     <plurals name="format_count_apps">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock settings</string>
     <string name="facet_settings_appearance_title">Appearance</string>
-    <string name="facet_settings_clock_overriding">Overriding defaults · tap to edit</string>
-    <string name="facet_settings_clock_inherits">Inherits default · Light stack · tap to preview</string>
     <string name="facet_settings_rename_explanation">Rename this facet.</string>
 
     <!-- HomeScreen ("Open settings" reuses open_settings) -->
@@ -772,10 +768,7 @@
 
     <!-- ClockStyleGalleryScreen ("Accent color" reuses appearance_accent_color; "24-hour time"
          reuses settings_time_format_24h; header reuses settings_clock_calendar_title) -->
-    <string name="clock_style_calendar_section">CALENDAR</string>
     <string name="clock_style_font_label">Font</string>
-    <string name="clock_style_color_label">Color</string>
-    <string name="clock_style_calendar_alignment">Calendar alignment</string>
     <string name="clock_style_clock_section">CLOCK</string>
     <string name="clock_style_primary_font_color">Primary font color</string>
     <string name="clock_style_show_meridiem">Show meridiem (AM/PM)</string>
@@ -795,7 +788,7 @@
     <string name="clock_adjust_align_left">Align left</string>
     <string name="clock_adjust_align_center">Align center</string>
     <string name="clock_adjust_align_right">Align right</string>
-    <string name="clock_adjust_edit_styles">Edit clock &amp; calendar styles</string>
+    <string name="clock_adjust_edit_styles">Edit clock styles</string>
     <string name="clock_adjust_edit_styles_subtitle">Templates, fonts, colors, and alignment</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->

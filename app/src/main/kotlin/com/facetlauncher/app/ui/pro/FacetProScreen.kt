@@ -5,14 +5,12 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.ProReason
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Ink
@@ -230,18 +229,13 @@ private fun UpgradeBottomBar(state: FacetProUiState, onBuy: (() -> Unit)?, onRes
             ProGradientButton(text = state.price?.let { stringResource(R.string.pro_unlock_price, it) } ?: stringResource(R.string.pro_unlock), onClick = onBuy, enabled = !state.busy, tag = "facet_pro_buy")
         }
         if (onRestore != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(38.dp)
-                    .padding(top = 2.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable(enabled = !state.busy, onClick = onRestore)
-                    .testTag("facet_pro_restore_link"),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.pro_restore), color = if (state.busy) Muted else Accent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            }
+            TextActionButton(
+                text = stringResource(R.string.pro_restore),
+                onClick = onRestore,
+                enabled = !state.busy,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                modifier = Modifier.fillMaxWidth().testTag("facet_pro_restore_link"),
+            )
         }
     }
 }

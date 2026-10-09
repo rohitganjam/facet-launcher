@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.settings.automation
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,6 +26,7 @@ import com.facetlauncher.app.data.model.PairedBluetoothDevice
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.PillTabPair
 import com.facetlauncher.app.ui.components.ProPill
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Muted
@@ -92,17 +92,14 @@ private fun PermissionNote(permission: AutomationPermission) {
     }
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).testTag("rule_editor_permission_note")) {
         Text(text = stringResource(message), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        Text(
+        TextActionButton(
             text = stringResource(R.string.automation_open_settings),
+            onClick = {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                runCatching { context.startActivity(intent) }
+            },
             style = MaterialTheme.typography.bodyMedium,
-            color = Accent,
-            modifier = Modifier
-                .clickable {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                    runCatching { context.startActivity(intent) }
-                }
-                .padding(vertical = 6.dp)
-                .testTag("rule_editor_open_settings"),
+            modifier = Modifier.testTag("rule_editor_open_settings"),
         )
     }
 }

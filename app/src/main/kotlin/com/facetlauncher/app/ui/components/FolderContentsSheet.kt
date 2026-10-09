@@ -172,21 +172,15 @@ fun FolderContentsSheet(
                             modifier = Modifier.weight(1f).padding(start = if (headerAction is FolderSheetHeaderAction.AddHere) 0.dp else 12.dp),
                         )
                         when (headerAction) {
-                            is FolderSheetHeaderAction.Rename -> Text(
+                            is FolderSheetHeaderAction.Rename -> TextActionButton(
                                 text = stringResource(R.string.action_rename),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Accent,
-                                modifier = Modifier
-                                    .testTag("folder_contents_sheet_rename")
-                                    .clickable(onClick = { showRenameDialog = true }),
+                                onClick = { showRenameDialog = true },
+                                modifier = Modifier.testTag("folder_contents_sheet_rename"),
                             )
-                            is FolderSheetHeaderAction.AddHere -> Text(
+                            is FolderSheetHeaderAction.AddHere -> TextActionButton(
                                 text = stringResource(R.string.folder_add_to_folder),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Accent,
-                                modifier = Modifier
-                                    .testTag("folder_contents_sheet_add")
-                                    .clickable(onClick = headerAction.onAdd),
+                                onClick = headerAction.onAdd,
+                                modifier = Modifier.testTag("folder_contents_sheet_add"),
                             )
                             FolderSheetHeaderAction.None -> Unit
                         }

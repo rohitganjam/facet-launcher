@@ -42,7 +42,7 @@ fun InheritOverrideCard(
     modifier: Modifier = Modifier,
     inheritSubtitle: String = stringResource(R.string.inherit_override_follows_default),
 ) {
-    SettingsCard(modifier = modifier) {
+    SettingsCard(modifier = modifier, fullBleedRows = true) {
         RadioOptionRow(
             title = stringResource(R.string.inherit_override_inherit_default),
             subtitle = inheritSubtitle,
@@ -77,7 +77,7 @@ private fun RadioOptionRow(
             .background(if (tinted) Accent.copy(alpha = 0.04f) else Color.Transparent)
             .testTag(testTag)
             .clickable(onClick = onClick)
-            .padding(vertical = 13.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

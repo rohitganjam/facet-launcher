@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +16,7 @@ import com.facetlauncher.app.ui.theme.Surface
 
 /**
  * A **surface** secondary-action button — this app's opaque [Surface] fill with [Ink] text, in the same
- * M3 Expressive square shape ([MaterialTheme.shapes.medium], 12dp) [TonalButton] uses. For an
+ * fully-rounded ([CircleShape]) shape [TonalButton] uses. For an
  * acknowledgement/dismissal action that shouldn't read as accent-tinted — [TonalButton]'s accent tint
  * implies "the primary thing to do here," which doesn't fit e.g. [GestureHintOverlay]'s "Got it".
  * Its fill is nearly the same color as the backdrops it sits on (a 1.05–1.3:1 difference), so the
@@ -33,7 +34,7 @@ fun SurfaceButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
-        shape = MaterialTheme.shapes.large,
+        shape = CircleShape,
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp, pressedElevation = 1.dp),
         border = BorderStroke(1.5.dp, Muted),
         colors = ButtonDefaults.buttonColors(

@@ -67,7 +67,7 @@ fun <T> LabeledDropdownRow(
     val density = LocalDensity.current
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (enabled) 1f else 0.4f),
+        modifier = modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp).alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

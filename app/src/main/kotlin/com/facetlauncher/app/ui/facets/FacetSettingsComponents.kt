@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +28,8 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
@@ -72,38 +72,15 @@ internal fun FacetSettingsHeader(
     ) {
         BackButton(onClick = onBack)
         Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
-        Row(
-            modifier = Modifier
-                .clickable(enabled = !isActive, onClick = onApplyFacet)
-                .testTag("facet_settings_apply_button")
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (isActive) {
-                Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Accent)
-                Text(text = stringResource(R.string.facet_settings_active), style = MaterialTheme.typography.bodyLarge, color = Accent)
-            } else {
-                Text(text = stringResource(R.string.facet_settings_activate_facet), style = MaterialTheme.typography.bodyLarge, color = Accent)
-            }
-        }
+        TextActionButton(
+            text = stringResource(if (isActive) R.string.facet_settings_active else R.string.facet_settings_activate_facet),
+            onClick = onApplyFacet,
+            enabled = !isActive,
+            disabledColor = Accent,
+            leadingIcon = if (isActive) Icons.Default.Check else null,
+            modifier = Modifier.testTag("facet_settings_apply_button"),
+        )
     }
-}
-
-@Composable
-internal fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(text = title, style = MaterialTheme.typography.labelSmall, color = Muted, modifier = modifier.padding(bottom = 6.dp))
-}
-
-/** Trailing affordance for a row that navigates to its own screen. */
-@Composable
-internal fun NavigationChevron(modifier: Modifier = Modifier) {
-    Icon(
-        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-        contentDescription = null,
-        tint = Muted,
-        modifier = modifier,
-    )
 }
 
 @Composable
@@ -114,24 +91,24 @@ internal fun FacetSettingsRow(
     testTag: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    trailing: (@Composable () -> Unit)? = null,
+    leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 13.dp)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 12.dp)
             .alpha(if (enabled) 1f else 0.4f),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
+        leadingIcon?.invoke()
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
             if (subtitle != null) {
                 Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
         }
-        trailing?.invoke()
     }
 }

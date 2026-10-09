@@ -38,9 +38,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * The top-level per-facet screen is now a short nav list — Rename, then one "HOME & APPS" card
- * with a plain row into each area's own settings screen (Apps list / Dock / Appearance /
- * Calendars), mirroring `SettingsScreen`'s own layout. No Inherit/Override switches here any
+ * The top-level per-facet screen is now a short nav list — Rename, an "Appearance" card, then
+ * one "Home & apps" card with a plain row into each area's own settings screen (Apps list /
+ * Dock / Calendars), mirroring `SettingsScreen`'s own layout. No Inherit/Override switches here any
  * more — each destination screen now owns its own (see chat history), exercised by
  * `com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreenTest` / `DockSettingsScreenTest` /
  * `com.facetlauncher.app.ui.home.clock.ClockStyleGalleryScreenTest`, which cover both the global
@@ -117,7 +117,7 @@ class FacetSettingsScreenTest {
         setContent()
 
         val renameTop = composeRule.onNodeWithTag("facet_settings_rename_row").fetchSemanticsNode().boundsInRoot.top
-        val appsSectionTop = composeRule.onNodeWithText("HOME & APPS").fetchSemanticsNode().boundsInRoot.top
+        val appsSectionTop = composeRule.onNodeWithText("Home & apps").fetchSemanticsNode().boundsInRoot.top
         assert(renameTop < appsSectionTop)
     }
 

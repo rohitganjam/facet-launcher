@@ -4,7 +4,6 @@ import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.DeleteOutline
@@ -43,12 +41,15 @@ import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.RenameDialog
+import com.facetlauncher.app.ui.components.TextActionButton
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
-import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
 import com.facetlauncher.app.ui.theme.ErrorColor
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
@@ -108,17 +109,12 @@ internal fun FoldersSettingsContent(
         ) {
             BackButton(onClick = onBack)
             Text(text = stringResource(R.string.settings_folders_title), style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
-            Row(
-                modifier = Modifier
-                    .clickable(onClick = { showCreateDialog = true })
-                    .testTag("folders_settings_create_button")
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Accent)
-                Text(text = stringResource(R.string.folders_settings_create_folder), style = MaterialTheme.typography.bodyLarge, color = Accent)
-            }
+            TextActionButton(
+                text = stringResource(R.string.folders_settings_create_folder),
+                onClick = { showCreateDialog = true },
+                leadingIcon = Icons.Default.Add,
+                modifier = Modifier.testTag("folders_settings_create_button"),
+            )
         }
 
         if (uiState.folders.isEmpty()) {
@@ -129,9 +125,9 @@ internal fun FoldersSettingsContent(
                 modifier = Modifier.padding(top = 8.dp),
             )
         } else {
-            SettingsCard {
+            SettingsCard(fullBleedRows = true) {
                 uiState.folders.forEachIndexed { index, folder ->
-                    if (index > 0) CardDivider()
+                    if (index > 0) CardDivider(startInset = SettingsIconBadgeInset)
                     FolderRow(
                         folder = folder,
                         onClick = { onOpenFolder(folder.id) },
@@ -178,17 +174,12 @@ private fun FolderRow(folder: Folder, onClick: () -> Unit, onDelete: () -> Unit,
             .testTag("folder_row_${folder.id}")
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 13.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(
-                modifier = Modifier.size(32.dp).background(IconTile, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(imageVector = Icons.Outlined.Folder, contentDescription = null, tint = Ink, modifier = Modifier.size(18.dp))
-            }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            SettingsIconBadge(Icons.Outlined.Folder, SettingsSectionHue.HOME_APPS)
             Column {
                 Text(text = folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink)
                 Text(

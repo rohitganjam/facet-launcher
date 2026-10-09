@@ -120,7 +120,7 @@ A lapse is only a refund, a revocation or a different Google account; it cannot 
 | A Pro limit (add facet at 3, locked facet, device trigger, third rule) | `facetPro/{reason}`; the screen shows a reason line. Every limit goes straight to the screen; there is no intermediate sheet. |
 | `FacetProScreen` | Free: `UpgradeScreen` (hero, feature rows, bottom bar with price, Unlock and Restore purchases). Pro: `UnlockedScreen` with shortcuts to set up a trigger or add a facet. |
 
-Buttons follow the app's 12dp shape (`ProGradientButton`, `TriggerPill`), not the mockup's pills.
+Buttons are pills like every other button in the app (`ProGradientButton`, the Settings card's Upgrade chip); `TriggerPill` is a chip, so it uses M3's small shape (8dp). The Settings `ProSettingsCard` uses the 28dp extra-large shape, matching the `SettingsCard`s below it.
 
 ## 6. No `INTERNET`
 

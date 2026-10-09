@@ -46,13 +46,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.SuccessColor
 
@@ -164,7 +164,7 @@ private fun PermissionsContent(
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         permissions.forEachIndexed { index, permission ->
                             if (index > 0) CardDivider()
                             PermissionRow(permission = permission, onTurnOnClick = { onTurnOnClick(permission) })
@@ -196,11 +196,15 @@ private fun PermissionsHeader(onBack: () -> Unit, modifier: Modifier = Modifier)
 
 @Composable
 private fun PermissionRow(permission: PermissionRowState, onTurnOnClick: () -> Unit, modifier: Modifier = Modifier) {
+    // A row that still needs a permission is tappable across its whole width (its action is "Turn on");
+    // a granted row has nothing to do, so it isn't. The padding follows clickable so the press
+    // highlight spans the full-bleed card.
     Row(
         modifier = modifier
             .fillMaxWidth()
             .testTag("permission_row_${permission.kind.name}")
-            .padding(vertical = 13.dp),
+            .then(if (permission.isGranted) Modifier else Modifier.clickable(onClick = onTurnOnClick))
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -220,10 +224,7 @@ private fun PermissionRow(permission: PermissionRowState, onTurnOnClick: () -> U
                 text = stringResource(R.string.permission_turn_on),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Accent,
-                modifier = Modifier
-                    .clickable(onClick = onTurnOnClick)
-                    .testTag("permission_turn_on_${permission.kind.name}")
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.testTag("permission_turn_on_${permission.kind.name}"),
             )
         }
     }

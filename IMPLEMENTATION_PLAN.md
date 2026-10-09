@@ -3778,3 +3778,120 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
   (clock row removed), `FavoritesPickerScreenTest` (cap test searches for the overflow app before waiting for its row —
   the cap is 12, so it sits below the lazy list's fold).
 - [x] **Docs**: `13` (nav list + Appearance cards), `CAPABILITIES.md`.
+
+## ✅ Settings restyle: tonal cards, leading icons, no chevrons (direct request)
+
+- [x] **`SettingsCard`**: tonal (`Surface` on a dimmer `SurfaceContainer` page, light page now `#EEF1F6`), no shadow or border,
+  `MaterialTheme.shapes.extraLarge` (28dp), clips its content so a row's press highlight follows the corners. `CardDivider`
+  takes a `startInset` so it clears a leading icon.
+- [x] **Leading icons** on the top-level Settings rows (`SettingsIconBadge`: 40dp circle, hue from `SettingsSectionHue`:
+  Facets accent, Appearance violet, Home & apps teal, System slate). Facets uses `Icons.Default.Layers`, the same icon as
+  the Pro page. The top-level rows no longer show `NavigationChevron`; sub-screens keep it where nav rows sit beside toggles.
+  The per-facet settings screen (`FacetSettingsScreen`) gets the same treatment as it is the same list scoped to one facet:
+  badges (Rename `Edit`, Apps list `FormatListBulleted`, Dock `Dock`, Appearance `Palette`, Calendars `CalendarMonth`, hues
+  as on Settings) and no chevrons; its private `NavigationChevron` is deleted.
+- [x] **`SettingsSectionHeader`** (shared, `labelLarge` in `Accent`) replaces three private/internal headers; section
+  strings are sentence case in all five locales.
+- [x] **Tests**: `SettingsScreenTest` (rows show an icon badge); `AppearanceSettingsScreenTest` / `FacetSettingsScreenTest`
+  updated for the sentence-case headers.
+
+## ✅ Buttons switched to pills (direct request)
+
+- [x] `TonalButton`, `SurfaceButton`, `ProGradientButton` and the Pro card's "Upgrade to Pro" chip now use `CircleShape`
+  (M3's default Full button shape), matching the 28dp `SettingsCard`s. Supersedes the square-button decision recorded in
+  "Secondary actions use a shared tonal-accent square button" above; `CLAUDE.md` and the design handoff README updated.
+- [x] Left as-is: text-only `TextButton`s (no container), and the clock toolbar's `AlignmentButton` (a segmented toggle chip).
+
+## ✅ Settings restyle follow-ups (direct requests)
+
+- [x] **Carousel "Launcher settings" row** is now a `SettingsCard` holding one `ClickableRow` (slate `Tune` badge, no chevron);
+  the facet preview cards and the Add-facet card keep their shadow (miniature screens, not list rows).
+- [x] **Pro card on Settings** corner radius 16dp → `extraLarge` (28dp) to match the cards below it.
+- [x] **Facet automation empty state**: the dashed `EmptyStrip` is replaced by `EmptyRulesMessage` (centred `AutoMode` badge +
+  message) at the top of the Rules card, above the same "Add rule" row a populated list has (`automation_empty_add` tag kept).
+  Previews: empty and the manual-override status line gained dark/new variants.
+- [x] **Per-facet settings**: Calendars moved above Appearance so the teal badges sit together.
+- [x] **Docs**: `04` (components count), `13` (facet settings layout), `15` (empty state), `16` (buttons are pills; Pro card 28dp).
+
+## ✅ "Set as default" is a standard button (direct request)
+
+- [x] The onboarding Set-as-default CTA was a hand-built `Text` (accent fill, 12dp). It is now the new shared `PrimaryButton`
+  (`ui/components/PrimaryButton.kt`: Material `Button`, solid `Accent`, `InkInverted` text, `CircleShape`, light/dark preview),
+  `onboarding_set_default` tag kept. `CLAUDE.md` button rule and `04` (components count 36) updated.
+
+## ✅ Text buttons are pills too (direct request)
+
+- [x] New shared `TextActionButton` (`ui/components/TextActionButton.kt`, M3 `TextButton`, colour/style params, light/dark
+  preview) replaces the hand-built clickable `Text`/`Box` links: onboarding Back/Next/Continue/Skip/Later, Permissions "Turn on",
+  folder sheet Rename / Add to folder, Pro "Restore purchases" / "Done" / "Add facet", automation "See Pro". All test tags kept.
+- [x] Home-surface links with a text-shadow style (Hub at-capacity "Manage", orphaned-widget "Remove"/"Keep space") stay `Text`
+  but are clipped to `CircleShape` so the press highlight is a pill.
+- [x] Material `TextButton`s in dialogs/editors already default to M3's Full shape; unchanged.
+
+## ✅ Appearance: clock card first, "Clock Style", thicker icon-shape ring (direct request)
+
+- [x] `AppearanceSettingsScreen` (global and facet scope): the Clock card now sits above Dock & home. The row/gallery title is
+  "Clock Style" in all five locales (calendar styling follows the clock, so it no longer says "& Calendar").
+- [x] Icon shape picker: the selected option is an Accent ring (2dp) with a 2dp gap around the icon; the ring's space is
+  reserved on every option so the row doesn't shift. Unselected options keep the hairline outline on the icon itself.
+- [x] Tests: section-order test follows Clock / Dock & home / General; the facet-scope test now asserts the Clock section exists
+  there (it asserted the opposite and only passed on timing); `ClockStyleGalleryScreenTest` header text.
+
+## ✅ Full-bleed press highlight for tappable rows (direct request)
+
+- [x] `SettingsCard(fullBleedRows = true)`: no side padding, rows pad themselves via `LocalSettingsRowInset`, so a pressed row's
+  highlight spans the card and follows its rounded corners (it was a square-cornered rectangle inset 16dp). On for every card of
+  `ClickableRow`s (Settings, per-facet settings, carousel Launcher settings row, Clock Style card), the automation Rules card, the
+  Permissions card (a row that still needs a permission is tappable across the whole row, a granted one isn't) and the
+  Inherit/Override radio card (`InheritOverrideCard`).
+- [x] **Decision: dropdown and switch rows stay control-only** (only the value area / the switch reacts to a tap), so they
+  keep the default padded card. Tapping anywhere on those rows is deliberately not supported.
+- [x] Tests: `PermissionsScreenTest` asserts click action / clicks on the row and checks the "Turn on" label in the unmerged tree;
+  a granted row has no click action.
+
+## ✅ Header and sheet text actions are pill buttons; remaining rows full-bleed (direct requests)
+
+- [x] `TextActionButton` gained `leadingIcon` and `disabledColor`. Converted: facet settings header Activate / Active (stays enabled-state
+  based; "Active" keeps the accent colour), Folders "New folder", Folder detail "Rename", onboarding "Clear all" (dock, favorites), and
+  the rule editor sheet's "Open settings" link, and the shared app picker's "Done" (favorites and dock selectors, onboarding). Folder sheet Rename / Add to folder were done earlier. Test tags unchanged.
+- [x] Full-bleed press highlight extended to every card with a whole-row-tappable row: About, Backup & restore (export/import),
+  Dock, Home apps list (dropdown + tappable rows), Folders, Calendar picker list, Clock Style "Reset position", onboarding Dock and
+  Home apps cards. `LabeledDropdownRow` pads itself with `LocalSettingsRowInset`, so dropdowns sit correctly in either card kind.
+  Cards that only hold dropdown/switch/other control rows (Notifications, App Drawer, Appearance dropdown cards, the Clock Style
+  options card, the all-day switch card, Folder detail's reorder list) stay padded and control-only by design.
+
+## ✅ Home long-press sheet: "Edit clock styles" (direct request)
+
+- [x] `clock_adjust_edit_styles` is now "Edit clock styles" (was "Edit clock & calendar styles" — calendar styling follows the clock);
+  `ClockAdjustSheetTest` assertions and the KDoc mentions updated; de/es/fr/pt translations updated too (Uhrstile bearbeiten / Editar estilos de reloj / Modifier les styles d'horloge / Editar estilos do relógio).
+
+## ✅ Unused strings removed (direct request)
+
+- [x] Seven strings with no reference in code, tests, manifest or other resources were deleted from all five locales (35 lines):
+  `clock_style_calendar_alignment`, `clock_style_calendar_section`, `clock_style_color_label`, `facet_settings_clock_inherits`,
+  `facet_settings_clock_overriding`, `facet_settings_section_apps_list`, `settings_section_clock_calendar`. No unused plurals or arrays.
+
+## ✅ Facet settings: Appearance in its own card (direct request)
+
+- [x] `FacetSettingsScreen` now has Rename, an "Appearance" section/card (the Appearance row), then "Home & apps"
+  (Apps list / Dock / Calendars) — the same order as the main Settings screen. Doc `13` and the test KDoc updated; tags unchanged.
+
+## ✅ Home long-press (clock adjust) sheet restyled like Settings (direct request)
+
+- [x] `ClockAdjustSheet`: two tonal `SettingsCard`s (clock rows: Adjust size & position / Edit clock styles / Use custom widget or
+  Switch to launcher clock; then Facet settings / Launcher settings) of `ClickableRow`s with `SettingsIconBadge`s (clock rows violet,
+  Facet settings accent, Launcher settings slate), inset dividers, full-bleed press highlights; the Global / facet-name badge and
+  Pro pill stay as trailing content. Test tags unchanged.
+- [x] `ThemedModalBottomSheet` gained an optional `containerColor` (default `Surface`); the clock adjust sheet passes the dimmer
+  `SurfaceContainer` so the cards read as tonal. The now-unused `open_in_full.xml` and `ic_palette_24.xml` drawables were deleted
+  (icons are `Icons.Outlined.*`).
+
+## ✅ Folders settings: folder rows use the icon badge (direct request)
+
+- [x] `FoldersSettingsScreen`'s `FolderRow` leading icon is now the shared `SettingsIconBadge` (outlined Folder, teal Home & apps hue,
+  same as the Folders row on Settings) instead of a hand-built 32dp dark circle; dividers inset past it. Test tags unchanged.
+
+## ✅ Backup & restore rows have icon badges (direct request)
+
+- [x] Export backup (`Icons.Outlined.FileUpload`) and Import backup (`FileDownload`) rows use `SettingsIconBadge` in the System (slate)
+  hue like the Backup & restore row on Settings; the badge dims with the row while a backup is busy; divider inset past it.

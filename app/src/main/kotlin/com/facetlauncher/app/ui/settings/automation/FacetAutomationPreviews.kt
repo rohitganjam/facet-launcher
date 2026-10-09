@@ -44,11 +44,32 @@ private fun FacetAutomationScreenPreview() {
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 600)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 600, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun FacetAutomationEmptyPreview() {
     FacetLauncherTheme {
         FacetAutomationContent(
             state = FacetAutomationScreenState(),
+            onBack = {},
+            onToggleRule = { _, _ -> },
+            onAddRule = {},
+            onEditRule = {},
+            onSeePro = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 600)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 600, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun FacetAutomationManualOverridePreview() {
+    val rule = previewItem(1, AutomationTrigger.Bluetooth("AA:BB", "Car"))
+    FacetLauncherTheme {
+        FacetAutomationContent(
+            state = FacetAutomationScreenState(
+                items = listOf(rule),
+                status = AutomationStatus.ManualOverride("Home", rule),
+            ),
             onBack = {},
             onToggleRule = { _, _ -> },
             onAddRule = {},

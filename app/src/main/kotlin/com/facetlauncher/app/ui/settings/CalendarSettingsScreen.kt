@@ -54,6 +54,7 @@ import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.dashedBorder
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
@@ -171,10 +172,10 @@ private fun CalendarSettingsContent(
                 item { Spacer(modifier = Modifier.height(16.dp)) }
 
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         Column(modifier = Modifier.padding(vertical = 13.dp)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current).padding(bottom = 10.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -198,7 +199,12 @@ private fun CalendarSettingsContent(
                             }
                             if (uiState.isCalendarAccessGranted) {
                                 if (uiState.calendars.isEmpty()) {
-                                    Text(text = stringResource(R.string.calendar_settings_no_calendars_found), style = MaterialTheme.typography.bodyMedium, color = Muted)
+                                    Text(
+                                        text = stringResource(R.string.calendar_settings_no_calendars_found),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Muted,
+                                        modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current),
+                                    )
                                 } else {
                                     uiState.calendars.forEach { calendar ->
                                         CalendarPickerRow(
@@ -215,6 +221,7 @@ private fun CalendarSettingsContent(
                                     actionLabel = stringResource(R.string.permission_turn_on),
                                     testTag = "calendar_permission_strip",
                                     onClick = onTurnOnClick,
+                                    modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current),
                                 )
                             }
                         }
@@ -249,7 +256,7 @@ private fun CalendarPickerRow(calendar: CalendarInfo, swatch: AccentSwatch?, che
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onToggle)
-            .padding(vertical = 6.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {

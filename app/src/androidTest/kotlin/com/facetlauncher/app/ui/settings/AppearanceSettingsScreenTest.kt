@@ -693,32 +693,32 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun globalModeShowsThreeSeparateSectionsInOrder() {
-        // Dock & Home / Clock / General are each their own card now, not bundled together (see
-        // chat history). Each header is asserted right as it scrolls into view, in that order —
-        // not via cross-scroll bounds comparison, which breaks once an earlier item scrolls far
-        // enough to be disposed from the LazyColumn's composed range.
+        // Clock / Dock & Home / General are each their own card (Clock first). Each header is
+        // asserted right as it scrolls into view, in that order — not via cross-scroll bounds
+        // comparison, which breaks once an earlier item scrolls far enough to be disposed from the
+        // LazyColumn's composed range.
         setContent()
 
-        composeRule.onNodeWithText("DOCK & HOME").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithText("CLOCK").assertIsDisplayed()
+        composeRule.onNodeWithText("Clock").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
-        composeRule.onNodeWithText("GENERAL").assertIsDisplayed()
+        composeRule.onNodeWithText("General").assertIsDisplayed()
     }
 
     @Test
-    fun facetScopedModeShowsOnlyTheDockAndHomeSection() {
-        // No Clock or General section at all in facet mode (see
-        // facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField for the individual rows and its
-        // own comment on why this polls for settle first)
+    fun facetScopedModeShowsClockAndDockAndHomeButNotGeneral() {
+        // The Clock style row lives in facet mode too (above Dock & home); General is global-only.
         setContent(facetId = 1L)
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("CLOCK").fetchSemanticsNodes().isEmpty()
+            composeRule.onAllNodesWithText("Clock").fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("DOCK & HOME").assertIsDisplayed()
-        composeRule.onNodeWithText("CLOCK").assertDoesNotExist()
-        composeRule.onNodeWithText("GENERAL").assertDoesNotExist()
+        composeRule.onNodeWithText("Clock").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
+        composeRule.onNodeWithText("General").assertDoesNotExist()
     }
 
     @Test

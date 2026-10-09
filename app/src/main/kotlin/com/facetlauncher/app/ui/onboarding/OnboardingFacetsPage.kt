@@ -6,13 +6,11 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Hairline
@@ -91,29 +89,19 @@ fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext:
         ) {
             OnboardingDots(step = 2, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text(
+                TextActionButton(
                     text = stringResource(R.string.action_back),
-                    style = MaterialTheme.typography.bodyLarge,
+                    onClick = onBack,
                     color = Muted,
-                    // 48dp minimum touch target (M3 guideline), centered on the text.
-                    modifier = Modifier
-                        .clickable(onClick = onBack)
-                        .testTag("onboarding_back")
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center),
+                    modifier = Modifier.testTag("onboarding_back"),
                 )
-                Text(
+                TextActionButton(
                     // Not "Next" (this is the last swipeable step) or "Finish" (it doesn't finish
                     // onboarding by itself — it leads into the set-default sheet, the real final
                     // action) — "Continue" describes moving on into that sheet without overclaiming.
                     text = stringResource(R.string.action_continue),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Accent,
-                    modifier = Modifier
-                        .clickable(onClick = onNext)
-                        .testTag("onboarding_next")
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center),
+                    onClick = onNext,
+                    modifier = Modifier.testTag("onboarding_next"),
                 )
             }
         }

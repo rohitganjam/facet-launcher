@@ -41,6 +41,7 @@ Naming:
   - **Bottom sheets: use `ThemedModalBottomSheet`** (`ui/components/ThemedModalBottomSheet.kt`), never a raw `ModalBottomSheet` or a hand-rolled overlay. It's the themed sheet plus Home-swipe blocking and Home-press dismissal, and its surface runs behind the nav bar like every other sheet.
   - **Anything that can be open over Home must close on Home press:** a new sheet/dialog/overlay either uses `ThemedModalBottomSheet` or calls `DismissOnHomePress` (see `12 §4`). The Home-press handler must never run animation inline in the `collect` body — an interrupted animation throws a `CancellationException` that silently unsubscribes it.
 - Use `LazyColumn`/`LazyVerticalGrid` for any list that can grow past a screenful (app drawer, contact list) — never a plain `Column` with `.verticalScroll()`.
+- **Settings rows:** a row tappable across its whole width (navigation, radio, a permission that needs turning on) lives in a `SettingsCard(fullBleedRows = true)` and pads itself with `LocalSettingsRowInset` *after* `clickable`, so the press highlight spans the card. Dropdown and switch rows are deliberately control-only (only the value or the switch reacts) and stay in a default padded card.
 - Keep composable parameters side-effect-free to avoid unnecessary recomposition.
 - Gestures (swipe up/down, long-press, drag) are implemented with `pointerInput` / `detectDragGestures` etc. at the surface they're specified on in README.md — check the exact thresholds and easing named there (e.g. 420ms long-press, 55px swipe threshold, `cubic-bezier(.32,.72,0,1)`) rather than approximating.
 
@@ -55,13 +56,13 @@ Every component's corner radius must come from Material 3's real shape scale and
 | Small | 8dp | `.small` | Chips, Menus/Dropdowns                                 |
 | Medium | 12dp | `.medium` | Cards, small FABs                                      |
 | Large | 16dp | `.large` | FABs, extended FABs, navigation drawers                |
-| Extra large | 28dp | `.extraLarge` | Dialogs, large FABs, modal bottom sheets (top corners) |
+| Extra large | 28dp | `.extraLarge` | Dialogs, large FABs, modal bottom sheets (top corners), `SettingsCard` (tonal, no shadow/border) |
 | Full | fully rounded | `CircleShape` | Search bars, segmented/tab controls, switches, icon-style circles |
 
 - Look up a component's category on the [Compose Material3 component list](https://developer.android.com/develop/ui/compose/components) or [API reference](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary) and use its real default shape (verify against the library's own tokens when in doubt — `ShapeTokens.kt`/`MenuTokens.kt`/`DialogTokens.kt`/etc. under `androidx.compose.material3.tokens`) rather than guessing a dp value.
 - A "top corners only" variant (e.g. a bottom sheet) is a literal `RoundedCornerShape(topStart = ..., topEnd = ..., bottomEnd = 0.dp, bottomStart = 0.dp)` using the matching token's dp value — `MaterialTheme.shapes` has no per-corner variant.
 
-- **Buttons are square, not Full:** every text button uses `MaterialTheme.shapes.medium` (12dp; `TonalButton`, `ProGradientButton`) or `.large` (`SurfaceButton`) — a deliberate project choice over M3's round default. Don't add a `CircleShape` button.
+- **Buttons are pills (Full):** every text button (`PrimaryButton`, `TonalButton`, `SurfaceButton`, `ProGradientButton`, the Pro card's upgrade chip) uses `CircleShape`, M3's default button shape. Don't give a button a bespoke corner radius, and don't hand-build one from a `Text` with a background or a click: use `PrimaryButton` for a solid-accent primary action and `TextActionButton` (M3 `TextButton`, also a pill) for a text-only action. The exception is a link on the wallpaper with a text-shadow style (Hub strip, orphaned-widget tile), which stays a `Text` clipped to `CircleShape`.
 - **Exception — app icons.** `AppIcon` is outlined by the user's `IconShape` setting (`ui/components/SuperellipseShape.kt`: a superellipse by default, n=4), not the M3 shape scale, and takes no corner-radius parameter. Don't give an icon a bespoke radius.
 
 ## Testing — needed for every capability

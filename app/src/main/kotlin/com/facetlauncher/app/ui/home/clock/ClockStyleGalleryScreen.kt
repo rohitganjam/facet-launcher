@@ -49,6 +49,7 @@ import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
@@ -299,7 +300,7 @@ private fun ClockStyleGalleryScreen(
             )
         }
         item {
-            SettingsCard {
+            SettingsCard(fullBleedRows = true) {
                 ClockPositionResetRow(onClick = onResetClockPosition, enabled = controlsEnabled)
             }
         }
@@ -382,7 +383,7 @@ private fun ClockPositionResetRow(onClick: () -> Unit, modifier: Modifier = Modi
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
             .testTag("reset_clock_position_row")
-            .padding(vertical = 13.dp)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
             .alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,

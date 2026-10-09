@@ -8,6 +8,7 @@ import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
 import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
 import com.facetlauncher.app.ui.theme.Scrim
@@ -28,6 +29,8 @@ fun ThemedModalBottomSheet(
     modifier: Modifier = Modifier,
     /** `true` opens straight to the content's full height instead of clamping at half the screen — for menus short enough to always show whole. */
     skipPartiallyExpanded: Boolean = false,
+    /** The sheet surface; [Surface] normally, the dimmer [com.facetlauncher.app.ui.theme.SurfaceContainer] for a sheet of [SettingsCard]s. */
+    containerColor: Color = Surface,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DismissOnHomePress(onDismiss = onDismissRequest)
@@ -49,7 +52,7 @@ fun ThemedModalBottomSheet(
         },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded),
         shape = SHEET_SHAPE,
-        containerColor = Surface,
+        containerColor = containerColor,
         scrimColor = Scrim,
         dragHandle = { AppContextMenuDragHandle() },
         content = content,

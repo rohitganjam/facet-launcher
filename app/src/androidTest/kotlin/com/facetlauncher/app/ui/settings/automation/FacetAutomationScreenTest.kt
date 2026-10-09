@@ -39,7 +39,7 @@ class FacetAutomationScreenTest {
     }
 
     @Test
-    fun noRulesShowsTheEmptyStripAndItsAddAction() {
+    fun noRulesShowsTheEmptyCardAndItsAddAction() {
         var added = false
         setContent(FacetAutomationScreenState(), onAddRule = { added = true })
 

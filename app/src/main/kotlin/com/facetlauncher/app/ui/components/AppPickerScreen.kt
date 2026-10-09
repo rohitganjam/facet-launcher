@@ -373,11 +373,11 @@ private fun AppPickerHeader(title: String, onDone: () -> Unit, tagPrefix: String
             BackButton(onClick = onDone)
             Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
-        Text(
+        TextActionButton(
             text = stringResource(R.string.action_done),
-            style = MaterialTheme.typography.bodyLarge,
+            onClick = onDone,
             color = Ink,
-            modifier = Modifier.testTag("${tagPrefix}_done").clickable(onClick = onDone),
+            modifier = Modifier.testTag("${tagPrefix}_done"),
         )
     }
 }

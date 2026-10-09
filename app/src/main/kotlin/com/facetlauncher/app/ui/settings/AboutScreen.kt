@@ -35,6 +35,7 @@ import com.facetlauncher.app.BuildConfig
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Ink
@@ -85,7 +86,7 @@ private fun AboutContent(
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         InfoRow(title = stringResource(R.string.about_version), subtitle = versionName, testTag = "about_version_row")
                         CardDivider()
                         ClickableAboutRow(
@@ -136,7 +137,7 @@ private fun InfoRow(title: String, subtitle: String, testTag: String, modifier: 
             // own semantics node (matches ClickableAboutRow's behavior for touch-exploration too).
             .semantics(mergeDescendants = true) {}
             .fillMaxWidth()
-            .padding(vertical = 13.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -152,7 +153,7 @@ private fun ClickableAboutRow(title: String, subtitle: String, onClick: () -> Un
             .testTag(testTag)
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 13.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

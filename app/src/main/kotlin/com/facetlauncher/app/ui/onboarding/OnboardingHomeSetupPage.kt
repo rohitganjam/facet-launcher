@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -50,10 +48,11 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.rememberDragReorderState
-import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -134,26 +133,16 @@ fun OnboardingHomeSetupPage(
         ) {
             OnboardingDots(step = 1, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text(
+                TextActionButton(
                     text = stringResource(R.string.action_back),
-                    style = MaterialTheme.typography.bodyLarge,
+                    onClick = onBack,
                     color = Muted,
-                    // 48dp minimum touch target (M3 guideline), centered on the text.
-                    modifier = Modifier
-                        .clickable(onClick = onBack)
-                        .testTag("onboarding_back")
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center),
+                    modifier = Modifier.testTag("onboarding_back"),
                 )
-                Text(
+                TextActionButton(
                     text = stringResource(R.string.action_next),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Accent,
-                    modifier = Modifier
-                        .clickable(onClick = onNext)
-                        .testTag("onboarding_next")
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center),
+                    onClick = onNext,
+                    modifier = Modifier.testTag("onboarding_next"),
                 )
             }
         }
@@ -174,11 +163,11 @@ private fun DockSection(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = stringResource(R.string.onboarding_dock_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
             if (dockApps.isNotEmpty()) {
-                Text(
+                TextActionButton(
                     text = stringResource(R.string.action_clear_all),
+                    onClick = { showClearConfirm = true },
                     style = MaterialTheme.typography.labelSmall,
-                    color = Accent,
-                    modifier = Modifier.clickable { showClearConfirm = true }.testTag("onboarding_clear_dock"),
+                    modifier = Modifier.testTag("onboarding_clear_dock"),
                 )
             }
         }
@@ -189,11 +178,11 @@ private fun DockSection(
             color = Muted,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        SettingsCard {
+        SettingsCard(fullBleedRows = true) {
             DockClickableRow(countLabel = countLabel, onClick = onManageClick)
             if (dockApps.isNotEmpty()) {
                 CardDivider()
-                DockAppsReorderRow(dockApps = dockApps, onReorder = onReorder, modifier = Modifier.padding(vertical = 12.dp))
+                DockAppsReorderRow(dockApps = dockApps, onReorder = onReorder, modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current, vertical = 12.dp))
             }
         }
 
@@ -217,7 +206,7 @@ private fun DockClickableRow(countLabel: String, onClick: () -> Unit, modifier: 
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .testTag("onboarding_manage_dock")
-            .padding(vertical = 13.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -318,16 +307,16 @@ private fun HomeAppsSection(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = stringResource(R.string.onboarding_home_apps_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
             if (listContentMode == ListContentMode.FAVORITES && favoriteApps.isNotEmpty()) {
-                Text(
+                TextActionButton(
                     text = stringResource(R.string.action_clear_all),
+                    onClick = { showClearConfirm = true },
                     style = MaterialTheme.typography.labelSmall,
-                    color = Accent,
-                    modifier = Modifier.clickable { showClearConfirm = true }.testTag("onboarding_clear_favorites"),
+                    modifier = Modifier.testTag("onboarding_clear_favorites"),
                 )
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        SettingsCard {
+        SettingsCard(fullBleedRows = true) {
             LabeledDropdownRow(
                 title = stringResource(R.string.onboarding_show_label),
                 options = ListContentMode.entries,
@@ -341,7 +330,11 @@ private fun HomeAppsSection(
                 FavoritesClickableRow(countLabel = favoriteCountLabel, onClick = onEditFavoritesClick)
                 if (favoriteApps.isNotEmpty()) {
                     CardDivider()
-                    FavoritesReorderList(favorites = favoriteApps, onReorder = onReorderFavorites, modifier = Modifier.padding(vertical = 8.dp))
+                    FavoritesReorderList(
+                        favorites = favoriteApps,
+                        onReorder = onReorderFavorites,
+                        modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current, vertical = 8.dp),
+                    )
                 }
             } else {
                 CardDivider()
@@ -381,7 +374,7 @@ private fun FavoritesClickableRow(countLabel: String, onClick: () -> Unit, modif
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .testTag("onboarding_edit_favorites")
-            .padding(vertical = 13.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

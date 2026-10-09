@@ -60,6 +60,7 @@ import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.rememberDragReorderState
@@ -155,7 +156,7 @@ private fun HomeAppsListSettingsContent(
                     )
                 }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         LabeledDropdownRow(
                             title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_content_facet else R.string.home_apps_list_content_default),
                             options = ListContentMode.entries,
@@ -223,7 +224,7 @@ private fun HomeAppsListClickableRow(title: String, subtitle: String?, onClick: 
             .testTag(testTag)
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 13.dp)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
             .alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -270,7 +271,7 @@ private fun DefaultFavoritesReorderList(favorites: List<PlacedItem>, onReorder: 
     )
 
     LazyColumn(
-        modifier = modifier.fillMaxWidth().height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT * order.size),
+        modifier = modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current).height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT * order.size),
         userScrollEnabled = false,
     ) {
         items(order, key = { it.reorderKey() }) { item ->
