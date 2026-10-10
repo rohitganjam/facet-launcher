@@ -3785,7 +3785,7 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
   `MaterialTheme.shapes.extraLarge` (28dp), clips its content so a row's press highlight follows the corners. `CardDivider`
   takes a `startInset` so it clears a leading icon.
 - [x] **Leading icons** on the top-level Settings rows (`SettingsIconBadge`: 40dp circle, hue from `SettingsSectionHue`:
-  Facets accent, Appearance violet, Home & apps teal, System slate). Facets uses `Icons.Default.Layers`, the same icon as
+  Facets blue (fixed), Appearance violet, Home & apps teal, System slate). Facets uses `Icons.Default.Layers`, the same icon as
   the Pro page. The top-level rows no longer show `NavigationChevron`; sub-screens keep it where nav rows sit beside toggles.
   The per-facet settings screen (`FacetSettingsScreen`) gets the same treatment as it is the same list scoped to one facet:
   badges (Rename `Edit`, Apps list `FormatListBulleted`, Dock `Dock`, Appearance `Palette`, Calendars `CalendarMonth`, hues
@@ -3880,7 +3880,7 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] `ClockAdjustSheet`: two tonal `SettingsCard`s (clock rows: Adjust size & position / Edit clock styles / Use custom widget or
   Switch to launcher clock; then Facet settings / Launcher settings) of `ClickableRow`s with `SettingsIconBadge`s (clock rows violet,
-  Facet settings accent, Launcher settings slate), inset dividers, full-bleed press highlights; the Global / facet-name badge and
+  Facet settings blue (fixed), Launcher settings slate), inset dividers, full-bleed press highlights; the Global / facet-name badge and
   Pro pill stay as trailing content. Test tags unchanged.
 - [x] `ThemedModalBottomSheet` gained an optional `containerColor` (default `Surface`); the clock adjust sheet passes the dimmer
   `SurfaceContainer` so the cards read as tonal. The now-unused `open_in_full.xml` and `ic_palette_24.xml` drawables were deleted
@@ -3911,3 +3911,9 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] `HomeDrawerRouteTest.swipingWithinAnOverflowingAppListScrollsItInsteadOfOpeningTheDrawer` asserted a Home row existed immediately
   after `setContent` (a race; it passed on master by luck): it now polls with `waitUntil`. `systemBackClosesAnOpenFacetCarousel` passed
   on its own re-run (timing flake under the full suite), no change.
+
+## ✅ Facets icon hue is a fixed blue (direct request)
+
+- [x] `SettingsSectionHue.FACETS` no longer follows the user's `Accent` (it looked grey with a wallpaper-derived accent): fixed blue,
+  `#2563EB` light / `#93C5FD` dark, like the other section hues. Affects the Settings Facets rows, the facet automation empty state,
+  the per-facet Rename row and the Home sheet's Facet settings row.

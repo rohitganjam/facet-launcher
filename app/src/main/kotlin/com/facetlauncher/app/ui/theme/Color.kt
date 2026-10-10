@@ -98,20 +98,16 @@ val Faint: Color @Composable get() = if (LocalIsDarkTheme.current) FaintDark els
 val Hairline: Color @Composable get() = if (LocalIsDarkTheme.current) HairlineDark else HairlineLight
 val IconTile: Color @Composable get() = if (LocalIsDarkTheme.current) IconTileDark else IconTileLight
 
-/** Hue for a Settings section's leading-icon circle (glyph at full [color], circle at a low-alpha tint of it). [FACETS] follows [Accent]. */
+/** Hue for a Settings section's leading-icon circle (glyph at full [color], circle at a low-alpha tint of it). Fixed colours, independent of the user's [Accent]. */
 enum class SettingsSectionHue(private val light: Color, private val dark: Color) {
-    FACETS(AccentLight, AccentDark),
+    FACETS(Color(0xFF2563EB), Color(0xFF93C5FD)),
     APPEARANCE(Color(0xFF7C3AED), Color(0xFFC4B5FD)),
     HOME_APPS(Color(0xFF0D9488), Color(0xFF5EEAD4)),
     SYSTEM(Color(0xFF475569), Color(0xFFCBD5E1)),
     ;
 
     val color: Color
-        @Composable get() = when {
-            this == FACETS -> Accent
-            LocalIsDarkTheme.current -> dark
-            else -> light
-        }
+        @Composable get() = if (LocalIsDarkTheme.current) dark else light
 }
 
 /** [FolderTileGlyph][com.facetlauncher.app.ui.home.FolderTileGlyph]'s tile background — deliberately theme-invariant, unlike [IconTile], so the folder plate reads the same over the wallpaper in light or dark mode. */
