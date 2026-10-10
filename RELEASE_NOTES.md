@@ -1,12 +1,16 @@
-# Facet Launcher 0.1.20
+# Facet Launcher 0.1.21
 
 ## New Features
-- **Facet automation from Manage Facets.** Manage Facets now opens with a Facet automation card, showing how many rules you have, that takes you straight to your automation rules.
+- (none)
+
+## Fixes
+- (none)
 
 ## Improvements
-- **Facet Pro, once unlocked.** The Pro screen now ends with an **Add a facet** button and **Restore purchases**, which scroll with the page instead of being pinned. Restore purchases lets you re-check with Google Play at any time, and tells you what it found.
-- **Pro now comes only from Google Play.** Your Pro status is no longer saved in Android's automatic backups or phone-to-phone transfers. After restoring to a new phone, Facet checks Google Play on first launch, and your settings, facets and rules come back as before.
+- The app now works on Android 11, not just Android 12 and up
+- On Android 11, Appearance shows a simpler set of accent color presets, since the newer Material You color picker isn't available on that version
 
 ## Internal
-- Added logging of each Pro ownership check (the connection result and the product, state and acknowledgement of any purchase, with no tokens or personal data), to make billing problems easier to diagnose.
-- Added tests for five previously untested classes and refreshed the testing docs.
+- Lower minSdk from 31 to 30 and gate Android 12+ APIs behind version checks: accent color source tabs, BLUETOOTH_CONNECT vs install-time BLUETOOTH permission, Wi-Fi SSID retrieval fallback via WifiManager, widget targetCellWidth/Height, onboarding backdrop blur
+- Add tests for each Android 11 compatibility gate and update architecture docs
+- Bump version to 0.1.20 (code 21) and add release notes
