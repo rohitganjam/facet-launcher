@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -109,6 +110,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import com.facetlauncher.app.ui.theme.dynamicColorSupported
 import com.facetlauncher.app.ui.theme.resolve
 import com.facetlauncher.app.ui.theme.toneOf
 
@@ -761,7 +763,7 @@ private fun AppearanceSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mo
  * pick rather than needing to re-choose.
  */
 @Composable
-private fun AccentColorSection(
+internal fun AccentColorSection(
     accentFromSystem: Boolean,
     customAccentSwatch: String?,
     wallpaperAccentRole: WallpaperAccentRole,
@@ -769,9 +771,15 @@ private fun AccentColorSection(
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
     modifier: Modifier = Modifier,
+    showSourceTabs: Boolean = dynamicColorSupported,
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         Text(text = stringResource(R.string.appearance_accent_color), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(bottom = 10.dp))
+        if (!showSourceTabs) {
+            // Pre-Android 12 has no wallpaper colours: presets only, with blue as the implicit default.
+            AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChange)
+            return@Column
+        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             PillOption(
                 label = stringResource(R.string.appearance_wallpaper_colors),
@@ -958,6 +966,8 @@ private fun SplitColorCircle(
  * unlike the named Basic-colors presets — these are algorithmically derived, unnamed hues; the
  * swatch itself is the only identifier a user needs to tell them apart.
  */
+// Only shown when dynamicColorSupported (Android 12+), and each call is wrapped in runCatching anyway.
+@SuppressLint("NewApi")
 @Composable
 private fun WallpaperAccentRoleGrid(selected: WallpaperAccentRole, onSelect: (WallpaperAccentRole) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current

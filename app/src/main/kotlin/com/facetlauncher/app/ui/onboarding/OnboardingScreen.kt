@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.onboarding
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -141,6 +142,7 @@ fun OnboardingScreen(
     // for the whole flow, rather than loading it into a bitmap ourselves and blurring that copy.
     val activityWindow = (LocalView.current.context as? Activity)?.window
     DisposableEffect(activityWindow) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@DisposableEffect onDispose { }
         activityWindow?.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
         activityWindow?.setBackgroundBlurRadius(with(density) { ONBOARDING_BACKDROP_BLUR.roundToPx() })
         onDispose {

@@ -9,6 +9,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import androidx.core.content.ContextCompat
 import com.facetlauncher.app.data.model.WifiState
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,25 +46,45 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
             @Suppress("DEPRECATION")
             manager.allNetworks.forEach { network ->
                 manager.getNetworkCapabilities(network)?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }
-                    ?.let { networks[network] = it.ssidOrNull() }
+                    ?.let { networks[network] = ssidOf(it) }
             }
             trySend(networks.toWifiState())
 
-            val callback = object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
-                override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                    networks[network] = capabilities.ssidOrNull()
-                    trySend(networks.toWifiState())
+            val onChanged = { network: Network, capabilities: NetworkCapabilities ->
+                networks[network] = ssidOf(capabilities)
+                trySend(networks.toWifiState())
+                Unit
+            }
+            val onGone = { network: Network ->
+                networks.remove(network)
+                trySend(networks.toWifiState())
+                Unit
+            }
+            // The flag that lets the callback carry the SSID is Android 12+; earlier versions read it via WifiManager.
+            val callback = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
+                    override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = onChanged(network, capabilities)
+                    override fun onLost(network: Network) = onGone(network)
                 }
-
-                override fun onLost(network: Network) {
-                    networks.remove(network)
-                    trySend(networks.toWifiState())
+            } else {
+                object : ConnectivityManager.NetworkCallback() {
+                    override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = onChanged(network, capabilities)
+                    override fun onLost(network: Network) = onGone(network)
                 }
             }
             manager.registerNetworkCallback(NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(), callback)
             awaitClose { manager.unregisterNetworkCallback(callback) }
         }
     }.distinctUntilChanged()
+
+    /** Android 12+ puts the SSID in the capabilities; Android 11 only exposes it through [WifiManager.getConnectionInfo]. */
+    private fun ssidOf(capabilities: NetworkCapabilities): String? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            capabilities.ssidOrNull()
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(WifiManager::class.java)?.connectionInfo?.ssid.cleanedSsid()
+        }
 
     /**
      * Names for the network picker: the current network first, then the networks in the latest scan,
@@ -83,5 +104,6 @@ private fun Map<Network, String?>.toWifiState(): WifiState =
     if (isEmpty()) WifiState() else WifiState(connected = true, ssid = values.firstNotNullOfOrNull { it })
 
 /** The SSID without the quotes Android wraps it in, or null when it is unreadable (no location permission, or location off). */
-private fun NetworkCapabilities.ssidOrNull(): String? =
-    (transportInfo as? WifiInfo)?.ssid?.removeSurrounding("\"")?.takeIf { it.isNotBlank() && it != UNKNOWN_SSID }
+private fun NetworkCapabilities.ssidOrNull(): String? = (transportInfo as? WifiInfo)?.ssid.cleanedSsid()
+
+private fun String?.cleanedSsid(): String? = this?.removeSurrounding("\"")?.takeIf { it.isNotBlank() && it != UNKNOWN_SSID }

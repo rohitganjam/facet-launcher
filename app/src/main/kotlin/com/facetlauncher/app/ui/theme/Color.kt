@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.theme
 
+import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -71,6 +72,9 @@ private val IconTileDark = Color(0xFF39424F)
 // and as the literal design-reference values (also AccentSwatch.BLUE's exact values).
 private val AccentLight = Color(0xFF2563EB)
 private val AccentDark = Color(0xFFA8C7FA)
+
+/** Material You (wallpaper-derived) colours exist from Android 12; below that only the preset swatches apply. */
+val dynamicColorSupported: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 private val ErrorLight = Color(0xFFDC2626)
 private val ErrorDark = Color(0xFFF2857F)
 private val SuccessLight = Color(0xFF16A34A)
@@ -129,8 +133,8 @@ internal fun WallpaperAccentRole.toneOf(scheme: ColorScheme): Color = when (this
  * F11's accent handling — "one variable driving ~100 usages" per README. Settings → Theme →
  * Accent color offers two sources ([LocalAccentFromSystem]):
  * - **Wallpaper colors** (default): Material You ([dynamicLightColorScheme]/[dynamicDarkColorScheme],
- *   reading the system's wallpaper-derived `system_accent1/2/3` palette — always available since
- *   minSdk 33 ≥ API 31), with the user's own pick of which of the three tonal roles to use
+ *   reading the system's wallpaper-derived `system_accent1/2/3` palette — Android 12+ only, see
+ *   [dynamicColorSupported]), with the user's own pick of which of the three tonal roles to use
  *   ([LocalWallpaperAccentRole] — see Settings' wallpaper-color picker row).
  * - **Basic colors**: [LocalCustomAccentSwatch]'s fixed pick from the curated [AccentSwatch]
  *   palette — each swatch carries its own light/dark pair, so switching the app's theme mode
@@ -144,7 +148,7 @@ internal fun WallpaperAccentRole.toneOf(scheme: ColorScheme): Color = when (this
 @Composable
 internal fun accentTonalExtremes(): Pair<Color, Color> {
     val swatch = LocalCustomAccentSwatch.current
-    if (!LocalAccentFromSystem.current && swatch != null) {
+    if (swatch != null && (!dynamicColorSupported || !LocalAccentFromSystem.current)) {
         return swatch.light to swatch.dark
     }
     val context = LocalContext.current
@@ -156,9 +160,12 @@ internal fun accentTonalExtremes(): Pair<Color, Color> {
     // picked inside the same composition must recompute too.
     val refreshSignal = LocalDynamicColorRefreshSignal.current
     return remember(context, refreshSignal, role) {
-        val light = runCatching { role.toneOf(dynamicLightColorScheme(context)) }.getOrDefault(AccentLight)
-        val dark = runCatching { role.toneOf(dynamicDarkColorScheme(context)) }.getOrDefault(AccentDark)
-        light to dark
+        if (dynamicColorSupported) {
+            runCatching { role.toneOf(dynamicLightColorScheme(context)) }.getOrDefault(AccentLight) to
+                runCatching { role.toneOf(dynamicDarkColorScheme(context)) }.getOrDefault(AccentDark)
+        } else {
+            AccentLight to AccentDark
+        }
     }
 }
 
@@ -179,6 +186,7 @@ val Accent: Color
  */
 @Composable
 fun wallpaperPrimaryAndSecondary(): Pair<Color, Color> {
+    if (!dynamicColorSupported) return AccentLight to AccentDark
     val context = LocalContext.current
     // Keyed on the resume signal too — see accentTonalExtremes' identical note above.
     val refreshSignal = LocalDynamicColorRefreshSignal.current

@@ -3,6 +3,7 @@ package com.facetlauncher.app.data
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.content.ContextCompat
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationTrigger
@@ -30,6 +31,10 @@ open class AutomationPermissionRepository @Inject constructor(
 }
 
 private fun AutomationPermission.manifestName(): String = when (this) {
-    AutomationPermission.BLUETOOTH_CONNECT -> Manifest.permission.BLUETOOTH_CONNECT
+    AutomationPermission.BLUETOOTH_CONNECT -> bluetoothPermissionName()
     AutomationPermission.LOCATION -> Manifest.permission.ACCESS_FINE_LOCATION
 }
+
+/** `BLUETOOTH_CONNECT` is Android 12+; Android 11 uses the install-time `BLUETOOTH` permission instead, so it is always granted. */
+internal fun bluetoothPermissionName(): String =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Manifest.permission.BLUETOOTH_CONNECT else Manifest.permission.BLUETOOTH
