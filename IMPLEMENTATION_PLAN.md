@@ -3917,3 +3917,17 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] `SettingsSectionHue.FACETS` no longer follows the user's `Accent` (it looked grey with a wallpaper-derived accent): fixed blue,
   `#2563EB` light / `#93C5FD` dark, like the other section hues. Affects the Settings Facets rows, the facet automation empty state,
   the per-facet Rename row and the Home sheet's Facet settings row.
+
+## ✅ Documentation review (direct request)
+
+- [x] Design handoff README: Settings (`3c`) and per-facet settings (`3d`) rewritten to the shipped layout, token tables brought to the
+  shipped values (page tone, Muted `.55`, dark Surface), section hues, radius scale, button shape; clock-style rows no longer "unbuilt".
+- [x] `CAPABILITIES.md`: Settings map, facet settings, Appearance order, icon shape, shared look and feel.
+- [x] Architecture: `04` (24 routes, settings-kit components), `05` F3 (five `MAX_APPS` readers, line numbers re-verified), `06` (counts from
+  the registry, three new test conventions), `12` (sheet `containerColor`), `13` (settings kit), README (registry counts).
+- [x] `ONBOARDING_FLOW.md` / brief: the removed carousel callout (`FirstRunCallout`, `PROFILES_INTRO`), `OnboardingFacetsPage`, and the live
+  `HOME_SET_DEFAULT_PROMPT` coach mark. `CLOCK_RESIZE_SPEC.md` banner notes the shipped sheet.
+- [x] `CLAUDE.md`: version pointer instead of a stale number; release script writes `release_notes/<version>.md`.
+- [x] 0.1.19 release notes rewritten for users. Previews added for `SettingsCard` and `SettingsIconBadge` (the documented every-public-composable rule).
+- [x] Verified clean: package counts in `04`, ViewModel / use case / repository registries vs code, all 267 relative doc links.
+- Left as historical on purpose: this plan's chronological entries, `CLOCK_RESIZE_SPEC.md`'s `Profile*` names, older release notes.

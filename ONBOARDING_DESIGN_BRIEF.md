@@ -97,7 +97,7 @@ screen; content sits directly on the wallpaper for steps 1–3.
 | 5 | Onboarding 4 — Set as default (sheet over dimmed Home) | light + dark |
 | 6 | Onboarding 4 — already-default variant | light |
 | 7 | Coach mark — Home gesture hint overlay | light + dark |
-| 8 | Coach mark — Profiles callout (over the real carousel) | light + dark |
+| 8 | Coach mark — carousel callout (over the real carousel) — **not shipped, removed** | light + dark |
 | 9 | Coach mark — Hub callout *(optional)* | light |
 
 ---

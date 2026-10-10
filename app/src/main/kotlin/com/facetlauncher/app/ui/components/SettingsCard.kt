@@ -1,24 +1,39 @@
 package com.facetlauncher.app.ui.components
 
+import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Dock
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.Surface
+import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 private val SettingsCardHorizontalPadding = 16.dp
 
@@ -71,4 +86,32 @@ fun SettingsSectionHeader(title: String, modifier: Modifier = Modifier) {
         color = Accent,
         modifier = modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp),
     )
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun SettingsCardPreview() {
+    FacetLauncherTheme {
+        Column(modifier = Modifier.background(SurfaceContainer).padding(24.dp)) {
+            SettingsSectionHeader(stringResource(R.string.settings_section_home_apps))
+            SettingsCard(fullBleedRows = true) {
+                PreviewRow(Icons.Outlined.Dock, R.string.settings_dock_title)
+                CardDivider(startInset = SettingsIconBadgeInset)
+                PreviewRow(Icons.Outlined.Folder, R.string.settings_folders_title)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewRow(icon: ImageVector, @StringRes title: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon, SettingsSectionHue.HOME_APPS)
+        Text(text = stringResource(title), style = MaterialTheme.typography.bodyLarge)
+    }
 }

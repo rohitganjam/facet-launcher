@@ -195,7 +195,7 @@ A downward drag from a closed drawer expands the notification shade on the same 
 
 Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the clock adjust menu and the one-time
 "make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
-system bars and swipe-down and Back dismiss it the same way everywhere. While one is showing, Home's swipes
+system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock adjust menu passes the dimmer `SurfaceContainer` because its content (`ClockAdjustSheet`) is two tonal `SettingsCard`s of icon-badge rows — Adjust clock size & position, Edit clock styles (with the Global / facet-name badge), Use custom widget or Switch to launcher clock; then Facet settings and Launcher settings. While one is showing, Home's swipes
 are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
 behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
 `LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
@@ -209,7 +209,7 @@ gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp 
 handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp
 (`HOME_CLOCK_MIN_GAP`) above the handle, too little room for it. It writes through
 `HomeViewModel.onClockAlignmentCommit`, with the same facet-or-global ownership as height and scale
-(`clockPositionOwningFacet`; all three sit behind `overrideClock`) — the Clock & Calendar Style screen writes the same
+(`clockPositionOwningFacet`; all three sit behind `overrideClock`) — the Clock Style screen writes the same
 value. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
 toolbar dims to 25% and its options are disabled while any handle or resize drag is active, and becomes usable again
 ~200ms after release, so a thumb coming off the handle can't tap it (it stays composed, so it doesn't pop in and out).

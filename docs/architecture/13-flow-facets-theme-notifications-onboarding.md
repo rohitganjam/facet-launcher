@@ -39,6 +39,18 @@ flowchart TB
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```
 
+- **The settings kit (`ui/components/`)** — `SettingsCard` is tonal (28dp, no shadow or border) on the
+  dimmer `SurfaceContainer` page. By default it pads its content 16dp; with `fullBleedRows = true` it
+  doesn't, and each row pads itself with `LocalSettingsRowInset` *after* `clickable`, so a pressed row's
+  highlight spans the card and follows its rounded corners (`CardDivider` and `ClickableRow` read the
+  same local). Every card of tappable rows uses it; dropdown and switch rows stay control-only in a
+  default padded card by design. `SettingsIconBadge` is the 40dp leading icon, tinted from
+  `SettingsSectionHue` (`theme/Color.kt`: Facets blue, Appearance violet, Home & apps teal, System
+  slate — fixed colours, independent of the accent); `SettingsSectionHeader` is the sentence-case
+  title above a card. Buttons are `PrimaryButton`, `TonalButton`, `SurfaceButton` and
+  `TextActionButton` (M3 `TextButton`), all pills. The same kit lays out `SettingsScreen`,
+  `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `ClockAdjustSheet` and the
+  carousel's Launcher settings row.
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row, an "Appearance" card (the
   Appearance row), then a "Home & apps" card with Apps list / Dock / Calendars rows, mirroring `SettingsScreen`'s own
   layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
@@ -53,10 +65,10 @@ flowchart TB
   `FacetClockStyleGalleryScreen`, and its subtitle and the preview clock resolve through
   `overrideClock` via `AppearanceSettingsUiState.clockSettings`), "Dock & home" (the `LOOK`
   fields above, always shown), and (global mode only) "General"
-  (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
+  (theme/accent/icon style and shape/launcher font/app label color/size/weight). Row titles:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
-  position". Within "DOCK & HOME", `appListLayout` ("App list layout" — always visible) then gates
+  position". Within "Dock & home", `appListLayout` ("App list layout" — always visible) then gates
   three more rows, mutually exclusive per its value: `SINGLE_COLUMN` shows `appRowPosition`/
   `appRowPresentation` (the rows above, unchanged); `TWO_COLUMN` hides `appRowPosition`, shows
   `appListColumnAlignment` ("Column alignment" — both columns left-aligned, both right-aligned, or

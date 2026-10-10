@@ -46,9 +46,9 @@ starting at `HOME`.
 |---|---|---|
 | Custom clock widget | `ui/home/ClockBlock.kt`, `ui/home/clock/ClockTemplates.kt` | ~36 templates (`ClockTemplateId`) — typographic + shape-based. Ticks off `ACTION_TIME_TICK` (no polling). 12/24h. Per-template accent color, meridiem, date style (Full/Condensed). |
 | Clock style gallery | `ui/home/clock/ClockStyleGalleryScreen.kt` | Global + per-facet picker. Includes Phase 10 "advanced" templates (Roboto Flex Wide/Narrow/Tech). |
-| Clock position + size | `ui/home/ClockZoneHandle.kt`, `ClockCornerHandle.kt`, `ClockAdjustSheet.kt`, `ClockAdjustToolbar.kt` | Long-press clock → bottom sheet (`ThemedModalBottomSheet`) → adjust mode: height handle (drag vertical zone), corner-drag resize (`clockScale` 0.5–2.0, default 0.8), and an "Alignment" pill (left / center / right) just below the handle — dims to 25% and disables while dragging, no Done button (tap the clock or empty space to exit). "Edit styles" stays in the sheet. Global + per-facet. |
+| Clock position + size | `ui/home/ClockZoneHandle.kt`, `ClockCornerHandle.kt`, `ClockAdjustSheet.kt`, `ClockAdjustToolbar.kt` | Long-press clock → bottom sheet (`ThemedModalBottomSheet`) → adjust mode: height handle (drag vertical zone), corner-drag resize (`clockScale` 0.5–2.0, default 0.8), and an "Alignment" pill (left / center / right) just below the handle — dims to 25% and disables while dragging, no Done button (tap the clock or empty space to exit). "Edit clock styles" stays in the sheet. Global + per-facet. |
 | Custom widget in place of the clock | `ui/home/ClockWidgetFacetController.kt`, `ClockWidgetHostController.kt`, `domain/SwitchFacetToNativeClockUseCase.kt` | Long-press sheet → "Use custom widget" swaps the native clock for **any widget** (not limited to clock widgets), per facet. **Pro:** a free user sees a Pro pill and the row opens Facet Pro; a facet that already hosts a widget keeps it after a lapse, and switching back to the native clock stays free. (own `AppWidgetHost` id, own saved size). Switching back to the native clock releases the widget id. |
-| Clock alignment | `ClockAlignment` (LEFT/CENTER/RIGHT) | One value governs the clock (or hosted widget) and the calendar strip. Per-facet override (`overrideClock`, with height + scale). Set from adjust mode's Alignment pill or Clock & Calendar Style. |
+| Clock alignment | `ClockAlignment` (LEFT/CENTER/RIGHT) | One value governs the clock (or hosted widget) and the calendar strip. Per-facet override (`overrideClock`, with height + scale). Set from adjust mode's Alignment pill or Clock Style. |
 | Calendar events on clock | `ClockBlock.kt` + `ui/home/clock/CalendarEventsBlock.kt` | Real `CalendarContract` query. Event rows below the date, accent rule on next upcoming, tap → opens calendar app at that event. All-day toggle, per-calendar accent colors, per-calendar selection. **Gated on `READ_CALENDAR`** — shows a dashed permission strip when denied. |
 | App list (Favorites / Recents / Most Used) | `ui/home/HomeScreen.kt`, `domain/ObserveHomeScreenStateUseCase.kt` | Per-facet `ListContentMode`. Section heading is dynamic (FAVORITES/RECENTS/MOST USED). |
 | — Favorites | `data/FavoriteAppRepository.kt`, `DefaultFavoriteAppRepository.kt` | Up to 8. Global **Default favorites** list + per-facet override (`overridingFavorites`). Uninstall-collapse + hard delete. Reorder in Settings, not the picker. |
@@ -94,12 +94,13 @@ starting at `HOME`.
 - **Manage Facets** (`ManageFacetsScreen`) — Settings → Facets. Drag-to-reorder list, per-row
   overflow (Facet settings / Delete), pinned "Add facet" row (capped at 3).
 - **Add facet** — a new facet is named `Facet N` and **inherits the launcher-wide defaults**
-  (default favorites, dock, clock/calendar style) until it overrides them. It does not copy
+  (default favorites, dock, clock style) until it overrides them. It does not copy
   another facet's settings.
 - **Delete facet** — `ConfirmDialog` required; blocked at 1 remaining.
-- **Facet settings** (`FacetSettingsScreen`) — Rename, Activate, and one destination per
-  overridable area: Apps list, Dock, Appearance (which holds the facet's Clock & Calendar style), Calendars
-  to display. Each destination
+- **Facet settings** (`FacetSettingsScreen`) — Activate (header), a Rename row, an Appearance
+  card (which holds the facet's Clock Style), and a Home & apps card with one destination per
+  other overridable area: Apps list, Dock, Calendars to display. Laid out like the main
+  Settings screen. Each destination
   has its own Inherit/Override switch, so a facet only stores what differs from the defaults.
 - **Per-facet widget in the clock slot** — a facet can replace its native clock with any hosted widget (own
   `AppWidgetHost` id, released on delete or when switched back to the native clock).
@@ -171,7 +172,9 @@ starting at `HOME`.
 | Launcher font | `LauncherFontOption` | Base font for all text roles except clock/calendar (which have their own picker + a "Default launcher font" option). |
 | Font weight | `homeAppsFontWeight`, `calendarFontWeight` | `FontWeightOption` (6 stops). Home-apps weight scopes to app list + dock + drawer labels. Calendar weight is facet-overridable. |
 | App label color | `appLabelColorOption` (`ClockColorOption`) | THEME / THEME_INVERTED / ACCENT_PRIMARY / ACCENT_SECONDARY. |
+| Icon shape | `IconShape` (SQUIRCLE default, ROUNDED, CIRCLE, SQUARE) | Global outline for app icons, picked in Appearance with each option drawn in its own shape; the selected one gets an accent ring with a gap. |
 | Live preview card | `AppearanceSettingsScreen.kt` | Wallpaper-backed sample of app rows + dock icon. |
+| Appearance screen order | `AppearanceSettingsScreen.kt` | Preview, then a Clock card (the Clock Style row), Dock & home, and — global only — General. The same screen serves a facet, which has no General card. |
 | Per-app label rename | **Not built.** | Deferred to icon-pack work (F11 v2, parked). |
 | Third-party icon packs | **Not built / parked** (PRD §3a). | |
 
@@ -179,14 +182,21 @@ starting at `HOME`.
 
 ## 7. Settings map (all built unless noted)
 
-Top-level groups in `SettingsScreen.kt`:
+`SettingsScreen.kt` opens with the Facet Pro card (upgrade prompt, or a "Pro is active" row), then
+four sections, each a card of icon-badge rows:
 
-- **FACETS** → Manage Facets
-- **APPEARANCE** → `AppearanceSettingsScreen` (theme, accent, icons, launcher font, font weight,
-  app label color, live preview)
-- **CLOCK & CALENDAR** → clock style gallery, `CalendarSettingsScreen` (show all-day events,
-  calendars to display — real once granted)
-- **HOME & APPS**
+- **Facets**
+  - Facets → Manage Facets
+  - Facet automation → `FacetAutomationScreen` (rules that switch facets by schedule or device
+    trigger; one card with an icon, a message and an "Add rule" row when empty)
+- **Appearance**
+  - Change wallpaper → `ACTION_SET_WALLPAPER` system picker
+  - Launcher Appearance → `AppearanceSettingsScreen` (Clock Style row → clock style gallery; Dock &
+    home look; General: theme, system bar icons, accent, icon style and shape, launcher font, font
+    color/size/weight; live preview)
+- **Home & apps**
+  - Calendars to display → `CalendarSettingsScreen` (show all-day events, calendar picker — real
+    once granted)
   - Dock → `DockSettingsScreen` (display style, pick apps, reorder)
   - Home Apps List → `HomeAppsListSettingsScreen` (position, presentation, default content mode,
     apps to show, default favorites + reorder)
@@ -194,13 +204,21 @@ Top-level groups in `SettingsScreen.kt`:
     search contacts, search bar position, drawer opacity)
   - Notifications → `NotificationSettingsScreen` (on/off + Dot/Count style; routes to the access
     explanation screen if not granted)
-- **SYSTEM**
-  - Permissions → `PermissionsScreen` (Calendar, Contacts, Usage access, Notification access —
-    per-row grant status + fix action)
+  - Folders → `FoldersSettingsScreen` / `FolderDetailScreen` (create, rename, reorder, delete)
+- **System**
+  - Permissions → `PermissionsScreen` (Calendar, Contacts, Usage access, Notification access,
+    Bluetooth, Location — a row that still needs a permission is tappable across its width)
   - Backup & restore → `BackupRestoreScreen` (full-settings JSON export/import via SAF; destructive
     import with confirm; guided widget re-add)
-  - Change wallpaper → `ACTION_SET_WALLPAPER` system picker
-  - Set as default launcher → status + `ACTION_MANAGE_DEFAULT_APPS_SETTINGS`
+  - Set as default launcher → status + the system role picker
+  - Work profile status row (when a Work profile exists), About
+
+**Look and feel (shared across the settings screens, per-facet settings, the Home long-press
+sheet and the carousel's Launcher settings row):** rows are grouped in tonal `SettingsCard`s
+(28dp, no shadow or border) on a dimmer page; each navigation row has an icon badge tinted by its
+section (Facets blue, Appearance violet, Home & apps teal, System slate), with no chevron; a
+pressed row's highlight spans the card. Every button is a pill. Dropdown and switch rows react
+only on their control, not across the row. Section and screen titles are sentence case.
 
 Every non-root screen has an on-screen back button (convention).
 

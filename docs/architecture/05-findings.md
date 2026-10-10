@@ -42,8 +42,9 @@ composable reaches into `domain/`, and `DrawerViewModel` already injects
 
 ## F3 — UI reading a repository constant (Low)
 
-`ui/settings/DockSettingsScreen.kt:137` and `ui/onboarding/OnboardingUiState.kt:30` read
-`DockAppRepository.MAX_APPS`. `data/model/AppListLimits.kt` already exists for exactly this
+Five UI files read `DockAppRepository.MAX_APPS`: `ui/settings/DockSettingsScreen.kt:144`,
+`ui/settings/AppearanceSettingsScreen.kt:471`, `ui/onboarding/OnboardingHomeSetupPage.kt:115`,
+`ui/facets/FacetSettingsViewModel.kt:106` and `ui/dock/DockAppPickerViewModel.kt:121`. `data/model/AppListLimits.kt` already exists for exactly this
 (`MAX_FAVORITES`, `DEFAULT_APPS_TO_SHOW`); move `MAX_APPS` there as `AppListLimits.MAX_DOCK_APPS`
 and the UI stops importing a repository type.
 
