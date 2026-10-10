@@ -22,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowNetwork
 import org.robolectric.shadows.ShadowNetworkCapabilities
@@ -128,6 +129,26 @@ class WifiRepositoryTest {
         job.cancel()
 
         assertEquals(WifiState(connected = true, ssid = null), results.last())
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `on android 11 the name comes from the wifi manager since capabilities carry none`() = runTest {
+        // Given Android 11, where the SSID is only readable through WifiManager.connectionInfo
+        val wifiInfo = org.mockito.Mockito.mock(WifiInfo::class.java)
+        org.mockito.Mockito.`when`(wifiInfo.ssid).thenReturn("\"Home\"")
+        shadowOf(context.getSystemService(WifiManager::class.java)).setConnectionInfo(wifiInfo)
+        val results = mutableListOf<WifiState>()
+        val job = collectInto(results)
+        idle()
+
+        // When a wifi network connects
+        deliver(ShadowNetwork.newInstance(7), ShadowNetworkCapabilities.newInstance().also { shadowOf(it).addTransportType(NetworkCapabilities.TRANSPORT_WIFI) })
+        idle()
+        job.cancel()
+
+        // Then the name is read from the wifi manager, without the Android 12 callback flag
+        assertEquals(WifiState(connected = true, ssid = "Home"), results.last())
     }
 
     @Test

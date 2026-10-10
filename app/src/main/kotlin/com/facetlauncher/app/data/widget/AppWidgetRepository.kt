@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.os.UserHandle
 import android.os.UserManager
@@ -66,9 +67,11 @@ class AppWidgetRepository @Inject constructor(
      */
     fun defaultSpanFor(info: AppWidgetProviderInfo): Pair<Int, Int> {
         val cellUnitDp = calculateHubCellWidth(context)
-        val columns = (info.targetCellWidth.takeIf { it > 0 } ?: dpToCells(info.minWidth, cellUnitDp))
+        val targetColumns = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.targetCellWidth else 0
+        val targetRows = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.targetCellHeight else 0
+        val columns = (targetColumns.takeIf { it > 0 } ?: dpToCells(info.minWidth, cellUnitDp))
             .coerceIn(1, HUB_COLUMNS)
-        val rows = (info.targetCellHeight.takeIf { it > 0 } ?: dpToCells(info.minHeight, cellUnitDp))
+        val rows = (targetRows.takeIf { it > 0 } ?: dpToCells(info.minHeight, cellUnitDp))
             .coerceAtLeast(1)
         return columns to rows
     }

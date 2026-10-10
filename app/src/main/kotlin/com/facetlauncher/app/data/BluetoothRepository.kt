@@ -1,6 +1,5 @@
 package com.facetlauncher.app.data
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -45,7 +44,7 @@ class BluetoothRepository @Inject constructor(@ApplicationContext private val co
     private val bluetoothManager: BluetoothManager? get() = context.getSystemService(BluetoothManager::class.java)
 
     private fun permissionGranted() =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(context, bluetoothPermissionName()) == PackageManager.PERMISSION_GRANTED
 
     /** Null while unknown (no permission, or the first query hasn't answered), then the connected addresses on every change. */
     fun observeConnectedAddresses(): Flow<Set<String>?> = callbackFlow {

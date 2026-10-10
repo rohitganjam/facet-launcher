@@ -363,7 +363,11 @@ fire on a guess at startup. An empty Bluetooth set is a real answer, so a "not c
   pass; a rule whose permission is missing is never met. `AutomationTrigger.requiredPermission()` maps
   Bluetooth to `BLUETOOTH_CONNECT` and a *named* Wi-Fi network to `ACCESS_FINE_LOCATION` (the other
   triggers need none). The manifest declares `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION`,
-  `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE`, and still no `INTERNET`.
+  `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE`, and still no `INTERNET`. On Android 11 (`minSdk 30`)
+  `BLUETOOTH_CONNECT` does not exist: the manifest also declares the install-time `BLUETOOTH` with
+  `maxSdkVersion="30"`, and `bluetoothPermissionName()` makes Bluetooth read as granted from that, so no
+  runtime request is shown there. Wi-Fi names on Android 11 come from `WifiManager.connectionInfo`
+  (the callback's location-info flag is Android 12+).
 - **`DeviceStateRepository`** combines the four sources into one hot `StateFlow<DeviceState>`, shared
   with `WhileSubscribed`. `RunFacetAutomationUseCase` collects it for the whole process (and treats every
   change as a trigger), so `current()` is a cheap read and a manual switch samples real device state.

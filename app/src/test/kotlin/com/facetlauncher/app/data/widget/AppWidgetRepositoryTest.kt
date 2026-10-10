@@ -169,6 +169,22 @@ class AppWidgetRepositoryTest {
     }
 
     @Test
+    @Config(sdk = [30])
+    fun `defaultSpanFor uses minWidth math on android 11, which has no target cell fields`() {
+        // Given a provider on Android 11
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
+        val info = AppWidgetProviderInfo().apply {
+            minWidth = 300
+            minHeight = 60
+        }
+
+        // Then the span comes from the legacy dp math without touching API 31 fields
+        val (cols, rows) = repository.defaultSpanFor(info)
+        assertEquals(true, cols in 1..5)
+        assertEquals(true, rows >= 1)
+    }
+
+    @Test
     fun `defaultSpanFor clamps the column span to the Hub's own column count`() {
         val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val info = AppWidgetProviderInfo().apply { targetCellWidth = 12; targetCellHeight = 3 }

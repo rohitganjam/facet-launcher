@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import android.content.pm.LauncherApps
+import android.os.Build
 import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -38,11 +39,13 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -201,6 +204,8 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun accentSwatchGridOnlyAppearsWhenBasicColorsIsSelectedAndPickingOneShowsItChecked() {
+        // Wallpaper colours (and so the source tabs) exist from Android 12
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default — now in the "General" card,
         // below "Dock & Home"/"Clock" (see chat history), so it needs scrolling into view first.
         setContent()
@@ -227,7 +232,63 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
+    fun withoutSourceTabsOnlyThePresetSwatchesShowAndPickingOneReportsIt() {
+        // Given the accent section as Android 11 shows it (no wallpaper colours, so no source tabs)
+        var picked: com.facetlauncher.app.ui.theme.AccentSwatch? = null
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AccentColorSection(
+                    accentFromSystem = true,
+                    customAccentSwatch = null,
+                    wallpaperAccentRole = WallpaperAccentRole.PRIMARY,
+                    onAccentFromSystemChange = {},
+                    onCustomAccentSwatchChange = { picked = it },
+                    onWallpaperAccentRoleChange = {},
+                    showSourceTabs = false,
+                )
+            }
+        }
+
+        // Then the presets show with Blue checked by default, and neither tab nor wallpaper grid exists
+        composeRule.onNodeWithTag("accent_swatch_grid").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Blue").assertExists()
+        composeRule.onNodeWithTag("accent_source_wallpaper").assertDoesNotExist()
+        composeRule.onNodeWithTag("accent_source_basic").assertDoesNotExist()
+        composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertDoesNotExist()
+
+        // When tapping Teal
+        composeRule.onNodeWithTag("accent_swatch_TEAL").performClick()
+
+        // Then it is reported
+        assertEquals(com.facetlauncher.app.ui.theme.AccentSwatch.TEAL, picked)
+    }
+
+    @Test
+    fun withSourceTabsBothTabsShow() {
+        // Given the accent section as Android 12+ shows it
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AccentColorSection(
+                    accentFromSystem = true,
+                    customAccentSwatch = null,
+                    wallpaperAccentRole = WallpaperAccentRole.PRIMARY,
+                    onAccentFromSystemChange = {},
+                    onCustomAccentSwatchChange = {},
+                    onWallpaperAccentRoleChange = {},
+                    showSourceTabs = true,
+                )
+            }
+        }
+
+        // Then both source tabs are there
+        composeRule.onNodeWithTag("accent_source_wallpaper").assertIsDisplayed()
+        composeRule.onNodeWithTag("accent_source_basic").assertIsDisplayed()
+    }
+
+    @Test
     fun wallpaperAccentRoleGridShowsByDefaultAndBasicColorsGridDoesNot() {
+        // Wallpaper colours (and so the source tabs) exist from Android 12
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default — scrolled into view (see
         // themeModeDropdownSwitchesBetweenLightDarkAndSystem's own comment)
         setContent()
@@ -240,6 +301,8 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun wallpaperAccentRoleGridDisappearsWhenBasicColorsIsSelected() {
+        // Wallpaper colours (and so the source tabs) exist from Android 12
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default — scrolled into view
         setContent()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
@@ -257,6 +320,8 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun tappingAWallpaperAccentRoleSwatchPersistsTheChoice() {
+        // Wallpaper colours (and so the source tabs) exist from Android 12
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default (PRIMARY role) — scrolled into view
         val settingsRepository = setContent()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_SECONDARY"))

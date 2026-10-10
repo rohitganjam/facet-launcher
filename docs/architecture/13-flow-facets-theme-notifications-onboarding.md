@@ -153,8 +153,8 @@ flowchart LR
     DARK -- DARK --> D[dark]
     DARK -- SYSTEM --> SYS["isSystemInDarkTheme()"]
     T --> ACC{"accentFromSystem?"}
-    ACC -- "true" --> DYN["dynamicLight/DarkColorScheme(context)\nrole picked by wallpaperAccentRole\n(PRIMARY / SECONDARY / TERTIARY)"]
-    ACC -- "false" --> SW["AccentSwatch.valueOf(customAccentSwatch)\nfixed palette"]
+    ACC -- "true (Android 12+ only)" --> DYN["dynamicLight/DarkColorScheme(context)\nrole picked by wallpaperAccentRole\n(PRIMARY / SECONDARY / TERTIARY)"]
+    ACC -- "false, or Android 11" --> SW["AccentSwatch.valueOf(customAccentSwatch)\nfixed palette"]
     DYN --> CS["FacetLight/DarkColorScheme(accent)"]
     SW --> CS
     T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
@@ -168,6 +168,9 @@ flowchart LR
   first frame is never painted with default theme values that then flip.
 - `LocalDynamicColorRefreshSignal` is bumped when the wallpaper changes so Material You colours
   re-resolve without a restart.
+- Android 11 (`minSdk 30`) has no Material You: `dynamicColorSupported` is false, `accentTonalExtremes()` uses the
+  chosen `AccentSwatch` (default blue), Settings → Appearance shows only the preset swatches (no source tabs), and the
+  onboarding backdrop blur (`setBackgroundBlurRadius`, Android 12+) is skipped.
 - Clock/app-label colours are *not* the M3 scheme directly: `ClockColorOption`
   (`THEME` / `ACCENT_PRIMARY` / …) resolves through `ui/theme/ClockColors.kt` against the current
   scheme. Clock's own colour is per-facet (`facets.clockColorOption`); the app-label colour

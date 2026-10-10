@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import java.time.DayOfWeek
 
 @RunWith(RobolectricTestRunner::class)
@@ -33,6 +34,21 @@ class AutomationPermissionRepositoryTest {
 
         assertTrue(repository.isGranted(AutomationPermission.BLUETOOTH_CONNECT))
         assertTrue(repository.isGranted(AutomationPermission.LOCATION))
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `on android 11 bluetooth follows the install-time permission, not BLUETOOTH_CONNECT`() {
+        // Given Android 11, where BLUETOOTH_CONNECT does not exist and BLUETOOTH is the permission that counts
+        shadow.denyPermissions(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_CONNECT)
+        assertFalse(repository.isGranted(AutomationPermission.BLUETOOTH_CONNECT))
+
+        // When only BLUETOOTH is granted
+        shadow.grantPermissions(Manifest.permission.BLUETOOTH)
+
+        // Then the trigger is usable
+        assertTrue(repository.isGranted(AutomationPermission.BLUETOOTH_CONNECT))
+        assertTrue(repository.isUsable(AutomationTrigger.Bluetooth("AA:BB", "Car")))
     }
 
     @Test
