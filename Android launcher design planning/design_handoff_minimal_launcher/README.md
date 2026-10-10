@@ -43,11 +43,11 @@ App names are invented. No real products are depicted.
 | `2d` | Clock style as its own page | Adopted; see `3e` |
 | `3a` | Facet carousel | **Revised:** recent-apps style — swipe browses, tap any card (centered or peeking) applies it immediately. Uniform card scale (~85%), no separate centered/neighbour tiers. |
 | `3b` | Facet reorder list | **Revised:** no longer an in-carousel long-press-drag state. A "Reorder" header link swaps the carousel for a plain list — drag handle, name, overflow menu (Facet settings / Delete) per row, plus a pinned Add-facet row. |
-| `3c` | **Launcher settings** | Canonical settings screen. **Revised:** each section is now a card (14px corners, `Hairline` border/dividers), not a flat row list. |
-| `3d` | **Per-facet settings** | **Revised:** grouped into an App-list card and a Clock card (see `3d`/Clock card below). |
-| `3e` | Clock style page (default) | Still unbuilt — only "Light stack" exists (Known Gap). |
-| `3f` | Clock style page (facet override) | **Revised/expanded:** the inherit/override pattern this page introduced now also covers a facet's 24-hour time and Calendar settings, via the Clock card's single switch — not clock style alone. |
-| — | **Calendar settings** [new screen] | Reached from the global or a facet's Clock card. "Show all-day events" toggle (real) + "Calendars to display" (permission-denied placeholder — see `4l`). |
+| `3c` | **Launcher settings** | Canonical settings screen. **Restyled:** a Pro card, then four tonal cards (Facets, Appearance, Home & apps, System) of icon-badge rows — 28px corners, no shadow or border, no chevrons. |
+| `3d` | **Per-facet settings** | **Restyled:** the same card layout — a Rename card, an Appearance card (holds the facet's Clock Style), and a Home & apps card (Apps list, Dock, Calendars). |
+| `3e` | Clock style page (default) | Built as the **clock style gallery** (`ClockStyleGalleryScreen`): a card per template with a live preview, plus font, colour, accent, 24-hour, meridiem, date and alignment options. Reached from the Appearance screen's **Clock Style** row. |
+| `3f` | Clock style page (facet override) | The same gallery scoped to a facet, behind the Inherit/Override switch (two radio rows). |
+| — | **Calendar settings** [new screen] | Reached from the Settings **Calendars to display** row or a facet's Calendars row. "Show all-day events" toggle plus the calendar picker once `READ_CALENDAR` is granted (the `4p` permission-denied strip until then — see `4l`). |
 | `4a`–`4e` | Launcher Hub: populated, empty, add picker, at capacity, orphaned widget | |
 | `4f`–`4h` | First run: what it is → pick favorites → set as default | |
 | `4i` | App long-press menu | |
@@ -152,35 +152,26 @@ Four rows, each `13px 24px` with `1px` separators, title `400 16px` and subtitle
 
 ### Launcher settings (`3c`)
 
-Canonical settings screen. Scrolls well past one viewport. Title `500 26px`, `letter-spacing: -.6px`. Section headers `600 10px`, `letter-spacing: .14em`, `rgba(2,8,23,.32)`. **Revised: each section is now a card** — `14px` rounded corners, `1px rgba(2,8,23,.07)` (`Hairline`) border on the same white surface as the page, `1px Hairline` dividers between rows in place of full-bleed row separators; title `400 14px`, subtitle `400 11.5px`.
+Canonical settings screen, restyled to current Android/Material settings conventions (see Design Tokens). It opens with the **Facet Pro card** (a dark upsell card, or a one-row "Pro is active" summary), then four sections, each a **tonal card**: a `Surface` fill on a dimmer page tone, **28px corners, no shadow or border**, rows separated by `1px Hairline` dividers inset past the icon. Each row has a **40px icon badge** (an outlined 22px glyph on a circle tinted at 14% in light / 24% in dark of the section's hue), a `400 14px` title and `400 11.5px` subtitle, **no chevron** (every row on these lists navigates), and a **full-width press highlight** that follows the card's rounded corners. Section headers are sentence case, `labelLarge`, in the accent colour. Screen title `500 26px`, `letter-spacing: -.6px`.
 
-**Every option that changes appearance shows the actual result, not a label [not built as spec'd]:** this remains true for the disabled Icons/Clock-style previews, but the two rows that became real dropdowns this pass (Dock **Display style**, App Drawer **Presentation**/**Grid size**) render as plain text-value dropdowns (title + current value + chevron), not the live mini-preview tiles this line originally called for — a deliberate scope-narrowing to ship the underlying settings sooner; upgrading them to preview tiles remains open.
+Dropdown and switch rows are deliberately **control-only**: only the value or the switch reacts, not the whole row. A row whose action is the row itself (navigation, a radio option, a permission that needs turning on) is tappable across its width.
 
-| Section | Contents |
+| Section | Rows |
 |---|---|
-| **FACETS** | Facets → the **Manage Facets** list (`3b`) — reorder, add/remove, reach per-facet settings. (The swipeable **Switch Facets** carousel opens on a left swipe on Home instead.) |
-| **CLOCK** | Default clock style → `3e` (disabled — see Known Gap, `IMPLEMENTATION_PLAN.md`). **24-hour time** (real toggle). **Calendar** [revised — was "Calendar events" disabled, now a real row navigating to Calendar settings] → subtitle reflects whether all-day events are shown. |
-| **NOTIFICATIONS** [new, split out of "Shared across facets"] | **Notifications** [revised — now a `ClickableRow` navigating to its own dedicated Notification Settings page, not an inline toggle] subtitle shows `On · Dot`/`On · Count`/`Off`. That page holds the real on/off switch (turning it on without access granted routes to the notification-access explanation screen first) plus a **Badge style** dropdown (Dot / Count). |
-| **DOCK** | `4 apps · shared across facets`; icon row + `+` slot → `4k`; `Drag to reorder · long-press to remove · up to 5 apps`; **Display style** [revised — was "Show apps as", now a dropdown, not a two-pill toggle] Icons (default) / Text |
-| **APP DRAWER** | **Presentation** [revised — now a real dropdown, not disabled] List (default) / Grid. **Grid size** [revised — real dropdown, **only shown when Presentation is Grid**] 4×4 / 4×5 / 5×5 / 5×6 (default). **Show icons** (real, **only shown under List**). **Show labels** [revised — now real, **only shown under Grid**, was always-shown-disabled]. Search contacts (still disabled). Search bar position (unchanged pill toggle). **Drawer opacity** [moved here from Appearance] — slider handle shortened to an `8px`-tall, `4px`-wide accent bar (a `4px` track height plus `2px` overhang each side), replacing the default circular thumb. |
-| **APPEARANCE** | Icons: System default / Monochrome (default), still disabled. Accent from system, still disabled. *(Drawer opacity moved to App Drawer, above.)* |
-| **(bottom)** | Backup & restore (still disabled), Set as default launcher (`Active`, green) |
+| **Facets** (blue) | **Facets** → the **Manage Facets** list (`3b`) — reorder, add/remove, reach per-facet settings. (The swipeable **Switch Facets** carousel opens on a left swipe on Home instead.) **Facet automation** → rules that switch facets by schedule or device trigger (`fa1`–`fa9`). |
+| **Appearance** (violet) | **Change wallpaper** → the system picker. **Launcher Appearance** → the Appearance screen: a **Clock** card (the **Clock Style** row → `3e`), **Dock & home** (dock display style, app list layout, position, presentation and alignment), and **General** (theme, system bar icons, accent colour, icon style, **icon shape** — Squircle / Rounded / Circle / Square, the selected one drawn with a 2px accent ring and a 2px gap — launcher font, font colour, size and weight), above a live preview card. |
+| **Home & apps** (teal) | **Calendars to display** → calendar settings. **Dock** → pick apps and reorder. **Home Apps List** → content mode (Favorites / Recents / Most used), apps to show, default favorites. **App Drawer** → presentation (List / Grid), grid or list size, show icons / labels, search, search bar position, drawer opacity. **Notifications** → on/off and Dot / Count badge style (routes to the access explanation if not granted). **Folders** → create, rename, reorder, delete. |
+| **System** (slate) | **Permissions** → per-permission status with a **Turn on** row for Calendar, Contacts, Usage access, Notification access, Bluetooth and Location. **Backup & restore** → export or import a settings file. **Set as default launcher**, a Work profile status row when one exists, and **About**. |
 
 ### Per-facet settings (`3d`)
 
-Reached from the sheet's **Edit facet**, the carousel's gear, or the reorder list's overflow menu (**Facet settings**). Header shows the facet name. **Revised: grouped into cards** — an unheaded "App list" card, a headed **CLOCK** card, then Rename facet as a standalone row below both.
+Reached from the Home long-press sheet's **Facet settings**, the carousel's gear, or the Manage Facets overflow menu. The header shows the facet name with an **Activate facet** button (a "✓ Active" mark when it is already the active facet). It uses the same card layout as `3c`: a **Rename facet** card (→ `4m`), an **Appearance** card (→ the Appearance screen scoped to this facet, including its **Clock Style**), then a **Home & apps** card with **Apps list settings**, **Dock settings** and **Calendars to display**. Each destination screen carries its own Inherit/Override switch (two radio rows, tappable across the row), so a facet stores only what differs from the launcher defaults.
 
-| Row | Control |
-|---|---|
-| App list content | Real dropdown — Favorites (selectable) / Recents / Most used (present but disabled inside the menu — Phase 4 dependency) |
-| Apps to show | Only rendered when a non-Favorites mode is selected — effectively always hidden today, since nothing else is selectable yet [revised from "always shown disabled"] |
-| Favorite apps | `5 of 8` + chevron → `4j`, subtitle only (no preview icon row built) |
-| *(Clock card, see below)* | |
-| Rename facet | → `4m`, standalone row below the cards |
-
-Footnote: dock, icons, accent, drawer layout and notification dots are launcher-wide. A new facet copies the previous facet's settings; favorites start empty.
+Footnote: accent, icon style and shape, drawer layout and notification dots are launcher-wide. A new facet inherits the launcher defaults and does not copy another facet's settings.
 
 ### Clock card (`3d`) and Calendar settings (new screen, wraps `4l`)
+
+> **Current state:** the facet's clock options no longer sit in a Clock card on the per-facet settings screen. The **Clock Style** row lives on the Appearance screen (scoped to the facet there), opens that facet's own clock style gallery, and the Inherit/Override pattern described below now sits on each destination screen. The text below is the original design history.
 
 **Revised and expanded from the original `3e`/`3f` clock-style-only design:** the facet's **CLOCK** card now covers three rows — Clock style, 24-hour time, Calendar — behind **one shared Inherit/Override switch** (not a separate switch per row), reusing the exact `3e`/`3f` radio-row copy and tinting:
 
@@ -265,7 +256,7 @@ Rules that switch the active facet by themselves. Entry: Settings → Facets →
   - **Battery:** pill tabs for *Charging / Not charging* and *Below / Above*, and a 5% slider (Above stops at 95%).
 - **Permissions (`fa7`, `fa8`).** Asked when the choice that needs them is made (Bluetooth type; Named network). A refusal keeps the previous trigger and shows a note with **Open settings**. A saved rule whose permission was later revoked is dimmed with an error icon and "Needs … access"; tapping it asks for the permission.
 - **Pro states (`fa4`, `fa6`).** For a free user: device triggers carry a **Pro pill** in the *When* dropdown, and choosing one opens the **Facet Pro screen** (see below) instead of asking for a permission; at the 2-rule limit the **Add rule** row carries a Pro pill and opens the same screen; a dashed strip under the Rules card reads "Free includes 2 schedule rules. Pro adds more rules and triggers…" with **Upgrade to Pro**; rules that no longer qualify are dimmed with a lock and "Paused. Needs Pro" (tapping opens the Facet Pro screen). Free keeps the first two schedule rules, in list order.
-- **Shape (M3 scale).** Sheet top corners 28dp (extra large), dialogs 28dp, cards and the status line 12dp (medium), dashed strips 12dp (medium), chips, Pro pill and menus 8dp (small), switches, radios and slider are stock M3. Buttons follow the app's existing square-button convention (`TonalButton` / `SurfaceButton`), a documented departure from M3's full-round buttons.
+- **Shape (M3 scale).** Sheet top corners 28dp (extra large), dialogs 28dp, settings cards 28dp (extra large), other cards and the status line 12dp (medium), dashed strips 12dp (medium), chips, Pro pill and menus 8dp (small), switches, radios and slider are stock M3. Buttons are M3's default fully rounded pills (`PrimaryButton`, `TonalButton`, `SurfaceButton`, text actions).
 - **Tokens.** `Surface` sheet, `Ink` / `Muted` text, `Accent` for selected chips, radios, slider and the Add rule row, `Hairline` for unselected chips and slider track, `ErrorColor` for inline errors and Delete. Dialogs 28dp (M3 extra large), buttons use `TonalButton` and `SurfaceButton`.
 
 **Deviations from the mockups.** The trigger picker (`fa4`) is a dropdown row in the editor, not a second sheet, and the Pro pills sit in that dropdown. Everyone is treated as entitled until billing exists, so the Pro states only appear for a free user once the billing plan lands. The mockup's radii were aligned with the M3 scale (strips 12, sheet 28). A Bluetooth rule whose device was unpaired is not yet flagged "Device not found".
@@ -337,10 +328,11 @@ Data the launcher must fetch: installed app list (`LauncherApps`, live callbacks
 | Wallpaper | `#ffffff` |
 | Carousel backdrop | `#dfe3ea` (`#d3d8e1` while dragging) |
 | Surface | `#ffffff` |
+| Page (settings screens, `SurfaceContainer`) | `#eef1f6` |
 | Drawer overlay | `rgba(255,255,255,.88)` |
 | Scrim | `rgba(2,8,23,.28)` |
 | Ink | `#020817` |
-| Muted | `rgba(2,8,23,.45)` |
+| Muted | `rgba(2,8,23,.55)` |
 | Faint | `rgba(2,8,23,.3)` |
 | Hairline | `rgba(2,8,23,.07)` |
 | Icon tile | `#1e293b` |
@@ -354,16 +346,29 @@ Data the launcher must fetch: installed app list (`LauncherApps`, live callbacks
 |---|---|
 | Wallpaper | `#14171d` |
 | Carousel backdrop | `#101319` (`#0d1015` while dragging) |
-| Surface | `#171a21` |
+| Surface | `#20242d` |
+| Page (settings screens, `SurfaceContainer`) | `#14171d` |
 | Drawer overlay | `rgba(20,23,29,.92)` |
 | Scrim | `rgba(0,0,0,.58)` |
 | Ink | `#e7eaf0` |
-| Muted | `rgba(226,232,240,.5)` |
+| Muted | `rgba(226,232,240,.55)` |
+| Faint | `rgba(226,232,240,.3)` |
 | Hairline | `rgba(226,232,240,.07)` |
 | Icon tile | `#39424f` |
 | Accent (system default) | `#a8c7fa` |
 | Error | `#f2857f` |
 | Success | `#7fd493` |
+
+### Settings section hues
+
+Fixed colours (independent of the user's accent) for the icon badges on settings rows: the glyph at full colour on a circle tinted at 14% (light) / 24% (dark) of it.
+
+| Section | Light | Dark |
+|---|---|---|
+| Facets | `#2563eb` | `#93c5fd` |
+| Appearance | `#7c3aed` | `#c4b5fd` |
+| Home & apps | `#0d9488` | `#5eead4` |
+| System | `#475569` | `#cbd5e1` |
 
 ### Accent handling
 
@@ -395,7 +400,7 @@ Inter throughout, weights 200 / 300 / 400 / 500 / 600.
 
 Screen gutter 24px. Section gap 26px. Row padding 12–14px vertical. Grid gap 8px.
 
-Radius: 5px checkbox · 8px chip · 9px button · 10–14px card · 15px dock icon · 20px sheet · 36px device frame.
+Radius (Material 3 scale): 4px text field · 8px chip and menu · 12px small card · 28px settings card, dialog and sheet · fully rounded (pill) buttons, switches and the search bar · 36px device frame. App icons follow the user's icon shape setting instead.
 
 Shadow: `0 1px 2px rgba(2,8,23,.08)` raised pill · `0 10px 30px rgba(2,8,23,.14)` carousel page · `0 16px 40px rgba(2,8,23,.22)` dialog · `0 22px 44px rgba(2,8,23,.22)` dragged page (superseded — the reorder list dims a picked-up row to 20% opacity instead, no rotate/shadow lift; see `3b`) · `0 -8px 24px rgba(2,8,23,.1)` bottom sheet.
 

@@ -5,8 +5,8 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **138 test classes, 1144 cases** — 669 unit (100 classes),
-475 instrumented (38 classes).
+Current counts (from the registry): **183 test classes, 1623 cases** — 1039 unit (139 classes),
+584 instrumented (44 classes).
 
 ## 1. The two tiers
 
@@ -14,13 +14,13 @@ Current counts (from the registry): **138 test classes, 1144 cases** — 669 uni
 flowchart LR
     subgraph UNIT["app/src/test — JVM, ./gradlew test"]
         direction TB
-        U1["data/ — 52 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
+        U1["data/ — 54 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
         U2["domain/ — 42 classes\nEvery use case; pure ones need no Android"]
-        U3["ui/ — 38 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
+        U3["ui/ — 43 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
     end
     subgraph INST["app/src/androidTest — emulator, ./gradlew connectedDebugAndroidTest"]
         direction TB
-        I1["ui/ — 41 classes\nOne *ScreenTest per screen + route/component/theme"]
+        I1["ui/ — 43 classes\nOne *ScreenTest per screen + route/component/theme"]
         I2["data/local — 1 class\nFacetDatabaseMigrationTest over app/schemas"]
     end
     CODE["app/src/main"] --> UNIT
@@ -29,7 +29,7 @@ flowchart LR
 
 | | Unit (JVM) | Instrumented |
 |---|---|---|
-| Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 73 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
+| Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 75 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
 | Coroutines | `kotlinx-coroutines-test`: `runTest` (467 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
 | Doubles | Mockito 5.23 (`mockito-core`, inline mock maker → `final` Kotlin classes are mockable) for repositories/use cases; hand-written `Fake*Dao` classes (`data/FolderTestFakes.kt` + per-test fakes) for Room; `data/FakeEntitlementRepository.kt` (a `MutableStateFlow` behind the `open` entitlement repository) to flip a free user in tests; `Room.inMemoryDatabaseBuilder` in 9 tests that need real SQL | `mockito-android`; subclass fakes for the three `open` repositories (`ui/settings/Fake{NotificationAccess,CalendarPermission}Repository.kt`, plus an inline `WallpaperRepository` subclass per test that needs one); most screen tests need no doubles — they pass a `UiState` + lambdas |
 | Compose | — | `createComposeRule()` (40 uses); content set with `composeRule.setContent { FacetLauncherTheme { XScreen(uiState, on… = {}) } }` |
@@ -96,6 +96,11 @@ class DockAppRepositoryTest {
 - Gestures use `performTouchInput { swipeUp() / swipeDown() / longClick() / swipe(...) }` with the
   thresholds from the design spec (55px, 420ms) — e.g. `AppDrawerScreenTest` asserts swipe-down at
   scroll-top closes the drawer and swipe-down mid-list does not.
+- Drag-to-reorder (`DragReorderStateTest`) drives the gesture by hand — `down`, a series of `moveBy`
+  each followed by `waitForIdle()`, then `up` — rather than one `swipe*`: the state reads its list
+  from a Compose `State`, so a single injected burst with no frame between events acts on a stale
+  list. Wrap rows in `key(item)` and put `dragModifier` *before* the lifting `graphicsLayer`, as the
+  real call sites do, or the translation cancels the finger's own movement.
 - Route-level tests (`HomeDrawerRouteTest`, `KeyboardDismissalTest`) compose the real
   `HomeDrawerRoute` with real ViewModels over mocked repositories to exercise gesture routing
   between Home and Drawer.
@@ -115,13 +120,16 @@ proves the no-destructive-fallback policy is really in force.
 | Rule | Why |
 |---|---|
 | Test class mirrors the class under test: `XRepository` → `XRepositoryTest`, same package in `test/` or `androidTest/` | The registry's "no mirrored test" section and the `Subject` column depend on it |
-| Method names describe behaviour: `` `swipe down at top closes drawer`() `` (unit) or `swipeDownAtTopClosesDrawer()` (instrumented — 423 of 462 use camelCase; backticked names work but are avoided because `adb`/Orchestrator quoting of spaces is fragile) | The registry lists names verbatim as the behaviour contract |
-| Given / When / Then sections (comments or blank lines) in every body | Readability of 900+ cases |
+| Method names describe behaviour: `` `swipe down at top closes drawer`() `` (unit) or `swipeDownAtTopClosesDrawer()` (instrumented — 532 of 579 use camelCase; backticked names work but are avoided because `adb`/Orchestrator quoting of spaces is fragile) | The registry lists names verbatim as the behaviour contract |
+| Given / When / Then sections (comments or blank lines) in every body | Readability of 1500+ cases |
 | One behaviour per test; a factory function (`repository(...)`, `viewModel(...)`) with defaulted doubles instead of a shared mutable `@Before` fixture | Overrides stay local and visible |
 | Never mock `UserHandle` — build a real one via `Parcel` (see the helper at the top of `AppDrawerScreenTest`) | Mockito bypasses `equals`, producing spurious matches on device |
 | Never `Thread.sleep`, never disable animation scales; use `waitForIdle()` / `waitUntil { }` | See `CLAUDE.md` — a disabled animator scale breaks the real app on that device |
 | Instrumented runs target the emulator only: `ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest` when a phone is attached | `connectedAndroidTest` installs/uninstalls on every listed device |
 | A new Room migration ships with its `FacetDatabaseMigrationTest` case in the same commit | Untested migrations are the one class of bug that destroys user data |
+| A clickable row merges its children into one semantics node: assert the click action on the row's own tag, and look for a child's tag (an icon badge, a "Turn on" label) with `useUnmergedTree = true` | The default merged tree hides descendants of a `clickable`/`toggleable`, so the lookup finds nothing |
+| Settings screens scroll, and screen order changes: `performScrollToNode(hasTestTag(...))` to each row right before using it, never relying on an earlier scroll still having it composed | A row several cards down is off-screen and not composed, so a touch or assertion fails with "could not find any node" |
+| A list that fills in asynchronously gets `waitUntil { onAllNodesWithTag(...).fetchSemanticsNodes().isNotEmpty() }` before the first assertion | An immediate `assertExists` right after `setContent` races the first emission and passes or fails by timing |
 | After adding/renaming/removing a test: `python3 scripts/gen-test-registry.py` and commit the regenerated `TEST_REGISTRY.md` | The registry is the living index; a stale one is worse than none |
 
 ## 4. Running
@@ -141,11 +149,10 @@ Reports: `app/build/reports/tests/testDebugUnitTest/index.html` and
 
 ## 5. Known coverage gaps (from the registry's last section)
 
-Real gaps — no test class references the type at all:
-
-- `ui/settings/FoldersSettingsViewModel`
-- `ui/settings/NotificationAccessExplanationViewModel`
-- `ui/settings/UsageAccessExplanationViewModel`
+Real gaps — no test class references the type at all: none. (The three Settings ViewModels that
+were here now have `FoldersSettingsViewModelTest`, `NotificationAccessExplanationViewModelTest` and
+`UsageAccessExplanationViewModelTest`; `ClockWidgetTouchGate` is covered by a Robolectric test and
+`DragReorderState` by an instrumented drag test.)
 
 Indirect-only coverage (exercised through screen/route tests but without a mirrored unit test —
 acceptable for the trivial permission repositories, worth adding for the ViewModels):

@@ -10,14 +10,14 @@ date: 2026-09-07T15:48:07Z
 - Added turn 5 to both launcher designs: the shipped Settings directory and its nine sub-screens.
 - Redrew Appearance with both accent sources — wallpaper Material You tones and the ten fixed light/dark swatches.
 - Adopted the implementation's recalibrated tokens (page vs card surface split, 55% secondary text, 12px card radius).
-- Documented Clock & Calendar Style, Notifications, Permissions and Backup & restore as separate destinations.
+- Documented Clock Style, Notifications, Permissions and Backup & restore as separate destinations.
 
 ## Screen map
 | Project screen | Repo files |
 | --- | --- |
 | 5a Settings | ui/settings/SettingsScreen.kt, ui/navigation/FacetNavHost.kt |
 | 5b/5c Appearance | ui/settings/AppearanceSettingsScreen.kt, ui/theme/AccentSwatch.kt, ui/theme/Color.kt |
-| 5d Clock & Calendar Style | ui/home/clock/ClockStyleGalleryScreen.kt, data/model/ClockTemplateId.kt, data/model/ClockFontOption.kt, data/model/ClockColorOption.kt |
+| 5d Clock Style | ui/home/clock/ClockStyleGalleryScreen.kt, data/model/ClockTemplateId.kt, data/model/ClockFontOption.kt, data/model/ClockColorOption.kt |
 | 5e Home Apps List | ui/settings/HomeAppsListSettingsScreen.kt |
 | 5f App Drawer | ui/settings/AppDrawerSettingsScreen.kt |
 | 5g Dock | ui/settings/DockSettingsScreen.kt |

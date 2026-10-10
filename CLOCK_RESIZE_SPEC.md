@@ -1,6 +1,6 @@
 # Clock Widget Resize — Implementation Spec
 
-> **Historical spec — the code has moved on.** Shipped differently: a single `clockScale` (not `clockScaleX/Y`), `ClockAdjustSheet` is now a `ThemedModalBottomSheet`, and adjust mode also has an "Alignment" pill below the height handle. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` §4 and `CAPABILITIES.md` for current behavior.
+> **Historical spec — the code has moved on.** Shipped differently: a single `clockScale` (not `clockScaleX/Y`), `ClockAdjustSheet` is now a `ThemedModalBottomSheet`, and adjust mode also has an "Alignment" pill below the height handle. The sheet is now two tonal cards of icon-badge rows (Adjust clock size & position, Edit clock styles, Use custom widget; then Facet settings, Launcher settings) using `Icons.Outlined.*` icons, so the `open_in_full` drawable called for in §8 was never added. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` §4 and `CAPABILITIES.md` for current behavior.
 
 Freeform (independent X/Y) scaling of the Home clock+date widget, corner-drag interaction, global + per-profile override. Long-press on the clock now opens a bottom sheet ("Change widget position" / "Resize clock widget") instead of jumping straight into the existing move-handle drag mode.
 

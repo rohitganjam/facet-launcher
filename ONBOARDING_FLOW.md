@@ -229,13 +229,15 @@ Two primitives, no coordinate-anchored spotlighting:
   Widgets (left edge), All your apps (bottom-right). "Got it" is a `SurfaceButton` with a 1.5dp `Muted`
   border and a soft shadow — its fill is nearly the overlay's color, so the edge carries the contrast.
   Auto-dismiss on first gesture.
-- **`FirstRunCallout`** — dismissible inline card (12dp corners, 1dp Hairline, `SettingsCard`
-  styling) pinned to the top of a surface on its first open.
+- **`FirstRunCallout`** — *removed.* The carousel's first-open inline callout (`PROFILES_INTRO`) was
+  dropped, so no inline callout component exists any more; the two coach marks left are
+  `HOME_GESTURES` (the overlay above) and `HOME_SET_DEFAULT_PROMPT` (the set-default sheet).
 
 | id | Trigger | Surface | Teaches |
 |---|---|---|---|
 | `HOME_GESTURES` | onboarding just completed | Home overlay | swipe up *("All your apps")* / swipe right *("Widgets")* / swipe left *("Switch facets")* / press and hold the clock *("Press and hold the clock to resize or move it")* — the first three match `PRD.md` §5 |
-| `PROFILES_INTRO` | first carousel open | inline callout | **operational only** (concept already covered by step 3) — *"Swipe to browse · tap a card to switch · Reorder up top"* |
+| `HOME_SET_DEFAULT_PROMPT` | first real Home render after onboarding | bottom sheet (`SetDefaultLauncherSheet`) | "Make Facet your home screen" — **Set as default** (pill) / **Later** (text) |
+| ~~`PROFILES_INTRO`~~ | first carousel open | inline callout | **Removed.** Was operational only — *"Swipe to browse · tap a card to switch · Reorder up top"* |
 | `HUB_INTRO` *(optional)* | first Hub open | inline callout | *"Your widgets live here · add up to 20 · swipe left for home"* — **deferred**, not built this pass (see §9) |
 
 The dock needs no coach mark — set up in step 2, visible on Home. The drawer needs none —
@@ -251,9 +253,8 @@ swipe-up-to-open is standard; rail/search are visible affordances.
   swipe attempt during the hint just clears it rather than also completing the real navigation
   underneath — a second swipe then behaves normally); dismissal calls
   `HomeViewModel.dismissGestureHint()` → `settingsRepository.markCoachMarkSeen(...)`.
-- **Profiles callout** — `ProfileCarouselUiState.showIntroCallout = PROFILES_INTRO_COACH_MARK_ID
-  !in globalSettings.coachMarksSeen` (same pattern); `onIntroDismissed()` persists. Ids are shared
-  constants in `ui/components/CoachMarkIds.kt`.
+- **Carousel callout** — removed (see §5). Coach-mark ids are shared constants in
+  `ui/components/CoachMarkIds.kt` (`HOME_GESTURES`, `HOME_SET_DEFAULT_PROMPT`).
 
 Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for reduced motion.
 
@@ -278,7 +279,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 - `OnboardingScreen.kt` (stateless host, owns `step: OnboardingStep` and a separate
   `subScreen: OnboardingSubScreen?` — `DOCK_PICKER` / `FAVORITES_PICKER` — both `rememberSaveable`),
   `OnboardingViewModel.kt`, `OnboardingUiState.kt`.
-- `OnboardingIntroPage.kt`, `OnboardingHomeSetupPage.kt`, `OnboardingProfilesPage.kt`,
+- `OnboardingIntroPage.kt`, `OnboardingHomeSetupPage.kt`, `OnboardingFacetsPage.kt`,
   `SetDefaultLauncherSheet.kt` (a `ThemedModalBottomSheet` since the Home action menus were unified — content
   carries its own 24dp under the button; dismissing by scrim/swipe/Back counts as "Later"/"Done"),
   `OnboardingDots.kt`.
@@ -291,12 +292,11 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
   since `OnboardingScreenTest` builds every ViewModel by hand against a non-Hilt compose host.
 
 **UI — coach marks**
-- `ui/components/GestureHintOverlay.kt`, `ui/components/FirstRunCallout.kt`,
+- `ui/components/GestureHintOverlay.kt`,
   `ui/components/CoachMarkIds.kt` (shared id constants).
 - `HomeUiState.showGestureHint` (computed property) + `HomeViewModel.dismissGestureHint()`;
   `HomeDrawerRoute` renders the overlay only while Home is at rest.
-- `ProfileCarouselUiState.showIntroCallout` (computed property) / `ProfileCarouselViewModel.onIntroDismissed()`;
-  callout rendered in `ProfileCarouselScreen`, above the Reorder row.
+- *(The carousel intro callout this once listed was removed.)*
 
 **Wiring**
 - `LauncherUiState.onboardingCompleted`; `LauncherViewModel` combine + `completeOnboarding()` +
@@ -322,7 +322,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 | Set-default explanation tone | `UsageAccessExplanationScreen`'s explicit-theming discipline (no stock M3 defaults) |
 | Callout card styling | `ui/components/SettingsCard.kt`'s 12dp/Hairline pattern |
 | Step / overlay transition easing | `HomeDrawerRoute`'s `CubicBezierEasing(.32,.72,0,1)` / 340 ms |
-| Indicator dots | New `OnboardingDots.kt` — small enough not to warrant sharing with `ProfileCarouselScreen`'s own page indicator |
+| Indicator dots | New `OnboardingDots.kt` — small enough not to warrant sharing with `FacetCarouselScreen`'s own page indicator |
 | Tokens | `ui/theme/` — `Surface`, `Ink`, `Muted`, `Faint`, `Hairline`, `Scrim`, `Accent`, `InkInverted` (text on the Accent-filled primary button), `SuccessColor` |
 
 ---
@@ -363,8 +363,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
 - `HomeUiStateTest` / `HomeViewModelTest` — `showGestureHint` true only when
   `onboardingCompleted && id !in coachMarksSeen`; `dismissGestureHint()` persists via
   `markCoachMarkSeen`.
-- `ProfileCarouselUiStateTest` / `ProfileCarouselViewModelTest` — `showIntroCallout` reflects the
-  set; `onIntroDismissed()` persists.
+- *(The carousel intro-callout unit tests — `showIntroCallout` / `onIntroDismissed()` — were removed with the callout.)*
 
 **Instrumented (`app/src/androidTest`, emulator only — `ANDROID_SERIAL=`)**
 - `OnboardingScreenTest` — first-run shows intro; Next advances intro → home setup → profiles →
@@ -380,10 +379,7 @@ Compose respects `ANIMATOR_DURATION_SCALE` automatically → static fallback for
   `OnboardingScreenTest` + the pre-existing Home/Drawer instrumented suite.)
 - `HomeDrawerRouteTest` — gesture hint shows once onboarding has completed and dismisses on "Got
   it"; does not show before onboarding completes (the default for every other test in this file).
-- `ProfileCarouselScreenTest` — intro callout shows on first open and dismisses on "Got it"; stays
-  hidden once already dismissed. Every *pre-existing* test in this file now defaults to
-  "already seen" (`introCalloutAlreadySeen = true`) so the new callout doesn't change their
-  established layout/visibility assumptions.
+- *(The carousel intro-callout tests were removed along with the callout.)*
 
 **Previews** — light + dark `@Preview` for each of the four steps + both coach marks.
 
@@ -409,9 +405,9 @@ history looks like it stalled, not because of anything in this feature's own cod
 6. ✅ **`OnboardingScreen`** host + `AnimatedContent` + system-back handling.
 7. ✅ **`LauncherActivity`** three-way branch + `completeOnboarding()`.
 8. ✅ **`GestureHintOverlay`** + `HomeUiState`/`HomeViewModel`/`HomeDrawerRoute` wiring + tests.
-9. ✅ **`FirstRunCallout`** + `ProfileCarouselViewModel` wiring + tests. Hub callout **deferred** —
-   optional in both design docs, Hub already has its own empty state doing similar work; add later
-   with the identical `FirstRunCallout` component if wanted.
+9. ✅ → **removed.** `FirstRunCallout` and its carousel wiring shipped, then were dropped. The Hub
+   callout stays **deferred** — optional in both design docs, Hub already has its own empty state
+   doing similar work.
 10. ✅ **Instrumented tests** + full-suite green (`./gradlew test`, `ANDROID_SERIAL=<emulator>
     ./gradlew connectedDebugAndroidTest`).
 11. **Tick** the Phase 8 first-run box in `IMPLEMENTATION_PLAN.md` with the write-up (next).
