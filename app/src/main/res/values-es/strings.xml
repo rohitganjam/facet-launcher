@@ -451,6 +451,7 @@
     <string name="pro_hero_trigger_work">Trabajo</string>
     <string name="pro_hero_trigger_car">Coche</string>
     <string name="pro_hero_trigger_drive">Conducir</string>
+    <string name="pro_add_facet">Añadir una faceta</string>
     <string name="pro_restore">Restaurar compras</string>
     <string name="pro_feature_facets_title">Más facetas</string>
     <string name="pro_feature_facets_body">El plan gratuito incluye 3. Pro llega a 10. Cada una tiene sus propias apps de inicio y su reloj.</string>
@@ -473,8 +474,6 @@
     <string name="pro_owned_bluetooth_body">Cambia al conectar un dispositivo</string>
     <string name="pro_owned_more_title">Disparadores de auriculares y batería</string>
     <string name="pro_owned_more_body">Cambia al enchufar o cargar</string>
-    <string name="pro_set_up_trigger">Configurar un disparador</string>
-    <string name="pro_add_facet">Añadir una faceta</string>
     <string name="pro_card_headline">La experiencia completa de Facet, totalmente desbloqueada.</string>
     <string name="settings_pro_free_plan">Estás en el plan gratuito</string>
     <string name="pro_upgrade_to_pro">Pasar a Pro</string>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Everything is backed up except the cached Pro flag: Pro must come from Google Play on this device, never from a backup. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="datastore/facet_entitlement.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="datastore/facet_entitlement.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

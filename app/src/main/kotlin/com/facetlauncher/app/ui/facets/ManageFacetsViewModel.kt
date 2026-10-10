@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.facets
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
@@ -23,6 +24,8 @@ data class ManageFacetsUiState(
     val activeFacetId: Long = 0L,
     /** False for a free user: facets past the third are disabled and the add row opens the upgrade sheet. */
     val isPro: Boolean = true,
+    /** How many automation rules exist, for the Facet automation card's subtitle. */
+    val automationRuleCount: Int = 0,
 ) {
     val canAddFacet: Boolean get() = FacetLimits.canAdd(facets.size, isPro)
 
@@ -47,14 +50,16 @@ class ManageFacetsViewModel @Inject constructor(
     private val activateFacetById: ActivateFacetByIdUseCase,
     private val addFacetUseCase: AddFacetUseCase,
     entitlementRepository: EntitlementRepository,
+    automationRuleRepository: AutomationRuleRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<ManageFacetsUiState> = combine(
         facetRepository.observeFacets(),
         settingsRepository.settings,
         entitlementRepository.isPro,
-    ) { facets, settings, isPro ->
-        ManageFacetsUiState(facets = facets, activeFacetId = settings.activeFacetId, isPro = isPro)
+        automationRuleRepository.observeRules(),
+    ) { facets, settings, isPro, rules ->
+        ManageFacetsUiState(facets = facets, activeFacetId = settings.activeFacetId, isPro = isPro, automationRuleCount = rules.size)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ManageFacetsUiState())
 
     fun reorderFacets(orderedFacets: List<FacetEntity>) {

@@ -451,6 +451,7 @@
     <string name="pro_hero_trigger_work">Trabalho</string>
     <string name="pro_hero_trigger_car">Carro</string>
     <string name="pro_hero_trigger_drive">Dirigir</string>
+    <string name="pro_add_facet">Adicionar uma faceta</string>
     <string name="pro_restore">Restaurar compras</string>
     <string name="pro_feature_facets_title">Mais facetas</string>
     <string name="pro_feature_facets_body">O plano gratuito inclui 3. O Pro vai até 10. Cada uma tem seus próprios apps na tela inicial e seu relógio.</string>
@@ -473,8 +474,6 @@
     <string name="pro_owned_bluetooth_body">Muda ao conectar um dispositivo</string>
     <string name="pro_owned_more_title">Gatilhos de fones e bateria</string>
     <string name="pro_owned_more_body">Muda ao conectar o fone ou carregar</string>
-    <string name="pro_set_up_trigger">Configurar um gatilho</string>
-    <string name="pro_add_facet">Adicionar uma faceta</string>
     <string name="pro_card_headline">A experiência completa do Facet, totalmente desbloqueada.</string>
     <string name="settings_pro_free_plan">Você está no plano gratuito</string>
     <string name="pro_upgrade_to_pro">Fazer upgrade para o Pro</string>

@@ -63,14 +63,12 @@ import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
 
 /**
  * Settings → Facet Pro, and where every Pro limit lands. A dark hero with three example facets, the three
- * things Pro gives, and the price with Unlock pinned at the bottom; once bought, the same hero lit up with
- * what is unlocked and shortcuts to use it. See `docs/architecture/16-flow-billing.md` and design turn 12.
+ * things Pro gives, and Unlock pinned at the bottom; once bought, the same hero lit up with what is unlocked. See `docs/architecture/16-flow-billing.md` and design turn 12.
  */
 @Composable
 fun FacetProScreen(
     reason: ProReason,
     onBack: () -> Unit,
-    onSetUpTrigger: () -> Unit,
     onAddFacet: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FacetProViewModel = hiltViewModel(),
@@ -84,7 +82,6 @@ fun FacetProScreen(
         onBack = onBack,
         onBuy = activity?.let { host -> { viewModel.buy(host) } },
         onRestore = viewModel::restore,
-        onSetUpTrigger = onSetUpTrigger,
         onAddFacet = onAddFacet,
         modifier = modifier,
     )
@@ -98,14 +95,13 @@ internal fun FacetProContent(
     onBack: () -> Unit,
     onBuy: (() -> Unit)?,
     onRestore: (() -> Unit)?,
-    onSetUpTrigger: () -> Unit,
     onAddFacet: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Free: dark hero over a normal page (so the navigation bar follows the theme). Pro: dark all the way down.
     SystemBarsBackdropEffect(if (state.isPro) SystemBarsBackdrop.DARK_SURFACE else SystemBarsBackdrop.DARK_TOP)
     if (state.isPro) {
-        UnlockedScreen(onBack, onSetUpTrigger, onAddFacet, modifier)
+        UnlockedScreen(state, onBack, onRestore, onAddFacet, modifier)
     } else {
         UpgradeScreen(reason, state, onBack, onBuy, onRestore, modifier)
     }
@@ -249,7 +245,7 @@ private fun ProReason.noteRes(): Int = when (this) {
     ProReason.ABOUT -> R.string.pro_upgrade_about
 }
 
-private fun FacetProMessage.textRes(): Int = when (this) {
+internal fun FacetProMessage.textRes(): Int = when (this) {
     FacetProMessage.PLAY_UNAVAILABLE -> R.string.pro_message_unavailable
     FacetProMessage.NO_PURCHASE_FOUND -> R.string.pro_message_no_purchase
     FacetProMessage.PENDING -> R.string.pro_message_pending

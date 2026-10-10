@@ -491,6 +491,7 @@
     <string name="pro_hero_trigger_work">Work</string>
     <string name="pro_hero_trigger_car">Car</string>
     <string name="pro_hero_trigger_drive">Drive</string>
+    <string name="pro_add_facet">Add a facet</string>
     <string name="pro_restore">Restore purchases</string>
     <string name="pro_feature_facets_title">More facets</string>
     <string name="pro_feature_facets_body">Free includes 3. Pro goes up to 10. Each one gets its own home apps and clock.</string>
@@ -513,8 +514,6 @@
     <string name="pro_owned_bluetooth_body">Switch on a device</string>
     <string name="pro_owned_more_title">Headphones and battery triggers</string>
     <string name="pro_owned_more_body">Switch on plugging in or charging</string>
-    <string name="pro_set_up_trigger">Set up a trigger</string>
-    <string name="pro_add_facet">Add a facet</string>
     <string name="pro_card_headline">The complete Facet experience, fully unlocked.</string>
     <string name="settings_pro_free_plan">You\'re on the Free plan</string>
     <string name="pro_upgrade_to_pro">Upgrade to Pro</string>

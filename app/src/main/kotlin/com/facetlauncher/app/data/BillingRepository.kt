@@ -2,6 +2,7 @@ package com.facetlauncher.app.data
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -58,8 +59,12 @@ open class BillingRepository @Inject constructor(
 
     /** Asks Play what this account owns. [ProQueryResult.Unavailable] if Play can't answer; that must never be read as "not owned". */
     open suspend fun queryPro(): ProQueryResult {
-        if (!ensureConnected()) return ProQueryResult.Unavailable
+        if (!ensureConnected()) {
+            Log.i(TAG, "queryPro: could not connect to Play")
+            return ProQueryResult.Unavailable
+        }
         val owned = client.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build())
+        Log.i(TAG, "queryPro: code=${owned.billingResult.responseCode} purchases=${owned.purchasesList.map { "${it.products} state=${it.purchaseState} acknowledged=${it.isAcknowledged}" }}")
         return if (owned.billingResult.isOk()) handle(owned.purchasesList) else ProQueryResult.Unavailable
     }
 
@@ -118,6 +123,7 @@ open class BillingRepository @Inject constructor(
             client.startConnection(
                 object : BillingClientStateListener {
                     override fun onBillingSetupFinished(result: BillingResult) {
+                        Log.i(TAG, "setup: code=${result.responseCode} ${result.debugMessage}")
                         if (continuation.isActive) continuation.resume(result.isOk())
                     }
 
@@ -130,6 +136,7 @@ open class BillingRepository @Inject constructor(
     private fun BillingResult.isOk() = responseCode == BillingClient.BillingResponseCode.OK
 
     private companion object {
+        const val TAG = "FacetBilling"
         const val UPDATES_BUFFER = 8
     }
 }

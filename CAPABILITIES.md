@@ -91,7 +91,7 @@ starting at `HOME`.
   Swipe to browse, **tap any card (centered or peeking) to apply immediately**. Live preview
   cards render each facet's real clock + favorites + dock (that facet's own if overridden,
   otherwise the shared default) + calendar events. Right-aligned "Reorder" button → Manage Facets.
-- **Manage Facets** (`ManageFacetsScreen`) — Settings → Facets. Drag-to-reorder list, per-row
+- **Manage Facets** (`ManageFacetsScreen`) — Settings → Facets. A Facet automation card at the top, then a drag-to-reorder list, per-row
   overflow (Facet settings / Delete), pinned "Add facet" row (capped at 3).
 - **Add facet** — a new facet is named `Facet N` and **inherits the launcher-wide defaults**
   (default favorites, dock, clock style) until it overrides them. It does not copy
@@ -121,7 +121,7 @@ starting at `HOME`.
 
 ### Facet automation (built-in rules)
 
-`ui/settings/automation/` + `domain/` + `data/`. Settings → Facets → **Facet automation**. See
+`ui/settings/automation/` + `domain/` + `data/`. Settings → **Facet automation**, or the card at the top of Manage Facets. See
 [`docs/architecture/15-flow-facet-automation.md`](docs/architecture/15-flow-facet-automation.md).
 
 - **Rules switch the active facet by themselves.** A rule is a target facet, one trigger, and an end

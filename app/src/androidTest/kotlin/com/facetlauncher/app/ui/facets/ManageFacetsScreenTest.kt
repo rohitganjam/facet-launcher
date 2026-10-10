@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performClick
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -35,6 +36,7 @@ import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -50,6 +52,7 @@ class ManageFacetsScreenTest {
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
         entitlement: EntitlementRepository = EntitlementRepository(),
         onOpenFacetPro: (ProReason) -> Unit = {},
+        onOpenFacetAutomation: () -> Unit = {},
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -82,6 +85,7 @@ class ManageFacetsScreenTest {
                     testAutomation(context, database, facetRepository, settingsRepository, entitlement).activate,
                     AddFacetUseCase(facetRepository, entitlement),
                     entitlement,
+                    AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                 )
             }
             FacetLauncherTheme {
@@ -90,6 +94,7 @@ class ManageFacetsScreenTest {
                     onEditFacet = onEditFacet,
                     onFacetApply = onFacetApply,
                     onOpenFacetPro = onOpenFacetPro,
+                    onOpenFacetAutomation = onOpenFacetAutomation,
                     viewModel = viewModel,
                 )
             }
@@ -99,6 +104,21 @@ class ManageFacetsScreenTest {
             composeRule.onAllNodesWithTag("manage_facets_screen").fetchSemanticsNodes().isNotEmpty()
         }
         return settingsRepository
+    }
+
+    @Test
+    fun theFacetAutomationCardOpensAutomationAndSitsAboveTheReorderHint() {
+        var opened = 0
+        setContent(seed = { facetRepository, _ -> facetRepository.addFacet() }, onOpenFacetAutomation = { opened++ })
+
+        composeRule.onNodeWithText("Facet automation").assertExists()
+        composeRule.onNodeWithText("No rules").assertExists()
+        composeRule.onNodeWithTag("manage_facets_automation_row").performClick()
+
+        assertEquals(1, opened)
+        val cardTop = composeRule.onNodeWithTag("manage_facets_automation_row").fetchSemanticsNode().boundsInRoot.top
+        val hintTop = composeRule.onNodeWithTag("facet_reorder_hint").fetchSemanticsNode().boundsInRoot.top
+        assertTrue(cardTop < hintTop)
     }
 
     @Test

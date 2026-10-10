@@ -50,6 +50,12 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
+import com.facetlauncher.app.ui.settings.ClickableRow
+import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.SettingsCard
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.material.icons.outlined.AutoMode
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BackButton
@@ -85,6 +91,7 @@ fun ManageFacetsScreen(
     onEditFacet: (facetId: Long) -> Unit,
     onFacetApply: () -> Unit,
     onOpenFacetPro: (ProReason) -> Unit,
+    onOpenFacetAutomation: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ManageFacetsViewModel = hiltViewModel(),
 ) {
@@ -98,6 +105,7 @@ fun ManageFacetsScreen(
         onDeleteFacet = viewModel::deleteFacet,
         onAddFacet = viewModel::addFacet,
         onOpenFacetPro = onOpenFacetPro,
+        onOpenFacetAutomation = onOpenFacetAutomation,
         modifier = modifier,
     )
 }
@@ -112,6 +120,7 @@ private fun ManageFacetsContent(
     onDeleteFacet: (FacetEntity) -> Unit,
     onAddFacet: () -> Unit,
     onOpenFacetPro: (ProReason) -> Unit,
+    onOpenFacetAutomation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var deletingFacet by remember { mutableStateOf<FacetEntity?>(null) }
@@ -128,6 +137,8 @@ private fun ManageFacetsContent(
                 facets = workingList,
                 activeFacetId = uiState.activeFacetId,
                 isFacetLocked = { it !in uiState.selectableFacetIds },
+                automationRuleCount = uiState.automationRuleCount,
+                onOpenFacetAutomation = onOpenFacetAutomation,
                 showAddFacet = uiState.showAddFacet,
                 addNeedsPro = !uiState.canAddFacet,
                 canDeleteFacet = uiState.canDeleteFacet,
@@ -187,6 +198,8 @@ private fun FacetReorderList(
     facets: List<FacetEntity>,
     activeFacetId: Long,
     isFacetLocked: (facetId: Long) -> Boolean,
+    automationRuleCount: Int,
+    onOpenFacetAutomation: () -> Unit,
     showAddFacet: Boolean,
     addNeedsPro: Boolean,
     canDeleteFacet: Boolean,
@@ -215,6 +228,7 @@ private fun FacetReorderList(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(REORDER_ROW_SPACING),
     ) {
+        item(key = "facet_automation") { FacetAutomationCard(automationRuleCount, onOpenFacetAutomation, Modifier.padding(bottom = 12.dp)) }
         item(key = "reorder_hint") {
             Text(
                 text = stringResource(R.string.manage_facets_drag_hint),
@@ -257,6 +271,23 @@ private fun FacetReorderList(
                 modifier = Modifier.fillMaxWidth().testTag("facet_reorder_add_row"),
             )
         }
+    }
+}
+
+@Composable
+private fun FacetAutomationCard(ruleCount: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SettingsCard(modifier = modifier, fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_facet_automation_title),
+            subtitle = if (ruleCount == 0) {
+                stringResource(R.string.settings_facet_automation_none)
+            } else {
+                pluralStringResource(R.plurals.settings_facet_automation_rules, ruleCount, ruleCount)
+            },
+            onClick = onClick,
+            testTag = "manage_facets_automation_row",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.AutoMode, SettingsSectionHue.FACETS) },
+        )
     }
 }
 
@@ -371,6 +402,7 @@ private fun ManageFacetsScreenPreview() {
                     FacetEntity(id = 2, name = "Work", position = 1),
                 ),
                 activeFacetId = 1,
+                automationRuleCount = 2,
             ),
             onBack = {},
             onReorder = {},
@@ -379,6 +411,7 @@ private fun ManageFacetsScreenPreview() {
             onDeleteFacet = {},
             onAddFacet = {},
             onOpenFacetPro = {},
+            onOpenFacetAutomation = {},
         )
     }
 }

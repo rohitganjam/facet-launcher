@@ -21,7 +21,6 @@ class FacetProContentTest {
     private var bought = 0
     private var restored = 0
     private var wentBack = 0
-    private var setUpTrigger = 0
     private var addedFacet = 0
 
     private fun show(
@@ -37,7 +36,6 @@ class FacetProContentTest {
                     onBack = { wentBack++ },
                     onBuy = if (canBuy) ({ bought++ }) else null,
                     onRestore = if (canBuy) ({ restored++ }) else null,
-                    onSetUpTrigger = { setUpTrigger++ },
                     onAddFacet = { addedFacet++ },
                 )
             }
@@ -157,15 +155,24 @@ class FacetProContentTest {
     }
 
     @Test
-    fun theUnlockedScreenOffersToSetUpATriggerAndToAddAFacet() {
+    fun theUnlockedScreenHasAddAFacetAndRestoreAtTheEndOfTheContent() {
         show(state = FacetProUiState(isPro = true))
 
-        composeRule.onNodeWithTag("facet_pro_set_up_trigger").performClick()
-        composeRule.onNodeWithTag("facet_pro_add_facet").performClick()
+        composeRule.onNodeWithTag("facet_pro_set_up_trigger").assertDoesNotExist()
+        composeRule.onNodeWithTag("facet_pro_add_facet").performScrollTo().performClick()
+        composeRule.onNodeWithTag("facet_pro_restore_link").performScrollTo().performClick()
         composeRule.onNodeWithText("Done").performClick()
 
-        assertEquals(1, setUpTrigger)
         assertEquals(1, addedFacet)
+        assertEquals(1, restored)
         assertEquals(1, wentBack)
+    }
+
+    @Test
+    fun theUnlockedScreenShowsTheResultOfARestoreAndDisablesItWhileBusy() {
+        show(state = FacetProUiState(isPro = true, busy = true, message = FacetProMessage.RESTORED))
+
+        composeRule.onNodeWithTag("facet_pro_message").assertExists()
+        composeRule.onNodeWithTag("facet_pro_restore_link").assertIsNotEnabled()
     }
 }

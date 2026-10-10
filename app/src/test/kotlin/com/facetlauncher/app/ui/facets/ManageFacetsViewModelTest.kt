@@ -2,7 +2,10 @@ package com.facetlauncher.app.ui.facets
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.AutomationStateRepository
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
@@ -19,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -83,6 +87,7 @@ class ManageFacetsViewModelTest {
         settings: SettingsRepository = fakeSettings(),
         automationState: AutomationStateRepository = mock(AutomationStateRepository::class.java),
         entitlement: FakeEntitlementRepository = FakeEntitlementRepository(),
+        ruleCount: Int = 0,
     ) = ManageFacetsViewModel(
         facetRepository,
         settings,
@@ -90,6 +95,9 @@ class ManageFacetsViewModelTest {
         ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, entitlement), settings, automationState, mock(RefreshAutomationStateUseCase::class.java)),
         AddFacetUseCase(facetRepository, entitlement),
         entitlement,
+        mock(AutomationRuleRepository::class.java).also {
+            `when`(it.observeRules()).thenReturn(flowOf(List(ruleCount) { AutomationRule(it + 1L, 1L, AutomationTrigger.Headphones()) }))
+        },
     )
 
     @Test
@@ -239,5 +247,16 @@ class ManageFacetsViewModelTest {
         viewModel.deleteFacet(facets[1])
         dispatcher.scheduler.advanceUntilIdle()
         assertEquals(setOf(facets[0].id, facets[2].id, facets[3].id), viewModel.uiState.value.selectableFacetIds)
+    }
+
+    @Test
+    fun `the automation rule count follows the rules`() = runTest(dispatcher) {
+        val facetRepository = FacetRepository(FakeFacetDao())
+        facetRepository.addFacet()
+        val viewModel = createViewModel(facetRepository, ruleCount = 3)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(3, viewModel.uiState.value.automationRuleCount)
     }
 }

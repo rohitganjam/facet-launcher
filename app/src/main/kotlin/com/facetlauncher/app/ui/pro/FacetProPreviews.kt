@@ -14,7 +14,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 
 @Composable
 private fun ProPreview(state: FacetProUiState, reason: ProReason = ProReason.FACET_LIMIT) {
-    FacetLauncherTheme { FacetProContent(reason = reason, state = state, onBack = {}, onBuy = {}, onRestore = {}, onSetUpTrigger = {}, onAddFacet = {}) }
+    FacetLauncherTheme { FacetProContent(reason = reason, state = state, onBack = {}, onBuy = {}, onRestore = {}, onAddFacet = {}) }
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
@@ -30,6 +30,10 @@ private fun FacetProMessagePreview() = ProPreview(FacetProUiState(price = "$9.99
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun FacetProOwnedPreview() = ProPreview(FacetProUiState(isPro = true), ProReason.ABOUT)
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun FacetProOwnedRestoredPreview() = ProPreview(FacetProUiState(isPro = true, message = FacetProMessage.RESTORED), ProReason.ABOUT)
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 300)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)

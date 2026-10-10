@@ -451,6 +451,7 @@
     <string name="pro_hero_trigger_work">Travail</string>
     <string name="pro_hero_trigger_car">Voiture</string>
     <string name="pro_hero_trigger_drive">Conduite</string>
+    <string name="pro_add_facet">Ajouter une facette</string>
     <string name="pro_restore">Restaurer les achats</string>
     <string name="pro_feature_facets_title">Plus de facettes</string>
     <string name="pro_feature_facets_body">L\'offre gratuite en inclut 3. Pro va jusqu\'à 10. Chacune a ses propres apps d\'accueil et son horloge.</string>
@@ -473,8 +474,6 @@
     <string name="pro_owned_bluetooth_body">Change quand vous connectez un appareil</string>
     <string name="pro_owned_more_title">Déclencheurs écouteurs et batterie</string>
     <string name="pro_owned_more_body">Change au branchement ou à la charge</string>
-    <string name="pro_set_up_trigger">Configurer un déclencheur</string>
-    <string name="pro_add_facet">Ajouter une facette</string>
     <string name="pro_card_headline">L\'expérience Facet complète, entièrement débloquée.</string>
     <string name="settings_pro_free_plan">Vous êtes sur l\'offre gratuite</string>
     <string name="pro_upgrade_to_pro">Passer à Pro</string>

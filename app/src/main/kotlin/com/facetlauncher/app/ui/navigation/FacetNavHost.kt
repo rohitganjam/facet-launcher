@@ -315,7 +315,6 @@ fun FacetNavHost(
             FacetProScreen(
                 reason = reason,
                 onBack = { navController.popBackStackSafely() },
-                onSetUpTrigger = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
                 onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
             )
         }
@@ -326,6 +325,7 @@ fun FacetNavHost(
                 onEditFacet = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
                 onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                onOpenFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
             )
         }
         composable(

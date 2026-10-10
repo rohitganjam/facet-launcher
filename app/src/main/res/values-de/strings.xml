@@ -451,6 +451,7 @@
     <string name="pro_hero_trigger_work">Arbeit</string>
     <string name="pro_hero_trigger_car">Auto</string>
     <string name="pro_hero_trigger_drive">Fahren</string>
+    <string name="pro_add_facet">Facette hinzufügen</string>
     <string name="pro_restore">Käufe wiederherstellen</string>
     <string name="pro_feature_facets_title">Mehr Facetten</string>
     <string name="pro_feature_facets_body">Kostenlos sind 3 enthalten. Pro geht bis 10. Jede hat eigene Startbildschirm-Apps und eine eigene Uhr.</string>
@@ -473,8 +474,6 @@
     <string name="pro_owned_bluetooth_body">Wechselt beim Verbinden eines Geräts</string>
     <string name="pro_owned_more_title">Kopfhörer- und Akku-Auslöser</string>
     <string name="pro_owned_more_body">Wechselt beim Anschließen oder Laden</string>
-    <string name="pro_set_up_trigger">Auslöser einrichten</string>
-    <string name="pro_add_facet">Facette hinzufügen</string>
     <string name="pro_card_headline">Das komplette Facet-Erlebnis, voll freigeschaltet.</string>
     <string name="settings_pro_free_plan">Du nutzt den kostenlosen Plan</string>
     <string name="pro_upgrade_to_pro">Auf Pro upgraden</string>

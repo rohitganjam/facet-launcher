@@ -110,6 +110,7 @@ A lapse is only a refund, a revocation or a different Google account; it cannot 
 | Facets | Every facet is kept. The first 3 in list order stay selectable; the rest are disabled (lock, tap opens the Facet Pro screen) until the count is 3 or Pro returns. A disabled facet can still be deleted. See [13 §1a](13-flow-facets-theme-notifications-onboarding.md). |
 | Automation | Pro-trigger rules and rules beyond the first two schedule rules pause (dimmed, never deleted). `RunFacetAutomationUseCase` runs a pass when `isPro` changes, so it takes effect at once. See [15](15-flow-facet-automation.md). |
 | Custom clock widget | The "Use custom widget" row in the clock adjust sheet is Pro (`ClockWidgetFacetController.isPro`, `ProReason.CUSTOM_WIDGET`): free users get a Pro pill and the Facet Pro screen. A facet that already hosts a widget keeps it, with its size, after a lapse. They just can't pick another, and "Switch to launcher clock" stays free. Hub widgets are free. |
+| Backups | Pro never comes from a backup. Android's automatic backup and device transfer leave out the cached flag (`res/xml/data_extraction_rules.xml`, covering `facet_entitlement`), and the app's own JSON backup doesn't carry it. After a restore or a new phone the user is Free until Play confirms Pro, which takes one check. |
 | Backup import | Imports every facet as it is; the rule above handles a free user who imports more than 3. |
 
 ## 5. Screens
@@ -118,7 +119,7 @@ A lapse is only a refund, a revocation or a different Google account; it cannot 
 |---|---|
 | Settings `ProSettingsCard` | Free: the dark upsell card ("You're on the Free plan", Upgrade to Pro). Pro: one "Pro is active" row with a live summary. Both open `facetPro/ABOUT`. |
 | A Pro limit (add facet at 3, locked facet, device trigger, third rule) | `facetPro/{reason}`; the screen shows a reason line. Every limit goes straight to the screen; there is no intermediate sheet. |
-| `FacetProScreen` | Free: `UpgradeScreen` (hero, feature rows, bottom bar with price, Unlock and Restore purchases). Pro: `UnlockedScreen` with shortcuts to set up a trigger or add a facet. |
+| `FacetProScreen` | Free: `UpgradeScreen` (hero, feature rows, bottom bar with price, Unlock and Restore purchases). Pro: `UnlockedScreen` with a gradient Add a facet button (opens Manage facets) and Restore purchases under it, both at the end of the scrolling content rather than pinned, so a Pro user can re-check with Play. Automation is linked from the card at the top of Manage facets. |
 
 Buttons are pills like every other button in the app (`ProGradientButton`, the Settings card's Upgrade chip); `TriggerPill` is a chip, so it uses M3's small shape (8dp). The Settings `ProSettingsCard` uses the 28dp extra-large shape, matching the `SettingsCard`s below it.
 

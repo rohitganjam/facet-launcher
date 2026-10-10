@@ -375,7 +375,7 @@ fire on a guess at startup. An empty Bluetooth set is a real answer, so a "not c
 
 ## 5d. The UI (built)
 
-Settings → Facets → **Facet automation** (`FacetAutomationScreen`, route `facetAutomation`) is the only entry.
+`FacetAutomationScreen` (route `facetAutomation`) has two entries: the **Facet automation** row in Settings, and the **Facet automation** card at the top of Manage facets (above the reorder hint, with the rule count as its subtitle).
 The editor is a sheet inside that screen, not a route, so closing it never touches the back stack.
 
 | Piece | What it does |

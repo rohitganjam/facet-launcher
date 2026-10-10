@@ -1,7 +1,7 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1791595502.0347133,
-    "seen": 1791612623.31475,
+    "mtime": 1791612826.5193331,
+    "seen": 1791612832.525271,
     "ast_hash": "ba5d3e56585465718328bfe134a2f5ef",
     "semantic_hash": ""
   },
@@ -36,14 +36,14 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1791596363.5094264,
-    "seen": 1791612623.3150651,
+    "mtime": 1791612826.515125,
+    "seen": 1791612832.5255868,
     "ast_hash": "13ab3ad872055c2ba3d5d4e157655175",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1791596633.2954483,
-    "seen": 1791612623.315066,
+    "mtime": 1791612826.5169291,
+    "seen": 1791612832.525588,
     "ast_hash": "dc9f62a9d91b194e06474768e1e63f13",
     "semantic_hash": ""
   },
@@ -120,14 +120,14 @@
     "semantic_hash": ""
   },
   "Android launcher design planning/design_handoff_minimal_launcher/README.md": {
-    "mtime": 1791596030.8824184,
-    "seen": 1791612623.315062,
+    "mtime": 1791612826.5122855,
+    "seen": 1791612832.525584,
     "ast_hash": "4b8cf6e4456c62544e78f7aaa9e9e580",
     "semantic_hash": ""
   },
   "Android launcher design planning/github.md": {
-    "mtime": 1791596040.2025948,
-    "seen": 1791612623.315063,
+    "mtime": 1791612826.51422,
+    "seen": 1791612832.525585,
     "ast_hash": "25cb5d29ba9afe4daf2b94a5c6aea189",
     "semantic_hash": ""
   },
@@ -186,26 +186,26 @@
     "semantic_hash": ""
   },
   "CLOCK_RESIZE_SPEC.md": {
-    "mtime": 1791596049.9674246,
-    "seen": 1791612623.3150651,
+    "mtime": 1791612826.515561,
+    "seen": 1791612832.5255868,
     "ast_hash": "6b9a52bcfa497093bb5da2b90a7b0ddc",
     "semantic_hash": ""
   },
   "CAPABILITIES.md": {
-    "mtime": 1791595827.259017,
-    "seen": 1791612623.315064,
+    "mtime": 1791612826.5147076,
+    "seen": 1791612832.525586,
     "ast_hash": "a41b3dc1a5532cf4af729be15628ec81",
     "semantic_hash": ""
   },
   "ONBOARDING_DESIGN_BRIEF.md": {
-    "mtime": 1791596238.3931406,
-    "seen": 1791612623.315066,
+    "mtime": 1791612826.5179296,
+    "seen": 1791612832.525588,
     "ast_hash": "d1c9c11582ad42cef16792d2bfffd3e9",
     "semantic_hash": ""
   },
   "ONBOARDING_FLOW.md": {
-    "mtime": 1791596282.7814107,
-    "seen": 1791612623.3150668,
+    "mtime": 1791612826.5185587,
+    "seen": 1791612832.525589,
     "ast_hash": "31f00c38e6c4be90882d888cc54913e5",
     "semantic_hash": ""
   },
@@ -1152,8 +1152,8 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/SettingsCard.kt": {
-    "mtime": 1791596602.086169,
-    "seen": 1791612623.3148952,
+    "mtime": 1791612826.5198698,
+    "seen": 1791612832.5254242,
     "ast_hash": "21fb65480c824e5a642692c3a88cdcfd",
     "semantic_hash": ""
   },
@@ -2688,20 +2688,20 @@
     "semantic_hash": ""
   },
   "docs/architecture/04-package-structure.md": {
-    "mtime": 1791597397.7722883,
-    "seen": 1791612623.315074,
+    "mtime": 1791612826.521662,
+    "seen": 1791612832.525596,
     "ast_hash": "fed52b836ab74ecb8d51ecfe835aff46",
     "semantic_hash": ""
   },
   "docs/architecture/05-findings.md": {
-    "mtime": 1791596095.9046412,
-    "seen": 1791612623.3150752,
+    "mtime": 1791612826.5219688,
+    "seen": 1791612832.5255969,
     "ast_hash": "b91aa17db9ce24ae832c22ac7682bf00",
     "semantic_hash": ""
   },
   "docs/architecture/README.md": {
-    "mtime": 1791597385.628325,
-    "seen": 1791612623.315082,
+    "mtime": 1791612826.5238574,
+    "seen": 1791612832.525604,
     "ast_hash": "104a1997151b2ce3c70f12f46d50da50",
     "semantic_hash": ""
   },
@@ -2712,8 +2712,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/06-testing.md": {
-    "mtime": 1791597397.7785206,
-    "seen": 1791612623.3150752,
+    "mtime": 1791612826.5224931,
+    "seen": 1791612832.525598,
     "ast_hash": "36558ddbbe4128e02ff8a69e4f9c35ee",
     "semantic_hash": ""
   },
@@ -2748,26 +2748,26 @@
     "semantic_hash": ""
   },
   "docs/architecture/12-flow-drawer-search-and-app-actions.md": {
-    "mtime": 1791596069.6624289,
-    "seen": 1791612623.315079,
+    "mtime": 1791612826.5228033,
+    "seen": 1791612832.525601,
     "ast_hash": "7a163e72f6254cac7ce9f7842fbde9e8",
     "semantic_hash": ""
   },
   "docs/architecture/13-flow-facets-theme-notifications-onboarding.md": {
-    "mtime": 1791596575.3750093,
-    "seen": 1791612623.315079,
+    "mtime": 1791612826.523088,
+    "seen": 1791612832.525602,
     "ast_hash": "06b216525988191c43e091fbe2ed66a5",
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1791597406.2124453,
-    "seen": 1791612623.315082,
+    "mtime": 1791612826.5246215,
+    "seen": 1791612832.5256052,
     "ast_hash": "b5f093b989775c3556c83d3dab46e0de",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1791595586.811488,
-    "seen": 1791612623.3150551,
+    "mtime": 1791612826.5458727,
+    "seen": 1791612832.525577,
     "ast_hash": "dc116469aecf8f66c94f143cd891dbec",
     "semantic_hash": ""
   },
@@ -2778,8 +2778,8 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1791596462.6214688,
-    "seen": 1791612623.3150668,
+    "mtime": 1791612826.518828,
+    "seen": 1791612832.525589,
     "ast_hash": "865f49fd3d38466dcdbe683a596dc476",
     "semantic_hash": ""
   },
@@ -3978,8 +3978,8 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/SettingsIconBadge.kt": {
-    "mtime": 1791596602.0871384,
-    "seen": 1791612623.3148952,
+    "mtime": 1791612826.5201204,
+    "seen": 1791612832.5254242,
     "ast_hash": "be5a94b9fbf6ece048b0a612dcf33120",
     "semantic_hash": ""
   },
@@ -3987,42 +3987,6 @@
     "mtime": 1791595161.208457,
     "seen": 1791612623.3148968,
     "ast_hash": "352a05ae8e144e379ebfa6c7f820935d",
-    "semantic_hash": ""
-  },
-  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/components/DragReorderStateTest.kt": {
-    "mtime": 1791597337.4484808,
-    "seen": 1791612623.3147678,
-    "ast_hash": "f5db25468fe2a462e19719f9d11ac2fd",
-    "semantic_hash": ""
-  },
-  "app/src/test/kotlin/com/facetlauncher/app/ui/home/ClockWidgetTouchGateTest.kt": {
-    "mtime": 1791596827.9987566,
-    "seen": 1791612623.315031,
-    "ast_hash": "c74256ae8d1acf0d703a2a180f018c44",
-    "semantic_hash": ""
-  },
-  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/FoldersSettingsViewModelTest.kt": {
-    "mtime": 1791596702.551025,
-    "seen": 1791612623.31504,
-    "ast_hash": "8a2ecc819f2bc5f4c3d4a70f9f7ae14a",
-    "semantic_hash": ""
-  },
-  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/NotificationAccessExplanationViewModelTest.kt": {
-    "mtime": 1791596702.5489345,
-    "seen": 1791612623.315041,
-    "ast_hash": "6f56935bc2df671ac97248e6c4313d3a",
-    "semantic_hash": ""
-  },
-  "app/src/test/kotlin/com/facetlauncher/app/ui/settings/UsageAccessExplanationViewModelTest.kt": {
-    "mtime": 1791596702.546806,
-    "seen": 1791612623.315043,
-    "ast_hash": "08aa0969b80bda40a097662854e607bb",
-    "semantic_hash": ""
-  },
-  "release_notes/0.1.19.md": {
-    "mtime": 1791596462.621312,
-    "seen": 1791612623.31509,
-    "ast_hash": "865f49fd3d38466dcdbe683a596dc476",
     "semantic_hash": ""
   }
 }
