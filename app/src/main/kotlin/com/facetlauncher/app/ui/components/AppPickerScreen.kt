@@ -373,11 +373,11 @@ private fun AppPickerHeader(title: String, onDone: () -> Unit, tagPrefix: String
             BackButton(onClick = onDone)
             Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
-        Text(
+        TextActionButton(
             text = stringResource(R.string.action_done),
-            style = MaterialTheme.typography.bodyLarge,
+            onClick = onDone,
             color = Ink,
-            modifier = Modifier.testTag("${tagPrefix}_done").clickable(onClick = onDone),
+            modifier = Modifier.testTag("${tagPrefix}_done"),
         )
     }
 }
@@ -420,7 +420,7 @@ private fun AppPickerRow(app: AppInfo, checked: Boolean, enabled: Boolean, tagPr
 private fun AppPickerScreenPreview() {
     FacetLauncherTheme {
         AppPickerScreen(
-            title = "Favorites",
+            title = stringResource(R.string.list_content_mode_favorites),
             query = "",
             selectedResults = (1..3).map { AppInfo("com.example.$it", ".Main", "App $it", null) },
             otherResults = (4..8).map { AppInfo("com.example.$it", ".Main", "App $it", null) },

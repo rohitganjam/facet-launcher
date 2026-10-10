@@ -25,7 +25,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── theme/                     (11)  Color, Type, Theme, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
     ├── pro/                       (6)   FacetProScreen (before purchase) / FacetProUnlocked (after) / FacetProViewModel, ProComponents (ink panel, PRO mark, facet fans, trigger pills, gradient button), ProSettingsCard (Settings), previews
-    ├── components/                (34)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    ├── components/                (37)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
     │                                    DragReorderState, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
     │                                    AppPickerScreen, FolderContentsSheet, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (23 routes) + popBackStackSafely

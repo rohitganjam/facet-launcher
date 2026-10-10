@@ -74,7 +74,7 @@ class ClockStyleGalleryScreenTest {
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.entries.last().name}"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
-        composeRule.onNodeWithText("Clock & Calendar Style").assertIsDisplayed()
+        composeRule.onNodeWithText("Clock Style").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 

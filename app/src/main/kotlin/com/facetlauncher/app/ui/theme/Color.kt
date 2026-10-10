@@ -38,7 +38,7 @@ private val SurfaceDark = Color(0xFF20242D)
 // themes, matching Material's dark-theme convention of elevated surfaces reading lighter, not
 // darker (see chat history). Dark's value coincides with [WallpaperDark] — a coincidence, not a
 // reuse, since that token's own job (Home carousel backdrop) is unrelated to this one.
-private val SurfaceContainerLight = Color(0xFFF8F9FA)
+private val SurfaceContainerLight = Color(0xFFEEF1F6)
 private val SurfaceContainerDark = Color(0xFF14171D)
 private val DrawerOverlayLight = Color(0xE0FFFFFF) // rgba(255,255,255,.88)
 private val DrawerOverlayDark = Color(0xEB14171D) // rgba(20,23,29,.92)
@@ -97,6 +97,18 @@ val Muted: Color @Composable get() = if (LocalIsDarkTheme.current) MutedDark els
 val Faint: Color @Composable get() = if (LocalIsDarkTheme.current) FaintDark else FaintLight
 val Hairline: Color @Composable get() = if (LocalIsDarkTheme.current) HairlineDark else HairlineLight
 val IconTile: Color @Composable get() = if (LocalIsDarkTheme.current) IconTileDark else IconTileLight
+
+/** Hue for a Settings section's leading-icon circle (glyph at full [color], circle at a low-alpha tint of it). Fixed colours, independent of the user's [Accent]. */
+enum class SettingsSectionHue(private val light: Color, private val dark: Color) {
+    FACETS(Color(0xFF2563EB), Color(0xFF93C5FD)),
+    APPEARANCE(Color(0xFF7C3AED), Color(0xFFC4B5FD)),
+    HOME_APPS(Color(0xFF0D9488), Color(0xFF5EEAD4)),
+    SYSTEM(Color(0xFF475569), Color(0xFFCBD5E1)),
+    ;
+
+    val color: Color
+        @Composable get() = if (LocalIsDarkTheme.current) dark else light
+}
 
 /** [FolderTileGlyph][com.facetlauncher.app.ui.home.FolderTileGlyph]'s tile background — deliberately theme-invariant, unlike [IconTile], so the folder plate reads the same over the wallpaper in light or dark mode. */
 val FolderGlyphBackground: Color = IconTileDark

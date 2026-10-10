@@ -125,6 +125,7 @@ import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 import com.facetlauncher.app.ui.theme.resolve
 import kotlin.math.abs
@@ -193,7 +194,7 @@ fun HomeScreen(
     onDraggingHandleChange: (Boolean) -> Unit = {},
     /** Id of the facet whose `overrideClock` bundle governs the clock widget's position/scale right now, or `null` if the global default applies. */
     clockPositionOwnerFacetId: Long? = null,
-    /** That same facet's own real name, for [ClockAdjustSheet]'s "Edit clock & calendar styles" row badge — `null` alongside [clockPositionOwnerFacetId] when the global default applies. */
+    /** That same facet's own real name, for [ClockAdjustSheet]'s "Edit clock styles" row badge — `null` alongside [clockPositionOwnerFacetId] when the global default applies. */
     clockPositionOwnerFacetName: String? = null,
     /** Fired by a plain tap on the clock (time/date), not a calendar event row — opens the device's default clock app. */
     onClockClick: () -> Unit = {},
@@ -1166,6 +1167,7 @@ fun HomeScreen(
             ThemedModalBottomSheet(
                 onDismissRequest = { onAdjustModeChange(ClockAdjustMode.NONE) },
                 skipPartiallyExpanded = true,
+                containerColor = SurfaceContainer,
             ) {
                 ClockAdjustSheet(
                     onAdjustClick = { onAdjustModeChange(ClockAdjustMode.ADJUST) },

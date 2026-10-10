@@ -24,6 +24,21 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.AutoMode
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Dock
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.SettingsBackupRestore
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Wallpaper
+import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -51,12 +66,17 @@ import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
+import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.pro.ProSettingsCard
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
@@ -156,17 +176,17 @@ private fun SettingsContent(
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
                 item { ProSettingsCard(isPro = uiState.isPro, facetCount = uiState.facetCount, triggersRunning = uiState.triggersRunning, onClick = onViewFacetPro) }
-                item { SectionHeader(stringResource(R.string.settings_section_facets)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_facets)) }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         ClickableRow(
                             title = stringResource(R.string.settings_facets_title),
                             subtitle = stringResource(R.string.settings_facets_subtitle),
                             onClick = onViewFacets,
                             testTag = "view_facets_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Default.Layers, SettingsSectionHue.FACETS),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_facet_automation_title),
                             subtitle = if (uiState.automationRuleCount == 0) {
@@ -176,35 +196,35 @@ private fun SettingsContent(
                             },
                             onClick = onViewFacetAutomation,
                             testTag = "facet_automation_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.AutoMode, SettingsSectionHue.FACETS),
                         )
                     }
                 }
 
-                item { SectionHeader(stringResource(R.string.settings_section_appearance)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         ClickableRow(
                             title = stringResource(R.string.settings_change_wallpaper_title),
                             subtitle = stringResource(R.string.settings_change_wallpaper_subtitle),
                             onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
                             testTag = "change_wallpaper_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Wallpaper, SettingsSectionHue.APPEARANCE),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_appearance_title),
                             subtitle = stringResource(R.string.settings_appearance_subtitle),
                             onClick = onNavigateToAppearance,
                             testTag = "appearance_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE),
                         )
                     }
                 }
 
-                item { SectionHeader(stringResource(R.string.settings_section_home_apps)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         ClickableRow(
                             title = stringResource(R.string.settings_calendars_title),
                             subtitle = stringResource(
@@ -214,33 +234,33 @@ private fun SettingsContent(
                             ),
                             onClick = onNavigateToCalendarSettings,
                             testTag = "calendar_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.CalendarMonth, SettingsSectionHue.HOME_APPS),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_dock_title),
                             subtitle = dockSummary(uiState.dockItems),
                             onClick = onNavigateToDockSettings,
                             testTag = "dock_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_home_apps_list_title),
                             subtitle = appsListSummary(uiState.settings.listContentMode, uiState.defaultFavorites.size, uiState.settings.appsToShowCount),
                             onClick = onNavigateToHomeAppsListSettings,
                             testTag = "home_apps_list_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_app_drawer_title),
                             subtitle = appDrawerSummary(uiState.settings.drawerPresentation, uiState.settings.searchContactsEnabled, uiState.settings.searchSettingsEnabled),
                             onClick = onNavigateToAppDrawerSettings,
                             testTag = "app_drawer_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.HOME_APPS),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_notifications_title),
                             subtitle = if (uiState.settings.notificationDotsEnabled) {
@@ -250,44 +270,44 @@ private fun SettingsContent(
                             },
                             onClick = onNavigateToNotificationSettings,
                             testTag = "notification_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Notifications, SettingsSectionHue.HOME_APPS),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_folders_title),
                             subtitle = folderCountSummary(uiState.folderCount),
                             onClick = onNavigateToFolders,
                             testTag = "folders_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Folder, SettingsSectionHue.HOME_APPS),
                         )
                     }
                 }
 
-                item { SectionHeader(stringResource(R.string.settings_section_system)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         ClickableRow(
                             title = stringResource(R.string.settings_permissions_title),
                             subtitle = stringResource(R.string.settings_permissions_subtitle),
                             onClick = onNavigateToPermissions,
                             testTag = "view_permissions_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Shield, SettingsSectionHue.SYSTEM),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_backup_restore_title),
                             subtitle = stringResource(R.string.settings_backup_restore_subtitle),
                             onClick = onNavigateToBackupRestore,
                             testTag = "backup_restore_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.SettingsBackupRestore, SettingsSectionHue.SYSTEM),
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_set_default_launcher_title),
                             subtitle = stringResource(if (uiState.isDefaultLauncher) R.string.settings_status_active else R.string.settings_status_not_set),
                             onClick = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
                             testTag = "set_default_launcher_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Home, SettingsSectionHue.SYSTEM),
                         )
                         // Read-only: this app reflects the Work Profile's state, it doesn't
                         // control it — Android already owns a pause/resume toggle (system
@@ -297,22 +317,22 @@ private fun SettingsContent(
                         // real Work Profile per user, but list-shaped so it stays correct if that
                         // ever isn't true.
                         uiState.workProfiles.forEach { workProfile ->
-                            CardDivider()
+                            CardDivider(startInset = SettingsIconBadgeInset)
                             ClickableRow(
                                 title = workProfile.label,
                                 subtitle = stringResource(if (workProfile.isPaused) R.string.settings_status_paused else R.string.settings_status_active),
                                 onClick = { runCatching { context.startActivity(onRequestWorkProfileSettingsIntent()) } },
                                 testTag = "work_profile_row",
-                                trailing = { NavigationChevron() },
+                                leadingIcon = iconBadge(Icons.Outlined.Work, SettingsSectionHue.SYSTEM),
                             )
                         }
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
                             title = stringResource(R.string.settings_about_title),
                             subtitle = stringResource(R.string.settings_about_subtitle),
                             onClick = onNavigateToAbout,
                             testTag = "about_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = iconBadge(Icons.Outlined.Info, SettingsSectionHue.SYSTEM),
                         )
                     }
                 }
@@ -391,18 +411,6 @@ private fun NotificationBadgeStyle.notificationsSummaryLabel(): String = when (t
     NotificationBadgeStyle.COUNT -> stringResource(R.string.settings_notification_badge_counts)
 }
 
-@Composable
-private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelSmall,
-        // Muted, not Faint — this label is read as navigation, not decoration, and Faint's ~30%
-        // alpha was too dim for that (see chat history).
-        color = Muted,
-        modifier = modifier.padding(top = 18.dp, bottom = 6.dp),
-    )
-}
-
 /** Package-visible (not private) — also used by [AppearanceSettingsScreen]'s own nav rows. */
 @Composable
 fun ClickableRow(
@@ -411,22 +419,22 @@ fun ClickableRow(
     onClick: () -> Unit,
     testTag: String,
     modifier: Modifier = Modifier,
+    leadingIcon: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
+    // No clip of its own — the enclosing SettingsCard clips, so the press highlight follows its corners.
+    // The horizontal padding comes after clickable so, in a full-bleed card, the highlight spans the card.
     Row(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
-            // Rounds the row's own ripple/press-highlight — matches this app's other standalone
-            // clickable rows (see FacetCarouselScreen.kt's LauncherSettingsRow/AddFacetRow),
-            // M3's Card default shape (CLAUDE.md's Material 3 shape section).
-            .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
-            .padding(vertical = 13.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Column {
+        leadingIcon?.invoke()
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
             if (subtitle != null) {
                 Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
@@ -435,6 +443,8 @@ fun ClickableRow(
         trailing?.invoke()
     }
 }
+
+private fun iconBadge(icon: ImageVector, hue: SettingsSectionHue): @Composable () -> Unit = { SettingsIconBadge(icon, hue) }
 
 /** Trailing affordance for a row that navigates to its own screen. Package-visible — see [ClickableRow]. */
 @Composable

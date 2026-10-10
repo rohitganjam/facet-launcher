@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -504,6 +505,7 @@ class AppearanceSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_list_layout_row_option_GRID").performClick()
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_grid_columns_row"))
         composeRule.onNodeWithTag("appearance_app_list_grid_columns_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_list_grid_columns_row_option_FOUR").performClick()
@@ -602,6 +604,7 @@ class AppearanceSettingsScreenTest {
             runBlocking { settingsRepository.settings.first().appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.RIGHT }
         }
 
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_row_presentation_row"))
         composeRule.onNodeWithTag("appearance_app_row_presentation_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_row_presentation_row_option_TEXT_ONLY").performClick()
@@ -609,6 +612,7 @@ class AppearanceSettingsScreenTest {
             runBlocking { settingsRepository.settings.first().appRowPresentation == com.facetlauncher.app.data.model.AppRowPresentation.TEXT_ONLY }
         }
 
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_vertical_alignment_row"))
         composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row_option_TOP").performClick()
@@ -693,32 +697,32 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun globalModeShowsThreeSeparateSectionsInOrder() {
-        // Dock & Home / Clock / General are each their own card now, not bundled together (see
-        // chat history). Each header is asserted right as it scrolls into view, in that order —
-        // not via cross-scroll bounds comparison, which breaks once an earlier item scrolls far
-        // enough to be disposed from the LazyColumn's composed range.
+        // Clock / Dock & Home / General are each their own card (Clock first). Each header is
+        // asserted right as it scrolls into view, in that order — not via cross-scroll bounds
+        // comparison, which breaks once an earlier item scrolls far enough to be disposed from the
+        // LazyColumn's composed range.
         setContent()
 
-        composeRule.onNodeWithText("DOCK & HOME").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithText("CLOCK").assertIsDisplayed()
+        composeRule.onNodeWithText("Clock").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
-        composeRule.onNodeWithText("GENERAL").assertIsDisplayed()
+        composeRule.onNodeWithText("General").assertIsDisplayed()
     }
 
     @Test
-    fun facetScopedModeShowsOnlyTheDockAndHomeSection() {
-        // No Clock or General section at all in facet mode (see
-        // facetScopedModeHidesClockStyleRowAndEveryGlobalOnlyField for the individual rows and its
-        // own comment on why this polls for settle first)
+    fun facetScopedModeShowsClockAndDockAndHomeButNotGeneral() {
+        // The Clock style row lives in facet mode too (above Dock & home); General is global-only.
         setContent(facetId = 1L)
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("CLOCK").fetchSemanticsNodes().isEmpty()
+            composeRule.onAllNodesWithText("Clock").fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("DOCK & HOME").assertIsDisplayed()
-        composeRule.onNodeWithText("CLOCK").assertDoesNotExist()
-        composeRule.onNodeWithText("GENERAL").assertDoesNotExist()
+        composeRule.onNodeWithText("Clock").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
+        composeRule.onNodeWithText("General").assertDoesNotExist()
     }
 
     @Test
@@ -727,10 +731,11 @@ class AppearanceSettingsScreenTest {
         // rows have no other distinguishing content at rest.
         setContent()
 
-        composeRule.onNodeWithText("Show Dock apps as").assertIsDisplayed()
-        composeRule.onNodeWithText("Home Apps Alignment").assertIsDisplayed()
-        composeRule.onNodeWithText("Show Home apps as").assertIsDisplayed()
-        composeRule.onNodeWithText("Home Apps list position").assertIsDisplayed()
+        // The Clock card sits above these rows, so each is scrolled into view before it's checked.
+        listOf("Show Dock apps as", "Home Apps Alignment", "Show Home apps as", "Home Apps list position").forEach { title ->
+            composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasText(title))
+            composeRule.onNodeWithText(title).assertIsDisplayed()
+        }
     }
 
     @Test

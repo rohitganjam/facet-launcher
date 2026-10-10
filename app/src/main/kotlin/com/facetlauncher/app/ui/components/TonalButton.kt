@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -21,13 +22,9 @@ import com.facetlauncher.app.ui.theme.Surface
 
 /**
  * A **tonal accent** button — M3's filled-tonal role (an accent-tinted container with accent
- * text), in M3 Expressive's **square** button shape (`MaterialTheme.shapes.medium`, 12dp) rather
- * than the default fully-rounded stadium. Used for secondary actions that should still read as a
- * real button: the Switch Facets carousel's *Reorder*, the Hub header's *Add*, the Hub
- * empty-state's *Add widget*.
- *
- * The square shape is a **deliberate departure** from `CLAUDE.md`'s "buttons = Full/`CircleShape`"
- * rule, per direct request — M3 Expressive supports both round and square button shapes.
+ * text) in M3's default fully-rounded (Full, [CircleShape]) button shape. Used for secondary
+ * actions that should still read as a real button: the Switch Facets carousel's *Reorder*, the
+ * Hub header's *Add*, the Hub empty-state's *Add widget*.
  *
  * This app doesn't map M3's `secondaryContainer` slot, so the tonal fill is an accent tint
  * **composited over the opaque [Surface]** — an opaque colour, so the button reads the same on a
@@ -48,7 +45,7 @@ fun TonalButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
+        shape = CircleShape,
         elevation = null, // tonal buttons are flat
         border = BorderStroke(1.dp, Accent.copy(alpha = if (enabled) 0.32f else 0.12f)),
         colors = ButtonDefaults.buttonColors(

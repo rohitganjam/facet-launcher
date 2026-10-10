@@ -90,6 +90,7 @@ import com.facetlauncher.app.ui.components.FontSizeSlider
 import com.facetlauncher.app.ui.components.FontWeightSlider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.home.AppRow
@@ -229,7 +230,23 @@ private fun AppearanceSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                item { AppearanceSectionHeader(stringResource(R.string.appearance_section_dock_home)) }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_section_clock)) }
+                item {
+                    SettingsCard(fullBleedRows = true) {
+                        ClickableRow(
+                            title = stringResource(R.string.settings_clock_calendar_title),
+                            subtitle = stringResource(
+                                R.string.dot_join_2,
+                                stringResource(uiState.clockSettings.clockTemplateId.displayNameRes),
+                                stringResource(if (uiState.clockSettings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+                            ),
+                            onClick = onNavigateToClockStyleGallery,
+                            testTag = "clock_style_gallery_row",
+                            trailing = { NavigationChevron() },
+                        )
+                    }
+                }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_section_dock_home)) }
                 item {
                     // "How things look/are placed" for Dock and the Home apps list — moved in from
                     // Dock's/Home-Apps-List's own screens (see chat history), always shown at both
@@ -335,25 +352,9 @@ private fun AppearanceSettingsContent(
                         )
                     }
                 }
-                item { AppearanceSectionHeader(stringResource(R.string.appearance_section_clock)) }
-                item {
-                    SettingsCard {
-                        ClickableRow(
-                            title = stringResource(R.string.settings_clock_calendar_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_2,
-                                stringResource(uiState.clockSettings.clockTemplateId.displayNameRes),
-                                stringResource(if (uiState.clockSettings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                            ),
-                            onClick = onNavigateToClockStyleGallery,
-                            testTag = "clock_style_gallery_row",
-                            trailing = { NavigationChevron() },
-                        )
-                    }
-                }
                 // The cards below are global only — no per-facet override exists for these fields yet.
                 if (!isFacetScoped) {
-                    item { AppearanceSectionHeader(stringResource(R.string.appearance_section_general)) }
+                    item { SettingsSectionHeader(stringResource(R.string.appearance_section_general)) }
                     item {
                         SettingsCard {
                             LabeledDropdownRow(
@@ -472,14 +473,6 @@ private const val PREVIEW_DOCK_APP_COUNT = DockAppRepository.MAX_APPS
 /** Matches `FacetCarouselScreen`'s own `CAROUSEL_CARD_SCALE` — a genuine scale model of the
  * screen, not a full-width/full-height card. */
 private const val APPEARANCE_PREVIEW_CARD_SCALE = 0.55f
-
-@Composable
-private fun AppearanceSectionHeader(title: String, modifier: Modifier = Modifier) {
-    // Matches SettingsScreen's own SectionHeader spacing exactly (top = 18.dp, bottom = 6.dp) — a
-    // missing top padding here left "CLOCK"/"GENERAL" sitting flush against the card above them,
-    // with no breathing room, unlike every section header on the main Settings screen.
-    Text(text = title, style = MaterialTheme.typography.labelSmall, color = Muted, modifier = modifier.padding(top = 18.dp, bottom = 6.dp))
-}
 
 /**
  * "This is how Home looks" — scaled to a real fraction of the device screen and density-scaled to
@@ -822,6 +815,9 @@ private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, te
     }
 }
 
+private val ICON_SHAPE_RING_WIDTH = 2.dp
+private val ICON_SHAPE_RING_GAP = 2.dp
+
 /** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
 @Composable
 private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
@@ -834,35 +830,43 @@ private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, 
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             IconShape.entries.forEach { shape ->
-                val isSelected = shape == selected
-                val label = stringResource(shape.displayNameRes)
-                Column(
-                    modifier = Modifier
-                        .testTag("icon_shape_${shape.name}")
-                        .clip(MaterialTheme.shapes.small)
-                        .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(shape) })
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(AppIconSize.TILE)
-                            .background(IconTile, shape.toComposeShape())
-                            .border(
-                                width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) Accent else Hairline,
-                                shape = shape.toComposeShape(),
-                            ),
-                    )
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) Ink else Muted,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                }
+                IconShapeOption(shape = shape, isSelected = shape == selected, onSelect = { onSelect(shape) })
             }
         }
+    }
+}
+
+@Composable
+private fun IconShapeOption(shape: IconShape, isSelected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .testTag("icon_shape_${shape.name}")
+            .clip(MaterialTheme.shapes.small)
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Selected: an Accent ring with a transparent gap around the icon. The ring's space is
+        // reserved on every option so selecting one doesn't shift the row.
+        Box(
+            modifier = Modifier
+                .size(AppIconSize.TILE + (ICON_SHAPE_RING_WIDTH + ICON_SHAPE_RING_GAP) * 2)
+                .then(if (isSelected) Modifier.border(ICON_SHAPE_RING_WIDTH, Accent, shape.toComposeShape()) else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(AppIconSize.TILE)
+                    .background(IconTile, shape.toComposeShape())
+                    .then(if (isSelected) Modifier else Modifier.border(1.dp, Hairline, shape.toComposeShape())),
+            )
+        }
+        Text(
+            text = stringResource(shape.displayNameRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) Ink else Muted,
+            modifier = Modifier.padding(top = 6.dp),
+        )
     }
 }
 

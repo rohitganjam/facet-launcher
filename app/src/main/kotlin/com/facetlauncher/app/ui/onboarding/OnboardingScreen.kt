@@ -13,20 +13,15 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.dock.DockAppPickerScreen
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
@@ -263,19 +259,15 @@ fun OnboardingScreen(
         // Jumps straight past the remaining steps and completes onboarding — the "make Facet your
         // home screen" prompt itself now lives on the real Home screen, not here.
         if (subScreen == null) {
-            Text(
+            TextActionButton(
                 text = stringResource(R.string.onboarding_skip),
-                style = MaterialTheme.typography.bodyLarge,
+                onClick = onFinish,
                 color = Muted,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-                    .padding(horizontal = 20.dp)
-                    // 48dp minimum touch target (M3 guideline), centered on the text.
-                    .clickable(onClick = onFinish)
-                    .testTag("onboarding_skip")
-                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                    .wrapContentSize(Alignment.Center),
+                    .padding(horizontal = 8.dp)
+                    .testTag("onboarding_skip"),
             )
         }
     }

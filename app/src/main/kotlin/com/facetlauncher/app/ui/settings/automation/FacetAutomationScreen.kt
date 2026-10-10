@@ -60,10 +60,11 @@ import com.facetlauncher.app.domain.FacetAutomationScreenState
 import com.facetlauncher.app.domain.RuleAvailability
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
-import com.facetlauncher.app.ui.facets.SectionHeader
+import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
@@ -157,10 +158,10 @@ internal fun FacetAutomationContent(
             ) {
                 if (state != null) {
                     state.status?.let { status -> item { StatusLine(status) } }
-                    item { SectionHeader(stringResource(R.string.automation_section_rules)) }
+                    item { SettingsSectionHeader(stringResource(R.string.automation_section_rules)) }
                     item { RulesCard(state, onToggleRule, onAddRule, onEditRule) }
                     if (!state.canAddRule) item { FreePlanStrip(onSeePro) }
-                    item { SectionHeader(stringResource(R.string.automation_section_other_apps), modifier = Modifier.padding(top = 20.dp)) }
+                    item { SettingsSectionHeader(stringResource(R.string.automation_section_other_apps)) }
                     item { OtherAppsCard() }
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
@@ -193,21 +194,21 @@ private fun RulesCard(
     onAddRule: () -> Unit,
     onEditRule: (Long) -> Unit,
 ) {
-    if (state.items.isEmpty()) {
-        EmptyStrip()
-        // The same "Add rule" row as under a populated list, so the action looks identical either way.
-        SettingsCard(modifier = Modifier.padding(top = 10.dp)) {
-            AddRuleRow(showProPill = false, onClick = onAddRule, tag = "automation_empty_add")
+    SettingsCard(fullBleedRows = true) {
+        if (state.items.isEmpty()) {
+            EmptyRulesMessage()
         }
-        return
-    }
-    SettingsCard {
         state.items.forEachIndexed { index, item ->
             if (index > 0) CardDivider()
             RuleRow(item = item, onToggle = { onToggleRule(item.rule.id, it) }, onClick = { onEditRule(item.rule.id) })
         }
         CardDivider()
-        AddRuleRow(showProPill = !state.canAddRule, onClick = onAddRule)
+        // The same "Add rule" row whether or not any rules exist yet.
+        AddRuleRow(
+            showProPill = !state.canAddRule,
+            onClick = onAddRule,
+            tag = if (state.items.isEmpty()) "automation_empty_add" else "automation_add_rule_row",
+        )
     }
 }
 
@@ -221,7 +222,7 @@ private fun RuleRow(item: AutomationRuleItem, onToggle: (Boolean) -> Unit, onCli
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .alpha(if (unavailable || !item.rule.enabled) 0.55f else 1f)
-            .padding(vertical = 13.dp)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
             .testTag("automation_rule_row_${item.rule.id}"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -255,7 +256,7 @@ private fun AddRuleRow(showProPill: Boolean, onClick: () -> Unit, modifier: Modi
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 14.dp)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 14.dp)
             .testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,

@@ -3,14 +3,18 @@ package com.facetlauncher.app.ui.facets
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Dock
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,8 +33,12 @@ import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.RenameDialog
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
+import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
@@ -102,29 +110,41 @@ private fun FacetSettingsContent(
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         FacetSettingsRow(
                             title = stringResource(R.string.facet_settings_rename_facet),
                             subtitle = facet?.name,
                             onClick = { showRenameDialog = true },
                             testTag = "facet_settings_rename_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = { SettingsIconBadge(Icons.Outlined.Edit, SettingsSectionHue.FACETS) },
                         )
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(18.dp)) }
-                item { SectionHeader(stringResource(R.string.settings_section_home_apps)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
+                        FacetSettingsRow(
+                            title = stringResource(R.string.facet_settings_appearance_title),
+                            subtitle = stringResource(R.string.dot_join_2, uiState.dockDisplayMode.displayLabel(), uiState.appRowPresentation.displayLabel()),
+                            onClick = onAppearanceClick,
+                            testTag = "facet_appearance_row",
+                            leadingIcon = { SettingsIconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE) },
+                        )
+                    }
+                }
+
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
+                item {
+                    SettingsCard(fullBleedRows = true) {
                         FacetSettingsRow(
                             title = stringResource(R.string.facet_settings_apps_list_settings_title),
                             subtitle = appsSubtitle(uiState),
                             onClick = onAppsListClick,
                             testTag = "facet_apps_list_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = { SettingsIconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS) },
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         FacetSettingsRow(
                             title = stringResource(R.string.facet_settings_dock_settings_title),
                             subtitle = stringResource(
@@ -134,17 +154,9 @@ private fun FacetSettingsContent(
                             ),
                             onClick = onDockClick,
                             testTag = "facet_dock_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
                         )
-                        CardDivider()
-                        FacetSettingsRow(
-                            title = stringResource(R.string.facet_settings_appearance_title),
-                            subtitle = stringResource(R.string.dot_join_2, uiState.dockDisplayMode.displayLabel(), uiState.appRowPresentation.displayLabel()),
-                            onClick = onAppearanceClick,
-                            testTag = "facet_appearance_row",
-                            trailing = { NavigationChevron() },
-                        )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         FacetSettingsRow(
                             title = stringResource(R.string.settings_calendars_title),
                             subtitle = stringResource(
@@ -154,7 +166,7 @@ private fun FacetSettingsContent(
                             ),
                             onClick = onCalendarClick,
                             testTag = "facet_calendar_settings_row",
-                            trailing = { NavigationChevron() },
+                            leadingIcon = { SettingsIconBadge(Icons.Outlined.CalendarMonth, SettingsSectionHue.HOME_APPS) },
                         )
                     }
                 }

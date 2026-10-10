@@ -6,20 +6,17 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
-import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
@@ -108,17 +105,10 @@ fun OnboardingIntroPage(onNext: () -> Unit, modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OnboardingDots(step = 0, totalSteps = ONBOARDING_STEP_COUNT)
-            Text(
+            TextActionButton(
                 text = stringResource(R.string.action_next),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Accent,
-                // 48dp minimum touch target (M3 guideline) — defaultMinSize before
-                // wrapContentSize so the enlarged tap area stays centered on the text.
-                modifier = Modifier
-                    .clickable(onClick = onNext)
-                    .testTag("onboarding_next")
-                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                    .wrapContentSize(Alignment.Center),
+                onClick = onNext,
+                modifier = Modifier.testTag("onboarding_next"),
             )
         }
     }

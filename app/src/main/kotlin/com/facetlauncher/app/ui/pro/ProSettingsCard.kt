@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.LockOpen
@@ -46,7 +47,7 @@ fun ProSettingsCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = MaterialTheme.shapes.large
+    val shape = MaterialTheme.shapes.extraLarge
     val dark = LocalIsDarkTheme.current
     Box(
         modifier = modifier
@@ -66,7 +67,7 @@ fun ProSettingsCard(
 @Composable
 private fun ProUpsell() {
     Box(modifier = Modifier.fillMaxWidth()) {
-        ProFacetFan(modifier = Modifier.align(Alignment.TopEnd).padding(end = 16.dp, top = 8.dp))
+        ProFacetFan(modifier = Modifier.align(Alignment.TopEnd).padding(end = 24.dp, top = 16.dp))
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 15.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ProBadge(textSize = 9f)
@@ -88,7 +89,7 @@ private fun ProUpsell() {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.LockOpen, contentDescription = null, tint = Color.White.copy(alpha = 0.75f), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.weight(1f))
-                val buttonShape = MaterialTheme.shapes.medium
+                val buttonShape = CircleShape
                 Text(
                     text = stringResource(R.string.pro_upgrade_to_pro),
                     color = Color.White,

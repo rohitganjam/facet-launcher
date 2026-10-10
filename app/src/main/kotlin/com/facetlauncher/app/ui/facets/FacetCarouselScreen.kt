@@ -24,12 +24,11 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +57,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -97,6 +97,8 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.ScreenHeader
+import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.home.AppRow
@@ -107,12 +109,14 @@ import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.home.HOME_CLOCK_DEFAULT_TOP_OFFSET
 import com.facetlauncher.app.ui.home.HOME_CLOCK_MIN_GAP
 import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.settings.ClickableRow
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.FacetType
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
@@ -399,41 +403,20 @@ private fun FacetCarouselHeader(facetCount: Int, canReorder: Boolean, onReorderC
 }
 
 /**
- * The launcher-wide settings entry point, sitting just below the carousel. Carries the same
- * shadow + hairline-border lift as [com.facetlauncher.app.ui.components.SettingsCard] (a bare
- * [Surface] fill is invisible against this screen's dimmer backdrop, especially in dark mode) and
- * a leading [Icons.Default.Tune] glyph — `Tune`, not a gear, so it doesn't read as a second
- * "facet settings" control next to each card's own gear.
+ * The launcher-wide settings entry point, sitting just below the carousel — a [SettingsCard] with
+ * one [ClickableRow], so it matches the Settings screen it opens. `Tune`, not a gear, so it doesn't
+ * read as a second "facet settings" control next to each card's own gear.
  */
 @Composable
 private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    // M3's Card default shape — see CLAUDE.md's Material 3 shape section.
-    val shape = MaterialTheme.shapes.medium
-    Row(
-        modifier = modifier
-            .shadow(elevation = 4.dp, shape = shape)
-            .clip(shape)
-            .background(Surface)
-            .border(1.dp, Ink.copy(alpha = 0.14f), shape)
-            .clickable(onClick = onClick)
-            .testTag("facet_carousel_launcher_settings")
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.Tune,
-                contentDescription = null,
-                tint = Muted,
-                modifier = Modifier.padding(end = 14.dp).size(24.dp),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = stringResource(R.string.facet_carousel_launcher_settings), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                Text(text = stringResource(R.string.facet_carousel_launcher_settings_subtitle), style = MaterialTheme.typography.bodyMedium, color = Muted)
-            }
-        }
-        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Ink)
+    SettingsCard(modifier = modifier, fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.facet_carousel_launcher_settings),
+            subtitle = stringResource(R.string.facet_carousel_launcher_settings_subtitle),
+            onClick = onClick,
+            testTag = "facet_carousel_launcher_settings",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.Tune, SettingsSectionHue.SYSTEM) },
+        )
     }
 }
 
@@ -847,11 +830,13 @@ private fun AddFacetPage(onClick: () -> Unit, showProPill: Boolean, modifier: Mo
         // Invisible stand-in for FacetPreviewPage's own name row — same Text structure so it
         // measures to the exact same height, without hardcoding a dp guess. Without this, the
         // Add-facet card (which has no header of its own) would start higher up than its
-        // neighboring facet cards and read as a different, taller size (see chat history).
+        // neighboring facet cards and read as a different, taller size (see chat history). Any
+        // single line of this style measures the same; it's hidden and cleared from accessibility.
         Text(
-            text = "",
+            text = stringResource(R.string.facet_carousel_add_facet),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f),
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f).clearAndSetSemantics { },
         )
         Column(
             modifier = Modifier

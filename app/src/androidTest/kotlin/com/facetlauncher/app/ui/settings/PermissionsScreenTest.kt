@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -82,34 +83,40 @@ class PermissionsScreenTest {
         // Then each row renders with its title, its "why" subtitle, and a working "Turn on" action
         composeRule.onNodeWithText("Calendar").assertExists()
         composeRule.onNodeWithText("Shows today's events on the clock.").assertExists()
-        composeRule.onNodeWithTag("permission_turn_on_CALENDAR").assertExists().assertHasClickAction()
+        composeRule.onNodeWithTag("permission_row_CALENDAR").assertHasClickAction()
+        composeRule.onNodeWithTag("permission_turn_on_CALENDAR", useUnmergedTree = true).assertExists()
 
         composeRule.onNodeWithText("Contacts").assertExists()
         composeRule.onNodeWithText(
             "Lets Drawer search show matching contacts with quick call/message/WhatsApp actions.",
         ).assertExists()
-        composeRule.onNodeWithTag("permission_turn_on_CONTACTS").assertExists().assertHasClickAction()
+        composeRule.onNodeWithTag("permission_row_CONTACTS").assertHasClickAction()
+        composeRule.onNodeWithTag("permission_turn_on_CONTACTS", useUnmergedTree = true).assertExists()
 
         composeRule.onNodeWithText("Usage access").assertExists()
         composeRule.onNodeWithText("Powers the Recents and Most used app lists.").assertExists()
-        composeRule.onNodeWithTag("permission_turn_on_USAGE_ACCESS").assertExists().assertHasClickAction()
+        composeRule.onNodeWithTag("permission_row_USAGE_ACCESS").assertHasClickAction()
+        composeRule.onNodeWithTag("permission_turn_on_USAGE_ACCESS", useUnmergedTree = true).assertExists()
 
         composeRule.onNodeWithText("Notification access").assertExists()
         composeRule.onNodeWithText("Shows a dot or count badge on apps with active notifications.").assertExists()
-        composeRule.onNodeWithTag("permission_turn_on_NOTIFICATION_ACCESS").assertExists().assertHasClickAction()
+        composeRule.onNodeWithTag("permission_row_NOTIFICATION_ACCESS").assertHasClickAction()
+        composeRule.onNodeWithTag("permission_turn_on_NOTIFICATION_ACCESS", useUnmergedTree = true).assertExists()
 
         // The two facet-automation permissions, each saying what it is for
         composeRule.onNodeWithText("Bluetooth").assertExists()
         composeRule.onNodeWithText(
             "Lets facet automation rules react to a paired Bluetooth device, such as your car, and lists paired devices when you set one up.",
         ).assertExists()
-        composeRule.onNodeWithTag("permission_turn_on_BLUETOOTH").assertExists().assertHasClickAction()
+        composeRule.onNodeWithTag("permission_row_BLUETOOTH").assertHasClickAction()
+        composeRule.onNodeWithTag("permission_turn_on_BLUETOOTH", useUnmergedTree = true).assertExists()
 
         composeRule.onNodeWithText("Location").assertExists()
         composeRule.onNodeWithText(
             "Android requires it to read the Wi-Fi network name for rules about a named network. Facet only uses it for that, never to find where you are.",
         ).assertExists()
-        composeRule.onNodeWithTag("permission_turn_on_LOCATION").assertExists().assertHasClickAction()
+        composeRule.onNodeWithTag("permission_row_LOCATION").assertHasClickAction()
+        composeRule.onNodeWithTag("permission_turn_on_LOCATION", useUnmergedTree = true).assertExists()
     }
 
     @Test
@@ -120,7 +127,7 @@ class PermissionsScreenTest {
 
         // When tapping "Turn on" for Usage access — a special-access permission with no runtime
         // dialog of its own, so this always goes to the existing explanation screen instead
-        composeRule.onNodeWithTag("permission_turn_on_USAGE_ACCESS").performClick()
+        composeRule.onNodeWithTag("permission_row_USAGE_ACCESS").performClick()
 
         // Then it navigates there
         assertEquals(true, navigated)
@@ -135,7 +142,7 @@ class PermissionsScreenTest {
         setContent(onNavigateToNotificationAccessExplanation = { navigated = true })
 
         // When tapping "Turn on" for Notification access
-        composeRule.onNodeWithTag("permission_turn_on_NOTIFICATION_ACCESS").performClick()
+        composeRule.onNodeWithTag("permission_row_NOTIFICATION_ACCESS").performClick()
 
         // Then it navigates there
         assertEquals(true, navigated)
@@ -188,5 +195,8 @@ class PermissionsScreenGrantedTest {
         composeRule.onNodeWithTag("permission_turn_on_BLUETOOTH").assertDoesNotExist()
         composeRule.onNodeWithTag("permission_status_LOCATION").assertExists()
         composeRule.onNodeWithTag("permission_turn_on_LOCATION").assertDoesNotExist()
+
+        // And a granted row isn't tappable — it has nothing to turn on
+        composeRule.onNodeWithTag("permission_row_CALENDAR").assertHasNoClickAction()
     }
 }

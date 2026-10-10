@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,13 +70,13 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
                 text = stringResource(R.string.hub_orphaned_remove),
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(ErrorColor)),
                 color = ErrorColor,
-                modifier = Modifier.testTag("hub_orphaned_remove").clickable(onClick = onRemove),
+                modifier = Modifier.testTag("hub_orphaned_remove").clip(CircleShape).clickable(onClick = onRemove),
             )
             Text(
                 text = stringResource(R.string.hub_orphaned_keep_space),
                 style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
                 color = HomeAppTextColorFaint,
-                modifier = Modifier.testTag("hub_orphaned_keep_space").clickable(onClick = onKeepSpace),
+                modifier = Modifier.testTag("hub_orphaned_keep_space").clip(CircleShape).clickable(onClick = onKeepSpace),
             )
         }
     }

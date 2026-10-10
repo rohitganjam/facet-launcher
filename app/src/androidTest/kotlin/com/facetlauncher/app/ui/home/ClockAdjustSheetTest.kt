@@ -50,7 +50,7 @@ class ClockAdjustSheetTest {
 
         // Then the row's label stays generic and its badge reads "Global"
         composeRule.onNode(
-            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Edit clock & calendar styles")),
+            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Edit clock styles")),
             useUnmergedTree = true,
         ).assertExists()
         composeRule.onNode(
@@ -66,7 +66,7 @@ class ClockAdjustSheetTest {
 
         // Then the row's label is unchanged, and its badge names that facet instead of "Global"
         composeRule.onNode(
-            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Edit clock & calendar styles")),
+            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Edit clock styles")),
             useUnmergedTree = true,
         ).assertExists()
         composeRule.onNode(

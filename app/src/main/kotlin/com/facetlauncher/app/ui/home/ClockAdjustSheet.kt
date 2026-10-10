@@ -2,29 +2,21 @@ package com.facetlauncher.app.ui.home
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Widgets
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.OpenInFull
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,28 +24,32 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.FacetScopeBadge
 import com.facetlauncher.app.ui.components.ProPill
-import com.facetlauncher.app.ui.theme.IconTile
-import com.facetlauncher.app.ui.theme.Ink
-import com.facetlauncher.app.ui.theme.InkInverted
+import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
+import com.facetlauncher.app.ui.settings.ClickableRow
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Surface
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
+import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * Long-press bottom sheet — opened both by long-pressing the clock and by long-pressing any other
  * empty space on Home (see [com.facetlauncher.app.ui.home.HomeScreen]'s own root long-press
  * detector). Lets the user enter the combined clock adjust mode (move handle + resize handles
- * together), jump to the clock/calendar style gallery, or jump to the active facet's own settings
+ * together), jump to the clock style gallery, or jump to the active facet's own settings
  * or launcher-wide settings — each row carries a subheading, same pattern as
  * [com.facetlauncher.app.ui.facets.FacetCarouselScreen]'s own "Launcher settings" row and its
  * per-card "Facet settings" gear.
  *
- * "Edit clock & calendar styles"'s own label text never changes; a trailing [FacetScopeBadge]
+ * Laid out like the Settings screens: two tonal [SettingsCard]s (the clock rows, then the two
+ * settings destinations) of icon-badge rows on the dimmer sheet tone ([SurfaceContainer], set by
+ * the host), with full-width press highlights.
+ *
+ * "Edit clock styles"'s own label text never changes; a trailing [FacetScopeBadge]
  * names which style set it edits instead — "Global" or the overriding facet's own real name — same
  * pattern as [com.facetlauncher.app.ui.components.QuickPlacementBadge] on the app context menu's
  * Favorites/Dock rows (decided explicitly by the user to apply that same badge logic here, over
- * folding the distinction into the sentence itself, e.g. "Edit Facet clock & calendar styles" —
- * see chat history).
+ * folding the distinction into the sentence itself — see chat history).
  *
  * PRD F15 — [hasCustomClockWidget] switches the sheet between two widget-choice rows rather than
  * offering a destructive "remove": "Use custom widget" (always shown — picks a widget, or a
@@ -71,7 +67,7 @@ fun ClockAdjustSheet(
     onLauncherSettingsClick: () -> Unit,
     onUseCustomWidgetClick: () -> Unit,
     onSwitchToLauncherClockClick: () -> Unit,
-    /** Non-null names the facet whose own clock/calendar styles are in effect right now; `null` means the launcher-wide default applies — see [FacetScopeBadge]. */
+    /** Non-null names the facet whose own clock styles are in effect right now; `null` means the launcher-wide default applies — see [FacetScopeBadge]. */
     overrideFacetName: String?,
     modifier: Modifier = Modifier,
     /** Whether the active facet currently has a hosted `AppWidget` bound as its clock (PRD F15) — see this composable's own doc. */
@@ -82,46 +78,55 @@ fun ClockAdjustSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp)
             .testTag("clock_adjust_sheet"),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AdjustRow(
-            icon = { Icon(painter = painterResource(R.drawable.open_in_full), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = stringResource(R.string.clock_adjust_adjust_size_position),
-            subtitle = stringResource(R.string.clock_adjust_size_position_subtitle),
-            onClick = onAdjustClick,
-            testTag = "clock_adjust_open",
-        )
-        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-        ClockWidgetChoiceRows(
-            onEditStylesClick = onEditStylesClick,
-            onUseCustomWidgetClick = onUseCustomWidgetClick,
-            onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
-            overrideFacetName = overrideFacetName,
-            hasCustomClockWidget = hasCustomClockWidget,
-            isPro = isPro,
-        )
-        AdjustRow(
-            icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = stringResource(R.string.facet_carousel_facet_settings),
-            subtitle = stringResource(R.string.clock_adjust_facet_settings_subtitle),
-            onClick = onFacetSettingsClick,
-            testTag = "clock_adjust_facet_settings",
-        )
-        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-        AdjustRow(
-            icon = { Icon(imageVector = Icons.Default.Tune, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
-            label = stringResource(R.string.facet_carousel_launcher_settings),
-            subtitle = stringResource(R.string.facet_carousel_launcher_settings_subtitle),
-            onClick = onLauncherSettingsClick,
-            testTag = "clock_adjust_launcher_settings",
-        )
+        SettingsCard(fullBleedRows = true) {
+            AdjustRow(
+                icon = Icons.Outlined.OpenInFull,
+                hue = SettingsSectionHue.APPEARANCE,
+                label = stringResource(R.string.clock_adjust_adjust_size_position),
+                subtitle = stringResource(R.string.clock_adjust_size_position_subtitle),
+                onClick = onAdjustClick,
+                testTag = "clock_adjust_open",
+            )
+            ClockWidgetChoiceRows(
+                onEditStylesClick = onEditStylesClick,
+                onUseCustomWidgetClick = onUseCustomWidgetClick,
+                onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
+                overrideFacetName = overrideFacetName,
+                hasCustomClockWidget = hasCustomClockWidget,
+                isPro = isPro,
+            )
+        }
+        SettingsCard(fullBleedRows = true) {
+            AdjustRow(
+                icon = Icons.Outlined.Settings,
+                hue = SettingsSectionHue.FACETS,
+                label = stringResource(R.string.facet_carousel_facet_settings),
+                subtitle = stringResource(R.string.clock_adjust_facet_settings_subtitle),
+                onClick = onFacetSettingsClick,
+                testTag = "clock_adjust_facet_settings",
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+            AdjustRow(
+                icon = Icons.Outlined.Tune,
+                hue = SettingsSectionHue.SYSTEM,
+                label = stringResource(R.string.facet_carousel_launcher_settings),
+                subtitle = stringResource(R.string.facet_carousel_launcher_settings_subtitle),
+                onClick = onLauncherSettingsClick,
+                testTag = "clock_adjust_launcher_settings",
+            )
+        }
     }
 }
 
 /**
  * PRD F15's "Edit … styles"/widget-choice rows — factored out of [ClockAdjustSheet] itself purely
  * to stay under this codebase's max-composable-length lint rule; behavior is exactly
- * [ClockAdjustSheet]'s own doc.
+ * [ClockAdjustSheet]'s own doc. Each row is preceded by its divider, so the first card's last row
+ * has none after it.
  */
 @Composable
 private fun ClockWidgetChoiceRows(
@@ -133,68 +138,60 @@ private fun ClockWidgetChoiceRows(
     isPro: Boolean,
 ) = Column {
     if (!hasCustomClockWidget) {
+        CardDivider(startInset = SettingsIconBadgeInset)
         AdjustRow(
-            icon = { Icon(painter = painterResource(R.drawable.ic_palette_24), contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
+            icon = Icons.Outlined.Palette,
+            hue = SettingsSectionHue.APPEARANCE,
             label = stringResource(R.string.clock_adjust_edit_styles),
             subtitle = stringResource(R.string.clock_adjust_edit_styles_subtitle),
             onClick = onEditStylesClick,
             testTag = "clock_adjust_edit_styles",
             trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
         )
-        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
     }
+    CardDivider(startInset = SettingsIconBadgeInset)
     AdjustRow(
-        icon = { Icon(imageVector = Icons.Default.Widgets, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
+        icon = Icons.Outlined.Widgets,
+        hue = SettingsSectionHue.APPEARANCE,
         label = stringResource(R.string.clock_adjust_use_custom_widget),
         subtitle = stringResource(R.string.clock_adjust_use_custom_widget_subtitle),
         onClick = onUseCustomWidgetClick,
         testTag = "clock_adjust_use_custom_widget",
         trailingContent = if (isPro) null else ({ ProPill() }),
     )
-    CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
     if (hasCustomClockWidget) {
+        CardDivider(startInset = SettingsIconBadgeInset)
         AdjustRow(
-            icon = { Icon(imageVector = Icons.Default.AccessTime, contentDescription = null, tint = InkInverted, modifier = Modifier.size(18.dp)) },
+            icon = Icons.Outlined.AccessTime,
+            hue = SettingsSectionHue.APPEARANCE,
             label = stringResource(R.string.clock_adjust_switch_to_launcher_clock),
             subtitle = stringResource(R.string.clock_adjust_switch_to_launcher_clock_subtitle),
             onClick = onSwitchToLauncherClockClick,
             testTag = "clock_adjust_switch_to_launcher_clock",
         )
-        CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
     }
 }
 
 @Composable
 private fun AdjustRow(
-    icon: @Composable () -> Unit,
+    icon: ImageVector,
+    hue: SettingsSectionHue,
     label: String,
     subtitle: String,
     onClick: () -> Unit,
+    testTag: String,
     modifier: Modifier = Modifier,
-    testTag: String? = null,
     trailingContent: (@Composable () -> Unit)? = null,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Box(
-            modifier = Modifier.size(32.dp).clip(CircleShape).background(IconTile),
-            contentAlignment = Alignment.Center,
-        ) {
-            icon()
-        }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
-        }
-        trailingContent?.invoke()
-    }
+    ClickableRow(
+        title = label,
+        subtitle = subtitle,
+        onClick = onClick,
+        testTag = testTag,
+        modifier = modifier,
+        leadingIcon = { SettingsIconBadge(icon, hue) },
+        trailing = trailingContent,
+    )
 }
 
 @Preview(showBackground = true)
@@ -210,7 +207,7 @@ private fun ClockAdjustSheetPreview() {
             onUseCustomWidgetClick = {},
             onSwitchToLauncherClockClick = {},
             overrideFacetName = null,
-            modifier = Modifier.background(Surface),
+            modifier = Modifier.background(SurfaceContainer),
         )
     }
 }
@@ -228,7 +225,7 @@ private fun ClockAdjustSheetCustomWidgetPreview() {
             onSwitchToLauncherClockClick = {},
             overrideFacetName = null,
             hasCustomClockWidget = true,
-            modifier = Modifier.background(Surface),
+            modifier = Modifier.background(SurfaceContainer),
         )
     }
 }

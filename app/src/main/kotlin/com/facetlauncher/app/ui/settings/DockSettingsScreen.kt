@@ -57,6 +57,7 @@ import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.rememberDragReorderState
@@ -137,7 +138,7 @@ private fun DockSettingsContent(
                     )
                 }
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         DockClickableRow(
                             title = stringResource(R.string.dock_select_apps),
                             subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, DockAppRepository.MAX_APPS),
@@ -183,7 +184,7 @@ private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Un
             .testTag(testTag)
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 13.dp)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
             .alpha(if (enabled) 1f else 0.4f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -211,7 +212,7 @@ private fun DockAppsRow(
     onReorder: (List<PlacedItem>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
+    Column(modifier = modifier.padding(horizontal = LocalSettingsRowInset.current, vertical = 8.dp)) {
         // Keyed on component identity only, not the raw `dockItems` list — an app's AppInfo.icon
         // is a freshly-decoded bitmap on every LauncherApps re-emission, so keying `remember` on
         // the raw list would reset drag state mid-drag on re-emissions unrelated to the dock.

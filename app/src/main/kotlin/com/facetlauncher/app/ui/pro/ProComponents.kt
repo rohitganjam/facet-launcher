@@ -100,13 +100,13 @@ internal fun ProBadge(modifier: Modifier = Modifier, textSize: Float = 10f) {
 }
 
 /**
- * A full-width button with the accent gradient and glow, its label in `onPrimary` (white in light, dark in dark theme, where the accent is lighter): the one primary action of the Pro screens. It keeps the
- * app's button shape (M3 medium, 12dp, like [com.facetlauncher.app.ui.components.TonalButton]), not a pill.
+ * A full-width button with the accent gradient and glow, its label in `onPrimary` (white in light, dark in dark theme, where the accent is lighter): the one primary action of the Pro screens. A pill,
+ * like every other button ([com.facetlauncher.app.ui.components.TonalButton]).
  */
 @Composable
 internal fun ProGradientButton(text: String, onClick: () -> Unit, enabled: Boolean, tag: String, modifier: Modifier = Modifier) {
     val accent = Accent
-    val buttonShape = MaterialTheme.shapes.medium
+    val buttonShape = CircleShape
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -123,22 +123,25 @@ internal fun ProGradientButton(text: String, onClick: () -> Unit, enabled: Boole
     }
 }
 
+/** The fan's overall scale: 56dp tall (it was 52dp). */
+private const val FAN_SCALE = 56f / 52f
+
 /** Three small facet cards fanned at a corner of the Settings card. Decorative. */
 @Composable
 internal fun ProFacetFan(modifier: Modifier = Modifier) {
     val accent = Accent
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(6.dp * FAN_SCALE)
     val cards = listOf(
         Triple(FanLight, -9f, 0.dp),
-        Triple(lerp(FanPaper, accent, 0.35f), 0f, (-4).dp),
+        Triple(lerp(FanPaper, accent, 0.35f), 0f, (-4).dp * FAN_SCALE),
         Triple(FanDark, 9f, 0.dp),
     )
-    Box(modifier = modifier.size(width = 58.dp, height = 52.dp).clearAndSetSemantics { }) {
+    Box(modifier = modifier.size(width = 58.dp * FAN_SCALE, height = 52.dp * FAN_SCALE).clearAndSetSemantics { }) {
         cards.forEachIndexed { index, (color, degrees, lift) ->
             Box(
                 modifier = Modifier
-                    .offset(x = 16.dp * index, y = 8.dp + lift)
-                    .size(width = 26.dp, height = 44.dp)
+                    .offset(x = 16.dp * FAN_SCALE * index, y = 8.dp * FAN_SCALE + lift)
+                    .size(width = 26.dp * FAN_SCALE, height = 44.dp * FAN_SCALE)
                     .graphicsLayer { rotationZ = degrees; shadowElevation = 6.dp.toPx(); this.shape = shape; clip = false }
                     .background(color, shape),
             )

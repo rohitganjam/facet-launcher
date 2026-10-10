@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,9 +54,9 @@ import com.facetlauncher.app.ui.components.RenameDialog
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.rememberDragReorderState
-import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
@@ -190,17 +189,12 @@ private fun FolderDetailHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        Row(
-            modifier = Modifier
-                .clickable(onClick = { showRenameDialog = true })
-                .testTag("folder_detail_rename")
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Icon(imageVector = Icons.Outlined.DriveFileRenameOutline, contentDescription = null, tint = Accent)
-            Text(text = stringResource(R.string.action_rename), style = MaterialTheme.typography.bodyLarge, color = Accent)
-        }
+        TextActionButton(
+            text = stringResource(R.string.action_rename),
+            onClick = { showRenameDialog = true },
+            leadingIcon = Icons.Outlined.DriveFileRenameOutline,
+            modifier = Modifier.testTag("folder_detail_rename"),
+        )
     }
 
     if (showRenameDialog) {

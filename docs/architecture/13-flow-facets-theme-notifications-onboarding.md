@@ -39,19 +39,20 @@ flowchart TB
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```
 
-- **`FacetSettingsScreen` is a plain nav list** — a Rename row plus one "HOME & APPS" card with
-  Apps list / Dock / Appearance / Calendars rows, mirroring `SettingsScreen`'s own
-  layout. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
+- **`FacetSettingsScreen` is a plain nav list** — a Rename row, an "Appearance" card (the
+  Appearance row), then a "Home & apps" card with Apps list / Dock / Calendars rows, mirroring `SettingsScreen`'s own
+  layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
+  the same hue as on Settings, inset dividers, no chevrons. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
   own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle
   sits on the same screen as the controls it gates, and `setOverriding*` calls now live in that
   destination's own ViewModel rather than `FacetSettingsViewModel`. The "Appearance" row is the one
   exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
   switch of its own (see the `LOOK` subgraph above).
-- **`AppearanceSettingsScreen` is three separate cards**, not one — "DOCK & HOME" (the `LOOK`
-  fields above, always shown), "CLOCK" (just the Clock & calendar style nav row, shown in both
-  scopes — in facet scope it opens that facet's own `FacetClockStyleGalleryScreen`, and its
-  subtitle and the preview clock resolve through `overrideClock` via
-  `AppearanceSettingsUiState.clockSettings`), and (global mode only) "GENERAL"
+- **`AppearanceSettingsScreen` is three separate cards**, not one, in this order — "Clock" (just
+  the Clock Style nav row, shown in both scopes — in facet scope it opens that facet's own
+  `FacetClockStyleGalleryScreen`, and its subtitle and the preview clock resolve through
+  `overrideClock` via `AppearanceSettingsUiState.clockSettings`), "Dock & home" (the `LOOK`
+  fields above, always shown), and (global mode only) "General"
   (theme/accent/icons/launcher font/app label color/size/weight). Row titles:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list

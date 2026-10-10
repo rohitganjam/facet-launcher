@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -44,13 +49,17 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.ConfirmDialog
+import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import java.text.SimpleDateFormat
@@ -161,16 +170,18 @@ private fun BackupRestoreContent(
                 }
 
                 item {
-                    SettingsCard {
+                    SettingsCard(fullBleedRows = true) {
                         RowScaffold(
+                            icon = Icons.Outlined.FileUpload,
                             title = stringResource(R.string.backup_restore_export_title),
                             subtitle = stringResource(R.string.backup_restore_export_subtitle),
                             onClick = onExportClick,
                             enabled = !uiState.isBusy,
                             testTag = "export_backup_row",
                         )
-                        CardDivider()
+                        CardDivider(startInset = SettingsIconBadgeInset)
                         RowScaffold(
+                            icon = Icons.Outlined.FileDownload,
                             title = stringResource(R.string.backup_restore_import_title),
                             subtitle = stringResource(R.string.backup_restore_import_subtitle),
                             onClick = onImportClick,
@@ -295,6 +306,7 @@ private fun PendingWidgetRow(
 
 @Composable
 private fun RowScaffold(
+    icon: ImageVector,
     title: String,
     subtitle: String,
     onClick: () -> Unit,
@@ -307,9 +319,11 @@ private fun RowScaffold(
             .fillMaxWidth()
             .testTag(testTag)
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = 14.dp),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        SettingsIconBadge(icon, SettingsSectionHue.SYSTEM, modifier = Modifier.alpha(if (enabled) 1f else 0.4f))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = if (enabled) Ink else Muted)
             Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)

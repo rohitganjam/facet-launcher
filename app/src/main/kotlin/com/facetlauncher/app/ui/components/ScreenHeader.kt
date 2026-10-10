@@ -11,9 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.facetlauncher.app.ui.theme.Ink
@@ -78,9 +80,9 @@ fun ScreenHeader(
 private fun ScreenHeaderPreview() {
     FacetLauncherTheme {
         ScreenHeader(
-            title = "Screen title",
-            subtitle = "N things available",
-            trailingAction = { TonalButton(text = "Action", onClick = {}) },
+            title = stringResource(R.string.settings_header_title),
+            subtitle = stringResource(R.string.settings_facets_subtitle),
+            trailingAction = { TonalButton(text = stringResource(R.string.action_save), onClick = {}) },
         )
     }
 }

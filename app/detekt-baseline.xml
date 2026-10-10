@@ -31,14 +31,6 @@
     <ID>ComposableParamOrder:HomeScreen.kt:@Composable internal fun FolderRow</ID>
     <ID>ComposableParamOrder:HomeScreen.kt:@OptIn(ExperimentalFoundationApi::class) @Composable internal fun AppRow</ID>
     <ID>ComposableParamOrder:StickyHeaderLayout.kt:@Composable fun StickyHeaderLayout</ID>
-    <ID>ComposeHardcodedText:AppPickerScreen.kt:"Favorites"</ID>
-    <ID>ComposeHardcodedText:FacetCarouselScreen.kt:""</ID>
-    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Calendar"</ID>
-    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Contacts"</ID>
-    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Notification access"</ID>
-    <ID>ComposeHardcodedText:PermissionsScreen.kt:"Usage access"</ID>
-    <ID>ComposeHardcodedText:ScreenHeader.kt:"Action"</ID>
-    <ID>ComposeHardcodedText:ScreenHeader.kt:"Screen title"</ID>
     <ID>CompositionLocalAllowlist:LauncherLocals.kt:/** * [LauncherViewModel.homePressedEvent], threaded down from [com.facetlauncher.app.LauncherActivity]'s * top-level `CompositionLocalProvider` so any transient UI state that should close when the user * returns Home — not just [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own Drawer/Hub/Facet * axes, but e.g. [com.facetlauncher.app.ui.components.AppContextMenu]'s bottom sheet — can subscribe * directly without every intermediate composable threading it through as a parameter. Same shape as * `ui/theme/ThemeLocals.kt`'s own locals. `null` wherever [com.facetlauncher.app.LauncherActivity] * hasn't provided it (`@Preview`s, unit tests), where nothing should close rather than crash. */ val LocalHomePressedEvent = staticCompositionLocalOf&lt;SharedFlow&lt;Unit&gt;?&gt; { null }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Bumped by [FacetLauncherTheme] on every `ON_RESUME` so [Accent]'s dynamic-color lookup re-reads * the OS's current wallpaper-derived palette instead of trusting a value cached from whenever the * Activity was first composed. Needed because Facet, as the Home app, is almost always *resumed* * rather than freshly launched — without this, a wallpaper/theme-palette change made in system * Settings would only show up in Facet after a full force-stop, not just returning to Home (see * chat history). */ val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * F11's accent-source settings, provided once at the root by [FacetLauncherTheme] so [Accent] * (a plain top-level color, not a composable parameter) can read them without every call site * threading them through. Defaults here (Material You on, no custom pick) only apply to * previews/tests that render without going through [FacetLauncherTheme] explicitly. */ val LocalAccentFromSystem = staticCompositionLocalOf { true }</ID>

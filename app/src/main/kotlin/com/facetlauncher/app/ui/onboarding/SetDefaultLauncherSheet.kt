@@ -4,19 +4,15 @@ import android.content.Intent
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,12 +25,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.PrimaryButton
+import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
-import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
-import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 
@@ -66,17 +62,11 @@ fun SetDefaultLauncherSheet(
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
             SetDefaultContent(onSetDefault = { launcher.launch(requestDefaultLauncherIntent()) })
             Spacer(modifier = Modifier.height(20.dp))
-            Text(
+            TextActionButton(
                 text = stringResource(R.string.onboarding_later),
-                style = MaterialTheme.typography.bodyLarge,
+                onClick = onFinish,
                 color = Muted,
-                // 48dp minimum touch target (M3 guideline), centered on the text.
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .clickable(onClick = onFinish)
-                    .testTag("onboarding_later")
-                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                    .wrapContentSize(Alignment.Center),
+                modifier = Modifier.align(Alignment.End).testTag("onboarding_later"),
             )
         }
     }
@@ -106,17 +96,10 @@ private fun SetDefaultContent(onSetDefault: () -> Unit, modifier: Modifier = Mod
             Text(text = stringResource(R.string.set_default_launcher_home_app_badge), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text(
+        PrimaryButton(
             text = stringResource(R.string.set_default_launcher_cta),
-            style = MaterialTheme.typography.bodyLarge,
-            color = InkInverted,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Accent, MaterialTheme.shapes.medium)
-                .clickable(onClick = onSetDefault)
-                .testTag("onboarding_set_default")
-                .padding(vertical = 14.dp),
+            onClick = onSetDefault,
+            modifier = Modifier.fillMaxWidth().testTag("onboarding_set_default"),
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(

@@ -191,18 +191,17 @@
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Réglages</string>
-    <string name="settings_section_facets">FACETTES</string>
-    <string name="settings_section_appearance">APPARENCE</string>
-    <string name="settings_section_clock_calendar">HORLOGE ET CALENDRIER</string>
-    <string name="settings_section_home_apps">ACCUEIL ET APPS</string>
-    <string name="settings_section_system">SYSTÈME</string>
+    <string name="settings_section_facets">Facettes</string>
+    <string name="settings_section_appearance">Apparence</string>
+    <string name="settings_section_home_apps">Accueil et apps</string>
+    <string name="settings_section_system">Système</string>
     <string name="settings_facets_title">Facettes</string>
     <string name="settings_facets_subtitle">Créez et gérez des réglages propres à chaque facette</string>
     <string name="settings_change_wallpaper_title">Changer le fond d\'écran</string>
     <string name="settings_change_wallpaper_subtitle">Change le fond d\'écran du système</string>
     <string name="settings_appearance_title">Apparence du launcher</string>
     <string name="settings_appearance_subtitle">Thème, accent, icônes, polices</string>
-    <string name="settings_clock_calendar_title">Style d\'horloge et de calendrier</string>
+    <string name="settings_clock_calendar_title">Style d\'horloge</string>
     <string name="settings_time_format_24h">Format 24 heures</string>
     <string name="settings_time_format_12h">Format 12 heures</string>
     <string name="settings_calendars_title">Calendriers à afficher</string>
@@ -695,24 +694,18 @@
     <string name="facet_settings_active">Actif</string>
     <string name="facet_settings_activate_facet">Activer</string>
     <string name="facet_settings_rename_facet">Renommer la facette</string>
-    <string name="facet_settings_section_apps_list">LISTE D\'APPS</string>
     <plurals name="format_count_apps">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Réglages du Dock</string>
-    <string name="facet_settings_clock_overriding">Remplace les valeurs par défaut · appuyez pour modifier</string>
-    <string name="facet_settings_clock_inherits">Hérite du défaut · Pile légère · appuyez pour prévisualiser</string>
     <string name="facet_settings_rename_explanation">Renommez cette facette.</string>
 
     <!-- HomeScreen -->
     <string name="home_usage_access_needed">Les plus utilisées nécessite l\'accès à l\'utilisation depuis les réglages système.</string>
 
     <!-- ClockStyleGalleryScreen -->
-    <string name="clock_style_calendar_section">CALENDRIER</string>
     <string name="clock_style_font_label">Police</string>
-    <string name="clock_style_color_label">Couleur</string>
-    <string name="clock_style_calendar_alignment">Alignement du calendrier</string>
     <string name="clock_style_clock_section">HORLOGE</string>
     <string name="clock_style_primary_font_color">Couleur de police principale</string>
     <string name="clock_style_show_meridiem">Afficher le méridien (AM/PM)</string>
@@ -731,7 +724,7 @@
     <string name="clock_adjust_align_left">Aligner à gauche</string>
     <string name="clock_adjust_align_center">Centrer</string>
     <string name="clock_adjust_align_right">Aligner à droite</string>
-    <string name="clock_adjust_edit_styles">Modifier les styles d\'horloge et de calendrier</string>
+    <string name="clock_adjust_edit_styles">Modifier les styles d\'horloge</string>
     <string name="clock_adjust_edit_styles_subtitle">Modèles, polices, couleurs et alignement</string>
     <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>
 
@@ -798,9 +791,9 @@
     <string name="app_list_column_alignment_launcher_default">Alignement par défaut du launcher</string>
     <string name="app_list_grid_columns_launcher_default">Colonnes par défaut du launcher</string>
     <string name="app_list_grid_display_mode_launcher_default">Style par défaut du launcher</string>
-    <string name="appearance_section_dock_home">DOCK ET ACCUEIL</string>
-    <string name="appearance_section_clock">HORLOGE</string>
-    <string name="appearance_section_general">GÉNÉRAL</string>
+    <string name="appearance_section_dock_home">Dock et accueil</string>
+    <string name="appearance_section_clock">Horloge</string>
+    <string name="appearance_section_general">Général</string>
     <string name="appearance_icon_shape">Forme des icônes</string>
     <string name="facet_settings_appearance_title">Apparence</string>
     <string name="clock_adjust_use_custom_widget">Utiliser un widget personnalisé</string>
