@@ -131,6 +131,7 @@ undecodable file).
 | Test class mirrors the class under test: `XRepository` → `XRepositoryTest`, same package in `test/` or `androidTest/` | The registry's "no mirrored test" section and the `Subject` column depend on it |
 | Method names describe behaviour: `` `swipe down at top closes drawer`() `` (unit) or `swipeDownAtTopClosesDrawer()` (instrumented — 532 of 579 use camelCase; backticked names work but are avoided because `adb`/Orchestrator quoting of spaces is fragile) | The registry lists names verbatim as the behaviour contract |
 | Given / When / Then sections (comments or blank lines) in every body | Readability of 1500+ cases |
+| A test for a feature newer than `minSdk` (30) carries `@SdkSuppress(minSdkVersion = …)`, not an `assumeTrue(Build.VERSION…)` in the body | The orchestrator reports a failed assumption as a failure; the annotation keeps the test out of the run on older devices (e.g. the four wallpaper-accent tests, Android 12+) |
 | One behaviour per test; a factory function (`repository(...)`, `viewModel(...)`) with defaulted doubles instead of a shared mutable `@Before` fixture | Overrides stay local and visible |
 | Never mock `UserHandle` — build a real one via `Parcel` (see the helper at the top of `AppDrawerScreenTest`) | Mockito bypasses `equals`, producing spurious matches on device |
 | Never `Thread.sleep`, never disable animation scales; use `waitForIdle()` / `waitUntil { }` | See `CLAUDE.md` — a disabled animator scale breaks the real app on that device |

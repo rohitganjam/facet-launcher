@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.test.filters.SdkSuppress
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
@@ -31,7 +32,6 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -95,9 +95,9 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
+    // Wallpaper colours (and so the source tabs) exist from Android 12; older devices skip these rather than run them
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     fun accentSwatchGridOnlyAppearsWhenBasicColorsIsSelectedAndPickingOneShowsItChecked() {
-        // Wallpaper colours (and so the source tabs) exist from Android 12
-        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default — now in the "General" card,
         // below "Dock & Home"/"Clock" (see chat history), so it needs scrolling into view first.
         setContent()
@@ -178,9 +178,9 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
+    // Wallpaper colours (and so the source tabs) exist from Android 12; older devices skip these rather than run them
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     fun wallpaperAccentRoleGridShowsByDefaultAndBasicColorsGridDoesNot() {
-        // Wallpaper colours (and so the source tabs) exist from Android 12
-        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default — scrolled into view (see
         // themeModeDropdownSwitchesBetweenLightDarkAndSystem's own comment)
         setContent()
@@ -192,9 +192,9 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
+    // Wallpaper colours (and so the source tabs) exist from Android 12; older devices skip these rather than run them
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     fun wallpaperAccentRoleGridDisappearsWhenBasicColorsIsSelected() {
-        // Wallpaper colours (and so the source tabs) exist from Android 12
-        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default — scrolled into view
         setContent()
         composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
@@ -211,9 +211,9 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
+    // Wallpaper colours (and so the source tabs) exist from Android 12; older devices skip these rather than run them
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     fun tappingAWallpaperAccentRoleSwatchPersistsTheChoice() {
-        // Wallpaper colours (and so the source tabs) exist from Android 12
-        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
         // Given the screen, "Wallpaper colors" selected by default (PRIMARY role) — scrolled into view
         val settingsRepository = setContent()
         composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_SECONDARY"))

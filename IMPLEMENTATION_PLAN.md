@@ -3979,3 +3979,8 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] `MediaSessionRepositoryTest` (13 instrumented tests): a real `MediaSession` through the real `MediaSessionManager` — no-access emits null, emitted title/artist/playing/duration/skip actions, metadata and playback updates, stopped → null → back, playing session wins, transport calls (pause/play/next/previous) and the content intent reach the session, album art from a bitmap, a `file:` URI decode, an `http:` URI ignored, an undecodable file. Passes on API 36 and API 30; breaking the art decode and skip-to-next makes two tests fail.
 - [x] The test grants notification access through the shell and always revokes it (a leftover grant fails `PermissionsScreenTest`).
 - [ ] Still untested: the wave's pause/unpause animation, the Home layout (row under the clock pushing the list down), and the progress timer.
+
+## API 30 test failures (direct request)
+
+- [x] `FacetProContentTest.theUnlockedScreenHasAddAFacetAndRestoreAtTheEndOfTheContent`: a test bug (Done is in the scrolling header and is scrolled off-screen after reaching Restore on the shorter API 30 emulator); the test now scrolls to Done. 14/14 on API 30 and 36.
+- [x] The four wallpaper-accent tests (`FontsThemesIconsScreenTest`) use `@SdkSuppress(minSdkVersion = S)` instead of `assumeTrue`, so they no longer run (or report as failures) on Android 11: 12 tests on API 30, 16 on API 36, all passing. The full API 30 run should now have no failures.

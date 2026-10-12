@@ -161,7 +161,8 @@ class FacetProContentTest {
         composeRule.onNodeWithTag("facet_pro_set_up_trigger").assertDoesNotExist()
         composeRule.onNodeWithTag("facet_pro_add_facet").performScrollTo().performClick()
         composeRule.onNodeWithTag("facet_pro_restore_link").performScrollTo().performClick()
-        composeRule.onNodeWithText("Done").performClick()
+        // Done lives in the header at the top of the scrolling content, so scrolling down to Restore pushes it out of view.
+        composeRule.onNodeWithText("Done").performScrollTo().performClick()
 
         assertEquals(1, addedFacet)
         assertEquals(1, restored)
