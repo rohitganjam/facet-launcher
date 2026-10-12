@@ -287,7 +287,8 @@ sequenceDiagram
   subtext that follows the page: "Dot badges"/"Count badges"/"Badges off", then "Media player on"/"off", joined by " · ".
   Without notification access it says "Needs notification access" instead, since both switches read off then.
   `AppearanceSettingsViewModel` holds the access flag and re-reads it on resume (`refreshNotificationAccess`).
-- Progress style is `WAVY` (default, `media_progress_style`) or `FLAT`. `WAVY` is Material's `LinearWavyProgressIndicator`,
+- Progress style is `WAVY` (default, `media_progress_style`) or `FLAT`. `WAVY` is Material's `LinearWavyProgressIndicator`
+  with every animation parameter left at its default (only the colors are ours; the wave keeps moving while paused),
   which only exists from Material3 1.5, so `app/build.gradle.kts` overrides the BOM's 1.4.0 with `1.5.0-beta01` (drop the
   override once a BOM pins a stable 1.5). It needs no OS-version gating (the artifact's minSdk is 24).
 - Progress is interpolated in the UI from the last reported position/time/speed; it is `null` (no bar fill) when the

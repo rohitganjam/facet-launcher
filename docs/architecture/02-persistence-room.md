@@ -680,7 +680,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `notification_badge_style` | String (`NotificationBadgeStyle`) | `notificationBadgeStyle` | `DOT` |
 | `show_media_player_on_home` | Boolean | `showMediaPlayerOnHome` | `false` — opt-in; the row also needs notification access, so it only shows when both hold |
 | `show_media_skip_buttons` | Boolean | `showMediaSkipButtons` | `true` |
-| `media_progress_style` | String (`MediaProgressStyle`) | `mediaProgressStyle` | `WAVY` — Material's `LinearWavyProgressIndicator`, moving while playing and flat when paused — or `FLAT` |
+| `media_progress_style` | String (`MediaProgressStyle`) | `mediaProgressStyle` | `WAVY` — Material's `LinearWavyProgressIndicator` with all animation parameters at their defaults (it keeps waving while paused) — or `FLAT` |
 
 #### Permission-prompt bookkeeping
 

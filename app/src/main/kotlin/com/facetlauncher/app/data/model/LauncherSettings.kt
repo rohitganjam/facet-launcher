@@ -95,7 +95,7 @@ enum class SystemBarIconStyle(@param:StringRes val displayNameRes: Int) {
     DARK(R.string.system_bar_icons_dark),
 }
 
-/** How the Home media row draws playback progress: a plain line, or Material 3's wavy line (flat while paused). */
+/** How the Home media row draws playback progress: a plain line, or Material 3's wavy line with its default animation. */
 enum class MediaProgressStyle(@param:StringRes val displayNameRes: Int) {
     FLAT(R.string.media_progress_style_flat),
     WAVY(R.string.media_progress_style_wavy),

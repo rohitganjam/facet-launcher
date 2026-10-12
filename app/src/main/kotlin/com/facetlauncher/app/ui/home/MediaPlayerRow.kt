@@ -2,8 +2,6 @@ package com.facetlauncher.app.ui.home
 
 import android.content.res.Configuration
 import android.os.SystemClock
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -276,7 +274,6 @@ private fun MediaProgressLine(
     if (style == MediaProgressStyle.WAVY && progress != null) {
         WavyProgressLine(
             progress = progress,
-            isPlaying = state.isPlaying,
             color = color,
             modifier = modifier.testTag("home_media_progress"),
         )
@@ -301,21 +298,15 @@ private fun MediaProgressLine(
     }
 }
 
-/** Material's wavy line up to [progress]. The wave moves while [isPlaying] and settles flat when paused. */
+/** Material's wavy line up to [progress], with its default animation; only the colors are ours. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun WavyProgressLine(progress: Float, isPlaying: Boolean, color: Color, modifier: Modifier = Modifier) {
-    val amplitude by animateFloatAsState(
-        targetValue = if (isPlaying) 1f else 0f,
-        animationSpec = tween(durationMillis = 300),
-        label = "waveAmplitude",
-    )
+private fun WavyProgressLine(progress: Float, color: Color, modifier: Modifier = Modifier) {
     LinearWavyProgressIndicator(
         progress = { progress },
         modifier = modifier.fillMaxWidth(),
         color = color,
         trackColor = color.copy(alpha = 0.25f),
-        amplitude = { amplitude },
     )
 }
 
