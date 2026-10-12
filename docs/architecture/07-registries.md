@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories (41) — all `@Singleton`, all constructor-injected, no interfaces
+## 1. Repositories (42) — all `@Singleton`, all constructor-injected, no interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -36,13 +36,14 @@ dependency is not listed the class does not have it.
 | `FavoriteAppRepository` | Room `favorite_apps` + `favorite_folder_placements` | 2 DAOs, `FolderRepository`, `AppRepository` | per-facet variants + `observeFavoriteItemsForFacets(ids)`, `replaceItems` | 8 use cases, 4 ViewModels |
 | `FolderRepository` | Room `folders` + `folder_apps` | `FolderDao`, `AppRepository` | `observeFolders(): Flow<List<Folder>>` (hydrated), create/rename/delete, add/remove/reorder members, `removeByPackage/UserId`, `getRawFolders`, `restoreFolder`, `deleteAllFolders`, orphan repair | 4 placement repositories, 5 use cases, 6 ViewModels |
 | `HeadphonesRepository` | `AudioManager` output devices + `AudioDeviceCallback` | `Context` | `observeHeadphonesPluggedIn(): Flow<Boolean>` | `DeviceStateRepository` |
+| `MediaSessionRepository` (`open`) | `MediaSessionManager.getActiveSessions` via the notification-listener grant, `MediaController` callbacks and transport controls; art falls back to a `content:`/`file:` art URI decoded off the main thread | `Context` | `observe(): Flow<MediaPlayerState?>` (cold), `skipToPrevious()`, `togglePlayPause()`, `skipToNext()`, `openPlayer()` | `ObserveHomeScreenStateUseCase`, `HomeViewModel` |
 | `NextAlarmRepository` | `AlarmManager.nextAlarmClock` + `ACTION_NEXT_ALARM_CLOCK_CHANGED` | `Context`, `Clock` | `observeNextAlarmMillis(): Flow<Long?>` | `ObserveClockAccessoriesUseCase` |
 | `NotificationAccessRepository` (`open`) | `NotificationManagerCompat.getEnabledListenerPackages` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel`, 3 settings ViewModels |
 | `NotificationBadgeRepository` | in-memory `MutableStateFlow<Map<String, Int>>` | — | `badgeCounts: StateFlow`, `setActiveNotifications(list)` | `FacetNotificationListenerService` (writer), `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
 | `NotificationShadeRepository` | `StatusBarManager.expandNotificationsPanel` (reflection, `EXPAND_STATUS_BAR`) | `Context` | `expand()` | `HomeViewModel` |
 | `PrivateSpaceRepository` | `UserManager` quiet-mode + `ACTION_PROFILE_*` broadcasts | `UserManager`, `AppRepository`, `Context` | `observePrivateSpaceState(): Flow<PrivateSpaceState>`, `observePrivateSpaceApps()`, `requestUnlock()` | `DrawerViewModel`, `PrivateSpaceViewModel` |
 | `SecureFolderRepository` | `PackageManager.getLaunchIntentForPackage(Samsung Secure Folder)` | `Context` | `launchIntent(): Intent?` | `DrawerViewModel` |
-| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 54 `suspend fun set*/reset*/mark*` writers | 12 use cases, 20 ViewModels |
+| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 57 `suspend fun set*/reset*/mark*` writers | 12 use cases, 20 ViewModels |
 | `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context` | `search(query)` (IO) | `DrawerViewModel` |
 | `UsageAccessRepository` | `AppOpsManager.unsafeCheckOpNoThrow(GET_USAGE_STATS)` | `AppOpsManager`, `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `PermissionsViewModel`, `UsageAccessExplanationViewModel` |
 | `UsageStatsRepository` | `UsageStatsManager.queryUsageStats` | `UsageStatsManager`, `AppRepository` | `getRecentApps(limit)`, `getMostUsedApps(limit)` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase` |
@@ -111,7 +112,7 @@ cycles; `AppRepository` is the single root.
 | `ObserveClockAccessoriesUseCase` | observe | `BatteryRepository`, `NextAlarmRepository` | `ObserveHomeScreenStateUseCase` |
 | `ObserveFacetAutomationUseCase` | observe (`Flow<FacetAutomationScreenState>`: rule rows with facet names, "why Home looks like this" status, permission and Pro availability, `canAddRule`, `isPro`). Takes a refresh tick that re-reads permission grants | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase` | `FacetAutomationViewModel` |
 | `ObserveFacetPreviewsUseCase` | observe (`Flow<Map<Long, FacetPreviewData>>`) | `FacetRepository`, `SettingsRepository`, `FavoriteAppRepository`, `DefaultFavoriteAppRepository`, `FacetDockAppRepository`, `DockAppRepository`, `UsageStatsRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`, `CalendarRepository` | `FacetCarouselViewModel` |
-| `ObserveHomeScreenStateUseCase` | observe (holds `refreshTrigger`, see F8) | 12 repositories + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
+| `ObserveHomeScreenStateUseCase` | observe (holds `refreshTrigger`, see F8) | 13 repositories + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
 | `ObserveHubStateUseCase` | observe (holds `refreshTrigger`) | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
 | `ObserveQuickAddStateUseCase` | pure (`forApp` / `forFolder`) | — | `HomeViewModel` |
 | `ObserveSettingsScreenStateUseCase` | observe | `SettingsRepository`, `DockAppRepository`, `DefaultFavoriteAppRepository`, `FolderRepository` | `SettingsViewModel` |
@@ -156,7 +157,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `OnboardingViewModel` | `OnboardingScreen` | — |
 | `SettingsViewModel` | `SettingsScreen` | — |
 | `FacetProViewModel` | `FacetProScreen` (Settings → Facet Pro, and every Pro limit): Buy, Restore, the Play price and messages | `reason` (`ProReason`) |
-| `AppearanceSettingsViewModel` | `AppearanceSettingsScreen` | `facetId?` |
+| `AppearanceSettingsViewModel` | `AppearanceSettingsScreen`, `DockAppsAppearanceScreen` (both `facetId?`), `FontsThemesIconsScreen` (global) — one instance per back-stack entry | `facetId?` |
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |
 | `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId?` |

@@ -233,7 +233,8 @@ private fun ClockOrWidgetContent(
                 use24HourTime = use24HourTime,
                 showMeridiem = showMeridiem,
                 textColor = colorOption.resolve(),
-                mutedTextColor = colorOption.resolve().copy(alpha = 0.8f),
+                // The date and accessory rows use the clock's own text color at full strength, not a faded tone.
+                mutedTextColor = colorOption.resolve(),
                 accentColor = accentColorOption.resolve(),
                 dateStyle = dateStyle,
                 modifier = clockContentModifier,

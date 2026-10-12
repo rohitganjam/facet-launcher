@@ -216,6 +216,13 @@ toolbar dims to 25% and its options are disabled while any handle or resize drag
 It swallows taps on its own surface even when disabled, because Home's root exits adjust mode on any tap that reaches
 it unconsumed (empty space); there is no Done button — tapping the clock or empty space, Back and Home all exit.
 
+**Media player row** (`MediaPlayerRow`, see [13 §3](13-flow-facets-theme-notifications-onboarding.md)) sits just under the
+clock block, at `handlePx - HOME_CLOCK_MIN_GAP + HOME_MEDIA_ROW_TOP_GAP`, and while visible pushes a top-aligned app list
+down by its own measured height (`appListTopPx` replaces `handlePx` for the list's offset, max height and the compact-spacing
+check). A bottom-aligned list stays put and the row fills the gap. Its height is kept after it hides, and it is not composed
+in clock adjust mode (so the handles own that space), so neither shifts the list. Its taps are scoped to the art and the
+title, so Home's own long-press still works around it.
+
 **Pressing Home** (`LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`) collapses
 everything back to bare Home, where Back only peels off the top layer. `HomeDrawerRoute`'s collector clears
 focus, resets the clock adjust sheet and the clock widget picker, and closes the Drawer, Hub and carousel

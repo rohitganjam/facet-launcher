@@ -65,9 +65,6 @@ data class FacetSettingsUiState(
     val globalAppListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
     val globalAppsToShowCount: Int = 5,
-    val globalShowAllDayEvents: Boolean = true,
-    /** `null` means nothing has been explicitly chosen yet — see [com.facetlauncher.app.data.model.LauncherSettings.selectedCalendarIds]. */
-    val globalSelectedCalendarIds: Set<String>? = null,
 ) {
     /** Gates the header's "Apply facet" button — see [FacetSettingsHeader]'s own doc. */
     val isActive: Boolean get() = facet?.id == activeFacetId
@@ -104,13 +101,6 @@ data class FacetSettingsUiState(
     val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, globalDockDisplayMode)
     val effectiveDockApps: List<PlacedItem> get() = if (isOverridingDock) dockApps else defaultDockApps
     val dockLabel: String get() = "${effectiveDockApps.size} of ${DockAppRepository.MAX_APPS}"
-
-    /** Calendar *selection* has its own override flag, independent of [isOverridingClock] — see `CalendarSettingsUiState`'s own doc comment. */
-    val isOverridingCalendar: Boolean get() = facet?.overrideCalendar ?: false
-    val effectiveShowAllDayEvents: Boolean get() = if (isOverridingCalendar) facet?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
-    val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverridingCalendar) facet?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
-    /** `null` (nothing explicitly chosen yet) counts as zero here — it isn't the same as "every calendar", it's "none decided". */
-    val selectedCalendarCount: Int get() = effectiveSelectedCalendarIds?.size ?: 0
 }
 
 @HiltViewModel
@@ -168,8 +158,6 @@ class FacetSettingsViewModel @Inject constructor(
             globalAppListGridDisplayMode = settings.appListGridDisplayMode,
             globalListContentMode = settings.listContentMode,
             globalAppsToShowCount = settings.appsToShowCount,
-            globalShowAllDayEvents = settings.showAllDayEvents,
-            globalSelectedCalendarIds = settings.selectedCalendarIds,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FacetSettingsUiState())
 

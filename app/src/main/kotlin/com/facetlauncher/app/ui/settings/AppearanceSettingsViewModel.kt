@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
@@ -70,6 +71,10 @@ data class AppearanceSettingsUiState(
     val globalDockItems: List<PlacedItem> = emptyList(),
     /** Today's real events for the effective calendar selection, empty when calendar permission isn't granted — never a sample fallback (matches `ObserveHomeScreenStateUseCase`'s own gating). */
     val calendarEvents: List<CalendarEvent> = emptyList(),
+    /** Whether notification-listener access is really granted — the Notifications row says so instead of reading "on" for a switch that isn't actually working. */
+    val notificationAccessGranted: Boolean = false,
+    /** Whether `READ_CALENDAR` is really granted — the Calendars row says so instead of summarising a selection nothing can read. */
+    val calendarAccessGranted: Boolean = false,
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode)
@@ -84,6 +89,12 @@ data class AppearanceSettingsUiState(
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overrideApps == true) facetFavorites else globalFavorites
     /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
     val effectiveDockItems: List<PlacedItem> get() = if (facet?.overrideDock == true) facetDockItems else globalDockItems
+
+    /** The calendar row's summary — resolves exactly like `CalendarSettingsUiState` (the facet's own selection when `overrideCalendar`, else global). */
+    val effectiveShowAllDayEvents: Boolean get() = if (facet?.overrideCalendar == true) facet.showAllDayEvents else settings.showAllDayEvents
+
+    /** `null` (nothing explicitly chosen yet) counts as zero — it isn't "every calendar", it's "none decided". */
+    val selectedCalendarCount: Int get() = (if (facet?.overrideCalendar == true) facet.selectedCalendarIds ?: settings.selectedCalendarIds else settings.selectedCalendarIds)?.size ?: 0
 
     /** [settings] with the clock block resolved for this scope: the facet's own when `overrideClock`, else global. */
     val clockSettings: LauncherSettings get() = settings.copy(
@@ -120,6 +131,7 @@ class AppearanceSettingsViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val wallpaperRepository: WallpaperRepository,
+    private val notificationAccessRepository: NotificationAccessRepository,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
@@ -129,12 +141,16 @@ class AppearanceSettingsViewModel @Inject constructor(
     private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { facetDockAppRepository.observeDockItems(it) } ?: flowOf(emptyList())
     private val globalDockItemsFlow: Flow<List<PlacedItem>> = dockAppRepository.observeDockItems()
 
+    private val isNotificationAccessGranted = MutableStateFlow(notificationAccessRepository.isGranted())
+    private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())
+
     val uiState: StateFlow<AppearanceSettingsUiState> = combine(
         settingsRepository.settings,
         facetId?.let { facetRepository.observeFacets() } ?: flowOf(emptyList()),
         combine(facetFavoritesFlow, globalFavoritesFlow, ::Pair),
         combine(facetDockItemsFlow, globalDockItemsFlow, ::Pair),
-    ) { settings, facets, favorites, dockItems ->
+        combine(isNotificationAccessGranted, isCalendarAccessGranted, ::Pair),
+    ) { settings, facets, favorites, dockItems, (notificationAccessGranted, calendarAccessGranted) ->
         val facet = facets.find { it.id == facetId }
         val (facetFavorites, globalFavorites) = favorites
         val (facetDockItems, globalDockItems) = dockItems
@@ -146,8 +162,20 @@ class AppearanceSettingsViewModel @Inject constructor(
             facetDockItems = facetDockItems,
             globalDockItems = globalDockItems,
             calendarEvents = observeCalendarEvents(facet, settings),
+            notificationAccessGranted = notificationAccessGranted,
+            calendarAccessGranted = calendarAccessGranted,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppearanceSettingsUiState())
+
+    /** Notification-listener access has no grant-change callback — the screen calls this on resume, so returning from the Notifications page picks up a grant made in system Settings. */
+    fun refreshNotificationAccess() {
+        isNotificationAccessGranted.value = notificationAccessRepository.isGranted()
+    }
+
+    /** `READ_CALENDAR` has no grant-change callback either — called on resume, so granting it from the Calendars page updates this screen. Re-emitting also re-reads today's events for the preview. */
+    fun refreshCalendarAccess() {
+        isCalendarAccessGranted.value = calendarPermissionRepository.isGranted()
+    }
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LauncherSettings())

@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
+import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
@@ -86,6 +87,7 @@ class AppearanceSettingsViewModelTest {
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         wallpaperRepository: WallpaperRepository = fakeWallpaperRepository(),
+        notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
     ): AppearanceSettingsViewModel {
         // Favorites/dock/calendar-grant are plain value params, stubbed only here, rather than
         // letting a test build and pre-stub its own mock before passing it in — Mockito's
@@ -110,6 +112,7 @@ class AppearanceSettingsViewModelTest {
             calendarRepository,
             calendarPermissionRepository,
             wallpaperRepository,
+            notificationAccessRepository,
         )
     }
 
@@ -370,5 +373,121 @@ class AppearanceSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(event), viewModel.uiState.value.calendarEvents)
+    }
+
+    // --- notification access (drives the Notifications row's subtext) ---
+
+    @Test
+    fun `notification access is false in the state until it is granted`() = runTest {
+        // Given notification access not granted
+        val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
+        `when`(notificationAccessRepository.isGranted()).thenReturn(false)
+        val viewModel = createViewModel(notificationAccessRepository = notificationAccessRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state says so
+        assertEquals(false, viewModel.uiState.value.notificationAccessGranted)
+    }
+
+    @Test
+    fun `refreshing notification access picks up a grant made in system settings`() = runTest {
+        // Given access not granted at first
+        val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
+        `when`(notificationAccessRepository.isGranted()).thenReturn(false)
+        val viewModel = createViewModel(notificationAccessRepository = notificationAccessRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When the user grants it and the screen resumes
+        `when`(notificationAccessRepository.isGranted()).thenReturn(true)
+        viewModel.refreshNotificationAccess()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state flips to granted
+        assertEquals(true, viewModel.uiState.value.notificationAccessGranted)
+    }
+
+    @Test
+    fun `calendar access is false in the state until it is granted`() = runTest {
+        // Given calendar permission not granted
+        val viewModel = createViewModel(calendarGranted = false)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state says so
+        assertEquals(false, viewModel.uiState.value.calendarAccessGranted)
+    }
+
+    @Test
+    fun `refreshing calendar access picks up a grant made from the calendar page`() = runTest {
+        // Given calendar permission not granted at first (and a calendar repository that can answer once it is)
+        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
+        val calendarRepository = mock(CalendarRepository::class.java)
+        `when`(calendarRepository.getTodayEvents(null, true)).thenReturn(emptyList())
+        val viewModel = createViewModel(
+            calendarGranted = false,
+            calendarPermissionRepository = calendarPermissionRepository,
+            calendarRepository = calendarRepository,
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When the user grants it and the screen resumes
+        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
+        viewModel.refreshCalendarAccess()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state flips to granted
+        assertEquals(true, viewModel.uiState.value.calendarAccessGranted)
+    }
+
+    // --- calendar row summary (the "Calendars to display" row lives in Appearance now) ---
+
+    @Test
+    fun `calendar summary uses the global selection when no facet is overriding calendar`() {
+        // Given a facet that isn't overriding calendar, with its own (ignored) values
+        val state = AppearanceSettingsUiState(
+            settings = LauncherSettings(showAllDayEvents = true, selectedCalendarIds = setOf("cal-2", "cal-3")),
+            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = false, showAllDayEvents = false, selectedCalendarIdsCsv = "cal-1"),
+        )
+
+        // Then the summary follows the global values
+        assertEquals(true, state.effectiveShowAllDayEvents)
+        assertEquals(2, state.selectedCalendarCount)
+    }
+
+    @Test
+    fun `calendar summary uses the facet's own values while it overrides calendar`() {
+        // Given a facet overriding calendar
+        val state = AppearanceSettingsUiState(
+            settings = LauncherSettings(showAllDayEvents = true, selectedCalendarIds = setOf("cal-2", "cal-3")),
+            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false, selectedCalendarIdsCsv = "cal-1"),
+        )
+
+        // Then the summary follows the facet's values
+        assertEquals(false, state.effectiveShowAllDayEvents)
+        assertEquals(1, state.selectedCalendarCount)
+    }
+
+    @Test
+    fun `calendar count is zero when nothing was chosen yet, not treated as every calendar`() {
+        // Given the global scope with no explicit selection
+        val state = AppearanceSettingsUiState(settings = LauncherSettings(selectedCalendarIds = null))
+
+        // Then it counts none
+        assertEquals(0, state.selectedCalendarCount)
+    }
+
+    @Test
+    fun `calendar count falls back to the global selection while overriding if the facet hasn't chosen its own`() {
+        // Given a facet overriding calendar but with no selection of its own
+        val state = AppearanceSettingsUiState(
+            settings = LauncherSettings(selectedCalendarIds = setOf("cal-1", "cal-2")),
+            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = null),
+        )
+
+        // Then it counts the global selection (like the calendar page itself does)
+        assertEquals(2, state.selectedCalendarCount)
     }
 }

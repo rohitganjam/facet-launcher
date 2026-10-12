@@ -27,13 +27,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.AutoMode
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Shield
@@ -62,7 +60,6 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
@@ -95,11 +92,9 @@ fun SettingsScreen(
     onViewFacetAutomation: () -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
-    onNavigateToNotificationSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
@@ -116,11 +111,9 @@ fun SettingsScreen(
         onViewFacetAutomation = onViewFacetAutomation,
         onViewFacetPro = onViewFacetPro,
         onNavigateToAppearance = onNavigateToAppearance,
-        onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
-        onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
@@ -139,11 +132,9 @@ private fun SettingsContent(
     onViewFacetAutomation: () -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
-    onNavigateToNotificationSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
@@ -226,18 +217,6 @@ private fun SettingsContent(
                 item {
                     SettingsCard(fullBleedRows = true) {
                         ClickableRow(
-                            title = stringResource(R.string.settings_calendars_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_2,
-                                pluralStringResource(R.plurals.settings_calendars_selected, uiState.selectedCalendarCount, uiState.selectedCalendarCount),
-                                stringResource(if (uiState.settings.showAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
-                            ),
-                            onClick = onNavigateToCalendarSettings,
-                            testTag = "calendar_settings_row",
-                            leadingIcon = iconBadge(Icons.Outlined.CalendarMonth, SettingsSectionHue.HOME_APPS),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
                             title = stringResource(R.string.settings_dock_title),
                             subtitle = dockSummary(uiState.dockItems),
                             onClick = onNavigateToDockSettings,
@@ -259,18 +238,6 @@ private fun SettingsContent(
                             onClick = onNavigateToAppDrawerSettings,
                             testTag = "app_drawer_settings_row",
                             leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.HOME_APPS),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_notifications_title),
-                            subtitle = if (uiState.settings.notificationDotsEnabled) {
-                                stringResource(R.string.settings_notifications_enabled_subtitle, uiState.settings.notificationBadgeStyle.notificationsSummaryLabel())
-                            } else {
-                                stringResource(R.string.settings_notifications_disabled_subtitle)
-                            },
-                            onClick = onNavigateToNotificationSettings,
-                            testTag = "notification_settings_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Notifications, SettingsSectionHue.HOME_APPS),
                         )
                         CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
@@ -404,13 +371,6 @@ private fun dockSummary(items: List<PlacedItem>): String {
 private fun folderCountSummary(count: Int): String =
     if (count == 0) stringResource(R.string.settings_folders_none) else pluralStringResource(R.plurals.settings_folders_count, count, count)
 
-/** "Dots"/"Counts" — the actual configured badge style, not a generic "dots/badges" placeholder. */
-@Composable
-private fun NotificationBadgeStyle.notificationsSummaryLabel(): String = when (this) {
-    NotificationBadgeStyle.DOT -> stringResource(R.string.settings_notification_badge_dots)
-    NotificationBadgeStyle.COUNT -> stringResource(R.string.settings_notification_badge_counts)
-}
-
 /** Package-visible (not private) — also used by [AppearanceSettingsScreen]'s own nav rows. */
 @Composable
 fun ClickableRow(
@@ -444,7 +404,7 @@ fun ClickableRow(
     }
 }
 
-private fun iconBadge(icon: ImageVector, hue: SettingsSectionHue): @Composable () -> Unit = { SettingsIconBadge(icon, hue) }
+internal fun iconBadge(icon: ImageVector, hue: SettingsSectionHue): @Composable () -> Unit = { SettingsIconBadge(icon, hue) }
 
 /** Trailing affordance for a row that navigates to its own screen. Package-visible — see [ClickableRow]. */
 @Composable
@@ -472,11 +432,9 @@ private fun SettingsScreenPreview() {
             onViewFacets = {},
             onViewFacetAutomation = {},
             onNavigateToAppearance = {},
-            onNavigateToCalendarSettings = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},
             onNavigateToAppDrawerSettings = {},
-            onNavigateToNotificationSettings = {},
             onNavigateToFolders = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},

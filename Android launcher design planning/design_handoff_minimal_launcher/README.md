@@ -43,11 +43,11 @@ App names are invented. No real products are depicted.
 | `2d` | Clock style as its own page | Adopted; see `3e` |
 | `3a` | Facet carousel | **Revised:** recent-apps style — swipe browses, tap any card (centered or peeking) applies it immediately. Uniform card scale (~85%), no separate centered/neighbour tiers. |
 | `3b` | Facet reorder list | **Revised:** no longer an in-carousel long-press-drag state. A "Reorder" header link swaps the carousel for a plain list — drag handle, name, overflow menu (Facet settings / Delete) per row, plus a pinned Add-facet row. |
-| `3c` | **Launcher settings** | Canonical settings screen. **Restyled:** a Pro card, then four tonal cards (Facets, Appearance, Home & apps, System) of icon-badge rows — 28px corners, no shadow or border, no chevrons. |
-| `3d` | **Per-facet settings** | **Restyled:** the same card layout — a Rename card, an Appearance card (holds the facet's Clock Style), and a Home & apps card (Apps list, Dock, Calendars). |
+| `3c` | **Launcher settings** | Canonical settings screen. **Restyled:** a Pro card, then four tonal cards (Facets, Appearance, Apps and folders, System) of icon-badge rows — 28px corners, no shadow or border, no chevrons. |
+| `3d` | **Per-facet settings** | **Restyled:** the same card layout — a Rename card, an Appearance card (holds the facet's Clock Style), and an Apps and folders card (Apps list, Dock). |
 | `3e` | Clock style page (default) | Built as the **clock style gallery** (`ClockStyleGalleryScreen`): a card per template with a live preview, plus font, colour, accent, 24-hour, meridiem, date and alignment options. Reached from the Appearance screen's **Clock Style** row. |
 | `3f` | Clock style page (facet override) | The same gallery scoped to a facet, behind the Inherit/Override switch (two radio rows). |
-| — | **Calendar settings** [new screen] | Reached from the Settings **Calendars to display** row or a facet's Calendars row. "Show all-day events" toggle plus the calendar picker once `READ_CALENDAR` is granted (the `4p` permission-denied strip until then — see `4l`). |
+| — | **Calendar settings** [new screen] | Reached from the **Calendars to display** row in Appearance's **Clock & calendar** section (the launcher's, or a facet's own Appearance screen). "Show all-day events" toggle plus the calendar picker once `READ_CALENDAR` is granted (the `4p` permission-denied strip until then — see `4l`). |
 | `4a`–`4e` | Launcher Hub: populated, empty, add picker, at capacity, orphaned widget | |
 | `4f`–`4h` | First run: what it is → pick favorites → set as default | |
 | `4i` | App long-press menu | |
@@ -159,13 +159,13 @@ Dropdown and switch rows are deliberately **control-only**: only the value or th
 | Section | Rows |
 |---|---|
 | **Facets** (blue) | **Facets** → the **Manage Facets** list (`3b`) — reorder, add/remove, reach per-facet settings. (The swipeable **Switch Facets** carousel opens on a left swipe on Home instead.) **Facet automation** → rules that switch facets by schedule or device trigger (`fa1`–`fa9`). |
-| **Appearance** (violet) | **Change wallpaper** → the system picker. **Launcher Appearance** → the Appearance screen: a **Clock** card (the **Clock Style** row → `3e`), **Dock & home** (dock display style, app list layout, position, presentation and alignment), and **General** (theme, system bar icons, accent colour, icon style, **icon shape** — Squircle / Rounded / Circle / Square, the selected one drawn with a 2px accent ring and a 2px gap — launcher font, font colour, size and weight), above a live preview card. |
-| **Home & apps** (teal) | **Calendars to display** → calendar settings. **Dock** → pick apps and reorder. **Home Apps List** → content mode (Favorites / Recents / Most used), apps to show, default favorites. **App Drawer** → presentation (List / Grid), grid or list size, show icons / labels, search, search bar position, drawer opacity. **Notifications** → on/off and Dot / Count badge style (routes to the access explanation if not granted). **Folders** → create, rename, reorder, delete. |
+| **Appearance** (violet) | **Change wallpaper** → the system picker. **Launcher Appearance** → the Appearance screen: a **Clock & calendar** card (the **Clock Style** row → `3e`, and **Calendars to display** → calendar settings), **Dock & home** (one **Dock & Apps appearance** row → a screen with dock display style, app list layout, position, presentation and alignment), a global-only **Notifications** card (a **Notifications and media** row → the Notifications page), and a global-only **General** card (one **Fonts, themes and icons** row → a screen with theme, system bar icons, accent colour, icon style, **icon shape** — Squircle / Rounded / Circle / Square, the selected one drawn with a 2px accent ring and a 2px gap — launcher font, font colour, size and weight), above a live preview card. Both detail screens repeat the live preview card above their controls. |
+| **Apps and folders** (teal) | **Dock** → pick apps and reorder. **Home Apps List** → content mode (Favorites / Recents / Most used), apps to show, default favorites. **App Drawer** → presentation (List / Grid), grid or list size, show icons / labels, search, search bar position, drawer opacity. **Folders** → create, rename, reorder, delete. |
 | **System** (slate) | **Permissions** → per-permission status with a **Turn on** row for Calendar, Contacts, Usage access, Notification access, Bluetooth and Location. **Backup & restore** → export or import a settings file. **Set as default launcher**, a Work profile status row when one exists, and **About**. |
 
 ### Per-facet settings (`3d`)
 
-Reached from the Home long-press sheet's **Facet settings**, the carousel's gear, or the Manage Facets overflow menu. The header shows the facet name with an **Activate facet** button (a "✓ Active" mark when it is already the active facet). It uses the same card layout as `3c`: a **Rename facet** card (→ `4m`), an **Appearance** card (→ the Appearance screen scoped to this facet, including its **Clock Style**), then a **Home & apps** card with **Apps list settings**, **Dock settings** and **Calendars to display**. Each destination screen carries its own Inherit/Override switch (two radio rows, tappable across the row), so a facet stores only what differs from the launcher defaults.
+Reached from the Home long-press sheet's **Facet settings**, the carousel's gear, or the Manage Facets overflow menu. The header shows the facet name with an **Activate facet** button (a "✓ Active" mark when it is already the active facet). It uses the same card layout as `3c`: a **Rename facet** card (→ `4m`), an **Appearance** card (→ the Appearance screen scoped to this facet, including its **Clock Style**), then an **Apps and folders** card with **Apps list settings** and **Dock settings**. (**Calendars to display** now sits in that Appearance screen's **Clock & calendar** card.) Each destination screen carries its own Inherit/Override switch (two radio rows, tappable across the row), so a facet stores only what differs from the launcher defaults.
 
 Footnote: accent, icon style and shape, drawer layout and notification dots are launcher-wide. A new facet inherits the launcher defaults and does not copy another facet's settings.
 
@@ -367,7 +367,7 @@ Fixed colours (independent of the user's accent) for the icon badges on settings
 |---|---|---|
 | Facets | `#2563eb` | `#93c5fd` |
 | Appearance | `#7c3aed` | `#c4b5fd` |
-| Home & apps | `#0d9488` | `#5eead4` |
+| Apps and folders | `#0d9488` | `#5eead4` |
 | System | `#475569` | `#cbd5e1` |
 
 ### Accent handling

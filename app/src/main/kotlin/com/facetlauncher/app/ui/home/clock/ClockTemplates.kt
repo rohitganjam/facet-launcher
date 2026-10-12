@@ -336,20 +336,19 @@ private fun RuleMeridiemTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 11.dp))
         }
         Box(modifier = Modifier.padding(top = 22.dp).fillMaxWidth().height(1.dp).background(Hairline))
-        // Accessory row moved below the rule, sharing the date's own row (rather than the rule's)
-        // — per direct request.
-        Row(
-            modifier = Modifier.padding(top = 12.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = now.format(dateFormatter(locale, dateStyle)),
-                style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 20.sp, shadow = homeTextShadow(mutedTextColor)),
-                color = mutedTextColor,
-            )
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 20.sp)
-        }
+        // The date and the accessory row each get their own line below the rule. They used to share one row, which
+        // jammed the battery against the date whenever the date was as wide as the time above it.
+        Text(
+            text = now.format(dateFormatter(locale, dateStyle)),
+            style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 20.sp, shadow = homeTextShadow(mutedTextColor)),
+            color = mutedTextColor,
+            modifier = Modifier.padding(top = 12.dp),
+        )
+        ClockAccessoryRow(
+            nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor,
+            modifier = Modifier.padding(top = 8.dp),
+            fontSize = 20.sp,
+        )
     }
 }
 
@@ -1293,7 +1292,8 @@ private fun AccentFieldTemplate(
             ) {
                 HourText(now.format(hourFormatter), family, Surface, 77.sp, FontWeight.SemiBold)
             }
-            MinuteText(now.format(minuteFormatter), family, textColor, 77.sp, FontWeight.ExtraLight)
+            // Same 12dp as the block's bottom padding (and the meridiem below) — the hour sits that far above the row's bottom edge, so the minute must too or its baseline lands lower.
+            MinuteText(now.format(minuteFormatter), family, textColor, 77.sp, FontWeight.ExtraLight, modifier = Modifier.padding(bottom = 12.dp))
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 12.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)

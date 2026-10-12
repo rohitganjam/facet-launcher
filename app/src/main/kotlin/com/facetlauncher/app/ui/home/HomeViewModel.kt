@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -39,6 +40,7 @@ import kotlinx.coroutines.launch
  * can never leave Home permanently blank, since unlike an ordinary app there is no "force quit and
  * reopen" for the actual home screen.
  */
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val observeHomeScreenState: ObserveHomeScreenStateUseCase,
@@ -47,6 +49,7 @@ class HomeViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val defaultLauncherRepository: DefaultLauncherRepository,
     private val quickAddState: ObserveQuickAddStateUseCase,
+    private val mediaSessionRepository: MediaSessionRepository,
     /** PRD F15 — the Composable layer calls straight through these (e.g. `homeViewModel.clockWidgetHost.createHostView(...)`, `homeViewModel.clockWidgetFacet.commitSize(homeUiState.activeFacet, ...)`); see their own docs for why these hooks live outside this class. */
     val clockWidgetHost: ClockWidgetHostController,
     val clockWidgetFacet: ClockWidgetFacetController,
@@ -71,6 +74,7 @@ class HomeViewModel @Inject constructor(
                 calendarEvents = screenState.calendarEvents,
                 badgeCounts = screenState.badgeCounts,
                 clockAccessories = screenState.clockAccessories,
+                mediaPlayer = screenState.mediaPlayer,
                 usageAccessPromptDismissed = dismissed,
                 isDefaultLauncher = isDefault,
             )
@@ -112,6 +116,14 @@ class HomeViewModel @Inject constructor(
     fun dismissGestureHint() {
         viewModelScope.launch { settingsRepository.markCoachMarkSeen(HOME_GESTURES_COACH_MARK_ID) }
     }
+
+    fun onMediaPrevious() = mediaSessionRepository.skipToPrevious()
+
+    fun onMediaPlayPause() = mediaSessionRepository.togglePlayPause()
+
+    fun onMediaNext() = mediaSessionRepository.skipToNext()
+
+    fun onMediaOpen() = mediaSessionRepository.openPlayer()
 
     /** Swipe-down-to-open-shade gesture, from [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]. */
     fun expandNotificationShade() {

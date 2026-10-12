@@ -13,8 +13,8 @@ checked against source, not against planning docs; where the code diverges from
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
 | [05-findings.md](05-findings.md) | Architect's review: 12 findings ranked by severity with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
-| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (183 classes / 1623 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 41 repositories (deps, source wrapped, API, consumers), 43 use cases, 30 ViewModels |
+| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (188 classes / 1680 cases), regenerate with `scripts/gen-test-registry.py` |
+| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories (deps, source wrapped, API, consumers), 43 use cases, 30 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder; override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -29,7 +29,7 @@ checked against source, not against planning docs; where the code diverges from
 
 | Concern | Choice (verified in `app/build.gradle.kts`) |
 |---|---|
-| Language / UI | Kotlin only, Jetpack Compose (BOM `2026.01.01`, Material3), no XML layouts |
+| Language / UI | Kotlin only, Jetpack Compose (BOM `2026.09.00`, Material3 overridden to `1.5.0-beta01` for the wavy progress indicator), no XML layouts |
 | Module layout | `:app` (`minSdk 30`, `targetSdk/compileSdk 36`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.9.6` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |

@@ -39,7 +39,7 @@ import org.junit.Test
 
 /**
  * The top-level per-facet screen is now a short nav list — Rename, an "Appearance" card, then
- * one "Home & apps" card with a plain row into each area's own settings screen (Apps list /
+ * one "Apps and folders" card with a plain row into each area's own settings screen (Apps list /
  * Dock / Calendars), mirroring `SettingsScreen`'s own layout. No Inherit/Override switches here any
  * more — each destination screen now owns its own (see chat history), exercised by
  * `com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreenTest` / `DockSettingsScreenTest` /
@@ -57,7 +57,6 @@ class FacetSettingsScreenTest {
     private fun setContent(
         onNavigateToAppsList: (Long) -> Unit = {},
         onNavigateToDockSettings: (Long) -> Unit = {},
-        onNavigateToCalendarSettings: (Long) -> Unit = {},
         onNavigateToAppearance: (Long) -> Unit = {},
         onFacetApply: () -> Unit = {},
     ): FacetRepository {
@@ -91,7 +90,6 @@ class FacetSettingsScreenTest {
                     onBack = {},
                     onNavigateToAppsList = onNavigateToAppsList,
                     onNavigateToDockSettings = onNavigateToDockSettings,
-                    onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToAppearance = onNavigateToAppearance,
                     onFacetApply = onFacetApply,
                     viewModel = viewModel,
@@ -117,7 +115,7 @@ class FacetSettingsScreenTest {
         setContent()
 
         val renameTop = composeRule.onNodeWithTag("facet_settings_rename_row").fetchSemanticsNode().boundsInRoot.top
-        val appsSectionTop = composeRule.onNodeWithText("Home & apps").fetchSemanticsNode().boundsInRoot.top
+        val appsSectionTop = composeRule.onNodeWithText("Apps and folders").fetchSemanticsNode().boundsInRoot.top
         assert(renameTop < appsSectionTop)
     }
 
@@ -167,13 +165,14 @@ class FacetSettingsScreenTest {
     }
 
     @Test
-    fun calendarRowNavigatesWithTheFacetsId() {
-        var navigatedFromCalendar: Long? = null
-        setContent(onNavigateToCalendarSettings = { navigatedFromCalendar = it })
+    fun calendarRowIsGoneBecauseAppearanceOwnsIt() {
+        // Given a facet's settings
+        setContent()
+        awaitFacetLoaded()
+        scrollToRow("facet_dock_settings_row")
 
-        scrollToRow("facet_calendar_settings_row")
-        composeRule.onNodeWithTag("facet_calendar_settings_row").performClick()
-        assertEquals(true, navigatedFromCalendar != null)
+        // Then there's no calendar row here — it moved into the facet's Appearance screen
+        composeRule.onNodeWithTag("facet_calendar_settings_row").assertDoesNotExist()
     }
 
     @Test
@@ -192,40 +191,13 @@ class FacetSettingsScreenTest {
         setContent(onNavigateToAppearance = { navigatedFromAppearance = it })
         awaitFacetLoaded()
 
-        // The dock display style/app row presentation move to Appearance now (see chat history) —
-        // this row previews both, inheriting the global defaults (Icons, Icon & Text) since this
-        // facet overrides neither.
+        // This row previews the facet's clock style, then the dock display style and app row
+        // presentation — inheriting the global defaults (Icons, Icon & Text) since this facet
+        // overrides none of them — each named for its surface: "<template> clock · Dock icons · Home icon & text".
         scrollToRow("facet_appearance_row")
-        composeRule.onNodeWithTag("facet_appearance_row").assertTextContains("Icons", substring = true)
+        composeRule.onNodeWithTag("facet_appearance_row").assertTextContains(" clock · Dock icons · Home icon & text", substring = true)
         composeRule.onNodeWithTag("facet_appearance_row").performClick()
         assertEquals(true, navigatedFromAppearance != null)
-    }
-
-    @Test
-    fun calendarRowSubtitleShowsZeroSelectedWhenNothingHasBeenExplicitlyChosenYet() {
-        // Given a fresh facet that isn't overriding, and the global selection never touched (`null` — "none decided", not "all")
-        setContent()
-        awaitFacetLoaded()
-        scrollToRow("facet_calendar_settings_row")
-
-        // Then the row shows a literal zero, not a device calendar total standing in for "all"
-        composeRule.onNodeWithTag("facet_calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
-    }
-
-    @Test
-    fun calendarRowSubtitleReflectsTheGlobalSelectionWhileInheriting() {
-        // Given 2 calendars explicitly selected globally, and this facet inheriting (not overriding)
-        setContent()
-        awaitFacetLoaded()
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
-        scrollToRow("facet_calendar_settings_row")
-
-        // Then the row reflects that inherited count and the all-day events visibility
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("facet_calendar_settings_row").assertTextContains("2 calendars selected · All-day events visible", substring = true)
-            }.isSuccess
-        }
     }
 
     @Test

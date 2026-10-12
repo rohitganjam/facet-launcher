@@ -20,7 +20,4 @@ data class SettingsUiState(
     val isLoading: Boolean = true,
     /** Every genuine Work Profile on this device — one settings row per entry; empty hides the section entirely. See [WorkProfileInfo]'s own doc. */
     val workProfiles: List<WorkProfileInfo> = emptyList(),
-) {
-    /** `null` (nothing explicitly chosen yet) counts as zero here — it isn't the same as "every calendar", it's "none decided". See [LauncherSettings.selectedCalendarIds]. */
-    val selectedCalendarCount: Int get() = settings.selectedCalendarIds?.size ?: 0
-}
+)

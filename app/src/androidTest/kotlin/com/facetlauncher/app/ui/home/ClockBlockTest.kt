@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home
 import android.appwidget.AppWidgetHostView
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.down
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -712,5 +713,67 @@ class ClockBlockTest {
         }
         composeRule.onNodeWithText("9").assertExists()
         composeRule.onNodeWithText("05").assertExists()
+    }
+
+    private fun resolvedTextColor(text: String, useUnmergedTree: Boolean = false): androidx.compose.ui.graphics.Color {
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        val node = composeRule.onNodeWithText(text, useUnmergedTree = useUnmergedTree).fetchSemanticsNode()
+        node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        return layouts.first().layoutInput.style.color
+    }
+
+    private fun assertDateAndBatteryMatchTheTimeColor(template: ClockTemplateId) {
+        // Given a template with a battery accessory
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = template, batteryPercent = 100) }
+        }
+
+        // Then the date and the battery text are exactly the time's color (they used to be it at 80% alpha)
+        val time = resolvedTextColor("9:05")
+        assertEquals("date color for $template", time, resolvedTextColor("Thursday, 27 August"))
+        assertEquals("battery color for $template", time, resolvedTextColor("100%", useUnmergedTree = true))
+    }
+
+    @Test
+    fun rulerDateAndAccessoryRowsUseTheClocksOwnTextColorNotAFadedTone() = assertDateAndBatteryMatchTheTimeColor(ClockTemplateId.RULE_MERIDIEM)
+
+    @Test
+    fun lightStackDateAndAccessoryRowsUseTheClocksOwnTextColorNotAFadedTone() = assertDateAndBatteryMatchTheTimeColor(ClockTemplateId.LIGHT_STACK)
+
+    @Test
+    fun rulerTemplateKeepsTheAccessoryRowBelowTheDateNotBesideIt() {
+        // Given the Ruler template at 09:05 with a battery accessory
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.RULE_MERIDIEM, batteryPercent = 100)
+            }
+        }
+
+        // When measuring the date line and the battery line
+        val date = composeRule.onNodeWithText("Thursday, 27 August").getUnclippedBoundsInRoot()
+        val battery = composeRule.onNodeWithText("100%", useUnmergedTree = true).getUnclippedBoundsInRoot()
+
+        // Then the accessory row starts below the date's bottom edge (it used to share the date's line)
+        assertTrue("battery top ${battery.top} should be below date bottom ${date.bottom}", battery.top >= date.bottom)
+    }
+
+    @Test
+    fun accentFieldHourAndMinuteShareABaseline() {
+        // Given ACCENT_FIELD at 09:05 — the hour and minute use the same font size, so their text boxes
+        // line up exactly when their baselines do (the hour used to float ~12dp above the minute)
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ACCENT_FIELD) }
+        }
+
+        // When measuring both digit runs
+        val hour = composeRule.onNodeWithText("9").getUnclippedBoundsInRoot()
+        val minute = composeRule.onNodeWithText("05").getUnclippedBoundsInRoot()
+
+        // Then they sit at the same height
+        assertEquals(hour.top.value, minute.top.value, 1f)
+        assertEquals(hour.bottom.value, minute.bottom.value, 1f)
     }
 }

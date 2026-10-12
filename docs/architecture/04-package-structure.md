@@ -8,15 +8,15 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (45)  @Singleton Repositories — the only layer that touches
+├── data/                          (47)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (7)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── local/                     (28)  Room: FacetDatabase, 13 entities, 12 DAOs, Converters, Migrations
-│   ├── model/                     (39)  Immutable value types & enums shared by every layer
+│   ├── model/                     (40)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
-│   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository
+│   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
 ├── domain/                        (48)  45 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
@@ -30,11 +30,11 @@ app/src/main/kotlin/com/facetlauncher/app/
     │                                    AppPickerScreen, FolderContentsSheet, the settings kit — SettingsCard,
     │                                    SettingsSectionHeader, SettingsIconBadge — and the buttons PrimaryButton,
     │                                    TonalButton, SurfaceButton, TextActionButton, …)
-    ├── navigation/                (1)   FacetNavHost + FacetDestinations (24 routes) + popBackStackSafely
+    ├── navigation/                (1)   FacetNavHost + FacetDestinations (26 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)
-    ├── home/                      (13)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
-    │                                    ClockAdjustToolbar, hosted-clock-widget controllers/tile, TimeTick
+    ├── home/                      (14)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
+    │                                    ClockAdjustToolbar, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow
     │   ├── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
     │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
@@ -44,7 +44,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (30)  13 settings screens, each `XScreen.kt` + `XViewModel.kt`
+    └── settings/                  (33)  13 settings screens, each `XScreen.kt` + `XViewModel.kt` — except Appearance, a hub of three screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `FontsThemesIconsScreen`) sharing `AppearanceSettingsViewModel` and the `AppearancePreview.kt` card
         ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```

@@ -193,14 +193,14 @@
     <string name="settings_header_title">Configurações</string>
     <string name="settings_section_facets">Facetas</string>
     <string name="settings_section_appearance">Aparência</string>
-    <string name="settings_section_home_apps">Início e apps</string>
+    <string name="settings_section_home_apps">Apps e pastas</string>
     <string name="settings_section_system">Sistema</string>
     <string name="settings_facets_title">Facetas</string>
     <string name="settings_facets_subtitle">Crie e gerencie configurações específicas de cada faceta</string>
     <string name="settings_change_wallpaper_title">Mudar papel de parede</string>
     <string name="settings_change_wallpaper_subtitle">Altere o papel de parede do sistema</string>
     <string name="settings_appearance_title">Aparência do launcher</string>
-    <string name="settings_appearance_subtitle">Tema, destaque, ícones, fontes</string>
+    <string name="settings_appearance_subtitle">Personalize relógio, calendário, início, notificações, temas</string>
     <string name="settings_clock_calendar_title">Estilo do relógio</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
     <string name="settings_time_format_12h">Formato de 12 horas</string>
@@ -237,10 +237,14 @@
     <string name="settings_contact_search">Busca de contatos %1$s</string>
     <string name="settings_settings_search">Busca de configurações %1$s</string>
     <string name="settings_notifications_title">Notificações</string>
-    <string name="settings_notification_badge_dots">Pontos</string>
-    <string name="settings_notification_badge_counts">Números</string>
-    <string name="settings_notifications_enabled_subtitle">Ativado · %1$s no Dock, Início e Gaveta</string>
-    <string name="settings_notifications_disabled_subtitle">Desativado</string>
+    <string name="settings_notifications_media_row_title">Notificações e mídia</string>
+    <string name="settings_notifications_summary_badges_dot">Selos de ponto</string>
+    <string name="settings_notifications_summary_badges_count">Selos numéricos</string>
+    <string name="settings_notifications_summary_badges_off">Selos desativados</string>
+    <string name="settings_notifications_summary_media_on">Reprodutor ativado</string>
+    <string name="settings_notifications_summary_media_off">Reprodutor desativado</string>
+    <string name="settings_notifications_needs_access">Requer acesso a notificações</string>
+    <string name="settings_calendars_needs_access">Requer acesso ao calendário</string>
     <string name="settings_folders_title">Pastas</string>
     <string name="settings_folders_none">Ainda não há pastas</string>
     <plurals name="settings_folders_count">
@@ -261,6 +265,16 @@
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Selos de notificação</string>
     <string name="notification_badge_style_row_title">Estilo do selo</string>
+    <string name="media_player_row_title">Mostrar o reprodutor de mídia na tela inicial</string>
+    <string name="media_skip_buttons_row_title">Mostrar botões de pular</string>
+    <string name="media_progress_style_row_title">Estilo de progresso</string>
+    <string name="media_progress_style_flat">Plano</string>
+    <string name="media_progress_style_wavy">Ondulado</string>
+    <string name="media_player_open_cd">Abrir reprodutor</string>
+    <string name="media_player_previous_cd">Faixa anterior</string>
+    <string name="media_player_next_cd">Próxima faixa</string>
+    <string name="media_player_play_cd">Reproduzir</string>
+    <string name="media_player_pause_cd">Pausar</string>
 
     <!-- Drawer enums -->
     <string name="drawer_presentation_list">Lista</string>
@@ -576,8 +590,8 @@
     <string name="usage_access_explanation_body">Isso requer acesso de uso, uma permissão especial concedida nas configurações do sistema — o Facet não pode solicitá-la diretamente. Ele só lê quais apps você abre e por quanto tempo; nada sai do seu dispositivo.</string>
 
     <!-- NotificationAccessExplanationScreen -->
-    <string name="notification_access_explanation_headline">Os selos de notificação exibem um ponto ou número nos apps com algo esperando por você.</string>
-    <string name="notification_access_explanation_body">Isso requer acesso a notificações, uma permissão especial concedida nas configurações do sistema — o Facet não pode solicitá-la diretamente. Ele só lê quais apps têm notificações ativas e se estão silenciosas; nada sai do seu dispositivo.</string>
+    <string name="notification_access_explanation_headline">Os selos de notificação exibem um ponto ou número nos apps com algo esperando por você, e o reprodutor de mídia mostra o que está tocando.</string>
+    <string name="notification_access_explanation_body">Isso requer acesso a notificações, uma permissão especial concedida nas configurações do sistema — o Facet não pode solicitá-la diretamente. Ele só lê quais apps têm notificações ativas e se estão silenciosas, além do título, do artista e da capa da mídia que está tocando; nada sai do seu dispositivo.</string>
 
     <!-- FolderAppPickerScreen -->
     <string name="folder_app_picker_in_folder">NA PASTA</string>
@@ -791,10 +805,19 @@
     <string name="app_list_grid_columns_launcher_default">Colunas padrão do launcher</string>
     <string name="app_list_grid_display_mode_launcher_default">Estilo padrão do launcher</string>
     <string name="appearance_section_dock_home">Dock e início</string>
-    <string name="appearance_section_clock">Relógio</string>
+    <string name="appearance_section_clock">Relógio e calendário</string>
+    <string name="appearance_dock_apps_title">Aparência do dock e dos apps</string>
+    <string name="appearance_fonts_themes_icons_title">Fontes, temas e ícones</string>
+    <string name="appearance_fonts_themes_icons_subtitle">Tema, destaque, estilo de ícones, fontes</string>
     <string name="appearance_section_general">Geral</string>
     <string name="appearance_icon_shape">Formato dos ícones</string>
     <string name="facet_settings_appearance_title">Aparência</string>
+    <string name="facet_settings_appearance_clock_label">Relógio: %1$s</string>
+    <string name="facet_settings_appearance_dock_icons">Ícones do dock</string>
+    <string name="facet_settings_appearance_dock_text">Texto do dock</string>
+    <string name="facet_settings_appearance_home_icon_only">Início: apenas ícone</string>
+    <string name="facet_settings_appearance_home_icon_and_text">Início: ícone e texto</string>
+    <string name="facet_settings_appearance_home_text_only">Início: apenas texto</string>
     <string name="clock_adjust_use_custom_widget">Usar widget personalizado</string>
     <string name="clock_adjust_use_custom_widget_subtitle">Substitui o relógio por um widget da sua escolha</string>
     <string name="clock_adjust_switch_to_launcher_clock">Mudar para o widget de relógio do launcher</string>

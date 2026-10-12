@@ -34,6 +34,7 @@ import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
@@ -54,6 +55,9 @@ private object Keys {
     val DRAWER_OPACITY = floatPreferencesKey("drawer_opacity")
     val NOTIFICATION_DOTS_ENABLED = booleanPreferencesKey("notification_dots_enabled")
     val NOTIFICATION_BADGE_STYLE = stringPreferencesKey("notification_badge_style")
+    val SHOW_MEDIA_PLAYER_ON_HOME = booleanPreferencesKey("show_media_player_on_home")
+    val SHOW_MEDIA_SKIP_BUTTONS = booleanPreferencesKey("show_media_skip_buttons")
+    val MEDIA_PROGRESS_STYLE = stringPreferencesKey("media_progress_style")
     val SHOW_DRAWER_ICONS = booleanPreferencesKey("show_drawer_icons")
     val SHOW_DRAWER_LABELS = booleanPreferencesKey("show_drawer_labels")
     val SEARCH_BAR_POSITION = stringPreferencesKey("search_bar_position")
@@ -125,6 +129,11 @@ class SettingsRepository @Inject constructor(
             notificationBadgeStyle = preferences[Keys.NOTIFICATION_BADGE_STYLE]?.let {
                 runCatching { NotificationBadgeStyle.valueOf(it) }.getOrNull()
             } ?: defaults.notificationBadgeStyle,
+            showMediaPlayerOnHome = preferences[Keys.SHOW_MEDIA_PLAYER_ON_HOME] ?: defaults.showMediaPlayerOnHome,
+            showMediaSkipButtons = preferences[Keys.SHOW_MEDIA_SKIP_BUTTONS] ?: defaults.showMediaSkipButtons,
+            mediaProgressStyle = preferences[Keys.MEDIA_PROGRESS_STYLE]?.let {
+                runCatching { MediaProgressStyle.valueOf(it) }.getOrNull()
+            } ?: defaults.mediaProgressStyle,
             showDrawerIcons = preferences[Keys.SHOW_DRAWER_ICONS] ?: defaults.showDrawerIcons,
             showDrawerLabels = preferences[Keys.SHOW_DRAWER_LABELS] ?: defaults.showDrawerLabels,
             searchBarPosition = preferences[Keys.SEARCH_BAR_POSITION]?.let {
@@ -245,6 +254,18 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setNotificationBadgeStyle(style: NotificationBadgeStyle) {
         dataStore.edit { it[Keys.NOTIFICATION_BADGE_STYLE] = style.name }
+    }
+
+    suspend fun setShowMediaPlayerOnHome(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_MEDIA_PLAYER_ON_HOME] = enabled }
+    }
+
+    suspend fun setShowMediaSkipButtons(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_MEDIA_SKIP_BUTTONS] = enabled }
+    }
+
+    suspend fun setMediaProgressStyle(style: MediaProgressStyle) {
+        dataStore.edit { it[Keys.MEDIA_PROGRESS_STYLE] = style.name }
     }
 
     suspend fun setShowDrawerIcons(enabled: Boolean) {

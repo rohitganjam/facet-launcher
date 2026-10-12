@@ -95,6 +95,12 @@ enum class SystemBarIconStyle(@param:StringRes val displayNameRes: Int) {
     DARK(R.string.system_bar_icons_dark),
 }
 
+/** How the Home media row draws playback progress: a plain line, or Material 3's wavy line (flat while paused). */
+enum class MediaProgressStyle(@param:StringRes val displayNameRes: Int) {
+    FLAT(R.string.media_progress_style_flat),
+    WAVY(R.string.media_progress_style_wavy),
+}
+
 /** F13 — README specs a dot-only badge; `COUNT` is a deliberate departure from that, offered as a user choice rather than replacing the spec's default outright. */
 enum class NotificationBadgeStyle(@param:StringRes val displayNameRes: Int) {
     DOT(R.string.notification_badge_style_dot),
@@ -235,6 +241,10 @@ data class LauncherSettings(
     val notificationDotsEnabled: Boolean = true,
     /** F13 — Dot (README's spec default) vs a capped numeric count, chosen from the dedicated Notification settings screen. */
     val notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
+    /** Opt-in: the media player row under Home's clock. Also needs notification access (a media session is read through the listener grant). */
+    val showMediaPlayerOnHome: Boolean = false,
+    val showMediaSkipButtons: Boolean = true,
+    val mediaProgressStyle: MediaProgressStyle = MediaProgressStyle.WAVY,
     val showDrawerIcons: Boolean = true,
     val showDrawerLabels: Boolean = true,
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,

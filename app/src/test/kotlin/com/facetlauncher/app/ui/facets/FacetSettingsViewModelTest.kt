@@ -249,54 +249,6 @@ class FacetSettingsViewModelTest {
         assertEquals(DockDisplayMode.TEXT, state.dockDisplayMode)
     }
 
-    @Test
-    fun `calendar selection falls back to the global default while not overriding calendar`() {
-        val state = FacetSettingsUiState(
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = false, showAllDayEvents = false, selectedCalendarIdsCsv = "cal-1"),
-            globalShowAllDayEvents = true,
-            globalSelectedCalendarIds = setOf("cal-2", "cal-3"),
-        )
-
-        assertEquals(true, state.effectiveShowAllDayEvents)
-        assertEquals(setOf("cal-2", "cal-3"), state.effectiveSelectedCalendarIds)
-        assertEquals(2, state.selectedCalendarCount)
-    }
-
-    @Test
-    fun `calendar selection uses this facet's own values while overriding calendar`() {
-        val state = FacetSettingsUiState(
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false, selectedCalendarIdsCsv = "cal-1"),
-            globalShowAllDayEvents = true,
-            globalSelectedCalendarIds = setOf("cal-2", "cal-3"),
-        )
-
-        assertEquals(false, state.effectiveShowAllDayEvents)
-        assertEquals(setOf("cal-1"), state.effectiveSelectedCalendarIds)
-        assertEquals(1, state.selectedCalendarCount)
-    }
-
-    @Test
-    fun `selected calendar count is zero when nothing has been explicitly chosen yet anywhere, not treated as every calendar`() {
-        val state = FacetSettingsUiState(
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = false),
-            globalSelectedCalendarIds = null,
-        )
-
-        assertNull(state.effectiveSelectedCalendarIds)
-        assertEquals(0, state.selectedCalendarCount)
-    }
-
-    @Test
-    fun `calendar selection falls back to the global selection while overriding if this facet hasn't chosen its own yet`() {
-        val state = FacetSettingsUiState(
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = null),
-            globalSelectedCalendarIds = setOf("cal-1", "cal-2"),
-        )
-
-        assertEquals(setOf("cal-1", "cal-2"), state.effectiveSelectedCalendarIds)
-        assertEquals(2, state.selectedCalendarCount)
-    }
-
     // --- FacetSettingsViewModel: real behavior (applyFacet / renameFacet), against a real FacetRepository ---
 
     private val testDispatcher = StandardTestDispatcher()

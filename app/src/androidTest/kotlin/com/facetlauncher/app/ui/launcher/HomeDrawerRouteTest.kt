@@ -58,6 +58,7 @@ import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
+import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.PrivateSpaceRepository
@@ -255,6 +256,7 @@ class HomeDrawerRouteTest {
                         notificationBadgeRepository,
                         notificationAccessRepository,
                         ObserveClockAccessoriesUseCase(BatteryRepository(context), NextAlarmRepository(context, Clock.systemDefaultZone())),
+                        MediaSessionRepository(context),
                     ),
                     NotificationShadeRepository(context),
                     settingsRepository,
@@ -263,6 +265,7 @@ class HomeDrawerRouteTest {
                         runBlocking { `when`(repo.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
                     },
                     ObserveQuickAddStateUseCase(),
+                    MediaSessionRepository(context),
                     ClockWidgetHostController(appWidgetRepository),
                     ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository), EntitlementRepository()),
                 )

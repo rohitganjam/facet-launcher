@@ -108,6 +108,8 @@ import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
+import com.facetlauncher.app.data.model.MediaPlayerState
+import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppContextMenu
@@ -166,6 +168,14 @@ fun HomeScreen(
     dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     badgeCounts: Map<String, Int> = emptyMap(),
+    /** The media row under the clock, shown while non-null — see [MediaPlayerRow]. */
+    mediaPlayer: MediaPlayerState? = null,
+    showMediaSkipButtons: Boolean = true,
+    mediaProgressStyle: MediaProgressStyle = MediaProgressStyle.WAVY,
+    onMediaPrevious: () -> Unit = {},
+    onMediaPlayPause: () -> Unit = {},
+    onMediaNext: () -> Unit = {},
+    onMediaOpen: () -> Unit = {},
     use24HourTime: Boolean = false,
     clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
@@ -377,6 +387,26 @@ fun HomeScreen(
     val ceilingPx = maxOf(floorPx, HOME_CLOCK_ZONE_MAX_FRACTION * contentHeightPx)
     val handlePx = (liveHandlePx ?: basePersistedHandlePx).coerceIn(floorPx, ceilingPx)
 
+    // The media row sits just under the clock block (whose bottom is minGapPx above the handle) and
+    // pushes the app list down by its own height while visible. Its height is kept across hides so
+    // clock adjust mode (which hides the row) doesn't shift the list.
+    var lastMediaPlayer by remember { mutableStateOf<MediaPlayerState?>(null) }
+    LaunchedEffect(mediaPlayer) { if (mediaPlayer != null) lastMediaPlayer = mediaPlayer }
+    val shownMediaPlayer = mediaPlayer ?: lastMediaPlayer
+    var mediaRowHeightPx by remember { mutableFloatStateOf(0f) }
+    val mediaFraction by animateFloatAsState(
+        targetValue = if (mediaPlayer != null) 1f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = EmphasizedDecelerateEasing),
+        label = "mediaPlayerAppearance",
+    )
+    val mediaRowTopPx = handlePx - minGapPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
+    val mediaBelowGapPx = with(density) { HOME_MEDIA_ROW_BOTTOM_GAP.toPx() }
+    val appListTopFor: (Float) -> Float = { reservePx ->
+        if (reservePx > 0f) maxOf(handlePx, mediaRowTopPx + reservePx + mediaBelowGapPx) else handlePx
+    }
+    val appListTopPx = appListTopFor(mediaRowHeightPx * mediaFraction)
+    val appListTopTargetPx = appListTopFor(if (mediaPlayer != null) mediaRowHeightPx else 0f)
+
     // The clock renders at its persisted [clockScale] and nothing recomputes it frame to frame.
     // The largest scale that still fits — headroom above the pinned bottom (past the status bar,
     // plus room for the resize handle to clear the notification-shade strip) and room to the sides
@@ -468,15 +498,15 @@ fun HomeScreen(
     // Evaluated once per key-set change, not continuously — flipping to compact shrinks the
     // content and re-triggers this same measurement, but this effect has already finished by
     // then, so it doesn't see its own result and flip back.
-    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt, clockZoneHeightDp) {
+    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt, clockZoneHeightDp, mediaPlayer != null, mediaRowHeightPx) {
         useCompactAppSpacing = false
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
-            snapshotFlow { appListNaturalHeightPx to (contentHeightPx - handlePx) }
+            snapshotFlow { appListNaturalHeightPx to (contentHeightPx - appListTopTargetPx) }
                 .filter { (natural, available) -> natural > 0f && available > 0f }
                 .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
                 .first()
         }
-        useCompactAppSpacing = appListNaturalHeightPx > (contentHeightPx - handlePx)
+        useCompactAppSpacing = appListNaturalHeightPx > (contentHeightPx - appListTopTargetPx)
         appListRevealed = true
     }
 
@@ -675,11 +705,32 @@ fun HomeScreen(
                     onClockWidgetLeftoverFling = onClockWidgetLeftoverFling,
                 )
 
+                // Not composed in clock adjust mode (the handles own that space); mediaRowHeightPx
+                // is kept, so the list doesn't move.
+                if (shownMediaPlayer != null && mediaFraction > 0f && clockAdjustMode == ClockAdjustMode.NONE) {
+                    MediaPlayerRow(
+                        state = shownMediaPlayer,
+                        showSkipButtons = showMediaSkipButtons,
+                        progressStyle = mediaProgressStyle,
+                        onPrevious = onMediaPrevious,
+                        onPlayPause = onMediaPlayPause,
+                        onNext = onMediaNext,
+                        onOpen = onMediaOpen,
+                        labelColor = appLabelColor,
+                        labelFontWeight = appLabelFontWeight,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .offset { IntOffset(0, mediaRowTopPx.roundToInt()) }
+                            .onSizeChanged { if (it.height > 0) mediaRowHeightPx = it.height.toFloat() }
+                            .graphicsLayer { alpha = mediaFraction },
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .let {
                             if (appListVerticalAlignment == AppListVerticalAlignment.TOP) {
-                                it.align(Alignment.TopStart).offset { IntOffset(0, handlePx.roundToInt()) }
+                                it.align(Alignment.TopStart).offset { IntOffset(0, appListTopPx.roundToInt()) }
                             } else {
                                 // Today's unchanged behavior — hugs the bottom of the content area.
                                 it.align(Alignment.BottomStart)
@@ -688,7 +739,7 @@ fun HomeScreen(
                         .fillMaxWidth()
                         // Inert (never binds) whenever there's ample room below the handle — only
                         // clips/scrolls in the genuine overflow case, which today has no fallback at all.
-                        .heightIn(max = with(density) { (contentHeightPx - handlePx).coerceAtLeast(0f).toDp() })
+                        .heightIn(max = with(density) { (contentHeightPx - appListTopPx).coerceAtLeast(0f).toDp() })
                         .onGloballyPositioned {
                             appListSize = it.size
                             appListOriginInRoot = it.positionInRoot()
@@ -1231,6 +1282,10 @@ internal val HOME_CLOCK_DEFAULT_TOP_OFFSET = 52.dp
 
 /** Minimum gap always kept between the clock+calendar block's bottom edge and its grab handle. Not private — see [HOME_CLOCK_DEFAULT_TOP_OFFSET]'s own doc. */
 internal val HOME_CLOCK_MIN_GAP = 24.dp
+
+/** Gap between the clock block's bottom edge and the media row, and between the media row and the app list below it. */
+internal val HOME_MEDIA_ROW_TOP_GAP = 4.dp
+internal val HOME_MEDIA_ROW_BOTTOM_GAP = 12.dp
 
 /** Visible gap between the height handle's touch strip and the alignment toolbar below it — Material's minimum between touch targets. */
 internal val CLOCK_ADJUST_TOOLBAR_GAP = 8.dp

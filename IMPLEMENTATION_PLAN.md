@@ -3931,3 +3931,45 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] 0.1.19 release notes rewritten for users. Previews added for `SettingsCard` and `SettingsIconBadge` (the documented every-public-composable rule).
 - [x] Verified clean: package counts in `04`, ViewModel / use case / repository registries vs code, all 267 relative doc links.
 - Left as historical on purpose: this plan's chronological entries, `CLOCK_RESIZE_SPEC.md`'s `Profile*` names, older release notes.
+
+## Media player row on Home (direct request)
+
+- [x] Opt-in "Show media player in home screen" (+ "Show skip buttons", default on, and a Flat/Wavy "Progress style", default Flat) on the Notifications settings page; backed up, off by default. Needs the existing notification-access grant, no new permission.
+- [x] `MediaSessionRepository` (cold `callbackFlow` over `MediaSessionManager` + per-session `MediaController` callbacks, transport calls, `content:`/`file:` art fallback) and `buildMediaPlayerState` / `pickActiveSession` mapping; `ObserveHomeScreenStateUseCase` exposes `mediaPlayer` only when the setting is on and access is granted.
+- [x] `MediaPlayerRow`: bare row under the clock, art as tall as text + progress line, controls on the title line; a top-aligned app list moves down by its height.
+- [x] Tests: `MediaSessionMappingTest`, `ObserveHomeScreenStateUseCaseTest` (3 cases), `HomeViewModelTest`, `SettingsRepositoryTest`; `MediaPlayerRowTest`, `NotificationSettingsScreenTest` (5 new cases).
+- [x] Docs: `01`, `02`, `03`, `04`, `06`, `07`, `12`, `13`, README, `TEST_REGISTRY.md`.
+- [x] `MediaPlayerRowTest` (9) and `NotificationSettingsScreenTest` (11) pass on the emulator.
+- [ ] Check the row on a device with a real player (art, skip, progress, paused).
+
+## Settings moves + Material3 1.5.0-beta01 (direct request)
+
+- [x] Notifications is its own global-only section on Appearance (a row to the Notifications page); the row left Settings' Home & apps card.
+- [x] "Calendars to display" moved under Appearance's renamed **Clock & calendar** section (launcher and facet-scoped), and left Settings and the facet settings screen. The calendar page itself is unchanged; the old facet/settings summary logic moved to `AppearanceSettingsUiState` with its tests.
+- [x] `material3` overridden to `1.5.0-beta01` (one rename fix: `TimePickerDefaults.colors` dropped "Unselected" from five parameter names). The Home media row uses `LinearWavyProgressIndicator`; Wavy is now the default progress style, Flat stays an option.
+- [x] Translations (de/es/fr/pt) for the media strings and the new section name.
+
+## Appearance polish: subtext, Accent Field, section rename (direct request)
+
+- [x] Notifications row on Appearance is "Notifications and media" with a subtext that follows the page ("Dot badges · Media player on", "Needs notification access" without access, re-read on resume).
+- [x] Launcher Appearance row: "Customize clock, calendar, home, notifications, themes". Facet Appearance row: "<template> clock · Dock icons · Home icon & text" (each part named for its surface).
+- [x] Accent Field clock: the hour and minute now share a baseline (the minute gets the block's 12dp bottom padding); `accentFieldHourAndMinuteShareABaseline` guards it.
+- [x] "Home & apps" is now "Apps and folders" in launcher and facet settings (translated).
+- [x] Full instrumented suite: API 36 608/608 clean; API 30 only the 5 failures that also fail on the original code (`FacetProContentTest` ×1, four wallpaper-accent assumption checks). Note: `PermissionsScreenTest` assumes notification access was never granted on the device — a leftover grant fails it until the app is uninstalled.
+
+## Appearance split into a hub of screens (direct request)
+
+- [x] "Dock & home" now holds one row, **Dock & Apps appearance**, opening `DockAppsAppearanceScreen` (both scopes, route `dockAppsAppearance?facetId=`); the dock/app-list controls moved there unchanged.
+- [x] "General" now holds one row, **Fonts, themes and icons** (global only), opening `FontsThemesIconsScreen` (route `fontsThemesIcons`) with the theme / system bar icons / accent / icon / font controls.
+- [x] Both new screens show the live `AppearancePreviewCard` (now in `AppearancePreview.kt`) and share `AppearanceSettingsViewModel`. Strings translated (de/es/fr/pt).
+- [x] Tests: `AppearanceSettingsScreenTest` split into the hub plus `DockAppsAppearanceScreenTest` and `FontsThemesIconsScreenTest` over a shared `AppearanceScreenTestHost`; all 174 `ui.settings` instrumented tests and the 1,062 unit tests pass. detekt baseline re-keyed for the moved code.
+
+## Appearance rows: icons and permission-aware subtext (direct request)
+
+- [x] The five Appearance link rows got violet icon badges (Settings style, no trailing chevron).
+- [x] "Calendars to display" now says "Needs calendar access" without `READ_CALENDAR`, like the Notifications row; the view model re-reads both grants on resume (`refreshCalendarAccess`). Translated (de/es/fr/pt).
+
+## Ruler template layout and clock text color (direct request)
+
+- [x] Ruler (`RULE_MERIDIEM`): the date and the accessory row each get their own line below the rule (they shared one, which jammed the battery against the date); guarded by `rulerTemplateKeepsTheAccessoryRowBelowTheDateNotBesideIt`.
+- [x] The date and accessory rows use the clock's own text color, not the 80%-alpha "muted" tone (`ClockBlock` and the Style Gallery preview now pass `mutedTextColor = textColor`). Side effect: other template pieces that borrow the muted color (e.g. Date forward's demoted time, Bracket minimal's glyphs) are full strength too. Guarded by `rulerDate…`/`lightStackDate…` tests comparing resolved text colors.

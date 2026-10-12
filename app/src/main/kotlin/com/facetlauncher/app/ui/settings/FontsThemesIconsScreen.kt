@@ -1,0 +1,516 @@
+package com.facetlauncher.app.ui.settings
+
+import android.annotation.SuppressLint
+import android.content.res.Configuration
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.ClockColorOption
+import com.facetlauncher.app.data.model.FontScaleOption
+import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconShape
+import com.facetlauncher.app.data.model.LauncherFontOption
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.SystemBarIconStyle
+import com.facetlauncher.app.data.model.ThemeMode
+import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.FontSizeSlider
+import com.facetlauncher.app.ui.components.FontWeightSlider
+import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.toComposeShape
+import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.theme.AccentSwatch
+import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.IconTile
+import com.facetlauncher.app.ui.theme.Ink
+import com.facetlauncher.app.ui.theme.LocalDynamicColorRefreshSignal
+import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.Surface
+import com.facetlauncher.app.ui.theme.SurfaceContainer
+import com.facetlauncher.app.ui.theme.dynamicColorSupported
+import com.facetlauncher.app.ui.theme.toneOf
+
+/**
+ * Settings → Appearance → Fonts, themes and icons — theme, system bar icons, accent color, icon style and shape, launcher font,
+ * font color, size and weight. Global only: a facet has no override for any of these, so a facet's Appearance screen has no link here.
+ * Moved off the main Appearance screen. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
+ */
+@Composable
+fun FontsThemesIconsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AppearanceSettingsViewModel = hiltViewModel(),
+) {
+    val settings by viewModel.settings.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val homeWallpaper by viewModel.homeWallpaper.collectAsState()
+    FontsThemesIconsContent(
+        settings = settings,
+        uiState = uiState,
+        homeWallpaper = homeWallpaper,
+        onBack = onBack,
+        onThemeModeChange = viewModel::setThemeMode,
+        onSystemBarIconStyleChange = viewModel::setSystemBarIconStyle,
+        onAccentFromSystemChange = viewModel::setAccentFromSystem,
+        onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
+        onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
+        onIconRenderModeChange = viewModel::setIconRenderMode,
+        onIconShapeChange = viewModel::setIconShape,
+        onLauncherFontOptionChange = viewModel::setLauncherFontOption,
+        onAppLabelColorOptionChange = viewModel::setAppLabelColorOption,
+        onHomeAppsFontWeightChange = viewModel::setHomeAppsFontWeight,
+        onFontScaleOptionChange = viewModel::setFontScaleOption,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun FontsThemesIconsContent(
+    settings: LauncherSettings,
+    uiState: AppearanceSettingsUiState,
+    homeWallpaper: HomeWallpaper,
+    onBack: () -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onSystemBarIconStyleChange: (SystemBarIconStyle) -> Unit,
+    onAccentFromSystemChange: (Boolean) -> Unit,
+    onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
+    onIconRenderModeChange: (IconRenderMode) -> Unit,
+    onIconShapeChange: (IconShape) -> Unit,
+    onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
+    onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
+    onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
+    onFontScaleOptionChange: (FontScaleOption) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_fonts_themes_icons_title), onBack = onBack) },
+        content = { headerHeight ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(SurfaceContainer)
+                    .testTag("fonts_themes_icons_screen")
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(horizontal = 24.dp),
+                contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
+            ) {
+                item {
+                    AppearancePreviewCard(
+                        settings = uiState.clockSettings,
+                        appRowPosition = uiState.appRowPosition,
+                        appRowPresentation = uiState.appRowPresentation,
+                        appListLayout = uiState.appListLayout,
+                        appListColumnAlignment = uiState.appListColumnAlignment,
+                        appListGridColumns = uiState.appListGridColumns,
+                        appListGridDisplayMode = uiState.appListGridDisplayMode,
+                        dockDisplayMode = uiState.dockDisplayMode,
+                        favorites = uiState.effectiveFavorites,
+                        dockItems = uiState.effectiveDockItems,
+                        calendarEvents = uiState.calendarEvents,
+                        homeWallpaper = homeWallpaper,
+                        modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
+                    )
+                }
+                item {
+                    SettingsCard {
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.appearance_launcher_theme),
+                            options = ThemeMode.entries,
+                            selected = settings.themeMode,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onThemeModeChange,
+                            testTag = "theme_mode_dropdown",
+                        )
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.appearance_system_bar_icons),
+                            options = SystemBarIconStyle.entries,
+                            selected = settings.systemBarIconStyle,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onSystemBarIconStyleChange,
+                            testTag = "appearance_system_bar_icons_row",
+                        )
+                        CardDivider()
+                        AccentColorSection(
+                            accentFromSystem = settings.accentFromSystem,
+                            customAccentSwatch = settings.customAccentSwatch,
+                            wallpaperAccentRole = settings.wallpaperAccentRole,
+                            onAccentFromSystemChange = onAccentFromSystemChange,
+                            onCustomAccentSwatchChange = onCustomAccentSwatchChange,
+                            onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
+                        )
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.appearance_icon_style),
+                            options = IconRenderMode.entries,
+                            selected = settings.iconRenderMode,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onIconRenderModeChange,
+                            testTag = "appearance_icons_row",
+                        )
+                        CardDivider()
+                        IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.appearance_launcher_font),
+                            options = LauncherFontOption.entries,
+                            selected = settings.launcherFontOption,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onLauncherFontOptionChange,
+                            testTag = "appearance_font_row",
+                        )
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.appearance_font_color),
+                            options = ClockColorOption.entries,
+                            selected = settings.appLabelColorOption,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onAppLabelColorOptionChange,
+                            testTag = "appearance_app_label_color_row",
+                        )
+                        CardDivider()
+                        FontSizeSlider(
+                            selected = settings.fontScaleOption,
+                            onSelectedChange = onFontScaleOptionChange,
+                            label = stringResource(R.string.appearance_font_size),
+                            showPreview = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 13.dp)
+                                .testTag("appearance_font_size_slider"),
+                            sliderTestTag = "appearance_font_size_slider_control",
+                        )
+                        CardDivider()
+                        FontWeightSlider(
+                            selected = settings.homeAppsFontWeight,
+                            onSelectedChange = onHomeAppsFontWeightChange,
+                            label = stringResource(R.string.appearance_font_weight),
+                            showPreview = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 13.dp)
+                                .testTag("appearance_font_weight_slider"),
+                            sliderTestTag = "appearance_font_weight_slider_control",
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun FontsThemesIconsScreenPreview() {
+    FacetLauncherTheme {
+        FontsThemesIconsContent(
+            settings = LauncherSettings(),
+            uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
+            homeWallpaper = HomeWallpaper.Unavailable,
+            onBack = {},
+            onThemeModeChange = {},
+            onSystemBarIconStyleChange = {},
+            onAccentFromSystemChange = {},
+            onCustomAccentSwatchChange = {},
+            onWallpaperAccentRoleChange = {},
+            onIconRenderModeChange = {},
+            onIconShapeChange = {},
+            onLauncherFontOptionChange = {},
+            onAppLabelColorOptionChange = {},
+            onHomeAppsFontWeightChange = {},
+            onFontScaleOptionChange = {},
+        )
+    }
+}
+
+/**
+ * Settings → Appearance → Accent color. Two sources, matching the system "Wallpaper & style"
+ * picker's own interaction model: **Wallpaper colors** (Material You, the default) reveals
+ * [WallpaperAccentRoleGrid] — the wallpaper's own three derived tones, tappable just like Basic
+ * colors' preset swatches; **Basic colors** reveals the curated [AccentSwatch] grid instead. Each
+ * swatch (either grid) renders both its light and dark half at once (see [SplitColorCircle])
+ * since picking one stores both — switching the theme mode restores the right half for the *same*
+ * pick rather than needing to re-choose.
+ */
+@Composable
+internal fun AccentColorSection(
+    accentFromSystem: Boolean,
+    customAccentSwatch: String?,
+    wallpaperAccentRole: WallpaperAccentRole,
+    onAccentFromSystemChange: (Boolean) -> Unit,
+    onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
+    modifier: Modifier = Modifier,
+    showSourceTabs: Boolean = dynamicColorSupported,
+) {
+    Column(modifier = modifier.padding(vertical = 8.dp)) {
+        Text(text = stringResource(R.string.appearance_accent_color), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(bottom = 10.dp))
+        if (!showSourceTabs) {
+            // Pre-Android 12 has no wallpaper colours: presets only, with blue as the implicit default.
+            AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChange)
+            return@Column
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            PillOption(
+                label = stringResource(R.string.appearance_wallpaper_colors),
+                selected = accentFromSystem,
+                onClick = { onAccentFromSystemChange(true) },
+                testTag = "accent_source_wallpaper",
+                modifier = Modifier.weight(1f),
+            )
+            PillOption(
+                label = stringResource(R.string.appearance_basic_colors),
+                selected = !accentFromSystem,
+                onClick = { onAccentFromSystemChange(false) },
+                testTag = "accent_source_basic",
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        if (accentFromSystem) {
+            WallpaperAccentRoleGrid(selected = wallpaperAccentRole, onSelect = onWallpaperAccentRoleChange)
+        } else {
+            AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChange)
+        }
+    }
+}
+
+@Composable
+private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .testTag(testTag)
+            // M3's SegmentedButton defaults to CornerFull — see CLAUDE.md's Material 3 shape section.
+            .clip(CircleShape)
+            .background(if (selected) Ink.copy(alpha = 0.06f) else Surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Ink for both — selection is already conveyed by the pill's own background tint above;
+        // dimming the unselected label's text on top of that read as disabled (see chat history).
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Ink)
+    }
+}
+
+private val ICON_SHAPE_RING_WIDTH = 2.dp
+private val ICON_SHAPE_RING_GAP = 2.dp
+
+/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
+@Composable
+private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
+        Text(
+            text = stringResource(R.string.appearance_icon_shape),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            IconShape.entries.forEach { shape ->
+                IconShapeOption(shape = shape, isSelected = shape == selected, onSelect = { onSelect(shape) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun IconShapeOption(shape: IconShape, isSelected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .testTag("icon_shape_${shape.name}")
+            .clip(MaterialTheme.shapes.small)
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Selected: an Accent ring with a transparent gap around the icon. The ring's space is
+        // reserved on every option so selecting one doesn't shift the row.
+        Box(
+            modifier = Modifier
+                .size(AppIconSize.TILE + (ICON_SHAPE_RING_WIDTH + ICON_SHAPE_RING_GAP) * 2)
+                .then(if (isSelected) Modifier.border(ICON_SHAPE_RING_WIDTH, Accent, shape.toComposeShape()) else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(AppIconSize.TILE)
+                    .background(IconTile, shape.toComposeShape())
+                    .then(if (isSelected) Modifier else Modifier.border(1.dp, Hairline, shape.toComposeShape())),
+            )
+        }
+        Text(
+            text = stringResource(shape.displayNameRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) Ink else Muted,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+private const val ACCENT_SWATCH_GRID_COLUMNS = 5
+
+@Composable
+private fun AccentSwatchGrid(selected: String?, onSelect: (AccentSwatch) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.testTag("accent_swatch_grid"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        AccentSwatch.entries.chunked(ACCENT_SWATCH_GRID_COLUMNS).forEach { row ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                row.forEach { swatch ->
+                    // Defaults to the first swatch once "Basic colors" is picked with nothing
+                    // chosen yet, matching README's Accent stand-in (BLUE == the app's original
+                    // default accent values).
+                    AccentSwatchCircle(
+                        swatch = swatch,
+                        selected = selected?.let { AccentSwatch.valueOf(it) } == swatch ||
+                            (selected == null && swatch == AccentSwatch.entries.first()),
+                        onClick = { onSelect(swatch) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccentSwatchCircle(swatch: AccentSwatch, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SplitColorCircle(
+        light = swatch.light,
+        dark = swatch.dark,
+        selected = selected,
+        checkedContentDescription = stringResource(swatch.labelRes),
+        testTag = "accent_swatch_${swatch.name}",
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+/**
+ * The shared visual behind every accent-color swatch (Basic colors' presets, and the wallpaper
+ * roles below) — both its light and dark half at once, side by side, with a checkmark overlay
+ * when selected.
+ */
+@Composable
+private fun SplitColorCircle(
+    light: Color,
+    dark: Color,
+    selected: Boolean,
+    checkedContentDescription: String,
+    testTag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .testTag(testTag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(modifier = Modifier.matchParentSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(light))
+            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(dark))
+        }
+        if (selected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = checkedContentDescription,
+                tint = Surface,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(Ink.copy(alpha = 0.35f))
+                    .padding(3.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The wallpaper-derived counterpart to [AccentSwatchGrid] — instead of a fixed preset palette,
+ * shows the wallpaper's own three Material You tonal roles ([WallpaperAccentRole.entries]) as
+ * tappable swatches, each with a real light/dark pair read live off the OS's dynamic color scheme
+ * (same [dynamicLightColorScheme]/[dynamicDarkColorScheme] + resume-signal-keyed `remember` +
+ * defensive fallback pattern as `ui/theme/Color.kt`'s own `accentTonalExtremes()` — see that
+ * function's doc for why the resume signal matters for a launcher specifically). No text labels,
+ * unlike the named Basic-colors presets — these are algorithmically derived, unnamed hues; the
+ * swatch itself is the only identifier a user needs to tell them apart.
+ */
+// Only shown when dynamicColorSupported (Android 12+), and each call is wrapped in runCatching anyway.
+@SuppressLint("NewApi")
+@Composable
+private fun WallpaperAccentRoleGrid(selected: WallpaperAccentRole, onSelect: (WallpaperAccentRole) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val refreshSignal = LocalDynamicColorRefreshSignal.current
+    val tones = remember(context, refreshSignal) {
+        WallpaperAccentRole.entries.associateWith { role ->
+            runCatching { role.toneOf(dynamicLightColorScheme(context)) }.getOrDefault(AccentSwatch.BLUE.light) to
+                runCatching { role.toneOf(dynamicDarkColorScheme(context)) }.getOrDefault(AccentSwatch.BLUE.dark)
+        }
+    }
+    Row(modifier = modifier.testTag("wallpaper_accent_role_grid"), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        WallpaperAccentRole.entries.forEach { role ->
+            val (light, dark) = tones.getValue(role)
+            SplitColorCircle(
+                light = light,
+                dark = dark,
+                selected = role == selected,
+                checkedContentDescription = "Wallpaper color ${role.ordinal + 1}",
+                testTag = "wallpaper_accent_role_${role.name}",
+                onClick = { onSelect(role) },
+            )
+        }
+    }
+}

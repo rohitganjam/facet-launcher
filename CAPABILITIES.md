@@ -98,8 +98,8 @@ starting at `HOME`.
   another facet's settings.
 - **Delete facet** — `ConfirmDialog` required; blocked at 1 remaining.
 - **Facet settings** (`FacetSettingsScreen`) — Activate (header), a Rename row, an Appearance
-  card (which holds the facet's Clock Style), and a Home & apps card with one destination per
-  other overridable area: Apps list, Dock, Calendars to display. Laid out like the main
+  card (which holds the facet's Clock Style and its Calendars to display), and an Apps and folders card
+  with one destination per other overridable area: Apps list, Dock. Laid out like the main
   Settings screen. Each destination
   has its own Inherit/Override switch, so a facet only stores what differs from the defaults.
 - **Per-facet widget in the clock slot** — a facet can replace its native clock with any hosted widget (own
@@ -174,7 +174,7 @@ starting at `HOME`.
 | App label color | `appLabelColorOption` (`ClockColorOption`) | THEME / THEME_INVERTED / ACCENT_PRIMARY / ACCENT_SECONDARY. |
 | Icon shape | `IconShape` (SQUIRCLE default, ROUNDED, CIRCLE, SQUARE) | Global outline for app icons, picked in Appearance with each option drawn in its own shape; the selected one gets an accent ring with a gap. |
 | Live preview card | `AppearanceSettingsScreen.kt` | Wallpaper-backed sample of app rows + dock icon. |
-| Appearance screen order | `AppearanceSettingsScreen.kt` | Preview, then a Clock card (the Clock Style row), Dock & home, and — global only — General. The same screen serves a facet, which has no General card. |
+| Appearance screen order | `AppearanceSettingsScreen.kt` | Preview, then a Clock & calendar card (the Clock Style and Calendars to display rows), Dock & home (one "Dock & Apps appearance" row), and — global only — Notifications (a "Notifications and media" row) and General (one "Fonts, themes and icons" row). The same screen serves a facet, which has only the first two. |
 | Per-app label rename | **Not built.** | Deferred to icon-pack work (F11 v2, parked). |
 | Third-party icon packs | **Not built / parked** (PRD §3a). | |
 
@@ -191,19 +191,21 @@ four sections, each a card of icon-badge rows:
     trigger; one card with an icon, a message and an "Add rule" row when empty)
 - **Appearance**
   - Change wallpaper → `ACTION_SET_WALLPAPER` system picker
-  - Launcher Appearance → `AppearanceSettingsScreen` (Clock Style row → clock style gallery; Dock &
-    home look; General: theme, system bar icons, accent, icon style and shape, launcher font, font
-    color/size/weight; live preview)
-- **Home & apps**
-  - Calendars to display → `CalendarSettingsScreen` (show all-day events, calendar picker — real
-    once granted)
+  - Launcher Appearance → `AppearanceSettingsScreen` (Clock & calendar: Clock Style row → clock
+    style gallery, Calendars to display → `CalendarSettingsScreen` (show all-day events, calendar
+    picker — real once granted); Dock & home → "Dock & Apps appearance" → `DockAppsAppearanceScreen`
+    (dock style, app list layout, position, presentation, alignment; both scopes; live preview);
+    Notifications section with a "Notifications and media" row → `NotificationSettingsScreen`
+    (badges on/off + Dot/Count style, and the Home media player: on/off, skip buttons, Flat/Wavy
+    progress; routes to the access explanation screen if not granted); General → "Fonts, themes
+    and icons" → `FontsThemesIconsScreen` (theme, system bar icons, accent, icon style and shape,
+    launcher font, font color/size/weight; global only; live preview); live preview on the hub)
+- **Apps and folders**
   - Dock → `DockSettingsScreen` (display style, pick apps, reorder)
   - Home Apps List → `HomeAppsListSettingsScreen` (position, presentation, default content mode,
     apps to show, default favorites + reorder)
   - App Drawer → `AppDrawerSettingsScreen` (presentation, grid/list size, show icons/labels,
     search contacts, search bar position, drawer opacity)
-  - Notifications → `NotificationSettingsScreen` (on/off + Dot/Count style; routes to the access
-    explanation screen if not granted)
   - Folders → `FoldersSettingsScreen` / `FolderDetailScreen` (create, rename, reorder, delete)
 - **System**
   - Permissions → `PermissionsScreen` (Calendar, Contacts, Usage access, Notification access,
@@ -216,7 +218,7 @@ four sections, each a card of icon-badge rows:
 **Look and feel (shared across the settings screens, per-facet settings, the Home long-press
 sheet and the carousel's Launcher settings row):** rows are grouped in tonal `SettingsCard`s
 (28dp, no shadow or border) on a dimmer page; each navigation row has an icon badge tinted by its
-section (Facets blue, Appearance violet, Home & apps teal, System slate), with no chevron; a
+section (Facets blue, Appearance violet, Apps and folders teal, System slate), with no chevron; a
 pressed row's highlight spans the card. Every button is a pill. Dropdown and switch rows react
 only on their control, not across the row. Section and screen titles are sentence case.
 

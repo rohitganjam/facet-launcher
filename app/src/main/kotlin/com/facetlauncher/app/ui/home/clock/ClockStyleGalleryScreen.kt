@@ -350,7 +350,7 @@ private fun ClockStyleGalleryScreen(
                     use24HourTime = use24HourTime,
                     showMeridiem = showMeridiem,
                     textColor = textColor,
-                    mutedTextColor = textColor.copy(alpha = 0.8f),
+                    mutedTextColor = textColor,
                     accentColor = accentColor,
                     dateStyle = dateStyle,
                     // Every template's own root lost its `fillMaxWidth()` (see HomeScreen.kt's own

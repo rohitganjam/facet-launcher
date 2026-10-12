@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -140,6 +141,92 @@ class NotificationSettingsScreenTest {
         composeRule.waitUntil(timeoutMillis = 1_000) {
             runBlocking { settingsRepository.settings.first().notificationDotsEnabled }
         }
+    }
+
+    @Test
+    fun mediaPlayerIsOffByDefaultAndSkipButtonsAreDisabledUntilItIsOn() {
+        // Given the screen with access granted and settings at their defaults
+        setContent(accessGranted = true)
+
+        // Then the media player is opt-in, so it's off and the skip-buttons switch can't be used yet
+        composeRule.onNodeWithTag("media_player_toggle").assertIsOff()
+        composeRule.onNodeWithTag("media_skip_buttons_toggle").assertIsNotEnabled()
+    }
+
+    @Test
+    fun turningTheMediaPlayerOnPersistsAndEnablesSkipButtons() {
+        // Given the screen with access granted
+        val settingsRepository = setContent(accessGranted = true)
+
+        // When turning the media player on
+        composeRule.onNodeWithTag("media_player_toggle").performClick()
+
+        // Then it persists and the skip-buttons switch becomes usable
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().showMediaPlayerOnHome }
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("media_skip_buttons_toggle").assertIsEnabled() }.isSuccess
+        }
+    }
+
+    @Test
+    fun turningTheSkipButtonsOffPersists() {
+        // Given the media player on, so the skip-buttons switch is usable
+        val settingsRepository = setContent(accessGranted = true)
+        composeRule.onNodeWithTag("media_player_toggle").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("media_skip_buttons_toggle").assertIsEnabled() }.isSuccess
+        }
+
+        // When turning skip buttons off
+        composeRule.onNodeWithTag("media_skip_buttons_toggle").performClick()
+
+        // Then the choice persists
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { !settingsRepository.settings.first().showMediaSkipButtons }
+        }
+    }
+
+    @Test
+    fun choosingFlatProgressPersists() {
+        // Given the media player on, so the progress style row is usable
+        val settingsRepository = setContent(accessGranted = true)
+        composeRule.onNodeWithTag("media_player_toggle").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("media_progress_style_row").assertIsEnabled() }.isSuccess
+        }
+
+        // When choosing Flat from the dropdown (Wavy is the default)
+        composeRule.onNodeWithTag("media_progress_style_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("media_progress_style_row_option_FLAT").performClick()
+
+        // Then it persists
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().mediaProgressStyle == MediaProgressStyle.FLAT }
+        }
+    }
+
+    @Test
+    fun turningTheMediaPlayerOnWithoutAccessRoutesToTheExplanationScreen() {
+        // Given the screen with notification access not granted
+        var navigatedToExplanation = false
+        val settingsRepository = setContent(
+            onNavigateToNotificationAccessExplanation = { navigatedToExplanation = true },
+            accessGranted = false,
+        )
+
+        // When tapping the media player switch
+        composeRule.onNodeWithTag("media_player_toggle").performClick()
+
+        // Then it routes to the explanation screen, remembers the choice for when access lands,
+        // and the switch itself stays off until the grant is real
+        assertEquals(true, navigatedToExplanation)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().showMediaPlayerOnHome }
+        }
+        composeRule.onNodeWithTag("media_player_toggle").assertIsOff()
     }
 
     @Test

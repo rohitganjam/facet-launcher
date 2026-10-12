@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -17,12 +18,14 @@ import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -47,6 +50,8 @@ data class HomeScreenState(
     val badgeCounts: Map<String, Int>,
     /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
     val clockAccessories: ClockAccessoryState,
+    /** The active media session — `null` unless "Show media player in home screen" is on, access is granted, and a session is playing or paused. */
+    val mediaPlayer: MediaPlayerState?,
 )
 
 /**
@@ -69,6 +74,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val observeClockAccessories: ObserveClockAccessoriesUseCase,
+    private val mediaSessionRepository: MediaSessionRepository,
 ) {
     // PACKAGE_USAGE_STATS/READ_CALENDAR have no grant-change callback — the only way to grant
     // either is a system redirect/dialog, so callers (Home, on resume) call refresh() to force
@@ -123,6 +129,15 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         // within the combine() overload's supported arity — unrelated to badgeCounts otherwise.
         val badgeCountsAndAccessories = combine(badgeCounts, observeClockAccessories()) { badges, accessories -> badges to accessories }
 
+        // Only subscribes to the framework while the setting is on and access is granted; refreshTrigger
+        // re-evaluates the grant on resume.
+        val mediaPlayer = combine(
+            settingsRepository.settings.map { it.showMediaPlayerOnHome }.distinctUntilChanged(),
+            refreshTrigger,
+        ) { enabled, _ -> enabled }.flatMapLatest { enabled ->
+            if (enabled && notificationAccessRepository.isGranted()) mediaSessionRepository.observe() else flowOf(null)
+        }
+
         return combine(
             settingsRepository.settings,
             dockAndFavoriteItems,
@@ -130,7 +145,8 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             facetRepository.observeFacets(),
             calendarEvents,
             badgeCountsAndAccessories,
-        ) { settings, (dockApps, favoriteItems), items, facets, events, (badges, accessories) ->
+            mediaPlayer,
+        ) { settings, (dockApps, favoriteItems), items, facets, events, (badges, accessories), media ->
             HomeScreenState(
                 settings = settings,
                 dockApps = dockApps,
@@ -141,6 +157,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
                 calendarEvents = events,
                 badgeCounts = badges,
                 clockAccessories = accessories,
+                mediaPlayer = media,
             )
         }
     }

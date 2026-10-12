@@ -132,7 +132,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
+    // Overrides the BOM's 1.4.0 for the wavy progress indicator (1.5 only) — drop once a BOM pins a stable 1.5.
+    implementation("androidx.compose.material3:material3:1.5.0-beta01")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
 

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FormatListBulleted
@@ -53,7 +52,6 @@ fun FacetSettingsScreen(
     onBack: () -> Unit,
     onNavigateToAppsList: (facetId: Long) -> Unit,
     onNavigateToDockSettings: (facetId: Long) -> Unit,
-    onNavigateToCalendarSettings: (facetId: Long) -> Unit,
     onNavigateToAppearance: (facetId: Long) -> Unit,
     onFacetApply: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +64,6 @@ fun FacetSettingsScreen(
         onBack = onBack,
         onAppsListClick = { onNavigateToAppsList(viewModel.facetId) },
         onDockClick = { onNavigateToDockSettings(viewModel.facetId) },
-        onCalendarClick = { onNavigateToCalendarSettings(viewModel.facetId) },
         onAppearanceClick = { onNavigateToAppearance(viewModel.facetId) },
         onRename = viewModel::renameFacet,
         onApplyFacet = { viewModel.applyFacet(); onFacetApply() },
@@ -80,7 +77,6 @@ private fun FacetSettingsContent(
     onBack: () -> Unit,
     onAppsListClick: () -> Unit,
     onDockClick: () -> Unit,
-    onCalendarClick: () -> Unit,
     onAppearanceClick: () -> Unit,
     onRename: (String) -> Unit,
     onApplyFacet: () -> Unit,
@@ -126,7 +122,12 @@ private fun FacetSettingsContent(
                     SettingsCard(fullBleedRows = true) {
                         FacetSettingsRow(
                             title = stringResource(R.string.facet_settings_appearance_title),
-                            subtitle = stringResource(R.string.dot_join_2, uiState.dockDisplayMode.displayLabel(), uiState.appRowPresentation.displayLabel()),
+                            subtitle = stringResource(
+                                R.string.dot_join_3,
+                                stringResource(R.string.facet_settings_appearance_clock_label, stringResource(uiState.clockTemplateId.displayNameRes)),
+                                uiState.dockDisplayMode.appearanceSummaryLabel(),
+                                uiState.appRowPresentation.appearanceSummaryLabel(),
+                            ),
                             onClick = onAppearanceClick,
                             testTag = "facet_appearance_row",
                             leadingIcon = { SettingsIconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE) },
@@ -155,18 +156,6 @@ private fun FacetSettingsContent(
                             onClick = onDockClick,
                             testTag = "facet_dock_settings_row",
                             leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        FacetSettingsRow(
-                            title = stringResource(R.string.settings_calendars_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_2,
-                                pluralStringResource(R.plurals.settings_calendars_selected, uiState.selectedCalendarCount, uiState.selectedCalendarCount),
-                                stringResource(if (uiState.effectiveShowAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
-                            ),
-                            onClick = onCalendarClick,
-                            testTag = "facet_calendar_settings_row",
-                            leadingIcon = { SettingsIconBadge(Icons.Outlined.CalendarMonth, SettingsSectionHue.HOME_APPS) },
                         )
                     }
                 }
@@ -205,7 +194,6 @@ private fun FacetSettingsScreenPreview() {
             onBack = {},
             onAppsListClick = {},
             onDockClick = {},
-            onCalendarClick = {},
             onAppearanceClick = {},
             onRename = {},
             onApplyFacet = {},

@@ -72,6 +72,10 @@ data class BackupSettings(
     val drawerOpacity: Float,
     val notificationDotsEnabled: Boolean,
     val notificationBadgeStyle: String,
+    /** Purely additive and defaulted, so no version bump. */
+    val showMediaPlayerOnHome: Boolean = false,
+    val showMediaSkipButtons: Boolean = true,
+    val mediaProgressStyle: String = MediaProgressStyle.WAVY.name,
     val showDrawerIcons: Boolean,
     val showDrawerLabels: Boolean,
     val searchBarPosition: String,

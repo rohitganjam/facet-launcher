@@ -51,11 +51,9 @@ class SettingsScreenTest {
         onViewFacetPro: () -> Unit = {},
         entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
-        onNavigateToCalendarSettings: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToAppDrawerSettings: () -> Unit = {},
-        onNavigateToNotificationSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
@@ -91,11 +89,9 @@ class SettingsScreenTest {
                     onViewFacetAutomation = onViewFacetAutomation,
                     onViewFacetPro = onViewFacetPro,
                     onNavigateToAppearance = onNavigateToAppearance,
-                    onNavigateToCalendarSettings = onNavigateToCalendarSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
-                    onNavigateToNotificationSettings = onNavigateToNotificationSettings,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToPermissions = onNavigateToPermissions,
                     onNavigateToBackupRestore = onNavigateToBackupRestore,
@@ -156,7 +152,7 @@ class SettingsScreenTest {
         var navigated = false
         setContent(onNavigateToAppearance = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_row"))
-        composeRule.onNodeWithTag("appearance_row").assertTextContains("Theme, accent, icons, fonts", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Customize clock, calendar, home, notifications, themes", substring = true)
 
         // When tapping it
         composeRule.onNodeWithTag("appearance_row").performClick()
@@ -248,59 +244,14 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun notificationSettingsRowIsClickableAndReflectsEnabledStateWithCrossCuttingScope() {
-        // Given the settings screen — notification dots are enabled by default (Dot badge style),
-        // and the row's subtitle states the cross-cutting scope explicitly (see chat history: dots
-        // render on Dock, Home Apps List, and App Drawer icons alike, not just one surface), using
-        // the actual configured badge style rather than a generic "dots/badges" placeholder.
-        var navigated = false
-        setContent(onNavigateToNotificationSettings = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
-        composeRule.onNodeWithTag("notification_settings_row").assertTextContains("Enabled · Dots on Dock, Home & Drawer")
-
-        // When tapping "Notifications"
-        composeRule.onNodeWithTag("notification_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun calendarRowNavigatesToCalendarSettings() {
-        // Given the settings screen
-        var navigated = false
-        setContent(onNavigateToCalendarSettings = { navigated = true })
-
-        // When tapping the Calendar row
-        composeRule.onNodeWithTag("calendar_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun calendarRowSubtitleShowsZeroSelectedWhenNothingHasBeenExplicitlyChosenYet() {
-        // Given a fresh install — selectedCalendarIds is `null` (never touched), which is "none decided", not "all"
+    fun calendarAndNotificationRowsLiveInAppearanceNotInSettings() {
+        // Given the settings screen, scrolled through its Apps and folders section
         setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("calendar_settings_row"))
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("folders_settings_row"))
 
-        // Then the row shows a literal zero, not a device calendar total standing in for "all"
-        composeRule.onNodeWithTag("calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
-    }
-
-    @Test
-    fun calendarRowSubtitleReflectsAnExplicitSelection() {
-        // Given 2 calendars explicitly selected
-        val settingsRepository = setContent()
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("calendar_settings_row"))
-
-        // Then the row reflects that exact count and the all-day events visibility
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("calendar_settings_row").assertTextContains("2 calendars selected · All-day events visible", substring = true)
-            }.isSuccess
-        }
+        // Then neither moved row is here any more (Appearance owns them now)
+        composeRule.onNodeWithTag("calendar_settings_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
     }
 
     @Test

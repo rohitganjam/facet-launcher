@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -69,6 +70,7 @@ class HomeViewModelTest {
         dockApps: List<PlacedItem> = emptyList(),
         favoriteItems: List<PlacedItem> = emptyList(),
         clockWidgetFacet: ClockWidgetFacetController = mock(ClockWidgetFacetController::class.java),
+        mediaSessionRepository: MediaSessionRepository = mock(MediaSessionRepository::class.java),
     ): HomeViewModel {
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(
@@ -83,6 +85,7 @@ class HomeViewModelTest {
                     calendarEvents = emptyList(),
                     badgeCounts = emptyMap(),
                     clockAccessories = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),
+                    mediaPlayer = null,
                 ),
             ),
         )
@@ -93,6 +96,7 @@ class HomeViewModelTest {
             facetRepository,
             defaultLauncherRepository,
             ObserveQuickAddStateUseCase(),
+            mediaSessionRepository,
             mock(ClockWidgetHostController::class.java),
             clockWidgetFacet,
         )
@@ -110,6 +114,25 @@ class HomeViewModelTest {
 
         // Then it delegates to the repository rather than reaching the platform directly
         verify(notificationShadeRepository).expand()
+    }
+
+    @Test
+    fun `media transport actions delegate to the media session repository`() = runTest {
+        // Given a HomeViewModel wired to a mocked media session repository
+        val mediaSessionRepository = mock(MediaSessionRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), mediaSessionRepository = mediaSessionRepository)
+
+        // When each transport action fires
+        viewModel.onMediaPrevious()
+        viewModel.onMediaPlayPause()
+        viewModel.onMediaNext()
+        viewModel.onMediaOpen()
+
+        // Then each goes straight to the repository
+        verify(mediaSessionRepository).skipToPrevious()
+        verify(mediaSessionRepository).togglePlayPause()
+        verify(mediaSessionRepository).skipToNext()
+        verify(mediaSessionRepository).openPlayer()
     }
 
     @Test
@@ -142,6 +165,7 @@ class HomeViewModelTest {
             mock(FacetRepository::class.java),
             defaultLauncherRepository,
             ObserveQuickAddStateUseCase(),
+            mock(MediaSessionRepository::class.java),
             mock(ClockWidgetHostController::class.java),
             mock(ClockWidgetFacetController::class.java),
         )

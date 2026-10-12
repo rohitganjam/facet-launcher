@@ -32,7 +32,7 @@ flowchart TB
         C3["DockSettingsScreen\nupdateOverridingDock(facet, overriding) — content only now\n(the dock's own app list); same copy-on-first-override into facet_dock_apps"]
         C4["CalendarSettingsScreen\nupdateOverridingCalendar(...)"]
     end
-    subgraph LOOK["AppearanceSettingsScreen — no override switch, sentinel per field"]
+    subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
     end
@@ -45,14 +45,14 @@ flowchart TB
   highlight spans the card and follows its rounded corners (`CardDivider` and `ClickableRow` read the
   same local). Every card of tappable rows uses it; dropdown and switch rows stay control-only in a
   default padded card by design. `SettingsIconBadge` is the 40dp leading icon, tinted from
-  `SettingsSectionHue` (`theme/Color.kt`: Facets blue, Appearance violet, Home & apps teal, System
+  `SettingsSectionHue` (`theme/Color.kt`: Facets blue, Appearance violet, Apps and folders teal, System
   slate — fixed colours, independent of the accent); `SettingsSectionHeader` is the sentence-case
   title above a card. Buttons are `PrimaryButton`, `TonalButton`, `SurfaceButton` and
   `TextActionButton` (M3 `TextButton`), all pills. The same kit lays out `SettingsScreen`,
   `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `ClockAdjustSheet` and the
   carousel's Launcher settings row.
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row, an "Appearance" card (the
-  Appearance row), then a "Home & apps" card with Apps list / Dock / Calendars rows, mirroring `SettingsScreen`'s own
+  Appearance row), then an "Apps and folders" card with Apps list / Dock rows, mirroring `SettingsScreen`'s own
   layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
   the same hue as on Settings, inset dividers, no chevrons. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
   own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle
@@ -60,12 +60,18 @@ flowchart TB
   destination's own ViewModel rather than `FacetSettingsViewModel`. The "Appearance" row is the one
   exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
   switch of its own (see the `LOOK` subgraph above).
-- **`AppearanceSettingsScreen` is three separate cards**, not one, in this order — "Clock" (just
-  the Clock Style nav row, shown in both scopes — in facet scope it opens that facet's own
+- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen — "Clock &
+  calendar" (the Clock Style row, shown in both scopes — in facet scope it opens that facet's own
   `FacetClockStyleGalleryScreen`, and its subtitle and the preview clock resolve through
-  `overrideClock` via `AppearanceSettingsUiState.clockSettings`), "Dock & home" (the `LOOK`
-  fields above, always shown), and (global mode only) "General"
-  (theme/accent/icon style and shape/launcher font/app label color/size/weight). Row titles:
+  `overrideClock` via `AppearanceSettingsUiState.clockSettings` — plus "Calendars to display", whose subtext is the
+  selection summary, or "Needs calendar access" while `READ_CALENDAR` isn't granted, like the Notifications row below;
+  `AppearanceSettingsViewModel` re-reads both grants on resume), "Dock & home" (one
+  "Dock & Apps appearance" row → `DockAppsAppearanceScreen`, both scopes, route `dockAppsAppearance?facetId=`), and, global
+  only, "Notifications" and "General" (one "Fonts, themes and icons" row → `FontsThemesIconsScreen`, route `fontsThemesIcons`).
+  The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
+  `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
+  fields above, always shown; `FontsThemesIconsScreen` holds theme / system bar icons / accent / icon style and shape /
+  launcher font / app label color / size / weight. Row titles on the dock screen:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
   position". Within "Dock & home", `appListLayout` ("App list layout" — always visible) then gates
@@ -248,6 +254,44 @@ sequenceDiagram
   empty until the service connects after process start.
 - Badge counts are keyed by package only — a Work-profile app shares its badge with the personal
   copy (the service can't see the profile of a notification without extra plumbing).
+
+### Media player row
+
+The same notification-access grant also backs Home's media player row, opt-in via "Show media player in home screen"
+(`show_media_player_on_home`, default off; `show_media_skip_buttons`, default on) on the same Notifications page.
+
+```mermaid
+sequenceDiagram
+    participant MSM as MediaSessionManager
+    participant MSR as MediaSessionRepository (@Singleton, cold callbackFlow)
+    participant UC as ObserveHomeScreenStateUseCase
+    participant VM as HomeViewModel
+    participant UI as MediaPlayerRow
+    UC->>MSR: observe() only when setting on and NotificationAccessRepository.isGranted()
+    MSR->>MSM: addOnActiveSessionsChangedListener(FacetNotificationListenerService component)
+    MSM-)MSR: sessions changed / metadata / playback state callbacks
+    MSR->>MSR: buildMediaPlayerState per session, pickActiveSession (playing wins)
+    MSR-->>UC: MediaPlayerState or null
+    UC-->>VM: HomeScreenState.mediaPlayer
+    VM-->>UI: HomeUiState.mediaPlayer
+    UI->>VM: onMediaPrevious / PlayPause / Next / Open
+    VM->>MSR: transport call on the active MediaController
+```
+
+- Only playing or paused sessions with a title show; stopped, errored and untitled ones map to `null`, so the row
+  disappears with the player's notification.
+- Turning the setting on without access stores it and routes through `NotificationAccessExplanationScreen`; the switch
+  reads on only when the stored value and the real grant both hold, like the badges switch.
+- Art comes from the session's bitmap, else a `content:`/`file:` art URI decoded off the main thread (no network).
+- The page is reached from Appearance's global-only Notifications section, whose "Notifications and media" row carries a
+  subtext that follows the page: "Dot badges"/"Count badges"/"Badges off", then "Media player on"/"off", joined by " · ".
+  Without notification access it says "Needs notification access" instead, since both switches read off then.
+  `AppearanceSettingsViewModel` holds the access flag and re-reads it on resume (`refreshNotificationAccess`).
+- Progress style is `WAVY` (default, `media_progress_style`) or `FLAT`. `WAVY` is Material's `LinearWavyProgressIndicator`,
+  which only exists from Material3 1.5, so `app/build.gradle.kts` overrides the BOM's 1.4.0 with `1.5.0-beta01` (drop the
+  override once a BOM pins a stable 1.5). It needs no OS-version gating (the artifact's minSdk is 24).
+- Progress is interpolated in the UI from the last reported position/time/speed; it is `null` (no bar fill) when the
+  duration is unknown.
 
 ## 4. Onboarding & first run
 

@@ -137,15 +137,21 @@ flowchart TB
     ALM["NextAlarmRepository.observeNextAlarmMillis()"] --> CA
     CA["ObserveClockAccessoriesUseCase"]
 
+    S --> MP
+    RT --> MP
+    MS["MediaSessionRepository.observe()\n(callbackFlow over MediaSessionManager)"] --> MP
+    MP["mediaPlayer (null unless showMediaPlayerOnHome\nand notification access granted)"]
+
     ALI --> OUT
     DK --> OUT
     FAV2["favoriteItems (always observed,\nfor the quick-add menu)"] --> OUT
     CAL --> OUT
     BC --> OUT
     CA --> OUT
+    MP --> OUT
     S --> OUT
     F --> OUT
-    OUT{{"combine(7 sources) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher)\n→ HomeUiState"]
+    OUT{{"combine(8 sources) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher)\n→ HomeUiState"]
     HVM --> HS["HomeScreen"]
 ```
 
@@ -154,7 +160,9 @@ Notes:
 - The `combine` arity limit (5 in `kotlinx.coroutines`) is worked around with `domain/FlowCombine.kt`
   (6- and 7-ary overloads) and by pairing unrelated flows (`dockAndFavoriteItems`, `badgeCountsAndAccessories`).
 - `refreshTrigger` exists because Recents/Most-used and calendar events are **one-shot** reads
-  (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume.
+  (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume. It also
+  re-evaluates the notification-access grant that gates `mediaPlayer`, re-subscribing to
+  `MediaSessionRepository.observe()` once access has been granted in system Settings.
 - `HomeViewModel` seeds `HomeUiState(isLoading = true)` and additionally clears `isLoading`
   after `LOADING_TIMEOUT_MS` so a slow first `LauncherApps` scan can't leave Home blank forever.
 - `HomeUiState`'s resolved "look" properties (`activeAppRowPosition`, `activeAppRowPresentation`,
@@ -201,6 +209,7 @@ sequenceDiagram
 | Source | Mechanism | Consumer |
 |---|---|---|
 | Notification badges | `FacetNotificationListenerService` (`@AndroidEntryPoint`) pushes `setActiveNotifications()` into `NotificationBadgeRepository`'s `MutableStateFlow` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
+| Media session | `MediaSessionRepository.observe()` — `callbackFlow` over `MediaSessionManager.OnActiveSessionsChangedListener` plus a `MediaController.Callback` per session (main-thread handler), cold: only subscribed while Home collects and the setting is on and access is granted | `ObserveHomeScreenStateUseCase` (`mediaPlayer`), transport calls via `HomeViewModel` |
 | Battery | `callbackFlow` over `ACTION_BATTERY_CHANGED` sticky broadcast | `ObserveClockAccessoriesUseCase` |
 | Headphones | `HeadphonesRepository.observeHeadphonesPluggedIn()` — `callbackFlow` over `AudioDeviceCallback` | `DeviceStateRepository` |
 | Wi-Fi | `WifiRepository.observeWifiState()` — synchronous read of current networks, then `ConnectivityManager` network callbacks | `DeviceStateRepository` |

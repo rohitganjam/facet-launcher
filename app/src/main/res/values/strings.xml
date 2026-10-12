@@ -211,14 +211,14 @@
     <string name="settings_header_title">Settings</string>
     <string name="settings_section_facets">Facets</string>
     <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_section_home_apps">Home &amp; apps</string>
+    <string name="settings_section_home_apps">Apps and folders</string>
     <string name="settings_section_system">System</string>
     <string name="settings_facets_title">Facets</string>
     <string name="settings_facets_subtitle">Create and manage facet-specific settings</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>
     <string name="settings_change_wallpaper_subtitle">Change your system wallpaper</string>
     <string name="settings_appearance_title">Launcher Appearance</string>
-    <string name="settings_appearance_subtitle">Theme, accent, icons, fonts</string>
+    <string name="settings_appearance_subtitle">Customize clock, calendar, home, notifications, themes</string>
     <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
     <string name="settings_time_format_12h">12-hour time</string>
@@ -255,10 +255,14 @@
     <string name="settings_contact_search">Contact search %1$s</string>
     <string name="settings_settings_search">Settings search %1$s</string>
     <string name="settings_notifications_title">Notifications</string>
-    <string name="settings_notification_badge_dots">Dots</string>
-    <string name="settings_notification_badge_counts">Counts</string>
-    <string name="settings_notifications_enabled_subtitle">Enabled · %1$s on Dock, Home &amp; Drawer</string>
-    <string name="settings_notifications_disabled_subtitle">Disabled</string>
+    <string name="settings_notifications_media_row_title">Notifications and media</string>
+    <string name="settings_notifications_summary_badges_dot">Dot badges</string>
+    <string name="settings_notifications_summary_badges_count">Count badges</string>
+    <string name="settings_notifications_summary_badges_off">Badges off</string>
+    <string name="settings_notifications_summary_media_on">Media player on</string>
+    <string name="settings_notifications_summary_media_off">Media player off</string>
+    <string name="settings_notifications_needs_access">Needs notification access</string>
+    <string name="settings_calendars_needs_access">Needs calendar access</string>
     <string name="settings_folders_title">Folders</string>
     <string name="settings_folders_none">No folders yet</string>
     <plurals name="settings_folders_count">
@@ -279,6 +283,18 @@
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Notification badges</string>
     <string name="notification_badge_style_row_title">Badge style</string>
+    <string name="media_player_row_title">Show media player in home screen</string>
+    <string name="media_skip_buttons_row_title">Show skip buttons</string>
+    <string name="media_progress_style_row_title">Progress style</string>
+    <string name="media_progress_style_flat">Flat</string>
+    <string name="media_progress_style_wavy">Wavy</string>
+
+    <!-- MediaPlayerRow -->
+    <string name="media_player_open_cd">Open player</string>
+    <string name="media_player_previous_cd">Previous track</string>
+    <string name="media_player_next_cd">Next track</string>
+    <string name="media_player_play_cd">Play</string>
+    <string name="media_player_pause_cd">Pause</string>
 
     <!-- DrawerPresentation/DrawerGridSize/DrawerListItemSize/SearchBarPosition/DrawerFolderDisplayMode
          — enum option labels, same pattern as section 1's data/model enums (LabeledDropdownRow
@@ -384,7 +400,10 @@
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Appearance</string>
     <string name="appearance_section_dock_home">Dock &amp; home</string>
-    <string name="appearance_section_clock">Clock</string>
+    <string name="appearance_section_clock">Clock &amp; calendar</string>
+    <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
+    <string name="appearance_fonts_themes_icons_title">Fonts, themes and icons</string>
+    <string name="appearance_fonts_themes_icons_subtitle">Theme, accent, icon style, fonts</string>
     <string name="appearance_section_general">General</string>
     <string name="appearance_launcher_theme">Launcher theme</string>
     <string name="appearance_system_bar_icons">System bar icons</string>
@@ -621,8 +640,8 @@
     <string name="usage_access_explanation_body">This needs usage access, a special permission granted from system Settings — Facet can\'t request it directly. It only reads which apps you open and for how long; nothing leaves your device.</string>
 
     <!-- NotificationAccessExplanationScreen (header reuses permission_notification_access_title) -->
-    <string name="notification_access_explanation_headline">Notification badges show a dot or count on apps with something waiting for you.</string>
-    <string name="notification_access_explanation_body">This needs notification access, a special permission granted from system Settings — Facet can\'t request it directly. It only reads which apps have active notifications and whether they\'re silent; nothing leaves your device.</string>
+    <string name="notification_access_explanation_headline">Notification badges show a dot or count on apps with something waiting for you, and the media player shows what\'s playing.</string>
+    <string name="notification_access_explanation_body">This needs notification access, a special permission granted from system Settings — Facet can\'t request it directly. It only reads which apps have active notifications and whether they\'re silent, plus the title, artist, and artwork of the media that\'s playing; nothing leaves your device.</string>
 
     <!-- FolderAppPickerScreen -->
     <string name="folder_app_picker_in_folder">IN FOLDER</string>
@@ -760,6 +779,12 @@
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock settings</string>
     <string name="facet_settings_appearance_title">Appearance</string>
+    <string name="facet_settings_appearance_clock_label">%1$s clock</string>
+    <string name="facet_settings_appearance_dock_icons">Dock icons</string>
+    <string name="facet_settings_appearance_dock_text">Dock text</string>
+    <string name="facet_settings_appearance_home_icon_only">Home icon only</string>
+    <string name="facet_settings_appearance_home_icon_and_text">Home icon &amp; text</string>
+    <string name="facet_settings_appearance_home_text_only">Home text only</string>
     <string name="facet_settings_rename_explanation">Rename this facet.</string>
 
     <!-- HomeScreen ("Open settings" reuses open_settings) -->

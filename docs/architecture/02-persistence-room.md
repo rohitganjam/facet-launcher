@@ -434,6 +434,9 @@ erDiagram
         boolean search_settings_enabled "default false"
         boolean notification_dots_enabled "default true"
         string notification_badge_style "NotificationBadgeStyle, default DOT"
+        boolean show_media_player_on_home "default false"
+        boolean show_media_skip_buttons "default true"
+        string media_progress_style "MediaProgressStyle, default WAVY"
         boolean calendar_permission_requested "default false"
         boolean contacts_permission_requested "default false"
         boolean bluetooth_permission_requested "default false"
@@ -558,6 +561,9 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setSearchSettingsEnabled(Boolean)` | `search_settings_enabled` | set | `AppDrawerSettingsViewModel` |
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
+| `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
+| `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
+| `setMediaProgressStyle(MediaProgressStyle)` | `media_progress_style` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
 | `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel` |
@@ -672,6 +678,9 @@ its position (see chat history: calendar/appearance styling consolidation).
 |---|---|---|---|
 | `notification_dots_enabled` | Boolean | `notificationDotsEnabled` | `true` |
 | `notification_badge_style` | String (`NotificationBadgeStyle`) | `notificationBadgeStyle` | `DOT` |
+| `show_media_player_on_home` | Boolean | `showMediaPlayerOnHome` | `false` — opt-in; the row also needs notification access, so it only shows when both hold |
+| `show_media_skip_buttons` | Boolean | `showMediaSkipButtons` | `true` |
+| `media_progress_style` | String (`MediaProgressStyle`) | `mediaProgressStyle` | `WAVY` — Material's `LinearWavyProgressIndicator`, moving while playing and flat when paused — or `FLAT` |
 
 #### Permission-prompt bookkeeping
 
@@ -725,7 +734,7 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 38 of the 54 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 41 of the 57 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,

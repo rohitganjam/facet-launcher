@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -17,6 +18,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -56,6 +58,9 @@ class ObserveHomeScreenStateUseCaseTest {
         val observeClockAccessories = mock(ObserveClockAccessoriesUseCase::class.java)
             .also { `when`(it.invoke()).thenReturn(flowOf(ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false))) }
 
+        val mediaFlow = MutableStateFlow<MediaPlayerState?>(null)
+        val mediaSessionRepository = mock(MediaSessionRepository::class.java).also { `when`(it.observe()).thenReturn(mediaFlow) }
+
         val useCase = ObserveHomeScreenStateUseCase(
             settingsRepository,
             dockAppRepository,
@@ -70,6 +75,7 @@ class ObserveHomeScreenStateUseCaseTest {
             notificationBadgeRepository,
             notificationAccessRepository,
             observeClockAccessories,
+            mediaSessionRepository,
         )
     }
 
@@ -267,5 +273,54 @@ class ObserveHomeScreenStateUseCaseTest {
 
         // Then it queries with the facet's own selected calendar ids, not the global setting
         assertEquals(listOf(event), result.calendarEvents)
+    }
+
+    private val playingTrack = MediaPlayerState(
+        packageName = "com.example.music", title = "Song", artist = "Artist", art = null, isPlaying = true,
+        positionMs = 0L, durationMs = 1_000L, positionUpdatedAtMs = 0L, playbackSpeed = 1f,
+        canSkipPrevious = true, canSkipNext = true,
+    )
+
+    @Test
+    fun `mediaPlayer is null when the media player setting is off even with a session playing`() = runTest {
+        // Given access granted and a session playing, but the "Show media player" setting at its default (off)
+        val fixture = Fixture()
+        `when`(fixture.notificationAccessRepository.isGranted()).thenReturn(true)
+        fixture.mediaFlow.value = playingTrack
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then nothing is exposed
+        assertEquals(null, result.mediaPlayer)
+    }
+
+    @Test
+    fun `mediaPlayer is null when the setting is on but notification access isn't granted`() = runTest {
+        // Given the setting on and a session playing, but no notification access
+        val fixture = Fixture()
+        fixture.settingsFlow.value = LauncherSettings(activeFacetId = 1L, showMediaPlayerOnHome = true)
+        fixture.mediaFlow.value = playingTrack
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then nothing is exposed
+        assertEquals(null, result.mediaPlayer)
+    }
+
+    @Test
+    fun `mediaPlayer exposes the active session when the setting is on and access is granted`() = runTest {
+        // Given the setting on, access granted, and a session playing
+        val fixture = Fixture()
+        `when`(fixture.notificationAccessRepository.isGranted()).thenReturn(true)
+        fixture.settingsFlow.value = LauncherSettings(activeFacetId = 1L, showMediaPlayerOnHome = true)
+        fixture.mediaFlow.value = playingTrack
+
+        // When observing home screen state
+        val result = fixture.useCase().first()
+
+        // Then the session is exposed as-is
+        assertEquals(playingTrack, result.mediaPlayer)
     }
 }

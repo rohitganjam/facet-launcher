@@ -30,7 +30,9 @@ import com.facetlauncher.app.ui.settings.AboutScreen
 import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
+import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
+import com.facetlauncher.app.ui.settings.FontsThemesIconsScreen
 import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
 import com.facetlauncher.app.ui.settings.FolderDetailScreen
 import com.facetlauncher.app.ui.settings.FoldersSettingsScreen
@@ -66,6 +68,8 @@ object FacetDestinations {
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
     const val BACKUP_RESTORE = "backupRestore"
     const val APPEARANCE_SETTINGS = "appearanceSettings?facetId={facetId}"
+    const val DOCK_APPS_APPEARANCE = "dockAppsAppearance?facetId={facetId}"
+    const val FONTS_THEMES_ICONS = "fontsThemesIcons"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
@@ -100,6 +104,10 @@ object FacetDestinations {
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) Appearance screen. */
     fun appearanceSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "appearanceSettings?facetId=$facetId" else "appearanceSettings"
+
+    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps appearance. */
+    fun dockAppsAppearance(facetId: Long? = null) =
+        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockAppsAppearance?facetId=$facetId" else "dockAppsAppearance"
 
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) entry point. */
     fun calendarSettings(facetId: Long? = null) =
@@ -185,11 +193,9 @@ fun FacetNavHost(
                 onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.appearanceSettings()) },
-                onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings()) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
-                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
@@ -213,7 +219,20 @@ fun FacetNavHost(
                     val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                     navController.navigate(dest)
                 },
+                onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings(facetId)) },
+                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
+                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
+                onNavigateToFontsThemesIcons = { navController.navigate(FacetDestinations.FONTS_THEMES_ICONS) },
             )
+        }
+        composable(
+            FacetDestinations.DOCK_APPS_APPEARANCE,
+            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+        ) {
+            DockAppsAppearanceScreen(onBack = { navController.popBackStackSafely() })
+        }
+        composable(FacetDestinations.FONTS_THEMES_ICONS) {
+            FontsThemesIconsScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(
             FacetDestinations.DOCK_SETTINGS,
@@ -336,9 +355,6 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToAppsList = { facetId -> navController.navigate(FacetDestinations.homeAppsListSettings(facetId)) },
                 onNavigateToDockSettings = { facetId -> navController.navigate(FacetDestinations.dockSettings(facetId)) },
-                onNavigateToCalendarSettings = { facetId ->
-                    navController.navigate(FacetDestinations.calendarSettings(facetId))
-                },
                 onNavigateToAppearance = { facetId ->
                     navController.navigate(FacetDestinations.appearanceSettings(facetId))
                 },

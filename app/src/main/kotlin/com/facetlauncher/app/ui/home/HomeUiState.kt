@@ -20,6 +20,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
@@ -40,6 +41,8 @@ data class HomeUiState(
     val badgeCounts: Map<String, Int> = emptyMap(),
     /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
     val clockAccessories: ClockAccessoryState = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),
+    /** The media row under the clock — `null` hides it (setting off, no access, or nothing playing/paused). */
+    val mediaPlayer: MediaPlayerState? = null,
     /** Set once the user taps the usage-access prompt's own button — the prompt then stays hidden
      *  for the rest of this ViewModel's lifetime regardless of whether they actually grant the
      *  permission afterward, rather than reappearing every recomposition until [usageAccessGranted]
