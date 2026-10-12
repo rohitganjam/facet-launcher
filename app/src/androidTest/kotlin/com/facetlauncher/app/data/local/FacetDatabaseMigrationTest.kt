@@ -573,6 +573,25 @@ class FacetDatabaseMigrationTest {
         remaining.close()
     }
 
+    @Test
+    fun migration26To27AddsCalendarDisplayColumnsDefaultingToIndicatorOnAndThreeItems() {
+        // Given a v26 database with an existing facet (v26 only added a table, so the v25 row shape is valid)
+        val dbV26 = helper.createDatabase(TEST_DB, 26)
+        insertFacetV25(dbV26, id = 1, name = "Work")
+        dbV26.close()
+
+        // When migrating to v27 (Room also validates the result against the exported v27 schema)
+        val dbV27 = helper.runMigrationsAndValidate(TEST_DB, 27, true, Migrations.MIGRATION_26_27)
+
+        // Then the existing facet keeps its data and gets the old behaviour: indicator on, 3 items
+        val cursor = dbV27.query("SELECT name, showCalendarIndicator, calendarItemsToShow FROM facets WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals("Work", cursor.getString(0))
+        assertEquals(1, cursor.getInt(1))
+        assertEquals(3, cursor.getInt(2))
+        cursor.close()
+    }
+
     private fun insertFacetV25(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         db.execSQL(
             "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +

@@ -573,6 +573,7 @@
     <string name="calendar_settings_preview_event_1">Team-Standup</string>
     <string name="calendar_settings_preview_event_2">Design-Review</string>
     <string name="calendar_settings_preview_event_3">Mittagessen mit Sam</string>
+    <string name="calendar_settings_preview_sample_note">Beispieltermine</string>
     <string name="calendar_settings_no_calendars_found">Keine Kalender auf diesem Gerät gefunden.</string>
     <string name="calendar_settings_access_off">Kalenderzugriff aus — Termine ausgeblendet.</string>
 

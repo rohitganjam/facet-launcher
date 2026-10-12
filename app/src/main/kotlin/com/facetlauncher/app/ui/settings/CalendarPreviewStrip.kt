@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -27,9 +28,9 @@ private const val HOUR_MILLIS = 3_600_000L
 
 /**
  * A short window onto the wallpaper (same crop as Home's top) with the calendar block drawn on it
- * using the scope's real font/colour/alignment and the display options being edited. Events are
- * samples, so the item count and indicator are always demonstrable; the bar colours follow the
- * device's actual calendars when they're loaded.
+ * using the scope's real font/colour/alignment and the display options being edited. Without
+ * calendar access it shows no events. With access it shows the real upcoming events, or labelled
+ * samples when today is clear, so the item count and indicator can still be demonstrated.
  */
 @Composable
 internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Modifier = Modifier) {
@@ -40,7 +41,7 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
         stringResource(R.string.calendar_settings_preview_event_3),
     )
     val calendarIds = uiState.calendars.map { it.id }
-    val events = remember(titles, calendarIds) {
+    val sampleEvents = remember(titles, calendarIds) {
         val now = System.currentTimeMillis()
         titles.mapIndexed { index, title ->
             CalendarEvent(
@@ -52,6 +53,12 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
                 isAllDay = false,
             )
         }
+    }
+    val showSamples = uiState.isCalendarAccessGranted && uiState.previewEvents.isEmpty()
+    val events = when {
+        !uiState.isCalendarAccessGranted -> emptyList()
+        showSamples -> sampleEvents
+        else -> uiState.previewEvents
     }
     val shape = MaterialTheme.shapes.extraLarge
     Box(
@@ -75,5 +82,13 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
             alignment = uiState.previewClockAlignment,
             display = uiState.calendarDisplay,
         )
+        if (showSamples) {
+            Text(
+                text = stringResource(R.string.calendar_settings_preview_sample_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = settings.appLabelColorOption.resolve().copy(alpha = 0.7f),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(horizontal = 18.dp, vertical = 8.dp).testTag("calendar_preview_sample_note"),
+            )
+        }
     }
 }

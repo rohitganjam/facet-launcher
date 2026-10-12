@@ -46,7 +46,7 @@ data class HomeScreenState(
     val facets: List<FacetEntity>,
     /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
     val usageAccessGranted: Boolean,
-    /** Today's events for the active facet's effective calendar settings — empty when ungranted or none selected. */
+    /** Upcoming events (midnight today to noon tomorrow) for the active facet's effective calendar settings — empty when ungranted or none selected. */
     val calendarEvents: List<CalendarEvent>,
     /** The active facet's effective calendar indicator / item-count settings. */
     val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
@@ -89,6 +89,16 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         refreshTrigger.tryEmit(Unit)
     }
 
+    private fun observeCalendarEventsAndDisplay(activeFacet: Flow<FacetEntity?>): Flow<Pair<List<CalendarEvent>, CalendarDisplayOptions>> {
+        val calendarDisplay = combine(activeFacet, settingsRepository.settings) { facet, settings ->
+            facet.effectiveCalendarDisplay(settings)
+        }.distinctUntilChanged()
+        val calendarEvents = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
+            facet to settings
+        }.flatMapLatest { (facet, settings) -> observeCalendarEvents(facet, settings) }
+        return combine(calendarEvents, calendarDisplay) { events, display -> events to display }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(): Flow<HomeScreenState> {
         val activeFacet = combine(settingsRepository.settings, facetRepository.observeFacets()) { settings, facets ->
@@ -119,13 +129,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
         val dockAndFavoriteItems = combine(dockApps, favoriteItems) { dock, favorites -> dock to favorites }
 
-        val calendarDisplay = combine(activeFacet, settingsRepository.settings) { facet, settings ->
-            facet.effectiveCalendarDisplay(settings)
-        }.distinctUntilChanged()
-
-        val calendarEvents = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
-            facet to settings
-        }.flatMapLatest { (facet, settings) -> observeCalendarEvents(facet, settings) }
+        val eventsAndDisplay = observeCalendarEventsAndDisplay(activeFacet)
 
         // Gated on both the "Notification badges" setting and the real grant — the listener
         // repository keeps running regardless, so this is where "off" actually takes effect.
@@ -136,7 +140,6 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         // Paired with badgeCounts (rather than added as a 7th argument below) purely to stay
         // within the combine() overload's supported arity — unrelated to badgeCounts otherwise.
         val badgeCountsAndAccessories = combine(badgeCounts, observeClockAccessories()) { badges, accessories -> badges to accessories }
-        val eventsAndDisplay = combine(calendarEvents, calendarDisplay) { events, display -> events to display }
 
         // Only subscribes to the framework while the setting is on and access is granted; refreshTrigger
         // re-evaluates the grant on resume.
@@ -189,6 +192,6 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
         val includeAllDay = if (facet?.overrideCalendar == true) facet.showAllDayEvents else settings.showAllDayEvents
         val selectedCalendarIds = if (facet?.overrideCalendar == true) facet.selectedCalendarIds else settings.selectedCalendarIds
-        return flow { emit(calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)) }
+        return flow { emit(calendarRepository.getUpcomingEvents(selectedCalendarIds, includeAllDay)) }
     }
 }

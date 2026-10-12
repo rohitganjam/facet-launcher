@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home.clock
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -41,7 +42,7 @@ class CalendarEventsBlockTest {
         setBlock(CalendarDisplayOptions())
 
         // Then every row has its calendar indicator
-        events.forEach { composeRule.onNodeWithTag("clock_event_indicator_${it.id}").assertExists() }
+        events.forEach { composeRule.onNodeWithTag("clock_event_indicator_${it.id}", useUnmergedTree = true).assertExists() }
     }
 
     @Test
@@ -52,7 +53,7 @@ class CalendarEventsBlockTest {
         // Then rows render but none has an indicator
         events.forEach {
             composeRule.onNodeWithTag("clock_event_row_${it.id}").assertExists()
-            composeRule.onNodeWithTag("clock_event_indicator_${it.id}").assertDoesNotExist()
+            composeRule.onNodeWithTag("clock_event_indicator_${it.id}", useUnmergedTree = true).assertDoesNotExist()
         }
     }
 
@@ -65,5 +66,19 @@ class CalendarEventsBlockTest {
         composeRule.onNodeWithTag("clock_event_row_1").assertExists()
         composeRule.onNodeWithTag("clock_event_row_2").assertExists()
         composeRule.onNodeWithTag("clock_event_row_3").assertDoesNotExist()
+    }
+
+    @Test
+    fun `rows for tomorrow carry a weekday prefix and rows for today do not`() {
+        // Given one event later today and one tomorrow (fixed clock is Thursday 27 Aug 2026)
+        val today = events.first()
+        val tomorrow = today.copy(id = 9, title = "Tomorrow thing", startTimeMillis = clock.millis() + 24 * 3_600_000, endTimeMillis = clock.millis() + 25 * 3_600_000)
+        composeRule.setContent {
+            FacetLauncherTheme { CalendarEventsBlock(events = listOf(today, tomorrow), clock = clock, locale = java.util.Locale.US, use24HourTime = true) }
+        }
+
+        // Then tomorrow's row is prefixed with Fri and today's row is not
+        composeRule.onNodeWithText("Fri 09:00").assertExists()
+        composeRule.onNodeWithText("10:00").assertExists()
     }
 }

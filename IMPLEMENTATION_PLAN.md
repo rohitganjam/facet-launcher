@@ -353,7 +353,7 @@ Reported gap: tapping a facet card in the carousel applied the facet but returne
 `assembleDebug`, `test`, and `connectedAndroidTest` all green (confirmed via a fresh full run, then a targeted re-run of the affected classes after the fixes below).
 
 - **Permission**: added `READ_CALENDAR` to the main manifest; `CalendarSettingsScreen.kt`'s "Turn on" action wired to `rememberLauncherForActivityResult(RequestPermission())`, replacing the previously-inert styled text.
-- **New `data/CalendarRepository.kt`** (`getCalendars()`, `getTodayEvents(calendarIds, includeAllDay)` via `CalendarContract.Calendars`/`Instances.query`) and **`data/CalendarPermissionRepository.kt`** (`isGranted()` via `ContextCompat.checkSelfPermission`).
+- **New `data/CalendarRepository.kt`** (`getCalendars()`, `getUpcomingEvents(calendarIds, includeAllDay)` via `CalendarContract.Calendars`/`Instances.query`) and **`data/CalendarPermissionRepository.kt`** (`isGranted()` via `ContextCompat.checkSelfPermission`).
 - **`CalendarSettingsViewModel`/`Screen` rewritten**: the static permission-denied strip from the earlier Settings-redesign shell is now real — granted state renders an actual checkbox list of the device's calendars (`calendar_picker_row_$id`), persisted to a new `LauncherSettings.selectedCalendarIds: Set<String>?` DataStore field (`null` = "not yet initialized, implicitly all calendars" distinct from an explicit empty set). `DisposableEffect`/`LifecycleEventObserver` re-checks the grant on resume, since there's no direct callback for a permission changed outside the app.
 - **`ClockBlock.kt`** gained `events: List<CalendarEvent>`/`onEventClick` — renders event rows below the date (rule + time + title, accent rule on the next upcoming event), sourced through `ObserveHomeScreenStateUseCase`'s now-5-flow `combine()`. Tapping a row fires `ACTION_VIEW` on the event's own `CalendarContract.Events` content URI.
 - Test: `CalendarRepositoryTest` (5 tests — Robolectric has no real Calendar Provider registered by default, so this mocks `ContentResolver` directly with `MatrixCursor` rather than attempting genuine inserts); `CalendarSettingsViewModelTest`/`CalendarSettingsScreenTest` additions (denied strip, granted list rendering + persistence); `ObserveHomeScreenStateUseCaseTest`/`ClockBlockTest` additions (event ordering, click intent).
@@ -3170,7 +3170,7 @@ consume the resolved output between facet and defaults" (direct request) — the
   transform lambda (itself `suspend`) — mirrors `ObserveHomeScreenStateUseCase`'s own
   permission-gated, facet-or-global `showAllDayEvents`/`selectedCalendarIds` resolution, empty (never
   a sample fallback) when `CalendarPermissionRepository.isGranted()` is false.
-- [x] `CalendarRepository.getTodayEvents` marked `open` (mirrors the existing `getCalendars`
+- [x] `CalendarRepository.getUpcomingEvents` marked `open` (mirrors the existing `getCalendars`
   precedent) so an instrumented test can override it with a fixed event list.
 - [x] `AppearancePreviewCard` (`AppearanceSettingsScreen.kt`) takes `favorites: List<PlacedItem>`/
   `dockItems: List<PlacedItem>`/`calendarEvents: List<CalendarEvent>` instead of the removed
@@ -3968,8 +3968,11 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] "Show calendar indicator" switch and "Items to display" (1–3) dropdown on the Calendars screen, launcher-wide and per facet (`overrideCalendar` gate); Room v27 (`MIGRATION_26_27`), DataStore keys, backup fields (defaulted).
 - [x] `CalendarEventsBlock` takes `CalendarDisplayOptions`; Home, the Appearance previews and the carousel previews all use it. No indicator = row collapses, no gap.
-- [x] Wallpaper-backed preview strip at the top of the Calendars screen (scrolls away), `WallpaperBackground` cropped to the top, sample events.
-- [ ] Not verified on a device or emulator: no Android SDK in the authoring environment. Run `./gradlew test` and `connectedDebugAndroidTest` (emulator); the build generates `app/schemas/.../27.json` — commit it and add `FacetDatabaseMigrationTest.migration26To27…`.
+- [x] Wallpaper-backed preview strip at the top of the Calendars screen (scrolls away), `WallpaperBackground` cropped to the top. No calendar access: no events. Access granted: real upcoming events (effective selection and all-day filter, via `CalendarSettingsViewModel`), falling back to labelled sample events ("Sample events" note) when today is clear.
+- [x] Verified on an emulator: unit tests green; targeted instrumented classes (`CalendarSettingsScreenTest`, `CalendarSettingsScreenGrantedTest`, `FacetDatabaseMigrationTest` incl. `migration26To27…`, `CalendarEventsBlockTest`) pass. `27.json` schema committed. Also fixed an unescaped apostrophe in the French strings. Full `connectedDebugAndroidTest` not run.
+
+- [x] Event window widened: `CalendarRepository.getTodayEvents` → `getUpcomingEvents`, local midnight today to noon tomorrow (Calendar arithmetic, DST-safe); all-day events count when dated today or tomorrow. Window and all-day cases in `CalendarRepositoryTest`.
+- [x] Rows for events not on today's date get a locale weekday prefix (`Thu 9:00`, `Thu All day`) via `eventTimeLabel` in `CalendarEventsBlock.kt` (timed: device-zone date, all-day: UTC date). `EventTimeLabelTest` + a `CalendarEventsBlockTest` case.
 
 ## Appearance rows: icons and permission-aware subtext (direct request)
 

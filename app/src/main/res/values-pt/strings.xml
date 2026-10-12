@@ -573,6 +573,7 @@
     <string name="calendar_settings_preview_event_1">Reunião de equipe</string>
     <string name="calendar_settings_preview_event_2">Revisão de design</string>
     <string name="calendar_settings_preview_event_3">Almoço com Sam</string>
+    <string name="calendar_settings_preview_sample_note">Eventos de exemplo</string>
     <string name="calendar_settings_no_calendars_found">Nenhum calendário encontrado neste dispositivo.</string>
     <string name="calendar_settings_access_off">Acesso ao calendário desativado — eventos ocultos.</string>
 

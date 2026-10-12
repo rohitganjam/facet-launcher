@@ -30,12 +30,12 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 internal class AppearanceScreenTestHost(private val composeRule: ComposeContentTestRule) {
 
 
-    /** Fakes calendar *data* — no real Calendar Provider reads. Mirrors `CalendarSettingsScreenTest`'s own local `FakeCalendarRepository`, just overriding `getTodayEvents` instead of `getCalendars`. */
+    /** Fakes calendar *data* — no real Calendar Provider reads. Mirrors `CalendarSettingsScreenTest`'s own local `FakeCalendarRepository`, just overriding `getUpcomingEvents` instead of `getCalendars`. */
     private class FakeCalendarRepository(
         contentResolver: android.content.ContentResolver,
         private val events: List<CalendarEvent>,
     ) : CalendarRepository(contentResolver) {
-        override suspend fun getTodayEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = events
+        override suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = events
     }
 
     /**

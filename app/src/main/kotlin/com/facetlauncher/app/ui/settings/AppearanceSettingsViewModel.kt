@@ -207,7 +207,7 @@ class AppearanceSettingsViewModel @Inject constructor(
         val overriding = facet?.overrideCalendar == true
         val includeAllDay = if (overriding) facet.showAllDayEvents else settings.showAllDayEvents
         val selectedCalendarIds = if (overriding) facet.selectedCalendarIds else settings.selectedCalendarIds
-        return calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)
+        return calendarRepository.getUpcomingEvents(selectedCalendarIds, includeAllDay)
     }
 
     fun setThemeMode(mode: ThemeMode) {

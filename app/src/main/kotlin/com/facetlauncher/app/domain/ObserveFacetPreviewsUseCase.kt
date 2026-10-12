@@ -137,6 +137,6 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
         val includeAllDay = if (facet.overrideCalendar) facet.showAllDayEvents else settings.showAllDayEvents
         val selectedCalendarIds = if (facet.overrideCalendar) facet.selectedCalendarIds else settings.selectedCalendarIds
-        return flow { emit(calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)) }
+        return flow { emit(calendarRepository.getUpcomingEvents(selectedCalendarIds, includeAllDay)) }
     }
 }

@@ -367,7 +367,7 @@ class AppearanceSettingsViewModelTest {
     fun `calendar events come from the real repository when permission is granted`() = runTest {
         val event = CalendarEvent(id = 1, calendarId = "1", title = "Standup", startTimeMillis = 0, endTimeMillis = 1, isAllDay = false)
         val calendarRepository = mock(CalendarRepository::class.java)
-        `when`(calendarRepository.getTodayEvents(null, true)).thenReturn(listOf(event))
+        `when`(calendarRepository.getUpcomingEvents(null, true)).thenReturn(listOf(event))
         val viewModel = createViewModel(calendarRepository = calendarRepository, calendarGranted = true)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -424,7 +424,7 @@ class AppearanceSettingsViewModelTest {
         // Given calendar permission not granted at first (and a calendar repository that can answer once it is)
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
         val calendarRepository = mock(CalendarRepository::class.java)
-        `when`(calendarRepository.getTodayEvents(null, true)).thenReturn(emptyList())
+        `when`(calendarRepository.getUpcomingEvents(null, true)).thenReturn(emptyList())
         val viewModel = createViewModel(
             calendarGranted = false,
             calendarPermissionRepository = calendarPermissionRepository,
