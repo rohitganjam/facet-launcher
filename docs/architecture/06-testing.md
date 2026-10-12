@@ -5,8 +5,8 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **188 test classes, 1680 cases** — 1061 unit (141 classes),
-619 instrumented (47 classes).
+Current counts (from the registry): **189 test classes, 1693 cases** — 1061 unit (141 classes),
+632 instrumented (48 classes).
 
 ## 1. The two tiers
 
@@ -114,6 +114,15 @@ One test per shipped `Migration` plus two guard tests: `createDatabase(name, old
 with raw SQL → `runMigrationsAndValidate(name, new, true, MIGRATION_old_new)` → assert the rows and
 new columns survived. The guard `migratingAnOldSchemaVersionWithNoRegisteredMigrationThrowsInsteadOfSilentlySucceeding`
 proves the no-destructive-fallback policy is really in force.
+
+### Framework-backed repositories (`androidTest/data/MediaSessionRepositoryTest`)
+
+`MediaSessionRepository` is tested against a real `MediaSession` through the real `MediaSessionManager`. Reading sessions needs the
+notification-listener grant, which a test can only give through the shell: `setUp`/`tearDown` run
+`cmd notification disallow_listener` and the test calls `allow_listener` via `UiAutomation.executeShellCommand`. Always take the grant
+away again — it survives reinstalls, and `PermissionsScreenTest` fails on any device that has it. The class covers the emitted state, the
+playing-session pick, transport calls reaching the session, the content intent, and album art (bitmap, `file:` URI decode, `http:` URI ignored,
+undecodable file).
 
 ## 3. Conventions (enforced by review)
 

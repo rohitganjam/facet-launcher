@@ -3973,3 +3973,9 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] Ruler (`RULE_MERIDIEM`): the date and the accessory row each get their own line below the rule (they shared one, which jammed the battery against the date); guarded by `rulerTemplateKeepsTheAccessoryRowBelowTheDateNotBesideIt`.
 - [x] The date and accessory rows use the clock's own text color, not the 80%-alpha "muted" tone (`ClockBlock` and the Style Gallery preview now pass `mutedTextColor = textColor`). Side effect: other template pieces that borrow the muted color (e.g. Date forward's demoted time, Bracket minimal's glyphs) are full strength too. Guarded by `rulerDate…`/`lightStackDate…` tests comparing resolved text colors.
+
+## MediaSessionRepository tests (direct request)
+
+- [x] `MediaSessionRepositoryTest` (13 instrumented tests): a real `MediaSession` through the real `MediaSessionManager` — no-access emits null, emitted title/artist/playing/duration/skip actions, metadata and playback updates, stopped → null → back, playing session wins, transport calls (pause/play/next/previous) and the content intent reach the session, album art from a bitmap, a `file:` URI decode, an `http:` URI ignored, an undecodable file. Passes on API 36 and API 30; breaking the art decode and skip-to-next makes two tests fail.
+- [x] The test grants notification access through the shell and always revokes it (a leftover grant fails `PermissionsScreenTest`).
+- [ ] Still untested: the wave's pause/unpause animation, the Home layout (row under the clock pushing the list down), and the progress timer.
