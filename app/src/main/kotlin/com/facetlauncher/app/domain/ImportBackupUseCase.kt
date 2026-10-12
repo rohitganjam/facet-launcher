@@ -163,6 +163,8 @@ class ImportBackupUseCase @Inject constructor(
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))
             setDrawerFolderDisplayMode(settings.drawerFolderDisplayMode.toEnumOrDefault(DrawerFolderDisplayMode.DO_NOT_SHOW))
             setShowAllDayEvents(settings.showAllDayEvents)
+            setShowCalendarIndicator(settings.showCalendarIndicator)
+            setCalendarItemsToShow(settings.calendarItemsToShow)
             setSearchContactsEnabled(settings.searchContactsEnabled)
             setThemeMode(settings.themeMode.toEnumOrDefault(ThemeMode.SYSTEM))
             setSystemBarIconStyle(settings.systemBarIconStyle.toEnumOrDefault(SystemBarIconStyle.MATCH_THEME))

@@ -568,6 +568,12 @@
     <string name="calendar_settings_header_title">Ajustes de calendario</string>
     <string name="calendar_settings_follows_launcher_wide">Sigue el ajuste de calendario general del launcher</string>
     <string name="calendar_settings_show_all_day_events">Mostrar eventos de todo el día</string>
+    <string name="calendar_settings_show_indicator">Mostrar indicador del calendario</string>
+    <string name="calendar_settings_items_to_display">Elementos a mostrar</string>
+    <string name="calendar_settings_preview_event_1">Reunión de equipo</string>
+    <string name="calendar_settings_preview_event_2">Revisión de diseño</string>
+    <string name="calendar_settings_preview_event_3">Almuerzo con Sam</string>
+    <string name="calendar_settings_preview_sample_note">Eventos de ejemplo</string>
     <string name="calendar_settings_no_calendars_found">No se encontraron calendarios en este dispositivo.</string>
     <string name="calendar_settings_access_off">Acceso al calendario desactivado — eventos ocultos.</string>
 

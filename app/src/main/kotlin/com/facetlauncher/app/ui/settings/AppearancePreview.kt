@@ -40,6 +40,7 @@ import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.DockDisplayMode
@@ -118,6 +119,7 @@ internal fun AppearancePreviewCard(
     favorites: List<PlacedItem>,
     dockItems: List<PlacedItem>,
     calendarEvents: List<CalendarEvent>,
+    calendarDisplay: CalendarDisplayOptions,
     homeWallpaper: HomeWallpaper,
     modifier: Modifier = Modifier,
 ) {
@@ -161,6 +163,7 @@ internal fun AppearancePreviewCard(
                     clockAlignment = settings.clockAlignment,
                     events = calendarEvents,
                     calendarColors = settings.calendarColors,
+                    calendarDisplay = calendarDisplay,
                     homeAppsFontWeight = settings.homeAppsFontWeight,
                     appLabelColorOption = settings.appLabelColorOption,
                     launcherFontOption = settings.launcherFontOption,

@@ -127,7 +127,7 @@ flowchart TB
     DK -- "else" --> GDK["DockAppRepository.observeDockItems()"]
 
     AF --> CAL{{"flatMapLatest → observeCalendarEvents"}}
-    CAL --> CR["CalendarRepository.getTodayEvents(ids, includeAllDay)\n(gated by CalendarPermissionRepository)"]
+    CAL --> CR["CalendarRepository.getUpcomingEvents(ids, includeAllDay)\n(gated by CalendarPermissionRepository)"]
 
     S --> BC
     NB["NotificationBadgeRepository.badgeCounts\n(StateFlow fed by FacetNotificationListenerService)"] --> BC

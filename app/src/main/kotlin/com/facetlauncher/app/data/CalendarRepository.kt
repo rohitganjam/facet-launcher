@@ -45,13 +45,13 @@ open class CalendarRepository @Inject constructor(
     }
 
     /**
-     * Today's events (device-local day boundaries), ordered by start time.
+     * Events from local midnight today until noon tomorrow, ordered by start time. All-day events
+     * count when dated today or tomorrow.
      * @param calendarIds restrict to these calendar ids; `null` means every calendar.
      * @param includeAllDay whether all-day events are included at all.
      */
-    open suspend fun getTodayEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(Dispatchers.IO) {
-        val begin = startOfToday()
-        val end = begin + DAY_MILLIS - 1
+    open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(Dispatchers.IO) {
+        val (begin, end) = upcomingWindow()
         val today = LocalDate.now()
 
         val projection = arrayOf(
@@ -75,7 +75,7 @@ open class CalendarRepository @Inject constructor(
                     val isAllDay = cursor.getInt(allDayCol) != 0
                     if (calendarIds != null && calendarId !in calendarIds) continue
                     if (isAllDay && !includeAllDay) continue
-                    if (isAllDay && !isOnLocalDate(cursor.getLong(beginCol), today)) continue
+                    if (isAllDay && !isOnTodayOrTomorrow(cursor.getLong(beginCol), today)) continue
                     add(
                         CalendarEvent(
                             id = cursor.getLong(eventIdCol),
@@ -94,22 +94,28 @@ open class CalendarRepository @Inject constructor(
 
     /**
      * All-day events are stored as UTC-midnight boundaries independent of device timezone, so
-     * [CalendarContract.Instances.query]'s overlap check against a *local*-midnight begin/end
-     * window can hand back yesterday's (or tomorrow's) all-day event whenever the device is ahead
-     * of or behind UTC. Re-derive the event's actual date from its UTC-anchored start and compare
-     * against today's local date instead of trusting the query window alone.
+     * [CalendarContract.Instances.query]'s overlap check against a *local* begin/end window can
+     * hand back an all-day event from the wrong side of the window whenever the device is ahead of
+     * or behind UTC. Re-derive the event's actual date from its UTC-anchored start and compare it
+     * against today's and tomorrow's local dates instead of trusting the query window alone.
      */
-    private fun isOnLocalDate(allDayStartMillis: Long, today: LocalDate): Boolean =
-        Instant.ofEpochMilli(allDayStartMillis).atZone(ZoneOffset.UTC).toLocalDate() == today
+    private fun isOnTodayOrTomorrow(allDayStartMillis: Long, today: LocalDate): Boolean {
+        val date = Instant.ofEpochMilli(allDayStartMillis).atZone(ZoneOffset.UTC).toLocalDate()
+        return date == today || date == today.plusDays(1)
+    }
 
-    private fun startOfToday(): Long = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-
-    private companion object {
-        const val DAY_MILLIS = 24 * 60 * 60 * 1000L
+    /** Local midnight today to noon tomorrow; calendar arithmetic keeps it right across DST changes. */
+    private fun upcomingWindow(): Pair<Long, Long> {
+        val begin = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val end = (begin.clone() as Calendar).apply {
+            add(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+        }
+        return begin.timeInMillis to end.timeInMillis
     }
 }

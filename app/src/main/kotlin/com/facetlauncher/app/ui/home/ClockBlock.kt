@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -74,6 +75,7 @@ fun ClockBlock(
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
     events: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
+    calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     /** Settings → Appearance → "Text weight" — see [com.facetlauncher.app.data.model.LauncherSettings.homeAppsFontWeight]; also styles [CalendarEventsBlock] now. */
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /** Settings → Appearance → "Font Color" — see [com.facetlauncher.app.data.model.LauncherSettings.appLabelColorOption]; also styles [CalendarEventsBlock] now. */
@@ -167,6 +169,7 @@ fun ClockBlock(
             textColor = appLabelColorOption.resolve(),
             fontWeight = homeAppsFontWeight.resolve(),
             alignment = clockAlignment,
+            display = calendarDisplay,
             onEventClick = onEventClick,
         )
     }

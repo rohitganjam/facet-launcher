@@ -146,8 +146,8 @@ class ObserveFacetPreviewsUseCaseTest {
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val overriddenEvent = CalendarEvent(id = 1L, calendarId = "1", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
         val inheritedEvent = CalendarEvent(id = 2L, calendarId = "1", title = "All day", startTimeMillis = 3_000L, endTimeMillis = 4_000L, isAllDay = true)
-        `when`(fixture.calendarRepository.getTodayEvents(null, false)).thenReturn(listOf(overriddenEvent))
-        `when`(fixture.calendarRepository.getTodayEvents(null, true)).thenReturn(listOf(overriddenEvent, inheritedEvent))
+        `when`(fixture.calendarRepository.getUpcomingEvents(null, false)).thenReturn(listOf(overriddenEvent))
+        `when`(fixture.calendarRepository.getUpcomingEvents(null, true)).thenReturn(listOf(overriddenEvent, inheritedEvent))
         fixture.facetsFlow.value = listOf(
             // Overrides all-day events off — queried with includeAllDay=false.
             FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
@@ -169,7 +169,7 @@ class ObserveFacetPreviewsUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val event = CalendarEvent(id = 1L, calendarId = "9", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
-        `when`(fixture.calendarRepository.getTodayEvents(setOf("9"), true)).thenReturn(listOf(event))
+        `when`(fixture.calendarRepository.getUpcomingEvents(setOf("9"), true)).thenReturn(listOf(event))
         fixture.settingsFlow.value = LauncherSettings(selectedCalendarIds = setOf("1", "2"))
         fixture.facetsFlow.value = listOf(
             FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),

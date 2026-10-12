@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -17,10 +18,10 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 /**
  * Wraps [FacetDao]. The launcher starts with exactly one facet (seeded by
@@ -284,6 +285,14 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(showAllDayEvents = enabled))
     }
 
+    suspend fun setShowCalendarIndicator(facet: FacetEntity, enabled: Boolean) {
+        facetDao.update(facet.copy(showCalendarIndicator = enabled))
+    }
+
+    suspend fun setCalendarItemsToShow(facet: FacetEntity, count: Int) {
+        facetDao.update(facet.copy(calendarItemsToShow = count.coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS)))
+    }
+
     suspend fun setSelectedCalendarIds(facet: FacetEntity, ids: Set<String>?) {
         facetDao.update(facet.copy(selectedCalendarIdsCsv = ids.toCsv()))
     }
@@ -299,11 +308,15 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         overriding: Boolean,
         showAllDayEvents: Boolean,
         selectedCalendarIds: Set<String>?,
+        showCalendarIndicator: Boolean = facet.showCalendarIndicator,
+        calendarItemsToShow: Int = facet.calendarItemsToShow,
     ) {
         facetDao.update(
             facet.copy(
                 overrideCalendar = overriding,
                 showAllDayEvents = showAllDayEvents,
+                showCalendarIndicator = showCalendarIndicator,
+                calendarItemsToShow = calendarItemsToShow,
                 selectedCalendarIdsCsv = selectedCalendarIds.toCsv(),
             ),
         )

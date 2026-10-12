@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import android.app.WallpaperManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -17,7 +18,9 @@ import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -54,6 +57,7 @@ class CalendarSettingsScreenTest {
                     facetRepository,
                     FakeCalendarPermissionRepository(context, granted = false),
                     CalendarRepository(context.contentResolver),
+                    WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }
             FacetLauncherTheme {
@@ -76,6 +80,45 @@ class CalendarSettingsScreenTest {
         // Then the change round-trips through the real repository
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { !settingsRepository.settings.first().showAllDayEvents }
+        }
+    }
+
+    @Test
+    fun previewStripShowsAboveTheControls() {
+        // Given the global entry point, When composed
+        setContent()
+
+        // Then the wallpaper preview strip is present
+        composeRule.onNodeWithTag("calendar_preview_strip").assertExists()
+    }
+
+    @Test
+    fun previewStripShowsNoEventsWithoutCalendarAccess() {
+        // Given calendar access is not granted, When composed
+        setContent()
+
+        // Then the strip carries no mock events and no sample note
+        composeRule.onNodeWithText("Team standup").assertDoesNotExist()
+        composeRule.onNodeWithTag("calendar_preview_sample_note").assertDoesNotExist()
+    }
+
+    @Test
+    fun indicatorToggleAndItemsDropdownPersistThroughSettingsRepository() {
+        // Given the global entry point, indicator on and 3 items by default
+        val (settingsRepository, _) = setContent()
+        composeRule.onNodeWithTag("show_calendar_indicator_toggle").performScrollTo().assertIsOn()
+
+        // When turning the indicator off and picking 2 items
+        composeRule.onNodeWithTag("show_calendar_indicator_toggle").performClick()
+        composeRule.onNodeWithTag("calendar_items_to_display_row").performScrollTo().performClick()
+        composeRule.onNodeWithText("2").performClick()
+
+        // Then both changes round-trip through the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                val settings = settingsRepository.settings.first()
+                !settings.showCalendarIndicator && settings.calendarItemsToShow == 2
+            }
         }
     }
 
@@ -114,8 +157,10 @@ class CalendarSettingsScreenTest {
 private class FakeCalendarRepository(
     contentResolver: android.content.ContentResolver,
     private val calendars: List<CalendarInfo>,
+    private val todayEvents: List<CalendarEvent> = emptyList(),
 ) : CalendarRepository(contentResolver) {
     override suspend fun getCalendars(): List<CalendarInfo> = calendars
+    override suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = todayEvents
 }
 
 class CalendarSettingsScreenGrantedTest {
@@ -123,7 +168,7 @@ class CalendarSettingsScreenGrantedTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(calendars: List<CalendarInfo>): SettingsRepository {
+    private fun setContent(calendars: List<CalendarInfo>, todayEvents: List<CalendarEvent> = emptyList()): SettingsRepository {
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -139,12 +184,40 @@ class CalendarSettingsScreenGrantedTest {
                     settingsRepository,
                     FacetRepository(database.facetDao()),
                     FakeCalendarPermissionRepository(context, granted = true),
-                    FakeCalendarRepository(context.contentResolver, calendars),
+                    FakeCalendarRepository(context.contentResolver, calendars, todayEvents),
+                    WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }
             FacetLauncherTheme { CalendarSettingsScreen(onBack = {}, viewModel = viewModel) }
         }
         return settingsRepository
+    }
+
+    @Test
+    fun previewStripShowsLabelledSamplesWhenTodayHasNoEvents() {
+        // Given access granted but nothing on today
+        setContent(listOf(CalendarInfo(id = "1", displayName = "Facet Test Calendar", accountName = "facet-test@example.com")))
+
+        // Then the sample events appear with the sample note
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("calendar_preview_sample_note").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithText("Team standup").assertExists()
+    }
+
+    @Test
+    fun previewStripShowsRealEventsWithoutTheSampleNote() {
+        // Given access granted and a real event today
+        val now = System.currentTimeMillis()
+        val event = CalendarEvent(id = 1, calendarId = "1", title = "Real dentist", startTimeMillis = now + 3_600_000, endTimeMillis = now + 7_200_000, isAllDay = false)
+        setContent(listOf(CalendarInfo(id = "1", displayName = "Facet Test Calendar", accountName = "facet-test@example.com")), listOf(event))
+
+        // Then the real event shows in the strip and no samples or note do
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithText("Real dentist").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithText("Team standup").assertDoesNotExist()
+        composeRule.onNodeWithTag("calendar_preview_sample_note").assertDoesNotExist()
     }
 
     @Test

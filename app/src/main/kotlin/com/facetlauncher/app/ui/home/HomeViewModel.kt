@@ -72,6 +72,7 @@ class HomeViewModel @Inject constructor(
                 facets = screenState.facets,
                 usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,
+                calendarDisplay = screenState.calendarDisplay,
                 badgeCounts = screenState.badgeCounts,
                 clockAccessories = screenState.clockAccessories,
                 mediaPlayer = screenState.mediaPlayer,

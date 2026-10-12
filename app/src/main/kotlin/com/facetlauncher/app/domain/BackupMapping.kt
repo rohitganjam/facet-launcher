@@ -4,11 +4,11 @@ import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
 import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementEntity
 import com.facetlauncher.app.data.local.DockAppEntity
 import com.facetlauncher.app.data.local.DockFolderPlacementEntity
-import com.facetlauncher.app.data.local.FavoriteAppEntity
-import com.facetlauncher.app.data.local.FavoriteFolderPlacementEntity
 import com.facetlauncher.app.data.local.FacetDockAppEntity
 import com.facetlauncher.app.data.local.FacetDockFolderPlacementEntity
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.FavoriteAppEntity
+import com.facetlauncher.app.data.local.FavoriteFolderPlacementEntity
 import com.facetlauncher.app.data.local.FolderWithApps
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -24,6 +24,7 @@ import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupFolder
 import com.facetlauncher.app.data.model.BackupFolderPlacement
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
@@ -103,6 +104,8 @@ fun FacetEntity.toBackupFacet(
     dockApps = dockApps,
     overrideCalendar = overrideCalendar,
     showAllDayEvents = showAllDayEvents,
+    showCalendarIndicator = showCalendarIndicator,
+    calendarItemsToShow = calendarItemsToShow,
     selectedCalendarIds = selectedCalendarIds?.toList(),
     favorites = favorites,
     dockFolderPlacements = dockFolderPlacements,
@@ -137,6 +140,8 @@ fun BackupFacet.toFacetEntity(): FacetEntity = FacetEntity(
     dockDisplayMode = dockDisplayMode.toEnumOrDefault(DockDisplayMode.LAUNCHER_DEFAULT),
     overrideCalendar = overrideCalendar,
     showAllDayEvents = showAllDayEvents,
+    showCalendarIndicator = showCalendarIndicator,
+    calendarItemsToShow = calendarItemsToShow.coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS),
     selectedCalendarIdsCsv = selectedCalendarIds?.joinToString(","),
 )
 

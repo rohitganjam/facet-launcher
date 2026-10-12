@@ -241,8 +241,12 @@ class AppearanceSettingsScreenTest {
         setContent(calendarGranted = true)
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
 
-        // Then the row shows a literal zero
-        composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
+        // Then the row shows a literal zero (once the ViewModel's first real state replaces its initial one)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching {
+                composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
+            }.isSuccess
+        }
     }
 
     @Test

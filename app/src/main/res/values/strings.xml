@@ -616,6 +616,12 @@
     <string name="calendar_settings_header_title">Calendar settings</string>
     <string name="calendar_settings_follows_launcher_wide">Follows the launcher-wide Calendar setting</string>
     <string name="calendar_settings_show_all_day_events">Show all-day events</string>
+    <string name="calendar_settings_show_indicator">Show calendar indicator</string>
+    <string name="calendar_settings_items_to_display">Items to display</string>
+    <string name="calendar_settings_preview_event_1">Team standup</string>
+    <string name="calendar_settings_preview_event_2">Design review</string>
+    <string name="calendar_settings_preview_event_3">Lunch with Sam</string>
+    <string name="calendar_settings_preview_sample_note">Sample events</string>
     <string name="calendar_settings_no_calendars_found">No calendars found on this device.</string>
     <string name="calendar_settings_access_off">Calendar access off — events hidden.</string>
 

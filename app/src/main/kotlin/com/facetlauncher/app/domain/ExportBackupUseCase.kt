@@ -89,6 +89,8 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     drawerFolderDisplayMode = drawerFolderDisplayMode.name,
     activeFacetIndex = activeFacetIndex,
     showAllDayEvents = showAllDayEvents,
+    showCalendarIndicator = showCalendarIndicator,
+    calendarItemsToShow = calendarItemsToShow,
     searchContactsEnabled = searchContactsEnabled,
     themeMode = themeMode.name,
     systemBarIconStyle = systemBarIconStyle.name,

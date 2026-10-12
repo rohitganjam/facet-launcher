@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.ui.home.rememberTickingNow
@@ -36,15 +37,14 @@ import com.facetlauncher.app.ui.theme.resolve
 import com.facetlauncher.app.ui.theme.resolvedColor
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** The clock block shows only the next few events, not the whole day's agenda. */
-private const val MAX_VISIBLE_EVENTS = 3
-
 /**
- * Today's calendar events (F1), deliberately independent of [com.facetlauncher.app.ui.home.ClockBlock]/
+ * Upcoming calendar events (F1; midnight today to noon tomorrow), deliberately independent of [com.facetlauncher.app.ui.home.ClockBlock]/
  * `ClockDisplay` — a font/color/layout change to one never has to touch the other, and either
  * can be dropped onto a screen alone. Own font/color configuration, kept separate from the rest
  * of the app's theme (per the clock/calendar template design brief) — [fontFamily]/[textColor]
@@ -57,11 +57,11 @@ private const val MAX_VISIBLE_EVENTS = 3
  * for a calendar with no assigned color yet. [textColor] is applied at full opacity to both the
  * time and the title — deliberately not muted (see chat history): calendar events are all
  * equally relevant information, unlike a decorative label, so there's no "secondary" tier to
- * dim here the way the clock's date line is dimmed relative to its time. Of [events] (today's,
+ * dim here the way the clock's date line is dimmed relative to its time. Of [events] (upcoming,
  * already filtered to selected
  * calendars/all-day setting by [com.facetlauncher.app.data.CalendarRepository]), only the ones
  * still relevant are actually rendered: an all-day event always, a timed one only until its own
- * end time passes — capped at [MAX_VISIBLE_EVENTS], since this is a glanceable clock-block strip,
+ * end time passes — capped at [CalendarDisplayOptions.itemsToShow], since this is a glanceable clock-block strip,
  * not a full day agenda.
  *
  * Owns its own live "now" (via [rememberTickingNow]) so it's fully self-contained — it doesn't
@@ -85,6 +85,7 @@ fun CalendarEventsBlock(
     fontWeight: FontWeight = FontWeight.SemiBold,
     textColor: Color = Ink,
     alignment: ClockAlignment = ClockAlignment.LEFT,
+    display: CalendarDisplayOptions = CalendarDisplayOptions(),
     onEventClick: (CalendarEvent) -> Unit = {},
 ) {
     val now by rememberTickingNow(clock)
@@ -92,8 +93,8 @@ fun CalendarEventsBlock(
         DateTimeFormatter.ofPattern(if (use24HourTime) "HH:mm" else "h:mm", locale)
     }
     val nowMillis = now.atZone(clock.zone).toInstant().toEpochMilli()
-    val visibleEvents = remember(events, nowMillis) {
-        events.filter { it.isAllDay || it.endTimeMillis > nowMillis }.take(MAX_VISIBLE_EVENTS)
+    val visibleEvents = remember(events, nowMillis, display.itemsToShow) {
+        events.filter { it.isAllDay || it.endTimeMillis > nowMillis }.take(display.itemsToShow)
     }
     if (visibleEvents.isEmpty()) return
 
@@ -111,9 +112,11 @@ fun CalendarEventsBlock(
                     ?: Accent,
                 timeFormatter = timeFormatter,
                 clock = clock,
+                locale = locale,
                 fontFamily = fontFamily,
                 fontWeight = fontWeight,
                 textColor = textColor,
+                showIndicator = display.showIndicator,
                 reversed = alignment == ClockAlignment.RIGHT,
                 onClick = { onEventClick(event) },
             )
@@ -127,18 +130,16 @@ private fun EventRow(
     barColor: Color,
     timeFormatter: DateTimeFormatter,
     clock: Clock,
+    locale: Locale,
     fontFamily: FontFamily,
     fontWeight: FontWeight,
     textColor: Color,
+    showIndicator: Boolean,
     reversed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val time = if (event.isAllDay) {
-        "All day"
-    } else {
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(event.startTimeMillis), clock.zone).format(timeFormatter)
-    }
+    val time = remember(event, timeFormatter, clock, locale) { eventTimeLabel(event, timeFormatter, clock, locale) }
     val indicator: @Composable () -> Unit = {
         Column(
             modifier = Modifier
@@ -175,11 +176,24 @@ private fun EventRow(
         if (reversed) {
             titleText()
             timeText()
-            indicator()
+            if (showIndicator) indicator()
         } else {
-            indicator()
+            if (showIndicator) indicator()
             timeText()
             titleText()
         }
     }
+}
+
+/** The row's time text. An event not on today's date gets a locale weekday prefix (`Tue 9:00`), so tomorrow's rows aren't mistaken for today's. */
+internal fun eventTimeLabel(event: CalendarEvent, timeFormatter: DateTimeFormatter, clock: Clock, locale: Locale): String {
+    val today = LocalDate.now(clock)
+    // All-day events are UTC-anchored dates; timed events use the device zone.
+    val eventDate = if (event.isAllDay) {
+        Instant.ofEpochMilli(event.startTimeMillis).atZone(ZoneOffset.UTC).toLocalDate()
+    } else {
+        Instant.ofEpochMilli(event.startTimeMillis).atZone(clock.zone).toLocalDate()
+    }
+    val time = if (event.isAllDay) "All day" else LocalDateTime.ofInstant(Instant.ofEpochMilli(event.startTimeMillis), clock.zone).format(timeFormatter)
+    return if (eventDate == today) time else "${eventDate.format(DateTimeFormatter.ofPattern("EEE", locale))} $time"
 }

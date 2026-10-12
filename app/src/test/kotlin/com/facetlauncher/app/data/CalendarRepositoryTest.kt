@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.CalendarContract
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.Calendar
 import java.util.TimeZone
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -97,7 +98,7 @@ class CalendarRepositoryTest {
     }
 
     @Test
-    fun `getTodayEvents returns every instance, sorted by start time`() = runTest {
+    fun `getUpcomingEvents returns every instance, sorted by start time`() = runTest {
         // Given two instances out of chronological order
         stubInstances(
             listOf(
@@ -107,7 +108,7 @@ class CalendarRepositoryTest {
         )
 
         // When fetching today's events, unfiltered
-        val result = repository.getTodayEvents(calendarIds = null, includeAllDay = true)
+        val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
 
         // Then they come back ordered by start time, end time carried through unchanged
         assertEquals(listOf("Earlier", "Later"), result.map { it.title })
@@ -115,7 +116,7 @@ class CalendarRepositoryTest {
     }
 
     @Test
-    fun `getTodayEvents excludes events from calendars not in the given set`() = runTest {
+    fun `getUpcomingEvents excludes events from calendars not in the given set`() = runTest {
         // Given instances on two different calendars
         stubInstances(
             listOf(
@@ -125,14 +126,14 @@ class CalendarRepositoryTest {
         )
 
         // When fetching restricted to just calendar 1
-        val result = repository.getTodayEvents(calendarIds = setOf("1"), includeAllDay = true)
+        val result = repository.getUpcomingEvents(calendarIds = setOf("1"), includeAllDay = true)
 
         // Then only that calendar's event is returned
         assertEquals(listOf("Standup"), result.map { it.title })
     }
 
     @Test
-    fun `getTodayEvents excludes all-day events when includeAllDay is false`() = runTest {
+    fun `getUpcomingEvents excludes all-day events when includeAllDay is false`() = runTest {
         // Given a timed event and an all-day event
         stubInstances(
             listOf(
@@ -142,14 +143,14 @@ class CalendarRepositoryTest {
         )
 
         // When fetching with includeAllDay = false
-        val result = repository.getTodayEvents(calendarIds = null, includeAllDay = false)
+        val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = false)
 
         // Then only the timed event is returned
         assertEquals(listOf("Standup"), result.map { it.title })
     }
 
     @Test
-    fun `getTodayEvents excludes an all-day event whose real UTC date is yesterday`() = runTest {
+    fun `getUpcomingEvents excludes an all-day event whose real UTC date is yesterday`() = runTest {
         // Given a device timezone ahead of UTC (IST, +5:30), where the Instances query's
         // local-midnight window overlaps into yesterday's UTC-anchored all-day event
         val originalTimeZone = TimeZone.getDefault()
@@ -166,7 +167,7 @@ class CalendarRepositoryTest {
             )
 
             // When fetching today's events
-            val result = repository.getTodayEvents(calendarIds = null, includeAllDay = true)
+            val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
 
             // Then only the all-day event actually dated today survives
             assertEquals(listOf("Today holiday"), result.map { it.title })
@@ -176,7 +177,71 @@ class CalendarRepositoryTest {
     }
 
     @Test
-    fun `getTodayEvents returns an empty list when the query returns null`() = runTest {
+    fun `getUpcomingEvents queries from local midnight today until noon tomorrow`() = runTest {
+        // Given an Instances query that returns nothing
+        val uri = org.mockito.ArgumentCaptor.forClass(Uri::class.java)
+        `when`(
+            contentResolver.query(
+                uri.capture() ?: Uri.EMPTY,
+                any(Array<String>::class.java),
+                nullable(String::class.java),
+                nullable(Array<String>::class.java),
+                nullable(String::class.java),
+            ),
+        ).thenReturn(instancesCursor(emptyList()))
+
+        // When fetching upcoming events
+        repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
+
+        // Then the window runs from 00:00 today to 12:00 tomorrow in the device time zone
+        val segments = uri.value.pathSegments
+        val begin = Calendar.getInstance().apply { timeInMillis = segments[segments.size - 2].toLong() }
+        val end = Calendar.getInstance().apply { timeInMillis = segments.last().toLong() }
+        val today = Calendar.getInstance()
+        assertEquals(listOf(0, 0, 0), listOf(begin.get(Calendar.HOUR_OF_DAY), begin.get(Calendar.MINUTE), begin.get(Calendar.SECOND)))
+        assertEquals(today.get(Calendar.DAY_OF_YEAR), begin.get(Calendar.DAY_OF_YEAR))
+        assertEquals(listOf(12, 0), listOf(end.get(Calendar.HOUR_OF_DAY), end.get(Calendar.MINUTE)))
+        val tomorrow = (begin.clone() as Calendar).apply { add(Calendar.DAY_OF_MONTH, 1) }
+        assertEquals(tomorrow.get(Calendar.DAY_OF_YEAR), end.get(Calendar.DAY_OF_YEAR))
+    }
+
+    @Test
+    fun `getUpcomingEvents keeps tomorrow's all-day event but drops the day after`() = runTest {
+        // Given all-day events dated yesterday, today, tomorrow and the day after (UTC-anchored)
+        val today = LocalDate.now()
+        fun allDay(id: Long, title: String, date: LocalDate) =
+            InstanceRow(eventId = id, calendarId = 1, title = title, beginMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(), allDay = true)
+        stubInstances(
+            listOf(
+                allDay(1, "Yesterday", today.minusDays(1)),
+                allDay(2, "Today", today),
+                allDay(3, "Tomorrow", today.plusDays(1)),
+                allDay(4, "Day after", today.plusDays(2)),
+            ),
+        )
+
+        // When fetching upcoming events
+        val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
+
+        // Then only today's and tomorrow's all-day events remain
+        assertEquals(listOf("Today", "Tomorrow"), result.map { it.title })
+    }
+
+    @Test
+    fun `getUpcomingEvents drops tomorrow's all-day event when all-day events are off`() = runTest {
+        // Given an all-day event dated tomorrow
+        val tomorrow = LocalDate.now().plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        stubInstances(listOf(InstanceRow(eventId = 1, calendarId = 1, title = "Tomorrow", beginMillis = tomorrow, allDay = true)))
+
+        // When all-day events are excluded
+        val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = false)
+
+        // Then it is dropped
+        assertEquals(emptyList<String>(), result.map { it.title })
+    }
+
+    @Test
+    fun `getUpcomingEvents returns an empty list when the query returns null`() = runTest {
         // Given a resolver that returns null (e.g. a transient provider failure)
         `when`(
             contentResolver.query(
@@ -189,7 +254,7 @@ class CalendarRepositoryTest {
         ).thenReturn(null)
 
         // When fetching today's events
-        val result = repository.getTodayEvents(calendarIds = null, includeAllDay = true)
+        val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
 
         // Then it degrades to an empty list rather than throwing
         assertEquals(emptyList<String>(), result.map { it.title })

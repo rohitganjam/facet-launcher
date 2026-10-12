@@ -254,6 +254,10 @@ data class LauncherSettings(
     val activeFacetId: Long = NO_ACTIVE_FACET_ID,
     /** Global Calendar setting (`4l`) — whether all-day events render on the clock. */
     val showAllDayEvents: Boolean = true,
+    /** Whether each Home calendar event row shows its calendar-color bar. */
+    val showCalendarIndicator: Boolean = true,
+    /** How many calendar events Home shows (1..[CalendarDisplayOptions.MAX_ITEMS]). */
+    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /** [CalendarContract.Calendars][android.provider.CalendarContract.Calendars] ids to show events from. `null` means "not yet initialized" — distinct from an empty set (user explicitly deselected everything) so a first-time grant can default to all calendars. */
     val selectedCalendarIds: Set<String>? = null,
     /**

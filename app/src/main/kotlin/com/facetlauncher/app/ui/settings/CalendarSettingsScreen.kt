@@ -50,9 +50,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.InheritOverrideCard
+import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -101,6 +104,8 @@ fun CalendarSettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onShowAllDayEventsChange = viewModel::setShowAllDayEvents,
+        onShowCalendarIndicatorChange = viewModel::setShowCalendarIndicator,
+        onItemsToShowChange = viewModel::setCalendarItemsToShow,
         onOverridingChange = viewModel::setOverriding,
         onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
         onCalendarToggle = viewModel::setCalendarSelected,
@@ -114,6 +119,8 @@ private fun CalendarSettingsContent(
     uiState: CalendarSettingsUiState,
     onBack: () -> Unit,
     onShowAllDayEventsChange: (Boolean) -> Unit,
+    onShowCalendarIndicatorChange: (Boolean) -> Unit,
+    onItemsToShowChange: (Int) -> Unit,
     onOverridingChange: (Boolean) -> Unit,
     onTurnOnClick: () -> Unit,
     onCalendarToggle: (String, Boolean) -> Unit,
@@ -136,6 +143,11 @@ private fun CalendarSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight),
             ) {
+                item {
+                    CalendarPreviewStrip(uiState = uiState)
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+
                 if (uiState.isFacetScoped) {
                     item {
                         InheritOverrideCard(
@@ -166,6 +178,33 @@ private fun CalendarSettingsContent(
                                 modifier = Modifier.testTag("show_all_day_events_toggle"),
                             )
                         }
+                        CardDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 13.dp)
+                                .alpha(if (controlsEnabled) 1f else 0.4f),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(text = stringResource(R.string.calendar_settings_show_indicator), style = MaterialTheme.typography.bodyLarge, color = Ink)
+                            Switch(
+                                checked = uiState.calendarDisplay.showIndicator,
+                                onCheckedChange = onShowCalendarIndicatorChange,
+                                enabled = controlsEnabled,
+                                modifier = Modifier.testTag("show_calendar_indicator_toggle"),
+                            )
+                        }
+                        CardDivider()
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.calendar_settings_items_to_display),
+                            options = (CalendarDisplayOptions.MIN_ITEMS..CalendarDisplayOptions.MAX_ITEMS).toList(),
+                            selected = uiState.calendarDisplay.itemsToShow,
+                            label = { it.toString() },
+                            onSelect = onItemsToShowChange,
+                            enabled = controlsEnabled,
+                            testTag = "calendar_items_to_display_row",
+                        )
                     }
                 }
 
@@ -209,7 +248,7 @@ private fun CalendarSettingsContent(
                                     uiState.calendars.forEach { calendar ->
                                         CalendarPickerRow(
                                             calendar = calendar,
-                                            swatch = uiState.calendarColors[calendar.id]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
+                                            swatch = uiState.calendarSwatch(calendar.id),
                                             checked = uiState.isCalendarSelected(calendar.id),
                                             onToggle = { onCalendarToggle(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
                                         )
@@ -309,6 +348,8 @@ private fun CalendarSettingsScreenPreview() {
             uiState = CalendarSettingsUiState(),
             onBack = {},
             onShowAllDayEventsChange = {},
+            onShowCalendarIndicatorChange = {},
+            onItemsToShowChange = {},
             onOverridingChange = {},
             onTurnOnClick = {},
             onCalendarToggle = { _, _ -> },

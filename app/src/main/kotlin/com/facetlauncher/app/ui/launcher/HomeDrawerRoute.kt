@@ -747,6 +747,7 @@ fun HomeDrawerRoute(
             isCharging = homeUiState.clockAccessories.isCharging,
             calendarEvents = homeUiState.calendarEvents,
             calendarColors = homeUiState.settings.calendarColors,
+            calendarDisplay = homeUiState.calendarDisplay,
             onEventClick = { event ->
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }

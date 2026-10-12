@@ -14,6 +14,7 @@ import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.effectiveCalendarDisplay
 import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -23,6 +24,7 @@ import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -76,6 +78,7 @@ data class AppearanceSettingsUiState(
     /** Whether `READ_CALENDAR` is really granted — the Calendars row says so instead of summarising a selection nothing can read. */
     val calendarAccessGranted: Boolean = false,
 ) {
+    val calendarDisplay: CalendarDisplayOptions get() = facet.effectiveCalendarDisplay(settings)
     val isFacetScoped: Boolean get() = facet != null
     val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode)
     val appRowPosition: AppRowPosition get() = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
@@ -204,7 +207,7 @@ class AppearanceSettingsViewModel @Inject constructor(
         val overriding = facet?.overrideCalendar == true
         val includeAllDay = if (overriding) facet.showAllDayEvents else settings.showAllDayEvents
         val selectedCalendarIds = if (overriding) facet.selectedCalendarIds else settings.selectedCalendarIds
-        return calendarRepository.getTodayEvents(selectedCalendarIds, includeAllDay)
+        return calendarRepository.getUpcomingEvents(selectedCalendarIds, includeAllDay)
     }
 
     fun setThemeMode(mode: ThemeMode) {

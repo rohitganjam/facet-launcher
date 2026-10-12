@@ -244,7 +244,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val event = CalendarEvent(id = 1L, calendarId = "1", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
-        `when`(fixture.calendarRepository.getTodayEvents(null, false)).thenReturn(listOf(event))
+        `when`(fixture.calendarRepository.getUpcomingEvents(null, false)).thenReturn(listOf(event))
         fixture.facetsFlow.value = listOf(
             FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
         )
@@ -262,7 +262,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val event = CalendarEvent(id = 1L, calendarId = "9", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
-        `when`(fixture.calendarRepository.getTodayEvents(setOf("9"), true)).thenReturn(listOf(event))
+        `when`(fixture.calendarRepository.getUpcomingEvents(setOf("9"), true)).thenReturn(listOf(event))
         fixture.settingsFlow.value = LauncherSettings(activeFacetId = 1L, selectedCalendarIds = setOf("1", "2"))
         fixture.facetsFlow.value = listOf(
             FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),

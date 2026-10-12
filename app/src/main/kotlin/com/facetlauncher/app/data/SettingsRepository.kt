@@ -5,10 +5,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -41,10 +42,10 @@ import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 private object Keys {
     val USE_24_HOUR_TIME = booleanPreferencesKey("use_24_hour_time")
@@ -65,6 +66,8 @@ private object Keys {
     val RECENTLY_INSTALLED_POSITION = stringPreferencesKey("recently_installed_position")
     val ACTIVE_FACET_ID = longPreferencesKey("active_facet_id")
     val SHOW_ALL_DAY_EVENTS = booleanPreferencesKey("show_all_day_events")
+    val SHOW_CALENDAR_INDICATOR = booleanPreferencesKey("show_calendar_indicator")
+    val CALENDAR_ITEMS_TO_SHOW = intPreferencesKey("calendar_items_to_show")
     val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
     val CALENDAR_COLORS = stringSetPreferencesKey("calendar_colors")
     val SEARCH_CONTACTS_ENABLED = booleanPreferencesKey("search_contacts_enabled")
@@ -147,6 +150,9 @@ class SettingsRepository @Inject constructor(
             } ?: defaults.recentlyInstalledPosition,
             activeFacetId = preferences[Keys.ACTIVE_FACET_ID] ?: defaults.activeFacetId,
             showAllDayEvents = preferences[Keys.SHOW_ALL_DAY_EVENTS] ?: defaults.showAllDayEvents,
+            showCalendarIndicator = preferences[Keys.SHOW_CALENDAR_INDICATOR] ?: defaults.showCalendarIndicator,
+            calendarItemsToShow = (preferences[Keys.CALENDAR_ITEMS_TO_SHOW] ?: defaults.calendarItemsToShow)
+                .coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS),
             selectedCalendarIds = preferences[Keys.SELECTED_CALENDAR_IDS],
             calendarColors = preferences[Keys.CALENDAR_COLORS].orEmpty().mapNotNull { entry ->
                 val parts = entry.split(":", limit = 2)
@@ -278,6 +284,14 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setShowAllDayEvents(enabled: Boolean) {
         dataStore.edit { it[Keys.SHOW_ALL_DAY_EVENTS] = enabled }
+    }
+
+    suspend fun setShowCalendarIndicator(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_CALENDAR_INDICATOR] = enabled }
+    }
+
+    suspend fun setCalendarItemsToShow(count: Int) {
+        dataStore.edit { it[Keys.CALENDAR_ITEMS_TO_SHOW] = count.coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS) }
     }
 
     suspend fun setSearchBarPosition(position: SearchBarPosition) {

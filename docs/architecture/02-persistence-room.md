@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v26**, `exportSchema = true` → `app/schemas/.../1.json … 26.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v27**, `exportSchema = true` → `app/schemas/.../1.json … 27.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 47 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -64,6 +64,8 @@ erDiagram
         string dockDisplayMode
         boolean overrideCalendar
         boolean showAllDayEvents
+        boolean showCalendarIndicator
+        int calendarItemsToShow
         string selectedCalendarIdsCsv "nullable"
     }
 
@@ -342,7 +344,7 @@ null converter result. Renaming an enum constant therefore never needs a migrati
 
 ```kotlin
 Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
-    .addMigrations(*Migrations.ALL)                       // 10→11 … 25→26, explicit SQL
+    .addMigrations(*Migrations.ALL)                       // 10→11 … 26→27, explicit SQL
     .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
     .build()
 ```
@@ -372,6 +374,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 23→24 | No column change (`LAUNCHER_DEFAULT` is just a new valid string for the already-`TEXT NOT NULL` `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode` columns) — data-only `UPDATE` resetting those four columns to `'LAUNCHER_DEFAULT'` on every facet row where the matching `overrideApps`/`overrideDock` flag is `0` (a stale, previously-unread value would otherwise start "overriding" silently); a row where the flag is `1` keeps its real value untouched |
 | 24→25 | `facets.appListLayout`, `appListColumnAlignment`, `appListGridColumns`, `appListGridDisplayMode` — Home app list two-column/grid layouts; brand-new columns (`DEFAULT 'LAUNCHER_DEFAULT'`), no data-reset step needed |
 | 25→26 | New table `automation_rules` (facet automation rules) with two foreign keys to `facets` (`targetFacetId` CASCADE, `endFacetId` SET NULL) and an index on each; DDL copied from the exported `26.json`, no data to carry over. Tested by `FacetDatabaseMigrationTest.migration25To26…` (schema validation plus both FK actions) |
+| 26→27 | `ALTER TABLE facets ADD COLUMN` `showCalendarIndicator INTEGER NOT NULL DEFAULT 1` and `calendarItemsToShow INTEGER NOT NULL DEFAULT 3` (per-facet calendar display overrides, gated by `overrideCalendar`); existing rows keep today's look |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -401,6 +404,8 @@ erDiagram
         float clock_zone_height_dp "nullable, absent = template height"
         float clock_scale "default 0.8"
         boolean show_all_day_events "default true"
+        boolean show_calendar_indicator "default true"
+        int calendar_items_to_show "1..3, default 3"
         stringset selected_calendar_ids "nullable, absent = all calendars"
         stringset calendar_colors "entries calendarId:colorName"
         string list_content_mode "ListContentMode, default FAVORITES"
@@ -452,7 +457,7 @@ erDiagram
         boolean overrideApps "gate: listContentMode, appsToShowCount (content only now)"
         boolean overridingFavorites "gate: favorite_apps vs default_favorite_apps"
         boolean overrideDock "gate: facet_dock_apps vs dock_apps (content only now)"
-        boolean overrideCalendar "gate: showAllDayEvents, selectedCalendarIdsCsv"
+        boolean overrideCalendar "gate: showAllDayEvents, showCalendarIndicator, calendarItemsToShow, selectedCalendarIdsCsv"
     }
 
     facet_settings ||--o{ facets : "active_facet_id selects one"
@@ -528,6 +533,8 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setClockScale(Float)` | `clock_scale` | set | `HomeViewModel` (corner handle) |
 | `resetClockScale()` | `clock_scale` | **remove** | `ClockStyleGalleryViewModel` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
+| `setShowCalendarIndicator(Boolean)` | `show_calendar_indicator` | set | `CalendarSettingsViewModel` |
+| `setCalendarItemsToShow(Int)` | `calendar_items_to_show` | set (clamped 1..3) | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
 | `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
@@ -606,6 +613,8 @@ its position (see chat history: calendar/appearance styling consolidation).
 | Key | Type | Field | Default | Notes |
 |---|---|---|---|---|
 | `show_all_day_events` | Boolean | `showAllDayEvents` | `true` | |
+| `show_calendar_indicator` | Boolean | `showCalendarIndicator` | `true` | Calendar-colour bar on Home event rows; facet-overridable via `overrideCalendar` |
+| `calendar_items_to_show` | Int | `calendarItemsToShow` | `3` | Events Home shows, clamped to 1..3 on read and write; facet-overridable via `overrideCalendar` |
 | `selected_calendar_ids` | Set<String> | `selectedCalendarIds` | `null` (= all calendars) | nullable — absent key means "every calendar" |
 | `calendar_colors` | Set<String> encoded `"<calendarId>:<colorName>"` | `calendarColors: Map<String,String>` | `{}` | Assigned by `AssignCalendarColorsUseCase`; entries without a `:` are dropped on read; not facet-overridable |
 
