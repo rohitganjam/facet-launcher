@@ -88,6 +88,9 @@ data class BackupSettings(
     @SerialName("activeProfileIndex")
     val activeFacetIndex: Int?,
     val showAllDayEvents: Boolean,
+    /** Defaulted — tolerant reader: an older backup restores to today's look (indicator on, 3 items). */
+    val showCalendarIndicator: Boolean = true,
+    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     val searchContactsEnabled: Boolean,
     val themeMode: String,
     /** Purely additive and defaulted, so no version bump — backups from before it existed still import. */
@@ -147,6 +150,8 @@ data class BackupFacet(
     val dockApps: List<BackupAppEntry> = emptyList(),
     val overrideCalendar: Boolean,
     val showAllDayEvents: Boolean,
+    val showCalendarIndicator: Boolean = true,
+    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /**
      * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.local.FacetEntity.selectedCalendarIdsCsv]'s
      * own doc comment. A real JSON array here (not the Room column's comma-joined encoding),

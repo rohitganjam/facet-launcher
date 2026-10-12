@@ -7,8 +7,15 @@ import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.effectiveCalendarDisplay
+import com.facetlauncher.app.data.local.resolveOverride
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarInfo
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
@@ -25,6 +32,9 @@ import kotlinx.coroutines.launch
 data class CalendarSettingsUiState(
     val facet: FacetEntity? = null,
     val globalShowAllDayEvents: Boolean = true,
+    /** Launcher-wide settings — the preview strip reads the font/colour/clock-alignment fields from here. */
+    val settings: LauncherSettings = LauncherSettings(),
+    val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     /** `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.model.LauncherSettings.selectedCalendarIds]. */
     val globalSelectedCalendarIds: Set<String>? = null,
     val isCalendarAccessGranted: Boolean = false,
@@ -35,6 +45,10 @@ data class CalendarSettingsUiState(
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideCalendar ?: false
     val effectiveShowAllDayEvents: Boolean get() = if (isOverriding) facet?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
+    val calendarDisplay: CalendarDisplayOptions get() = facet.effectiveCalendarDisplay(settings)
+    /** The clock-block look the preview strip renders with: the facet's own when it overrides the clock, else launcher-wide. */
+    val previewUse24HourTime: Boolean get() = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime)
+    val previewClockAlignment: ClockAlignment get() = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
     val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverriding) facet?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
     fun isCalendarSelected(calendarId: String): Boolean = effectiveSelectedCalendarIds?.let { calendarId in it } ?: true
 }
@@ -56,6 +70,7 @@ class CalendarSettingsViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val calendarRepository: CalendarRepository,
+    private val wallpaperRepository: WallpaperRepository,
 ) : ViewModel() {
 
     private val facetId: Long = savedStateHandle.get<Long>("facetId") ?: NO_ACTIVE_FACET_ID
@@ -65,16 +80,20 @@ class CalendarSettingsViewModel @Inject constructor(
 
     private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())
     private val calendars = MutableStateFlow<List<CalendarInfo>>(emptyList())
+    private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
 
     val uiState: StateFlow<CalendarSettingsUiState> = combine(
         settingsRepository.settings,
         facetRepository.observeFacets(),
         isCalendarAccessGranted,
         calendars,
-    ) { settings, facets, granted, calendarList ->
+        homeWallpaper,
+    ) { settings, facets, granted, calendarList, wallpaper ->
         CalendarSettingsUiState(
             facet = if (facetId == NO_ACTIVE_FACET_ID) null else facets.find { it.id == facetId },
             globalShowAllDayEvents = settings.showAllDayEvents,
+            settings = settings,
+            homeWallpaper = wallpaper,
             globalSelectedCalendarIds = settings.selectedCalendarIds,
             isCalendarAccessGranted = granted,
             calendars = calendarList,
@@ -84,6 +103,7 @@ class CalendarSettingsViewModel @Inject constructor(
 
     init {
         refreshCalendarAccess()
+        viewModelScope.launch { homeWallpaper.value = wallpaperRepository.currentHomeWallpaper() }
     }
 
     /** `READ_CALENDAR` has no grant-change callback — call on resume, and right after the runtime request returns. */
@@ -116,6 +136,20 @@ class CalendarSettingsViewModel @Inject constructor(
         }
     }
 
+    fun setShowCalendarIndicator(enabled: Boolean) {
+        val facet = uiState.value.facet
+        viewModelScope.launch {
+            if (facet != null) facetRepository.setShowCalendarIndicator(facet, enabled) else settingsRepository.setShowCalendarIndicator(enabled)
+        }
+    }
+
+    fun setCalendarItemsToShow(count: Int) {
+        val facet = uiState.value.facet
+        viewModelScope.launch {
+            if (facet != null) facetRepository.setCalendarItemsToShow(facet, count) else settingsRepository.setCalendarItemsToShow(count)
+        }
+    }
+
     /** Switching to Override seeds the facet's stored values with the current effective ones; switching back to Inherit clears it. */
     fun setOverriding(overriding: Boolean) {
         val facet = uiState.value.facet ?: return
@@ -126,6 +160,8 @@ class CalendarSettingsViewModel @Inject constructor(
                 overriding = overriding,
                 showAllDayEvents = state.effectiveShowAllDayEvents,
                 selectedCalendarIds = state.effectiveSelectedCalendarIds,
+                showCalendarIndicator = state.calendarDisplay.showIndicator,
+                calendarItemsToShow = state.calendarDisplay.itemsToShow,
             )
         }
     }

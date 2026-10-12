@@ -307,6 +307,23 @@ class FacetRepositoryTest {
     }
 
     @Test
+    fun `calendar display setters write the facet and clamp the item count`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+
+        repository.setShowCalendarIndicator(facet, false)
+        repository.setCalendarItemsToShow(repository.observeFacets().first().single(), 2)
+        val stored = repository.observeFacets().first().single()
+        assertEquals(false, stored.showCalendarIndicator)
+        assertEquals(2, stored.calendarItemsToShow)
+
+        repository.setCalendarItemsToShow(stored, 0)
+        assertEquals(1, repository.observeFacets().first().single().calendarItemsToShow)
+        repository.setCalendarItemsToShow(stored, 9)
+        assertEquals(3, repository.observeFacets().first().single().calendarItemsToShow)
+    }
+
+    @Test
     fun `updateOverridingCalendar sets selection fields and flag together, design fields untouched`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)

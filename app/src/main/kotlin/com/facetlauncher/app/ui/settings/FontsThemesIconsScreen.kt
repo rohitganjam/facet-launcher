@@ -158,6 +158,7 @@ private fun FontsThemesIconsContent(
                         favorites = uiState.effectiveFavorites,
                         dockItems = uiState.effectiveDockItems,
                         calendarEvents = uiState.calendarEvents,
+                        calendarDisplay = uiState.calendarDisplay,
                         homeWallpaper = homeWallpaper,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )

@@ -3964,6 +3964,13 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] Both new screens show the live `AppearancePreviewCard` (now in `AppearancePreview.kt`) and share `AppearanceSettingsViewModel`. Strings translated (de/es/fr/pt).
 - [x] Tests: `AppearanceSettingsScreenTest` split into the hub plus `DockAppsAppearanceScreenTest` and `FontsThemesIconsScreenTest` over a shared `AppearanceScreenTestHost`; all 174 `ui.settings` instrumented tests and the 1,062 unit tests pass. detekt baseline re-keyed for the moved code.
 
+## Calendar display settings (direct request)
+
+- [x] "Show calendar indicator" switch and "Items to display" (1–3) dropdown on the Calendars screen, launcher-wide and per facet (`overrideCalendar` gate); Room v27 (`MIGRATION_26_27`), DataStore keys, backup fields (defaulted).
+- [x] `CalendarEventsBlock` takes `CalendarDisplayOptions`; Home, the Appearance previews and the carousel previews all use it. No indicator = row collapses, no gap.
+- [x] Wallpaper-backed preview strip at the top of the Calendars screen (scrolls away), `WallpaperBackground` cropped to the top, sample events.
+- [ ] Not verified on a device or emulator: no Android SDK in the authoring environment. Run `./gradlew test` and `connectedDebugAndroidTest` (emulator); the build generates `app/schemas/.../27.json` — commit it and add `FacetDatabaseMigrationTest.migration26To27…`.
+
 ## Appearance rows: icons and permission-aware subtext (direct request)
 
 - [x] The five Appearance link rows got violet icon badges (Settings style, no trailing chevron).

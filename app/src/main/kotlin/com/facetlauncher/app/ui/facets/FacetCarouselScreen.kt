@@ -77,6 +77,7 @@ import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -312,6 +313,7 @@ private fun FacetCarouselContent(
                     clockZoneHeightDp = uiState.clockZoneHeightDp(facet.id),
                     calendarEvents = uiState.previewsByFacetId[facet.id]?.calendarEvents.orEmpty(),
                     calendarColors = uiState.globalSettings.calendarColors,
+                    calendarDisplay = uiState.previewsByFacetId[facet.id]?.calendarDisplay ?: CalendarDisplayOptions(),
                     launcherFontOption = uiState.globalSettings.launcherFontOption,
                     appRowPosition = uiState.appRowPosition(facet.id),
                     appRowPresentation = uiState.appRowPresentation(facet.id),
@@ -451,6 +453,7 @@ private fun FacetPreviewPage(
     clockZoneHeightDp: Float?,
     calendarEvents: List<CalendarEvent>,
     calendarColors: Map<String, String>,
+    calendarDisplay: CalendarDisplayOptions,
     launcherFontOption: LauncherFontOption,
     appRowPosition: AppRowPosition,
     appRowPresentation: AppRowPresentation,
@@ -575,6 +578,7 @@ private fun FacetPreviewPage(
                         clockAlignment = clockAlignment,
                         events = calendarEvents,
                         calendarColors = calendarColors,
+                        calendarDisplay = calendarDisplay,
                         homeAppsFontWeight = homeAppsFontWeight,
                         appLabelColorOption = appLabelColorOption,
                         launcherFontOption = launcherFontOption,

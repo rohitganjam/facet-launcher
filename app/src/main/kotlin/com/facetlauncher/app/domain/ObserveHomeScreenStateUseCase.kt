@@ -14,6 +14,8 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.effectiveCalendarDisplay
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -46,6 +48,8 @@ data class HomeScreenState(
     val usageAccessGranted: Boolean,
     /** Today's events for the active facet's effective calendar settings — empty when ungranted or none selected. */
     val calendarEvents: List<CalendarEvent>,
+    /** The active facet's effective calendar indicator / item-count settings. */
+    val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     /** F13 — notification count per package, empty unless both the "Notification badges" setting is on and access is granted. */
     val badgeCounts: Map<String, Int>,
     /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
@@ -115,6 +119,10 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
         val dockAndFavoriteItems = combine(dockApps, favoriteItems) { dock, favorites -> dock to favorites }
 
+        val calendarDisplay = combine(activeFacet, settingsRepository.settings) { facet, settings ->
+            facet.effectiveCalendarDisplay(settings)
+        }.distinctUntilChanged()
+
         val calendarEvents = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
             facet to settings
         }.flatMapLatest { (facet, settings) -> observeCalendarEvents(facet, settings) }
@@ -128,6 +136,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         // Paired with badgeCounts (rather than added as a 7th argument below) purely to stay
         // within the combine() overload's supported arity — unrelated to badgeCounts otherwise.
         val badgeCountsAndAccessories = combine(badgeCounts, observeClockAccessories()) { badges, accessories -> badges to accessories }
+        val eventsAndDisplay = combine(calendarEvents, calendarDisplay) { events, display -> events to display }
 
         // Only subscribes to the framework while the setting is on and access is granted; refreshTrigger
         // re-evaluates the grant on resume.
@@ -143,10 +152,10 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             dockAndFavoriteItems,
             appListItems,
             facetRepository.observeFacets(),
-            calendarEvents,
+            eventsAndDisplay,
             badgeCountsAndAccessories,
             mediaPlayer,
-        ) { settings, (dockApps, favoriteItems), items, facets, events, (badges, accessories), media ->
+        ) { settings, (dockApps, favoriteItems), items, facets, (events, display), (badges, accessories), media ->
             HomeScreenState(
                 settings = settings,
                 dockApps = dockApps,
@@ -155,6 +164,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
                 facets = facets,
                 usageAccessGranted = usageAccessRepository.isGranted(),
                 calendarEvents = events,
+                calendarDisplay = display,
                 badgeCounts = badges,
                 clockAccessories = accessories,
                 mediaPlayer = media,

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.ui.home.rememberTickingNow
@@ -39,9 +40,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-/** The clock block shows only the next few events, not the whole day's agenda. */
-private const val MAX_VISIBLE_EVENTS = 3
 
 /**
  * Today's calendar events (F1), deliberately independent of [com.facetlauncher.app.ui.home.ClockBlock]/
@@ -61,7 +59,7 @@ private const val MAX_VISIBLE_EVENTS = 3
  * already filtered to selected
  * calendars/all-day setting by [com.facetlauncher.app.data.CalendarRepository]), only the ones
  * still relevant are actually rendered: an all-day event always, a timed one only until its own
- * end time passes — capped at [MAX_VISIBLE_EVENTS], since this is a glanceable clock-block strip,
+ * end time passes — capped at [CalendarDisplayOptions.itemsToShow], since this is a glanceable clock-block strip,
  * not a full day agenda.
  *
  * Owns its own live "now" (via [rememberTickingNow]) so it's fully self-contained — it doesn't
@@ -85,6 +83,7 @@ fun CalendarEventsBlock(
     fontWeight: FontWeight = FontWeight.SemiBold,
     textColor: Color = Ink,
     alignment: ClockAlignment = ClockAlignment.LEFT,
+    display: CalendarDisplayOptions = CalendarDisplayOptions(),
     onEventClick: (CalendarEvent) -> Unit = {},
 ) {
     val now by rememberTickingNow(clock)
@@ -92,8 +91,8 @@ fun CalendarEventsBlock(
         DateTimeFormatter.ofPattern(if (use24HourTime) "HH:mm" else "h:mm", locale)
     }
     val nowMillis = now.atZone(clock.zone).toInstant().toEpochMilli()
-    val visibleEvents = remember(events, nowMillis) {
-        events.filter { it.isAllDay || it.endTimeMillis > nowMillis }.take(MAX_VISIBLE_EVENTS)
+    val visibleEvents = remember(events, nowMillis, display.itemsToShow) {
+        events.filter { it.isAllDay || it.endTimeMillis > nowMillis }.take(display.itemsToShow)
     }
     if (visibleEvents.isEmpty()) return
 
@@ -114,6 +113,7 @@ fun CalendarEventsBlock(
                 fontFamily = fontFamily,
                 fontWeight = fontWeight,
                 textColor = textColor,
+                showIndicator = display.showIndicator,
                 reversed = alignment == ClockAlignment.RIGHT,
                 onClick = { onEventClick(event) },
             )
@@ -130,6 +130,7 @@ private fun EventRow(
     fontFamily: FontFamily,
     fontWeight: FontWeight,
     textColor: Color,
+    showIndicator: Boolean,
     reversed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -175,9 +176,9 @@ private fun EventRow(
         if (reversed) {
             titleText()
             timeText()
-            indicator()
+            if (showIndicator) indicator()
         } else {
-            indicator()
+            if (showIndicator) indicator()
             timeText()
             titleText()
         }

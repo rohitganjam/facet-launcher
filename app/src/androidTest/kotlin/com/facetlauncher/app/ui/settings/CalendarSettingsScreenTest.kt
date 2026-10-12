@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import android.app.WallpaperManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -17,6 +18,7 @@ import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -54,6 +56,7 @@ class CalendarSettingsScreenTest {
                     facetRepository,
                     FakeCalendarPermissionRepository(context, granted = false),
                     CalendarRepository(context.contentResolver),
+                    WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }
             FacetLauncherTheme {
@@ -76,6 +79,35 @@ class CalendarSettingsScreenTest {
         // Then the change round-trips through the real repository
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { !settingsRepository.settings.first().showAllDayEvents }
+        }
+    }
+
+    @Test
+    fun previewStripShowsAboveTheControls() {
+        // Given the global entry point, When composed
+        setContent()
+
+        // Then the wallpaper preview strip is present
+        composeRule.onNodeWithTag("calendar_preview_strip").assertExists()
+    }
+
+    @Test
+    fun indicatorToggleAndItemsDropdownPersistThroughSettingsRepository() {
+        // Given the global entry point, indicator on and 3 items by default
+        val (settingsRepository, _) = setContent()
+        composeRule.onNodeWithTag("show_calendar_indicator_toggle").performScrollTo().assertIsOn()
+
+        // When turning the indicator off and picking 2 items
+        composeRule.onNodeWithTag("show_calendar_indicator_toggle").performClick()
+        composeRule.onNodeWithTag("calendar_items_to_display_row").performScrollTo().performClick()
+        composeRule.onNodeWithText("2").performClick()
+
+        // Then both changes round-trip through the real repository
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                val settings = settingsRepository.settings.first()
+                !settings.showCalendarIndicator && settings.calendarItemsToShow == 2
+            }
         }
     }
 

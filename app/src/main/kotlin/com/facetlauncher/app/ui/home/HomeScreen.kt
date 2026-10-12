@@ -91,6 +91,7 @@ import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -278,6 +279,7 @@ fun HomeScreen(
     isCharging: Boolean = false,
     calendarEvents: List<CalendarEvent> = emptyList(),
     calendarColors: Map<String, String> = emptyMap(),
+    calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     onEventClick: (CalendarEvent) -> Unit = {},
     onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
     onLaunchShortcut: (AppShortcut) -> Unit = {},
@@ -680,6 +682,7 @@ fun HomeScreen(
                     clockScale = effectiveClockScale,
                     events = calendarEvents,
                     calendarColors = calendarColors,
+                    calendarDisplay = calendarDisplay,
                     homeAppsFontWeight = homeAppsFontWeight,
                     appLabelColorOption = appLabelColorOption,
                     onEventClick = onEventClick,

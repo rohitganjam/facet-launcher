@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -38,6 +39,7 @@ data class HomeUiState(
     val facets: List<FacetEntity> = emptyList(),
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
+    val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     val badgeCounts: Map<String, Int> = emptyMap(),
     /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
     val clockAccessories: ClockAccessoryState = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),

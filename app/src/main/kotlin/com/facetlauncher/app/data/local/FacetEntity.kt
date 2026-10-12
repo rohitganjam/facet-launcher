@@ -10,12 +10,14 @@ import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 
 @Entity(tableName = "facets")
@@ -105,6 +107,8 @@ data class FacetEntity(
     // FacetRepository.updateOverridingCalendar's own doc comment).
     val overrideCalendar: Boolean = false,
     val showAllDayEvents: Boolean = true,
+    val showCalendarIndicator: Boolean = true,
+    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /**
      * Comma-joined [com.facetlauncher.app.data.model.CalendarInfo.id] values — Room has no
      * native `Set<String>` column type, and ids are always numeric so a comma delimiter is safe
@@ -146,3 +150,11 @@ inline fun <T> FacetEntity?.resolveSentinel(facetValue: (FacetEntity) -> T, sent
     val value = this?.let(facetValue) ?: return globalValue
     return if (value == sentinel) globalValue else value
 }
+
+/** The calendar display options in force for `this` facet (or the launcher-wide ones when it's `null` or not overriding the calendar). */
+fun FacetEntity?.effectiveCalendarDisplay(settings: LauncherSettings): CalendarDisplayOptions =
+    if (this?.overrideCalendar == true) {
+        CalendarDisplayOptions(showCalendarIndicator, calendarItemsToShow)
+    } else {
+        CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow)
+    }

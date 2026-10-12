@@ -568,6 +568,11 @@
     <string name="calendar_settings_header_title">Kalendereinstellungen</string>
     <string name="calendar_settings_follows_launcher_wide">Folgt der launcherweiten Kalendereinstellung</string>
     <string name="calendar_settings_show_all_day_events">Ganztägige Termine anzeigen</string>
+    <string name="calendar_settings_show_indicator">Kalenderindikator anzeigen</string>
+    <string name="calendar_settings_items_to_display">Angezeigte Einträge</string>
+    <string name="calendar_settings_preview_event_1">Team-Standup</string>
+    <string name="calendar_settings_preview_event_2">Design-Review</string>
+    <string name="calendar_settings_preview_event_3">Mittagessen mit Sam</string>
     <string name="calendar_settings_no_calendars_found">Keine Kalender auf diesem Gerät gefunden.</string>
     <string name="calendar_settings_access_off">Kalenderzugriff aus — Termine ausgeblendet.</string>
 
