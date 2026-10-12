@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.ui.theme.AccentSwatch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -105,6 +106,17 @@ class CalendarSettingsViewModelTest {
 
         assertEquals(CalendarDisplayOptions(showIndicator = true, itemsToShow = 3), inheriting.calendarDisplay)
         assertEquals(CalendarDisplayOptions(showIndicator = false, itemsToShow = 1), overriding.calendarDisplay)
+    }
+
+    @Test
+    fun `calendar swatches are hidden when the indicator is off`() {
+        val colors = mapOf("1" to AccentSwatch.entries.first().name)
+        val on = CalendarSettingsUiState(settings = LauncherSettings(showCalendarIndicator = true), calendarColors = colors)
+        val off = CalendarSettingsUiState(settings = LauncherSettings(showCalendarIndicator = false), calendarColors = colors)
+
+        assertEquals(AccentSwatch.entries.first(), on.calendarSwatch("1"))
+        assertEquals(null, off.calendarSwatch("1"))
+        assertEquals(null, on.calendarSwatch("unknown"))
     }
 
     @Test

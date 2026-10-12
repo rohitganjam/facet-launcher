@@ -248,7 +248,7 @@ private fun CalendarSettingsContent(
                                     uiState.calendars.forEach { calendar ->
                                         CalendarPickerRow(
                                             calendar = calendar,
-                                            swatch = uiState.calendarColors[calendar.id]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
+                                            swatch = uiState.calendarSwatch(calendar.id),
                                             checked = uiState.isCalendarSelected(calendar.id),
                                             onToggle = { onCalendarToggle(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
                                         )

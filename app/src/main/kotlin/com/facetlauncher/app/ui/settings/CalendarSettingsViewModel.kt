@@ -50,6 +50,9 @@ data class CalendarSettingsUiState(
     val previewUse24HourTime: Boolean get() = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime)
     val previewClockAlignment: ClockAlignment get() = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
     val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverriding) facet?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
+    /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
+    fun calendarSwatch(calendarId: String): AccentSwatch? =
+        if (calendarDisplay.showIndicator) calendarColors[calendarId]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() } else null
     fun isCalendarSelected(calendarId: String): Boolean = effectiveSelectedCalendarIds?.let { calendarId in it } ?: true
 }
 
