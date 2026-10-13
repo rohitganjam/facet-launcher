@@ -68,4 +68,23 @@ class NotificationBadgeRepositoryTest {
         // Then the counts are empty
         assertEquals(emptyMap<String, Int>(), repository.badgeCounts.value)
     }
+
+    @Test
+    fun `media notification packages follow the snapshot including silent ones`() {
+        // Given a media notification (silent) and an ordinary one
+        val repository = NotificationBadgeRepository()
+        repository.setActiveNotifications(
+            listOf(
+                NotificationInfo(packageName = "com.music", silent = true, isMedia = true),
+                NotificationInfo(packageName = "com.chat", silent = false),
+            ),
+        )
+
+        // Then only the media package is listed
+        assertEquals(setOf("com.music"), repository.mediaNotificationPackages.value)
+
+        // And once it is gone from the snapshot the set empties
+        repository.setActiveNotifications(listOf(NotificationInfo(packageName = "com.chat", silent = false)))
+        assertEquals(emptySet<String>(), repository.mediaNotificationPackages.value)
+    }
 }

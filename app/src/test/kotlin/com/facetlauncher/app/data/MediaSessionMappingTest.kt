@@ -131,4 +131,78 @@ class MediaSessionMappingTest {
         val overrun = state(isPlaying = true).copy(positionMs = 99_000L, durationMs = 100_000L, positionUpdatedAtMs = 0L)
         assertEquals(1f, overrun.progressAt(60_000L)!!, 0.001f)
     }
+
+    @Test
+    fun `with nothing playing the most recently played session wins`() {
+        // Given two paused sessions where b played after a
+        val a = state(isPlaying = false, packageName = "a")
+        val b = state(isPlaying = false, packageName = "b")
+
+        // Then b is picked, whatever the list order
+        assertSame(b, pickActiveSession(listOf(a, b), lastPlayedAt = mapOf("a" to 1L, "b" to 2L)))
+    }
+
+    @Test
+    fun `a playing session beats a more recently played paused one`() {
+        val playing = state(isPlaying = true, packageName = "a")
+        val paused = state(isPlaying = false, packageName = "b")
+
+        assertSame(playing, pickActiveSession(listOf(paused, playing), lastPlayedAt = mapOf("a" to 1L, "b" to 2L)))
+    }
+
+    @Test
+    fun `sessions never seen playing keep the platform order`() {
+        val first = state(isPlaying = false, packageName = "a")
+        val second = state(isPlaying = false, packageName = "b")
+
+        assertSame(first, pickActiveSession(listOf(first, second)))
+    }
+
+    @Test
+    fun `a MediaStyle template marks a notification as media`() {
+        val extras = android.os.Bundle().apply { putString(android.app.Notification.EXTRA_TEMPLATE, "android.app.Notification\$MediaStyle") }
+
+        assertTrue(isMediaNotification(extras))
+    }
+
+    @Test
+    fun `a media session token marks a notification as media`() {
+        val extras = android.os.Bundle().apply { putParcelable(android.app.Notification.EXTRA_MEDIA_SESSION, android.os.Bundle()) }
+
+        assertTrue(isMediaNotification(extras))
+    }
+
+    @Test
+    fun `an ordinary notification is not media`() {
+        val extras = android.os.Bundle().apply { putString(android.app.Notification.EXTRA_TEMPLATE, "android.app.Notification\$BigTextStyle") }
+
+        assertFalse(isMediaNotification(extras))
+        assertFalse(isMediaNotification(null))
+    }
+
+    @Test
+    fun `the picker remembers which session played last once both are paused`() {
+        val picker = ActiveSessionPicker()
+        val a = state(isPlaying = true, packageName = "a")
+        val b = state(isPlaying = true, packageName = "b")
+        val both = setOf("a", "b")
+
+        // Given a played, then b played
+        picker.pick(listOf("ca" to a), both)
+        picker.pick(listOf("cb" to b), both)
+
+        // When both are paused (a listed first)
+        val result = picker.pick(listOf("ca" to a.copy(isPlaying = false), "cb" to b.copy(isPlaying = false)), both)
+
+        // Then the one that played last wins
+        assertEquals("cb", result?.first)
+    }
+
+    @Test
+    fun `the picker ignores sessions without a media notification`() {
+        val picker = ActiveSessionPicker()
+        val playing = state(isPlaying = true, packageName = "a")
+
+        assertNull(picker.pick(listOf("ca" to playing), packagesWithNotification = emptySet()))
+    }
 }

@@ -20,6 +20,11 @@ class NotificationBadgeRepository @Inject constructor() {
     private val _badgeCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val badgeCounts: StateFlow<Map<String, Int>> = _badgeCounts.asStateFlow()
 
+    private val _mediaNotificationPackages = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Packages that currently have a media notification posted, silent or not. */
+    val mediaNotificationPackages: StateFlow<Set<String>> = _mediaNotificationPackages.asStateFlow()
+
     /**
      * Replaces the whole snapshot — always recomputed wholesale from the listener's current
      * `activeNotifications`/`Ranking`, never incremented/decremented per event. A package can
@@ -27,6 +32,7 @@ class NotificationBadgeRepository @Inject constructor() {
      * package (F13 is dot/count, never per-notification detail).
      */
     fun setActiveNotifications(notifications: List<NotificationInfo>) {
+        _mediaNotificationPackages.value = notifications.filter { it.isMedia }.map { it.packageName }.toSet()
         _badgeCounts.value = notifications
             .filterNot { it.silent }
             .groupingBy { it.packageName }

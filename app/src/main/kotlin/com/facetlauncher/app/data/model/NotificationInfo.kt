@@ -10,4 +10,6 @@ data class NotificationInfo(
     val packageName: String,
     /** True for a notification the system itself treats as silent (channel importance `IMPORTANCE_NONE`) — F13 never badges these. */
     val silent: Boolean,
+    /** True for a `MediaStyle` notification — what keeps Home's media player row on screen. */
+    val isMedia: Boolean = false,
 )

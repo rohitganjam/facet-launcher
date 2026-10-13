@@ -256,7 +256,7 @@ class HomeDrawerRouteTest {
                         notificationBadgeRepository,
                         notificationAccessRepository,
                         ObserveClockAccessoriesUseCase(BatteryRepository(context), NextAlarmRepository(context, Clock.systemDefaultZone())),
-                        MediaSessionRepository(context),
+                        MediaSessionRepository(context, notificationBadgeRepository),
                     ),
                     NotificationShadeRepository(context),
                     settingsRepository,
@@ -265,7 +265,7 @@ class HomeDrawerRouteTest {
                         runBlocking { `when`(repo.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
                     },
                     ObserveQuickAddStateUseCase(),
-                    MediaSessionRepository(context),
+                    MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
                     ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository), EntitlementRepository()),
                 )
