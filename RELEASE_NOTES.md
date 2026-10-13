@@ -1,21 +1,20 @@
-# Facet Launcher 0.1.23
+# Facet Launcher 0.1.24
 
 ## New Features
-- Added a setting to toggle the calendar colour indicator bar on Home screen events, and to choose how many upcoming events are shown (1-3) — available app-wide and per-facet.
+- (none)
 
 ## Fixes
-- Fixed calendar colour dots still showing in the calendar picker even when the colour indicator setting was turned off.
+- The media player row on Home no longer stays stuck on screen for apps (like Spotify or YouTube) that keep a paused session alive after you've dismissed their notification — it now disappears when the notification is gone.
+- When several apps could show a media player row, the picker now sensibly prefers whichever is actively playing, then falls back to the most recently played.
+- Fixed Home staying sharp and not fading behind the Widgets Hub and Switch Facets panels on older Android versions (Android 11) — it now fades and shrinks consistently on all versions, matching the Drawer behavior.
 
 ## Improvements
-- Upcoming events on the Home screen now show through noon tomorrow instead of just today, with a weekday label (e.g. "Tue 9:00") on events that aren't happening today.
-- The calendar preview strip now shows your real upcoming events once calendar access is granted, and sample events when there are none.
+- Added a bit more spacing between the calendar and the media player row on Home.
+- The Widgets Hub and Switch Facets screen headers now look identical in style (title, subtitle, and text shadow).
 
 ## Internal
-- Released 0.1.22 (code 23) version bump.
-- Added Room database v27 migration, DataStore keys, and backup fields for the new calendar settings.
-- Extracted calendar-pairing logic out of ObserveHomeScreenStateUseCase to satisfy detekt's LongMethod rule.
-- Fixed a French translation string that was breaking resource merging.
-- Updated ViewModel and UI tests for the new wallpaper repository dependency and calendar indicator feature.
-- Fixed an intermittent failure in the calendar row zero-count test by waiting for real state instead of asserting immediately.
-- Fixed API 30 test flakiness: scroll to the Done button before tapping in FacetProContentTest, and use @SdkSuppress instead of assumeTrue for wallpaper-accent tests.
-- Refreshed the graphify knowledge graph.
+- Increased HOME_MEDIA_ROW_TOP_GAP from 4dp to 8dp.
+- Removed the onWallpaper flag from ScreenHeader so Hub and Switch Facets headers are identical by construction.
+- Replaced the Android 12+-only RenderEffect blur approach for Home fade with homeLayerFade, matching the drawer's cross-version fade/scale approach.
+- Added NotificationInfo.isMedia and exposed media-session packages via NotificationBadgeRepository; added ActiveSessionPicker for session selection logic.
+- Release 0.1.23 (code 24).
