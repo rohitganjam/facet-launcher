@@ -1,20 +1,21 @@
-# Facet Launcher 0.1.22
+# Facet Launcher 0.1.23
 
 ## New Features
-- Added an optional media player row on the home screen, showing the current album art, song info, playback controls, and a progress bar (choice of flat or wavy style). Turn it on from the Notifications settings page.
+- Added a setting to toggle the calendar colour indicator bar on Home screen events, and to choose how many upcoming events are shown (1-3) — available app-wide and per-facet.
 
 ## Fixes
-- (none)
+- Fixed calendar colour dots still showing in the calendar picker even when the colour indicator setting was turned off.
 
 ## Improvements
-- Reorganized Appearance settings into a clearer hub: Clock & calendar, Dock & home, Notifications and media, and General, each with short, icon-labeled sections.
-- Moved notification and calendar display settings into Appearance, and renamed "Home & apps" to "Apps and folders".
-- Settings rows now clearly show when notification or calendar access still needs to be granted.
-- Refined clock designs: aligned the hour and minute in the Accent Field clock, separated the date and extra info onto their own line in the Ruler clock, and improved text contrast for date and accessory text.
-- Added German, Spanish, French, and Portuguese translations for the new and updated settings.
+- Upcoming events on the Home screen now show through noon tomorrow instead of just today, with a weekday label (e.g. "Tue 9:00") on events that aren't happening today.
+- The calendar preview strip now shows your real upcoming events once calendar access is granted, and sample events when there are none.
 
 ## Internal
-- Added MediaSessionRepositoryTest, driving a real MediaSession to cover metadata, playback state, transport actions, and album art decoding (bitmap, file URI, http URI, undecodable file), with notification access granted/revoked via shell for test isolation.
-- Upgraded material3 to 1.5.0-beta01 (overriding the BOM's 1.4.0) for LinearWavyProgressIndicator; updated TimePicker color parameter usage for the renamed API.
-- Split and expanded Appearance settings tests to cover the new hub plus sub-screens over a shared test host.
-- Updated architecture docs, CAPABILITIES, design README, test registry, and implementation plan.
+- Released 0.1.22 (code 23) version bump.
+- Added Room database v27 migration, DataStore keys, and backup fields for the new calendar settings.
+- Extracted calendar-pairing logic out of ObserveHomeScreenStateUseCase to satisfy detekt's LongMethod rule.
+- Fixed a French translation string that was breaking resource merging.
+- Updated ViewModel and UI tests for the new wallpaper repository dependency and calendar indicator feature.
+- Fixed an intermittent failure in the calendar row zero-count test by waiting for real state instead of asserting immediately.
+- Fixed API 30 test flakiness: scroll to the Done button before tapping in FacetProContentTest, and use @SdkSuppress instead of assumeTrue for wallpaper-accent tests.
+- Refreshed the graphify knowledge graph.
