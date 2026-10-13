@@ -16,10 +16,10 @@ class AboutScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}) {
+    private fun setContent(onBack: () -> Unit = {}, onNavigateToWhatsNew: () -> Unit = {}) {
         composeRule.setContent {
             FacetLauncherTheme {
-                AboutScreen(onBack = onBack)
+                AboutScreen(onBack = onBack, onNavigateToWhatsNew = onNavigateToWhatsNew)
             }
         }
         composeRule.waitForIdle()
@@ -33,6 +33,19 @@ class AboutScreenTest {
 
         // Then it shows the real BuildConfig.VERSION_NAME
         composeRule.onNodeWithTag("about_version_row").assertTextContains(BuildConfig.VERSION_NAME, substring = true)
+    }
+
+    @Test
+    fun whatsNewRowOpensTheReleaseNotes() {
+        // Given the About screen
+        var opened = false
+        setContent(onNavigateToWhatsNew = { opened = true })
+
+        // When tapping What's new
+        composeRule.onNodeWithTag("about_whats_new_row").performClick()
+
+        // Then it asks to open the release notes
+        assertEquals(true, opened)
     }
 
     @Test

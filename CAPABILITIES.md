@@ -119,6 +119,14 @@ starting at `HOME`.
 - Not yet verified against specific automation apps (Samsung Modes & Routines, Tasker); the code
   documents them as the intended targets.
 
+### What's new (in-app release notes)
+
+`ui/settings/WhatsNewScreen.kt` + `WhatsNewViewModel.kt`, reached from Settings → About → **What's new**. One card per release,
+newest first, with the installed version marked; each release lists its **New** and **Improved** bullets. The content is bundled
+as `app/src/main/assets/whats_new/<version>.md` and read by `data/ReleaseNotesRepository.kt` (parsed by `ReleaseNotesParser.kt`).
+`scripts/release.sh` drafts the file for each release before the build and pauses for sign-off (see `CLAUDE.md`); it is separate
+from the `release_notes/` change log. English only. Backfilled from 0.1.10.
+
 ### Facet automation (built-in rules)
 
 `ui/settings/automation/` + `domain/` + `data/`. Settings → **Facet automation**, or the card at the top of Manage Facets. See
@@ -213,7 +221,7 @@ four sections, each a card of icon-badge rows:
   - Backup & restore → `BackupRestoreScreen` (full-settings JSON export/import via SAF; destructive
     import with confirm; guided widget re-add)
   - Set as default launcher → status + the system role picker
-  - Work profile status row (when a Work profile exists), About
+  - Work profile status row (when a Work profile exists), About (version, **What's new**, check for updates, Discord)
 
 **Look and feel (shared across the settings screens, per-facet settings, the Home long-press
 sheet and the carousel's Launcher settings row):** rows are grouped in tonal `SettingsCard`s

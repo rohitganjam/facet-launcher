@@ -3992,6 +3992,12 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] On Android 14+ the system blocked the launcher's send of the session's content intent ("Background activity launch blocked" on an Android 17 device, silently: no exception), so a tap did nothing. `MediaSessionRepository.openPlayer` now sends it with `setPendingIntentBackgroundActivityStartMode(ALLOWED)` so the launcher's foreground privileges count, and falls back to the app's launcher intent when there is no content intent or the send throws.
 - [x] Tests: `MediaSessionRepositoryTest` content-intent send (existing) and a new launcher-intent fallback case. The Android 17 block itself is only reproducible on such a device.
 
+## In-app What's new (direct request)
+
+- [x] Settings → About → **What's new** row opens a `WhatsNewScreen`: a card per release (newest first, installed version marked) with New / Improved bullets. Content is bundled markdown in `app/src/main/assets/whats_new/<version>.md`, loaded by `ReleaseNotesRepository` (+ `ReleaseNotesParser`), shown by `WhatsNewViewModel`. Backfilled for 0.1.10 to 0.1.25; English only; strings translated for the row and headings (de/es/fr/pt).
+- [x] Release flow: `scripts/gen-whats-new.py` drafts the notes after the bump and before the build; `scripts/release.sh` pauses for sign-off (Enter to build, `q` to stop), with `--notes-only` and `--resume`. A draft containing `TODO` is never built. The `release_notes/` change log is unchanged and still generated after the build.
+- [x] Tests: `ReleaseNotesParserTest`, `ReleaseNotesRepositoryTest` (reads the real bundled files; no TODO), `WhatsNewViewModelTest`, `WhatsNewScreenTest` and an About-row case in `AboutScreenTest`. The release script flow was exercised end to end in a scratch worktree (draft, TODO refused, stray file refused, resume built an APK containing the notes).
+
 ## Appearance rows: icons and permission-aware subtext (direct request)
 
 - [x] The five Appearance link rows got violet icon badges (Settings style, no trailing chevron).
