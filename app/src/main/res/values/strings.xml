@@ -346,6 +346,7 @@
     <string name="app_list_column_alignment_both_right">Both right</string>
     <string name="app_list_column_alignment_mirrored">Left &amp; right</string>
     <string name="app_list_column_alignment_launcher_default">Default launcher alignment</string>
+    <string name="app_list_grid_columns_three">3 columns</string>
     <string name="app_list_grid_columns_four">4 columns</string>
     <string name="app_list_grid_columns_five">5 columns</string>
     <string name="app_list_grid_columns_six">6 columns</string>

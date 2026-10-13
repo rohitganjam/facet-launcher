@@ -197,6 +197,7 @@ fun AppListColumnAlignment.toColumnPositions(): Pair<AppRowPosition, AppRowPosit
 /** Only meaningful when [AppListLayout.GRID] is active — how many tiles wide the grid renders. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
 enum class AppListGridColumns(val columns: Int, @param:StringRes val displayNameRes: Int) {
     LAUNCHER_DEFAULT(0, R.string.app_list_grid_columns_launcher_default),
+    THREE(3, R.string.app_list_grid_columns_three),
     FOUR(4, R.string.app_list_grid_columns_four),
     FIVE(5, R.string.app_list_grid_columns_five),
     SIX(6, R.string.app_list_grid_columns_six),

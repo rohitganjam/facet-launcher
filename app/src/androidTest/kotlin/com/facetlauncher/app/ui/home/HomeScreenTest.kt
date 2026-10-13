@@ -1322,6 +1322,33 @@ class HomeScreenTest {
     }
 
     @Test
+    fun gridModeWithThreeColumnsWrapsAfterTheThirdApp() {
+        // Given Grid layout, 3 columns, icon-only display, and 4 apps (the fourth wraps)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(4).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appListLayout = AppListLayout.GRID,
+                    appListGridColumns = AppListGridColumns.THREE,
+                    appListGridDisplayMode = AppListGridDisplayMode.ICONS,
+                )
+            }
+        }
+
+        // Then the first 3 apps share a row and the 4th is on the next one
+        val app1 = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val app3 = composeRule.onNodeWithTag("home_app_icon_com.example.app3", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val app4 = composeRule.onNodeWithTag("home_app_icon_com.example.app4", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertEquals(app1.top, app3.top, 1f)
+        assert(app4.top > app1.top)
+
+        // And three columns are wider than four: a tile spans a third of the width, not a quarter
+        assert(app3.left > app1.left)
+    }
+
+    @Test
     fun gridTextDisplayModeRendersLabelsInsteadOfIcons() {
         // Given Grid layout with text-only display
         composeRule.setContent {

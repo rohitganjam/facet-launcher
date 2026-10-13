@@ -313,6 +313,7 @@
     <string name="app_list_column_alignment_both_left">Les deux à gauche</string>
     <string name="app_list_column_alignment_both_right">Les deux à droite</string>
     <string name="app_list_column_alignment_mirrored">Gauche et droite</string>
+    <string name="app_list_grid_columns_three">3 colonnes</string>
     <string name="app_list_grid_columns_four">4 colonnes</string>
     <string name="app_list_grid_columns_five">5 colonnes</string>
     <string name="app_list_grid_columns_six">6 colonnes</string>

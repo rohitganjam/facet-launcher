@@ -3998,6 +3998,11 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] Release flow: `scripts/gen-whats-new.py` drafts the notes after the bump and before the build; `scripts/release.sh` pauses for sign-off (Enter to build, `q` to stop), with `--notes-only` and `--resume`. A draft containing `TODO` is never built. The `release_notes/` change log is unchanged and still generated after the build.
 - [x] Tests: `ReleaseNotesParserTest`, `ReleaseNotesRepositoryTest` (reads the real bundled files; no TODO), `WhatsNewViewModelTest`, `WhatsNewScreenTest` and an About-row case in `AboutScreenTest`. The release script flow was exercised end to end in a scratch worktree (draft, TODO refused, stray file refused, resume built an APK containing the notes).
 
+## Three-column Home grid (direct request)
+
+- [x] `AppListGridColumns.THREE` ("3 columns") joins 4/5/6 in the Home grid's column choice, global and per facet. The option list comes from the enum, backup restores by name, and no database change is needed (stored as text).
+- [x] Tests: enum counts and backup name round-trip (`AppListGridColumnsTest`), settings and per-facet persistence, Home grid wraps 3 + 1 (`HomeScreenTest`), and the Appearance dropdown offers 3 columns and applies it to the preview (`DockAppsAppearanceScreenTest`).
+
 ## Appearance rows: icons and permission-aware subtext (direct request)
 
 - [x] The five Appearance link rows got violet icon badges (Settings style, no trailing chevron).

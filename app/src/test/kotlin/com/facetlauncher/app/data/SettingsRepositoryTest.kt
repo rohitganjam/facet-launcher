@@ -113,6 +113,20 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `setAppListGridColumns round-trips three columns`() = runTest {
+        // Given a repository at its default of four columns
+        val repository = createRepository()
+
+        // When three columns is chosen
+        repository.setAppListGridColumns(AppListGridColumns.THREE)
+
+        // Then it round-trips with a column count of 3
+        val settings = repository.settings.first()
+        assertEquals(AppListGridColumns.THREE, settings.appListGridColumns)
+        assertEquals(3, settings.appListGridColumns.columns)
+    }
+
+    @Test
     fun `setOnboardingCompleted and setDefaultsSeeded round-trip independently`() = runTest {
         // Given a repository
         val repository = createRepository()
