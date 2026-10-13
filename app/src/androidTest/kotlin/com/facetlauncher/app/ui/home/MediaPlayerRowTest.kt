@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -23,6 +24,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
 
 class MediaPlayerRowTest {
 
@@ -190,10 +192,17 @@ class MediaPlayerRowTest {
         composeRule.waitUntil(timeoutMillis = 5_000) { progressInkHeightPx() > flatHeight }
     }
 
-    /** Number of pixel rows containing any drawn pixel in the progress line: the wave's vertical extent. */
+    /**
+     * Number of pixel rows containing a drawn pixel in the progress line: the wave's vertical extent. The captured
+     * image has an opaque window background, so "drawn" means differing from the background (its top-left pixel,
+     * which the line never reaches), not just having alpha.
+     */
     private fun progressInkHeightPx(): Int {
         val pixels = composeRule.onNodeWithTag("home_media_progress").captureToImage().toPixelMap()
-        return (0 until pixels.height).count { y -> (0 until pixels.width).any { x -> pixels[x, y].alpha > 0f } }
+        val background = pixels[0, 0]
+        fun isInk(color: Color) =
+            abs(color.red - background.red) + abs(color.green - background.green) + abs(color.blue - background.blue) > INK_THRESHOLD
+        return (0 until pixels.height).count { y -> (0 until pixels.width).any { x -> isInk(pixels[x, y]) } }
     }
 
     @Test
@@ -204,5 +213,9 @@ class MediaPlayerRowTest {
         // Then previous is disabled and next still works
         composeRule.onNodeWithTag("home_media_previous").assertIsNotEnabled()
         composeRule.onNodeWithTag("home_media_next").assertExists()
+    }
+
+    private companion object {
+        const val INK_THRESHOLD = 0.08f
     }
 }
