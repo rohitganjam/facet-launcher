@@ -40,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -108,8 +107,14 @@ private val HOME_SWIPE_SLOP = 16.dp
 private const val VERTICAL_DOMINANCE = 1.2f
 private const val HOME_FADE_SCALE_RANGE = 0.03f
 
-/** Home blurs behind the Hub/Switch Facets panels (not the Drawer — see README's "Not blurred"), scaling with whichever axis's progress is furthest open. */
-private val HOME_PANEL_BLUR_RADIUS = 24.dp
+/** How Home's layer looks while a panel is opening. */
+internal data class HomeLayerFade(val alpha: Float, val scale: Float)
+
+/** Home yields to whichever of the Drawer, Hub and Switch Facets is furthest open: fully faded and [HOME_FADE_SCALE_RANGE] smaller when it is. */
+internal fun homeLayerFade(drawerProgress: Float, hubProgress: Float, facetProgress: Float): HomeLayerFade {
+    val panelProgress = maxOf(drawerProgress, hubProgress, facetProgress)
+    return HomeLayerFade(alpha = 1f - panelProgress, scale = 1f - panelProgress * HOME_FADE_SCALE_RANGE)
+}
 
 /** A downward swipe from a fully closed drawer that travels this fraction of the container height, or clears [VELOCITY_THRESHOLD_PX], expands the notification shade. */
 private const val SWIPE_DOWN_SHADE_FRACTION = 0.20f
@@ -791,17 +796,13 @@ fun HomeDrawerRoute(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
-                    alpha = 1f - drawerAxis.progress.value
-                    val scale = 1f - drawerAxis.progress.value * HOME_FADE_SCALE_RANGE
-                    scaleX = scale
-                    scaleY = scale
-                    val panelProgress = maxOf(hubAxis.progress.value, facetAxis.progress.value)
-                    renderEffect = if (panelProgress > 0f) {
-                        val radiusPx = HOME_PANEL_BLUR_RADIUS.toPx() * panelProgress
-                        BlurEffect(radiusPx, radiusPx)
-                    } else {
-                        null
-                    }
+                    // Home gives way to whichever panel (Drawer, Hub, Switch Facets) is opening, the same
+                    // way for all three: fades out and shrinks slightly, leaving only the wallpaper and
+                    // the panel's own scrim.
+                    val fade = homeLayerFade(drawerAxis.progress.value, hubAxis.progress.value, facetAxis.progress.value)
+                    alpha = fade.alpha
+                    scaleX = fade.scale
+                    scaleY = fade.scale
                 }
                 // Receives the app list's own leftover vertical scroll once it bottoms/tops out —
                 // see appListNestedScrollConnection's own doc.

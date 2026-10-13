@@ -382,11 +382,7 @@ private fun FacetCarouselContent(
     }
 }
 
-/**
- * "Switch Facets" — [ScreenHeader] with its default `onWallpaper = false`, since this screen
- * already sits on its own dimming [CAROUSEL_SCRIM_ALPHA] scrim rather than directly on the raw
- * wallpaper (unlike [com.facetlauncher.app.ui.hub.HubHeader], which uses `onWallpaper = true`).
- */
+/** "Switch Facets" — the shared [ScreenHeader], identical in look to [com.facetlauncher.app.ui.hub.HubHeader]. */
 @Composable
 private fun FacetCarouselHeader(facetCount: Int, canReorder: Boolean, onReorderClick: () -> Unit, modifier: Modifier = Modifier) {
     ScreenHeader(

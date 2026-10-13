@@ -13,9 +13,7 @@ import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 
 /**
- * "Facet Hub" — [ScreenHeader] with `onWallpaper = true`, since the Hub (like Home) sits directly
- * on the transparent wallpaper/Home layer, not an opaque `Surface` the way every Settings-style
- * screen does (see chat history).
+ * "Facet Hub" — the shared [ScreenHeader], identical in look to the Switch Facets carousel's.
  *
  * Deliberately bolder than Settings/Permissions/Backup & restore's own plain (unbolded)
  * `headlineSmall` titles — those are menu/utility screens the user passes through, whereas the
@@ -33,7 +31,6 @@ fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick:
         title = stringResource(R.string.hub_header_title),
         subtitle = stringResource(R.string.hub_header_subtitle, widgetCount, HUB_MAX_WIDGETS),
         modifier = modifier,
-        onWallpaper = true,
         trailingAction = {
             TonalButton(
                 text = stringResource(R.string.hub_header_add),
