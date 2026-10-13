@@ -441,7 +441,6 @@ erDiagram
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean show_media_player_on_home "default false"
         boolean show_media_skip_buttons "default true"
-        string media_progress_style "MediaProgressStyle, default WAVY"
         boolean calendar_permission_requested "default false"
         boolean contacts_permission_requested "default false"
         boolean bluetooth_permission_requested "default false"
@@ -570,7 +569,6 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
 | `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
-| `setMediaProgressStyle(MediaProgressStyle)` | `media_progress_style` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
 | `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel` |
@@ -689,7 +687,6 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `notification_badge_style` | String (`NotificationBadgeStyle`) | `notificationBadgeStyle` | `DOT` |
 | `show_media_player_on_home` | Boolean | `showMediaPlayerOnHome` | `false` — opt-in; the row also needs notification access, so it only shows when both hold |
 | `show_media_skip_buttons` | Boolean | `showMediaSkipButtons` | `true` |
-| `media_progress_style` | String (`MediaProgressStyle`) | `mediaProgressStyle` | `WAVY` — Material's `LinearWavyProgressIndicator` with all animation parameters at their defaults (it keeps waving while paused) — or `FLAT` |
 
 #### Permission-prompt bookkeeping
 

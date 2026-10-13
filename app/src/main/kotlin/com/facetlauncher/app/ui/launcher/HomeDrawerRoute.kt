@@ -659,7 +659,6 @@ fun HomeDrawerRoute(
             badgeCounts = homeUiState.badgeCounts,
             mediaPlayer = homeUiState.mediaPlayer,
             showMediaSkipButtons = homeUiState.settings.showMediaSkipButtons,
-            mediaProgressStyle = homeUiState.settings.mediaProgressStyle,
             onMediaPrevious = homeViewModel::onMediaPrevious,
             onMediaPlayPause = homeViewModel::onMediaPlayPause,
             onMediaNext = homeViewModel::onMediaNext,

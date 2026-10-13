@@ -267,9 +267,6 @@
     <string name="notification_badge_style_row_title">Abzeichenstil</string>
     <string name="media_player_row_title">Medienplayer auf dem Startbildschirm anzeigen</string>
     <string name="media_skip_buttons_row_title">Überspringen-Tasten anzeigen</string>
-    <string name="media_progress_style_row_title">Fortschrittsstil</string>
-    <string name="media_progress_style_flat">Flach</string>
-    <string name="media_progress_style_wavy">Wellig</string>
     <string name="media_player_open_cd">Player öffnen</string>
     <string name="media_player_previous_cd">Vorheriger Titel</string>
     <string name="media_player_next_cd">Nächster Titel</string>

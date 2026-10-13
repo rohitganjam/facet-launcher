@@ -267,9 +267,6 @@
     <string name="notification_badge_style_row_title">Estilo de insignia</string>
     <string name="media_player_row_title">Mostrar el reproductor multimedia en la pantalla de inicio</string>
     <string name="media_skip_buttons_row_title">Mostrar botones de salto</string>
-    <string name="media_progress_style_row_title">Estilo de progreso</string>
-    <string name="media_progress_style_flat">Plano</string>
-    <string name="media_progress_style_wavy">Ondulado</string>
     <string name="media_player_open_cd">Abrir reproductor</string>
     <string name="media_player_previous_cd">Pista anterior</string>
     <string name="media_player_next_cd">Pista siguiente</string>

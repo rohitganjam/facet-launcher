@@ -110,7 +110,6 @@ import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.MediaPlayerState
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppContextMenu
@@ -172,7 +171,6 @@ fun HomeScreen(
     /** The media row under the clock, shown while non-null — see [MediaPlayerRow]. */
     mediaPlayer: MediaPlayerState? = null,
     showMediaSkipButtons: Boolean = true,
-    mediaProgressStyle: MediaProgressStyle = MediaProgressStyle.WAVY,
     onMediaPrevious: () -> Unit = {},
     onMediaPlayPause: () -> Unit = {},
     onMediaNext: () -> Unit = {},
@@ -714,7 +712,6 @@ fun HomeScreen(
                     MediaPlayerRow(
                         state = shownMediaPlayer,
                         showSkipButtons = showMediaSkipButtons,
-                        progressStyle = mediaProgressStyle,
                         onPrevious = onMediaPrevious,
                         onPlayPause = onMediaPlayPause,
                         onNext = onMediaNext,

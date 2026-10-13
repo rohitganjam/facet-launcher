@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.LauncherSettings
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -58,10 +57,6 @@ class NotificationSettingsViewModel @Inject constructor(
 
     fun setShowMediaPlayer(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setShowMediaPlayerOnHome(enabled) }
-    }
-
-    fun setMediaProgressStyle(style: MediaProgressStyle) {
-        viewModelScope.launch { settingsRepository.setMediaProgressStyle(style) }
     }
 
     fun setShowSkipButtons(enabled: Boolean) {

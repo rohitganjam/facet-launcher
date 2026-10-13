@@ -11,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.facetlauncher.app.data.model.MediaPlayerState
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -32,7 +31,6 @@ class MediaPlayerRowTest {
     private fun setContent(
         state: MediaPlayerState = track,
         showSkipButtons: Boolean = true,
-        progressStyle: MediaProgressStyle = MediaProgressStyle.FLAT,
         onPrevious: () -> Unit = {},
         onPlayPause: () -> Unit = {},
         onNext: () -> Unit = {},
@@ -43,7 +41,6 @@ class MediaPlayerRowTest {
                 MediaPlayerRow(
                     state = state,
                     showSkipButtons = showSkipButtons,
-                    progressStyle = progressStyle,
                     onPrevious = onPrevious,
                     onPlayPause = onPlayPause,
                     onNext = onNext,
@@ -139,18 +136,18 @@ class MediaPlayerRowTest {
     }
 
     @Test
-    fun flatAndWavyProgressBothRenderForPlayingAndPausedTracks() {
-        // Given the wavy style on a playing track
-        setContent(progressStyle = MediaProgressStyle.WAVY)
+    fun progressRendersForAPlayingTrack() {
+        // Given a playing track
+        setContent()
 
         // Then the progress line renders
         composeRule.onNodeWithTag("home_media_progress").assertExists()
     }
 
     @Test
-    fun wavyProgressStillRendersWhenPaused() {
-        // Given the wavy style on a paused track (the wave goes flat but the line stays)
-        setContent(state = track.copy(isPlaying = false), progressStyle = MediaProgressStyle.WAVY)
+    fun progressStillRendersWhenPaused() {
+        // Given a paused track (the wave eases flat but the line stays)
+        setContent(state = track.copy(isPlaying = false))
 
         // Then the progress line is still there
         composeRule.onNodeWithTag("home_media_progress").assertExists()

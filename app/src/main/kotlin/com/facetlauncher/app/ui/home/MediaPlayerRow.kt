@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home
 
 import android.content.res.Configuration
 import android.os.SystemClock
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +55,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.MediaPlayerState
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
@@ -77,7 +77,6 @@ fun MediaPlayerRow(
     onNext: () -> Unit,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
-    progressStyle: MediaProgressStyle = MediaProgressStyle.WAVY,
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
 ) {
@@ -110,9 +109,8 @@ fun MediaPlayerRow(
             MediaProgressLine(
                 state = state,
                 color = labelColor,
-                style = progressStyle,
-                // The wavy line is ~10dp tall on its own, so it needs less breathing room.
-                modifier = Modifier.padding(top = if (progressStyle == MediaProgressStyle.WAVY) 2.dp else 8.dp),
+                // The wavy line is ~10dp tall on its own, so it needs little breathing room.
+                modifier = Modifier.padding(top = 2.dp),
             )
         }
     }
@@ -259,7 +257,6 @@ private fun TransportButton(
 private fun MediaProgressLine(
     state: MediaPlayerState,
     color: Color,
-    style: MediaProgressStyle,
     modifier: Modifier = Modifier,
 ) {
     var now by remember(state) { mutableLongStateOf(SystemClock.elapsedRealtime()) }
@@ -271,14 +268,16 @@ private fun MediaProgressLine(
         }
     }
     val progress = state.progressAt(now)
-    if (style == MediaProgressStyle.WAVY && progress != null) {
+    if (progress != null) {
         WavyProgressLine(
             progress = progress,
+            playing = state.isPlaying,
             color = color,
             modifier = modifier.testTag("home_media_progress"),
         )
         return
     }
+    // No duration (e.g. a live stream): an empty flat track.
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -286,24 +285,17 @@ private fun MediaProgressLine(
             .clip(CircleShape)
             .background(color.copy(alpha = 0.25f))
             .testTag("home_media_progress"),
-    ) {
-        if (progress != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress)
-                    .background(color),
-            )
-        }
-    }
+    )
 }
 
-/** Material's wavy line up to [progress], with its default animation; only the colors are ours. */
+/** Material's wavy line up to [progress]; the wave eases flat when playback stops. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun WavyProgressLine(progress: Float, color: Color, modifier: Modifier = Modifier) {
+private fun WavyProgressLine(progress: Float, playing: Boolean, color: Color, modifier: Modifier = Modifier) {
+    val waveScale by animateFloatAsState(if (playing) 1f else 0f, label = "waveScale")
     LinearWavyProgressIndicator(
         progress = { progress },
+        amplitude = { WavyProgressIndicatorDefaults.indicatorAmplitude(it) * waveScale },
         modifier = modifier.fillMaxWidth(),
         color = color,
         trackColor = color.copy(alpha = 0.25f),
