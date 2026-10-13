@@ -1287,7 +1287,7 @@ internal val HOME_CLOCK_DEFAULT_TOP_OFFSET = 52.dp
 internal val HOME_CLOCK_MIN_GAP = 24.dp
 
 /** Gap between the clock block's bottom edge and the media row, and between the media row and the app list below it. */
-internal val HOME_MEDIA_ROW_TOP_GAP = 4.dp
+internal val HOME_MEDIA_ROW_TOP_GAP = 8.dp
 internal val HOME_MEDIA_ROW_BOTTOM_GAP = 12.dp
 
 /** Visible gap between the height handle's touch strip and the alignment toolbar below it — Material's minimum between touch targets. */
