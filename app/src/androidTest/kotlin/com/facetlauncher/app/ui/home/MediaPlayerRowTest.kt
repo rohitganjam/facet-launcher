@@ -1,6 +1,12 @@
 package com.facetlauncher.app.ui.home
 
+import android.os.SystemClock
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -10,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
@@ -151,6 +158,42 @@ class MediaPlayerRowTest {
 
         // Then the progress line is still there
         composeRule.onNodeWithTag("home_media_progress").assertExists()
+    }
+
+    @Test
+    fun waveFlattensWhenPlaybackStopsAndReturnsOnResume() {
+        // Given a playing track part-way through, so the wave has amplitude
+        var playing by mutableStateOf(true)
+        val midTrack = track.copy(positionMs = 100_000L, positionUpdatedAtMs = SystemClock.elapsedRealtime())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                MediaPlayerRow(
+                    state = midTrack.copy(isPlaying = playing),
+                    showSkipButtons = true,
+                    onPrevious = {}, onPlayPause = {}, onNext = {}, onOpen = {},
+                )
+            }
+        }
+        val wavyHeight = progressInkHeightPx()
+        assertTrue("wave should be taller than a flat line, was $wavyHeight px", wavyHeight > 0)
+
+        // When playback stops
+        playing = false
+
+        // Then the line settles to a flat stroke, thinner than the wave
+        composeRule.waitUntil(timeoutMillis = 5_000) { progressInkHeightPx() < wavyHeight }
+        val flatHeight = progressInkHeightPx()
+        assertTrue("flat $flatHeight px should be thinner than wavy $wavyHeight px", flatHeight < wavyHeight)
+
+        // And when playback resumes, the wave comes back
+        playing = true
+        composeRule.waitUntil(timeoutMillis = 5_000) { progressInkHeightPx() > flatHeight }
+    }
+
+    /** Number of pixel rows containing any drawn pixel in the progress line: the wave's vertical extent. */
+    private fun progressInkHeightPx(): Int {
+        val pixels = composeRule.onNodeWithTag("home_media_progress").captureToImage().toPixelMap()
+        return (0 until pixels.height).count { y -> (0 until pixels.width).any { x -> pixels[x, y].alpha > 0f } }
     }
 
     @Test
