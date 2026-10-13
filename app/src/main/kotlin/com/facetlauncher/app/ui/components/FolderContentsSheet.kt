@@ -51,7 +51,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.theme.Accent
@@ -106,8 +105,7 @@ fun FolderContentsSheet(
     modifier: Modifier = Modifier,
     headerAction: FolderSheetHeaderAction = FolderSheetHeaderAction.Rename(onRename = { _, _ -> }),
     gridColumns: Int = 5,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
-    onLaunchShortcut: (AppShortcut) -> Unit = {},
+    appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
     onAppInfo: (AppInfo) -> Unit = {},
     /** True for the "Recently installed" virtual folder (List-only) — each contained app's icon gets a small recency badge, since these apps aren't grouped by any visual similarity the way a real folder's contents are. */
     showRecencyBadge: Boolean = false,
@@ -192,8 +190,7 @@ fun FolderContentsSheet(
                             folder = folder,
                             columns = gridColumns,
                             onAppClick = { app -> onDismissRequest(); onAppClick(app) },
-                            onRequestShortcuts = onRequestShortcuts,
-                            onLaunchShortcut = onLaunchShortcut,
+                            appMenuNotifications = appMenuNotifications,
                             onAppInfo = onAppInfo,
                             onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
                         )
@@ -201,8 +198,7 @@ fun FolderContentsSheet(
                         FolderContentsList(
                             folder = folder,
                             onAppClick = { app -> onDismissRequest(); onAppClick(app) },
-                            onRequestShortcuts = onRequestShortcuts,
-                            onLaunchShortcut = onLaunchShortcut,
+                            appMenuNotifications = appMenuNotifications,
                             onAppInfo = onAppInfo,
                             onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
                             showRecencyBadge = showRecencyBadge,
@@ -252,8 +248,7 @@ private fun FolderContentsEmptyState(modifier: Modifier = Modifier) {
 private fun FolderContentsList(
     folder: Folder,
     onAppClick: (AppInfo) -> Unit,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onRemoveFromFolder: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     onAppInfo: (AppInfo) -> Unit = {},
@@ -265,8 +260,7 @@ private fun FolderContentsList(
             FolderContentsAppRow(
                 app = app,
                 onClick = { onAppClick(app) },
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
                 onRemoveFromFolder = { onRemoveFromFolder(app) },
                 showRecencyBadge = showRecencyBadge,
@@ -281,8 +275,7 @@ private fun FolderContentsList(
 private fun FolderContentsAppRow(
     app: AppInfo,
     onClick: () -> Unit,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onRemoveFromFolder: () -> Unit,
     modifier: Modifier = Modifier,
     onAppInfo: (AppInfo) -> Unit = {},
@@ -311,8 +304,7 @@ private fun FolderContentsAppRow(
             app = app,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = onAppInfo,
             removeFromFolderId = 0L,
             onRemoveFromFolder = { _, _ -> onRemoveFromFolder() },
@@ -361,8 +353,7 @@ private fun FolderContentsGrid(
     folder: Folder,
     columns: Int,
     onAppClick: (AppInfo) -> Unit,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
@@ -374,8 +365,7 @@ private fun FolderContentsGrid(
                     FolderContentsGridTile(
                         app = app,
                         onClick = { onAppClick(app) },
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
+                        appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRemoveFromFolder = { onRemoveFromFolder(app) },
                     )
@@ -390,8 +380,7 @@ private fun FolderContentsGrid(
 private fun FolderContentsGridTile(
     app: AppInfo,
     onClick: () -> Unit,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: () -> Unit,
     modifier: Modifier = Modifier,
@@ -419,8 +408,7 @@ private fun FolderContentsGridTile(
             app = app,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = onAppInfo,
             removeFromFolderId = 0L,
             onRemoveFromFolder = { _, _ -> onRemoveFromFolder() },

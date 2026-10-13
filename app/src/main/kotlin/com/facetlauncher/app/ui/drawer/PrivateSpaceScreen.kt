@@ -176,7 +176,7 @@ private fun PrivateSpaceRecentlyInstalledHeader(modifier: Modifier = Modifier) {
  * reuse as the main Drawer's [com.facetlauncher.app.ui.drawer.AppDrawerScreen] version, styled
  * through [PrivateSpaceAppRow]'s own `MaterialTheme.colorScheme.*` tokens (Private Space's fixed
  * dark "incognito" look, independent of the rest of the app's theme) rather than this app's usual
- * `Accent`/`Ink`. `onRequestShortcuts`/`onLaunchShortcut`/`onAppInfo` stay at [FolderContentsSheet]'s
+ * `Accent`/`Ink`. `appMenuNotifications`/`onAppInfo` stay at [FolderContentsSheet]'s
  * own no-op defaults — [PrivateSpaceScreen] doesn't wire those up for its own rows either.
  */
 @Composable

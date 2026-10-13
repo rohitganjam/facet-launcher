@@ -144,6 +144,16 @@
     <!-- AppContextMenu -->
     <string name="app_context_menu_app_info">App-Info</string>
     <string name="app_context_menu_uninstall">Deinstallieren</string>
+    <string name="app_menu_notifications_header">Benachrichtigungen · %1$d</string>
+    <string name="app_menu_notifications_clear_all">Alle löschen</string>
+    <string name="app_menu_notifications_title">Benachrichtigungen</string>
+    <string name="app_menu_notifications_empty">Keine Benachrichtigungen</string>
+    <string name="app_menu_notifications_access_needed">Benachrichtigungen benötigen Zugriff über die Systemeinstellungen.</string>
+    <string name="relative_age_seconds">%1$ds</string>
+    <string name="relative_age_minutes">%1$d Min.</string>
+    <string name="relative_age_hours">%1$d Std.</string>
+    <string name="relative_age_days">%1$d T</string>
+    <string name="placement_action_description">%1$s, %2$s</string>
 
     <!-- AppPickerScreen -->
     <string name="app_picker_search_apps">Apps suchen</string>
@@ -265,6 +275,7 @@
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Benachrichtigungsabzeichen</string>
     <string name="notification_badge_style_row_title">Abzeichenstil</string>
+    <string name="notification_app_menu_row_title">Benachrichtigungen im App-Menü anzeigen</string>
     <string name="media_player_row_title">Medienplayer auf dem Startbildschirm anzeigen</string>
     <string name="media_skip_buttons_row_title">Überspringen-Tasten anzeigen</string>
     <string name="media_progress_style_row_title">Fortschrittsstil</string>

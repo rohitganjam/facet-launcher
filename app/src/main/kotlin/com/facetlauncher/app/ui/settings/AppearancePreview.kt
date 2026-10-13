@@ -51,6 +51,7 @@ import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.ClockBlock
@@ -277,8 +278,7 @@ private fun AppearancePreviewRow(item: PlacedItem, position: AppRowPosition, pre
             onClick = {},
             badgeCount = null,
             badgeStyle = NotificationBadgeStyle.DOT,
-            onRequestShortcuts = { emptyList() },
-            onLaunchShortcut = {},
+            appMenuNotifications = AppMenuNotifications.None,
             onAppInfo = {},
             position = position,
             presentation = presentation,
@@ -290,8 +290,7 @@ private fun AppearancePreviewRow(item: PlacedItem, position: AppRowPosition, pre
         is PlacedItem.FolderItem -> FolderRow(
             folder = item.folder,
             onAppClick = {},
-            onRequestShortcuts = { emptyList() },
-            onLaunchShortcut = {},
+            appMenuNotifications = AppMenuNotifications.None,
             onAppInfo = {},
             onRemoveFromFolder = { _, _ -> },
             onRenameFolder = { _, _ -> },

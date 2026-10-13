@@ -164,7 +164,7 @@ step, or simply invoke `RepairOrphanedProfileRowsUseCase` at the end of the impo
 
 - `DrawerViewModel` exposes `badgeCounts`, `contactResults`, `settingsResults`,
   `showContactsPermissionPrompt`, `showContactsSettingPrompt`, … as separate `StateFlow`s and
-  `suspend fun getShortcuts()` for the composable to call. Every other screen has one
+  `observeAppNotifications(app)` for the composable to call. Every other screen has one
   `XUiState`; the drawer's composable ends up collecting ~8 flows itself. Folding them into a
   `DrawerUiState` would also make `AppDrawerScreenTest` setups smaller.
 - `CalendarSettingsViewModel` does `private val assignCalendarColorsUseCase = AssignCalendarColorsUseCase()`

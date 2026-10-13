@@ -158,6 +158,7 @@ class ImportBackupUseCase @Inject constructor(
             setShowMediaPlayerOnHome(settings.showMediaPlayerOnHome)
             setShowMediaSkipButtons(settings.showMediaSkipButtons)
             setMediaProgressStyle(settings.mediaProgressStyle.toEnumOrDefault(MediaProgressStyle.WAVY))
+            setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))

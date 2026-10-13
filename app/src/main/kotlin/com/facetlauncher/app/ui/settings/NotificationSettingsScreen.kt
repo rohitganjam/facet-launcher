@@ -77,6 +77,11 @@ fun NotificationSettingsScreen(
             }
         },
         onBadgeStyleChange = viewModel::setBadgeStyle,
+        onShowInAppMenuChange = { checked ->
+            // Same as the media player: persisted first, then the explanation screen if access is missing.
+            viewModel.setShowNotificationsInAppMenu(checked)
+            if (checked && !uiState.isAccessGranted) onNavigateToNotificationAccessExplanation()
+        },
         onShowMediaPlayerChange = { checked ->
             // Persisted first even without access: the switch stays off (gated on the grant) until it
             // lands, and the player then appears without a second toggle.
@@ -95,6 +100,7 @@ private fun NotificationSettingsContent(
     onBack: () -> Unit,
     onEnabledChange: (Boolean) -> Unit,
     onBadgeStyleChange: (NotificationBadgeStyle) -> Unit,
+    onShowInAppMenuChange: (Boolean) -> Unit,
     onShowMediaPlayerChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: (Boolean) -> Unit,
     onMediaProgressStyleChange: (MediaProgressStyle) -> Unit,
@@ -107,6 +113,7 @@ private fun NotificationSettingsContent(
     // switch must never show on without the real permission backing it.
     val enabled = uiState.settings.notificationDotsEnabled && uiState.isAccessGranted
     val mediaEnabled = uiState.settings.showMediaPlayerOnHome && uiState.isAccessGranted
+    val inAppMenuEnabled = uiState.settings.showNotificationsInAppMenu && uiState.isAccessGranted
 
     Column(
         modifier = modifier
@@ -125,31 +132,14 @@ private fun NotificationSettingsContent(
             Text(text = stringResource(R.string.settings_notifications_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
 
-        SettingsCard {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(text = stringResource(R.string.notification_badges_row_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                Switch(
-                    checked = enabled,
-                    onCheckedChange = onEnabledChange,
-                    modifier = Modifier.testTag("notification_badges_toggle"),
-                )
-            }
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.notification_badge_style_row_title),
-                options = NotificationBadgeStyle.entries,
-                selected = uiState.settings.notificationBadgeStyle,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = onBadgeStyleChange,
-                enabled = enabled,
-                testTag = "badge_style_row",
-                modifier = Modifier.alpha(if (enabled) 1f else 0.4f),
-            )
-        }
+        BadgeSettingsCard(
+            badgesEnabled = enabled,
+            badgeStyle = uiState.settings.notificationBadgeStyle,
+            inAppMenuEnabled = inAppMenuEnabled,
+            onBadgesEnabledChange = onEnabledChange,
+            onBadgeStyleChange = onBadgeStyleChange,
+            onInAppMenuChange = onShowInAppMenuChange,
+        )
 
         MediaPlayerSettingsCard(
             enabled = mediaEnabled,
@@ -160,6 +150,61 @@ private fun NotificationSettingsContent(
             onProgressStyleChange = onMediaProgressStyleChange,
             modifier = Modifier.padding(top = 16.dp),
         )
+    }
+}
+
+@Composable
+private fun BadgeSettingsCard(
+    badgesEnabled: Boolean,
+    badgeStyle: NotificationBadgeStyle,
+    inAppMenuEnabled: Boolean,
+    onBadgesEnabledChange: (Boolean) -> Unit,
+    onBadgeStyleChange: (NotificationBadgeStyle) -> Unit,
+    onInAppMenuChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsCard(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.notification_badges_row_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Switch(
+                checked = badgesEnabled,
+                onCheckedChange = onBadgesEnabledChange,
+                modifier = Modifier.testTag("notification_badges_toggle"),
+            )
+        }
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.notification_badge_style_row_title),
+            options = NotificationBadgeStyle.entries,
+            selected = badgeStyle,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onBadgeStyleChange,
+            enabled = badgesEnabled,
+            testTag = "badge_style_row",
+            modifier = Modifier.alpha(if (badgesEnabled) 1f else 0.4f),
+        )
+        CardDivider()
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.notification_app_menu_row_title),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Ink,
+                modifier = Modifier.weight(1f).padding(end = 12.dp),
+            )
+            Switch(
+                checked = inAppMenuEnabled,
+                onCheckedChange = onInAppMenuChange,
+                modifier = Modifier.testTag("notification_app_menu_toggle"),
+            )
+        }
     }
 }
 
@@ -229,6 +274,7 @@ private fun NotificationSettingsScreenPreview() {
             onBack = {},
             onEnabledChange = {},
             onBadgeStyleChange = {},
+            onShowInAppMenuChange = {},
             onShowMediaPlayerChange = {},
             onShowSkipButtonsChange = {},
             onMediaProgressStyleChange = {},

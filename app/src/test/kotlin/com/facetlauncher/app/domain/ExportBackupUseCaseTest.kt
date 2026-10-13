@@ -80,6 +80,7 @@ class ExportBackupUseCaseTest {
                     appListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
                     appListGridColumns = AppListGridColumns.FIVE,
                     appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+                    showNotificationsInAppMenu = false,
                 ),
             ),
         )
@@ -123,6 +124,7 @@ class ExportBackupUseCaseTest {
         assertEquals("GRID", bundle.settings.appListLayout)
         assertEquals("BOTH_RIGHT", bundle.settings.appListColumnAlignment)
         assertEquals("FIVE", bundle.settings.appListGridColumns)
+        assertEquals(false, bundle.settings.showNotificationsInAppMenu)
         assertEquals("TEXT", bundle.settings.appListGridDisplayMode)
         assertEquals(0, bundle.settings.activeFacetIndex)
         assertEquals(1, bundle.dockApps.size)

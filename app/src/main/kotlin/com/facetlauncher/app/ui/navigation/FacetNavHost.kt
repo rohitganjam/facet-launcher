@@ -178,6 +178,9 @@ fun FacetNavHost(
                 onNavigateToUsageAccessExplanation = {
                     navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION)
                 },
+                onNavigateToNotificationAccessExplanation = {
+                    navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                },
                 onNavigateToClockStyleGallery = { facetId ->
                     val dest = if (facetId != null) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                     navController.navigate(dest)

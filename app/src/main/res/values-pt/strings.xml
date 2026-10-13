@@ -144,6 +144,16 @@
     <!-- AppContextMenu -->
     <string name="app_context_menu_app_info">Informações do app</string>
     <string name="app_context_menu_uninstall">Desinstalar</string>
+    <string name="app_menu_notifications_header">Notificações · %1$d</string>
+    <string name="app_menu_notifications_clear_all">Limpar tudo</string>
+    <string name="app_menu_notifications_title">Notificações</string>
+    <string name="app_menu_notifications_empty">Sem notificações</string>
+    <string name="app_menu_notifications_access_needed">As notificações precisam de acesso pelas configurações do sistema.</string>
+    <string name="relative_age_seconds">%1$ds</string>
+    <string name="relative_age_minutes">%1$d min</string>
+    <string name="relative_age_hours">%1$dh</string>
+    <string name="relative_age_days">%1$dd</string>
+    <string name="placement_action_description">%1$s, %2$s</string>
 
     <!-- AppPickerScreen -->
     <string name="app_picker_search_apps">Pesquisar apps</string>
@@ -265,6 +275,7 @@
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Selos de notificação</string>
     <string name="notification_badge_style_row_title">Estilo do selo</string>
+    <string name="notification_app_menu_row_title">Mostrar notificações no menu do app</string>
     <string name="media_player_row_title">Mostrar o reprodutor de mídia na tela inicial</string>
     <string name="media_skip_buttons_row_title">Mostrar botões de pular</string>
     <string name="media_progress_style_row_title">Estilo de progresso</string>

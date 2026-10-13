@@ -144,6 +144,16 @@
     <!-- AppContextMenu -->
     <string name="app_context_menu_app_info">Infos sur l\'app</string>
     <string name="app_context_menu_uninstall">Désinstaller</string>
+    <string name="app_menu_notifications_header">Notifications · %1$d</string>
+    <string name="app_menu_notifications_clear_all">Tout effacer</string>
+    <string name="app_menu_notifications_title">Notifications</string>
+    <string name="app_menu_notifications_empty">Aucune notification</string>
+    <string name="app_menu_notifications_access_needed">Les notifications nécessitent un accès depuis les réglages système.</string>
+    <string name="relative_age_seconds">%1$ds</string>
+    <string name="relative_age_minutes">%1$d min</string>
+    <string name="relative_age_hours">%1$dh</string>
+    <string name="relative_age_days">%1$dj</string>
+    <string name="placement_action_description">%1$s, %2$s</string>
 
     <!-- AppPickerScreen -->
     <string name="app_picker_search_apps">Rechercher des apps</string>
@@ -265,6 +275,7 @@
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Badges de notification</string>
     <string name="notification_badge_style_row_title">Style de badge</string>
+    <string name="notification_app_menu_row_title">Afficher les notifications dans le menu de l\'appli</string>
     <string name="media_player_row_title">Afficher le lecteur multimédia sur l\'écran d\'accueil</string>
     <string name="media_skip_buttons_row_title">Afficher les boutons de saut</string>
     <string name="media_progress_style_row_title">Style de progression</string>

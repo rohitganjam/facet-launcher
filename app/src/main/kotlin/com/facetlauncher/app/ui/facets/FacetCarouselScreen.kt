@@ -95,6 +95,7 @@ import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.ScreenHeader
@@ -742,8 +743,7 @@ private fun FacetPreviewRow(item: PlacedItem, position: AppRowPosition, presenta
             onClick = onClick,
             badgeCount = null,
             badgeStyle = NotificationBadgeStyle.DOT,
-            onRequestShortcuts = { emptyList() },
-            onLaunchShortcut = {},
+            appMenuNotifications = AppMenuNotifications.None,
             onAppInfo = {},
             position = position,
             presentation = presentation,
@@ -761,8 +761,7 @@ private fun FacetPreviewRow(item: PlacedItem, position: AppRowPosition, presenta
         is PlacedItem.FolderItem -> FolderRow(
             folder = item.folder,
             onAppClick = {},
-            onRequestShortcuts = { emptyList() },
-            onLaunchShortcut = {},
+            appMenuNotifications = AppMenuNotifications.None,
             onAppInfo = {},
             onRemoveFromFolder = { _, _ -> },
             onRenameFolder = { _, _ -> },

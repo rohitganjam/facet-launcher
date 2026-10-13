@@ -246,6 +246,8 @@ data class LauncherSettings(
     val showMediaPlayerOnHome: Boolean = false,
     val showMediaSkipButtons: Boolean = true,
     val mediaProgressStyle: MediaProgressStyle = MediaProgressStyle.WAVY,
+    /** Lists an app's notifications in its long-press menu. Also needs notification access. */
+    val showNotificationsInAppMenu: Boolean = true,
     val showDrawerIcons: Boolean = true,
     val showDrawerLabels: Boolean = true,
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
