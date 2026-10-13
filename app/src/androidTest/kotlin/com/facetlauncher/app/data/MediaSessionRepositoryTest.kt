@@ -1,5 +1,7 @@
 package com.facetlauncher.app.data
 
+import android.app.Activity
+import android.app.Instrumentation
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -285,6 +287,28 @@ class MediaSessionRepositoryTest {
             assertTrue(received.await(5, TimeUnit.SECONDS))
         } finally {
             context.unregisterReceiver(receiver)
+        }
+    }
+
+    @Test
+    fun openPlayerFallsBackToTheAppsLauncherIntentWhenTheSessionHasNoContentIntent() {
+        // Given a session with no content intent, owned by this app, whose launcher activity we intercept
+        val launcherClass = context.packageManager.getLaunchIntentForPackage(context.packageName)!!.component!!.className
+        val monitor = instrumentation.addMonitor(launcherClass, Instrumentation.ActivityResult(Activity.RESULT_OK, null), true)
+        try {
+            grantAccessAndCollect()
+            session().publish("Fallback song")
+            await { it?.title == "Fallback song" }
+
+            // When opening the player
+            repository.openPlayer()
+
+            // Then the app's launcher activity is started instead (a blocking monitor creates no activity, so count hits)
+            val deadline = System.currentTimeMillis() + 5_000
+            while (monitor.hits == 0 && System.currentTimeMillis() < deadline) Thread.sleep(50)
+            assertEquals(1, monitor.hits)
+        } finally {
+            instrumentation.removeMonitor(monitor)
         }
     }
 

@@ -1,7 +1,9 @@
 package com.facetlauncher.app.data
 
+import android.app.ActivityOptions
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadata
@@ -10,6 +12,8 @@ import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -57,9 +61,32 @@ open class MediaSessionRepository @Inject constructor(
         }
     }
 
-    /** Opens the player app via the session's own content intent. */
+    /**
+     * Opens the player app via the session's own content intent, or its launcher intent when it publishes none.
+     * The send opts in to this app's foreground privileges: from Android 14 the system otherwise blocks the
+     * creator-privileged start (silently — no exception), which is how a tap on the row did nothing.
+     */
     open fun openPlayer() {
-        activeController?.sessionActivity?.let { runCatching { it.send() } }
+        val controller = activeController ?: return
+        val sent = controller.sessionActivity?.let { intent ->
+            runCatching { intent.send(context, 0, null, null, null, null, foregroundSenderOptions()) }.isSuccess
+        } == true
+        if (!sent) launchPlayerApp(controller.packageName)
+    }
+
+    private fun foregroundSenderOptions(): Bundle? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ActivityOptions.makeBasic()
+                .setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                .toBundle()
+        } else {
+            null
+        }
+
+    private fun launchPlayerApp(packageName: String) {
+        context.packageManager.getLaunchIntentForPackage(packageName)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            ?.let { runCatching { context.startActivity(it) } }
     }
 
     private fun sessions(): Flow<MediaPlayerState?> = callbackFlow {
