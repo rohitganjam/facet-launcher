@@ -26,11 +26,14 @@ import kotlinx.coroutines.withContext
 /**
  * The media session Home's player row shows. Sessions are read through the notification-listener
  * grant ([FacetNotificationListenerService]'s component is what `getActiveSessions` checks), so
- * with no grant [observe] emits `null`. Cold: it only touches the framework while collected.
+ * with no grant [observe] emits `null`. A session only counts while its app has a media notification posted,
+ * so swiping that notification away removes the row even though many apps keep a paused session alive.
+ * Cold: it only touches the framework while collected.
  */
 @Singleton
 open class MediaSessionRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val notificationBadgeRepository: NotificationBadgeRepository,
 ) {
     @Volatile private var activeController: MediaController? = null
 
@@ -66,14 +69,16 @@ open class MediaSessionRepository @Inject constructor(
         val tracked = HashMap<MediaSession.Token, Pair<MediaController, MediaController.Callback>>()
         // The last art-URI decode, kept so a metadata change that repeats the URI doesn't re-decode.
         var artCache: Pair<Uri, Bitmap?>? = null
+        val picker = ActiveSessionPicker()
 
         fun publish() {
-            val candidates = tracked.values.mapNotNull { (controller, _) ->
+            val sessions = tracked.values.mapNotNull { (controller, _) ->
                 buildMediaPlayerState(controller.packageName, controller.metadata, controller.playbackState)
                     ?.let { controller to it }
             }
-            val picked = pickActiveSession(candidates.map { it.second })
-            val controller = candidates.firstOrNull { it.second === picked }?.first
+            val choice = picker.pick(sessions, notificationBadgeRepository.mediaNotificationPackages.value)
+            val picked = choice?.second
+            val controller = choice?.first
             activeController = controller
             if (picked == null || controller == null) {
                 trySend(null)
@@ -111,6 +116,9 @@ open class MediaSessionRepository @Inject constructor(
             }
             publish()
         }
+
+        // Posting or dismissing a media notification changes which sessions count; publish() runs on the main looper.
+        launch { notificationBadgeRepository.mediaNotificationPackages.collect { handler.post { publish() } } }
 
         val sessionsListener = MediaSessionManager.OnActiveSessionsChangedListener { sync(it) }
         try {

@@ -263,6 +263,7 @@ The same notification-access grant also backs Home's media player row, opt-in vi
 ```mermaid
 sequenceDiagram
     participant MSM as MediaSessionManager
+    participant NBR as NotificationBadgeRepository
     participant MSR as MediaSessionRepository (@Singleton, cold callbackFlow)
     participant UC as ObserveHomeScreenStateUseCase
     participant VM as HomeViewModel
@@ -270,7 +271,8 @@ sequenceDiagram
     UC->>MSR: observe() only when setting on and NotificationAccessRepository.isGranted()
     MSR->>MSM: addOnActiveSessionsChangedListener(FacetNotificationListenerService component)
     MSM-)MSR: sessions changed / metadata / playback state callbacks
-    MSR->>MSR: buildMediaPlayerState per session, pickActiveSession (playing wins)
+    NBR-)MSR: mediaNotificationPackages changes (media notification posted or swiped away)
+    MSR->>MSR: buildMediaPlayerState per session, keep those with a media notification, pick (playing wins, else last played)
     MSR-->>UC: MediaPlayerState or null
     UC-->>VM: HomeScreenState.mediaPlayer
     VM-->>UI: HomeUiState.mediaPlayer
@@ -278,8 +280,12 @@ sequenceDiagram
     VM->>MSR: transport call on the active MediaController
 ```
 
-- Only playing or paused sessions with a title show; stopped, errored and untitled ones map to `null`, so the row
-  disappears with the player's notification.
+- Only playing or paused sessions with a title show; stopped, errored and untitled ones map to `null`.
+- A session also needs its app's `MediaStyle` notification to be posted (`FacetNotificationListenerService` marks these
+  `NotificationInfo.isMedia`): many apps keep a paused session alive after the notification is swiped away, so the row
+  disappears with the notification, and returns if the app posts it again.
+- With several eligible sessions a playing one wins, otherwise the one that played most recently (`ActiveSessionPicker`),
+  falling back to `getActiveSessions` order for sessions never seen playing.
 - Turning the setting on without access stores it and routes through `NotificationAccessExplanationScreen`; the switch
   reads on only when the stored value and the real grant both hold, like the badges switch.
 - Art comes from the session's bitmap, else a `content:`/`file:` art URI decoded off the main thread (no network).

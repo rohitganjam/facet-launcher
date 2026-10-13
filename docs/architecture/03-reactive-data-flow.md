@@ -209,7 +209,7 @@ sequenceDiagram
 | Source | Mechanism | Consumer |
 |---|---|---|
 | Notification badges | `FacetNotificationListenerService` (`@AndroidEntryPoint`) pushes `setActiveNotifications()` into `NotificationBadgeRepository`'s `MutableStateFlow` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
-| Media session | `MediaSessionRepository.observe()` — `callbackFlow` over `MediaSessionManager.OnActiveSessionsChangedListener` plus a `MediaController.Callback` per session (main-thread handler), cold: only subscribed while Home collects and the setting is on and access is granted | `ObserveHomeScreenStateUseCase` (`mediaPlayer`), transport calls via `HomeViewModel` |
+| Media session | `MediaSessionRepository.observe()` — `callbackFlow` over `MediaSessionManager.OnActiveSessionsChangedListener` plus a `MediaController.Callback` per session (main-thread handler), gated on `NotificationBadgeRepository.mediaNotificationPackages` (a session only counts while its app has a media notification posted), cold: only subscribed while Home collects and the setting is on and access is granted | `ObserveHomeScreenStateUseCase` (`mediaPlayer`), transport calls via `HomeViewModel` |
 | Battery | `callbackFlow` over `ACTION_BATTERY_CHANGED` sticky broadcast | `ObserveClockAccessoriesUseCase` |
 | Headphones | `HeadphonesRepository.observeHeadphonesPluggedIn()` — `callbackFlow` over `AudioDeviceCallback` | `DeviceStateRepository` |
 | Wi-Fi | `WifiRepository.observeWifiState()` — synchronous read of current networks, then `ConnectivityManager` network callbacks | `DeviceStateRepository` |

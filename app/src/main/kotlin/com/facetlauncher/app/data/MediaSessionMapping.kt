@@ -1,7 +1,9 @@
 package com.facetlauncher.app.data
 
+import android.app.Notification
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
+import android.os.Bundle
 import com.facetlauncher.app.data.model.MediaPlayerState
 
 private val InactiveStates = setOf(PlaybackState.STATE_NONE, PlaybackState.STATE_STOPPED, PlaybackState.STATE_ERROR)
@@ -43,6 +45,30 @@ private fun mediaPlayerState(packageName: String, title: String, metadata: Media
 private fun MediaMetadata.firstText(vararg keys: String): String? =
     keys.firstNotNullOfOrNull { key -> getString(key)?.takeIf { it.isNotBlank() } }
 
-/** A playing session wins; otherwise the first one — [android.media.session.MediaSessionManager.getActiveSessions] is already ordered by priority. */
-internal fun pickActiveSession(states: List<MediaPlayerState>): MediaPlayerState? =
-    states.firstOrNull { it.isPlaying } ?: states.firstOrNull()
+/**
+ * A playing session wins; if none is playing, the one that played most recently ([lastPlayedAt], by package).
+ * Ties — including sessions never seen playing — keep [android.media.session.MediaSessionManager.getActiveSessions]'s
+ * priority order.
+ */
+internal fun pickActiveSession(states: List<MediaPlayerState>, lastPlayedAt: Map<String, Long> = emptyMap()): MediaPlayerState? {
+    val mostRecentFirst = states.sortedByDescending { lastPlayedAt[it.packageName] ?: 0L }
+    return mostRecentFirst.firstOrNull { it.isPlaying } ?: mostRecentFirst.firstOrNull()
+}
+
+/** Whether a notification's extras mark it as a `MediaStyle` one (platform or androidx/Media3 — both use the platform template). */
+internal fun isMediaNotification(extras: Bundle?): Boolean =
+    extras != null && (extras.getString(Notification.EXTRA_TEMPLATE)?.endsWith("MediaStyle") == true || extras.containsKey(Notification.EXTRA_MEDIA_SESSION))
+
+/** Remembers when each package last played, so a later pick among paused sessions can choose the most recent. */
+internal class ActiveSessionPicker {
+    private val lastPlayedAt = HashMap<String, Long>()
+    private var playedCounter = 0L
+
+    /** Only sessions whose package is in [packagesWithNotification] are eligible. */
+    fun <T> pick(sessions: List<Pair<T, MediaPlayerState>>, packagesWithNotification: Set<String>): Pair<T, MediaPlayerState>? {
+        sessions.filter { it.second.isPlaying }.forEach { lastPlayedAt[it.second.packageName] = ++playedCounter }
+        val candidates = sessions.filter { it.second.packageName in packagesWithNotification }
+        val picked = pickActiveSession(candidates.map { it.second }, lastPlayedAt)
+        return candidates.firstOrNull { it.second === picked }
+    }
+}

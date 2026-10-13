@@ -3974,6 +3974,19 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] Event window widened: `CalendarRepository.getTodayEvents` → `getUpcomingEvents`, local midnight today to noon tomorrow (Calendar arithmetic, DST-safe); all-day events count when dated today or tomorrow. Window and all-day cases in `CalendarRepositoryTest`.
 - [x] Rows for events not on today's date get a locale weekday prefix (`Thu 9:00`, `Thu All day`) via `eventTimeLabel` in `CalendarEventsBlock.kt` (timed: device-zone date, all-day: UTC date). `EventTimeLabelTest` + a `CalendarEventsBlockTest` case.
 
+## Media row follows the notification (direct request)
+
+- [x] A session shows on Home only while its app has a `MediaStyle` notification posted (`NotificationInfo.isMedia` → `NotificationBadgeRepository.mediaNotificationPackages`), so swiping the notification removes the row even when the app keeps a paused session alive. Several sessions: playing wins, else the most recently played (`ActiveSessionPicker`).
+- [x] Tests: `MediaSessionMappingTest` (picker, `isMediaNotification`), `NotificationBadgeRepositoryTest`, and three `MediaSessionRepositoryTest` cases against a real session (paused stays, dismiss removes and repost restores, no notification never shows).
+
+## Identical Hub and carousel headers (direct request)
+
+- [x] `ScreenHeader` lost its `onWallpaper` flag: title `Ink`, subtitle `Muted`, `homeAppLabelShadow` on both lines, so the Widgets hub and Switch Facets headers are identical by construction. `ScreenHeaderTest` pins the colours and shadows.
+
+## Hub and carousel fade Home like the drawer (direct request)
+
+- [x] Replaced the API 31+ `BlurEffect` on Home with the drawer's treatment for all three panels: Home fades to 0 and scales to .97 as the furthest-open of Drawer / Hub / Switch Facets opens (`homeLayerFade`), on every Android version. Fixes the unblurred, sharp Home showing under the panels on Android 11. `HomeLayerFadeTest` plus the existing `HomeDrawerRouteTest` open/close cases.
+
 ## Appearance rows: icons and permission-aware subtext (direct request)
 
 - [x] The five Appearance link rows got violet icon badges (Settings style, no trailing chevron).

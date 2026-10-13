@@ -13,6 +13,7 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facetlauncher.app.data.model.MediaPlayerState
+import com.facetlauncher.app.data.model.NotificationInfo
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.CountDownLatch
@@ -45,7 +46,8 @@ class MediaSessionRepositoryTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.targetContext
     private val listenerComponent = "${context.packageName}/${FacetNotificationListenerService::class.java.name}"
-    private val repository = MediaSessionRepository(context)
+    private val notificationBadgeRepository = NotificationBadgeRepository()
+    private val repository = MediaSessionRepository(context, notificationBadgeRepository)
 
     private val sessions = mutableListOf<MediaSession>()
     private val files = mutableListOf<File>()
@@ -75,7 +77,15 @@ class MediaSessionRepositoryTest {
         }
     }
 
+    /** Stands in for the listener service: marks this app as having a media notification posted (or not). */
+    private fun setMediaNotification(posted: Boolean) {
+        notificationBadgeRepository.setActiveNotifications(
+            if (posted) listOf(NotificationInfo(packageName = context.packageName, silent = false, isMedia = true)) else emptyList(),
+        )
+    }
+
     private fun grantAccessAndCollect() {
+        setMediaNotification(posted = true)
         shell("cmd notification allow_listener $listenerComponent")
         scope.launch { repository.observe().collect { latest.value = Emission(it) } }
     }
@@ -327,6 +337,47 @@ class MediaSessionRepositoryTest {
         val state = await { it?.title == "Broken art song" }!!
         assertNull(state.art)
         assertEquals("Artist", state.artist)
+    }
+
+    @Test
+    fun aPausedSessionStaysWhileItsNotificationExists() {
+        // Given access, a paused session and its media notification
+        grantAccessAndCollect()
+        session().publish("Paused song", playbackState = PlaybackState.STATE_PAUSED)
+
+        // Then the paused song is shown
+        assertEquals(false, await { it?.title == "Paused song" }!!.isPlaying)
+    }
+
+    @Test
+    fun dismissingTheNotificationRemovesAPausedSessionAndPostingAgainBringsItBack() {
+        // Given a paused session that is showing
+        grantAccessAndCollect()
+        session().publish("Dismiss song", playbackState = PlaybackState.STATE_PAUSED)
+        await { it?.title == "Dismiss song" }
+
+        // When its notification is swiped away
+        setMediaNotification(posted = false)
+
+        // Then nothing is shown, though the session itself is still alive
+        assertNull(await { it == null })
+
+        // And when the app posts the notification again
+        setMediaNotification(posted = true)
+
+        // Then the song returns
+        await { it?.title == "Dismiss song" }
+    }
+
+    @Test
+    fun aSessionWithoutAnyNotificationIsNeverShown() {
+        // Given access and a playing session, but no media notification
+        grantAccessAndCollect()
+        setMediaNotification(posted = false)
+        session().publish("Silent song")
+
+        // Then nothing is shown
+        assertNull(await { true })
     }
 
     private companion object {

@@ -48,7 +48,7 @@ class FacetNotificationListenerService : NotificationListenerService() {
             .map { sbn ->
                 val silent = currentRanking?.getRanking(sbn.key, ranking) == true &&
                     ranking.importance == NotificationManager.IMPORTANCE_NONE
-                NotificationInfo(packageName = sbn.packageName, silent = silent)
+                NotificationInfo(packageName = sbn.packageName, silent = silent, isMedia = isMediaNotification(sbn.notification.extras))
             }
         notificationBadgeRepository.setActiveNotifications(notifications)
     }
