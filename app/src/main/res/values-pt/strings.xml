@@ -267,9 +267,6 @@
     <string name="notification_badge_style_row_title">Estilo do selo</string>
     <string name="media_player_row_title">Mostrar o reprodutor de mídia na tela inicial</string>
     <string name="media_skip_buttons_row_title">Mostrar botões de pular</string>
-    <string name="media_progress_style_row_title">Estilo de progresso</string>
-    <string name="media_progress_style_flat">Plano</string>
-    <string name="media_progress_style_wavy">Ondulado</string>
     <string name="media_player_open_cd">Abrir reprodutor</string>
     <string name="media_player_previous_cd">Faixa anterior</string>
     <string name="media_player_next_cd">Próxima faixa</string>

@@ -267,9 +267,6 @@
     <string name="notification_badge_style_row_title">Style de badge</string>
     <string name="media_player_row_title">Afficher le lecteur multimédia sur l\'écran d\'accueil</string>
     <string name="media_skip_buttons_row_title">Afficher les boutons de saut</string>
-    <string name="media_progress_style_row_title">Style de progression</string>
-    <string name="media_progress_style_flat">Plat</string>
-    <string name="media_progress_style_wavy">Ondulé</string>
     <string name="media_player_open_cd">Ouvrir le lecteur</string>
     <string name="media_player_previous_cd">Piste précédente</string>
     <string name="media_player_next_cd">Piste suivante</string>

@@ -2431,7 +2431,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 | [ClockAdjustToolbarTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/ClockAdjustToolbarTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockAdjustToolbar.kt` | 4 | ComposeRule |
 | [ClockBlockTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/ClockBlockTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockBlock.kt` | 44 | ComposeRule |
 | [HomeScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/HomeScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt` | 54 | ComposeRule |
-| [MediaPlayerRowTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/MediaPlayerRowTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/home/MediaPlayerRow.kt` | 10 | ComposeRule |
+| [MediaPlayerRowTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/MediaPlayerRowTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/home/MediaPlayerRow.kt` | 11 | ComposeRule |
 
 <details><summary><code>ClockAdjustSheetTest</code> — 10 cases</summary>
 
@@ -2565,7 +2565,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 </details>
 
-<details><summary><code>MediaPlayerRowTest</code> — 10 cases</summary>
+<details><summary><code>MediaPlayerRowTest</code> — 11 cases</summary>
 
 - showsTitleAndArtist
 - transportButtonsFireTheirCallbacks
@@ -2574,8 +2574,9 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - pausedShowsPlay
 - skipButtonsAreHiddenWhenTheSettingIsOff
 - artIsASquareAsTallAsTheTextBlockNotAFullWidthTile
-- flatAndWavyProgressBothRenderForPlayingAndPausedTracks
-- wavyProgressStillRendersWhenPaused
+- progressRendersForAPlayingTrack
+- progressStillRendersWhenPaused
+- waveFlattensWhenPlaybackStopsAndReturnsOnResume
 - skipButtonIsDisabledWhenTheSessionCannotSkipThatWay
 
 </details>
@@ -2816,7 +2817,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 | [FoldersSettingsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/FoldersSettingsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/FoldersSettingsScreen.kt` | 6 | ComposeRule |
 | [FontsThemesIconsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/FontsThemesIconsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/FontsThemesIconsScreen.kt` | 12 | ComposeRule |
 | [HomeAppsListSettingsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/HomeAppsListSettingsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/HomeAppsListSettingsScreen.kt` | 7 | ComposeRule |
-| [NotificationSettingsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/NotificationSettingsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/NotificationSettingsScreen.kt` | 11 | ComposeRule |
+| [NotificationSettingsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/NotificationSettingsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/NotificationSettingsScreen.kt` | 10 | ComposeRule |
 | [PermissionsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/PermissionsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/PermissionsScreen.kt` | 5 | ComposeRule |
 | [SettingsScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/SettingsScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/SettingsScreen.kt` | 19 | ComposeRule |
 | [WhatsNewScreenTest](app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/WhatsNewScreenTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/ui/settings/WhatsNewScreen.kt` | 5 | ComposeRule |
@@ -2982,7 +2983,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 </details>
 
-<details><summary><code>NotificationSettingsScreenTest</code> — 11 cases</summary>
+<details><summary><code>NotificationSettingsScreenTest</code> — 10 cases</summary>
 
 - badgesOnByDefaultWithBadgeStyleEnabled
 - toggleStaysOffWithoutRealAccessEvenThoughTheStoredPreferenceDefaultsOn
@@ -2992,7 +2993,6 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - mediaPlayerIsOffByDefaultAndSkipButtonsAreDisabledUntilItIsOn
 - turningTheMediaPlayerOnPersistsAndEnablesSkipButtons
 - turningTheSkipButtonsOffPersists
-- choosingFlatProgressPersists
 - turningTheMediaPlayerOnWithoutAccessRoutesToTheExplanationScreen
 - backButtonInvokesOnBack
 

@@ -27,7 +27,6 @@ import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
@@ -73,7 +72,6 @@ class SettingsRepositoryTest {
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
         assertEquals(false, settings.showMediaPlayerOnHome)
         assertEquals(true, settings.showMediaSkipButtons)
-        assertEquals(MediaProgressStyle.WAVY, settings.mediaProgressStyle)
         assertEquals(true, settings.showDrawerIcons)
         assertEquals(true, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.TOP, settings.searchBarPosition)
@@ -290,7 +288,6 @@ class SettingsRepositoryTest {
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
         repository.setShowMediaPlayerOnHome(true)
         repository.setShowMediaSkipButtons(false)
-        repository.setMediaProgressStyle(MediaProgressStyle.FLAT)
         repository.setShowDrawerIcons(false)
         repository.setShowDrawerLabels(false)
         repository.setSearchBarPosition(SearchBarPosition.BOTTOM)
@@ -330,7 +327,6 @@ class SettingsRepositoryTest {
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)
         assertEquals(true, settings.showMediaPlayerOnHome)
         assertEquals(false, settings.showMediaSkipButtons)
-        assertEquals(MediaProgressStyle.FLAT, settings.mediaProgressStyle)
         assertEquals(false, settings.showDrawerIcons)
         assertEquals(false, settings.showDrawerLabels)
         assertEquals(SearchBarPosition.BOTTOM, settings.searchBarPosition)

@@ -82,7 +82,6 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     notificationBadgeStyle = notificationBadgeStyle.name,
     showMediaPlayerOnHome = showMediaPlayerOnHome,
     showMediaSkipButtons = showMediaSkipButtons,
-    mediaProgressStyle = mediaProgressStyle.name,
     showDrawerIcons = showDrawerIcons,
     showDrawerLabels = showDrawerLabels,
     searchBarPosition = searchBarPosition.name,
