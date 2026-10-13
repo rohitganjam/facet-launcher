@@ -3987,6 +3987,11 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] Replaced the API 31+ `BlurEffect` on Home with the drawer's treatment for all three panels: Home fades to 0 and scales to .97 as the furthest-open of Drawer / Hub / Switch Facets opens (`homeLayerFade`), on every Android version. Fixes the unblurred, sharp Home showing under the panels on Android 11. `HomeLayerFadeTest` plus the existing `HomeDrawerRouteTest` open/close cases.
 
+## Tapping the media row opens the app (direct request)
+
+- [x] On Android 14+ the system blocked the launcher's send of the session's content intent ("Background activity launch blocked" on an Android 17 device, silently: no exception), so a tap did nothing. `MediaSessionRepository.openPlayer` now sends it with `setPendingIntentBackgroundActivityStartMode(ALLOWED)` so the launcher's foreground privileges count, and falls back to the app's launcher intent when there is no content intent or the send throws.
+- [x] Tests: `MediaSessionRepositoryTest` content-intent send (existing) and a new launcher-intent fallback case. The Android 17 block itself is only reproducible on such a device.
+
 ## Appearance rows: icons and permission-aware subtext (direct request)
 
 - [x] The five Appearance link rows got violet icon badges (Settings style, no trailing chevron).
