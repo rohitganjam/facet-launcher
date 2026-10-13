@@ -313,6 +313,7 @@
     <string name="app_list_column_alignment_both_left">Ambas à esquerda</string>
     <string name="app_list_column_alignment_both_right">Ambas à direita</string>
     <string name="app_list_column_alignment_mirrored">Esquerda e direita</string>
+    <string name="app_list_grid_columns_three">3 colunas</string>
     <string name="app_list_grid_columns_four">4 colunas</string>
     <string name="app_list_grid_columns_five">5 colunas</string>
     <string name="app_list_grid_columns_six">6 colunas</string>
@@ -587,6 +588,14 @@
     <string name="about_check_for_updates_subtitle">Abrir o Facet Launcher no Google Play</string>
     <string name="about_join_discord">Entrar no Discord</string>
     <string name="about_join_discord_subtitle">Converse com a comunidade, dê feedback, acompanhe as novidades</string>
+    <string name="about_whats_new">Novidades</string>
+    <string name="about_whats_new_subtitle">Novos recursos e melhorias em cada versão</string>
+    <string name="whats_new_header_title">Novidades</string>
+    <string name="whats_new_version">Versão %1$s</string>
+    <string name="whats_new_installed">Instalada</string>
+    <string name="whats_new_section_new">Novo</string>
+    <string name="whats_new_section_improved">Melhorado</string>
+    <string name="whats_new_empty">As notas da versão ainda não estão disponíveis.</string>
 
     <!-- Shared -->
     <string name="open_settings">Abrir configurações</string>

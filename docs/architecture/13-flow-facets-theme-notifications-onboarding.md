@@ -80,7 +80,7 @@ flowchart TB
   `appListColumnAlignment` ("Column alignment" — both columns left-aligned, both right-aligned, or
   "left aligns to the edge, right aligns to the other edge") alongside `appRowPresentation`
   (unchanged, still applies to both columns); `GRID` hides both `appRowPosition` and
-  `appRowPresentation`, shows `appListGridColumns` ("Grid columns" — 4/5/6, user-choosable) and
+  `appRowPresentation`, shows `appListGridColumns` ("Grid columns" — 3/4/5/6, user-choosable) and
   `appListGridDisplayMode` ("Grid display" — icons or text, never both, shaped like
   `dockDisplayMode` but a wholly separate field). `appListVerticalAlignment` stays visible and
   applies uniformly across all three layouts. Its preview card (`AppearancePreviewCard`) is scaled to a fraction of the real screen

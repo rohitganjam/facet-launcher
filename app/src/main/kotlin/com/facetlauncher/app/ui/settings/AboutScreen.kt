@@ -45,14 +45,15 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 private const val DISCORD_INVITE_URL = "https://discord.gg/BRjwWZ23E"
 
-/** Settings → About — version (from [BuildConfig], never hardcoded so it can't drift from what `scripts/release.sh` bumps), a Play Store link to check for updates, and the community Discord. */
+/** Settings → About — version (from [BuildConfig], never hardcoded so it can't drift from what `scripts/release.sh` bumps), What's new (release notes), a Play Store link to check for updates, and the community Discord. */
 @Composable
-fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier, onNavigateToWhatsNew: () -> Unit = {}) {
     val context = LocalContext.current
 
     AboutContent(
         versionName = BuildConfig.VERSION_NAME,
         onBack = onBack,
+        onWhatsNewClick = onNavigateToWhatsNew,
         onCheckForUpdatesClick = {
             val url = "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}"
             runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
@@ -68,6 +69,7 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 private fun AboutContent(
     versionName: String,
     onBack: () -> Unit,
+    onWhatsNewClick: () -> Unit,
     onCheckForUpdatesClick: () -> Unit,
     onJoinDiscordClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -88,6 +90,13 @@ private fun AboutContent(
                 item {
                     SettingsCard(fullBleedRows = true) {
                         InfoRow(title = stringResource(R.string.about_version), subtitle = versionName, testTag = "about_version_row")
+                        CardDivider()
+                        ClickableAboutRow(
+                            title = stringResource(R.string.about_whats_new),
+                            subtitle = stringResource(R.string.about_whats_new_subtitle),
+                            onClick = onWhatsNewClick,
+                            testTag = "about_whats_new_row",
+                        )
                         CardDivider()
                         ClickableAboutRow(
                             title = stringResource(R.string.about_check_for_updates),
@@ -172,6 +181,7 @@ private fun AboutScreenPreview() {
         AboutContent(
             versionName = "0.1.7",
             onBack = {},
+            onWhatsNewClick = {},
             onCheckForUpdatesClick = {},
             onJoinDiscordClick = {},
         )

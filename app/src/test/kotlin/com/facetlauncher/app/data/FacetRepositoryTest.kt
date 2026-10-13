@@ -266,6 +266,25 @@ class FacetRepositoryTest {
     }
 
     @Test
+    fun `a facet stores three grid columns and keeps its other grid settings`() = runTest {
+        // Given a facet already on a grid with text display
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setAppListLayout(facet, AppListLayout.GRID)
+        repository.setAppListGridDisplayMode(repository.observeFacets().first().single(), AppListGridDisplayMode.TEXT)
+
+        // When it is switched to three columns
+        repository.setAppListGridColumns(repository.observeFacets().first().single(), AppListGridColumns.THREE)
+
+        // Then three columns persists with a column count of 3, and the rest is untouched
+        val stored = repository.observeFacets().first().single()
+        assertEquals(AppListGridColumns.THREE, stored.appListGridColumns)
+        assertEquals(3, stored.appListGridColumns.columns)
+        assertEquals(AppListLayout.GRID, stored.appListLayout)
+        assertEquals(AppListGridDisplayMode.TEXT, stored.appListGridDisplayMode)
+    }
+
+    @Test
     fun `setAppListLayout, setAppListColumnAlignment, setAppListGridColumns and setAppListGridDisplayMode round-trip independently`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)

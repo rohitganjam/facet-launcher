@@ -134,6 +134,49 @@ class DockAppsAppearanceScreenTest {
     }
 
     @Test
+    fun gridColumnsRowOffersThreeColumnsAndAppliesItToThePreview() {
+        // Given 4 real installed apps as favorites and the Grid layout chosen
+        val packages = mutableListOf<String>()
+        val settingsRepository = setContent(
+            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+                val installed = appRepository.getInstalledApps()
+                (0 until 4).forEach { index ->
+                    defaultFavoriteAppRepository.addFavorite(installed[index], position = index)
+                    packages += installed[index].packageName
+                }
+            },
+        )
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_layout_row"))
+        composeRule.onNodeWithTag("appearance_app_list_layout_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_list_layout_row_option_GRID").performClick()
+        composeRule.waitForIdle()
+
+        // When opening the columns row, 3 columns is one of the options, and choosing it
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_grid_columns_row"))
+        composeRule.onNodeWithTag("appearance_app_list_grid_columns_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_list_grid_columns_row_option_THREE").assertExists().performClick()
+        composeRule.waitForIdle()
+
+        // Then the setting is stored
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().appListGridColumns == com.facetlauncher.app.data.model.AppListGridColumns.THREE }
+        }
+
+        // And the preview lays the 4 favorites out 3 + 1
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
+        packages.forEach { pkg ->
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithTag("appearance_preview_grid_icon_$pkg").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        val tops = packages.map { composeRule.onNodeWithTag("appearance_preview_grid_icon_$it").fetchSemanticsNode().boundsInRoot.top }
+        assertEquals(tops[0], tops[2], 1f)
+        assert(tops[3] > tops[0])
+    }
+
+    @Test
     fun dockDisplayStyleRowChangesTheGlobalSetting() {
         // Given the screen, Icons selected by default — moved in from Dock's own screen (see chat history)
         val settingsRepository = setContent()

@@ -42,6 +42,7 @@ import com.facetlauncher.app.ui.settings.NotificationSettingsScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
 import com.facetlauncher.app.ui.settings.UsageAccessExplanationScreen
+import com.facetlauncher.app.ui.settings.WhatsNewScreen
 import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
 import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
@@ -74,6 +75,7 @@ object FacetDestinations {
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
     const val ABOUT = "about"
+    const val WHATS_NEW = "whats_new"
 
     fun facetClockStyleGallery(facetId: Long) = "facetClockStyleGallery/$facetId"
 
@@ -206,7 +208,13 @@ fun FacetNavHost(
             BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(FacetDestinations.ABOUT) {
-            AboutScreen(onBack = { navController.popBackStackSafely() })
+            AboutScreen(
+                onBack = { navController.popBackStackSafely() },
+                onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+            )
+        }
+        composable(FacetDestinations.WHATS_NEW) {
+            WhatsNewScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(
             FacetDestinations.APPEARANCE_SETTINGS,
