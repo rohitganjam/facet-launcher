@@ -75,7 +75,6 @@ data class BackupSettings(
     /** Purely additive and defaulted, so no version bump. */
     val showMediaPlayerOnHome: Boolean = false,
     val showMediaSkipButtons: Boolean = true,
-    val mediaProgressStyle: String = MediaProgressStyle.WAVY.name,
     val showNotificationsInAppMenu: Boolean = true,
     val showDrawerIcons: Boolean,
     val showDrawerLabels: Boolean,

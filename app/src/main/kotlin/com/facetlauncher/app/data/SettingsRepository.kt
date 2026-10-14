@@ -35,7 +35,6 @@ import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
@@ -58,7 +57,6 @@ private object Keys {
     val NOTIFICATION_BADGE_STYLE = stringPreferencesKey("notification_badge_style")
     val SHOW_MEDIA_PLAYER_ON_HOME = booleanPreferencesKey("show_media_player_on_home")
     val SHOW_MEDIA_SKIP_BUTTONS = booleanPreferencesKey("show_media_skip_buttons")
-    val MEDIA_PROGRESS_STYLE = stringPreferencesKey("media_progress_style")
     val SHOW_NOTIFICATIONS_IN_APP_MENU = booleanPreferencesKey("show_notifications_in_app_menu")
     val SHOW_DRAWER_ICONS = booleanPreferencesKey("show_drawer_icons")
     val SHOW_DRAWER_LABELS = booleanPreferencesKey("show_drawer_labels")
@@ -135,9 +133,6 @@ class SettingsRepository @Inject constructor(
             } ?: defaults.notificationBadgeStyle,
             showMediaPlayerOnHome = preferences[Keys.SHOW_MEDIA_PLAYER_ON_HOME] ?: defaults.showMediaPlayerOnHome,
             showMediaSkipButtons = preferences[Keys.SHOW_MEDIA_SKIP_BUTTONS] ?: defaults.showMediaSkipButtons,
-            mediaProgressStyle = preferences[Keys.MEDIA_PROGRESS_STYLE]?.let {
-                runCatching { MediaProgressStyle.valueOf(it) }.getOrNull()
-            } ?: defaults.mediaProgressStyle,
             showNotificationsInAppMenu = preferences[Keys.SHOW_NOTIFICATIONS_IN_APP_MENU] ?: defaults.showNotificationsInAppMenu,
             showDrawerIcons = preferences[Keys.SHOW_DRAWER_ICONS] ?: defaults.showDrawerIcons,
             showDrawerLabels = preferences[Keys.SHOW_DRAWER_LABELS] ?: defaults.showDrawerLabels,
@@ -274,10 +269,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setShowNotificationsInAppMenu(enabled: Boolean) {
         dataStore.edit { it[Keys.SHOW_NOTIFICATIONS_IN_APP_MENU] = enabled }
-    }
-
-    suspend fun setMediaProgressStyle(style: MediaProgressStyle) {
-        dataStore.edit { it[Keys.MEDIA_PROGRESS_STYLE] = style.name }
     }
 
     suspend fun setShowDrawerIcons(enabled: Boolean) {

@@ -32,7 +32,6 @@ import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SystemBarIconStyle
@@ -157,7 +156,6 @@ class ImportBackupUseCase @Inject constructor(
             setNotificationBadgeStyle(settings.notificationBadgeStyle.toEnumOrDefault(NotificationBadgeStyle.DOT))
             setShowMediaPlayerOnHome(settings.showMediaPlayerOnHome)
             setShowMediaSkipButtons(settings.showMediaSkipButtons)
-            setMediaProgressStyle(settings.mediaProgressStyle.toEnumOrDefault(MediaProgressStyle.WAVY))
             setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)

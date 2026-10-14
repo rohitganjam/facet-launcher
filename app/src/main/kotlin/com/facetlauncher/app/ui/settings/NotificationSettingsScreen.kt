@@ -30,7 +30,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.MediaProgressStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
@@ -89,7 +88,6 @@ fun NotificationSettingsScreen(
             if (checked && !uiState.isAccessGranted) onNavigateToNotificationAccessExplanation()
         },
         onShowSkipButtonsChange = viewModel::setShowSkipButtons,
-        onMediaProgressStyleChange = viewModel::setMediaProgressStyle,
         modifier = modifier,
     )
 }
@@ -103,7 +101,6 @@ private fun NotificationSettingsContent(
     onShowInAppMenuChange: (Boolean) -> Unit,
     onShowMediaPlayerChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: (Boolean) -> Unit,
-    onMediaProgressStyleChange: (MediaProgressStyle) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // The stored preference alone isn't enough to actually show badges — it defaults to true and
@@ -144,10 +141,8 @@ private fun NotificationSettingsContent(
         MediaPlayerSettingsCard(
             enabled = mediaEnabled,
             showSkipButtons = uiState.settings.showMediaSkipButtons,
-            progressStyle = uiState.settings.mediaProgressStyle,
             onEnabledChange = onShowMediaPlayerChange,
             onShowSkipButtonsChange = onShowSkipButtonsChange,
-            onProgressStyleChange = onMediaProgressStyleChange,
             modifier = Modifier.padding(top = 16.dp),
         )
     }
@@ -212,10 +207,8 @@ private fun BadgeSettingsCard(
 private fun MediaPlayerSettingsCard(
     enabled: Boolean,
     showSkipButtons: Boolean,
-    progressStyle: MediaProgressStyle,
     onEnabledChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: (Boolean) -> Unit,
-    onProgressStyleChange: (MediaProgressStyle) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsCard(modifier = modifier) {
@@ -250,17 +243,6 @@ private fun MediaPlayerSettingsCard(
                 modifier = Modifier.testTag("media_skip_buttons_toggle"),
             )
         }
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.media_progress_style_row_title),
-            options = MediaProgressStyle.entries,
-            selected = progressStyle,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onProgressStyleChange,
-            enabled = enabled,
-            testTag = "media_progress_style_row",
-            modifier = Modifier.alpha(if (enabled) 1f else 0.4f),
-        )
     }
 }
 
@@ -277,7 +259,6 @@ private fun NotificationSettingsScreenPreview() {
             onShowInAppMenuChange = {},
             onShowMediaPlayerChange = {},
             onShowSkipButtonsChange = {},
-            onMediaProgressStyleChange = {},
         )
     }
 }
