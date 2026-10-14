@@ -95,7 +95,7 @@ fun PrivateSpaceScreen(
                             PrivateSpaceRecentlyInstalledRow(apps = recentlyInstalledApps, onAppClick = onAppClick)
                         }
                     }
-                    items(apps, key = { it.packageName + it.activityName }) { app ->
+                    items(apps, key = { it.listKey }) { app ->
                         PrivateSpaceAppRow(app = app, onClick = { onAppClick(app) })
                     }
                     if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_LAST) {

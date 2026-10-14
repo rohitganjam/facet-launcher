@@ -249,12 +249,12 @@ private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
  */
 @Composable
 private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
-    val componentsKey = dockApps.map { it.packageName to it.activityName }
+    val componentsKey = dockApps.map { it.listKey }
     var order by remember(componentsKey) { mutableStateOf(dockApps) }
     val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
-        key = { it.packageName to it.activityName },
+        key = { it.listKey },
         axis = Orientation.Horizontal,
         slotSizePx = slotWidthPx,
         onOrderChange = { order = it },
@@ -266,7 +266,7 @@ private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo
         horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
         userScrollEnabled = false,
     ) {
-        items(order, key = { it.packageName + it.activityName }) { app ->
+        items(order, key = { it.listKey }) { app ->
             val isDragging = reorderState.isDragging(app)
             AppIcon(
                 icon = app.icon,
@@ -389,12 +389,12 @@ private fun FavoritesClickableRow(countLabel: String, onClick: () -> Unit, modif
 /** Drag-to-reorder for the favorites list — mirrors `HomeAppsListSettingsScreen`'s `DefaultFavoritesReorderList`. */
 @Composable
 private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
-    val componentsKey = favorites.map { it.packageName to it.activityName }
+    val componentsKey = favorites.map { it.listKey }
     var order by remember(componentsKey) { mutableStateOf(favorites) }
     val rowHeightPx = with(LocalDensity.current) { ReorderRowDefaults.FAVORITE_ROW_HEIGHT.toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
-        key = { it.packageName to it.activityName },
+        key = { it.listKey },
         axis = Orientation.Vertical,
         slotSizePx = rowHeightPx,
         onOrderChange = { order = it },
@@ -405,7 +405,7 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
         modifier = modifier.fillMaxWidth().height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT * order.size),
         userScrollEnabled = false,
     ) {
-        items(order, key = { it.packageName + it.activityName }) { app ->
+        items(order, key = { it.listKey }) { app ->
             val isDragging = reorderState.isDragging(app)
             Row(
                 modifier = Modifier

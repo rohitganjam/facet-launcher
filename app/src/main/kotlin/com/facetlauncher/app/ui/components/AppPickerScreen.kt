@@ -251,7 +251,7 @@ private fun AppPickerAppsList(
 
         if (selectedResults.isNotEmpty()) {
             item { AppPickerSectionHeader(selectedSectionLabel) }
-            items(selectedResults, key = { it.packageName + it.activityName }) { app ->
+            items(selectedResults, key = { it.listKey }) { app ->
                 val isSelected = (app.packageName to app.activityName) in selectedComponents
                 AppPickerRow(
                     app = app,
@@ -264,7 +264,7 @@ private fun AppPickerAppsList(
         }
         if (otherResults.isNotEmpty()) {
             item { AppPickerSectionHeader(stringResource(R.string.app_picker_all_apps)) }
-            items(otherResults, key = { it.packageName + it.activityName }) { app ->
+            items(otherResults, key = { it.listKey }) { app ->
                 val isSelected = (app.packageName to app.activityName) in selectedComponents
                 AppPickerRow(
                     app = app,

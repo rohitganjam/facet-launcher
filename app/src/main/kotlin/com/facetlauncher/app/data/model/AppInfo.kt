@@ -24,7 +24,10 @@ data class AppInfo(
     val userHandle: UserHandle = Process.myUserHandle(),
     val firstInstallTime: Long = 0L,
     val lastUpdateTime: Long = 0L,
-)
+) {
+    /** Unique per installed activity per user — a stable list/reorder key. The same app in a Work Profile shares its package and activity, so those two alone collide. */
+    val listKey: String get() = "$packageName/$activityName/${userHandle.hashCode()}"
+}
 
 /**
  * This launcher's own `applicationId` (`app/build.gradle.kts`) — a real, installed, launchable

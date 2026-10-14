@@ -95,7 +95,7 @@ Run tests:
 
 **Check whether a test run is already in progress before starting another.**
 - A full instrumented run takes ~25 minutes, and runs share the emulator and Gradle's results directory — a second run can overlap the first or overwrite its results.
-- Before any `./gradlew test` or `connectedDebugAndroidTest`: `pgrep -fl "gradlew|GradleWrapperMain"`, and check any background task already started. If one is running, wait for it to finish and read its result first.
+- Before any `./gradlew test` or `connectedDebugAndroidTest`: `pgrep -fl "[G]radleWrapperMain"` (the bracket stops pgrep matching its own command line), and check any background task already started. If one is running, wait for it to finish and read its result first.
 - Run one test class per `-Pandroid.testInstrumentationRunnerArguments.class=...` invocation — a comma-separated list runs only the first class (and the same for `package=`).
 
 **Never disable device/emulator animation scales (`animator_duration_scale`/`window_animation_scale`/`transition_animation_scale`) as a test-reliability workaround.**
