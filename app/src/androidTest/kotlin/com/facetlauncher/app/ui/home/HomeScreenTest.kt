@@ -49,6 +49,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.test.assertCountEquals
+import com.facetlauncher.app.data.model.AppProfile
 
 class HomeScreenTest {
 
@@ -1367,5 +1369,51 @@ class HomeScreenTest {
         // Then the label renders but not the icon
         composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun aWorkAppShowsTheWorkBadgeInTheFavoritesAndInTheDock() {
+        // Given a personal favorite, a Work favorite and a Work app in the dock
+        val personal = AppInfo(packageName = "com.example.personal", activityName = ".Main", label = "Personal", icon = null)
+        val workFavorite = AppInfo(packageName = "com.example.workfav", activityName = ".Main", label = "WorkFav", icon = null, profile = AppProfile.WORK)
+        val workDock = AppInfo(packageName = "com.example.workdock", activityName = ".Main", label = "WorkDock", icon = null, profile = AppProfile.WORK)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = listOf(personal, workFavorite).map { PlacedItem.SingleApp(it) },
+                    dockApps = listOf(PlacedItem.SingleApp(workDock)),
+                    onAppClick = {},
+                )
+            }
+        }
+
+        // Then exactly the two Work apps carry the badge (a clickable row merges its children, so look in the unmerged tree)
+        composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(2)
+    }
+
+    @Test
+    fun anOtherProfileAppShowsThePersonBadgeOnHome() {
+        // Given a favorite from a profile Android can't classify (the emulator's Work profile below API 35)
+        val other = AppInfo(packageName = "com.example.other", activityName = ".Main", label = "Other", icon = null, profile = AppProfile.OTHER)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(appListItems = listOf(PlacedItem.SingleApp(other)), dockApps = emptyList(), onAppClick = {})
+            }
+        }
+
+        composeRule.onAllNodesWithTag("other_profile_badge", useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun aPersonalAppHasNoProfileBadgeOnHome() {
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(appListItems = apps(2).map { PlacedItem.SingleApp(it) }, dockApps = apps(1).map { PlacedItem.SingleApp(it) }, onAppClick = {})
+            }
+        }
+
+        composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("other_profile_badge", useUnmergedTree = true).assertCountEquals(0)
     }
 }

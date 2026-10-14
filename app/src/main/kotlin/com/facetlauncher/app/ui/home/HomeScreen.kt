@@ -137,6 +137,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import com.facetlauncher.app.data.model.AppListLimits
 
 /** [MENU] shows the long-press bottom sheet; [ADJUST] shows the move handle *and* the resize handles together. */
 enum class ClockAdjustMode { NONE, MENU, ADJUST }
@@ -1599,7 +1600,7 @@ private fun HomeAppGridTile(
             )
         } else {
             AppIcon(
-                icon = app.icon,
+                app = app,
                 size = AppIconSize.TILE,
                 contentDescription = app.label,
                 notificationCount = badgeCount,
@@ -1780,7 +1781,7 @@ internal fun AppRow(
             val icon: @Composable () -> Unit = {
                 if (showIcon) {
                     AppIcon(
-                        icon = app.icon,
+                        app = app,
                         size = iconSize,
                         // No visible label to carry the a11y name when text is hidden — mirrors
                         // the Dock's own icons-only mode (see DockIcon below).
@@ -1972,7 +1973,7 @@ private fun SingleAppDockIcon(
                 modifier = clickModifier,
             ) {
                 AppIcon(
-                    icon = app.icon,
+                    app = app,
                     size = AppIconSize.TILE,
                     contentDescription = app.label,
                     notificationCount = badgeCount,

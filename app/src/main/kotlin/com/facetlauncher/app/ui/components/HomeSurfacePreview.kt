@@ -242,7 +242,7 @@ private fun HomeSurfacePreviewGrid(
                     )
                 } else {
                     when (item) {
-                        is PlacedItem.SingleApp -> AppIcon(icon = item.app.icon, size = AppIconSize.TILE, contentDescription = label)
+                        is PlacedItem.SingleApp -> AppIcon(app = item.app, size = AppIconSize.TILE, contentDescription = label)
                         is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
                     }
                 }

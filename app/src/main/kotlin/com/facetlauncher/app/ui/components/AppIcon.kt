@@ -74,12 +74,16 @@ fun AppIcon(
     size: Dp,
     contentDescription: String?,
     modifier: Modifier = Modifier,
+    notificationCount: Int? = null,
+    badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
 ) {
     AppIcon(
         icon = app.icon,
         size = size,
         contentDescription = contentDescription,
         modifier = modifier,
+        notificationCount = notificationCount,
+        badgeStyle = badgeStyle,
         isWorkApp = app.profile == AppProfile.WORK,
         isOtherProfileApp = app.profile == AppProfile.OTHER,
     )
