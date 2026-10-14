@@ -221,9 +221,9 @@ class DrawerViewModel @Inject constructor(
     /** Dismisses these notifications by key. False when the listener isn't connected, so nothing was dismissed. */
     fun dismissNotifications(keys: List<String>): Boolean = notificationActionController.dismiss(keys)
 
-    /** Opens the notification's own screen, then clears it if its app asked for that on open. */
+    /** Opens the notification's own screen, then clears it if its app asked for that on open. A persistent notification is never cleared. */
     fun openNotification(notification: NotificationInfo) {
-        if (notificationOpener.open(notification.contentIntent) && notification.autoCancel) {
+        if (notificationOpener.open(notification.contentIntent) && notification.autoCancel && notification.isClearable) {
             notificationActionController.dismiss(listOf(notification.key))
         }
     }

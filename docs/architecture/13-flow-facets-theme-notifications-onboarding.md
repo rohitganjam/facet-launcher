@@ -264,8 +264,10 @@ expanded, trimmed and cut to 300 characters by `notificationTitleAndText`), `pos
 `isSecret`, `autoCancel` and the `contentIntent`. All of it is in memory only.
 
 - `NotificationBadgeRepository.notificationsFor(pkg, handle)` lists, newest first, the notifications that are
-  not silent, not media (Home's player row owns those), clearable, not `VISIBILITY_SECRET`, and have a
-  title or text; group summaries are already dropped by the service. It matches package **and** profile,
+  not silent, not media (Home's player row owns those), not `VISIBILITY_SECRET`, and have a title or
+  text; group summaries are already dropped by the service. Persistent (non-clearable) notifications are
+  listed too, so the sheet agrees with the icon badge, which counts them; they can be opened but not
+  dismissed. It matches package **and** profile,
   so a Work copy of an app never shows the personal app's notifications.
 - `ObserveAppNotificationsUseCase` gates the list on `show_notifications_in_app_menu` (default on) and
   notification access. `AppNotificationsState(notifications, needsAccess, enabled)`: `enabled = false` hides the

@@ -49,7 +49,8 @@ class NotificationBadgeRepository @Inject constructor() {
 
     /**
      * The notifications worth listing for one app in one profile, newest first. Leaves out silent,
-     * media (Home's player row owns those), non-clearable, secret and contentless ones.
+     * media (Home's player row owns those), secret and contentless ones. Persistent
+     * (non-clearable) ones are listed: they can be opened but not dismissed.
      */
     fun notificationsFor(packageName: String, userHandle: UserHandle): Flow<List<NotificationInfo>> =
         _listedNotifications
@@ -58,4 +59,4 @@ class NotificationBadgeRepository @Inject constructor() {
 }
 
 private fun NotificationInfo.isListable(): Boolean =
-    !silent && !isMedia && isClearable && !isSecret && (!title.isNullOrBlank() || !text.isNullOrBlank())
+    !silent && !isMedia && !isSecret && (!title.isNullOrBlank() || !text.isNullOrBlank())

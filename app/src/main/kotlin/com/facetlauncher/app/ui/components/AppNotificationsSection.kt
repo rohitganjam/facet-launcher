@@ -80,11 +80,13 @@ internal fun AppNotificationsSection(
     modifier: Modifier = Modifier,
 ) {
     val notifications = state.notifications
+    // Persistent notifications are listed but can't be dismissed, so they don't count toward "Clear all".
+    val clearableKeys = notifications.filter { it.isClearable }.map { it.key }
     Column(modifier = modifier) {
         NotificationsHeader(
             count = notifications.size,
-            canClear = notifications.isNotEmpty(),
-            onClearAll = { onDismiss(notifications.map { it.key }) },
+            canClear = clearableKeys.isNotEmpty(),
+            onClearAll = { onDismiss(clearableKeys) },
         )
         when {
             state.needsAccess -> EnableNotificationsRow(onClick = onEnableAccess)
@@ -184,46 +186,53 @@ private fun NotificationCard(
     onDismissOne: () -> Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { target -> target == SwipeToDismissBoxValue.Settled || onDismissOne() },
-    )
+    val tag = "app_notification_${notification.key}"
+    if (notification.isClearable) {
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { target -> target == SwipeToDismissBoxValue.Settled || onDismissOne() },
+        )
+        SwipeToDismissBox(state = dismissState, backgroundContent = {}, modifier = modifier.testTag(tag)) {
+            NotificationCardBody(notification, onOpen)
+        }
+    } else {
+        // A persistent notification: it can be opened but not swiped away.
+        NotificationCardBody(notification, onOpen, modifier = modifier.testTag(tag))
+    }
+}
+
+@Composable
+private fun NotificationCardBody(notification: NotificationInfo, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val shape = MaterialTheme.shapes.medium
     val title = notification.title?.takeIf { it.isNotBlank() }
     val text = notification.text?.takeIf { it.isNotBlank() }
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {},
-        modifier = modifier.testTag("app_notification_${notification.key}"),
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(SurfaceContainer, shape)
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 12.dp, vertical = CARD_VERTICAL_PADDING),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(SurfaceContainer, shape)
-                .clickable(onClick = onOpen)
-                .padding(horizontal = 12.dp, vertical = CARD_VERTICAL_PADDING),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = title ?: text.orEmpty(),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Ink,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(text = shortAgeText(notification.postTime), style = MaterialTheme.typography.labelSmall, color = Muted)
-            }
-            if (title != null && text != null) {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Muted,
-                    maxLines = CARD_BODY_LINES,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = title ?: text.orEmpty(),
+                style = MaterialTheme.typography.titleSmall,
+                color = Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(text = shortAgeText(notification.postTime), style = MaterialTheme.typography.labelSmall, color = Muted)
+        }
+        if (title != null && text != null) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+                maxLines = CARD_BODY_LINES,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

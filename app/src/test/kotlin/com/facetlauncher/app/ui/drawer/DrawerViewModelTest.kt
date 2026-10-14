@@ -211,6 +211,21 @@ class DrawerViewModelTest {
     }
 
     @Test
+    fun `openNotification never clears a persistent notification even if it asked to auto-cancel`() {
+        // Given an intent that sends, and a notification that is both auto-cancel and persistent
+        val opener = mock(NotificationOpener::class.java)
+        `when`(opener.open(message.contentIntent)).thenReturn(true)
+        val controller = NotificationActionController()
+        val dismissed = mutableListOf<List<String>>()
+        controller.attach { dismissed += it }
+        val viewModel = drawerViewModel(notificationOpener = opener, notificationActionController = controller)
+
+        // When opening it, then it is opened but left in place, since the listener can't dismiss it
+        viewModel.openNotification(message.copy(autoCancel = true, isClearable = false))
+        assertEquals(emptyList<List<String>>(), dismissed)
+    }
+
+    @Test
     fun `contacts permission prompt is hidden with a blank query even when access isn't granted`() = runTest {
         // Given the setting is on but access isn't granted
         val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = false)

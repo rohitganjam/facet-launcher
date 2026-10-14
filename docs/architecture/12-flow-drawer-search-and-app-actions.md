@@ -170,7 +170,9 @@ content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.
   card to two cards plus a 40% peek of the next, and never over a third of the screen. Each card shows the
   title, a compact age (`1s`, `2m`, `3h`, `4d`; `ShortAge.kt`, localised unit strings) and up to two lines
   of text. Cards open on tap (the sheet closes first) and swipe away singly; "Clear all" dismisses every
-  listed key and leaves the sheet open. With the setting on but no notification access the body is one
+  clearable listed key and leaves the sheet open. A persistent (ongoing, non-clearable) notification is listed
+  and tappable but has no swipe, is left out of "Clear all" (which greys out when only persistent ones remain),
+  and is never dismissed after opening. With the setting on but no notification access the body is one
   "Enable notifications" row that closes the sheet and calls
   `HomeDrawerRoute.onNavigateToNotificationAccessExplanation` (→ the access explanation route). It is fed to
   the sheet as one `AppMenuNotifications` holder threaded through `HomeScreen`, `AppDrawerScreen` and
