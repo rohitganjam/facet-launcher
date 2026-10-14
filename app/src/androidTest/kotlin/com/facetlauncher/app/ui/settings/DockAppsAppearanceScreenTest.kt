@@ -195,6 +195,42 @@ class DockAppsAppearanceScreenTest {
     }
 
     @Test
+    fun previewCardMovesTheAppListUnderTheClockWhenVerticalAlignmentIsTop() {
+        // Given one favorite, with the default Bottom alignment
+        var packageName = ""
+        setContent(
+            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+                val app = appRepository.getInstalledApps().first()
+                packageName = app.packageName
+                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+            },
+        )
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
+        fun gapBelowClock(): Float {
+            val clockBottom = composeRule.onNodeWithTag("appearance_preview_clock", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
+            val rowTop = composeRule.onNodeWithTag("appearance_preview_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
+            return rowTop - clockBottom
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("appearance_preview_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        val bottomGap = gapBelowClock()
+
+        // When switching vertical alignment to Top
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_vertical_alignment_row"))
+        composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row_option_TOP").performClick()
+        composeRule.waitForIdle()
+
+        // Then the list sits closer to the clock than it did at the bottom
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
+        composeRule.waitForIdle()
+        val topGap = gapBelowClock()
+        org.junit.Assert.assertTrue("top gap $topGap should be smaller than bottom gap $bottomGap", topGap < bottomGap)
+    }
+
+    @Test
     fun appRowPositionPresentationAndVerticalAlignmentRowsChangeTheGlobalSetting() {
         // Given the screen — moved in from Home Apps List's own screen (see chat history)
         val settingsRepository = setContent()

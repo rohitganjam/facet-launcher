@@ -109,6 +109,8 @@ data class AppearanceSettingsUiState(
         clockShowMeridiem = facet.resolveOverride({ it.overrideClock }, { it.clockShowMeridiem }, settings.clockShowMeridiem),
         clockDateStyle = facet.resolveOverride({ it.overrideClock }, { it.clockDateStyle }, settings.clockDateStyle),
         clockAlignment = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment),
+        clockScale = facet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale),
+        clockZoneHeightDp = facet.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp),
     )
 }
 

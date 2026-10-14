@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -100,6 +101,9 @@ data class FacetCarouselUiState(
 
     fun appRowPresentation(facetId: Long): AppRowPresentation =
         facet(facetId).resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalSettings.appRowPresentation)
+
+    fun appListVerticalAlignment(facetId: Long): AppListVerticalAlignment =
+        facet(facetId).resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, globalSettings.appListVerticalAlignment)
 
     fun appListLayout(facetId: Long): AppListLayout =
         facet(facetId).resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, globalSettings.appListLayout)

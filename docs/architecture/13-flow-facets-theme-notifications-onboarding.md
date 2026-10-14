@@ -83,10 +83,15 @@ flowchart TB
   `appRowPresentation`, shows `appListGridColumns` ("Grid columns" — 3/4/5/6, user-choosable) and
   `appListGridDisplayMode` ("Grid display" — icons or text, never both, shaped like
   `dockDisplayMode` but a wholly separate field). `appListVerticalAlignment` stays visible and
-  applies uniformly across all three layouts. Its preview card (`AppearancePreviewCard`) is scaled to a fraction of the real screen
-  and density-scaled to match — the same technique `FacetCarouselScreen`'s own `FacetPreviewPage`
-  uses for its carousel cards (`CAROUSEL_CARD_SCALE`/`APPEARANCE_PREVIEW_CARD_SCALE`, both `0.55f`)
-  — reimplemented independently rather than shared, so a change to one can't regress the other.
+  applies uniformly across all three layouts. Its preview card (`AppearancePreviewCard`) is a thin wrapper over the shared `HomePreview`
+  (`ui/home/HomePreview.kt`, fed by `HomePreviewState`) — the same composable `FacetCarouselScreen`'s
+  `FacetPreviewPage` renders, scaled to a fraction of the real screen (`APPEARANCE_PREVIEW_CARD_SCALE`/
+  `CAROUSEL_CARD_SCALE`, both `0.55f`) and density-scaled to match. `HomePreview` honors clock
+  alignment, clock zone height (`clockZoneHeightDp`, same top-offset formula as `HomeScreen`) and
+  clock scale, plus the app list's row/column alignment and `appListVerticalAlignment` (TOP puts the
+  list one `HOME_CLOCK_MIN_GAP` below the clock, BOTTOM keeps it above the dock). Tags are
+  parameterized (`appearance_preview_` / `facet_preview_`); a non-null `onClick` makes rows, grid
+  tiles and dock icons tap-to-apply (carousel), null leaves it read-only (Appearance).
   The calendar preview lives here now too (via `ClockBlock`'s own bundled `CalendarEventsBlock`),
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
@@ -99,20 +104,15 @@ flowchart TB
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDayEvents`/`selectedCalendarIds` resolved the same way `ObserveHomeScreenStateUseCase`
   resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `FacetEntity?.effectiveCalendarDisplay` (gated by `overrideCalendar`) into `HomeScreenState.calendarDisplay` / `FacetPreviewData.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
-- **`FacetCarouselScreen`'s own `FacetPreviewPage` mirrors the same `LOOK`-field 3-way branch**
-  (`FacetPreviewAppList`/`FacetPreviewRow`/`FacetPreviewGridTile`, reading `FacetCarouselViewModel`'s
-  `appListLayout(facetId)`/`appListColumnAlignment(facetId)`/`appListGridColumns(facetId)`/
-  `appListGridDisplayMode(facetId)`), reimplemented separately from `AppearancePreviewCard` for the
-  same "can't regress the other" reason above — its tiles are tappable (`onCardClick` applies the
-  facet), unlike the read-only Appearance preview. Fixed on-device (2026-09-28, see chat history):
-  this card used to always render a plain single-column list regardless of the facet's real
-  `appListLayout`, and both preview cards used `Arrangement.SpaceEvenly` for Grid, which spread an
-  incomplete last row's tiles across the full width instead of packing them left like
-  `HomeScreen`'s real `LazyVerticalGrid(GridCells.Fixed(n))`. Both preview cards also cap how many
-  favorites they render — `previewItemCap`/`PREVIEW_ROW_BUDGET` (duplicated per-file, same
-  "deliberately reimplemented" reasoning), a row budget × items-per-row so `TWO_COLUMN`/`GRID`
-  show proportionally more of the real list than `SINGLE_COLUMN`'s tighter cap without overflowing
-  the card.
+- **`FacetCarouselScreen`'s `FacetPreviewPage` renders the same `HomePreview`**, fed by
+  `FacetCarouselViewModel`'s per-facet resolvers (`appListLayout(facetId)`/`appListColumnAlignment(facetId)`/
+  `appListVerticalAlignment(facetId)`/`appListGridColumns(facetId)`/`appListGridDisplayMode(facetId)`).
+  Its tiles are tappable (`onCardClick` applies the facet), unlike the read-only Appearance preview.
+  The shared Grid branch uses fixed-slot columns, not `Arrangement.SpaceEvenly`, so an incomplete
+  last row packs left like `HomeScreen`'s real `LazyVerticalGrid(GridCells.Fixed(n))`. The preview
+  caps how many favorites it renders — `previewItemCap`/`PREVIEW_ROW_BUDGET` — a row budget ×
+  items-per-row so `TWO_COLUMN`/`GRID` show proportionally more of the real list than
+  `SINGLE_COLUMN`'s tighter cap without overflowing the card.
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.

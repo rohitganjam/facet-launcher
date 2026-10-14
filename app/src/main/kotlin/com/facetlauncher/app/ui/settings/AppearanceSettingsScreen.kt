@@ -129,18 +129,7 @@ private fun AppearanceSettingsContent(
             ) {
                 item {
                     AppearancePreviewCard(
-                        settings = uiState.clockSettings,
-                        appRowPosition = uiState.appRowPosition,
-                        appRowPresentation = uiState.appRowPresentation,
-                        appListLayout = uiState.appListLayout,
-                        appListColumnAlignment = uiState.appListColumnAlignment,
-                        appListGridColumns = uiState.appListGridColumns,
-                        appListGridDisplayMode = uiState.appListGridDisplayMode,
-                        dockDisplayMode = uiState.dockDisplayMode,
-                        favorites = uiState.effectiveFavorites,
-                        dockItems = uiState.effectiveDockItems,
-                        calendarEvents = uiState.calendarEvents,
-                        calendarDisplay = uiState.calendarDisplay,
+                        uiState = uiState,
                         homeWallpaper = homeWallpaper,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
