@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.GLOBAL_OWNER_KEY
 
 /**
  * A folder placed into a Dock or Favorites list at [position] — the launcher-wide default when

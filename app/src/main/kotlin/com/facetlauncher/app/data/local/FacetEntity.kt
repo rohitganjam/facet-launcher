@@ -18,6 +18,8 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.ListContentMode
 
 @Entity(tableName = "facets")
@@ -158,3 +160,11 @@ fun FacetEntity?.effectiveCalendarDisplay(settings: LauncherSettings): CalendarD
     } else {
         CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow)
     }
+
+/** Where [list] lives for `this` facet: its own rows when it overrides that list, else the launcher-wide default (also the answer when there is no active facet). */
+fun FacetEntity?.placementTarget(list: PlacementList): PlacementTarget = when {
+    this == null -> PlacementTarget(list)
+    list == PlacementList.DOCK && overrideDock -> PlacementTarget(list, id)
+    list == PlacementList.FAVORITES && overridingFavorites -> PlacementTarget(list, id)
+    else -> PlacementTarget(list)
+}

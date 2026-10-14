@@ -18,11 +18,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.filters.SdkSuppress
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.FontScaleOption
@@ -34,6 +30,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
 
 class FontsThemesIconsScreenTest {
 
@@ -51,7 +49,7 @@ class FontsThemesIconsScreenTest {
         notificationAccessGranted: Boolean = true,
         calendarEvents: List<CalendarEvent> = emptyList(),
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
-        seedApps: suspend (AppRepository, FavoriteAppRepository, DefaultFavoriteAppRepository, DockAppRepository, FacetDockAppRepository, Long?) -> Unit = { _, _, _, _, _, _ -> },
+        seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
         FontsThemesIconsScreen(onBack = onBack, viewModel = viewModel)
     }
@@ -347,10 +345,10 @@ class FontsThemesIconsScreenTest {
         // Given the screen, App label color at its default, one real (installed) favorite seeded
         var favoriteLabel = ""
         setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val app = appRepository.getInstalledApps()[0]
                 favoriteLabel = app.label
-                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },
         )
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()

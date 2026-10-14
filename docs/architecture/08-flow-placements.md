@@ -14,15 +14,14 @@ which rows were hit.
 ```mermaid
 flowchart TB
     UI["AppContextMenu / FolderTileContextMenu\n(Drawer long-press, Home long-press)"] -- "QuickPlacementAction.Add / Remove" --> DVM[DrawerViewModel]
-    DVM --> UC{"Add|Remove App|Folder To|From Dock|Favorites UseCase\n(8 use cases, same shape)"}
-    UC --> S["settingsRepository.settings.first().activeFacetId"]
+    DVM --> UC{"AddToActiveListUseCase /\nRemoveFromActiveListUseCase\n(list, item: app or folder)"}
+    UC --> RT["ResolveActivePlacementTargetUseCase(list)"]
+    RT --> S["settingsRepository.settings.first().activeFacetId"]
     S --> F["facetRepository.getById(activeFacetId)"]
-    F --> D{Dock or Favorites?}
-    D -- "Dock: facet.overrideDock == true" --> FDR["FacetDockAppRepository\napp_placements / folder_placements\n(list DOCK, facetId = facet)"]
-    D -- "Dock: else" --> DR["DockAppRepository\napp_placements / folder_placements\n(list DOCK, facetId null)"]
-    D -- "Favorites: facet.overridingFavorites == true" --> FR["FavoriteAppRepository\napp_placements / folder_placements\n(list FAVORITES, facetId = facet)"]
-    D -- "Favorites: else" --> DFR["DefaultFavoriteAppRepository\napp_placements / folder_placements\n(list FAVORITES, facetId null)"]
-    FDR & DR & FR & DFR --> POS["position = observeXItems().first().size\n(append to end)"]
+    F --> D{"facet.placementTarget(list)"}
+    D -- "Dock and facet.overrideDock, or Favorites and facet.overridingFavorites" --> T1["PlacementTarget(list, facet.id)"]
+    D -- "otherwise" --> T2["PlacementTarget(list) — launcher-wide"]
+    T1 & T2 --> POS["position = placementRepository.observeItems(target).first().size\n(append to end)"]
     POS --> DAO["appPlacementDao.upsert(AppPlacementEntity(list, pkg, activity, position, profile, userId))"]
     DAO --> ROOM[(Room invalidates table)]
     ROOM --> HOME["Home / Drawer re-emit via combine\n(see 03 §2)"]
@@ -30,7 +29,7 @@ flowchart TB
 
 - Capacity is enforced *before* the use case, in `ObserveQuickAddStateUseCase`
   (`HomeViewModel`): an `Add` action is only offered when `items.size < max`
-  (`DockAppRepository.MAX_APPS` for dock, `AppListLimits.MAX_FAVORITES` for favorites); a
+  (`AppListLimits.MAX_DOCK_APPS` for dock, `AppListLimits.MAX_FAVORITES` for favorites); a
   `Remove` when the item is already a member. The context menu renders exactly what that state says.
 - `userId` on the new row is `app.userHandle.hashCode()` — the same value the unique index and the
   hydration join use, so a Work-profile copy of an app is a distinct placement.
@@ -41,10 +40,10 @@ Reordering rewrites `position = index` for every item in the list (an `upsert` p
 
 | Surface (all use `ui/components/DragReorderState`) | ViewModel call | Repository | Mechanism |
 |---|---|---|---|
-| Dock settings (`DockSettingsScreen`) | `DockSettingsViewModel` → | `DockAppRepository.reorderDockItems(items)` / `FacetDockAppRepository.reorderDockItems(facetId, items)` | `upsert` of every app and folder placement with `position = index` (`AppPlacementDao.upsert` / `FolderPlacementDao.upsert`); `replaceItems(facetId, items)` instead calls `deleteAllForOwner(list, facetId)` first, used when an override is switched on |
-| Home app list settings (`HomeAppsListSettingsScreen`) | `HomeAppsListSettingsViewModel` → | `FavoriteAppRepository.reorderFavoriteItems` / `DefaultFavoriteAppRepository.reorderItems` | same |
+| Dock settings (`DockSettingsScreen`) | `DockSettingsViewModel` → | `PlacementRepository.reorderItems(PlacementTarget(DOCK, facetId), items)` | `upsert` of every app and folder placement with `position = index` (`AppPlacementDao.upsert` / `FolderPlacementDao.upsert`); `replaceItems(facetId, items)` instead calls `deleteAllForOwner(list, facetId)` first, used when an override is switched on |
+| Home app list settings (`HomeAppsListSettingsScreen`) | `HomeAppsListSettingsViewModel` → | `PlacementRepository.reorderItems(PlacementTarget(FAVORITES, facetId), items)` | same |
 | Folder contents (`FolderDetailScreen`) | `FolderDetailViewModel` → | `FolderRepository.reorderFolderApps(folderId, apps)` | same |
-| Onboarding (`OnboardingHomeSetupPage`) | `OnboardingViewModel.reorderDockApps / reorderFavorites` | global repos only (no facet exists yet) | same |
+| Onboarding (`OnboardingHomeSetupPage`) | `OnboardingViewModel.reorderDockApps / reorderFavorites` | `PlacementRepository.reorderItems` on the launcher-wide targets only (no facet exists yet) | same |
 | Manage facets (`ManageFacetsScreen`) | `ManageFacetsViewModel.reorderFacets` | `FacetRepository.reorderFacets` | `update` per facet with new `position` |
 
 Home itself has no drag-reorder of dock or app list — Home's drag gestures are the clock
@@ -64,7 +63,7 @@ sequenceDiagram
     FR->>FD: insertFolder(FolderEntity(name)) → folderId
     D->>FR: addAppToFolder(folderId, app)
     FR->>FD: upsertFolderApp(FolderAppEntity(folderId, pkg, activity, position, profile, userId))
-    D->>D: AddFolderToDockUseCase(folder) / AddFolderToFavoritesUseCase(folder)
+    D->>D: AddToActiveListUseCase(list, PlacedItem.FolderItem(folder))
     Note over D: routes exactly like an app, but writes a folder_placements row (list, folderId, position)
     D->>FR: deleteFolder(folderId)
     FR->>FD: deleteFolder(id)
@@ -90,7 +89,7 @@ flowchart LR
     A -- "removeByPackage(pkg, userId) on all 5 repos" --> T1[(app_placements, folder_apps)]
     A -- "removeByUserId(handle.hashCode()) on all 5 repos" --> T1
     B -- "getOrphanedRows() WHERE userId = -1\n→ backfillUserId(entity, handlesFor(profile).singleOrNull().hashCode())" --> T1
-    C -- "defaults_seeded == false →\nDefaultAppRepository.getDefaultAppPackages()\n∩ installed → addDockApp × ≤ MAX_APPS\n→ setDefaultsSeeded(true)" --> T2[(app_placements)]
+    C -- "defaults_seeded == false →\nDefaultAppRepository.getDefaultAppPackages()\n∩ installed → placementRepository.addApp × ≤ MAX_DOCK_APPS\n→ setDefaultsSeeded(true)" --> T2[(app_placements)]
 ```
 
 | Process | Trigger | Effect | Why it exists |

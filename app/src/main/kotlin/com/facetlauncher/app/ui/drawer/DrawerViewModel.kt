@@ -21,19 +21,15 @@ import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationInfo
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.SettingsSearchEntry
-import com.facetlauncher.app.domain.AddAppToDockUseCase
-import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
-import com.facetlauncher.app.domain.AddFolderToDockUseCase
-import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.AppNotificationsState
+import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
+import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
-import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
-import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,14 +61,8 @@ class DrawerViewModel @Inject constructor(
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
-    private val addAppToFavorites: AddAppToFavoritesUseCase,
-    private val removeAppFromFavorites: RemoveAppFromFavoritesUseCase,
-    private val addAppToDock: AddAppToDockUseCase,
-    private val removeAppFromDock: RemoveAppFromDockUseCase,
-    private val addFolderToFavorites: AddFolderToFavoritesUseCase,
-    private val removeFolderFromFavorites: RemoveFolderFromFavoritesUseCase,
-    private val addFolderToDock: AddFolderToDockUseCase,
-    private val removeFolderFromDock: RemoveFolderFromDockUseCase,
+    private val addToActiveList: AddToActiveListUseCase,
+    private val removeFromActiveList: RemoveFromActiveListUseCase,
     private val folderRepository: FolderRepository,
     private val secureFolderRepository: SecureFolderRepository,
     private val privateSpaceRepository: PrivateSpaceRepository,
@@ -231,38 +221,19 @@ class DrawerViewModel @Inject constructor(
     /** F12's long-press "App info" row — see [AppRepository.openAppDetails]. */
     fun openAppInfo(app: AppInfo) = appRepository.openAppDetails(app)
 
-    fun onFavoritesAction(app: AppInfo, action: QuickPlacementAction) {
-        viewModelScope.launch {
-            when (action) {
-                is QuickPlacementAction.Add -> addAppToFavorites(app)
-                is QuickPlacementAction.Remove -> removeAppFromFavorites(app)
-            }
-        }
-    }
+    fun onFavoritesAction(app: AppInfo, action: QuickPlacementAction) = applyPlacement(PlacementList.FAVORITES, PlacedItem.SingleApp(app), action)
 
-    fun onDockAction(app: AppInfo, action: QuickPlacementAction) {
-        viewModelScope.launch {
-            when (action) {
-                is QuickPlacementAction.Add -> addAppToDock(app)
-                is QuickPlacementAction.Remove -> removeAppFromDock(app)
-            }
-        }
-    }
+    fun onDockAction(app: AppInfo, action: QuickPlacementAction) = applyPlacement(PlacementList.DOCK, PlacedItem.SingleApp(app), action)
 
-    fun onFolderFavoritesAction(folder: Folder, action: QuickPlacementAction) {
-        viewModelScope.launch {
-            when (action) {
-                is QuickPlacementAction.Add -> addFolderToFavorites(folder)
-                is QuickPlacementAction.Remove -> removeFolderFromFavorites(folder)
-            }
-        }
-    }
+    fun onFolderFavoritesAction(folder: Folder, action: QuickPlacementAction) = applyPlacement(PlacementList.FAVORITES, PlacedItem.FolderItem(folder), action)
 
-    fun onFolderDockAction(folder: Folder, action: QuickPlacementAction) {
+    fun onFolderDockAction(folder: Folder, action: QuickPlacementAction) = applyPlacement(PlacementList.DOCK, PlacedItem.FolderItem(folder), action)
+
+    private fun applyPlacement(list: PlacementList, item: PlacedItem, action: QuickPlacementAction) {
         viewModelScope.launch {
             when (action) {
-                is QuickPlacementAction.Add -> addFolderToDock(folder)
-                is QuickPlacementAction.Remove -> removeFolderFromDock(folder)
+                is QuickPlacementAction.Add -> addToActiveList(list, item)
+                is QuickPlacementAction.Remove -> removeFromActiveList(list, item)
             }
         }
     }

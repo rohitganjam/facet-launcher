@@ -8,17 +8,17 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (51)  @Singleton Repositories — the only layer that touches
+├── data/                          (48)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (7)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
-│   ├── local/                     (17)  Room: FacetDatabase, 7 entities, 6 DAOs, PlacementList, Converters, Migrations
-│   ├── model/                     (41)  Immutable value types & enums shared by every layer
-│   │                                    (AppInfo, PlacedItem, LauncherSettings, AppProfile, Clock*Option,
+│   ├── local/                     (16)  Room: FacetDatabase, 7 entities, 6 DAOs, Converters, Migrations
+│   ├── model/                     (43)  Immutable value types & enums shared by every layer
+│   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (49)  46 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (44)  41 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -57,7 +57,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 | A Room `@Entity`, `@Dao`, `Migration`, or `@TypeConverter` | `data/local/` | `XEntity`, `XDao` | `AppPlacementEntity`, `AppPlacementDao` |
 | A Hilt `@Module` | `data/di/` | `XModule` | `DatabaseModule` |
 | An immutable value type or enum used across layers | `data/model/` | plain noun | `AppInfo`, `PlacedItem`, `ClockDateStyle` |
-| Logic that spans more than one repository, or a pure algorithm | `domain/` | `XUseCase` with `operator fun invoke` / `observe()` | `AddAppToDockUseCase`, `ResolveWidgetDropUseCase` |
+| Logic that spans more than one repository, or a pure algorithm | `domain/` | `XUseCase` with `operator fun invoke` / `observe()` | `AddToActiveListUseCase`, `ResolveWidgetDropUseCase` |
 | Owns screen state and is the composable's only collaborator | `ui/<surface>/` | `XViewModel` (`@HiltViewModel`) | `HubViewModel` |
 | The immutable state a screen renders | `ui/<surface>/` | `XUiState` (data class) | `HomeUiState`, `BackupRestoreUiState` |
 | A screen-level composable | `ui/<surface>/` | `XScreen` | `AppDrawerScreen` |
@@ -77,11 +77,11 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          42   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
+├── data/          39   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
 │   ├── local/      7   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)
 │   ├── model/      8   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
-├── domain/        43   one test per use case (pure logic — no Android needed for most)
+├── domain/        38   one test per use case (pure logic — no Android needed for most)
 └── ui/            48   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)

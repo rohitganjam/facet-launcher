@@ -43,7 +43,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
 
     /**
      * A new facet has no per-facet settings to copy yet — it inherits the launcher-wide
-     * default Favorites list (see [DefaultFavoriteAppRepository]) until it overrides them, and
+     * default Favorites list (see [PlacementRepository]) until it overrides them, and
      * this just picks the next `Facet N` name and position.
      */
     suspend fun addFacet(): FacetEntity {

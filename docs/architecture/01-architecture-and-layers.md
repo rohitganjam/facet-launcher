@@ -48,14 +48,14 @@ flowchart TB
 |---|---|---|---|
 | Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(uiState: HomeUiState, onAppClick: ..., ...)` |
 | ViewModels | Use cases, Repositories | DAOs, `DataStore`, framework services | `HomeViewModel(ObserveHomeScreenStateUseCase, SettingsRepository, FacetRepository, ...)` |
-| Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddAppToDockUseCase(SettingsRepository, FacetRepository, DockAppRepository, FacetDockAppRepository)` |
-| Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `DockAppRepository(AppPlacementDao, FolderPlacementDao, FolderRepository, AppRepository)` |
+| Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddToActiveListUseCase(ResolveActivePlacementTargetUseCase, PlacementRepository)` |
+| Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `PlacementRepository(AppPlacementDao, FolderPlacementDao, FolderRepository, AppRepository)` |
 | DAOs / entities (`data/local`) | Room, `data/model` enums via `Converters` | anything above | `AppPlacementDao.observe(list, ownerKey): Flow<List<AppPlacementEntity>>` |
 
 Boundary check results (grep over `app/src/main`):
 
 - **0** ViewModels import a DAO. ✅
-- **0** composables inject or call a Repository. ✅ (Three import `DockAppRepository` only to read the constant `MAX_APPS` — see F3.)
+- **0** composables inject or call a Repository. ✅ (The dock size cap lives in `AppListLimits.MAX_DOCK_APPS`, so no composable imports a repository type for a constant any more.)
 - **1** composable instantiates use cases directly (`AppDrawerScreen` → `remember { RankBySearchRelevanceUseCase() }`, and two more) — see F2.
 - **5** `domain/` files import `android.*` — see F4.
 
@@ -102,7 +102,7 @@ flowchart TB
             DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
         end
-        REPOS["44 @Singleton data classes (42 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["41 @Singleton data classes (39 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -134,7 +134,7 @@ flowchart TB
 | DAOs (6) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; release and benchmark builds leave them empty, so the override and its Settings row exist only in debug. |
-| Repositories (42; with `NotificationOpener` and `NotificationActionController`, 44 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| Repositories (39; with `NotificationOpener` and `NotificationActionController`, 41 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (32) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 

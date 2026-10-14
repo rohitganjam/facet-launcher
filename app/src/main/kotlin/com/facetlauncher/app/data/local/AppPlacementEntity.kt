@@ -5,6 +5,8 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.GLOBAL_OWNER_KEY
 
 /**
  * One app in a Dock or Favorites list: the launcher-wide default when [facetId] is null, else that

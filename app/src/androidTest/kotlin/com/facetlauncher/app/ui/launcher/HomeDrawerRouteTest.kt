@@ -47,14 +47,10 @@ import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.EntitlementRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationActionController
@@ -82,11 +78,7 @@ import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
-import com.facetlauncher.app.domain.AddAppToDockUseCase
-import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
-import com.facetlauncher.app.domain.AddFolderToDockUseCase
-import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
@@ -102,10 +94,6 @@ import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
-import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
-import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
@@ -138,6 +126,11 @@ import org.junit.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.domain.AddToActiveListUseCase
+import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
 
 /**
  * Home and Drawer are one merged composable now ([HomeDrawerRoute]) rather than two NavHost
@@ -229,15 +222,11 @@ class HomeDrawerRouteTest {
                     `when`(repo.profileFor(any())).thenReturn(AppProfile.PERSONAL)
                 }
             }
-            val dockAppRepository = remember { DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
-            val facetDockAppRepository = remember { FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
-            val favoriteAppRepository = remember { FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
-            val defaultFavoriteAppRepository = remember {
-                DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
-                    // Never seeded otherwise — observeDefaultFavorites() combines DB rows against
-                    // installed apps, so with zero rows the app list stays permanently empty
-                    // regardless of how fast/slow the installed-apps side is.
-                    runBlocking { apps.take(favoriteCount).forEachIndexed { index, app -> repo.addFavorite(app, position = index) } }
+            val placementRepository = remember {
+                PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
+                    // Never seeded otherwise — the app list combines DB rows against installed apps, so with
+                    // zero rows it stays permanently empty regardless of how fast/slow the installed-apps side is.
+                    runBlocking { apps.take(favoriteCount).forEachIndexed { index, app -> repo.addApp(PlacementTarget.GlobalFavorites, app, position = index) } }
                 }
             }
             val homeViewModel = remember {
@@ -258,10 +247,7 @@ class HomeDrawerRouteTest {
                 HomeViewModel(
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
-                        dockAppRepository,
-                        facetDockAppRepository,
-                        favoriteAppRepository,
-                        defaultFavoriteAppRepository,
+                        placementRepository,
                         facetRepository,
                         usageStatsRepository,
                         usageAccessRepository,
@@ -289,14 +275,14 @@ class HomeDrawerRouteTest {
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, EntitlementRepository())),
                     CleanUpUninstalledAppsUseCase(
-                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
                     RepairOrphanedProfileRowsUseCase(
-                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
-                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
+                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), placementRepository, GetInstalledAppsUseCase(appRepository)),
                     SyncFacetShortcutsUseCase(SelectableFacetsUseCase(facetRepository, EntitlementRepository()), FacetShortcutRepository(context)),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                     testAutomation(context, database, facetRepository, settingsRepository).run,
@@ -327,14 +313,8 @@ class HomeDrawerRouteTest {
                     notificationBadgeRepository,
                     notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),
-                    AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    RemoveAppFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
-                    RemoveAppFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
-                    AddFolderToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    RemoveFolderFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    AddFolderToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
-                    RemoveFolderFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
+                    AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
+                    RemoveFromActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
                     privateSpaceRepository,
@@ -426,10 +406,7 @@ class HomeDrawerRouteTest {
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
-                        favoriteAppRepository,
-                        defaultFavoriteAppRepository,
-                        facetDockAppRepository,
-                        dockAppRepository,
+                        placementRepository,
                         UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
                         UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                         CalendarPermissionRepository(context),

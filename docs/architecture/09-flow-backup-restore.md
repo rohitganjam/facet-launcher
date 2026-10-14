@@ -12,15 +12,15 @@ sequenceDiagram
     participant S as BackupRestoreScreen
     participant VM as BackupRestoreViewModel
     participant UC as ExportBackupUseCase
-    participant R as 8 repositories (raw getters)
+    participant R as repositories (raw getters)
     participant BR as BackupRepository
     S->>VM: onExportDestinationChosen(uri)   (from ActivityResultContracts.CreateDocument)
     VM->>UC: invoke(uri)
     UC->>R: settings.first(), observeFacets().first(), getRawFolders()
     loop each facet
-        UC->>R: getRawFavoritesForFacet(id), getRawDockAppsForFacet(id), getRaw*FolderPlacementsForFacet(id)
+        UC->>R: placementRepository.getRawApps(Favorites/Dock of facet), getRawFolderPlacements(...)
     end
-    UC->>R: getRawDockApps(), getRawDefaultFavorites(), getRawDock/DefaultFavoriteFolderPlacements(), widgetPlacementRepository.observeAll().first()
+    UC->>R: placementRepository.getRawApps / getRawFolderPlacements (GlobalDock, GlobalFavorites), widgetPlacementRepository.observeAll().first()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
     UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 3, exportedAtEpochMillis, ...))
     BR->>BR: contentResolver.openOutputStream(uri) + Json.encodeToString  (Dispatchers.IO)
@@ -53,10 +53,10 @@ sequenceDiagram
     UC->>R: facetRepository.deleteAllFacets()   (FK CASCADE clears every per-facet placement)
     loop each BackupFacet
         UC->>R: restoreFacet(entity.copy(id = 0)) → newId
-        UC->>R: restoreFavorite / restoreDockApp / restore*FolderPlacement (AppPlacementEntity / FolderPlacementEntity with list + newId, folderIndex→newId)
+        UC->>R: placementRepository.restoreApp / restoreFolderPlacement (AppPlacementEntity / PlacementTarget with list + newId, folderIndex→newId)
     end
-    UC->>R: dockAppRepository.deleteAllDockApps(), restoreDockApp × n, restoreDockFolderPlacement × n
-    UC->>R: defaultFavoriteAppRepository.deleteAllDefaultFavorites(), restore × n
+    UC->>R: placementRepository.deleteAll(GlobalDock), restoreApp × n, restoreFolderPlacement × n
+    UC->>R: placementRepository.deleteAll(GlobalFavorites), restore × n
     UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
     UC->>R: settingsRepository.setActiveFacetId(newIds[activeFacetIndex])
     UC-->>VM: ImportBackupResult.Success(counts, pendingWidgetPlacements = bundle.widgetPlacements)
@@ -77,8 +77,8 @@ sequenceDiagram
   folder rows to `folder_placements`, distinguished by `list` (`DOCK`/`FAVORITES`) and `facetId`
   (null for the launcher-wide lists). `deleteAllFolders` clears every folder placement through the
   folder FK cascade, `deleteAllFacets` clears every per-facet row through the facet FK cascade, and
-  the global lists are wiped explicitly by `deleteAllDockApps` / `deleteAllDefaultFavorites`
-  (`deleteAllForOwner(list, GLOBAL_OWNER_KEY)`).
+  the global lists are wiped explicitly by `PlacementRepository.deleteAll(PlacementTarget.GlobalDock)` /
+  `deleteAll(PlacementTarget.GlobalFavorites)` (`deleteAllForOwner(list, GLOBAL_OWNER_KEY)`).
 - Result type: `ImportBackupResult.Success | InvalidFile | UnsupportedVersion(version)`.
 
 ## 3. Widget re-bind after import

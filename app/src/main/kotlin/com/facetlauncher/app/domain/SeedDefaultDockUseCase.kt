@@ -1,10 +1,12 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
 
 /**
  * Pre-fills the shared dock with this device's own default browser/messaging/camera/mail/phone
@@ -17,7 +19,7 @@ import kotlinx.coroutines.flow.first
 class SeedDefaultDockUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val defaultAppRepository: DefaultAppRepository,
-    private val dockAppRepository: DockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val getInstalledApps: GetInstalledAppsUseCase,
 ) {
     suspend operator fun invoke() {
@@ -25,8 +27,8 @@ class SeedDefaultDockUseCase @Inject constructor(
         val installed = getInstalledApps()
         defaultAppRepository.getDefaultAppPackages()
             .mapNotNull { packageName -> installed.firstOrNull { it.packageName == packageName } }
-            .take(DockAppRepository.MAX_APPS)
-            .forEachIndexed { position, app -> dockAppRepository.addDockApp(app, position) }
+            .take(AppListLimits.MAX_DOCK_APPS)
+            .forEachIndexed { position, app -> placementRepository.addApp(PlacementTarget.GlobalDock, app, position) }
         settingsRepository.setDefaultsSeeded(true)
     }
 }

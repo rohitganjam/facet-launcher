@@ -20,8 +20,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -33,6 +31,9 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 class DockAppPickerScreenTest {
 
@@ -49,7 +50,7 @@ class DockAppPickerScreenTest {
     private fun setContent(
         onDone: () -> Unit = {},
         facetId: Long? = null,
-        seed: (AppRepository, DockAppRepository, FacetDockAppRepository, FolderRepository) -> Unit = { _, _, _, _ -> },
+        seed: (AppRepository, PlacementRepository, FolderRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -58,19 +59,17 @@ class DockAppPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository)
+                seed(appRepository, placementRepository, folderRepository)
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 DockAppPickerViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     GetInstalledAppsUseCase(appRepository),
-                    dockAppRepository,
-                    facetDockAppRepository,
+                    placementRepository,
                     folderRepository,
                     SortAppsForPickerUseCase(usageStatsRepository),
                     usageAccessRepository,
@@ -102,7 +101,7 @@ class DockAppPickerScreenTest {
         // repository the ViewModel uses, rather than assuming a specific package is visible —
         // package-visibility rules can differ between this test APK and the app under test)
         var targetApp: AppInfo? = null
-        setContent { appRepository, _, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "dock_picker_row_${app.packageName}"
 
@@ -128,9 +127,9 @@ class DockAppPickerScreenTest {
     @Test
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already in the dock, so both "IN DOCK" and "ALL APPS" render
-        setContent { appRepository, dockAppRepository, _, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
-            installed.take(2).forEachIndexed { index, app -> runBlocking { dockAppRepository.addDockApp(app, index) } }
+            installed.take(2).forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, index) } }
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithText("ALL APPS").assertExists() }.isSuccess
@@ -148,10 +147,10 @@ class DockAppPickerScreenTest {
     fun inDockAppsRenderFirstUnderTheirOwnSectionHeader() {
         // Given two real apps already in the dock
         var dockApps: List<AppInfo> = emptyList()
-        setContent { appRepository, dockAppRepository, _, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             dockApps = installed.take(2)
-            dockApps.forEachIndexed { index, app -> runBlocking { dockAppRepository.addDockApp(app, index) } }
+            dockApps.forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, index) } }
         }
 
         // Then both section headers render, with the in-dock apps' rows present under "IN DOCK"
@@ -168,10 +167,10 @@ class DockAppPickerScreenTest {
     fun uncheckingIsAllowedDownToAnEmptyDock() {
         // Given a dock with a single app — no floor blocks removing it (MIN_APPS = 0)
         var onlyDockApp: AppInfo? = null
-        setContent { appRepository, dockAppRepository, _, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             onlyDockApp = app
-            runBlocking { dockAppRepository.addDockApp(app, 0) }
+            runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, 0) }
         }
         val app = requireNotNull(onlyDockApp)
         val rowTag = "dock_picker_row_${app.packageName}"
@@ -199,10 +198,10 @@ class DockAppPickerScreenTest {
         // Given the picker opened for facet 7 (not the launcher-wide default) with one app
         // already in facet 7's own dock and NOT in the shared default dock
         var seededApp: AppInfo? = null
-        setContent(facetId = 7L) { appRepository, dockAppRepository, facetDockAppRepository, _ ->
+        setContent(facetId = 7L) { appRepository, placementRepository, _ ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
-            runBlocking { facetDockAppRepository.addDockApp(7L, app, 0) }
+            runBlocking { placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 7L), app, 0) }
             // deliberately leave the shared default dock empty
         }
         val app = requireNotNull(seededApp)
@@ -225,7 +224,7 @@ class DockAppPickerScreenTest {
     fun foldersTabCheckboxReflectsWhetherTheFolderIsPlacedInThisDock() {
         // Given a folder that exists but isn't placed in the dock yet
         var folderId: Long? = null
-        setContent { _, _, _, folderRepository ->
+        setContent { _, _, folderRepository ->
             folderId = runBlocking { folderRepository.createFolder("Games") }
         }
         val id = requireNotNull(folderId)
@@ -249,10 +248,10 @@ class DockAppPickerScreenTest {
     fun uncheckingAFolderInThePickerUnplacesItWithoutDeletingIt() {
         // Given a folder already placed in the dock
         var folderId: Long? = null
-        setContent { _, dockAppRepository, _, folderRepository ->
+        setContent { _, placementRepository, folderRepository ->
             folderId = runBlocking {
                 val id = folderRepository.createFolder("Games")
-                dockAppRepository.placeFolderInDock(id, position = 0)
+                placementRepository.placeFolder(PlacementTarget.GlobalDock, id, position = 0)
                 id
             }
         }
@@ -276,7 +275,7 @@ class DockAppPickerScreenTest {
     @Test
     fun sortDirectionToggleReversesTheAllAppsSectionOrder() {
         // Given at least one real installed app, not placed in the dock
-        setContent { _, _, _, _ -> }
+        setContent { _, _, _ -> }
         composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
         val ascendingOrder = lastViewModel.uiState.value.otherResults.map { it.packageName }
 
@@ -296,7 +295,7 @@ class DockAppPickerScreenTest {
     @Test
     fun sortMenuSelectingLastInstalledReordersAllAppsByInstallTime() {
         // Given at least one real installed app, not placed in the dock
-        setContent { _, _, _, _ -> }
+        setContent { _, _, _ -> }
         composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
 
         // When opening the sort dropdown (the real popup, not calling the ViewModel directly)
@@ -324,15 +323,13 @@ class DockAppPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 DockAppPickerViewModel(
                     SavedStateHandle(),
                     GetInstalledAppsUseCase(appRepository),
-                    dockAppRepository,
-                    facetDockAppRepository,
+                    placementRepository,
                     folderRepository,
                     SortAppsForPickerUseCase(usageStatsRepository),
                     usageAccessRepository,

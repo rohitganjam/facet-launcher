@@ -137,6 +137,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import com.facetlauncher.app.data.model.AppListLimits
 
 /** [MENU] shows the long-press bottom sheet; [ADJUST] shows the move handle *and* the resize handles together. */
 enum class ClockAdjustMode { NONE, MENU, ADJUST }
@@ -150,9 +151,8 @@ internal fun PlacedItem.stableKey(): Any = when (this) {
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
  * [appListItems] (Favorites/Recents/Most Used depending on the active list content mode, from
- * [com.facetlauncher.app.data.FavoriteAppRepository] or
- * [com.facetlauncher.app.data.UsageStatsRepository]) and [dockApps] (from
- * [com.facetlauncher.app.data.DockAppRepository]) are real persisted state — this composable
+ * [com.facetlauncher.app.data.PlacementRepository] or [com.facetlauncher.app.data.UsageStatsRepository])
+ * and [dockApps] (from [com.facetlauncher.app.data.PlacementRepository]) are real persisted state — this composable
  * only renders, it never slices/computes them itself.
  */
 @Composable

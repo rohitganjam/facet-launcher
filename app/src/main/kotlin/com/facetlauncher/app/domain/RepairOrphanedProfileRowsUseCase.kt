@@ -1,13 +1,10 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.model.AppProfile
 import javax.inject.Inject
+import com.facetlauncher.app.data.PlacementRepository
 
 /**
  * One-time-per-row backfill for Favorites/Dock/Folder rows that predate
@@ -28,24 +25,12 @@ import javax.inject.Inject
  */
 class RepairOrphanedProfileRowsUseCase @Inject constructor(
     private val appRepository: AppRepository,
-    private val dockAppRepository: DockAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val placementRepository: PlacementRepository,
     private val folderRepository: FolderRepository,
 ) {
     suspend operator fun invoke() {
-        favoriteAppRepository.getOrphanedRows().forEach { entity ->
-            resolve(entity.profile)?.let { userId -> favoriteAppRepository.backfillUserId(entity, userId) }
-        }
-        dockAppRepository.getOrphanedRows().forEach { entity ->
-            resolve(entity.profile)?.let { userId -> dockAppRepository.backfillUserId(entity, userId) }
-        }
-        facetDockAppRepository.getOrphanedRows().forEach { entity ->
-            resolve(entity.profile)?.let { userId -> facetDockAppRepository.backfillUserId(entity, userId) }
-        }
-        defaultFavoriteAppRepository.getOrphanedRows().forEach { entity ->
-            resolve(entity.profile)?.let { userId -> defaultFavoriteAppRepository.backfillUserId(entity, userId) }
+        placementRepository.getOrphanedRows().forEach { entity ->
+            resolve(entity.profile)?.let { userId -> placementRepository.backfillUserId(entity, userId) }
         }
         folderRepository.getOrphanedRows().forEach { entity ->
             resolve(entity.profile)?.let { userId -> folderRepository.backfillUserId(entity, userId) }

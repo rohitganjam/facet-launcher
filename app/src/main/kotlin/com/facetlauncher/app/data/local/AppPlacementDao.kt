@@ -5,11 +5,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.GLOBAL_OWNER_KEY
 
 /**
- * Every Dock/Favorites app row. A query takes the [PlacementList] plus either one owner
- * ([GLOBAL_OWNER_KEY] or a facet id) or a `global` flag that picks the launcher-wide rows (true) or
- * every facet's rows (false).
+ * Every Dock/Favorites app row. Per-list queries take the [PlacementList] plus the owner
+ * ([GLOBAL_OWNER_KEY] or a facet id); uninstall and orphan-repair queries span every list and owner.
  */
 @Dao
 interface AppPlacementDao {
@@ -25,19 +26,19 @@ interface AppPlacementDao {
     )
     suspend fun deleteByComponent(list: PlacementList, ownerKey: Long, packageName: String, activityName: String, userId: Int)
 
-    /** Uninstall cleanup — removes [packageName]'s entries belonging to [userId] regardless of activity. */
-    @Query("DELETE FROM app_placements WHERE list = :list AND (ownerKey = 0) = :global AND packageName = :packageName AND userId = :userId")
-    suspend fun deleteByPackage(list: PlacementList, global: Boolean, packageName: String, userId: Int)
+    /** Uninstall cleanup — removes [packageName]'s entries belonging to [userId] from every list and owner, regardless of activity. */
+    @Query("DELETE FROM app_placements WHERE packageName = :packageName AND userId = :userId")
+    suspend fun deleteByPackage(packageName: String, userId: Int)
 
-    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment). */
-    @Query("DELETE FROM app_placements WHERE list = :list AND (ownerKey = 0) = :global AND userId = :userId")
-    suspend fun deleteByUserId(list: PlacementList, global: Boolean, userId: Int)
+    /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment), across every list and owner. */
+    @Query("DELETE FROM app_placements WHERE userId = :userId")
+    suspend fun deleteByUserId(userId: Int)
 
     /** Wipes one list entirely — a facet's own, or the launcher-wide default. */
     @Query("DELETE FROM app_placements WHERE list = :list AND ownerKey = :ownerKey")
     suspend fun deleteAllForOwner(list: PlacementList, ownerKey: Long)
 
-    /** Rows still at [Migrations.MIGRATION_19_20]'s `-1` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
-    @Query("SELECT * FROM app_placements WHERE list = :list AND (ownerKey = 0) = :global AND userId = -1")
-    suspend fun getOrphaned(list: PlacementList, global: Boolean): List<AppPlacementEntity>
+    /** Rows still at [Migrations.MIGRATION_19_20]'s `-1` sentinel, in every list and owner — see `RepairOrphanedProfileRowsUseCase`. */
+    @Query("SELECT * FROM app_placements WHERE userId = -1")
+    suspend fun getOrphaned(): List<AppPlacementEntity>
 }

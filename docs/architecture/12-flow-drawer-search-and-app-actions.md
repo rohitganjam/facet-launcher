@@ -1,7 +1,7 @@
 # 12 — Flow: App Drawer — search, tabs, and per-app actions
 
 The drawer is the one surface that fans out to the most repositories (`DrawerViewModel` injects
-10 repositories, 10 use cases and the two notification helpers `NotificationActionController` and `NotificationOpener`). Its app list comes from *outside* (`FacetNavHost` passes
+10 repositories, 4 use cases and the two notification helpers `NotificationActionController` and `NotificationOpener`). Its app list comes from *outside* (`FacetNavHost` passes
 `LauncherUiState.apps`); the ViewModel owns search, tabs' supporting data, and every action.
 
 ## 1. Data in

@@ -9,6 +9,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.GLOBAL_OWNER_KEY
 
 /** Every behavior is checked for both lists (Dock and Favorites), since one table now backs all four former tables. */
 @RunWith(RobolectricTestRunner::class)

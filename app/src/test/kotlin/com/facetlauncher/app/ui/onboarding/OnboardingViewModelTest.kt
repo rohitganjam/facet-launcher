@@ -1,7 +1,5 @@
 package com.facetlauncher.app.ui.onboarding
 
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -27,6 +25,8 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.PlacementRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -45,8 +45,7 @@ class OnboardingViewModelTest {
     private class Fixture(
         val favorites: MutableStateFlow<List<AppInfo>>,
         val dockApps: MutableStateFlow<List<AppInfo>>,
-        val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
-        val dockAppRepository: DockAppRepository,
+        val placementRepository: PlacementRepository,
         val settingsRepository: SettingsRepository,
         val viewModel: OnboardingViewModel,
     )
@@ -58,19 +57,17 @@ class OnboardingViewModelTest {
     ): Fixture {
         val favoritesFlow = MutableStateFlow(favorites)
         val dockFlow = MutableStateFlow(dockApps)
-        val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
-        `when`(defaultFavoriteAppRepository.observeDefaultFavorites()).thenReturn(favoritesFlow)
-        val dockAppRepository = mock(DockAppRepository::class.java)
-        `when`(dockAppRepository.observeDockApps()).thenReturn(dockFlow)
+        val placementRepository = mock(PlacementRepository::class.java)
+        `when`(placementRepository.observeApps(PlacementTarget.GlobalFavorites)).thenReturn(favoritesFlow)
+        `when`(placementRepository.observeApps(PlacementTarget.GlobalDock)).thenReturn(dockFlow)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings))
         val viewModel = OnboardingViewModel(
-            defaultFavoriteAppRepository,
-            dockAppRepository,
+            placementRepository,
             settingsRepository,
         )
         testDispatcher.scheduler.advanceUntilIdle()
-        return Fixture(favoritesFlow, dockFlow, defaultFavoriteAppRepository, dockAppRepository, settingsRepository, viewModel)
+        return Fixture(favoritesFlow, dockFlow, placementRepository, settingsRepository, viewModel)
     }
 
     @Test
@@ -168,7 +165,7 @@ class OnboardingViewModelTest {
         f.viewModel.reorderDockApps(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(f.dockAppRepository).reorderDockApps(reordered)
+        verify(f.placementRepository).reorderItems(PlacementTarget.GlobalDock, reordered.map { PlacedItem.SingleApp(it) })
     }
 
     @Test
@@ -182,6 +179,6 @@ class OnboardingViewModelTest {
         f.viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(f.defaultFavoriteAppRepository).reorderItems(reordered.map { PlacedItem.SingleApp(it) })
+        verify(f.placementRepository).reorderItems(PlacementTarget.GlobalFavorites, reordered.map { PlacedItem.SingleApp(it) })
     }
 }

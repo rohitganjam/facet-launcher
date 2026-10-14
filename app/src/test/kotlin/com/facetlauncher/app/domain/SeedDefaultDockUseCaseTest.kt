@@ -1,7 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DockAppRepository
+import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -15,6 +15,8 @@ import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.AppListLimits
 
 @RunWith(RobolectricTestRunner::class)
 class SeedDefaultDockUseCaseTest {
@@ -25,18 +27,18 @@ class SeedDefaultDockUseCaseTest {
         defaultsSeeded: Boolean,
         defaultPackages: List<String>,
         installed: List<AppInfo>,
-    ): Triple<SeedDefaultDockUseCase, SettingsRepository, DockAppRepository> {
+    ): Triple<SeedDefaultDockUseCase, SettingsRepository, PlacementRepository> {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(defaultsSeeded = defaultsSeeded)))
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(defaultPackages)
-        val dockAppRepository = mock(DockAppRepository::class.java)
+        val placementRepository = mock(PlacementRepository::class.java)
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         `when`(getInstalledApps.invoke()).thenReturn(installed)
         return Triple(
-            SeedDefaultDockUseCase(settingsRepository, defaultAppRepository, dockAppRepository, getInstalledApps),
+            SeedDefaultDockUseCase(settingsRepository, defaultAppRepository, placementRepository, getInstalledApps),
             settingsRepository,
-            dockAppRepository,
+            placementRepository,
         )
     }
 
@@ -46,7 +48,7 @@ class SeedDefaultDockUseCaseTest {
         val browser = appInfo("com.example.browser")
         val messaging = appInfo("com.example.messaging")
         val camera = appInfo("com.example.camera")
-        val (useCase, settingsRepository, dockAppRepository) = useCase(
+        val (useCase, settingsRepository, placementRepository) = useCase(
             defaultsSeeded = false,
             defaultPackages = listOf(browser.packageName, messaging.packageName, camera.packageName),
             installed = listOf(browser, messaging, camera),
@@ -56,9 +58,9 @@ class SeedDefaultDockUseCaseTest {
         useCase()
 
         // Then each resolved app is added to the dock at its resolved position, in order
-        verify(dockAppRepository).addDockApp(browser, 0)
-        verify(dockAppRepository).addDockApp(messaging, 1)
-        verify(dockAppRepository).addDockApp(camera, 2)
+        verify(placementRepository).addApp(PlacementTarget.GlobalDock, browser, 0)
+        verify(placementRepository).addApp(PlacementTarget.GlobalDock, messaging, 1)
+        verify(placementRepository).addApp(PlacementTarget.GlobalDock, camera, 2)
         verify(settingsRepository).setDefaultsSeeded(true)
     }
 
@@ -66,7 +68,7 @@ class SeedDefaultDockUseCaseTest {
     fun `tolerates an unresolvable package by skipping it`() = runTest {
         // Given one default package that isn't actually installed
         val browser = appInfo("com.example.browser")
-        val (useCase, _, dockAppRepository) = useCase(
+        val (useCase, _, placementRepository) = useCase(
             defaultsSeeded = false,
             defaultPackages = listOf("com.example.notinstalled", browser.packageName),
             installed = listOf(browser),
@@ -76,14 +78,14 @@ class SeedDefaultDockUseCaseTest {
         useCase()
 
         // Then only the resolvable app is seeded, at position 0 despite being second in the default list
-        verify(dockAppRepository).addDockApp(browser, 0)
+        verify(placementRepository).addApp(PlacementTarget.GlobalDock, browser, 0)
     }
 
     @Test
     fun `caps seeding at MAX_APPS`() = runTest {
         // Given more resolvable default packages than the dock can hold
-        val apps = (1..DockAppRepository.MAX_APPS + 2).map { appInfo("com.example.app$it") }
-        val (useCase, _, dockAppRepository) = useCase(
+        val apps = (1..AppListLimits.MAX_DOCK_APPS + 2).map { appInfo("com.example.app$it") }
+        val (useCase, _, placementRepository) = useCase(
             defaultsSeeded = false,
             defaultPackages = apps.map { it.packageName },
             installed = apps,
@@ -93,14 +95,14 @@ class SeedDefaultDockUseCaseTest {
         useCase()
 
         // Then only the first MAX_APPS are seeded
-        verify(dockAppRepository).addDockApp(apps[DockAppRepository.MAX_APPS - 1], DockAppRepository.MAX_APPS - 1)
-        verify(dockAppRepository, never()).addDockApp(apps[DockAppRepository.MAX_APPS], DockAppRepository.MAX_APPS)
+        verify(placementRepository).addApp(PlacementTarget.GlobalDock, apps[AppListLimits.MAX_DOCK_APPS - 1], AppListLimits.MAX_DOCK_APPS - 1)
+        verify(placementRepository, never()).addApp(PlacementTarget.GlobalDock, apps[AppListLimits.MAX_DOCK_APPS], AppListLimits.MAX_DOCK_APPS)
     }
 
     @Test
     fun `no-ops when defaults are already seeded`() = runTest {
         // Given defaultsSeeded already true
-        val (useCase, settingsRepository, dockAppRepository) = useCase(
+        val (useCase, settingsRepository, placementRepository) = useCase(
             defaultsSeeded = true,
             defaultPackages = listOf("com.example.browser"),
             installed = listOf(appInfo("com.example.browser")),
@@ -110,7 +112,7 @@ class SeedDefaultDockUseCaseTest {
         useCase()
 
         // Then nothing is added and the flag is never re-written
-        verifyNoInteractions(dockAppRepository)
+        verifyNoInteractions(placementRepository)
         verify(settingsRepository, never()).setDefaultsSeeded(true)
     }
 }

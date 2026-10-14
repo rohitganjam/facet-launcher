@@ -28,14 +28,10 @@ import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.EntitlementRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.NotificationActionController
@@ -58,11 +54,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
-import com.facetlauncher.app.domain.AddAppToDockUseCase
-import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
-import com.facetlauncher.app.domain.AddFolderToDockUseCase
-import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
@@ -78,10 +70,6 @@ import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
-import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
-import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
@@ -104,6 +92,10 @@ import java.io.File
 import java.time.Clock
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.AddToActiveListUseCase
+import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
 
 class KeyboardDismissalTest {
 
@@ -128,10 +120,7 @@ class KeyboardDismissalTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val usageStatsRepository = UsageStatsRepository(
                     context.getSystemService(UsageStatsManager::class.java),
@@ -150,10 +139,7 @@ class KeyboardDismissalTest {
                 HomeViewModel(
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
-                        dockAppRepository,
-                        facetDockAppRepository,
-                        favoriteAppRepository,
-                        defaultFavoriteAppRepository,
+                        placementRepository,
                         facetRepository,
                         usageStatsRepository,
                         usageAccessRepository,
@@ -183,23 +169,20 @@ class KeyboardDismissalTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, EntitlementRepository())),
                     CleanUpUninstalledAppsUseCase(
-                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
                     RepairOrphanedProfileRowsUseCase(
-                        appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository,
+                        appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
-                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), dockAppRepository, GetInstalledAppsUseCase(appRepository)),
+                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), placementRepository, GetInstalledAppsUseCase(appRepository)),
                     SyncFacetShortcutsUseCase(SelectableFacetsUseCase(facetRepository, EntitlementRepository()), FacetShortcutRepository(context)),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                     testAutomation(context, database, facetRepository, settingsRepository).run,
@@ -215,10 +198,7 @@ class KeyboardDismissalTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val notificationBadgeRepository = NotificationBadgeRepository()
                 val notificationAccessRepository = NotificationAccessRepository(context)
@@ -231,14 +211,8 @@ class KeyboardDismissalTest {
                     notificationBadgeRepository,
                     notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),
-                    AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    RemoveAppFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    AddAppToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
-                    RemoveAppFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
-                    AddFolderToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    RemoveFolderFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
-                    AddFolderToDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
-                    RemoveFolderFromDockUseCase(settingsRepository, facetRepository, dockAppRepository, facetDockAppRepository),
+                    AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
+                    RemoveFromActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
                     PrivateSpaceRepository(context.getSystemService(UserManager::class.java), appRepository, context),
@@ -294,6 +268,7 @@ class KeyboardDismissalTest {
             val clockWidgetPickerViewModel = remember {
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val appWidgetRepository = AppWidgetRepository(
                     context,
@@ -316,11 +291,8 @@ class KeyboardDismissalTest {
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
                 FacetCarouselViewModel(
                     facetRepository,
@@ -339,10 +311,7 @@ class KeyboardDismissalTest {
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
-                        favoriteAppRepository,
-                        defaultFavoriteAppRepository,
-                        facetDockAppRepository,
-                        dockAppRepository,
+                        placementRepository,
                         UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
                         UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                         CalendarPermissionRepository(context),

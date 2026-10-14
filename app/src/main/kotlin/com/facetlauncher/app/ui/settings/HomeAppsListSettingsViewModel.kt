@@ -4,8 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -37,6 +35,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 /** Appearance preview card home-row + dock-icon slots — how many recognizable apps to surface. */
 private const val PREVIEW_APP_COUNT = 3
@@ -83,7 +84,7 @@ data class HomeAppsListUiState(
     val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, globalAppListGridDisplayMode)
     /** This scope's effective favorites — the facet's own while overriding, the launcher-wide default otherwise. Apps and folders interleaved, same as Home's own list. */
     val favorites: List<PlacedItem> get() = if (isOverriding) facetFavorites else globalFavorites
-    val favoritesLabel: String get() = "${favorites.size} of ${DefaultFavoriteAppRepository.MAX_FAVORITES}"
+    val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
     /** What the preview renders — [favorites] in Favorites mode, a recognizable app sample otherwise. */
     val previewApps: List<PlacedItem> get() = if (listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
 }
@@ -101,8 +102,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val placementRepository: PlacementRepository,
     private val wallpaperRepository: WallpaperRepository,
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
@@ -114,8 +114,8 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
-    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { favoriteAppRepository.observeFavoriteItems(it) } ?: flowOf(emptyList())
-    private val globalFavoritesFlow: Flow<List<PlacedItem>> = defaultFavoriteAppRepository.observeDefaultItems()
+    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
+    private val globalFavoritesFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalFavorites)
 
     val uiState: StateFlow<HomeAppsListUiState> = combine(
         settingsRepository.settings,
@@ -166,8 +166,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun reorderFavorites(orderedItems: List<PlacedItem>) {
         viewModelScope.launch {
-            facetId?.let { favoriteAppRepository.reorderFavoriteItems(it, orderedItems) }
-                ?: defaultFavoriteAppRepository.reorderItems(orderedItems)
+            placementRepository.reorderItems(PlacementTarget(PlacementList.FAVORITES, facetId), orderedItems)
         }
     }
 
@@ -187,7 +186,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val facet = facetRepository.getById(pid) ?: return@launch
             if (overriding && state.facetFavorites.isEmpty()) {
-                favoriteAppRepository.replaceItems(pid, state.globalFavorites)
+                placementRepository.replaceItems(PlacementTarget(PlacementList.FAVORITES, pid), state.globalFavorites)
             }
             facetRepository.updateOverridingApps(
                 facet = facet,

@@ -10,6 +10,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementList
 
 /**
  * Real Room-backed (not a fake in-memory [FacetDao]) — these actually exercise [Converters],

@@ -45,7 +45,7 @@ sequenceDiagram
     UC-->>VM: map { filter out PRIVATE profile / own package }
     VM-->>UI: _uiState.value = ...
 
-    Note over SH: DockAppRepository, FavoriteAppRepository, FolderRepository, ...\nsubscribe to the same installedApps — replay(1) hands each\nthe current list immediately, no re-scan triggered
+    Note over SH: PlacementRepository, FolderRepository, ...\nsubscribe to the same installedApps — replay(1) hands each\nthe current list immediately, no re-scan triggered
 
     OS-)SH: onPackageAdded / Removed / Changed / Available / Unavailable
     SH->>SH: refresh() → one full re-query + re-decode
@@ -74,7 +74,7 @@ Key properties of this flow:
 
 ## 2. Hydrating Room placements against the live list
 
-Every placement repository joins its Room rows with the live app list in memory. `DockAppRepository.observeDockItems()` is representative:
+`PlacementRepository` joins the Room rows of any Dock or Favorites list with the live app list in memory. `observeItems(PlacementTarget.GlobalDock)` is representative:
 
 ```mermaid
 flowchart TB
@@ -99,11 +99,10 @@ Rules this encodes:
   index — so a personal and a work copy of the same app are distinct placements.
 - A Room write re-runs only the join, using `combine`'s cached latest app list; it never re-queries
   `LauncherApps`.
-- All four placement repositories read the same two tables, `app_placements` and `folder_placements`,
-  each through its own `(list, owner)` pair (`DockAppRepository` = `DOCK` + global,
-  `FacetDockAppRepository` = `DOCK` + a facet id, `FavoriteAppRepository` = `FAVORITES` + a facet id,
-  `DefaultFavoriteAppRepository` = `FAVORITES` + global). The join above is identical for all of them.
-- `FacetDockAppRepository` / `FavoriteAppRepository` also offer `observe…ForFacets(ids)`
+- `PlacementRepository` serves all four lists from the same two tables, `app_placements` and
+  `folder_placements`, each through a `PlacementTarget(list, facetId)`: `DOCK` or `FAVORITES`, for the
+  launcher-wide default (`facetId` null) or for one facet. The join above is identical for all of them.
+- `observeItemsForFacets(list, ids)` / `observeAppsForFacets(list, ids)` offer a batched read
   → `Flow<Map<Long, List<PlacedItem>>>` for the facet carousel previews, built the same way. Those
   previews, and the Appearance screens' preview, render through the shared `HomePreview` composable
   (`ui/home/HomePreview.kt`), which honors the clock's alignment, zone height and scale and the app
@@ -124,14 +123,12 @@ flowchart TB
     S --> ALI
     RT["refreshTrigger\nMutableSharedFlow(replay=1)"] --> ALI
     ALI{{"flatMapLatest → observeAppListItems(facet, settings)"}}
-    ALI -- "FAVORITES + overridingFavorites" --> FAV["FavoriteAppRepository.observeFavoriteItems(facet.id)"]
-    ALI -- "FAVORITES" --> DFAV["DefaultFavoriteAppRepository.observeDefaultItems()"]
+    ALI -- "FAVORITES" --> FAV["PlacementRepository.observeItems(facet.placementTarget(FAVORITES))\n(the facet's own list if overridingFavorites, else the launcher-wide one)"]
     ALI -- "RECENTS / MOST_USED\n(one-shot flow { emit(...) })" --> US["UsageStatsRepository\ngetRecentApps / getMostUsedApps"]
     ALI -- "usage access not granted" --> EMPTY["flowOf(emptyList())"]
 
     AF --> DK{{"flatMapLatest → dock"}}
-    DK -- "facet.overrideDock" --> FDK["FacetDockAppRepository.observeDockItems(facet.id)"]
-    DK -- "else" --> GDK["DockAppRepository.observeDockItems()"]
+    DK --> GDK["PlacementRepository.observeItems(facet.placementTarget(DOCK))\n(the facet's own list if overrideDock, else the launcher-wide one)"]
 
     AF --> CAL{{"flatMapLatest → observeCalendarEvents"}}
     CAL --> CR["CalendarRepository.getUpcomingEvents(ids, includeAllDay)\n(gated by CalendarPermissionRepository)"]

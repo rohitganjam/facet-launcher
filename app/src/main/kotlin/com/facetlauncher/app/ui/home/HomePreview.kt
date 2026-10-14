@@ -29,7 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -58,6 +57,7 @@ import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.resolve
+import com.facetlauncher.app.data.model.AppListLimits
 
 /**
  * Row budget the scaled card can show before crowding out the clock/dock. Grid and two-column pack
@@ -177,7 +177,7 @@ private fun HomePreviewFavorites(state: HomePreviewState, testTagPrefix: String,
 private fun HomePreviewDock(state: HomePreviewState, onClick: (() -> Unit)?) {
     if (state.dockItems.isEmpty()) return
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-        state.dockItems.take(DockAppRepository.MAX_APPS).forEach { item ->
+        state.dockItems.take(AppListLimits.MAX_DOCK_APPS).forEach { item ->
             DockIcon(
                 item = item,
                 displayMode = state.dockDisplayMode,

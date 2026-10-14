@@ -20,12 +20,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.EntitlementRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -49,6 +45,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 class FacetCarouselScreenTest {
 
@@ -71,7 +70,7 @@ class FacetCarouselScreenTest {
         seed: suspend (FacetRepository, SettingsRepository) -> Unit = { _, _ -> },
         entitlement: EntitlementRepository = EntitlementRepository(),
         onOpenFacetPro: (ProReason) -> Unit = {},
-        seedApps: suspend (AppRepository, FavoriteAppRepository, DockAppRepository) -> Unit = { _, _, _ -> },
+        seedApps: suspend (AppRepository, PlacementRepository) -> Unit = { _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -85,8 +84,7 @@ class FacetCarouselScreenTest {
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val usageStatsRepository = com.facetlauncher.app.data.UsageStatsRepository(
                     context.getSystemService(android.app.usage.UsageStatsManager::class.java),
                     appRepository
@@ -97,8 +95,6 @@ class FacetCarouselScreenTest {
                 )
                 val calendarPermissionRepository = com.facetlauncher.app.data.CalendarPermissionRepository(context)
                 val calendarRepository = com.facetlauncher.app.data.CalendarRepository(context.contentResolver)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val wallpaperRepository = com.facetlauncher.app.data.WallpaperRepository(
                     android.app.WallpaperManager.getInstance(context),
                 )
@@ -112,7 +108,7 @@ class FacetCarouselScreenTest {
                 runBlocking {
                     seed(facetRepository, settingsRepository)
                 }
-                runBlocking { seedApps(appRepository, favoriteAppRepository, dockAppRepository) }
+                runBlocking { seedApps(appRepository, placementRepository) }
                 FacetCarouselViewModel(
                     facetRepository,
                     settingsRepository,
@@ -121,10 +117,7 @@ class FacetCarouselScreenTest {
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
-                        favoriteAppRepository,
-                        defaultFavoriteAppRepository,
-                        facetDockAppRepository,
-                        dockAppRepository,
+                        placementRepository,
                         usageStatsRepository,
                         usageAccessRepository,
                         calendarPermissionRepository,
@@ -465,14 +458,14 @@ class FacetCarouselScreenTest {
                 // this test seeds a favorite specifically for this facet.
                 facetRepository.setOverridingFavorites(only, true)
             },
-            seedApps = { appRepository, favoriteAppRepository, dockAppRepository ->
+            seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getInstalledApps()
                 val favoriteApp = installed[0]
                 val dockApp = installed[1]
                 favoriteLabel = favoriteApp.label
                 dockLabel = dockApp.label
-                favoriteAppRepository.addFavorite(facetId = facetId, app = favoriteApp, position = 0)
-                dockAppRepository.addDockApp(dockApp, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = favoriteApp, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
             },
         )
 
@@ -505,10 +498,10 @@ class FacetCarouselScreenTest {
                 val afterLayout = facetRepository.observeFacets().first().single()
                 facetRepository.setAppListGridColumns(afterLayout, AppListGridColumns.FOUR)
             },
-            seedApps = { appRepository, favoriteAppRepository, _ ->
+            seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getInstalledApps()
                 (0 until 6).forEach { index ->
-                    favoriteAppRepository.addFavorite(facetId = facetId, app = installed[index], position = index)
+                    placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = installed[index], position = index)
                     packages += installed[index].packageName
                 }
             },
@@ -549,10 +542,10 @@ class FacetCarouselScreenTest {
                 val afterLayout = facetRepository.observeFacets().first().single()
                 facetRepository.setAppListGridDisplayMode(afterLayout, AppListGridDisplayMode.TEXT)
             },
-            seedApps = { appRepository, favoriteAppRepository, _ ->
+            seedApps = { appRepository, placementRepository ->
                 val app = appRepository.getInstalledApps()[0]
                 packageName = app.packageName
-                favoriteAppRepository.addFavorite(facetId = facetId, app = app, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = app, position = 0)
             },
         )
 
@@ -599,10 +592,10 @@ class FacetCarouselScreenTest {
                 settings.setActiveFacetId(only.id)
                 facetRepository.setOverridingFavorites(only, true)
             },
-            seedApps = { appRepository, favoriteAppRepository, _ ->
+            seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getInstalledApps()[0]
                 favoriteLabel = favoriteApp.label
-                favoriteAppRepository.addFavorite(facetId = facetId, app = favoriteApp, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = favoriteApp, position = 0)
             },
         )
 
@@ -628,10 +621,10 @@ class FacetCarouselScreenTest {
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
             },
-            seedApps = { appRepository, _, dockAppRepository ->
+            seedApps = { appRepository, placementRepository ->
                 val dockApp = appRepository.getInstalledApps()[0]
                 dockLabel = dockApp.label
-                dockAppRepository.addDockApp(dockApp, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
             },
         )
 
@@ -657,10 +650,10 @@ class FacetCarouselScreenTest {
                 settings.setActiveFacetId(only.id)
                 facetRepository.setOverridingFavorites(only, true)
             },
-            seedApps = { appRepository, favoriteAppRepository, _ ->
+            seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getInstalledApps()[0]
                 favoriteLabel = favoriteApp.label
-                favoriteAppRepository.addFavorite(facetId = facetId, app = favoriteApp, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = favoriteApp, position = 0)
             },
         )
 
@@ -681,10 +674,10 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 settings.setActiveFacetId(only.id)
             },
-            seedApps = { appRepository, _, dockAppRepository ->
+            seedApps = { appRepository, placementRepository ->
                 val dockApp = appRepository.getInstalledApps()[0]
                 dockLabel = dockApp.label
-                dockAppRepository.addDockApp(dockApp, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
             },
         )
 

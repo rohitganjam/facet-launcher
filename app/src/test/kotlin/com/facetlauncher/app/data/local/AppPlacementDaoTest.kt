@@ -9,6 +9,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.GLOBAL_OWNER_KEY
 
 /** Every behavior is checked for both lists (Dock and Favorites), since one table now backs all four former tables. */
 @RunWith(RobolectricTestRunner::class)
@@ -109,64 +111,49 @@ class AppPlacementDaoTest {
     }
 
     @Test
-    fun `deleteByPackage with global true removes only launcher-wide rows of that list for that user`() = runTest {
-        // Given a launcher-wide and a facet Dock row for the same package, plus a Favorites row and another user's row
+    fun `deleteByPackage removes the package for that user from every list and owner`() = runTest {
+        // Given the same package in both lists, launcher-wide and in a facet, plus another user's copy and another package
         val database = createDatabase()
         val dao = database.appPlacementDao()
         val facetId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
-        dao.upsert(app(PlacementList.DOCK, "p", position = 0))
-        dao.upsert(app(PlacementList.DOCK, "p", position = 1, userId = 10))
-        dao.upsert(app(PlacementList.DOCK, "p", facetId = facetId))
-        dao.upsert(app(PlacementList.FAVORITES, "p"))
-
-        // When uninstall cleanup targets the launcher-wide Dock for user 0
-        dao.deleteByPackage(PlacementList.DOCK, global = true, packageName = "p", userId = 0)
-
-        // Then only that row is gone
-        assertEquals(listOf(10), dao.observe(PlacementList.DOCK, GLOBAL_OWNER_KEY).first().map { it.userId })
-        assertEquals(1, dao.observe(PlacementList.DOCK, facetId).first().size)
-        assertEquals(1, dao.observe(PlacementList.FAVORITES, GLOBAL_OWNER_KEY).first().size)
-    }
-
-    @Test
-    fun `deleteByPackage with global false removes every facet's rows of that list but not launcher-wide ones`() = runTest {
         PlacementList.entries.forEach { list ->
-            // Given the same package in the launcher-wide list and in two facets
-            val database = createDatabase()
-            val dao = database.appPlacementDao()
-            val one = database.facetDao().insert(FacetEntity(name = "One", position = 0))
-            val two = database.facetDao().insert(FacetEntity(name = "Two", position = 1))
             dao.upsert(app(list, "p"))
-            dao.upsert(app(list, "p", facetId = one))
-            dao.upsert(app(list, "p", facetId = two))
+            dao.upsert(app(list, "p", facetId = facetId))
+            dao.upsert(app(list, "p", position = 1, userId = 10))
+            dao.upsert(app(list, "keep", position = 2))
+        }
 
-            // When facet cleanup runs
-            dao.deleteByPackage(list, global = false, packageName = "p", userId = 0)
+        // When uninstall cleanup targets the package for user 0
+        dao.deleteByPackage("p", 0)
 
-            // Then both facets lose it and the launcher-wide row stays
-            assertTrue(dao.observe(list, one).first().isEmpty())
-            assertTrue(dao.observe(list, two).first().isEmpty())
-            assertEquals(1, dao.observe(list, GLOBAL_OWNER_KEY).first().size)
+        // Then every user-0 copy is gone, in every list and owner; user 10's copy and the other package stay
+        PlacementList.entries.forEach { list ->
+            assertEquals(listOf("p", "keep"), dao.observe(list, GLOBAL_OWNER_KEY).first().map { it.packageName })
+            assertEquals(listOf(10, 0), dao.observe(list, GLOBAL_OWNER_KEY).first().map { it.userId })
+            assertTrue(dao.observe(list, facetId).first().isEmpty())
         }
     }
 
     @Test
-    fun `deleteByUserId removes only that user's rows in the chosen scope`() = runTest {
+    fun `deleteByUserId removes only that user's rows from every list and owner`() = runTest {
+        // Given a personal and a work-profile row, launcher-wide and in a facet, in both lists
+        val database = createDatabase()
+        val dao = database.appPlacementDao()
+        val facetId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
         PlacementList.entries.forEach { list ->
-            // Given a personal and a work-profile row, launcher-wide and in a facet
-            val database = createDatabase()
-            val dao = database.appPlacementDao()
-            val facetId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
             dao.upsert(app(list, "a", userId = 0))
             dao.upsert(app(list, "w", userId = 10))
             dao.upsert(app(list, "fw", facetId = facetId, userId = 10))
+            dao.upsert(app(list, "fa", facetId = facetId, userId = 0))
+        }
 
-            // When the work profile vanishes for the launcher-wide list
-            dao.deleteByUserId(list, global = true, userId = 10)
+        // When the work profile vanishes
+        dao.deleteByUserId(10)
 
-            // Then only the launcher-wide work row is gone
+        // Then only the user-0 rows remain, everywhere
+        PlacementList.entries.forEach { list ->
             assertEquals(listOf("a"), dao.observe(list, GLOBAL_OWNER_KEY).first().map { it.packageName })
-            assertEquals(listOf("fw"), dao.observe(list, facetId).first().map { it.packageName })
+            assertEquals(listOf("fa"), dao.observe(list, facetId).first().map { it.packageName })
         }
     }
 
@@ -192,20 +179,22 @@ class AppPlacementDaoTest {
     }
 
     @Test
-    fun `getOrphaned returns only rows still at the minus one user sentinel in the chosen scope`() = runTest {
+    fun `getOrphaned returns every row still at the minus one user sentinel, in any list or owner`() = runTest {
+        // Given orphaned rows in both lists, launcher-wide and in a facet, and a healthy row
+        val database = createDatabase()
+        val dao = database.appPlacementDao()
+        val facetId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
         PlacementList.entries.forEach { list ->
-            // Given an orphaned launcher-wide row, an orphaned facet row and a healthy row
-            val database = createDatabase()
-            val dao = database.appPlacementDao()
-            val facetId = database.facetDao().insert(FacetEntity(name = "One", position = 0))
-            dao.upsert(app(list, "g", userId = -1))
-            dao.upsert(app(list, "f", facetId = facetId, userId = -1))
-            dao.upsert(app(list, "ok", userId = 0))
-
-            // Then each scope reports only its own orphan
-            assertEquals(listOf("g"), dao.getOrphaned(list, global = true).map { it.packageName })
-            assertEquals(listOf("f"), dao.getOrphaned(list, global = false).map { it.packageName })
+            dao.upsert(app(list, "g-$list", userId = -1))
+            dao.upsert(app(list, "f-$list", facetId = facetId, userId = -1))
+            dao.upsert(app(list, "ok-$list", userId = 0))
         }
+
+        // Then all four orphans are reported and no healthy row is
+        assertEquals(
+            setOf("g-DOCK", "f-DOCK", "g-FAVORITES", "f-FAVORITES"),
+            dao.getOrphaned().map { it.packageName }.toSet(),
+        )
     }
 
     @Test

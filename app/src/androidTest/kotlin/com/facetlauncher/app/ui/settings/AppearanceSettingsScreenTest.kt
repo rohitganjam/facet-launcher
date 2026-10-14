@@ -13,11 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -26,6 +22,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 class AppearanceSettingsScreenTest {
 
@@ -48,7 +47,7 @@ class AppearanceSettingsScreenTest {
         notificationAccessGranted: Boolean = true,
         calendarEvents: List<CalendarEvent> = emptyList(),
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
-        seedApps: suspend (AppRepository, FavoriteAppRepository, DefaultFavoriteAppRepository, DockAppRepository, FacetDockAppRepository, Long?) -> Unit = { _, _, _, _, _, _ -> },
+        seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
         AppearanceSettingsScreen(
             onBack = onBack,
@@ -98,14 +97,14 @@ class AppearanceSettingsScreenTest {
         var favorite2Label = ""
         var dockLabel = ""
         setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, dockAppRepository, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val installed = appRepository.getInstalledApps()
                 favorite1Label = installed[0].label
                 favorite2Label = installed[1].label
                 dockLabel = installed[2].label
-                defaultFavoriteAppRepository.addFavorite(installed[0], position = 0)
-                defaultFavoriteAppRepository.addFavorite(installed[1], position = 1)
-                dockAppRepository.addDockApp(installed[2], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[1], position = 1)
+                placementRepository.addApp(PlacementTarget.GlobalDock, installed[2], position = 0)
             },
         )
 
@@ -126,10 +125,10 @@ class AppearanceSettingsScreenTest {
         // Given the screen, one real (installed) favorite seeded
         var favoriteLabel = ""
         setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val app = appRepository.getInstalledApps()[0]
                 favoriteLabel = app.label
-                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },
         )
 
@@ -437,16 +436,16 @@ class AppearanceSettingsScreenTest {
         var facetDockLabel = ""
         setContent(
             facetId = facetId,
-            seedApps = { appRepository, favoriteAppRepository, defaultFavoriteAppRepository, dockAppRepository, facetDockAppRepository, id ->
+            seedApps = { appRepository, placementRepository, id ->
                 val installed = appRepository.getInstalledApps()
                 globalFavoriteLabel = installed[0].label
                 globalDockLabel = installed[1].label
                 facetFavoriteLabel = installed[2].label
                 facetDockLabel = installed[3].label
-                defaultFavoriteAppRepository.addFavorite(installed[0], position = 0)
-                dockAppRepository.addDockApp(installed[1], position = 0)
-                favoriteAppRepository.addFavorite(id!!, installed[2], position = 0)
-                facetDockAppRepository.addDockApp(id, installed[3], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalDock, installed[1], position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, id!!), installed[2], position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, id), installed[3], position = 0)
             },
         )
 
@@ -480,16 +479,16 @@ class AppearanceSettingsScreenTest {
                 val updated = facetRepository.getById(id)!!
                 facetRepository.updateOverridingDock(updated, overriding = true)
             },
-            seedApps = { appRepository, favoriteAppRepository, defaultFavoriteAppRepository, dockAppRepository, facetDockAppRepository, id ->
+            seedApps = { appRepository, placementRepository, id ->
                 val installed = appRepository.getInstalledApps()
                 globalFavoriteLabel = installed[0].label
                 globalDockLabel = installed[1].label
                 facetFavoriteLabel = installed[2].label
                 facetDockLabel = installed[3].label
-                defaultFavoriteAppRepository.addFavorite(installed[0], position = 0)
-                dockAppRepository.addDockApp(installed[1], position = 0)
-                favoriteAppRepository.addFavorite(id!!, installed[2], position = 0)
-                facetDockAppRepository.addDockApp(id, installed[3], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalDock, installed[1], position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, id!!), installed[2], position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, id), installed[3], position = 0)
             },
         )
 

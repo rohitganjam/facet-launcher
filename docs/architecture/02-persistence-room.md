@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v28**, `exportSchema = true` → `app/schemas/.../1.json … 28.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v28**, `exportSchema = true` → `app/schemas/.../1.json … 28.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 5 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 60 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -130,9 +130,9 @@ erDiagram
   Dock and Favorites entry. `list` (`PlacementList.DOCK | FAVORITES`) picks the list; a null `facetId`
   is the *global default* list and a facet id is that facet's *per-facet override*. Which one is live
   for a facet is decided by its `overrideDock` / `overridingFavorites` flags via
-  `FacetEntity.resolveOverride(...)`; the use cases `Add/RemoveAppTo/FromDock|Favorites` and
-  `Add/RemoveFolder…` route the write to the right `(list, owner)` through the four placement
-  repositories, which each pin one `PlacementList` and one scope.
+  `FacetEntity.placementTarget(list)`; `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
+  `ResolveActivePlacementTargetUseCase` for the right `PlacementTarget(list, facetId)` and write it
+  through `PlacementRepository`, the one repository over both tables.
 - **`ownerKey` exists because SQLite treats NULLs as distinct in a unique index.** It stores `facetId`,
   or `GLOBAL_OWNER_KEY` (`0`) for the global lists, so the unique keys below also hold for global rows.
   The entity derives it from `facetId` at construction; never set it independently.
@@ -165,10 +165,7 @@ flowchart LR
 
     subgraph REPO["data/ repositories"]
         FR[FacetRepository]
-        FAR[FavoriteAppRepository]
-        DAR[DockAppRepository]
-        FDAR[FacetDockAppRepository]
-        DFAR[DefaultFavoriteAppRepository]
+        PR["PlacementRepository\n(every Dock and Favorites list)"]
         FOR[FolderRepository]
         WPR[WidgetPlacementRepository]
         ARR["AutomationRuleRepository\n(maps rows to AutomationRule)"]
@@ -176,34 +173,19 @@ flowchart LR
     end
 
     FD --> FR
-    APD --> FAR
-    FPD --> FAR
-    APD --> DAR
-    FPD --> DAR
-    APD --> FDAR
-    FPD --> FDAR
-    APD --> DFAR
-    FPD --> DFAR
+    APD --> PR
+    FPD --> PR
     FOD --> FOR
     WPD --> WPR
     ARD --> ARR
     FD -. "facet exists check on save" .-> ARR
 
     AR -. "observeInstalledApps()" .-> FOR
-    AR -. "observeInstalledApps()" .-> FAR
-    AR -. "observeInstalledApps()" .-> DAR
-    AR -. "observeInstalledApps()" .-> FDAR
-    AR -. "observeInstalledApps()" .-> DFAR
-    FOR -. "observeFolders()" .-> FAR
-    FOR -. "observeFolders()" .-> DAR
-    FOR -. "observeFolders()" .-> FDAR
-    FOR -. "observeFolders()" .-> DFAR
+    AR -. "observeInstalledApps()" .-> PR
+    FOR -. "observeFolders()" .-> PR
 
     FR -- "Flow of List FacetEntity" --> OUT((use cases / ViewModels))
-    FAR -- "Flow of List PlacedItem" --> OUT
-    DAR -- "Flow of List PlacedItem" --> OUT
-    FDAR -- "Flow of Map facetId to List PlacedItem" --> OUT
-    DFAR -- "Flow of List PlacedItem" --> OUT
+    PR -- "Flow of List PlacedItem, or Map facetId to List PlacedItem" --> OUT
     FOR -- "Flow of List Folder" --> OUT
     WPR -- "Flow of List WidgetPlacementEntity" --> OUT
     ARR -- "Flow of List AutomationRule" --> OUT
@@ -246,12 +228,12 @@ Exceptions to the common shape, all deliberate:
 
 ### Room → Flow → UI, step by step
 
-1. A ViewModel launches a write, e.g. `viewModelScope.launch { addAppToDock(app) }`.
-2. The use case reads `settings.first()` + `facetRepository.getById(...)` to pick the table, then
-   calls `dockAppRepository.addDockApp(app, position)` → `appPlacementDao.upsert(AppPlacementEntity(list = DOCK, ...))`.
+1. A ViewModel launches a write, e.g. `viewModelScope.launch { addToActiveList(PlacementList.DOCK, PlacedItem.SingleApp(app)) }`.
+2. The use case resolves the active facet's `PlacementTarget` (`settings.first()` + `facetRepository.getById(...)`), then
+   calls `placementRepository.addApp(target, app, position)` → `appPlacementDao.upsert(AppPlacementEntity(list = DOCK, ...))`.
 3. Room commits and invalidates the `app_placements` table tracker.
 4. Every live `appPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)` collector re-queries and emits the new `List<AppPlacementEntity>`.
-5. `DockAppRepository.observeDockItems()` is a `combine(appPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY), folderPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY), folderRepository.observeFolders(), appRepository.observeInstalledApps())`; the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
+5. `PlacementRepository.observeItems(target)` is a `combine(appPlacementDao.observe(target.list, target.ownerKey), folderPlacementDao.observe(target.list, target.ownerKey), folderRepository.observeFolders(), appRepository.observeInstalledApps())`; the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
 6. `ObserveHomeScreenStateUseCase` combines that with settings/facets/calendar/badges → `HomeScreenState`.
 7. `HomeViewModel` maps it into `HomeUiState` and sets `_uiState.value`.
 8. `HomeScreen` recomposes from `collectAsStateWithLifecycle()`.

@@ -12,9 +12,8 @@ error; see this doc's own rule in `CLAUDE.md`'s "Living architecture docs" secti
 | # | Finding | Severity | Effort |
 |---|---|---|---|
 | F2 | Composables construct use cases directly (`AppDrawerScreen`, 3 use cases) | Medium (convention) | Small |
-| F3 | UI references `DockAppRepository.MAX_APPS` (6 files) | Low | Trivial |
 | F4 | `domain/` imports `android.*` in 5 files | Low–Medium | Small |
-| F5 | Repository→repository dependency web (4 placement repos → `FolderRepository` → `AppRepository`) | Medium (design) | Medium |
+| F5 | Repository→repository dependency web (`PlacementRepository` → `FolderRepository` → `AppRepository`) | Medium (design) | Medium |
 | F7 | `HomeViewModel` and `LauncherViewModel` collect for their whole lifetime (`launchIn(viewModelScope)`, not `stateIn(WhileSubscribed)`) | Low | Small |
 | F8 | `ObserveHomeScreenStateUseCase` / `ObserveHubStateUseCase` hold mutable state while unscoped | Low | Trivial |
 | F10 | Recents / Most-used / calendar are one-shot reads behind a manual `refreshTrigger` | Low (UX) | Medium |
@@ -39,16 +38,6 @@ composable reaches into `domain/`, and `DrawerViewModel` already injects
 `GroupedApps` in `DrawerUiState`) or pass the result in as a parameter. The same
 `AppDrawerScreenTest` assertions will still hold.
 
-## F3 — UI reading a repository constant (Low)
-
-Six UI files read `DockAppRepository.MAX_APPS`: three composables (`ui/settings/DockSettingsScreen.kt`,
-`ui/home/HomePreview.kt` in `HomePreviewDock`, `ui/onboarding/OnboardingHomeSetupPage.kt`) and three
-ViewModels (`ui/facets/FacetSettingsViewModel.kt`, `ui/dock/DockAppPickerViewModel.kt`,
-`ui/settings/FolderAppPickerViewModel.kt`). The composables importing a repository *type* only for a
-constant are the layering smell; the ViewModels may depend on repositories. `data/model/AppListLimits.kt` already exists for exactly this
-(`MAX_FAVORITES`, `DEFAULT_APPS_TO_SHOW`); move `MAX_APPS` there as `AppListLimits.MAX_DOCK_APPS`
-and the UI stops importing a repository type.
-
 ## F4 — `domain/` touching the Android framework (Low–Medium)
 
 `CLAUDE.md`: "nothing here touches Android framework APIs directly". Five files do:
@@ -64,15 +53,9 @@ and the UI stops importing a repository type.
 
 ```mermaid
 flowchart LR
-    DAR[DockAppRepository] --> FOR[FolderRepository]
-    FDAR[FacetDockAppRepository] --> FOR
-    FAR[FavoriteAppRepository] --> FOR
-    DFAR[DefaultFavoriteAppRepository] --> FOR
+    PR[PlacementRepository] --> FOR[FolderRepository]
     FOR --> AR[AppRepository]
-    DAR --> AR
-    FDAR --> AR
-    FAR --> AR
-    DFAR --> AR
+    PR --> AR
     USR[UsageStatsRepository] --> AR
     WPR2[WorkProfileRepository] --> AR
     PSR[PrivateSpaceRepository] --> AR
@@ -80,15 +63,15 @@ flowchart LR
 ```
 
 Hydration ("join these Room rows against the live app list and the live folder list") is logic
-that spans repositories, which `CLAUDE.md` assigns to `domain/`. Today it lives in each placement
-repository's `observe*Items()`. This is not wrong — it keeps the `PlacedItem` union in one layer
-and the use cases simple — but it means `AppRepository` is a fan-in for 9 classes and any change to
-its emission shape ripples through `data/`. Now that `AppRepository.observeInstalledApps()` is
-shared (`shareIn`, fixed — see `03 §1`), the runtime cost of this fan-in is gone; the design
-question (whether hydration belongs in `domain/` instead) remains open. Consider a single
-`ObservePlacedItemsUseCase(scope: PlacementScope)` that owns the join and lets the repositories go
-back to exposing raw entity flows, if the duplication across the five `observe*Items()` methods
-becomes a maintenance problem.
+that spans repositories, which `CLAUDE.md` assigns to `domain/`. Today it lives in
+`PlacementRepository`'s `observeApps` / `observeItems`. This is not wrong — it keeps the
+`PlacedItem` union in one layer and the use cases simple — but it means `AppRepository` is a fan-in
+for 6 classes and any change to its emission shape ripples through `data/`. Now that
+`AppRepository.observeInstalledApps()` is shared (`shareIn`, fixed — see `03 §1`), the runtime cost
+of this fan-in is gone; the design question (whether hydration belongs in `domain/` instead) remains
+open. With the four placement repositories folded into one, the join exists once, so the old worry
+about duplicating it is gone; consider an `ObservePlacedItemsUseCase` that owns the join and lets
+`PlacementRepository` expose raw entity flows only if it starts to grow.
 
 ## F7 — Lifetime collection in two ViewModels (Low)
 

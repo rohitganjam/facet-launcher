@@ -5,7 +5,7 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **201 test classes, 1862 cases** — 1134 unit (147 classes),
+Current counts (from the registry): **193 test classes, 1840 cases** — 1112 unit (139 classes),
 728 instrumented (54 classes).
 
 ## 1. The two tiers
@@ -14,8 +14,8 @@ Current counts (from the registry): **201 test classes, 1862 cases** — 1134 un
 flowchart LR
     subgraph UNIT["app/src/test — JVM, ./gradlew test"]
         direction TB
-        U1["data/ — 56 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
-        U2["domain/ — 43 classes\nEvery use case; pure ones need no Android"]
+        U1["data/ — 53 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
+        U2["domain/ — 38 classes\nEvery use case; pure ones need no Android"]
         U3["ui/ — 48 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
     end
     subgraph INST["app/src/androidTest — emulator, ./gradlew connectedDebugAndroidTest"]
@@ -29,9 +29,9 @@ flowchart LR
 
 | | Unit (JVM) | Instrumented |
 |---|---|---|
-| Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 73 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
-| Coroutines | `kotlinx-coroutines-test`: `runTest` (794 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
-| Doubles | Mockito 5.24 (`mockito-core`, inline mock maker → `final` Kotlin classes are mockable) for repositories/use cases; hand-written fake DAOs (`data/FolderTestFakes.kt`: `FakeFolderDao`, `FakeAppPlacementDao`, `FakeFolderPlacementDao`, shared by the four placement-repository tests) for Room; `data/FakeEntitlementRepository.kt` (a `MutableStateFlow` behind the `open` entitlement repository) to flip a free user in tests; `Room.inMemoryDatabaseBuilder` in 7 tests that need real SQL | `mockito-android`; subclass fakes for the three `open` repositories (`ui/settings/Fake{NotificationAccess,CalendarPermission}Repository.kt`, plus an inline `WallpaperRepository` subclass per test that needs one); most screen tests need no doubles — they pass a `UiState` + lambdas |
+| Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 66 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
+| Coroutines | `kotlinx-coroutines-test`: `runTest` (764 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
+| Doubles | Mockito 5.24 (`mockito-core`, inline mock maker → `final` Kotlin classes are mockable) for repositories/use cases; hand-written fake DAOs (`data/FolderTestFakes.kt`: `FakeFolderDao`, `FakeAppPlacementDao`, `FakeFolderPlacementDao`, used by `PlacementRepositoryTest`) for Room; `data/FakeEntitlementRepository.kt` (a `MutableStateFlow` behind the `open` entitlement repository) to flip a free user in tests; `Room.inMemoryDatabaseBuilder` in 7 tests that need real SQL | `mockito-android`; subclass fakes for the three `open` repositories (`ui/settings/Fake{NotificationAccess,CalendarPermission}Repository.kt`, plus an inline `WallpaperRepository` subclass per test that needs one); most screen tests need no doubles — they pass a `UiState` + lambdas |
 | Compose | — | `createComposeRule()` (53 uses); content set with `composeRule.setContent { FacetLauncherTheme { XScreen(uiState, on… = {}) } }` |
 | Selectors | — | `onNodeWithTag` against 310 `Modifier.testTag(...)` sites in `main` (430 distinct tags referenced by tests), `onNodeWithText`, `onNodeWithContentDescription` |
 | Room migrations | — | `MigrationTestHelper` reading `app/schemas/…/<v>.json` (mounted as `androidTest` assets in `build.gradle.kts`) |
@@ -43,13 +43,13 @@ flowchart LR
 
 ```kotlin
 @RunWith(RobolectricTestRunner::class)
-class DockAppRepositoryTest {
+class PlacementRepositoryTest {
     private fun repository(
         dao: AppPlacementDao = FakeAppPlacementDao(),
         placementDao: FolderPlacementDao = FakeFolderPlacementDao(),
         folderDao: FolderDao = FakeFolderDao(),
         installed: List<AppInfo> = ...,
-    ): DockAppRepository {
+    ): PlacementRepository {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(installed))
         ...
@@ -145,7 +145,7 @@ undecodable file).
 
 ```bash
 ./gradlew test                                                        # all unit tests (~2 min)
-./gradlew test --tests 'com.facetlauncher.app.data.DockAppRepositoryTest'   # one class
+./gradlew test --tests 'com.facetlauncher.app.data.PlacementRepositoryTest'   # one class
 adb devices -l                                                        # check what's attached first
 ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest      # all instrumented, emulator only
 ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest \

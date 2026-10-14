@@ -2,17 +2,13 @@ package com.facetlauncher.app.domain
 
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.PlacementList
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -29,15 +25,14 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.PlacementRepository
 
 class ExportBackupUseCaseTest {
 
     private val settingsRepository = mock(SettingsRepository::class.java)
     private val facetRepository = mock(FacetRepository::class.java)
-    private val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
-    private val dockAppRepository = mock(DockAppRepository::class.java)
-    private val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
-    private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
+    private val placementRepository = mock(PlacementRepository::class.java)
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
     private val folderRepository = mock(FolderRepository::class.java).also {
         runBlocking { `when`(it.getRawFolders()).thenReturn(emptyList()) }
@@ -47,10 +42,7 @@ class ExportBackupUseCaseTest {
     private val useCase = ExportBackupUseCase(
         settingsRepository,
         facetRepository,
-        favoriteAppRepository,
-        dockAppRepository,
-        facetDockAppRepository,
-        defaultFavoriteAppRepository,
+        placementRepository,
         widgetPlacementRepository,
         folderRepository,
         backupRepository,
@@ -83,22 +75,22 @@ class ExportBackupUseCaseTest {
             ),
         )
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        `when`(favoriteAppRepository.getRawFavoritesForFacet(7)).thenReturn(
+        `when`(placementRepository.getRawApps(PlacementTarget(PlacementList.FAVORITES, 7))).thenReturn(
             listOf(AppPlacementEntity(list = PlacementList.FAVORITES, id = 1, facetId = 7, packageName = "com.example.a", activityName = ".Main", position = 0)),
         )
-        `when`(dockAppRepository.getRawDockApps()).thenReturn(
+        `when`(placementRepository.getRawApps(PlacementTarget.GlobalDock)).thenReturn(
             listOf(AppPlacementEntity(list = PlacementList.DOCK, id = 1, packageName = "com.example.b", activityName = ".Main", position = 0)),
         )
-        `when`(facetDockAppRepository.getRawDockAppsForFacet(7)).thenReturn(
+        `when`(placementRepository.getRawApps(PlacementTarget(PlacementList.DOCK, 7))).thenReturn(
             listOf(AppPlacementEntity(list = PlacementList.DOCK, id = 1, facetId = 7, packageName = "com.example.d", activityName = ".Main", position = 0)),
         )
-        `when`(facetDockAppRepository.getRawDockFolderPlacementsForFacet(7)).thenReturn(emptyList())
-        `when`(favoriteAppRepository.getRawFavoriteFolderPlacementsForFacet(7)).thenReturn(emptyList())
-        `when`(defaultFavoriteAppRepository.getRawDefaultFavorites()).thenReturn(
+        `when`(placementRepository.getRawFolderPlacements(PlacementTarget(PlacementList.DOCK, 7))).thenReturn(emptyList())
+        `when`(placementRepository.getRawFolderPlacements(PlacementTarget(PlacementList.FAVORITES, 7))).thenReturn(emptyList())
+        `when`(placementRepository.getRawApps(PlacementTarget.GlobalFavorites)).thenReturn(
             listOf(AppPlacementEntity(list = PlacementList.FAVORITES, id = 1, packageName = "com.example.c", activityName = ".Main", position = 0)),
         )
-        `when`(dockAppRepository.getRawDockFolderPlacements()).thenReturn(emptyList())
-        `when`(defaultFavoriteAppRepository.getRawDefaultFavoriteFolderPlacements()).thenReturn(emptyList())
+        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock)).thenReturn(emptyList())
+        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(
             flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1))),
         )
@@ -139,10 +131,10 @@ class ExportBackupUseCaseTest {
     fun `no active facet leaves activeFacetIndex null`() = runTest {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(emptyList()))
-        `when`(dockAppRepository.getRawDockApps()).thenReturn(emptyList())
-        `when`(dockAppRepository.getRawDockFolderPlacements()).thenReturn(emptyList())
-        `when`(defaultFavoriteAppRepository.getRawDefaultFavorites()).thenReturn(emptyList())
-        `when`(defaultFavoriteAppRepository.getRawDefaultFavoriteFolderPlacements()).thenReturn(emptyList())
+        `when`(placementRepository.getRawApps(PlacementTarget.GlobalDock)).thenReturn(emptyList())
+        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock)).thenReturn(emptyList())
+        `when`(placementRepository.getRawApps(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
+        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         val uri = mock(Uri::class.java)
 

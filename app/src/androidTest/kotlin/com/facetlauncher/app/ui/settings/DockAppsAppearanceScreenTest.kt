@@ -12,11 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.assertCountEquals
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.CalendarEvent
 import kotlinx.coroutines.flow.first
@@ -24,6 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
 
 class DockAppsAppearanceScreenTest {
 
@@ -41,7 +39,7 @@ class DockAppsAppearanceScreenTest {
         notificationAccessGranted: Boolean = true,
         calendarEvents: List<CalendarEvent> = emptyList(),
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
-        seedApps: suspend (AppRepository, FavoriteAppRepository, DefaultFavoriteAppRepository, DockAppRepository, FacetDockAppRepository, Long?) -> Unit = { _, _, _, _, _, _ -> },
+        seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
         DockAppsAppearanceScreen(onBack = onBack, viewModel = viewModel)
     }
@@ -52,10 +50,10 @@ class DockAppsAppearanceScreenTest {
         // grid to wrap into two rows (4 + 2), the shape the left-align fix specifically targets.
         val packages = mutableListOf<String>()
         setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val installed = appRepository.getInstalledApps()
                 (0 until 6).forEach { index ->
-                    defaultFavoriteAppRepository.addFavorite(installed[index], position = index)
+                    placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[index], position = index)
                     packages += installed[index].packageName
                 }
             },
@@ -99,10 +97,10 @@ class DockAppsAppearanceScreenTest {
         // Given one real installed app as the global default favorite, Grid layout
         var packageName = ""
         setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val app = appRepository.getInstalledApps()[0]
                 packageName = app.packageName
-                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },
         )
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_layout_row"))
@@ -138,10 +136,10 @@ class DockAppsAppearanceScreenTest {
         // Given 4 real installed apps as favorites and the Grid layout chosen
         val packages = mutableListOf<String>()
         val settingsRepository = setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val installed = appRepository.getInstalledApps()
                 (0 until 4).forEach { index ->
-                    defaultFavoriteAppRepository.addFavorite(installed[index], position = index)
+                    placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[index], position = index)
                     packages += installed[index].packageName
                 }
             },
@@ -199,10 +197,10 @@ class DockAppsAppearanceScreenTest {
         // Given one favorite, with the default Bottom alignment
         var packageName = ""
         setContent(
-            seedApps = { appRepository, _, defaultFavoriteAppRepository, _, _, _ ->
+            seedApps = { appRepository, placementRepository, _ ->
                 val app = appRepository.getInstalledApps().first()
                 packageName = app.packageName
-                defaultFavoriteAppRepository.addFavorite(app, position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },
         )
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))

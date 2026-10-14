@@ -3,7 +3,7 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.FolderPlacementEntity
-import com.facetlauncher.app.data.local.PlacementList
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.local.FolderWithApps
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment

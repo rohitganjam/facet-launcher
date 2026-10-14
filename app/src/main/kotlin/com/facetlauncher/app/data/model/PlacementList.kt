@@ -1,4 +1,4 @@
-package com.facetlauncher.app.data.local
+package com.facetlauncher.app.data.model
 
 /** Which Home list a placement row belongs to. Stored by name in `app_placements`/`folder_placements`. */
 enum class PlacementList { DOCK, FAVORITES }

@@ -3,11 +3,7 @@ package com.facetlauncher.app.ui.settings
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -50,6 +46,9 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementList
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -80,10 +79,7 @@ class AppearanceSettingsViewModelTest {
         globalDockItems: List<PlacedItem> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
-        favoriteAppRepository: FavoriteAppRepository = mock(FavoriteAppRepository::class.java),
-        defaultFavoriteAppRepository: DefaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java),
-        dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java),
-        facetDockAppRepository: FacetDockAppRepository = mock(FacetDockAppRepository::class.java),
+        placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         wallpaperRepository: WallpaperRepository = fakeWallpaperRepository(),
@@ -96,19 +92,18 @@ class AppearanceSettingsViewModelTest {
         // `DockSettingsViewModelTest.createViewModel`'s own `dockItems: List<PlacedItem>` param.
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(favoriteAppRepository.observeFavoriteItems(anyLong())).thenReturn(flowOf(facetFavorites))
-        `when`(defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(globalFavorites))
-        `when`(dockAppRepository.observeDockItems()).thenReturn(flowOf(globalDockItems))
-        `when`(facetDockAppRepository.observeDockItems(anyLong())).thenReturn(flowOf(facetDockItems))
+        facetId?.let {
+            `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(facetFavorites))
+            `when`(placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(facetDockItems))
+        }
+        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(globalFavorites))
+        `when`(placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(globalDockItems))
         `when`(calendarPermissionRepository.isGranted()).thenReturn(calendarGranted)
         return AppearanceSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
             facetRepository,
-            favoriteAppRepository,
-            defaultFavoriteAppRepository,
-            dockAppRepository,
-            facetDockAppRepository,
+            placementRepository,
             calendarRepository,
             calendarPermissionRepository,
             wallpaperRepository,

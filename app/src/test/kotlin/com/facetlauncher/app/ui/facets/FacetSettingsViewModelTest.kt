@@ -2,12 +2,8 @@ package com.facetlauncher.app.ui.facets
 
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AutomationStateRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppInfo
@@ -48,6 +44,10 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.AppListLimits
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -197,7 +197,7 @@ class FacetSettingsViewModelTest {
         )
 
         assertEquals(defaultFavorites, state.effectiveFavorites)
-        assertEquals("2 of ${FavoriteAppRepository.MAX_FAVORITES}", state.favoritesLabel)
+        assertEquals("2 of ${AppListLimits.MAX_FAVORITES}", state.favoritesLabel)
     }
 
     @Test
@@ -210,7 +210,7 @@ class FacetSettingsViewModelTest {
         )
 
         assertEquals(ownFavorites, state.effectiveFavorites)
-        assertEquals("4 of ${FavoriteAppRepository.MAX_FAVORITES}", state.favoritesLabel)
+        assertEquals("4 of ${AppListLimits.MAX_FAVORITES}", state.favoritesLabel)
     }
 
     @Test
@@ -223,7 +223,7 @@ class FacetSettingsViewModelTest {
         )
 
         assertEquals(defaultDockApps, state.effectiveDockApps)
-        assertEquals("3 of ${DockAppRepository.MAX_APPS}", state.dockLabel)
+        assertEquals("3 of ${AppListLimits.MAX_DOCK_APPS}", state.dockLabel)
     }
 
     @Test
@@ -236,7 +236,7 @@ class FacetSettingsViewModelTest {
         )
 
         assertEquals(ownDockApps, state.effectiveDockApps)
-        assertEquals("1 of ${DockAppRepository.MAX_APPS}", state.dockLabel)
+        assertEquals("1 of ${AppListLimits.MAX_DOCK_APPS}", state.dockLabel)
     }
 
     @Test
@@ -267,27 +267,20 @@ class FacetSettingsViewModelTest {
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings()))
         },
-        favoriteAppRepository: FavoriteAppRepository = mock(FavoriteAppRepository::class.java).also {
-            `when`(it.observeFavoriteItems(anyLong())).thenReturn(flowOf(emptyList()))
-        },
-        defaultFavoriteAppRepository: DefaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java).also {
-            `when`(it.observeDefaultItems()).thenReturn(flowOf(emptyList()))
-        },
-        facetDockAppRepository: FacetDockAppRepository = mock(FacetDockAppRepository::class.java).also {
-            `when`(it.observeDockItems(anyLong())).thenReturn(flowOf(emptyList()))
-        },
-        dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java).also {
-            `when`(it.observeDockItems()).thenReturn(flowOf(emptyList()))
+        placementRepository: PlacementRepository = mock(PlacementRepository::class.java).also {
+            listOf(
+                PlacementTarget(PlacementList.FAVORITES, facetId),
+                PlacementTarget.GlobalFavorites,
+                PlacementTarget(PlacementList.DOCK, facetId),
+                PlacementTarget.GlobalDock,
+            ).forEach { target -> `when`(it.observeItems(target)).thenReturn(flowOf(emptyList())) }
         },
         automationStateRepository: AutomationStateRepository = mock(AutomationStateRepository::class.java),
     ) = FacetSettingsViewModel(
         SavedStateHandle(mapOf("facetId" to facetId)),
         facetRepository,
         settingsRepository,
-        favoriteAppRepository,
-        defaultFavoriteAppRepository,
-        facetDockAppRepository,
-        dockAppRepository,
+        placementRepository,
         ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()), settingsRepository, automationStateRepository, mock(RefreshAutomationStateUseCase::class.java)),
     )
 

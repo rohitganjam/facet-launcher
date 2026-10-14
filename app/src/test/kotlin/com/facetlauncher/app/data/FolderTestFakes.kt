@@ -8,7 +8,7 @@ import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.local.FolderPlacementDao
 import com.facetlauncher.app.data.local.FolderPlacementEntity
 import com.facetlauncher.app.data.local.FolderWithApps
-import com.facetlauncher.app.data.local.PlacementList
+import com.facetlauncher.app.data.model.PlacementList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -122,18 +122,17 @@ internal class FakeAppPlacementDao : AppPlacementDao {
         }
     }
 
-    override suspend fun deleteByPackage(list: PlacementList, global: Boolean, packageName: String, userId: Int) {
-        state.value = state.value.filterNot { it.list == list && (it.ownerKey == 0L) == global && it.packageName == packageName && it.userId == userId }
+    override suspend fun deleteByPackage(packageName: String, userId: Int) {
+        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
     }
 
-    override suspend fun deleteByUserId(list: PlacementList, global: Boolean, userId: Int) {
-        state.value = state.value.filterNot { it.list == list && (it.ownerKey == 0L) == global && it.userId == userId }
+    override suspend fun deleteByUserId(userId: Int) {
+        state.value = state.value.filterNot { it.userId == userId }
     }
 
     override suspend fun deleteAllForOwner(list: PlacementList, ownerKey: Long) {
         state.value = state.value.filterNot { it.list == list && it.ownerKey == ownerKey }
     }
 
-    override suspend fun getOrphaned(list: PlacementList, global: Boolean): List<AppPlacementEntity> =
-        state.value.filter { it.list == list && (it.ownerKey == 0L) == global && it.userId == -1 }
+    override suspend fun getOrphaned(): List<AppPlacementEntity> = state.value.filter { it.userId == -1 }
 }

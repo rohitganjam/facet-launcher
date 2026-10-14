@@ -18,8 +18,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -32,6 +30,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 class DockSettingsScreenTest {
 
@@ -42,7 +43,7 @@ class DockSettingsScreenTest {
         onBack: () -> Unit = {},
         onAddDockApp: () -> Unit = {},
         facetId: Long? = null,
-        seed: suspend (AppRepository, DockAppRepository, FacetDockAppRepository, FolderRepository, FacetRepository) -> Unit = { _, _, _, _, _ -> },
+        seed: suspend (AppRepository, PlacementRepository, FolderRepository, FacetRepository) -> Unit = { _, _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -56,18 +57,16 @@ class DockSettingsScreenTest {
                 val facetRepository = FacetRepository(database.facetDao())
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
-                runBlocking { seed(appRepository, dockAppRepository, facetDockAppRepository, folderRepository, facetRepository) }
+                runBlocking { seed(appRepository, placementRepository, folderRepository, facetRepository) }
                 DockSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
-                    dockAppRepository,
-                    facetDockAppRepository,
+                    placementRepository,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                 )
             }
@@ -111,9 +110,9 @@ class DockSettingsScreenTest {
     fun aFolderInTheDefaultDock_rendersAsAFolderTileInThePreview_notItsAppsFlattened() {
         var folderId = 0L
         setContent(
-            seed = { _, dockAppRepository, _, folderRepository, _ ->
+            seed = { _, placementRepository, folderRepository, _ ->
                 folderId = folderRepository.createFolder("Games")
-                dockAppRepository.placeFolderInDock(folderId, position = 0)
+                placementRepository.placeFolder(PlacementTarget.GlobalDock, folderId, position = 0)
             },
         )
 
@@ -136,9 +135,9 @@ class DockSettingsScreenTest {
         var folderId = 0L
         setContent(
             facetId = 42L,
-            seed = { _, _, facetDockAppRepository, folderRepository, facetRepository ->
+            seed = { _, placementRepository, folderRepository, facetRepository ->
                 folderId = folderRepository.createFolder("Games")
-                facetDockAppRepository.placeFolder(42L, folderId, position = 0)
+                placementRepository.placeFolder(PlacementTarget(PlacementList.DOCK, 42L), folderId, position = 0)
                 facetRepository.getById(42L)?.let { facetRepository.updateOverridingDock(it, true) }
             },
         )

@@ -2,10 +2,6 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
@@ -27,6 +23,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 /** A single facet's effective preview content — everything the carousel's own preview card needs beyond the clock. */
 data class FacetPreviewData(
@@ -46,8 +45,7 @@ data class FacetPreviewData(
  * including which calendars are selected). The dock follows the same shape — a facet overriding
  * its own dock (`overrideDock`) shows that list, one still inheriting shows the launcher-wide
  * default. Spans [FacetRepository],
- * [SettingsRepository], [FavoriteAppRepository], [DefaultFavoriteAppRepository],
- * [FacetDockAppRepository], [DockAppRepository],
+ * [SettingsRepository], [PlacementRepository],
  * [UsageStatsRepository], [UsageAccessRepository], [CalendarPermissionRepository] and
  * [CalendarRepository], so it's a use case rather than something either the ViewModel or a
  * composable computes directly. Unlike [ObserveHomeScreenStateUseCase], which resolves state for
@@ -58,10 +56,7 @@ data class FacetPreviewData(
 class ObserveFacetPreviewsUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
-    private val dockAppRepository: DockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val usageStatsRepository: UsageStatsRepository,
     private val usageAccessRepository: UsageAccessRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
@@ -73,16 +68,16 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         val settings = settingsRepository.settings.distinctUntilChanged()
 
         val facetIds = facets.map { it.map { facet -> facet.id } }.distinctUntilChanged()
-        val ownFavoritesByFacet = facetIds.flatMapLatest { favoriteAppRepository.observeFavoriteItemsForFacets(it) }
-        val ownDockByFacet = facetIds.flatMapLatest { facetDockAppRepository.observeDockItemsForFacets(it) }
+        val ownFavoritesByFacet = facetIds.flatMapLatest { placementRepository.observeItemsForFacets(PlacementList.FAVORITES, it) }
+        val ownDockByFacet = facetIds.flatMapLatest { placementRepository.observeItemsForFacets(PlacementList.DOCK, it) }
 
         return combine(
             facets,
             settings,
             ownFavoritesByFacet,
-            defaultFavoriteAppRepository.observeDefaultItems(),
+            placementRepository.observeItems(PlacementTarget.GlobalFavorites),
             ownDockByFacet,
-            dockAppRepository.observeDockItems(),
+            placementRepository.observeItems(PlacementTarget.GlobalDock),
         ) { facetList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock ->
             Inputs(facetList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock)
         }.flatMapLatest { inputs ->

@@ -9,11 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.CalendarRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -25,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import com.facetlauncher.app.data.PlacementRepository
 
 /** Builds the real [AppearanceSettingsViewModel] over an in-memory DB and a throwaway DataStore, and hosts whichever Appearance screen a test hands it. Shared by the three Appearance screens' tests. */
 internal class AppearanceScreenTestHost(private val composeRule: ComposeContentTestRule) {
@@ -66,7 +63,7 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
         notificationAccessGranted: Boolean = true,
         calendarEvents: List<CalendarEvent> = emptyList(),
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
-        seedApps: suspend (AppRepository, FavoriteAppRepository, DefaultFavoriteAppRepository, DockAppRepository, FacetDockAppRepository, Long?) -> Unit = { _, _, _, _, _, _ -> },
+        seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
         screen: @Composable (AppearanceSettingsViewModel) -> Unit,
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
@@ -85,23 +82,17 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val facetRepository = FacetRepository(database.facetDao())
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
                 runBlocking { seed(facetRepository, facetId) }
-                runBlocking { seedApps(appRepository, favoriteAppRepository, defaultFavoriteAppRepository, dockAppRepository, facetDockAppRepository, facetId) }
+                runBlocking { seedApps(appRepository, placementRepository, facetId) }
                 AppearanceSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
-                    favoriteAppRepository,
-                    defaultFavoriteAppRepository,
-                    dockAppRepository,
-                    facetDockAppRepository,
+                    placementRepository,
                     FakeCalendarRepository(context.contentResolver, calendarEvents),
                     FakeCalendarPermissionRepository(context, granted = calendarGranted),
                     wallpaperRepository,

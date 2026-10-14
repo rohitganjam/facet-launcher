@@ -20,17 +20,9 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.SettingsSearchEntry
-import com.facetlauncher.app.domain.AddAppToDockUseCase
-import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
-import com.facetlauncher.app.domain.AddFolderToDockUseCase
-import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
 import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
-import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
-import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromDockUseCase
-import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +40,12 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import com.facetlauncher.app.domain.AddToActiveListUseCase
+import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.domain.QuickPlacementAction
+import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.PlacedItem
 
 /**
  * Covers [DrawerViewModel.showContactsPermissionPrompt] — the search-drawer analogue of Home's
@@ -87,6 +85,8 @@ class DrawerViewModelTest {
         notificationActionController: NotificationActionController = NotificationActionController(),
         notificationOpener: NotificationOpener = mock(NotificationOpener::class.java),
         observeAppNotifications: ObserveAppNotificationsUseCase = mock(ObserveAppNotificationsUseCase::class.java),
+        addToActiveList: AddToActiveListUseCase = mock(AddToActiveListUseCase::class.java),
+        removeFromActiveList: RemoveFromActiveListUseCase = mock(RemoveFromActiveListUseCase::class.java),
     ): DrawerViewModel {
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(contactsPermissionGranted)
@@ -112,14 +112,8 @@ class DrawerViewModelTest {
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
-            addAppToFavorites = mock(AddAppToFavoritesUseCase::class.java),
-            removeAppFromFavorites = mock(RemoveAppFromFavoritesUseCase::class.java),
-            addAppToDock = mock(AddAppToDockUseCase::class.java),
-            removeAppFromDock = mock(RemoveAppFromDockUseCase::class.java),
-            addFolderToFavorites = mock(AddFolderToFavoritesUseCase::class.java),
-            removeFolderFromFavorites = mock(RemoveFolderFromFavoritesUseCase::class.java),
-            addFolderToDock = mock(AddFolderToDockUseCase::class.java),
-            removeFolderFromDock = mock(RemoveFolderFromDockUseCase::class.java),
+            addToActiveList = addToActiveList,
+            removeFromActiveList = removeFromActiveList,
             folderRepository = folderRepository,
             secureFolderRepository = secureFolderRepository,
             privateSpaceRepository = privateSpaceRepository,
@@ -420,5 +414,47 @@ class DrawerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(PrivateSpaceState.Locked, viewModel.privateSpaceState.value)
+    }
+
+    @Test
+    fun `the four long-press add actions go to the matching list through AddToActiveListUseCase`() = runTest {
+        // Given a drawer with a mocked add use case, an app and a folder
+        val addToActiveList = mock(AddToActiveListUseCase::class.java)
+        val viewModel = drawerViewModel(addToActiveList = addToActiveList)
+        val folder = Folder(id = 3L, name = "Games", apps = emptyList())
+
+        // When the four Add actions fire
+        viewModel.onFavoritesAction(chatApp, QuickPlacementAction.Add(null))
+        viewModel.onDockAction(chatApp, QuickPlacementAction.Add(null))
+        viewModel.onFolderFavoritesAction(folder, QuickPlacementAction.Add(null))
+        viewModel.onFolderDockAction(folder, QuickPlacementAction.Add(null))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each reaches the use case with its own list and item
+        verify(addToActiveList).invoke(PlacementList.FAVORITES, PlacedItem.SingleApp(chatApp))
+        verify(addToActiveList).invoke(PlacementList.DOCK, PlacedItem.SingleApp(chatApp))
+        verify(addToActiveList).invoke(PlacementList.FAVORITES, PlacedItem.FolderItem(folder))
+        verify(addToActiveList).invoke(PlacementList.DOCK, PlacedItem.FolderItem(folder))
+    }
+
+    @Test
+    fun `the four long-press remove actions go to the matching list through RemoveFromActiveListUseCase`() = runTest {
+        // Given a drawer with a mocked remove use case, an app and a folder
+        val removeFromActiveList = mock(RemoveFromActiveListUseCase::class.java)
+        val viewModel = drawerViewModel(removeFromActiveList = removeFromActiveList)
+        val folder = Folder(id = 3L, name = "Games", apps = emptyList())
+
+        // When the four Remove actions fire
+        viewModel.onFavoritesAction(chatApp, QuickPlacementAction.Remove(null))
+        viewModel.onDockAction(chatApp, QuickPlacementAction.Remove(null))
+        viewModel.onFolderFavoritesAction(folder, QuickPlacementAction.Remove(null))
+        viewModel.onFolderDockAction(folder, QuickPlacementAction.Remove(null))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each reaches the use case with its own list and item
+        verify(removeFromActiveList).invoke(PlacementList.FAVORITES, PlacedItem.SingleApp(chatApp))
+        verify(removeFromActiveList).invoke(PlacementList.DOCK, PlacedItem.SingleApp(chatApp))
+        verify(removeFromActiveList).invoke(PlacementList.FAVORITES, PlacedItem.FolderItem(folder))
+        verify(removeFromActiveList).invoke(PlacementList.DOCK, PlacedItem.FolderItem(folder))
     }
 }

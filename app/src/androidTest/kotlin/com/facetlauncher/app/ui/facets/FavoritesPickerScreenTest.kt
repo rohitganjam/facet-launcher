@@ -18,8 +18,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -33,6 +31,10 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 class FavoritesPickerScreenTest {
 
@@ -45,7 +47,7 @@ class FavoritesPickerScreenTest {
     /** [seed] runs against real (throwaway, in-memory) repositories before the screen renders. */
     private fun setContent(
         onDone: () -> Unit = {},
-        seed: suspend (AppRepository, FavoriteAppRepository, FolderRepository) -> Unit = { _, _, _ -> },
+        seed: suspend (AppRepository, PlacementRepository, FolderRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -54,19 +56,17 @@ class FavoritesPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 runBlocking {
                     facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
-                    seed(appRepository, favoriteAppRepository, folderRepository)
+                    seed(appRepository, placementRepository, folderRepository)
                 }
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 FavoritesPickerViewModel(
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     GetInstalledAppsUseCase(appRepository),
-                    favoriteAppRepository,
-                    defaultFavoriteAppRepository,
+                    placementRepository,
                     folderRepository,
                     SortAppsForPickerUseCase(usageStatsRepository),
                     usageAccessRepository,
@@ -109,9 +109,9 @@ class FavoritesPickerScreenTest {
     @Test
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already favorited, so both "FAVORITES" and "ALL APPS" render
-        setContent { appRepository, favoriteAppRepository, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
-            installed.take(2).forEachIndexed { index, app -> favoriteAppRepository.addFavorite(facetId, app, index) }
+            installed.take(2).forEachIndexed { index, app -> placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), app, index) }
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithText("ALL APPS").assertExists() }.isSuccess
@@ -129,10 +129,10 @@ class FavoritesPickerScreenTest {
     fun favoritedAppsRenderFirstUnderTheirOwnSectionHeader() {
         // Given two real apps already favorited
         var favorites: List<AppInfo> = emptyList()
-        setContent { appRepository, favoriteAppRepository, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             favorites = installed.take(2)
-            favorites.forEachIndexed { index, app -> favoriteAppRepository.addFavorite(facetId, app, index) }
+            favorites.forEachIndexed { index, app -> placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), app, index) }
         }
 
         // Then both section headers render, with the favorited apps' rows present under "FAVORITES"
@@ -149,14 +149,14 @@ class FavoritesPickerScreenTest {
     fun checkingIsBlockedAtTheMaxFavoritesCap() {
         // Given favorites already at the cap
         var overflowApp: AppInfo? = null
-        setContent { appRepository, favoriteAppRepository, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
-            val capApps = installed.take(FavoriteAppRepository.MAX_FAVORITES)
-            overflowApp = installed.getOrNull(FavoriteAppRepository.MAX_FAVORITES)
-            runBlocking { capApps.forEachIndexed { index, app -> favoriteAppRepository.addFavorite(facetId, app, index) } }
+            val capApps = installed.take(AppListLimits.MAX_FAVORITES)
+            overflowApp = installed.getOrNull(AppListLimits.MAX_FAVORITES)
+            runBlocking { capApps.forEachIndexed { index, app -> placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), app, index) } }
         }
         val app = requireNotNull(overflowApp) {
-            "test needs at least ${FavoriteAppRepository.MAX_FAVORITES + 1} installed apps visible to the test APK"
+            "test needs at least ${AppListLimits.MAX_FAVORITES + 1} installed apps visible to the test APK"
         }
         val rowTag = "favorites_picker_row_${app.packageName}"
 
@@ -206,10 +206,10 @@ class FavoritesPickerScreenTest {
     fun uncheckingAFolderInThePickerUnplacesItWithoutDeletingIt() {
         // Given a folder already placed in favorites
         var folderId: Long? = null
-        setContent { _, favoriteAppRepository, folderRepository ->
+        setContent { _, placementRepository, folderRepository ->
             val id = folderRepository.createFolder("Games")
             folderId = id
-            favoriteAppRepository.placeFolder(facetId, id, position = 0)
+            placementRepository.placeFolder(PlacementTarget(PlacementList.FAVORITES, facetId), id, position = 0)
         }
         val id = requireNotNull(folderId)
 
@@ -229,9 +229,9 @@ class FavoritesPickerScreenTest {
     }
 
     /** No `facetId` — the launcher-wide default Favorites list, reached from Settings. */
-    private fun setContentForDefaultFavorites(): Pair<AppRepository, DefaultFavoriteAppRepository> {
+    private fun setContentForDefaultFavorites(): Pair<AppRepository, PlacementRepository> {
         lateinit var appRepository: AppRepository
-        lateinit var defaultFavoriteAppRepository: DefaultFavoriteAppRepository
+        lateinit var placementRepository: PlacementRepository
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -239,15 +239,13 @@ class FavoritesPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
-                defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 FavoritesPickerViewModel(
                     SavedStateHandle(),
                     GetInstalledAppsUseCase(appRepository),
-                    favoriteAppRepository,
-                    defaultFavoriteAppRepository,
+                    placementRepository,
                     folderRepository,
                     SortAppsForPickerUseCase(usageStatsRepository),
                     usageAccessRepository,
@@ -258,7 +256,7 @@ class FavoritesPickerScreenTest {
             }
         }
         composeRule.waitForIdle()
-        return appRepository to defaultFavoriteAppRepository
+        return appRepository to placementRepository
     }
 
     @Test
@@ -288,7 +286,7 @@ class FavoritesPickerScreenTest {
         // facetId, the ViewModel routes reads/writes through DefaultFavoriteAppRepository
         // rather than FavoriteAppRepository, so this proves it landed in the launcher-wide
         // default list, not a per-facet one. Deliberately not asserted by calling
-        // defaultFavoriteAppRepository.observeDefaultFavorites() directly from the test: that
+        // placementRepository.observeApps(PlacementTarget.GlobalFavorites) directly from the test: that
         // flow chains into AppRepository.observeInstalledApps()'s live LauncherApps.registerCallback,
         // which needs a Looper-bound thread — fine when collected via the ViewModel's own
         // viewModelScope (Main), but calling it via a bare runBlocking on the instrumentation
@@ -302,10 +300,10 @@ class FavoritesPickerScreenTest {
     fun sortDirectionToggleReversesAllAppsWithoutTouchingFavorites() {
         // Given one real app already favorited, and at least one more not favorited
         var favorite: AppInfo? = null
-        setContent { appRepository, favoriteAppRepository, _ ->
+        setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getInstalledApps() }
             favorite = installed.first()
-            favoriteAppRepository.addFavorite(facetId, installed.first(), 0)
+            placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), installed.first(), 0)
         }
         val favoriteTag = "favorites_picker_row_${requireNotNull(favorite).packageName}"
         composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.otherResults.isNotEmpty() }
