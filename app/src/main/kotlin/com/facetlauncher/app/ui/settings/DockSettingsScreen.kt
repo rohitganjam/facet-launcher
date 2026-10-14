@@ -202,7 +202,7 @@ private val DOCK_TILE_SHAPE = RoundedCornerShape(14.dp)
 
 /** A [PlacedItem]'s stable identity for keying/reordering — a folder's own id, or its app's component. */
 private fun PlacedItem.reorderKey(): Any = when (this) {
-    is PlacedItem.SingleApp -> app.packageName to app.activityName
+    is PlacedItem.SingleApp -> app.listKey
     is PlacedItem.FolderItem -> "folder_${folder.id}"
 }
 

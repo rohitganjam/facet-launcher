@@ -107,12 +107,12 @@ class FolderAppPickerViewModelTest {
         val viewModel = createViewModel(folderId, listOf(a), repository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
-        assertTrue((a.packageName to a.activityName) !in viewModel.uiState.value.folderAppComponents)
+        assertTrue(a.listKey !in viewModel.uiState.value.folderAppComponents)
 
         viewModel.toggleApp(a)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue((a.packageName to a.activityName) in viewModel.uiState.value.folderAppComponents)
+        assertTrue(a.listKey in viewModel.uiState.value.folderAppComponents)
         assertEquals(listOf(a), repository.observeFolders().first().single().apps)
     }
 
@@ -125,12 +125,12 @@ class FolderAppPickerViewModelTest {
         val viewModel = createViewModel(folderId, listOf(a), repository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
-        assertTrue((a.packageName to a.activityName) in viewModel.uiState.value.folderAppComponents)
+        assertTrue(a.listKey in viewModel.uiState.value.folderAppComponents)
 
         viewModel.toggleApp(a)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue((a.packageName to a.activityName) !in viewModel.uiState.value.folderAppComponents)
+        assertTrue(a.listKey !in viewModel.uiState.value.folderAppComponents)
         assertTrue(repository.observeFolders().first().single().apps.isEmpty())
     }
 

@@ -87,7 +87,7 @@ fun AppPickerScreen(
     query: String,
     selectedResults: List<AppInfo>,
     otherResults: List<AppInfo>,
-    selectedComponents: Set<Pair<String, String>>,
+    selectedComponents: Set<String>,
     canAddMore: Boolean,
     canRemove: Boolean,
     sortOption: AppSortOption,
@@ -215,7 +215,7 @@ private fun AppPickerAppsList(
     query: String,
     selectedResults: List<AppInfo>,
     otherResults: List<AppInfo>,
-    selectedComponents: Set<Pair<String, String>>,
+    selectedComponents: Set<String>,
     canAddMore: Boolean,
     canRemove: Boolean,
     sortOption: AppSortOption,
@@ -252,7 +252,7 @@ private fun AppPickerAppsList(
         if (selectedResults.isNotEmpty()) {
             item { AppPickerSectionHeader(selectedSectionLabel) }
             items(selectedResults, key = { it.listKey }) { app ->
-                val isSelected = (app.packageName to app.activityName) in selectedComponents
+                val isSelected = app.listKey in selectedComponents
                 AppPickerRow(
                     app = app,
                     checked = isSelected,
@@ -265,7 +265,7 @@ private fun AppPickerAppsList(
         if (otherResults.isNotEmpty()) {
             item { AppPickerSectionHeader(stringResource(R.string.app_picker_all_apps)) }
             items(otherResults, key = { it.listKey }) { app ->
-                val isSelected = (app.packageName to app.activityName) in selectedComponents
+                val isSelected = app.listKey in selectedComponents
                 AppPickerRow(
                     app = app,
                     checked = isSelected,

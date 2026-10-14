@@ -51,6 +51,16 @@ class DockAppPickerViewModelTest {
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
+    /** The same app as [app] but in another user's profile (a Work Profile copy). */
+    private fun workCopyOf(app: AppInfo): AppInfo {
+        val parcel = android.os.Parcel.obtain()
+        parcel.writeInt(10)
+        parcel.setDataPosition(0)
+        val handle = android.os.UserHandle(parcel)
+        parcel.recycle()
+        return app.copy(profile = com.facetlauncher.app.data.model.AppProfile.WORK, userHandle = handle)
+    }
+
     private suspend fun createViewModel(
         installed: List<AppInfo>,
         dockApps: List<AppInfo>,
@@ -126,5 +136,20 @@ class DockAppPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(AppSortOption.LAST_USED, viewModel.uiState.value.sortOption)
+    }
+
+    @Test
+    fun `a Work Profile copy of a dock app is not shown as selected`() = runTest {
+        // Given the personal copy of an app is in the dock and its Work Profile copy is installed too
+        val personal = appInfo('a')
+        val work = workCopyOf(personal)
+        val viewModel = createViewModel(installed = listOf(personal, work), dockApps = listOf(personal))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then only the personal copy is selected, and the Work copy stays available to add
+        assertEquals(listOf(personal), viewModel.uiState.value.selectedResults)
+        assertEquals(listOf(work), viewModel.uiState.value.otherResults)
+        assertEquals(setOf(personal.listKey), viewModel.uiState.value.dockPackageComponents)
     }
 }

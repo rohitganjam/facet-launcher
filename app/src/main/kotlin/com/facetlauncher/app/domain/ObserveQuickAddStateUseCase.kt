@@ -47,9 +47,9 @@ data class QuickAddState(
  */
 class ObserveQuickAddStateUseCase @Inject constructor() {
     fun forApp(app: AppInfo, dockItems: List<PlacedItem>, favoriteItems: List<PlacedItem>, dockFacetName: String?, favoritesFacetName: String?): QuickAddState {
-        val component = app.packageName to app.activityName
+        val component = app.listKey
         return resolve(
-            isMember = { it is PlacedItem.SingleApp && (it.app.packageName to it.app.activityName) == component },
+            isMember = { it is PlacedItem.SingleApp && it.app.listKey == component },
             dockItems = dockItems,
             favoriteItems = favoriteItems,
             dockFacetName = dockFacetName,

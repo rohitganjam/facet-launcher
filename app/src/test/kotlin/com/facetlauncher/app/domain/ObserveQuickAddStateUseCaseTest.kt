@@ -19,6 +19,16 @@ class ObserveQuickAddStateUseCaseTest {
 
     private val app = appInfo('z')
 
+    /** The same app as [app] but in another user's profile (a Work Profile copy). */
+    private fun workCopyOf(app: AppInfo): AppInfo {
+        val parcel = android.os.Parcel.obtain()
+        parcel.writeInt(10)
+        parcel.setDataPosition(0)
+        val handle = android.os.UserHandle(parcel)
+        parcel.recycle()
+        return app.copy(profile = com.facetlauncher.app.data.model.AppProfile.WORK, userHandle = handle)
+    }
+
     @Test
     fun `forApp shows Add against the launcher-wide default when neither list names a facet`() {
         val result = useCase.forApp(app, dockItems = emptyList(), favoriteItems = emptyList(), dockFacetName = null, favoritesFacetName = null)
@@ -97,5 +107,19 @@ class ObserveQuickAddStateUseCaseTest {
 
         assertEquals(QuickPlacementAction.Remove(facetName = null), result.favoritesAction)
         assertEquals(QuickPlacementAction.Remove(facetName = null), result.dockAction)
+    }
+
+    @Test
+    fun `forApp treats a Work Profile copy as not yet a member when only the personal copy is placed`() {
+        // Given the personal copy is already in both lists
+        val work = workCopyOf(app)
+        val placed = listOf(PlacedItem.SingleApp(app))
+
+        // When opening the long-press menu of the Work Profile copy
+        val result = useCase.forApp(work, dockItems = placed, favoriteItems = placed, dockFacetName = null, favoritesFacetName = null)
+
+        // Then it offers Add, not Remove, for both lists
+        assertEquals(QuickPlacementAction.Add(facetName = null), result.favoritesAction)
+        assertEquals(QuickPlacementAction.Add(facetName = null), result.dockAction)
     }
 }
