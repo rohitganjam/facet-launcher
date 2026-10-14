@@ -269,7 +269,7 @@ private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo
         items(order, key = { it.listKey }) { app ->
             val isDragging = reorderState.isDragging(app)
             AppIcon(
-                icon = app.icon,
+                app = app,
                 size = AppIconSize.TILE,
                 contentDescription = app.label,
                 modifier = Modifier
@@ -435,7 +435,7 @@ private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppI
                         .testTag("onboarding_favorite_reorder_handle_${app.packageName}")
                         .then(reorderState.dragModifier(app)),
                 )
-                AppIcon(icon = app.icon, size = 30.dp, contentDescription = null)
+                AppIcon(app = app, size = 30.dp, contentDescription = null)
                 Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             }
         }

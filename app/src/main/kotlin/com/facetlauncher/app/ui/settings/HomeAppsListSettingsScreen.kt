@@ -310,7 +310,7 @@ private fun DefaultFavoritesReorderList(favorites: List<PlacedItem>, onReorder: 
                 )
                 when (item) {
                     is PlacedItem.SingleApp -> {
-                        AppIcon(icon = item.app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                        AppIcon(app = item.app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
                         Text(text = item.app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
                     }
                     is PlacedItem.FolderItem -> {

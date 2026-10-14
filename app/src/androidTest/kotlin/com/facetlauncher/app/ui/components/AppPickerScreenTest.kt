@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.UserHandle
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
@@ -80,5 +81,22 @@ class AppPickerScreenTest {
 
         // Then both rows render
         composeRule.onAllNodesWithText("Calendar").assertCountEquals(2)
+    }
+
+    @Test
+    fun onlyTheWorkCopyOfADuplicatedAppCarriesTheWorkBadge() {
+        // Given the same app for the personal user and a Work Profile
+        setContent(selectedResults = emptyList(), otherResults = listOf(personalCalendar, workCalendar))
+
+        // Then exactly one row, the Work copy's, shows the Work badge, so the two rows can be told apart
+        // (a clickable row merges its children, so the badge is only visible in the unmerged tree)
+        composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun anAppInOnlyThePersonalProfileHasNoWorkBadge() {
+        setContent(selectedResults = emptyList(), otherResults = listOf(personalCalendar))
+
+        composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(0)
     }
 }

@@ -257,7 +257,7 @@ private fun DockAppsRow(
                         .then(reorderState.dragModifier(item)),
                 ) {
                     when (item) {
-                        is PlacedItem.SingleApp -> AppIcon(icon = item.app.icon, size = AppIconSize.TILE, contentDescription = item.app.label)
+                        is PlacedItem.SingleApp -> AppIcon(app = item.app, size = AppIconSize.TILE, contentDescription = item.app.label)
                         is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
                     }
                 }
