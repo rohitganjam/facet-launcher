@@ -63,7 +63,7 @@ class NotificationBadgeRepositoryTest {
     }
 
     @Test
-    fun `leaves out silent media non-clearable secret and contentless notifications`() = runTest {
+    fun `leaves out silent media secret and contentless notifications`() = runTest {
         // Given one good notification and one of each kind that must not be listed
         val repository = NotificationBadgeRepository()
         repository.setActiveNotifications(
@@ -71,7 +71,6 @@ class NotificationBadgeRepositoryTest {
                 listed(key = "good"),
                 listed(key = "silent").copy(silent = true),
                 listed(key = "media").copy(isMedia = true),
-                listed(key = "ongoing").copy(isClearable = false),
                 listed(key = "secret").copy(isSecret = true),
                 listed(key = "empty", title = " ", text = null),
             ),
@@ -82,6 +81,37 @@ class NotificationBadgeRepositoryTest {
 
         // Then only the good one is listed
         assertEquals(listOf("good"), result.map { it.key })
+    }
+
+    @Test
+    fun `lists a persistent notification alongside the dismissible ones`() = runTest {
+        // Given an ongoing, non-clearable notification and two ordinary ones
+        val repository = NotificationBadgeRepository()
+        repository.setActiveNotifications(
+            listOf(
+                listed(key = "new", postTime = 3),
+                listed(key = "ongoing", postTime = 2).copy(isClearable = false),
+                listed(key = "old", postTime = 1),
+            ),
+        )
+
+        // When listing the app's notifications
+        val result = repository.notificationsFor("com.chat", personal).first()
+
+        // Then all three are listed, in order, and the persistent one is still marked as not clearable
+        assertEquals(listOf("new", "ongoing", "old"), result.map { it.key })
+        assertEquals(listOf(true, false, true), result.map { it.isClearable })
+    }
+
+    @Test
+    fun `a persistent notification still counts toward the badge`() = runTest {
+        // Given an app whose only notification is persistent
+        val repository = NotificationBadgeRepository()
+        repository.setActiveNotifications(listOf(listed(key = "ongoing").copy(isClearable = false)))
+
+        // Then it is both counted on the badge and listed, so the icon and the sheet agree
+        assertEquals(mapOf("com.chat" to 1), repository.badgeCounts.value)
+        assertEquals(listOf("ongoing"), repository.notificationsFor("com.chat", personal).first().map { it.key })
     }
 
     @Test

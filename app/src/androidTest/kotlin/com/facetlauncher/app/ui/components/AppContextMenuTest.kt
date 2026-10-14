@@ -712,4 +712,88 @@ class AppContextMenuTest {
 
     private fun notification(key: String, title: String, text: String) =
         NotificationInfo(packageName = app.packageName, silent = false, key = key, title = title, text = text, postTime = 1L)
+
+    private val persistent = notification("ongoing", "Navigation", "Turn left in 200 m").copy(isClearable = false)
+
+    @Test
+    fun aPersistentNotificationIsListedAndCountedAlongsideOthers() {
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(listOf(persistent) + twoNotifications)) }))
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_ongoing").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithText("Navigation").assertExists()
+        composeRule.onNodeWithText("Notifications · 3").assertExists()
+    }
+
+    @Test
+    fun tappingAPersistentNotificationOpensIt() {
+        var opened: NotificationInfo? = null
+        var sheetDismissed = false
+        setContent(
+            onDismissRequest = { sheetDismissed = true },
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(listOf(persistent))) },
+                onOpen = { opened = it },
+            ),
+        )
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_ongoing").assertExists() }.isSuccess
+        }
+
+        composeRule.onNodeWithTag("app_notification_ongoing").performClick()
+
+        assertEquals(persistent, opened)
+        assert(sheetDismissed)
+    }
+
+    @Test
+    fun aPersistentNotificationCannotBeSwipedAway() {
+        var dismissedKeys: List<String>? = null
+        setContent(
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(listOf(persistent))) },
+                onDismiss = { dismissedKeys = it; true },
+            ),
+        )
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_ongoing").assertExists() }.isSuccess
+        }
+
+        composeRule.onNodeWithTag("app_notification_ongoing").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        // Then nothing was dismissed and the card is still there
+        assertEquals(null, dismissedKeys)
+        composeRule.onNodeWithTag("app_notification_ongoing").assertExists()
+    }
+
+    @Test
+    fun clearAllLeavesPersistentNotificationsOut() {
+        var dismissedKeys: List<String>? = null
+        setContent(
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(listOf(persistent) + twoNotifications)) },
+                onDismiss = { dismissedKeys = it; true },
+            ),
+        )
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_clear_all").assertExists() }.isSuccess
+        }
+
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertIsEnabled().performClick()
+
+        assertEquals(listOf("k1", "k2"), dismissedKeys)
+    }
+
+    @Test
+    fun clearAllIsGreyedOutWhenEveryNotificationIsPersistent() {
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(listOf(persistent))) }))
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_ongoing").assertExists() }.isSuccess
+        }
+
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertIsNotEnabled()
+        composeRule.onNodeWithTag("app_notifications_empty").assertDoesNotExist()
+    }
 }

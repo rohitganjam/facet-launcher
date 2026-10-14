@@ -4065,6 +4065,7 @@ Design agreed in chat (mocks 14a/14b/15a/15b). Sheet = header (icon, name, bare 
 - [x] `FolderTileContextMenu`: same header (folder glyph, name, app count, Rename as an icon button) and the shared `PlacementActions` for Favorites and Dock.
 - [x] One `AppMenuNotifications` holder (observe, open, dismiss, enable access) replaces the two shortcut parameters through `HomeScreen`, `AppDrawerScreen`, `FolderContentsSheet` and the previews; `HomeDrawerRoute` builds it from `DrawerViewModel` and gains `onNavigateToNotificationAccessExplanation`, wired in `FacetNavHost`. Sheets still close on Home press.
 - [x] `DrawerViewModel`: `observeAppNotifications`, `dismissNotifications`, `openNotification` (opens through `NotificationOpener`, then clears it only if it asked for `autoCancel`).
+- [x] Persistent (non-clearable) notifications are listed so the sheet matches the icon badge: tappable, no swipe, excluded from "Clear all", never dismissed after opening.
 - [x] Strings in en/de/es/fr/pt; no hardcoded text (previews use existing string resources).
 - [x] `@Preview` light and dark for the main page, empty, tiles, rows, notifications and the folder menu.
 
