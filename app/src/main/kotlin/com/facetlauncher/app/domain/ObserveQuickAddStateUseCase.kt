@@ -1,6 +1,5 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.Folder
@@ -75,7 +74,7 @@ class ObserveQuickAddStateUseCase @Inject constructor() {
         favoritesFacetName: String?,
     ): QuickAddState = QuickAddState(
         favoritesAction = quickPlacementAction(favoriteItems, isMember, favoritesFacetName, AppListLimits.MAX_FAVORITES),
-        dockAction = quickPlacementAction(dockItems, isMember, dockFacetName, DockAppRepository.MAX_APPS),
+        dockAction = quickPlacementAction(dockItems, isMember, dockFacetName, AppListLimits.MAX_DOCK_APPS),
     )
 
     private fun quickPlacementAction(

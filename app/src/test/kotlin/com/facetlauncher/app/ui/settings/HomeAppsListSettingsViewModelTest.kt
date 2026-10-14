@@ -2,8 +2,6 @@ package com.facetlauncher.app.ui.settings
 
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -38,6 +36,10 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.AppListLimits
 
 /** A real (not Mockito) stub — plain Mockito can't reliably stub a `suspend` return. */
 private fun fakeWallpaperRepository() =
@@ -65,23 +67,21 @@ class HomeAppsListSettingsViewModelTest {
         facets: List<FacetEntity> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
-        favoriteAppRepository: FavoriteAppRepository = mock(FavoriteAppRepository::class.java),
-        defaultFavoriteAppRepository: DefaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java),
+        placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
     ): HomeAppsListSettingsViewModel {
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(favoriteAppRepository.observeFavoriteItems(anyLong())).thenReturn(flowOf(favorites))
-        `when`(defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(favorites))
+        facetId?.let { `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(favorites)) }
+        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(favorites))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
         return HomeAppsListSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
             facetRepository,
-            favoriteAppRepository,
-            defaultFavoriteAppRepository,
+            placementRepository,
             fakeWallpaperRepository(),
             defaultAppRepository,
             getInstalledApps,
@@ -108,7 +108,7 @@ class HomeAppsListSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(2, viewModel.uiState.value.favorites.size)
-        assertEquals("2 of ${DefaultFavoriteAppRepository.MAX_FAVORITES}", viewModel.uiState.value.favoritesLabel)
+        assertEquals("2 of ${AppListLimits.MAX_FAVORITES}", viewModel.uiState.value.favoritesLabel)
         assertEquals(favorites, viewModel.uiState.value.previewApps)
     }
 
@@ -148,27 +148,27 @@ class HomeAppsListSettingsViewModelTest {
 
     @Test
     fun `global reorderFavorites hits the default list, folders included`() = runTest {
-        val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
-        val viewModel = createViewModel(defaultFavoriteAppRepository = defaultFavoriteAppRepository)
+        val placementRepository = mock(PlacementRepository::class.java)
+        val viewModel = createViewModel(placementRepository = placementRepository)
         val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
         val reordered = listOf(PlacedItem.FolderItem(folder), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(defaultFavoriteAppRepository).reorderItems(reordered)
+        verify(placementRepository).reorderItems(PlacementTarget.GlobalFavorites, reordered)
     }
 
     @Test
     fun `facet-scoped reorderFavorites hits that facet's list, folders included`() = runTest {
-        val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
-        val viewModel = createViewModel(facetId = 7L, favoriteAppRepository = favoriteAppRepository)
+        val placementRepository = mock(PlacementRepository::class.java)
+        val viewModel = createViewModel(facetId = 7L, placementRepository = placementRepository)
         val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
         val reordered = listOf(PlacedItem.FolderItem(folder), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(favoriteAppRepository).reorderFavoriteItems(7L, reordered)
+        verify(placementRepository).reorderItems(PlacementTarget(PlacementList.FAVORITES, 7L), reordered)
     }
 }

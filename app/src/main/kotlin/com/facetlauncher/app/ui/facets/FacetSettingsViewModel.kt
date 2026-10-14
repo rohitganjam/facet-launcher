@@ -3,10 +3,6 @@ package com.facetlauncher.app.ui.facets
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.data.SettingsRepository
@@ -34,6 +30,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 data class FacetSettingsUiState(
     val facet: FacetEntity? = null,
@@ -93,14 +93,14 @@ data class FacetSettingsUiState(
     val listContentMode: ListContentMode get() = if (isOverridingApps) facet?.listContentMode ?: globalListContentMode else globalListContentMode
     val appsToShowCount: Int get() = if (isOverridingApps) facet?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overridingFavorites == true) favorites else defaultFavorites
-    val favoritesLabel: String get() = "${effectiveFavorites.size} of ${FavoriteAppRepository.MAX_FAVORITES}"
+    val favoritesLabel: String get() = "${effectiveFavorites.size} of ${AppListLimits.MAX_FAVORITES}"
 
     /** The Dock card's single inherit/override switch — governs only the dock's own app list now (Icons/Text display style moved to Settings → Appearance — see chat history). */
     val isOverridingDock: Boolean get() = facet?.overrideDock ?: false
     /** Look, not content — see [appRowPosition]'s own doc for the resolution shape. */
     val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, globalDockDisplayMode)
     val effectiveDockApps: List<PlacedItem> get() = if (isOverridingDock) dockApps else defaultDockApps
-    val dockLabel: String get() = "${effectiveDockApps.size} of ${DockAppRepository.MAX_APPS}"
+    val dockLabel: String get() = "${effectiveDockApps.size} of ${AppListLimits.MAX_DOCK_APPS}"
 }
 
 @HiltViewModel
@@ -108,10 +108,7 @@ class FacetSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
-    private val dockAppRepository: DockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val activateFacetById: ActivateFacetByIdUseCase,
 ) : ViewModel() {
 
@@ -121,13 +118,13 @@ class FacetSettingsViewModel @Inject constructor(
         facetRepository.observeFacets(),
         settingsRepository.settings,
         combine(
-            favoriteAppRepository.observeFavoriteItems(facetId),
-            defaultFavoriteAppRepository.observeDefaultItems(),
+            placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, facetId)),
+            placementRepository.observeItems(PlacementTarget.GlobalFavorites),
             ::Pair,
         ),
         combine(
-            facetDockAppRepository.observeDockItems(facetId),
-            dockAppRepository.observeDockItems(),
+            placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, facetId)),
+            placementRepository.observeItems(PlacementTarget.GlobalDock),
             ::Pair,
         ),
     ) { facets, settings, favs, docks ->

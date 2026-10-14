@@ -3,8 +3,6 @@ package com.facetlauncher.app.ui.settings
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -26,6 +24,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 /**
  * `global*`/`facet*` fields are the raw stored values; the effective, screen-bound properties
@@ -56,7 +57,7 @@ data class DockSettingsUiState(
  * Settings → Dock, and (with a `facetId`) a facet's own Dock screen — reused the same way
  * [com.facetlauncher.app.ui.home.clock.ClockStyleGalleryViewModel] is reused for the global and
  * per-facet clock gallery. No `facetId` (or [NO_ACTIVE_FACET_ID]) edits the launcher-wide
- * default dock; a real id edits that facet's own [FacetDockAppRepository] list and
+ * default dock; a real id edits that facet's own list in [PlacementRepository] and
  * `dockDisplayMode`, always. The Inherit/Override switch (moved in from
  * `FacetSettingsScreen` — see chat history) lives on this screen itself now.
  */
@@ -65,8 +66,7 @@ class DockSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
-    private val dockAppRepository: DockAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val wallpaperRepository: WallpaperRepository,
 ) : ViewModel() {
 
@@ -74,8 +74,8 @@ class DockSettingsViewModel @Inject constructor(
 
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
 
-    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { facetDockAppRepository.observeDockItems(it) } ?: flowOf(emptyList())
-    private val globalDockItemsFlow: Flow<List<PlacedItem>> = dockAppRepository.observeDockItems()
+    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
+    private val globalDockItemsFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalDock)
 
     val uiState: StateFlow<DockSettingsUiState> = combine(
         settingsRepository.settings,
@@ -101,9 +101,7 @@ class DockSettingsViewModel @Inject constructor(
 
     fun reorderDockItems(orderedItems: List<PlacedItem>) {
         viewModelScope.launch {
-            facetId?.let { facetId ->
-                facetDockAppRepository.reorderDockItems(facetId, orderedItems)
-            } ?: dockAppRepository.reorderDockItems(orderedItems)
+            placementRepository.reorderItems(PlacementTarget(PlacementList.DOCK, facetId), orderedItems)
         }
     }
 
@@ -121,7 +119,7 @@ class DockSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val facet = facetRepository.getById(pid) ?: return@launch
             if (overriding && state.facetDockItems.isEmpty()) {
-                facetDockAppRepository.replaceItems(pid, state.globalDockItems)
+                placementRepository.replaceItems(PlacementTarget(PlacementList.DOCK, pid), state.globalDockItems)
             }
             facetRepository.updateOverridingDock(facet, overriding)
         }

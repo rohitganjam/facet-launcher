@@ -11,66 +11,51 @@ error; see this doc's own rule in `CLAUDE.md`'s "Living architecture docs" secti
 
 | # | Finding | Severity | Effort |
 |---|---|---|---|
-| F2 | Composables construct use cases directly (`AppDrawerScreen`) | Medium (convention) | Small |
-| F3 | UI references `DockAppRepository.MAX_APPS` | Low | Trivial |
-| F4 | `domain/` imports `android.*` in 4 files | Low–Medium | Small |
-| F5 | Repository→repository dependency web (5 placement repos → `FolderRepository` → `AppRepository`) | Medium (design) | Medium |
-| F6 | Four structurally identical placement table families | Medium (maintenance) | Large (migration) |
-| F7 | ViewModels collect for their whole lifetime (`launchIn(viewModelScope)`, not `stateIn(WhileSubscribed)`) | Low | Small |
+| F2 | Composables construct use cases directly (`AppDrawerScreen`, 3 use cases) | Medium (convention) | Small |
+| F4 | `domain/` imports `android.*` in 5 files | Low–Medium | Small |
+| F5 | Repository→repository dependency web (`PlacementRepository` → `FolderRepository` → `AppRepository`) | Medium (design) | Medium |
+| F7 | `HomeViewModel` and `LauncherViewModel` collect for their whole lifetime (`launchIn(viewModelScope)`, not `stateIn(WhileSubscribed)`) | Low | Small |
 | F8 | `ObserveHomeScreenStateUseCase` / `ObserveHubStateUseCase` hold mutable state while unscoped | Low | Trivial |
 | F10 | Recents / Most-used / calendar are one-shot reads behind a manual `refreshTrigger` | Low (UX) | Medium |
 | F11 | Backup v3 omits every clock/app-list column added in schema v13–v15 (both global and per-facet) | Medium (data loss on restore) | Small |
-| F13 | Restored placements are written with `userId = -1` and stay invisible until the next process restart | **High** (visible bug) | Small |
 | F12 | `DrawerViewModel` exposes ~8 separate `StateFlow`s instead of one `DrawerUiState`; `AssignCalendarColorsUseCase` is `new`ed in a ViewModel instead of injected | Low (convention) | Small |
 
 ---
 
 ## F2 — Composables instantiating use cases (Medium)
 
-`ui/drawer/AppDrawerScreen.kt:219` and `:241`:
+`ui/drawer/AppDrawerScreen.kt:250`, `:272` and `:284`:
 
 ```kotlin
 val rankBySearchRelevance = remember { RankBySearchRelevanceUseCase() }
 val groupUseCase = remember { GroupAppsByLetterUseCase() }
+val recentlyInstalledUseCase = remember { RecentlyInstalledAppsUseCase() }
 ```
 
-Both are pure functions with no dependencies, so nothing breaks — but it is the one place a
+All three are pure functions with no dependencies, so nothing breaks — but it is the one place a
 composable reaches into `domain/`, and `DrawerViewModel` already injects
-`RankBySearchRelevanceUseCase`. Move the grouping/ranking into `DrawerViewModel` (emit
+`RankBySearchRelevanceUseCase`. Move the grouping/ranking/recents into `DrawerViewModel` (emit
 `GroupedApps` in `DrawerUiState`) or pass the result in as a parameter. The same
 `AppDrawerScreenTest` assertions will still hold.
 
-## F3 — UI reading a repository constant (Low)
-
-Five UI files read `DockAppRepository.MAX_APPS`: `ui/settings/DockSettingsScreen.kt:144`,
-`ui/home/HomePreview.kt` (`HomePreviewDock`), `ui/onboarding/OnboardingHomeSetupPage.kt:115`,
-`ui/facets/FacetSettingsViewModel.kt:106` and `ui/dock/DockAppPickerViewModel.kt:121`. `data/model/AppListLimits.kt` already exists for exactly this
-(`MAX_FAVORITES`, `DEFAULT_APPS_TO_SHOW`); move `MAX_APPS` there as `AppListLimits.MAX_DOCK_APPS`
-and the UI stops importing a repository type.
-
 ## F4 — `domain/` touching the Android framework (Low–Medium)
 
-`CLAUDE.md`: "nothing here touches Android framework APIs directly". Four files do:
+`CLAUDE.md`: "nothing here touches Android framework APIs directly". Five files do:
 
 | File | Import | Assessment |
 |---|---|---|
 | `HubGridConstants.kt` | `android.content.Context` — `calculateHubCellWidth(context)` reads display metrics | Real violation; belongs in a `HubLayoutRepository` or in `ui/hub` (it is a layout concern) |
 | `GroupAppsByLetterUseCase.kt` | `android.icu.text.AlphabeticIndex` | Pragmatic — ICU is the right tool; keep, but its test already needs Robolectric because of it |
 | `ExportBackupUseCase.kt`, `ImportBackupUseCase.kt` | `android.net.Uri` as a parameter type | Value type only; acceptable. Could take a `String` and let `BackupRepository` parse |
+| `ObserveAppNotificationsUseCase.kt` | `android.os.UserHandle` as a parameter type | Value type only (the same `UserHandle` `AppInfo` carries); acceptable |
 
 ## F5 — Repositories depending on repositories (Medium, design)
 
 ```mermaid
 flowchart LR
-    DAR[DockAppRepository] --> FOR[FolderRepository]
-    FDAR[FacetDockAppRepository] --> FOR
-    FAR[FavoriteAppRepository] --> FOR
-    DFAR[DefaultFavoriteAppRepository] --> FOR
+    PR[PlacementRepository] --> FOR[FolderRepository]
     FOR --> AR[AppRepository]
-    DAR --> AR
-    FDAR --> AR
-    FAR --> AR
-    DFAR --> AR
+    PR --> AR
     USR[UsageStatsRepository] --> AR
     WPR2[WorkProfileRepository] --> AR
     PSR[PrivateSpaceRepository] --> AR
@@ -78,52 +63,28 @@ flowchart LR
 ```
 
 Hydration ("join these Room rows against the live app list and the live folder list") is logic
-that spans repositories, which `CLAUDE.md` assigns to `domain/`. Today it lives in each placement
-repository's `observe*Items()`. This is not wrong — it keeps the `PlacedItem` union in one layer
-and the use cases simple — but it means `AppRepository` is a fan-in for 9 classes and any change to
-its emission shape ripples through `data/`. Now that `AppRepository.observeInstalledApps()` is
-shared (`shareIn`, fixed — see `03 §1`), the runtime cost of this fan-in is gone; the design
-question (whether hydration belongs in `domain/` instead) remains open. Consider a single
-`ObservePlacedItemsUseCase(scope: PlacementScope)` that owns the join and lets the repositories go
-back to exposing raw entity flows, if the duplication across the five `observe*Items()` methods
-becomes a maintenance problem.
+that spans repositories, which `CLAUDE.md` assigns to `domain/`. Today it lives in
+`PlacementRepository`'s `observeApps` / `observeItems`. This is not wrong — it keeps the
+`PlacedItem` union in one layer and the use cases simple — but it means `AppRepository` is a fan-in
+for 6 classes and any change to its emission shape ripples through `data/`. Now that
+`AppRepository.observeInstalledApps()` is shared (`shareIn`, fixed — see `03 §1`), the runtime cost
+of this fan-in is gone; the design question (whether hydration belongs in `domain/` instead) remains
+open. With the four placement repositories folded into one, the join exists once, so the old worry
+about duplicating it is gone; consider an `ObservePlacedItemsUseCase` that owns the join and lets
+`PlacementRepository` expose raw entity flows only if it starts to grow.
 
-## F6 — Four copies of the placement schema (Medium, maintenance)
+## F7 — Lifetime collection in two ViewModels (Low)
 
-`dock_apps`, `default_favorite_apps`, `facet_dock_apps`, `favorite_apps` are the same table with
-or without a `facetId`; the four `*_folder_placements` tables mirror them. That is 8 entities,
-8 DAOs, 4 repositories (~770 lines) and 8 near-identical `Add/Remove…UseCase`s (App/Folder ×
-Dock/Favorites) whose only difference is which repository pair they route to.
-
-**Cost today.** Adding a column to the app-placement tables means one `ALTER TABLE` plus one unique-index
-rebuild per table. `profile` (`MIGRATION_18_19`) and `userId` (`MIGRATION_19_20`) each did this in
-6 tables: the four app tables above, plus `folder_apps` and `widget_placements`. The four
-`*_folder_placements` tables were not touched by either, so only 4 of those 6 are this finding's
-copies; `folder_apps` and `widget_placements` are separate tables that would still need their own migration.
-
-**Proposed fix.** A single
-`placements(id, scope TEXT, facetId NULL, kind TEXT, packageName, activityName, folderId NULL, position, profile, userId)`
-would collapse the 8 entities, 8 DAOs and 4 repositories into one each, and a new column would
-cost one migration step instead of four.
-
-**What it would not remove.** The facet-or-global choice (`overrideDock`, `overridingFavorites`) lives in the
-use cases and is business logic, so those branches stay; only the repository pair they call changes.
-
-**Risk and timing.** The database is at version 27 with real user data, so this is a large migration
-that must copy every existing row. It is a "when the next schema change is big anyway" item, not a now item.
-
-## F7 — Lifetime collection in ViewModels (Low)
-
-`HomeViewModel`, `LauncherViewModel`, `DrawerViewModel` etc. use
-`combine(...).onEach { _uiState.value = it }.launchIn(viewModelScope)`. Upstream `callbackFlow`s
-(LauncherApps, battery, alarm broadcasts) therefore stay registered while the ViewModel exists,
-even when its screen is not composed. For the launcher's Home this is arguably desired (instant
-return), but for `HubViewModel`/settings ViewModels it keeps widget-host and Room subscriptions
-alive on the back stack. `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)`
-is the drop-in that fixes it, and pairs naturally with `AppRepository.observeInstalledApps()`'s
-own `shareIn` (fixed — see `03 §1`): a ViewModel that stops collecting while backgrounded no
-longer keeps a duplicate `LauncherApps` registration alive on its own, since the registration is
-shared app-wide regardless of which ViewModels are currently collecting it.
+Most ViewModels expose `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)`
+(26 files), which stops upstream collection when nothing observes the screen. Two do not:
+`HomeViewModel` and `LauncherViewModel` build their state with
+`combine(...).onEach { _uiState.value = it }.launchIn(viewModelScope)`, so their upstream
+`callbackFlow`s (LauncherApps, battery, alarm broadcasts) stay registered for the ViewModel's whole
+lifetime. For the launcher's Home and the app-lifetime orchestrator that is arguably desired
+(instant return, no re-subscribe on every resume), and `AppRepository.observeInstalledApps()`'s own
+`shareIn` means a ViewModel that stopped collecting would not remove the shared `LauncherApps`
+registration anyway. Worth revisiting only if Home's extra subscriptions (calendar, usage stats,
+badges) ever show up in a profile while another screen is on top.
 
 ## F8 — Stateful "unscoped" use cases (Low)
 
@@ -148,35 +109,19 @@ use case.
 `BackupSettings` and `BackupFacet` (`data/model/BackupBundle.kt`) were last extended for
 folders (v3) and never picked up the columns added in schema v13–v15: `clockAccentColorOption`,
 `clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
-`appListVerticalAlignment` (plus, globally, `selected_calendar_ids` and `calendar_colors`). A
+`appListVerticalAlignment` (plus, globally, `selected_calendar_ids`, `calendar_colors` and `recently_installed_position`). A
 restore therefore silently resets clock position/scale/date style and the calendar selection on
 every facet. Add them to both `@Serializable` classes with defaults (older files keep parsing),
 bump `CURRENT_BACKUP_VERSION` to 4, and extend `BackupMapping.kt` both ways. The
 `ExportBackupUseCaseTest`/`ImportBackupUseCaseTest` round-trip tests should assert every
 `FacetEntity` column, so this can't regress when v21 adds the next one.
 
-## F13 — Backup restore leaves placements invisible until restart (High)
-
-Traced in [09-flow-backup-restore.md §2](09-flow-backup-restore.md). `BackupAppEntry` has no
-`userId`; `BackupMapping.to*Entity()` therefore produces rows with the entity default `-1`;
-`ImportBackupUseCase` upserts them as-is; the only resolver
-(`RepairOrphanedProfileRowsUseCase`) is wired into `LauncherViewModel.init` and nothing
-re-runs it after an import. The in-memory join in every `observe*Items()` keys on
-`userHandle.hashCode()`, so `-1` rows are dropped by `mapNotNull` — the user sees an empty Home
-until they kill and relaunch the launcher (which, for a default launcher, usually means a reboot).
-
-Fix (small): give `ImportBackupUseCase` an `AppRepository` and set
-`userId = appRepository.handlesFor(profile).singleOrNull()?.hashCode() ?: -1` in the mapping
-step, or simply invoke `RepairOrphanedProfileRowsUseCase` at the end of the import. Add an
-`ImportBackupUseCaseTest` case asserting the restored entity's `userId` is resolved, and a
-`BackupRestoreScreenTest` case that the dock is visible immediately after import.
-
 ## F12 — Two small convention drifts (Low)
 
 - `DrawerViewModel` exposes `badgeCounts`, `contactResults`, `settingsResults`,
   `showContactsPermissionPrompt`, `showContactsSettingPrompt`, … as separate `StateFlow`s and
   `observeAppNotifications(app)` for the composable to call. Every other screen has one
-  `XUiState`; the drawer's composable ends up collecting ~8 flows itself. Folding them into a
+  `XUiState`; the drawer's composable ends up collecting 8 flows itself (`settings`, `privateSpaceState`, `badgeCounts`, `contactResults`, `settingsResults`, `showContactsPermissionPrompt`, `showContactsSettingPrompt`, `folders`). Folding them into a
   `DrawerUiState` would also make `AppDrawerScreenTest` setups smaller.
 - `CalendarSettingsViewModel` does `private val assignCalendarColorsUseCase = AssignCalendarColorsUseCase()`
   instead of constructor-injecting it (it has no dependencies, so Hilt would provide it for free).

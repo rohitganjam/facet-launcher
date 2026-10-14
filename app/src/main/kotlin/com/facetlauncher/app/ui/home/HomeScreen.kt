@@ -151,9 +151,8 @@ internal fun PlacedItem.stableKey(): Any = when (this) {
 /**
  * Home surface (`1a`, Airy density `1e`): clock + a short curated app list + dock. Both
  * [appListItems] (Favorites/Recents/Most Used depending on the active list content mode, from
- * [com.facetlauncher.app.data.FavoriteAppRepository] or
- * [com.facetlauncher.app.data.UsageStatsRepository]) and [dockApps] (from
- * [com.facetlauncher.app.data.DockAppRepository]) are real persisted state — this composable
+ * [com.facetlauncher.app.data.PlacementRepository] or [com.facetlauncher.app.data.UsageStatsRepository])
+ * and [dockApps] (from [com.facetlauncher.app.data.PlacementRepository]) are real persisted state — this composable
  * only renders, it never slices/computes them itself.
  */
 @Composable

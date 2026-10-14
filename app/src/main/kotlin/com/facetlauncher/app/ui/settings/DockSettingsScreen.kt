@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -67,6 +66,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
+import com.facetlauncher.app.data.model.AppListLimits
 
 /** Settings → Home & Apps → Dock — also a facet's own Dock screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
 @Composable
@@ -141,7 +141,7 @@ private fun DockSettingsContent(
                     SettingsCard(fullBleedRows = true) {
                         DockClickableRow(
                             title = stringResource(R.string.dock_select_apps),
-                            subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, DockAppRepository.MAX_APPS),
+                            subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, AppListLimits.MAX_DOCK_APPS),
                             onClick = onAddDockApp,
                             enabled = controlsEnabled,
                             testTag = "add_dock_app_row",

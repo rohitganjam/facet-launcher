@@ -37,8 +37,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -104,7 +102,7 @@ fun OnboardingHomeSetupPage(
                     appsToShowCount = uiState.appsToShowCount,
                     onAppsToShowCountChange = onAppsToShowCountChange,
                     favoriteApps = uiState.favoriteApps,
-                    favoriteCountLabel = stringResource(R.string.format_count_of_max, uiState.favoriteApps.size, DefaultFavoriteAppRepository.MAX_FAVORITES),
+                    favoriteCountLabel = stringResource(R.string.format_count_of_max, uiState.favoriteApps.size, AppListLimits.MAX_FAVORITES),
                     onEditFavoritesClick = onOpenFavoritesPicker,
                     onReorderFavorites = onReorderFavorites,
                     onClearFavorites = onClearFavorites,
@@ -112,7 +110,7 @@ fun OnboardingHomeSetupPage(
                 Spacer(modifier = Modifier.height(40.dp))
                 DockSection(
                     dockApps = uiState.dockApps,
-                    countLabel = stringResource(R.string.format_count_of_max, uiState.dockApps.size, DockAppRepository.MAX_APPS),
+                    countLabel = stringResource(R.string.format_count_of_max, uiState.dockApps.size, AppListLimits.MAX_DOCK_APPS),
                     onReorder = onReorderDockApps,
                     onManageClick = onOpenDockPicker,
                     onClearDockApps = onClearDockApps,

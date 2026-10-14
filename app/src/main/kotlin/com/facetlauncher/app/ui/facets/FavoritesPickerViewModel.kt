@@ -3,8 +3,6 @@ package com.facetlauncher.app.ui.facets
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.model.AppInfo
@@ -25,6 +23,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 data class FavoritesPickerUiState(
     /** `false` when this picker is editing the launcher-wide default Favorites list (reached from Settings) rather than one facet's own. */
@@ -53,14 +55,13 @@ data class FavoritesPickerUiState(
 /**
  * Favorites picker (`4j`) — also doubles as the "Default favorites" picker reached from Settings.
  * No `facetId` (or [NO_ACTIVE_FACET_ID]) means the launcher-wide default list
- * ([DefaultFavoriteAppRepository]) rather than one facet's own ([FavoriteAppRepository]).
+ * (`PlacementTarget.GlobalFavorites`) rather than one facet's own.
  */
 @HiltViewModel
 class FavoritesPickerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getInstalledApps: GetInstalledAppsUseCase,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val placementRepository: PlacementRepository,
     private val folderRepository: FolderRepository,
     private val sortAppsForPicker: SortAppsForPickerUseCase,
     private val usageAccessRepository: UsageAccessRepository,
@@ -77,10 +78,11 @@ class FavoritesPickerViewModel @Inject constructor(
     val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
     private val maxFavorites: Int
-        get() = if (facetId != null) FavoriteAppRepository.MAX_FAVORITES else DefaultFavoriteAppRepository.MAX_FAVORITES
+        get() = if (facetId != null) AppListLimits.MAX_FAVORITES else AppListLimits.MAX_FAVORITES
 
-    private fun observeItems(): Flow<List<PlacedItem>> =
-        facetId?.let { favoriteAppRepository.observeFavoriteItems(it) } ?: defaultFavoriteAppRepository.observeDefaultItems()
+    private val target = PlacementTarget(PlacementList.FAVORITES, facetId)
+
+    private fun observeItems(): Flow<List<PlacedItem>> = placementRepository.observeItems(target)
 
     /** Latched from the favorites' live order the first time it's observed; never updated after — see [FavoritesPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)
@@ -154,18 +156,10 @@ class FavoritesPickerViewModel @Inject constructor(
         val state = uiState.value
         val isFavorite = app.listKey in state.favoriteComponents
         viewModelScope.launch {
-            if (facetId != null) {
-                if (isFavorite) {
-                    favoriteAppRepository.removeFavorite(facetId, app)
-                } else if (state.canAddMore) {
-                    favoriteAppRepository.addFavorite(facetId, app, position = state.favoriteComponents.size)
-                }
-            } else {
-                if (isFavorite) {
-                    defaultFavoriteAppRepository.removeFavorite(app)
-                } else if (state.canAddMore) {
-                    defaultFavoriteAppRepository.addFavorite(app, position = state.favoriteComponents.size)
-                }
+            if (isFavorite) {
+                placementRepository.removeApp(target, app)
+            } else if (state.canAddMore) {
+                placementRepository.addApp(target, app, position = state.favoriteComponents.size)
             }
         }
     }
@@ -175,18 +169,10 @@ class FavoritesPickerViewModel @Inject constructor(
         val state = uiState.value
         val isPlaced = folder.id in state.placedFolderIds
         viewModelScope.launch {
-            if (facetId != null) {
-                if (isPlaced) {
-                    favoriteAppRepository.removeFolderPlacement(facetId, folder.id)
-                } else if (state.canAddMore) {
-                    favoriteAppRepository.placeFolder(facetId, folder.id, position = state.favoriteComponents.size + state.placedFolderIds.size)
-                }
-            } else {
-                if (isPlaced) {
-                    defaultFavoriteAppRepository.removeFolderPlacement(folder.id)
-                } else if (state.canAddMore) {
-                    defaultFavoriteAppRepository.placeFolder(folder.id, position = state.favoriteComponents.size + state.placedFolderIds.size)
-                }
+            if (isPlaced) {
+                placementRepository.removeFolderPlacement(target, folder.id)
+            } else if (state.canAddMore) {
+                placementRepository.placeFolder(target, folder.id, position = state.favoriteComponents.size + state.placedFolderIds.size)
             }
         }
     }

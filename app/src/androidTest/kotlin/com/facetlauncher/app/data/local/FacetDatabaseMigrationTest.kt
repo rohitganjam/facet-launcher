@@ -592,21 +592,106 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration27To28FoldsTheEightPlacementTablesIntoTwoWithoutLosingOrMisfilingAnyRow() {
+        // Given a v27 database with facets 1 and 2, folders 10 and 11, and rows in all eight old tables
+        val dbV27 = helper.createDatabase(TEST_DB, 27)
+        insertFacetV27(dbV27, id = 1, name = "Work")
+        insertFacetV27(dbV27, id = 2, name = "Home")
+        dbV27.execSQL("INSERT INTO folders (id, name) VALUES (10, 'Social'), (11, 'Tools')")
+        // (id, pkg, activity, position, profile, userId) — a work-profile row (userId 10) is included on purpose
+        dbV27.execSQL("INSERT INTO dock_apps (packageName, activityName, position, profile, userId) VALUES ('d.one', '.A', 0, 'PERSONAL', 0), ('d.work', '.A', 1, 'WORK', 10)")
+        dbV27.execSQL("INSERT INTO facet_dock_apps (facetId, packageName, activityName, position, profile, userId) VALUES (1, 'fd.one', '.A', 0, 'PERSONAL', 0), (2, 'fd.two', '.A', 0, 'PERSONAL', -1)")
+        dbV27.execSQL("INSERT INTO favorite_apps (facetId, packageName, activityName, position, profile, userId) VALUES (1, 'f.one', '.A', 0, 'PERSONAL', 0), (1, 'f.two', '.A', 1, 'WORK', 10)")
+        dbV27.execSQL("INSERT INTO default_favorite_apps (packageName, activityName, position, profile, userId) VALUES ('df.one', '.A', 0, 'PERSONAL', 0), ('df.two', '.A', 1, 'PERSONAL', 0)")
+        dbV27.execSQL("INSERT INTO dock_folder_placements (folderId, position) VALUES (10, 2)")
+        dbV27.execSQL("INSERT INTO facet_dock_folder_placements (facetId, folderId, position) VALUES (1, 10, 1)")
+        dbV27.execSQL("INSERT INTO favorite_folder_placements (facetId, folderId, position) VALUES (1, 11, 2), (2, 10, 0)")
+        dbV27.execSQL("INSERT INTO default_favorite_folder_placements (folderId, position) VALUES (11, 2)")
+        dbV27.close()
+
+        // When migrating to v28 (Room also validates the result against the exported v28 schema)
+        val dbV28 = helper.runMigrationsAndValidate(TEST_DB, 28, true, Migrations.MIGRATION_27_28)
+
+        // Then every app row is in the right list and owner, with its fields and order intact
+        fun apps(): List<String> {
+            val cursor = dbV28.query("SELECT list, facetId, ownerKey, packageName, activityName, position, profile, userId FROM app_placements ORDER BY list, ownerKey, position")
+            val rows = mutableListOf<String>()
+            while (cursor.moveToNext()) {
+                val facet = if (cursor.isNull(1)) "null" else cursor.getLong(1).toString()
+                rows += "${cursor.getString(0)}|$facet|${cursor.getLong(2)}|${cursor.getString(3)}|${cursor.getString(4)}|${cursor.getInt(5)}|${cursor.getString(6)}|${cursor.getInt(7)}"
+            }
+            cursor.close()
+            return rows
+        }
+        assertEquals(
+            listOf(
+                "DOCK|null|0|d.one|.A|0|PERSONAL|0",
+                "DOCK|null|0|d.work|.A|1|WORK|10",
+                "DOCK|1|1|fd.one|.A|0|PERSONAL|0",
+                "DOCK|2|2|fd.two|.A|0|PERSONAL|-1",
+                "FAVORITES|null|0|df.one|.A|0|PERSONAL|0",
+                "FAVORITES|null|0|df.two|.A|1|PERSONAL|0",
+                "FAVORITES|1|1|f.one|.A|0|PERSONAL|0",
+                "FAVORITES|1|1|f.two|.A|1|WORK|10",
+            ),
+            apps(),
+        )
+
+        // And every folder placement is in the right list and owner
+        val folderCursor = dbV28.query("SELECT list, facetId, ownerKey, folderId, position FROM folder_placements ORDER BY list, ownerKey, folderId")
+        val folderRows = mutableListOf<String>()
+        while (folderCursor.moveToNext()) {
+            val facet = if (folderCursor.isNull(1)) "null" else folderCursor.getLong(1).toString()
+            folderRows += "${folderCursor.getString(0)}|$facet|${folderCursor.getLong(2)}|${folderCursor.getLong(3)}|${folderCursor.getInt(4)}"
+        }
+        folderCursor.close()
+        assertEquals(
+            listOf("DOCK|null|0|10|2", "DOCK|1|1|10|1", "FAVORITES|null|0|11|2", "FAVORITES|1|1|11|2", "FAVORITES|2|2|10|0"),
+            folderRows,
+        )
+
+        // And the eight old tables are gone
+        val tables = dbV28.query("SELECT name FROM sqlite_master WHERE type = 'table'")
+        val names = mutableSetOf<String>()
+        while (tables.moveToNext()) names += tables.getString(0)
+        tables.close()
+        assertTrue(names.intersect(OLD_PLACEMENT_TABLES).isEmpty())
+
+        // And deleting a facet still cascades to its rows, leaving the launcher-wide ones alone
+        dbV28.execSQL("PRAGMA foreign_keys = ON")
+        dbV28.execSQL("DELETE FROM facets WHERE id = 1")
+        assertEquals(listOf("DOCK|null|0|d.one|.A|0|PERSONAL|0", "DOCK|null|0|d.work|.A|1|WORK|10", "DOCK|2|2|fd.two|.A|0|PERSONAL|-1", "FAVORITES|null|0|df.one|.A|0|PERSONAL|0", "FAVORITES|null|0|df.two|.A|1|PERSONAL|0"), apps())
+    }
+
+    /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
+    private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
+        insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")
+    }
+
     private fun insertFacetV25(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
+        insertFacetV25Columns(db, id, name, extraColumns = "", extraValues = "")
+    }
+
+    private fun insertFacetV25Columns(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String, extraColumns: String, extraValues: String) {
         db.execSQL(
             "INSERT INTO facets (id, name, position, overrideClock, clockTemplateId, clockFontOption, clockColorOption, " +
                 "clockAccentColorOption, use24HourTime, clockShowMeridiem, clockDateStyle, clockAlignment, clockZoneHeightDp, " +
                 "clockScale, clockWidgetAppWidgetId, clockWidgetWidthDp, clockWidgetHeightDp, overrideApps, appRowPosition, " +
                 "appRowPresentation, listContentMode, appsToShowCount, appListVerticalAlignment, overridingFavorites, " +
                 "overrideDock, dockDisplayMode, overrideCalendar, showAllDayEvents, selectedCalendarIdsCsv, appListLayout, " +
-                "appListColumnAlignment, appListGridColumns, appListGridDisplayMode) VALUES " +
+                "appListColumnAlignment, appListGridColumns, appListGridDisplayMode$extraColumns) VALUES " +
                 "($id, '$name', $id, 0, 'LIGHT_STACK', 'SYSTEM', 'THEME', 'ACCENT_PRIMARY', 0, 0, 'FULL', 'LEFT', NULL, " +
                 "0.8, NULL, NULL, NULL, 0, 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'FAVORITES', 6, 'LAUNCHER_DEFAULT', 0, 0, " +
-                "'LAUNCHER_DEFAULT', 0, 1, NULL, 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT')",
+                "'LAUNCHER_DEFAULT', 0, 1, NULL, 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT', 'LAUNCHER_DEFAULT'$extraValues)",
         )
     }
 
     private companion object {
         const val TEST_DB = "facet-migration-test.db"
+        val OLD_PLACEMENT_TABLES = setOf(
+            "dock_apps", "facet_dock_apps", "favorite_apps", "default_favorite_apps",
+            "dock_folder_placements", "facet_dock_folder_placements", "favorite_folder_placements", "default_favorite_folder_placements",
+        )
     }
 }

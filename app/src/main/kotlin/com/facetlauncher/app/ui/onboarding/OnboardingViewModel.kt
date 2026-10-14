@@ -2,8 +2,6 @@ package com.facetlauncher.app.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -16,6 +14,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
 
 /**
  * Backs the whole onboarding flow (`ui/onboarding/OnboardingScreen.kt`) — one instance shared
@@ -23,21 +23,20 @@ import kotlinx.coroutines.launch
  * obtains its child ViewModels once and passes state down as stateless parameters). Only the
  * home-setup step (step 2) mutates anything, and only the dock/favorites reordering and content
  * mode — adding/removing apps happens on the full-screen pickers reused from Settings, which own
- * their own ViewModels and write directly to [dockAppRepository]/[defaultFavoriteAppRepository].
+ * their own ViewModels and write directly to the launcher-wide Dock and Favorites lists.
  * The "make Facet your home screen" prompt (formerly a fourth step here) now lives on the real
  * Home screen instead — see [com.facetlauncher.app.ui.home.HomeViewModel]'s own default-launcher
  * handling and [SetDefaultLauncherSheet]'s doc for why.
  */
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
-    private val dockAppRepository: DockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<OnboardingUiState> = combine(
-        defaultFavoriteAppRepository.observeDefaultFavorites(),
-        dockAppRepository.observeDockApps(),
+        placementRepository.observeApps(PlacementTarget.GlobalFavorites),
+        placementRepository.observeApps(PlacementTarget.GlobalDock),
         settingsRepository.settings,
     ) { favorites, dockApps, settings ->
         OnboardingUiState(
@@ -62,20 +61,20 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun reorderDockApps(orderedApps: List<AppInfo>) {
-        viewModelScope.launch { dockAppRepository.reorderDockApps(orderedApps) }
+        viewModelScope.launch { placementRepository.reorderItems(PlacementTarget.GlobalDock, orderedApps.map { PlacedItem.SingleApp(it) }) }
     }
 
     fun reorderFavorites(orderedApps: List<AppInfo>) {
-        viewModelScope.launch { defaultFavoriteAppRepository.reorderItems(orderedApps.map { PlacedItem.SingleApp(it) }) }
+        viewModelScope.launch { placementRepository.reorderItems(PlacementTarget.GlobalFavorites, orderedApps.map { PlacedItem.SingleApp(it) }) }
     }
 
     /** Clears the default favorites list in one action, instead of unchecking every app in the picker. */
     fun clearFavorites() {
-        viewModelScope.launch { defaultFavoriteAppRepository.deleteAllDefaultFavorites() }
+        viewModelScope.launch { placementRepository.deleteAll(PlacementTarget.GlobalFavorites) }
     }
 
     /** Clears the default dock in one action, instead of unchecking every app in the picker. */
     fun clearDockApps() {
-        viewModelScope.launch { dockAppRepository.deleteAllDockApps() }
+        viewModelScope.launch { placementRepository.deleteAll(PlacementTarget.GlobalDock) }
     }
 }

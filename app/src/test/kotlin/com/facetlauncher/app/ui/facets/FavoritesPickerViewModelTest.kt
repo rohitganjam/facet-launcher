@@ -2,8 +2,6 @@ package com.facetlauncher.app.ui.facets
 
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -30,6 +28,9 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.PlacementRepository
 
 /**
  * Focused on the sort control + Usage Access gating added on top of the Favorites picker —
@@ -71,11 +72,10 @@ class FavoritesPickerViewModelTest {
         `when`(appRepository.getInstalledApps()).thenReturn(installed)
         val getInstalledApps = GetInstalledAppsUseCase(appRepository)
 
-        val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
-        `when`(favoriteAppRepository.observeFavoriteItems(facetId))
+        val placementRepository = mock(PlacementRepository::class.java)
+        `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, facetId)))
             .thenReturn(flowOf(favorites.map { PlacedItem.SingleApp(it) }))
-        val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
-        `when`(defaultFavoriteAppRepository.observeDefaultItems()).thenReturn(flowOf(emptyList()))
+        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
@@ -89,8 +89,7 @@ class FavoritesPickerViewModelTest {
         return FavoritesPickerViewModel(
             SavedStateHandle(mapOf("facetId" to facetId)),
             getInstalledApps,
-            favoriteAppRepository,
-            defaultFavoriteAppRepository,
+            placementRepository,
             folderRepository,
             sortAppsForPicker,
             usageAccessRepository,
@@ -146,8 +145,8 @@ class FavoritesPickerViewModelTest {
         val a = appInfo('a')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.getInstalledApps()).thenReturn(listOf(a))
-        val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
-        `when`(favoriteAppRepository.observeFavoriteItems(1L)).thenReturn(flowOf(emptyList()))
+        val placementRepository = mock(PlacementRepository::class.java)
+        `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(emptyList()))
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
         // False when the ViewModel is constructed (before the user leaves for system Settings),
@@ -158,8 +157,7 @@ class FavoritesPickerViewModelTest {
         val viewModel = FavoritesPickerViewModel(
             SavedStateHandle(mapOf("facetId" to 1L)),
             GetInstalledAppsUseCase(appRepository),
-            favoriteAppRepository,
-            mock(DefaultFavoriteAppRepository::class.java),
+            placementRepository,
             folderRepository,
             SortAppsForPickerUseCase(mock(UsageStatsRepository::class.java)),
             usageAccessRepository,

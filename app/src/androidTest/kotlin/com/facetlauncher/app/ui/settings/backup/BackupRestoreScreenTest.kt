@@ -14,11 +14,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.BackupRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
@@ -34,6 +30,7 @@ import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
 
 class BackupRestoreScreenTest {
 
@@ -53,24 +50,18 @@ class BackupRestoreScreenTest {
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val facetRepository = FacetRepository(database.facetDao())
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
                 val backupRepository = BackupRepository(context)
                 val appWidgetRepository = AppWidgetRepository(context, AppWidgetManager.getInstance(context), LauncherAppWidgetHost(context), context.getSystemService(UserManager::class.java), appRepository)
                 BackupRestoreViewModel(
                     ExportBackupUseCase(
-                        settingsRepository, facetRepository, favoriteAppRepository, dockAppRepository,
-                        facetDockAppRepository, defaultFavoriteAppRepository, widgetPlacementRepository, folderRepository, backupRepository,
+                        settingsRepository, facetRepository, placementRepository, widgetPlacementRepository, folderRepository, backupRepository,
                     ),
                     ImportBackupUseCase(
-                        backupRepository, settingsRepository, facetRepository, favoriteAppRepository,
-                        dockAppRepository, facetDockAppRepository, defaultFavoriteAppRepository, folderRepository,
+                        backupRepository, settingsRepository, facetRepository, placementRepository, folderRepository,
                         RepairOrphanedProfileRowsUseCase(
-                            appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository,
-                            defaultFavoriteAppRepository, folderRepository,
+                            appRepository, placementRepository, folderRepository,
                         ),
                     ),
                     appRepository,

@@ -2,14 +2,11 @@ package com.facetlauncher.app.domain
 
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FavoriteAppEntity
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -30,16 +27,15 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.PlacementRepository
 
 class ImportBackupUseCaseTest {
 
     private val backupRepository = mock(BackupRepository::class.java)
     private val settingsRepository = mock(SettingsRepository::class.java)
     private val facetRepository = mock(FacetRepository::class.java)
-    private val favoriteAppRepository = mock(FavoriteAppRepository::class.java)
-    private val dockAppRepository = mock(DockAppRepository::class.java)
-    private val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
-    private val defaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
+    private val placementRepository = mock(PlacementRepository::class.java)
     private val folderRepository = mock(FolderRepository::class.java)
     private val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
 
@@ -47,10 +43,7 @@ class ImportBackupUseCaseTest {
         backupRepository,
         settingsRepository,
         facetRepository,
-        favoriteAppRepository,
-        dockAppRepository,
-        facetDockAppRepository,
-        defaultFavoriteAppRepository,
+        placementRepository,
         folderRepository,
         repairOrphanedProfileRows,
     )
@@ -170,13 +163,11 @@ class ImportBackupUseCaseTest {
         // Then existing data is wiped first...
         verify(folderRepository).deleteAllFolders()
         verify(facetRepository).deleteAllFacets()
-        verify(dockAppRepository).deleteAllDockApps()
-        verify(defaultFavoriteAppRepository).deleteAllDefaultFavorites()
+        verify(placementRepository).deleteAll(PlacementTarget.GlobalDock)
+        verify(placementRepository).deleteAll(PlacementTarget.GlobalFavorites)
         // ...the backup's own data is restored, favorites attached to the newly-created facet's real id...
-        verify(favoriteAppRepository).restoreFavorite(FavoriteAppEntity(facetId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
-        verify(facetDockAppRepository).restoreDockApp(
-            com.facetlauncher.app.data.local.FacetDockAppEntity(facetId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0),
-        )
+        verify(placementRepository).restoreApp(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
+        verify(placementRepository).restoreApp(AppPlacementEntity(list = PlacementList.DOCK, facetId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0))
         // ...the active facet resolves from an index to that new id...
         verify(settingsRepository).setActiveFacetId(99L)
         // ...every other setting field is applied...

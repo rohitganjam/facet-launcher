@@ -85,4 +85,4 @@ when non-null. Nothing else in the app knows Secure Folder exists.
 | Work Profile removed | `CleanUpUninstalledAppsUseCase` via `observeProfileRemoved()` | `removeByUserId(handle.hashCode())` on all five placement/folder repositories |
 | Private Space removed | nothing to do | no persisted rows |
 | Pre-v20 rows (`userId = -1`) | `RepairOrphanedProfileRowsUseCase` at startup | `backfillUserId` from `handlesFor(profile).singleOrNull()` — ambiguous (two handles in one category) rows stay `-1` and hidden |
-| Restore from backup | *(should be)* the same repair — currently missing, see F13 | |
+| Restore from backup | `ImportBackupUseCase` runs the same `RepairOrphanedProfileRowsUseCase` once after the last restore | restored rows (`userId = -1`) are resolved immediately, not at the next launch — see [09 §2](09-flow-backup-restore.md) |

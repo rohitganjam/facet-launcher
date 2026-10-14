@@ -5,8 +5,8 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **189 test classes, 1693 cases** — 1061 unit (141 classes),
-632 instrumented (48 classes).
+Current counts (from the registry): **193 test classes, 1840 cases** — 1112 unit (139 classes),
+728 instrumented (54 classes).
 
 ## 1. The two tiers
 
@@ -14,14 +14,14 @@ Current counts (from the registry): **189 test classes, 1693 cases** — 1061 un
 flowchart LR
     subgraph UNIT["app/src/test — JVM, ./gradlew test"]
         direction TB
-        U1["data/ — 54 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
-        U2["domain/ — 42 classes\nEvery use case; pure ones need no Android"]
-        U3["ui/ — 43 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
+        U1["data/ — 53 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
+        U2["domain/ — 38 classes\nEvery use case; pure ones need no Android"]
+        U3["ui/ — 48 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
     end
     subgraph INST["app/src/androidTest — emulator, ./gradlew connectedDebugAndroidTest"]
         direction TB
-        I1["ui/ — 43 classes\nOne *ScreenTest per screen + route/component/theme"]
-        I2["data/local — 1 class\nFacetDatabaseMigrationTest over app/schemas"]
+        I1["ui/ — 52 classes\nOne *ScreenTest per screen + route/component/theme"]
+        I2["data/ — 2 classes\nFacetDatabaseMigrationTest over app/schemas,\nMediaSessionRepositoryTest"]
     end
     CODE["app/src/main"] --> UNIT
     CODE --> INST
@@ -29,11 +29,11 @@ flowchart LR
 
 | | Unit (JVM) | Instrumented |
 |---|---|---|
-| Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 75 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
-| Coroutines | `kotlinx-coroutines-test`: `runTest` (467 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
-| Doubles | Mockito 5.23 (`mockito-core`, inline mock maker → `final` Kotlin classes are mockable) for repositories/use cases; hand-written `Fake*Dao` classes (`data/FolderTestFakes.kt` + per-test fakes) for Room; `data/FakeEntitlementRepository.kt` (a `MutableStateFlow` behind the `open` entitlement repository) to flip a free user in tests; `Room.inMemoryDatabaseBuilder` in 9 tests that need real SQL | `mockito-android`; subclass fakes for the three `open` repositories (`ui/settings/Fake{NotificationAccess,CalendarPermission}Repository.kt`, plus an inline `WallpaperRepository` subclass per test that needs one); most screen tests need no doubles — they pass a `UiState` + lambdas |
-| Compose | — | `createComposeRule()` (40 uses); content set with `composeRule.setContent { FacetLauncherTheme { XScreen(uiState, on… = {}) } }` |
-| Selectors | — | `onNodeWithTag` against 215 `Modifier.testTag(...)` sites in `main` (287 distinct tags referenced by tests), `onNodeWithText`, `onNodeWithContentDescription` |
+| Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 66 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
+| Coroutines | `kotlinx-coroutines-test`: `runTest` (764 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
+| Doubles | Mockito 5.24 (`mockito-core`, inline mock maker → `final` Kotlin classes are mockable) for repositories/use cases; hand-written fake DAOs (`data/FolderTestFakes.kt`: `FakeFolderDao`, `FakeAppPlacementDao`, `FakeFolderPlacementDao`, used by `PlacementRepositoryTest`) for Room; `data/FakeEntitlementRepository.kt` (a `MutableStateFlow` behind the `open` entitlement repository) to flip a free user in tests; `Room.inMemoryDatabaseBuilder` in 7 tests that need real SQL | `mockito-android`; subclass fakes for the three `open` repositories (`ui/settings/Fake{NotificationAccess,CalendarPermission}Repository.kt`, plus an inline `WallpaperRepository` subclass per test that needs one); most screen tests need no doubles — they pass a `UiState` + lambdas |
+| Compose | — | `createComposeRule()` (53 uses); content set with `composeRule.setContent { FacetLauncherTheme { XScreen(uiState, on… = {}) } }` |
+| Selectors | — | `onNodeWithTag` against 310 `Modifier.testTag(...)` sites in `main` (430 distinct tags referenced by tests), `onNodeWithText`, `onNodeWithContentDescription` |
 | Room migrations | — | `MigrationTestHelper` reading `app/schemas/…/<v>.json` (mounted as `androidTest` assets in `build.gradle.kts`) |
 | Hilt | Not used in tests — everything is constructed by hand | Not used — no `HiltAndroidRule`; screens are tested below the ViewModel |
 
@@ -43,13 +43,13 @@ flowchart LR
 
 ```kotlin
 @RunWith(RobolectricTestRunner::class)
-class DockAppRepositoryTest {
+class PlacementRepositoryTest {
     private fun repository(
-        dao: DockAppDao = FakeDockAppDao(),
-        placementDao: DockFolderPlacementDao = FakeDockFolderPlacementDao(),
+        dao: AppPlacementDao = FakeAppPlacementDao(),
+        placementDao: FolderPlacementDao = FakeFolderPlacementDao(),
         folderDao: FolderDao = FakeFolderDao(),
         installed: List<AppInfo> = ...,
-    ): DockAppRepository {
+    ): PlacementRepository {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(installed))
         ...
@@ -62,7 +62,7 @@ class DockAppRepositoryTest {
 
 - A `repository(...)` factory with defaulted fakes is the standard fixture; tests override only
   what they need.
-- The DAO fake is a `MutableStateFlow`-backed in-memory list so `observeAll()` really re-emits on
+- The DAO fakes (`FakeAppPlacementDao`, `FakeFolderPlacementDao`) are `MutableStateFlow`-backed in-memory lists that honor the real table's unique key, so `observe(list, ownerKey)` really re-emits on
   writes — hydration and ordering are tested end-to-end through real `combine`.
 - `AppRepository` is always mocked at this level (its real implementation needs `LauncherApps`);
   `AppRepositoryTest` itself mocks `LauncherApps` and uses Robolectric's `shadowOf(UserManager)`.
@@ -77,10 +77,10 @@ class DockAppRepositoryTest {
 - Repository-composing use cases get Mockito mocks whose `observe*()` return `flowOf(...)` /
   `MutableStateFlow`, and assert with `.first()` inside `runTest`. Write use cases `verify(...)`
   the exact repository call (which table the placement was routed to).
-- `ObserveHomeScreenStateUseCaseTest` (12 cases) and `ObserveFacetPreviewsUseCaseTest` (6) pin the
+- `ObserveHomeScreenStateUseCaseTest` (15 cases) and `ObserveFacetPreviewsUseCaseTest` (6) pin the
   override-routing matrix (facet flag × settings value → which repository is observed). The
-  largest unit classes overall are `TimeInWordsTest` (26) and `FacetSettingsViewModelTest` (21); the
-  largest instrumented ones `HomeScreenTest` (45), `ClockBlockTest` (40), `AppDrawerScreenTest` (40).
+  largest unit classes overall are `AppearanceSettingsViewModelTest` (28), `TimeInWordsTest` (26) and `HomeUiStateTest` (24); the
+  largest instrumented ones `HomeScreenTest` (54), `HomeDrawerRouteTest` and `AppDrawerScreenTest` (50 each), `AppContextMenuTest` (45).
 
 ### ViewModels (`ui/**/*ViewModelTest`)
 
@@ -105,12 +105,11 @@ class DockAppRepositoryTest {
   `HomeDrawerRoute` with real ViewModels over mocked repositories to exercise gesture routing
   between Home and Drawer.
 - Anything async on top of an animation is awaited with `composeRule.waitUntil(timeoutMillis) { }`
-  (155 uses). There is exactly one `Thread.sleep` in the suite
-  (`FavoritesPickerScreenTest:175`, deliberately asserting a write did *not* happen).
+  (215 uses). There is no `Thread.sleep` anywhere in the suite.
 
 ### Migrations (`androidTest/data/local/FacetDatabaseMigrationTest`)
 
-One test per shipped `Migration` plus two guard tests: `createDatabase(name, old)` → insert rows
+One test per shipped `Migration` (the data-moving ones, such as `migration27To28FoldsTheEightPlacementTablesIntoTwoWithoutLosingOrMisfilingAnyRow`, seed rows in every affected table and assert each one's destination) plus two guard tests: `createDatabase(name, old)` → insert rows
 with raw SQL → `runMigrationsAndValidate(name, new, true, MIGRATION_old_new)` → assert the rows and
 new columns survived. The guard `migratingAnOldSchemaVersionWithNoRegisteredMigrationThrowsInsteadOfSilentlySucceeding`
 proves the no-destructive-fallback policy is really in force.
@@ -129,8 +128,8 @@ undecodable file).
 | Rule | Why |
 |---|---|
 | Test class mirrors the class under test: `XRepository` → `XRepositoryTest`, same package in `test/` or `androidTest/` | The registry's "no mirrored test" section and the `Subject` column depend on it |
-| Method names describe behaviour: `` `swipe down at top closes drawer`() `` (unit) or `swipeDownAtTopClosesDrawer()` (instrumented — 532 of 579 use camelCase; backticked names work but are avoided because `adb`/Orchestrator quoting of spaces is fragile) | The registry lists names verbatim as the behaviour contract |
-| Given / When / Then sections (comments or blank lines) in every body | Readability of 1500+ cases |
+| Method names describe behaviour: `` `swipe down at top closes drawer`() `` (unit) or `swipeDownAtTopClosesDrawer()` (instrumented — 672 of 728 use camelCase; backticked names work but are avoided because `adb`/Orchestrator quoting of spaces is fragile) | The registry lists names verbatim as the behaviour contract |
+| Given / When / Then sections (comments or blank lines) in every body | Readability of 1800+ cases |
 | A test for a feature newer than `minSdk` (30) carries `@SdkSuppress(minSdkVersion = …)`, not an `assumeTrue(Build.VERSION…)` in the body | The orchestrator reports a failed assumption as a failure; the annotation keeps the test out of the run on older devices (e.g. the four wallpaper-accent tests, Android 12+) |
 | One behaviour per test; a factory function (`repository(...)`, `viewModel(...)`) with defaulted doubles instead of a shared mutable `@Before` fixture | Overrides stay local and visible |
 | Never mock `UserHandle` — build a real one via `Parcel` (see the helper at the top of `AppDrawerScreenTest`) | Mockito bypasses `equals`, producing spurious matches on device |
@@ -146,7 +145,7 @@ undecodable file).
 
 ```bash
 ./gradlew test                                                        # all unit tests (~2 min)
-./gradlew test --tests 'com.facetlauncher.app.data.DockAppRepositoryTest'   # one class
+./gradlew test --tests 'com.facetlauncher.app.data.PlacementRepositoryTest'   # one class
 adb devices -l                                                        # check what's attached first
 ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest      # all instrumented, emulator only
 ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest \
@@ -165,12 +164,13 @@ were here now have `FoldersSettingsViewModelTest`, `NotificationAccessExplanatio
 `DragReorderState` by an instrumented drag test.)
 
 Indirect-only coverage (exercised through screen/route tests but without a mirrored unit test —
-acceptable for the trivial permission repositories, worth adding for the ViewModels):
-`FacetCarouselViewModel`, `PrivateSpaceViewModel`, `ClockWidgetPickerViewModel`,
-`NotificationSettingsViewModel`,
-`ObserveSettingsScreenStateUseCase`, `RankBySearchRelevanceUseCase`, `WorkProfileRepository`,
-`SecureFolderRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`,
-`ContactPermissionRepository`, `NotificationAccessRepository`.
+acceptable for the trivial permission repositories, worth adding for the ViewModels and the Billing/
+Entitlement seams): `ClockWidgetPickerViewModel`, `NotificationSettingsViewModel`,
+`ObserveSettingsScreenStateUseCase`, `RankBySearchRelevanceUseCase`, `RefreshAutomationStateUseCase`,
+`WorkProfileRepository`, `SecureFolderRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`,
+`ContactPermissionRepository`, `NotificationAccessRepository`, `BillingRepository`, `EntitlementRepository`.
+(`FacetCarouselViewModel` and `PrivateSpaceViewModel`, listed here before, now have their own tests.)
 
-`Migrations.kt`, `DefaultFavoriteAppDao`, `WidgetPlacementDao` appear in that list only because
-their tests are named differently (`FacetDatabaseMigrationTest`, `*RepositoryTest`) — covered.
+`Migrations.kt` and `WidgetPlacementDao` appear in the registry's no-mirror section only because
+their tests are named differently (`FacetDatabaseMigrationTest`, `WidgetPlacementRepositoryTest`) — covered.
+`AppPlacementDao`/`FolderPlacementDao` have mirrored `AppPlacementDaoTest`/`FolderPlacementDaoTest`.

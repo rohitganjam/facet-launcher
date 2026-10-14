@@ -2,10 +2,6 @@ package com.facetlauncher.app.domain
 
 import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -16,6 +12,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.PlacementRepository
 
 @RunWith(RobolectricTestRunner::class)
 class CleanUpUninstalledAppsUseCaseTest {
@@ -27,10 +24,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         // subscribed by the time it fires — avoids a race against the launched job below.
         val uninstalls = MutableSharedFlow<Pair<String, Int>>(replay = 1)
         val profileRemovals = MutableSharedFlow<UserHandle>(replay = 1)
-        val dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java)
-        val facetDockAppRepository: FacetDockAppRepository = mock(FacetDockAppRepository::class.java)
-        val favoriteAppRepository: FavoriteAppRepository = mock(FavoriteAppRepository::class.java)
-        val defaultFavoriteAppRepository: DefaultFavoriteAppRepository = mock(DefaultFavoriteAppRepository::class.java)
+        val placementRepository: PlacementRepository = mock(PlacementRepository::class.java)
         val folderRepository: FolderRepository = mock(FolderRepository::class.java)
 
         init {
@@ -39,7 +33,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         }
 
         fun useCase() = CleanUpUninstalledAppsUseCase(
-            appRepository, dockAppRepository, facetDockAppRepository, favoriteAppRepository, defaultFavoriteAppRepository, folderRepository,
+            appRepository, placementRepository, folderRepository,
         )
     }
 
@@ -59,10 +53,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         // folder holding it was ever placed in the Dock/Favorites. Scoped by the real userId, so
         // it can't collide with a personal favorite sharing the same package name, nor with a
         // second profile sharing the same display category (e.g. a clone profile also OTHER).
-        verify(fixture.dockAppRepository).removeByPackage("com.example.removed", 10)
-        verify(fixture.facetDockAppRepository).removeByPackage("com.example.removed", 10)
-        verify(fixture.favoriteAppRepository).removeByPackage("com.example.removed", 10)
-        verify(fixture.defaultFavoriteAppRepository).removeByPackage("com.example.removed", 10)
+        verify(fixture.placementRepository).removeByPackage("com.example.removed", 10)
         verify(fixture.folderRepository).removeByPackage("com.example.removed", 10)
         job.cancel()
     }
@@ -80,10 +71,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         testScheduler.advanceUntilIdle()
 
         // Then every repository bulk-drops rows for exactly that handle's userId directly
-        verify(fixture.dockAppRepository).removeByUserId(removedHandle.hashCode())
-        verify(fixture.facetDockAppRepository).removeByUserId(removedHandle.hashCode())
-        verify(fixture.favoriteAppRepository).removeByUserId(removedHandle.hashCode())
-        verify(fixture.defaultFavoriteAppRepository).removeByUserId(removedHandle.hashCode())
+        verify(fixture.placementRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.folderRepository).removeByUserId(removedHandle.hashCode())
         job.cancel()
     }

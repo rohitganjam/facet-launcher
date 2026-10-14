@@ -1,8 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.lifecycle.SavedStateHandle
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -32,6 +30,9 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.PlacementRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -59,19 +60,17 @@ class DockSettingsViewModelTest {
         facets: List<FacetEntity> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
-        dockAppRepository: DockAppRepository = mock(DockAppRepository::class.java),
-        facetDockAppRepository: FacetDockAppRepository = mock(FacetDockAppRepository::class.java),
+        placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
     ): DockSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(dockAppRepository.observeDockItems()).thenReturn(flowOf(dockItems))
-        `when`(facetDockAppRepository.observeDockItems(anyLong())).thenReturn(flowOf(dockItems))
+        `when`(placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockItems))
+        facetId?.let { `when`(placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(dockItems)) }
         return DockSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
             facetRepository,
-            dockAppRepository,
-            facetDockAppRepository,
+            placementRepository,
             fakeWallpaperRepository(),
         )
     }
@@ -87,36 +86,35 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `global-scoped reorder writes to DockAppRepository`() = runTest {
+    fun `global-scoped reorder writes to the launcher-wide dock list`() = runTest {
         // dockDisplayMode's own setter moved to AppearanceSettingsViewModel (see chat history —
         // display style is a look field, edited from Settings -> Appearance now); covered there.
         val settingsRepository = mock(SettingsRepository::class.java)
-        val dockAppRepository = mock(DockAppRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository, dockAppRepository = dockAppRepository)
+        val placementRepository = mock(PlacementRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository, placementRepository = placementRepository)
         val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.reorderDockItems(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(dockAppRepository).reorderDockItems(reordered)
+        verify(placementRepository).reorderItems(PlacementTarget.GlobalDock, reordered)
     }
 
     @Test
     fun `facet-scoped reorder writes to that facet, not the launcher-wide dock`() = runTest {
-        val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
-        `when`(facetDockAppRepository.observeDockItems(anyLong())).thenReturn(flowOf(emptyList()))
+        val placementRepository = mock(PlacementRepository::class.java)
         val facet = FacetEntity(id = 7L, name = "Work", position = 0)
         val viewModel = createViewModel(
             facetId = 7L,
             facets = listOf(facet),
-            facetDockAppRepository = facetDockAppRepository,
+            placementRepository = placementRepository,
         )
         val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
 
         viewModel.reorderDockItems(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetDockAppRepository).reorderDockItems(7L, reordered)
+        verify(placementRepository).reorderItems(PlacementTarget(PlacementList.DOCK, 7L), reordered)
     }
 
     @Test

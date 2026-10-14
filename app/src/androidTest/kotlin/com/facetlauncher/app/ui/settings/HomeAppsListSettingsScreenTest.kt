@@ -22,8 +22,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultAppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -38,6 +36,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 class HomeAppsListSettingsScreenTest {
 
@@ -53,7 +55,7 @@ class HomeAppsListSettingsScreenTest {
         onEditFavorites: () -> Unit = {},
         facetScoped: Boolean = false,
         onFacetRepo: (FacetRepository, Long?) -> Unit = { _, _ -> },
-        seed: suspend (FolderRepository, FavoriteAppRepository, DefaultFavoriteAppRepository, FacetRepository, Long?) -> Unit = { _, _, _, _, _ -> },
+        seed: suspend (FolderRepository, PlacementRepository, FacetRepository, Long?) -> Unit = { _, _, _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -69,15 +71,13 @@ class HomeAppsListSettingsScreenTest {
                 val facetId = if (facetScoped) runBlocking { facetRepository.addFacet().id } else null
                 onFacetRepo(facetRepository, facetId)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
-                runBlocking { seed(folderRepository, favoriteAppRepository, defaultFavoriteAppRepository, facetRepository, facetId) }
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                runBlocking { seed(folderRepository, placementRepository, facetRepository, facetId) }
                 HomeAppsListSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
-                    favoriteAppRepository,
-                    defaultFavoriteAppRepository,
+                    placementRepository,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),
@@ -125,9 +125,9 @@ class HomeAppsListSettingsScreenTest {
     fun aFolderFavoritedGlobally_isCountedAndShownInPreviewAndReorderList() {
         var folderId = 0L
         setContent(
-            seed = { folderRepository, _, defaultFavoriteAppRepository, _, _ ->
+            seed = { folderRepository, placementRepository, _, _ ->
                 folderId = folderRepository.createFolder("Games")
-                defaultFavoriteAppRepository.placeFolder(folderId, position = 0)
+                placementRepository.placeFolder(PlacementTarget.GlobalFavorites, folderId, position = 0)
             },
         )
 
@@ -135,7 +135,7 @@ class HomeAppsListSettingsScreenTest {
         // The real installed-apps query backing the preview/uiState resolves asynchronously —
         // wait for it rather than assuming setContent's own waitForIdle already caught it.
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("default_favorites_row").assertTextContains("1 of ${com.facetlauncher.app.data.DefaultFavoriteAppRepository.MAX_FAVORITES}") }.isSuccess
+            runCatching { composeRule.onNodeWithTag("default_favorites_row").assertTextContains("1 of ${com.facetlauncher.app.data.model.AppListLimits.MAX_FAVORITES}") }.isSuccess
         }
         composeRule.onNodeWithTag("default_favorite_reorder_row_folder_$folderId").assertExists()
         // Renders as a real folder row in the preview, not a flattened list of the folder's apps.
@@ -150,17 +150,17 @@ class HomeAppsListSettingsScreenTest {
         var folderId = 0L
         setContent(
             facetScoped = true,
-            seed = { folderRepository, favoriteAppRepository, _, facetRepository, facetId ->
+            seed = { folderRepository, placementRepository, facetRepository, facetId ->
                 val id = requireNotNull(facetId)
                 folderId = folderRepository.createFolder("Games")
-                favoriteAppRepository.placeFolder(id, folderId, position = 0)
+                placementRepository.placeFolder(PlacementTarget(PlacementList.FAVORITES, id), folderId, position = 0)
                 facetRepository.getById(id)?.let { facetRepository.setOverrideApps(it, true) }
             },
         )
 
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("default_favorites_row").assertTextContains("1 of ${com.facetlauncher.app.data.DefaultFavoriteAppRepository.MAX_FAVORITES}") }.isSuccess
+            runCatching { composeRule.onNodeWithTag("default_favorites_row").assertTextContains("1 of ${com.facetlauncher.app.data.model.AppListLimits.MAX_FAVORITES}") }.isSuccess
         }
         composeRule.onNodeWithTag("default_favorite_reorder_row_folder_$folderId").assertExists()
         composeRule.onNodeWithTag("home_surface_preview_folder_row_$folderId").assertExists()

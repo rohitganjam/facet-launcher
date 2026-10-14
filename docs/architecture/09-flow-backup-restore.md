@@ -12,15 +12,15 @@ sequenceDiagram
     participant S as BackupRestoreScreen
     participant VM as BackupRestoreViewModel
     participant UC as ExportBackupUseCase
-    participant R as 8 repositories (raw getters)
+    participant R as repositories (raw getters)
     participant BR as BackupRepository
     S->>VM: onExportDestinationChosen(uri)   (from ActivityResultContracts.CreateDocument)
     VM->>UC: invoke(uri)
     UC->>R: settings.first(), observeFacets().first(), getRawFolders()
     loop each facet
-        UC->>R: getRawFavoritesForFacet(id), getRawDockAppsForFacet(id), getRaw*FolderPlacementsForFacet(id)
+        UC->>R: placementRepository.getRawApps(Favorites/Dock of facet), getRawFolderPlacements(...)
     end
-    UC->>R: getRawDockApps(), getRawDefaultFavorites(), getRawDock/DefaultFavoriteFolderPlacements(), widgetPlacementRepository.observeAll().first()
+    UC->>R: placementRepository.getRawApps / getRawFolderPlacements (GlobalDock, GlobalFavorites), widgetPlacementRepository.observeAll().first()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
     UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 3, exportedAtEpochMillis, ...))
     BR->>BR: contentResolver.openOutputStream(uri) + Json.encodeToString  (Dispatchers.IO)
@@ -48,15 +48,16 @@ sequenceDiagram
     VM->>UC: invoke(uri)
     UC->>R: backupRepository.readBackup(uri) → bundle?  (null → InvalidFile)
     UC->>UC: backupVersion > CURRENT_BACKUP_VERSION → UnsupportedVersion
-    UC->>R: applySettings(bundle.settings)  — 33 SettingsRepository setters
+    UC->>R: applySettings(bundle.settings)  — 41 SettingsRepository setters
     UC->>R: folderRepository.deleteAllFolders(), then restoreFolder(...) per folder → index→newId map
     UC->>R: facetRepository.deleteAllFacets()   (FK CASCADE clears every per-facet placement)
     loop each BackupFacet
         UC->>R: restoreFacet(entity.copy(id = 0)) → newId
-        UC->>R: restoreFavorite / restoreDockApp / restore*FolderPlacement (newId, folderIndex→newId)
+        UC->>R: placementRepository.restoreApp / restoreFolderPlacement (AppPlacementEntity / PlacementTarget with list + newId, folderIndex→newId)
     end
-    UC->>R: dockAppRepository.deleteAllDockApps(), restoreDockApp × n, restoreDockFolderPlacement × n
-    UC->>R: defaultFavoriteAppRepository.deleteAllDefaultFavorites(), restore × n
+    UC->>R: placementRepository.deleteAll(GlobalDock), restoreApp × n, restoreFolderPlacement × n
+    UC->>R: placementRepository.deleteAll(GlobalFavorites), restore × n
+    UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
     UC->>R: settingsRepository.setActiveFacetId(newIds[activeFacetIndex])
     UC-->>VM: ImportBackupResult.Success(counts, pendingWidgetPlacements = bundle.widgetPlacements)
     VM-->>S: uiState.pendingWidgets = [...]   (widget re-bind UI, §3)
@@ -65,14 +66,19 @@ sequenceDiagram
 - **Not transactional.** The use case's own doc says so: a failure mid-way leaves a partially
   restored database. The order (folders → facets → global dock → global favorites) is chosen so
   every FK target exists before its referrers.
-- **`userId` on restored rows — defect (F13).** `BackupAppEntry` carries `profile` only;
-  `BackupMapping` builds entities with the default `userId = -1`, and `restoreFavorite` /
-  `restoreDockApp` / `restoreDefaultFavorite` / `restoreFolder` upsert them unchanged. The only
-  code that resolves `-1` is `RepairOrphanedProfileRowsUseCase`, which runs once in
-  `LauncherViewModel.init`. Until the launcher process restarts, every restored placement fails
-  the hydration join (`userHandle.hashCode()` is `0` for the personal user, never `-1`) and Home
-  shows an empty dock and app list. Fix: inject `RepairOrphanedProfileRowsUseCase` (or
-  `AppRepository.handlesFor`) into `ImportBackupUseCase` and resolve `userId` before upserting.
+- **`userId` on restored rows is repaired at the end of the import.** `BackupAppEntry` carries
+  `profile` only, so `BackupMapping.toAppPlacementEntity(list, facetId)` builds rows with the entity
+  default `userId = -1` and the `restore*` methods upsert them unchanged. Those rows would fail the
+  hydration join (`userHandle.hashCode()` is `0` for the personal user, never `-1`), so
+  `ImportBackupUseCase` injects `RepairOrphanedProfileRowsUseCase` and runs it once after the last
+  restore — the same pass `LauncherViewModel.init` runs at startup — and restored apps show up
+  immediately. `ImportBackupUseCaseTest` verifies the repair runs.
+- **Placement tables after the F6 consolidation.** All restored app rows go to `app_placements` and
+  folder rows to `folder_placements`, distinguished by `list` (`DOCK`/`FAVORITES`) and `facetId`
+  (null for the launcher-wide lists). `deleteAllFolders` clears every folder placement through the
+  folder FK cascade, `deleteAllFacets` clears every per-facet row through the facet FK cascade, and
+  the global lists are wiped explicitly by `PlacementRepository.deleteAll(PlacementTarget.GlobalDock)` /
+  `deleteAll(PlacementTarget.GlobalFavorites)` (`deleteAllForOwner(list, GLOBAL_OWNER_KEY)`).
 - Result type: `ImportBackupResult.Success | InvalidFile | UnsupportedVersion(version)`.
 
 ## 3. Widget re-bind after import

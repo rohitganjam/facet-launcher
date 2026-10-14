@@ -3,8 +3,6 @@ package com.facetlauncher.app.ui.dock
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.model.AppInfo
@@ -25,6 +23,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 data class DockAppPickerUiState(
     /** `false` when this picker is editing the launcher-wide default dock (reached from Settings) rather than one facet's own. */
@@ -54,15 +56,14 @@ data class DockAppPickerUiState(
 /**
  * Dock app picker (`4k`) — also doubles as one facet's own dock picker (reached from that
  * facet's settings). No `facetId` (or [NO_ACTIVE_FACET_ID]) means the launcher-wide default
- * dock ([DockAppRepository]) rather than one facet's own ([FacetDockAppRepository]) — the
+ * dock (`PlacementTarget.GlobalDock`) rather than one facet's own — the
  * same split [com.facetlauncher.app.ui.facets.FavoritesPickerViewModel] uses for favorites.
  */
 @HiltViewModel
 class DockAppPickerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getInstalledApps: GetInstalledAppsUseCase,
-    private val dockAppRepository: DockAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val folderRepository: FolderRepository,
     private val sortAppsForPicker: SortAppsForPickerUseCase,
     private val usageAccessRepository: UsageAccessRepository,
@@ -78,8 +79,9 @@ class DockAppPickerViewModel @Inject constructor(
     /** `PACKAGE_USAGE_STATS` has no grant-change callback — re-checked via [refreshUsageAccessGranted] on this screen's resume. */
     val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
-    private fun observeDockItems(): Flow<List<PlacedItem>> =
-        facetId?.let { facetDockAppRepository.observeDockItems(it) } ?: dockAppRepository.observeDockItems()
+    private val target = PlacementTarget(PlacementList.DOCK, facetId)
+
+    private fun observeDockItems(): Flow<List<PlacedItem>> = placementRepository.observeItems(target)
 
     /** Latched from the dock's live order the first time it's observed; never updated after — see [DockAppPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)
@@ -118,8 +120,8 @@ class DockAppPickerViewModel @Inject constructor(
             dockPackageComponents = liveOrder.toSet(),
             folders = folders,
             placedFolderIds = placedFolderIds,
-            canAddMore = itemCount < DockAppRepository.MAX_APPS,
-            canRemove = itemCount > DockAppRepository.MIN_APPS,
+            canAddMore = itemCount < AppListLimits.MAX_DOCK_APPS,
+            canRemove = itemCount > AppListLimits.MIN_DOCK_APPS,
             sortOption = sortOption,
             sortDirection = sortDirection,
         )
@@ -154,18 +156,10 @@ class DockAppPickerViewModel @Inject constructor(
         val state = uiState.value
         val isInDock = app.listKey in state.dockPackageComponents
         viewModelScope.launch {
-            if (facetId != null) {
-                if (isInDock) {
-                    if (state.canRemove) facetDockAppRepository.removeDockApp(facetId, app)
-                } else if (state.canAddMore) {
-                    facetDockAppRepository.addDockApp(facetId, app, position = state.dockPackageComponents.size)
-                }
-            } else {
-                if (isInDock) {
-                    if (state.canRemove) dockAppRepository.removeDockApp(app)
-                } else if (state.canAddMore) {
-                    dockAppRepository.addDockApp(app, position = state.dockPackageComponents.size)
-                }
+            if (isInDock) {
+                if (state.canRemove) placementRepository.removeApp(target, app)
+            } else if (state.canAddMore) {
+                placementRepository.addApp(target, app, position = state.dockPackageComponents.size)
             }
         }
     }
@@ -175,18 +169,10 @@ class DockAppPickerViewModel @Inject constructor(
         val state = uiState.value
         val isPlaced = folder.id in state.placedFolderIds
         viewModelScope.launch {
-            if (facetId != null) {
-                if (isPlaced) {
-                    if (state.canRemove) facetDockAppRepository.removeFolderPlacement(facetId, folder.id)
-                } else if (state.canAddMore) {
-                    facetDockAppRepository.placeFolder(facetId, folder.id, position = state.dockPackageComponents.size + state.placedFolderIds.size)
-                }
-            } else {
-                if (isPlaced) {
-                    if (state.canRemove) dockAppRepository.removeFolderFromDock(folder.id)
-                } else if (state.canAddMore) {
-                    dockAppRepository.placeFolderInDock(folder.id, position = state.dockPackageComponents.size + state.placedFolderIds.size)
-                }
+            if (isPlaced) {
+                if (state.canRemove) placementRepository.removeFolderPlacement(target, folder.id)
+            } else if (state.canAddMore) {
+                placementRepository.placeFolder(target, folder.id, position = state.dockPackageComponents.size + state.placedFolderIds.size)
             }
         }
     }

@@ -1,11 +1,8 @@
 package com.facetlauncher.app.domain
 
 import android.net.Uri
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.BackupRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -38,6 +35,8 @@ import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import javax.inject.Inject
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
 
 sealed interface ImportBackupResult {
     data class Success(
@@ -70,10 +69,7 @@ class ImportBackupUseCase @Inject constructor(
     private val backupRepository: BackupRepository,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val dockAppRepository: DockAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val placementRepository: PlacementRepository,
     private val folderRepository: FolderRepository,
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
 ) {
@@ -94,39 +90,41 @@ class ImportBackupUseCase @Inject constructor(
         var activeFacetId: Long? = null
         bundle.facets.forEachIndexed { index, backupFacet ->
             val newId = facetRepository.restoreFacet(backupFacet.toFacetEntity())
+            val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
+            val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
             backupFacet.favorites.forEach { entry ->
-                favoriteAppRepository.restoreFavorite(entry.toFavoriteAppEntity(newId))
+                placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.FAVORITES, newId))
             }
             backupFacet.dockApps.forEach { entry ->
-                facetDockAppRepository.restoreDockApp(entry.toFacetDockAppEntity(newId))
+                placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.DOCK, newId))
             }
             backupFacet.dockFolderPlacements.forEach { placement ->
                 newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                    facetDockAppRepository.restoreDockFolderPlacement(newId, folderId, placement.position)
+                    placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
                 }
             }
             backupFacet.favoriteFolderPlacements.forEach { placement ->
                 newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                    favoriteAppRepository.restoreFavoriteFolderPlacement(newId, folderId, placement.position)
+                    placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
                 }
             }
             if (index == bundle.settings.activeFacetIndex) activeFacetId = newId
         }
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
 
-        dockAppRepository.deleteAllDockApps()
-        bundle.dockApps.forEach { dockAppRepository.restoreDockApp(it.toDockAppEntity()) }
+        placementRepository.deleteAll(PlacementTarget.GlobalDock)
+        bundle.dockApps.forEach { placementRepository.restoreApp(it.toAppPlacementEntity(PlacementList.DOCK)) }
         bundle.dockFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                dockAppRepository.restoreDockFolderPlacement(folderId, placement.position)
+                placementRepository.restoreFolderPlacement(PlacementTarget.GlobalDock, folderId, placement.position)
             }
         }
 
-        defaultFavoriteAppRepository.deleteAllDefaultFavorites()
-        bundle.defaultFavoriteApps.forEach { defaultFavoriteAppRepository.restoreDefaultFavorite(it.toDefaultFavoriteAppEntity()) }
+        placementRepository.deleteAll(PlacementTarget.GlobalFavorites)
+        bundle.defaultFavoriteApps.forEach { placementRepository.restoreApp(it.toAppPlacementEntity(PlacementList.FAVORITES)) }
         bundle.defaultFavoriteFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                defaultFavoriteAppRepository.restoreDefaultFavoriteFolderPlacement(folderId, placement.position)
+                placementRepository.restoreFolderPlacement(PlacementTarget.GlobalFavorites, folderId, placement.position)
             }
         }
 

@@ -2,18 +2,12 @@ package com.facetlauncher.app.data.di
 
 import android.content.Context
 import androidx.room.Room
+import com.facetlauncher.app.data.local.AppPlacementDao
 import com.facetlauncher.app.data.local.AutomationRuleDao
-import com.facetlauncher.app.data.local.DefaultFavoriteAppDao
-import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementDao
-import com.facetlauncher.app.data.local.DockAppDao
-import com.facetlauncher.app.data.local.DockFolderPlacementDao
-import com.facetlauncher.app.data.local.FavoriteAppDao
-import com.facetlauncher.app.data.local.FavoriteFolderPlacementDao
+import com.facetlauncher.app.data.local.FolderPlacementDao
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.Migrations
 import com.facetlauncher.app.data.local.FacetDao
-import com.facetlauncher.app.data.local.FacetDockAppDao
-import com.facetlauncher.app.data.local.FacetDockFolderPlacementDao
 import com.facetlauncher.app.data.local.FolderDao
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import dagger.Module
@@ -48,34 +42,16 @@ object DatabaseModule {
     fun provideFacetDao(database: FacetDatabase): FacetDao = database.facetDao()
 
     @Provides
-    fun provideFavoriteAppDao(database: FacetDatabase): FavoriteAppDao = database.favoriteAppDao()
+    fun provideAppPlacementDao(database: FacetDatabase): AppPlacementDao = database.appPlacementDao()
 
     @Provides
-    fun provideDockAppDao(database: FacetDatabase): DockAppDao = database.dockAppDao()
-
-    @Provides
-    fun provideFacetDockAppDao(database: FacetDatabase): FacetDockAppDao = database.facetDockAppDao()
-
-    @Provides
-    fun provideDefaultFavoriteAppDao(database: FacetDatabase): DefaultFavoriteAppDao = database.defaultFavoriteAppDao()
+    fun provideFolderPlacementDao(database: FacetDatabase): FolderPlacementDao = database.folderPlacementDao()
 
     @Provides
     fun provideWidgetPlacementDao(database: FacetDatabase): WidgetPlacementDao = database.widgetPlacementDao()
 
     @Provides
     fun provideFolderDao(database: FacetDatabase): FolderDao = database.folderDao()
-
-    @Provides
-    fun provideDockFolderPlacementDao(database: FacetDatabase): DockFolderPlacementDao = database.dockFolderPlacementDao()
-
-    @Provides
-    fun provideFacetDockFolderPlacementDao(database: FacetDatabase): FacetDockFolderPlacementDao = database.facetDockFolderPlacementDao()
-
-    @Provides
-    fun provideFavoriteFolderPlacementDao(database: FacetDatabase): FavoriteFolderPlacementDao = database.favoriteFolderPlacementDao()
-
-    @Provides
-    fun provideDefaultFavoriteFolderPlacementDao(database: FacetDatabase): DefaultFavoriteFolderPlacementDao = database.defaultFavoriteFolderPlacementDao()
 
     @Provides
     fun provideAutomationRuleDao(database: FacetDatabase): AutomationRuleDao = database.automationRuleDao()

@@ -5,11 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -53,6 +49,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 /**
  * `global*` are the raw stored global values; the effective, screen-bound `dockDisplayMode`/
@@ -129,10 +128,7 @@ class AppearanceSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
-    private val dockAppRepository: DockAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
+    private val placementRepository: PlacementRepository,
     private val calendarRepository: CalendarRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val wallpaperRepository: WallpaperRepository,
@@ -141,10 +137,10 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
 
-    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { favoriteAppRepository.observeFavoriteItems(it) } ?: flowOf(emptyList())
-    private val globalFavoritesFlow: Flow<List<PlacedItem>> = defaultFavoriteAppRepository.observeDefaultItems()
-    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { facetDockAppRepository.observeDockItems(it) } ?: flowOf(emptyList())
-    private val globalDockItemsFlow: Flow<List<PlacedItem>> = dockAppRepository.observeDockItems()
+    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
+    private val globalFavoritesFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalFavorites)
+    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
+    private val globalDockItemsFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalDock)
 
     private val isNotificationAccessGranted = MutableStateFlow(notificationAccessRepository.isGranted())
     private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())

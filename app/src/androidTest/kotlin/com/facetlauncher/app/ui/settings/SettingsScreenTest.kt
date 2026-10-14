@@ -20,9 +20,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
-import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -38,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.PlacementRepository
 
 class SettingsScreenTest {
 
@@ -71,10 +70,9 @@ class SettingsScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 SettingsViewModel(
-                    ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
+                    ObserveSettingsScreenStateUseCase(settingsRepository, placementRepository, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),

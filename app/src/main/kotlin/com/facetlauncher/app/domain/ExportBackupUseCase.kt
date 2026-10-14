@@ -2,10 +2,6 @@ package com.facetlauncher.app.domain
 
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -15,6 +11,9 @@ import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.LauncherSettings
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 
 /**
  * F14 Backup & Restore export — composes every settings/data `Repository` into one [BackupBundle]
@@ -24,10 +23,7 @@ import kotlinx.coroutines.flow.first
 class ExportBackupUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
-    private val favoriteAppRepository: FavoriteAppRepository,
-    private val dockAppRepository: DockAppRepository,
-    private val facetDockAppRepository: FacetDockAppRepository,
-    private val defaultFavoriteAppRepository: DefaultFavoriteAppRepository,
+    private val placementRepository: PlacementRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val folderRepository: FolderRepository,
     private val backupRepository: BackupRepository,
@@ -45,11 +41,13 @@ class ExportBackupUseCase @Inject constructor(
         val backupFolders = rawFolders.map { it.toBackupFolder() }
 
         val backupFacets = facets.map { facet ->
-            val favorites = favoriteAppRepository.getRawFavoritesForFacet(facet.id).map { it.toBackupEntry() }
-            val dockApps = facetDockAppRepository.getRawDockAppsForFacet(facet.id).map { it.toBackupEntry() }
-            val dockFolderPlacements = facetDockAppRepository.getRawDockFolderPlacementsForFacet(facet.id)
+            val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, facet.id)
+            val dockTarget = PlacementTarget(PlacementList.DOCK, facet.id)
+            val favorites = placementRepository.getRawApps(favoritesTarget).map { it.toBackupEntry() }
+            val dockApps = placementRepository.getRawApps(dockTarget).map { it.toBackupEntry() }
+            val dockFolderPlacements = placementRepository.getRawFolderPlacements(dockTarget)
                 .mapNotNull { it.toBackupPlacement(folderIndexById) }
-            val favoriteFolderPlacements = favoriteAppRepository.getRawFavoriteFolderPlacementsForFacet(facet.id)
+            val favoriteFolderPlacements = placementRepository.getRawFolderPlacements(favoritesTarget)
                 .mapNotNull { it.toBackupPlacement(folderIndexById) }
             facet.toBackupFacet(favorites, dockApps, dockFolderPlacements, favoriteFolderPlacements)
         }
@@ -58,12 +56,12 @@ class ExportBackupUseCase @Inject constructor(
             exportedAtEpochMillis = System.currentTimeMillis(),
             settings = settings.toBackupSettings(activeFacetIndex),
             facets = backupFacets,
-            dockApps = dockAppRepository.getRawDockApps().map { it.toBackupEntry() },
-            defaultFavoriteApps = defaultFavoriteAppRepository.getRawDefaultFavorites().map { it.toBackupEntry() },
+            dockApps = placementRepository.getRawApps(PlacementTarget.GlobalDock).map { it.toBackupEntry() },
+            defaultFavoriteApps = placementRepository.getRawApps(PlacementTarget.GlobalFavorites).map { it.toBackupEntry() },
             widgetPlacements = widgetPlacementRepository.observeAll().first().map { it.toBackupPlacement() },
             folders = backupFolders,
-            dockFolderPlacements = dockAppRepository.getRawDockFolderPlacements().mapNotNull { it.toBackupPlacement(folderIndexById) },
-            defaultFavoriteFolderPlacements = defaultFavoriteAppRepository.getRawDefaultFavoriteFolderPlacements()
+            dockFolderPlacements = placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock).mapNotNull { it.toBackupPlacement(folderIndexById) },
+            defaultFavoriteFolderPlacements = placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)
                 .mapNotNull { it.toBackupPlacement(folderIndexById) },
         )
         backupRepository.writeBackup(uri, bundle)

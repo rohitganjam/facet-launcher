@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.facetlauncher.app.data.model.AppListLimits
 
 data class FolderAppPickerUiState(
     val folderName: String = "",
@@ -38,7 +39,7 @@ data class FolderAppPickerUiState(
 /**
  * A folder's own "Add to folder" picker — apps only, no Folders tab (a folder can't contain
  * another folder), unlike the Dock/Favorites pickers. No membership cap either — a folder has no
- * equivalent of [com.facetlauncher.app.data.DockAppRepository.MAX_APPS].
+ * equivalent of [com.facetlauncher.app.data.AppListLimits.MAX_DOCK_APPS].
  */
 @HiltViewModel
 class FolderAppPickerViewModel @Inject constructor(

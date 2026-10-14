@@ -25,11 +25,7 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.VerificationModes
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DefaultFavoriteAppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -48,6 +44,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementTarget
 
 class OnboardingScreenTest {
 
@@ -67,7 +66,7 @@ class OnboardingScreenTest {
     /** [seed] runs against real (throwaway, in-memory/temp-file) repositories before the screen renders. */
     private fun setContent(
         onFinish: () -> Unit = {},
-        seed: suspend (AppRepository, DockAppRepository, DefaultFavoriteAppRepository) -> Unit = { _, _, _ -> },
+        seed: suspend (AppRepository, PlacementRepository) -> Unit = { _, _ -> },
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -75,31 +74,27 @@ class OnboardingScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "onboarding-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                runBlocking { seed(appRepository, dockAppRepository, defaultFavoriteAppRepository) }
+                runBlocking { seed(appRepository, placementRepository) }
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
                 val sortAppsForPicker = SortAppsForPickerUseCase(UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository))
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 Triple(
                     OnboardingViewModel(
-                        defaultFavoriteAppRepository,
-                        dockAppRepository,
+                        placementRepository,
                         settingsRepository,
                     ),
                     // Onboarding embeds these full-screen pickers as-is (same as Settings); this
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
                     // FavoritesPickerScreenTest — an empty SavedStateHandle means the launcher-wide
                     // default dock/favorites, matching onboarding's own scope.
-                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, dockAppRepository, facetDockAppRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
-                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, favoriteAppRepository, defaultFavoriteAppRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
                 )
             }
             FacetLauncherTheme {
@@ -270,17 +265,17 @@ class OnboardingScreenTest {
     @Test
     fun `tapping Manage dock apps opens the full-screen dock picker`() {
         var seededApp: AppInfo? = null
-        setContent { appRepository, dockAppRepository, _ ->
+        setContent { appRepository, placementRepository ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
-            dockAppRepository.addDockApp(app, 0)
+            placementRepository.addApp(PlacementTarget.GlobalDock, app, 0)
         }
         requireNotNull(seededApp)
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onNodeWithText("1 of ${DockAppRepository.MAX_APPS}").let { runCatching { it.assertExists() }.isSuccess }
+            composeRule.onNodeWithText("1 of ${AppListLimits.MAX_DOCK_APPS}").let { runCatching { it.assertExists() }.isSuccess }
         }
 
         composeRule.onNodeWithTag("onboarding_manage_dock").performClick()
@@ -292,10 +287,10 @@ class OnboardingScreenTest {
     @Test
     fun `Clear all removes every dock app after confirming`() {
         var seededApp: AppInfo? = null
-        setContent { appRepository, dockAppRepository, _ ->
+        setContent { appRepository, placementRepository ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
-            dockAppRepository.addDockApp(app, 0)
+            placementRepository.addApp(PlacementTarget.GlobalDock, app, 0)
         }
         requireNotNull(seededApp)
 
@@ -313,7 +308,7 @@ class OnboardingScreenTest {
 
         // Then the dock is empty and the Clear all action disappears with it
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onNodeWithText("0 of ${DockAppRepository.MAX_APPS}").let { runCatching { it.assertExists() }.isSuccess }
+            composeRule.onNodeWithText("0 of ${AppListLimits.MAX_DOCK_APPS}").let { runCatching { it.assertExists() }.isSuccess }
         }
         composeRule.onNodeWithTag("onboarding_clear_dock").assertDoesNotExist()
     }
@@ -321,10 +316,10 @@ class OnboardingScreenTest {
     @Test
     fun `Clear all removes every favorite after confirming`() {
         var seededApp: AppInfo? = null
-        setContent { appRepository, _, defaultFavoriteAppRepository ->
+        setContent { appRepository, placementRepository ->
             val app = runBlocking { appRepository.getInstalledApps() }.first()
             seededApp = app
-            defaultFavoriteAppRepository.addFavorite(app, 0)
+            placementRepository.addApp(PlacementTarget.GlobalFavorites, app, 0)
         }
         requireNotNull(seededApp)
 

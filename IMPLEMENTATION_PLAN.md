@@ -4090,3 +4090,16 @@ Design agreed in chat (mocks 14a/14b/15a/15b). Sheet = header (icon, name, bare 
 - **Privacy:** notification text is rendered inside the launcher, in memory only, with the setting to turn it off. Work-profile notifications are shown in full; redacting them is a possible follow-up.
 - **Cross-profile open:** a Work-profile notification's `PendingIntent` sent from a third-party launcher is unverified on a device.
 - **Stale snapshot after access is revoked** (service doesn't clear on disconnect): hidden in practice because access is read when the sheet opens.
+
+## F6 — one placements table (schema v28)
+
+Folds the eight Dock/Favorites tables into `app_placements` and `folder_placements` (`list` = DOCK/FAVORITES, `facetId` null for the launcher-wide lists). Phase 1 only: the four repositories keep their public APIs; the three shared entity/DAO pairs and `FacetDatabase` change underneath.
+
+- [x] `AppPlacementEntity`/`FolderPlacementEntity`/`PlacementList` and `AppPlacementDao`/`FolderPlacementDao` replace 8 entities and 8 DAOs. `ownerKey` (facetId or 0) carries the unique keys because SQLite treats NULLs as distinct.
+- [x] `MIGRATION_27_28` copies every row in `id` order, then drops the eight old tables. `FacetDatabaseMigrationTest.migration27To28…` seeds all eight tables (work-profile `userId`, orphan `-1`, folders, two facets), checks every row's list and owner, checks the old tables are gone, and checks the facet cascade.
+- [x] Four repositories, `BackupMapping`, `ImportBackupUseCase`, `DatabaseModule` moved to the new DAOs; `Add/RemoveXUseCase`s untouched.
+- [x] Unit tests: 7 per-table DAO test files replaced by `AppPlacementDaoTest`/`FolderPlacementDaoTest` (both lists, both scopes, list/owner isolation, cascades); one shared `FakeAppPlacementDao`/`FakeFolderPlacementDao` replace the per-test fakes.
+- [x] Docs `01`, `02`, `03`, `04`, `06`, `07`, `08`, `13` updated; F6 removed from `05`; `TEST_REGISTRY.md` regenerated.
+- [x] Phase 2: `PlacementRepository` (one repository, addressed by `PlacementTarget(list, facetId)`) replaces `DockAppRepository`, `FacetDockAppRepository`, `FavoriteAppRepository` and `DefaultFavoriteAppRepository`; `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` and `ResolveActivePlacementTargetUseCase` replace the eight Add/Remove App/Folder To/From Dock/Favorites use cases. The dock and favorites caps moved to `AppListLimits` (`MAX_DOCK_APPS`, `MIN_DOCK_APPS`), which also resolves finding F3. `AppPlacementDao`'s uninstall and orphan queries now span every list. `PlacementList`/`PlacementTarget` live in `data/model`.
+- [x] Phase 2 tests: `PlacementRepositoryTest` runs each shared behavior against all four lists (plus cross-list isolation); `Add/Remove…UseCase` tests replaced by `AddToActiveListUseCaseTest`, `RemoveFromActiveListUseCaseTest`, `ResolveActivePlacementTargetUseCaseTest`; `DrawerViewModelTest` covers the four long-press actions; ViewModel, use-case and instrumented tests moved to the new API.
+- [ ] Upgrade a real v27 install in place on an emulator (favorites, dock, folders, a facet override) and confirm nothing is lost, before releasing.

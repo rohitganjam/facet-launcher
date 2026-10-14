@@ -27,7 +27,7 @@ flowchart TB
     end
 
     subgraph SRC["Sources"]
-        DAO["data/local — Room DAOs\nFacetDatabase v26"]
+        DAO["data/local — Room DAOs\nFacetDatabase v28"]
         DS["DataStore of Preferences\nfacet_settings, facet_automation"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end
@@ -48,16 +48,16 @@ flowchart TB
 |---|---|---|---|
 | Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(uiState: HomeUiState, onAppClick: ..., ...)` |
 | ViewModels | Use cases, Repositories | DAOs, `DataStore`, framework services | `HomeViewModel(ObserveHomeScreenStateUseCase, SettingsRepository, FacetRepository, ...)` |
-| Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddAppToDockUseCase(SettingsRepository, FacetRepository, DockAppRepository, FacetDockAppRepository)` |
-| Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `DockAppRepository(DockAppDao, DockFolderPlacementDao, FolderRepository, AppRepository)` |
-| DAOs / entities (`data/local`) | Room, `data/model` enums via `Converters` | anything above | `FavoriteAppDao.observeForFacet(facetId): Flow<List<FavoriteAppEntity>>` |
+| Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddToActiveListUseCase(ResolveActivePlacementTargetUseCase, PlacementRepository)` |
+| Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `PlacementRepository(AppPlacementDao, FolderPlacementDao, FolderRepository, AppRepository)` |
+| DAOs / entities (`data/local`) | Room, `data/model` enums via `Converters` | anything above | `AppPlacementDao.observe(list, ownerKey): Flow<List<AppPlacementEntity>>` |
 
 Boundary check results (grep over `app/src/main`):
 
 - **0** ViewModels import a DAO. ✅
-- **0** composables inject or call a Repository. ✅ (Two reference the constant `DockAppRepository.MAX_APPS` — see F3.)
-- **1** composable instantiates a use case directly (`AppDrawerScreen` → `remember { RankBySearchRelevanceUseCase() }`) — see F2.
-- **4** `domain/` files import `android.*` — see F4.
+- **0** composables inject or call a Repository. ✅ (The dock size cap lives in `AppListLimits.MAX_DOCK_APPS`, so no composable imports a repository type for a constant any more.)
+- **1** composable instantiates use cases directly (`AppDrawerScreen` → `remember { RankBySearchRelevanceUseCase() }`, and two more) — see F2.
+- **5** `domain/` files import `android.*` — see F4.
 
 ## 2. Unidirectional data flow, concretely
 
@@ -76,10 +76,11 @@ Concrete conventions the code actually follows:
 
 - **State is a single immutable `data class`** per screen (`HomeUiState`, `HubUiState`,
   `SettingsUiState`, `BackupRestoreUiState`, ...), exposed as `StateFlow<XUiState>` from a private
-  `MutableStateFlow`. Most ViewModels build it with
-  `combine(...).onEach { _uiState.value = it }.launchIn(viewModelScope)` (e.g. `HomeViewModel`,
-  `LauncherViewModel`) rather than `stateIn(WhileSubscribed)` — the upstream flows stay collected for
-  the ViewModel's whole lifetime (see F7).
+  `MutableStateFlow`. `HomeViewModel` and `LauncherViewModel` build theirs with
+  `combine(...).onEach { _uiState.value = it }.launchIn(viewModelScope)`, so their upstream flows stay
+  collected for the ViewModel's whole lifetime (see F7); most other ViewModels expose
+  `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)`, which stops collecting
+  when nothing observes the screen.
 - **Writes are fire-and-forget suspend calls** launched in `viewModelScope`; the UI never awaits
   them — it sees the result when Room/DataStore re-emits.
 - **One-off events** use `MutableSharedFlow(extraBufferCapacity = 1)` (e.g.
@@ -97,17 +98,17 @@ flowchart TB
         direction TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
             AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver\n(all @Singleton)"]
-            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 12 DAO @Provides (unscoped)"]
+            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 6 DAO @Provides (unscoped)"]
             DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
         end
-        REPOS["44 Repositories\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["41 @Singleton data classes (39 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
     subgraph VMC["ViewModelComponent — one per ViewModel instance"]
         UCS["Use cases\nclass X @Inject constructor(...)\nunscoped: new instance per injection"]
-        VMS["31 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
+        VMS["32 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
         UCS --> VMS
     end
 
@@ -130,10 +131,10 @@ flowchart TB
 | Framework services (`LauncherApps`, `UserManager`, `AppWidgetManager`, ...) | `@Singleton` | `@Provides` in `AppModule` / `WidgetModule`, `?: error(...)` if the service is missing | Repositories get real system services injected, so tests swap them with fakes/Robolectric. |
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
-| DAOs (12) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
+| DAOs (6) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; release and benchmark builds leave them empty, so the override and its Settings row exist only in debug. |
-| Repositories (44) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| Repositories (39; with `NotificationOpener` and `NotificationActionController`, 41 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (32) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
@@ -154,10 +155,12 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 `LauncherViewModel` is the app-lifetime orchestrator. Its `init` block:
 
 - collects `combine(GetInstalledAppsUseCase.observe(), SettingsRepository.settings, WorkProfileRepository.observeWorkProfiles())` into `LauncherUiState` (theme, font, icon mode, onboarding flag, live app list, work profiles);
-- runs `EnsureActiveFacetUseCase` once;
+- runs `EnsureActiveFacetUseCase.keepUsable()` (creates a facet if none exists and keeps `activeFacetId` valid);
 - keeps `CleanUpUninstalledAppsUseCase` collecting for the process lifetime (deletes placement rows on real uninstall broadcasts);
 - runs `RepairOrphanedProfileRowsUseCase` once (backfills `userId = -1` rows left by pre-profile schemas);
-- runs `SeedDefaultDockUseCase` on fresh installs.
+- runs `SeedDefaultDockUseCase` on fresh installs;
+- keeps `SyncFacetShortcutsUseCase` and `RunFacetAutomationUseCase` collecting for the process lifetime (dynamic shortcuts; automation rules);
+- clears `isLoading` after a 3 s timeout so a slow first app scan can't leave the screen blank.
 
 `FacetNavHost` owns 27 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
 nav transition — `HomeDrawerRoute` handles it as a follow-finger gesture inside the `HOME`

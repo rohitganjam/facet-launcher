@@ -2,8 +2,6 @@ package com.facetlauncher.app.ui.dock
 
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.DockAppRepository
-import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -30,6 +28,8 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.PlacementRepository
 
 /**
  * Focused on the sort control + Usage Access gating added on top of the Dock picker —
@@ -70,9 +70,8 @@ class DockAppPickerViewModelTest {
         `when`(appRepository.getInstalledApps()).thenReturn(installed)
         val getInstalledApps = GetInstalledAppsUseCase(appRepository)
 
-        val dockAppRepository = mock(DockAppRepository::class.java)
-        `when`(dockAppRepository.observeDockItems()).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
-        val facetDockAppRepository = mock(FacetDockAppRepository::class.java)
+        val placementRepository = mock(PlacementRepository::class.java)
+        `when`(placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
@@ -86,8 +85,7 @@ class DockAppPickerViewModelTest {
         return DockAppPickerViewModel(
             SavedStateHandle(),
             getInstalledApps,
-            dockAppRepository,
-            facetDockAppRepository,
+            placementRepository,
             folderRepository,
             sortAppsForPicker,
             usageAccessRepository,

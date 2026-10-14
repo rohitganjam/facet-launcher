@@ -231,7 +231,7 @@ class AppRepository @Inject constructor(
      * without this, any install/uninstall happening while Facet is in the foreground (including
      * via the app long-press context menu's Uninstall action) wouldn't be reflected anywhere —
      * Home/Drawer/Dock would keep showing the stale entry until the process restarts.
-     * [FavoriteAppRepository]/[DockAppRepository] both hydrate against this live flow too, so an
+     * [PlacementRepository] hydrates against this live flow too, so an
      * uninstall collapses Favorites/Dock/Drawer alike; one-shot callers (picker seed steps) can
      * still use [getInstalledApps] directly where a live subscription isn't needed.
      *
