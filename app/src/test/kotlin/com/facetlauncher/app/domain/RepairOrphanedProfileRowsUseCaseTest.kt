@@ -7,7 +7,8 @@ import com.facetlauncher.app.data.DockAppRepository
 import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.local.FavoriteAppEntity
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -59,7 +60,7 @@ class RepairOrphanedProfileRowsUseCaseTest {
     }
 
     private fun orphanedRow(profile: AppProfile) =
-        FavoriteAppEntity(facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = profile, userId = -1)
+        AppPlacementEntity(list = PlacementList.FAVORITES, facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = profile, userId = -1)
 
     @Test
     fun `backfills a single orphaned row to the one live handle matching its stored profile`() = runTest {

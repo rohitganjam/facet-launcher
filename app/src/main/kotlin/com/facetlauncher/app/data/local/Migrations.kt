@@ -504,9 +504,57 @@ object Migrations {
         }
     }
 
+    /**
+     * Folds the eight Dock/Favorites tables into `app_placements` and `folder_placements` (one row per
+     * placed app / folder, tagged with its `list` and owning facet). Rows are copied in `id` order so
+     * relative ordering survives, then the old tables are dropped.
+     */
+    val MIGRATION_27_28: Migration = object : Migration(27, 28) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `app_placements` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`list` TEXT NOT NULL, `facetId` INTEGER, `ownerKey` INTEGER NOT NULL, `packageName` TEXT NOT NULL, " +
+                    "`activityName` TEXT NOT NULL, `position` INTEGER NOT NULL, `profile` TEXT NOT NULL, `userId` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_app_placements_list_ownerKey_packageName_activityName_userId` " +
+                    "ON `app_placements` (`list`, `ownerKey`, `packageName`, `activityName`, `userId`)",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_placements_facetId` ON `app_placements` (`facetId`)")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `folder_placements` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`list` TEXT NOT NULL, `facetId` INTEGER, `ownerKey` INTEGER NOT NULL, `folderId` INTEGER NOT NULL, " +
+                    "`position` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , " +
+                    "FOREIGN KEY(`folderId`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_folder_placements_list_ownerKey_folderId` ON `folder_placements` (`list`, `ownerKey`, `folderId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_folder_placements_facetId` ON `folder_placements` (`facetId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_folder_placements_folderId` ON `folder_placements` (`folderId`)")
+
+            val appColumns = "`list`, `facetId`, `ownerKey`, `packageName`, `activityName`, `position`, `profile`, `userId`"
+            db.execSQL("INSERT INTO `app_placements` ($appColumns) SELECT 'DOCK', NULL, 0, packageName, activityName, position, profile, userId FROM `dock_apps` ORDER BY id")
+            db.execSQL("INSERT INTO `app_placements` ($appColumns) SELECT 'DOCK', facetId, facetId, packageName, activityName, position, profile, userId FROM `facet_dock_apps` ORDER BY id")
+            db.execSQL("INSERT INTO `app_placements` ($appColumns) SELECT 'FAVORITES', facetId, facetId, packageName, activityName, position, profile, userId FROM `favorite_apps` ORDER BY id")
+            db.execSQL("INSERT INTO `app_placements` ($appColumns) SELECT 'FAVORITES', NULL, 0, packageName, activityName, position, profile, userId FROM `default_favorite_apps` ORDER BY id")
+
+            val folderColumns = "`list`, `facetId`, `ownerKey`, `folderId`, `position`"
+            db.execSQL("INSERT INTO `folder_placements` ($folderColumns) SELECT 'DOCK', NULL, 0, folderId, position FROM `dock_folder_placements` ORDER BY id")
+            db.execSQL("INSERT INTO `folder_placements` ($folderColumns) SELECT 'DOCK', facetId, facetId, folderId, position FROM `facet_dock_folder_placements` ORDER BY id")
+            db.execSQL("INSERT INTO `folder_placements` ($folderColumns) SELECT 'FAVORITES', facetId, facetId, folderId, position FROM `favorite_folder_placements` ORDER BY id")
+            db.execSQL("INSERT INTO `folder_placements` ($folderColumns) SELECT 'FAVORITES', NULL, 0, folderId, position FROM `default_favorite_folder_placements` ORDER BY id")
+
+            listOf(
+                "dock_apps", "facet_dock_apps", "favorite_apps", "default_favorite_apps",
+                "dock_folder_placements", "facet_dock_folder_placements", "favorite_folder_placements", "default_favorite_folder_placements",
+            ).forEach { db.execSQL("DROP TABLE `$it`") }
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27,
+        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28,
     )
 }

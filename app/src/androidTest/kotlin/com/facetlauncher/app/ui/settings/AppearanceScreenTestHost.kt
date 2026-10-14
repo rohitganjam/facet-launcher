@@ -85,10 +85,10 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val facetRepository = FacetRepository(database.facetDao())
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }

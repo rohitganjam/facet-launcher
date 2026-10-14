@@ -7,12 +7,15 @@ import androidx.room.PrimaryKey
 import com.facetlauncher.app.data.model.AppProfile
 
 /**
- * One facet's own dock app list — mirrors [FavoriteAppEntity] exactly, just for the dock:
- * the per-facet counterpart to the launcher-wide [DockAppEntity], shown only while that
- * facet's [FacetEntity.overrideDock] is set.
+ * One app in a Dock or Favorites list: the launcher-wide default when [facetId] is null, else that
+ * facet's own overriding list. Replaces the four former per-list tables (`dock_apps`,
+ * `facet_dock_apps`, `favorite_apps`, `default_favorite_apps`).
+ *
+ * [ownerKey] is [facetId] or [GLOBAL_OWNER_KEY] — a stored copy because SQLite treats NULLs as
+ * distinct in a unique index, so uniqueness for the launcher-wide rows has to be on a non-null column.
  */
 @Entity(
-    tableName = "facet_dock_apps",
+    tableName = "app_placements",
     foreignKeys = [
         ForeignKey(
             entity = FacetEntity::class,
@@ -21,11 +24,16 @@ import com.facetlauncher.app.data.model.AppProfile
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["facetId", "packageName", "activityName", "userId"], unique = true)],
+    indices = [
+        Index(value = ["list", "ownerKey", "packageName", "activityName", "userId"], unique = true),
+        Index(value = ["facetId"]),
+    ],
 )
-data class FacetDockAppEntity(
+data class AppPlacementEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val facetId: Long,
+    val list: PlacementList,
+    val facetId: Long? = null,
+    val ownerKey: Long = facetId ?: GLOBAL_OWNER_KEY,
     val packageName: String,
     val activityName: String,
     val position: Int,

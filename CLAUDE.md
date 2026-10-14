@@ -160,6 +160,8 @@ app/build/outputs/bundle/release/app-release-<versionName>.aab
 | Change profile classification, Work Profile, Private Space, or Secure Folder handling | `11` |
 | Change drawer search, tabs, per-app actions, or Home gesture routing | `12` |
 | Change facet switching/overrides, theme resolution, status/nav bar icon color, notification badges, or onboarding | `13` (`§2a` for the bars) |
+| Change what a Home preview shows — the facet carousel cards or the Appearance screens' card (`ui/home/HomePreview.kt`), or the apps-only/dock-only `HomeSurfacePreview` | `13` (the `HomePreview` and `HomeSurfacePreview` bullets); `03 §2` if the hydration join changes |
+| Add a column to a Dock/Favorites placement, or a new placement list or owner | `02` (`app_placements` / `folder_placements`, `ownerKey`, migration table), `08`; both DAO tests (`AppPlacementDaoTest`, `FolderPlacementDaoTest`) and a `FacetDatabaseMigrationTest` case |
 | Add a bottom sheet, dialog, or overlay reachable from Home, or change clock adjust mode (handles, Alignment pill) | `12 §4` — and make it close on Home press (`ThemedModalBottomSheet` / `DismissOnHomePress`) |
 | Add a new user-visible flow that none of `08`–`13` covers | new `NN-flow-<name>.md` + a row in `docs/architecture/README.md` |
 | Add a package under `ui/`, `data/`, or `domain/`, or a new test directory | `04` — tree, placement rules, test-tree mirror |

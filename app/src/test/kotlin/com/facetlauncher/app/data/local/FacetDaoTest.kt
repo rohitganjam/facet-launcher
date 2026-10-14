@@ -74,17 +74,16 @@ class FacetDaoTest {
         // Given a facet with its own favorites and dock apps
         val database = createDatabase()
         val dao = database.facetDao()
-        val favoriteAppDao = database.favoriteAppDao()
-        val facetDockAppDao = database.facetDockAppDao()
+        val placementDao = database.appPlacementDao()
         val id = dao.insert(FacetEntity(name = "Facet 1", position = 0))
-        favoriteAppDao.upsert(FavoriteAppEntity(facetId = id, packageName = "com.example.a", activityName = ".Main", position = 0))
-        facetDockAppDao.upsert(FacetDockAppEntity(facetId = id, packageName = "com.example.b", activityName = ".Main", position = 0))
+        placementDao.upsert(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = id, packageName = "com.example.a", activityName = ".Main", position = 0))
+        placementDao.upsert(AppPlacementEntity(list = PlacementList.DOCK, facetId = id, packageName = "com.example.b", activityName = ".Main", position = 0))
 
         // When an unrelated field (e.g. toggling clock override) is updated on that same facet
         dao.update(FacetEntity(id = id, name = "Facet 1", position = 0, overrideClock = true))
 
         // Then the favorites and dock apps are untouched — a real UPDATE never cascades a delete
-        assertEquals(1, favoriteAppDao.observeForFacet(id).first().size)
-        assertEquals(1, facetDockAppDao.observeForFacet(id).first().size)
+        assertEquals(1, placementDao.observe(PlacementList.FAVORITES, id).first().size)
+        assertEquals(1, placementDao.observe(PlacementList.DOCK, id).first().size)
     }
 }

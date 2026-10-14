@@ -1,14 +1,9 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
-import com.facetlauncher.app.data.local.DefaultFavoriteFolderPlacementEntity
-import com.facetlauncher.app.data.local.DockAppEntity
-import com.facetlauncher.app.data.local.DockFolderPlacementEntity
-import com.facetlauncher.app.data.local.FacetDockAppEntity
-import com.facetlauncher.app.data.local.FacetDockFolderPlacementEntity
+import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.FavoriteAppEntity
-import com.facetlauncher.app.data.local.FavoriteFolderPlacementEntity
+import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.local.FolderWithApps
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -34,25 +29,11 @@ import com.facetlauncher.app.data.selectedCalendarIds
 
 /** F14 Backup & Restore — entity <-> DTO mapping shared by [ExportBackupUseCase]/[ImportBackupUseCase]. Every enum round-trips through its raw name with a fallback to the field's own default, matching `Converters.kt`'s established pattern. */
 
-fun FavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
+fun AppPlacementEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
 
-fun DockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
-
-fun FacetDockAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
-
-fun BackupAppEntry.toFacetDockAppEntity(facetId: Long): FacetDockAppEntity =
-    FacetDockAppEntity(facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
-
-fun DefaultFavoriteAppEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
-
-fun BackupAppEntry.toFavoriteAppEntity(facetId: Long): FavoriteAppEntity =
-    FavoriteAppEntity(facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
-
-fun BackupAppEntry.toDockAppEntity(): DockAppEntity =
-    DockAppEntity(packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
-
-fun BackupAppEntry.toDefaultFavoriteAppEntity(): DefaultFavoriteAppEntity =
-    DefaultFavoriteAppEntity(packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
+/** [facetId] null restores into the launcher-wide default list of [list]. */
+fun BackupAppEntry.toAppPlacementEntity(list: PlacementList, facetId: Long? = null): AppPlacementEntity =
+    AppPlacementEntity(list = list, facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
     BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name)
@@ -63,16 +44,7 @@ fun FolderWithApps.toBackupFolder(): BackupFolder = BackupFolder(
 )
 
 /** [folderIndexById] maps each folder's live row id to its position in [com.facetlauncher.app.data.model.BackupBundle.folders] — `null` only if the folder vanished between reads (a race, not a normal case), in which case the placement is simply dropped rather than exported with a dangling index. */
-fun DockFolderPlacementEntity.toBackupPlacement(folderIndexById: Map<Long, Int>): BackupFolderPlacement? =
-    folderIndexById[folderId]?.let { BackupFolderPlacement(folderIndex = it, position = position) }
-
-fun DefaultFavoriteFolderPlacementEntity.toBackupPlacement(folderIndexById: Map<Long, Int>): BackupFolderPlacement? =
-    folderIndexById[folderId]?.let { BackupFolderPlacement(folderIndex = it, position = position) }
-
-fun FacetDockFolderPlacementEntity.toBackupPlacement(folderIndexById: Map<Long, Int>): BackupFolderPlacement? =
-    folderIndexById[folderId]?.let { BackupFolderPlacement(folderIndex = it, position = position) }
-
-fun FavoriteFolderPlacementEntity.toBackupPlacement(folderIndexById: Map<Long, Int>): BackupFolderPlacement? =
+fun FolderPlacementEntity.toBackupPlacement(folderIndexById: Map<Long, Int>): BackupFolderPlacement? =
     folderIndexById[folderId]?.let { BackupFolderPlacement(folderIndex = it, position = position) }
 
 fun FacetEntity.toBackupFacet(

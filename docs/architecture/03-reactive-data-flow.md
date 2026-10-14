@@ -78,8 +78,8 @@ Every placement repository joins its Room rows with the live app list in memory.
 
 ```mermaid
 flowchart TB
-    DAO1["DockAppDao.observeAll()\nFlow of List DockAppEntity"] --> C
-    DAO2["DockFolderPlacementDao.observeAll()\nFlow of List DockFolderPlacementEntity"] --> C
+    DAO1["AppPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)\nFlow of List AppPlacementEntity"] --> C
+    DAO2["FolderPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)\nFlow of List FolderPlacementEntity"] --> C
     FR["FolderRepository.observeFolders()\n= combine(FolderDao.observeAllWithApps(), AppRepository.observeInstalledApps())"] --> C
     AR["AppRepository.observeInstalledApps()\nFlow of List AppInfo"] --> C
     C{{"combine(a, b, c, d)"}} --> IDX["installedByComponent =\ninstalled.associateBy { Triple(pkg, activity, userHandle.hashCode()) }"]
@@ -99,8 +99,15 @@ Rules this encodes:
   index — so a personal and a work copy of the same app are distinct placements.
 - A Room write re-runs only the join, using `combine`'s cached latest app list; it never re-queries
   `LauncherApps`.
+- All four placement repositories read the same two tables, `app_placements` and `folder_placements`,
+  each through its own `(list, owner)` pair (`DockAppRepository` = `DOCK` + global,
+  `FacetDockAppRepository` = `DOCK` + a facet id, `FavoriteAppRepository` = `FAVORITES` + a facet id,
+  `DefaultFavoriteAppRepository` = `FAVORITES` + global). The join above is identical for all of them.
 - `FacetDockAppRepository` / `FavoriteAppRepository` also offer `observe…ForFacets(ids)`
-  → `Flow<Map<Long, List<PlacedItem>>>` for the facet carousel previews, built the same way.
+  → `Flow<Map<Long, List<PlacedItem>>>` for the facet carousel previews, built the same way. Those
+  previews, and the Appearance screens' preview, render through the shared `HomePreview` composable
+  (`ui/home/HomePreview.kt`), which honors the clock's alignment, zone height and scale and the app
+  list's row, column and Top/Bottom alignment exactly as `HomeScreen` resolves them.
 
 ## 3. The Home screen state graph
 
@@ -188,10 +195,11 @@ sequenceDiagram
     App->>App: Hilt builds SingletonComponent (lazy — services/DB on first inject)
     Act->>LVM: by viewModels()
     LVM->>Repos: combine(GetInstalledAppsUseCase.observe(), settings, observeWorkProfiles())
-    LVM->>UC: EnsureActiveFacetUseCase()   (creates a facet if none, fixes activeFacetId)
+    LVM->>UC: EnsureActiveFacetUseCase.keepUsable()   (creates a facet if none, fixes activeFacetId, keeps it valid)
     LVM->>UC: CleanUpUninstalledAppsUseCase()   (collects for process lifetime)
     LVM->>UC: RepairOrphanedProfileRowsUseCase()   (one pass: userId = -1 rows)
     LVM->>UC: SeedDefaultDockUseCase()   (fresh install only)
+    LVM->>UC: SyncFacetShortcutsUseCase()   (collects for process lifetime, publishes dynamic shortcuts, see 14)
     LVM->>UC: RunFacetAutomationUseCase(homePressedEvent)   (collects for process lifetime, see 15)
     Act->>Act: setContent — uiState.isLoading → empty Box
     Repos-->>LVM: first LauncherUiState (apps + theme + onboardingCompleted)

@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import android.net.Uri
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.DefaultFavoriteAppRepository
 import com.facetlauncher.app.data.DockAppRepository
@@ -95,10 +96,10 @@ class ImportBackupUseCase @Inject constructor(
         bundle.facets.forEachIndexed { index, backupFacet ->
             val newId = facetRepository.restoreFacet(backupFacet.toFacetEntity())
             backupFacet.favorites.forEach { entry ->
-                favoriteAppRepository.restoreFavorite(entry.toFavoriteAppEntity(newId))
+                favoriteAppRepository.restoreFavorite(entry.toAppPlacementEntity(PlacementList.FAVORITES, newId))
             }
             backupFacet.dockApps.forEach { entry ->
-                facetDockAppRepository.restoreDockApp(entry.toFacetDockAppEntity(newId))
+                facetDockAppRepository.restoreDockApp(entry.toAppPlacementEntity(PlacementList.DOCK, newId))
             }
             backupFacet.dockFolderPlacements.forEach { placement ->
                 newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
@@ -115,7 +116,7 @@ class ImportBackupUseCase @Inject constructor(
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
 
         dockAppRepository.deleteAllDockApps()
-        bundle.dockApps.forEach { dockAppRepository.restoreDockApp(it.toDockAppEntity()) }
+        bundle.dockApps.forEach { dockAppRepository.restoreDockApp(it.toAppPlacementEntity(PlacementList.DOCK)) }
         bundle.dockFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 dockAppRepository.restoreDockFolderPlacement(folderId, placement.position)
@@ -123,7 +124,7 @@ class ImportBackupUseCase @Inject constructor(
         }
 
         defaultFavoriteAppRepository.deleteAllDefaultFavorites()
-        bundle.defaultFavoriteApps.forEach { defaultFavoriteAppRepository.restoreDefaultFavorite(it.toDefaultFavoriteAppEntity()) }
+        bundle.defaultFavoriteApps.forEach { defaultFavoriteAppRepository.restoreDefaultFavorite(it.toAppPlacementEntity(PlacementList.FAVORITES)) }
         bundle.defaultFavoriteFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 defaultFavoriteAppRepository.restoreDefaultFavoriteFolderPlacement(folderId, placement.position)

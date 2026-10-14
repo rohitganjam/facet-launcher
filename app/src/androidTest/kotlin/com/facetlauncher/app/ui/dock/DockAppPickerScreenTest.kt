@@ -58,8 +58,8 @@ class DockAppPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
@@ -324,8 +324,8 @@ class DockAppPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 DockAppPickerViewModel(

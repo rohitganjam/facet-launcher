@@ -189,7 +189,7 @@ private fun ManageFacetsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
 
 /**
  * A plain vertical list (never scrolls in practice — capped at
- * [com.facetlauncher.app.data.FacetRepository.MAX_FACETS] rows) of drag-handle + name +
+ * [com.facetlauncher.app.data.model.FacetLimits.PRO_MAX_FACETS] rows) of drag-handle + name +
  * overflow rows, with a non-reorderable "Add facet" row pinned at the bottom. Only the handle
  * on the left has a drag gesture attached, so there's no long-press/axis-conflict to arbitrate.
  */

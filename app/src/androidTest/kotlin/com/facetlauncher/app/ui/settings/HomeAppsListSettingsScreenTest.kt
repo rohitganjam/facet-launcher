@@ -69,8 +69,8 @@ class HomeAppsListSettingsScreenTest {
                 val facetId = if (facetScoped) runBlocking { facetRepository.addFacet().id } else null
                 onFacetRepo(facetRepository, facetId)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 runBlocking { seed(folderRepository, favoriteAppRepository, defaultFavoriteAppRepository, facetRepository, facetId) }
                 HomeAppsListSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),

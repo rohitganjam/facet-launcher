@@ -78,10 +78,10 @@ class FacetSettingsScreenTest {
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     facetRepository,
                     settingsRepository,
-                    FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
-                    DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
-                    FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
-                    DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                 )
             }

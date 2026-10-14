@@ -54,8 +54,8 @@ class FavoritesPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 runBlocking {
                     facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
                     seed(appRepository, favoriteAppRepository, folderRepository)
@@ -239,8 +239,8 @@ class FavoritesPickerScreenTest {
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), folderRepository, appRepository)
-                defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val favoriteAppRepository = FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 FavoritesPickerViewModel(

@@ -71,8 +71,8 @@ class SettingsScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 SettingsViewModel(
                     ObserveSettingsScreenStateUseCase(settingsRepository, dockAppRepository, defaultFavoriteAppRepository, folderRepository),
                     DefaultLauncherRepository(context),

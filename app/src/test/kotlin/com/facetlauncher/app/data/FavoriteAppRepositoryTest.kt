@@ -1,7 +1,10 @@
 package com.facetlauncher.app.data
 
-import com.facetlauncher.app.data.local.FavoriteAppDao
-import com.facetlauncher.app.data.local.FavoriteAppEntity
+import com.facetlauncher.app.data.local.AppPlacementDao
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.local.FolderPlacementDao
+import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
@@ -21,54 +24,15 @@ import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** In-memory fake — simpler than mocking every [FavoriteAppDao] method for this repository's needs. */
-private class FakeFavoriteAppDao : FavoriteAppDao {
-    private val state = MutableStateFlow<List<FavoriteAppEntity>>(emptyList())
-
-    override fun observeForFacet(facetId: Long): Flow<List<FavoriteAppEntity>> =
-        state.map { entries -> entries.filter { it.facetId == facetId } }
-
-    override suspend fun upsert(favoriteApp: FavoriteAppEntity): Long {
-        state.value = state.value.filterNot {
-            it.facetId == favoriteApp.facetId && it.packageName == favoriteApp.packageName && it.activityName == favoriteApp.activityName && it.userId == favoriteApp.userId
-        } + favoriteApp
-        return 0
-    }
-
-    override suspend fun delete(favoriteApp: FavoriteAppEntity) {
-        state.value = state.value.filterNot { it.id == favoriteApp.id }
-    }
-
-    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String, userId: Int) {
-        state.value = state.value.filterNot {
-            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName && it.userId == userId
-        }
-    }
-
-    override suspend fun deleteByPackage(packageName: String, userId: Int) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
-    }
-
-    override suspend fun deleteByUserId(userId: Int) {
-        state.value = state.value.filterNot { it.userId == userId }
-    }
-
-    override suspend fun deleteAllForFacet(facetId: Long) {
-        state.value = state.value.filterNot { it.facetId == facetId }
-    }
-
-    override suspend fun getOrphaned(): List<FavoriteAppEntity> = state.value.filter { it.userId == -1 }
-}
-
 @RunWith(RobolectricTestRunner::class)
 class FavoriteAppRepositoryTest {
 
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
-    private fun repository(dao: FavoriteAppDao, appRepository: AppRepository): FavoriteAppRepository {
+    private fun repository(dao: AppPlacementDao, appRepository: AppRepository): FavoriteAppRepository {
         val folderRepository = FolderRepository(FakeFolderDao(), appRepository)
-        return FavoriteAppRepository(dao, FakeFavoriteFolderPlacementDao(), folderRepository, appRepository)
+        return FavoriteAppRepository(dao, FakeFolderPlacementDao(), folderRepository, appRepository)
     }
 
     @Test
@@ -78,7 +42,7 @@ class FavoriteAppRepositoryTest {
         val b = appInfo('b')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = b, position = 1)
         repository.addFavorite(facetId = 1, app = a, position = 0)
@@ -95,7 +59,7 @@ class FavoriteAppRepositoryTest {
         // Given a favorite entry for an app AppRepository no longer reports as installed
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = appInfo('a'), position = 0)
 
@@ -112,7 +76,7 @@ class FavoriteAppRepositoryTest {
         val a = appInfo('a')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
 
@@ -127,7 +91,7 @@ class FavoriteAppRepositoryTest {
         val a = appInfo('a')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a)))
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
 
@@ -144,9 +108,9 @@ class FavoriteAppRepositoryTest {
         // e.g. a clone-profile collision below API 35) but come from two distinct real handles
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
-        val dao = FakeFavoriteAppDao()
-        dao.upsert(FavoriteAppEntity(facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
-        dao.upsert(FavoriteAppEntity(facetId = 2, packageName = "com.example.b", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 20))
+        val dao = FakeAppPlacementDao()
+        dao.upsert(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
+        dao.upsert(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = 2, packageName = "com.example.b", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 20))
         val repository = repository(dao, appRepository)
 
         // When removing only the first handle's rows
@@ -154,7 +118,7 @@ class FavoriteAppRepositoryTest {
 
         // Then only that handle's row is gone — the other colliding-category row survives
         assertEquals(emptyList<AppInfo>(), repository.observeFavoritesForFacet(1).first())
-        assertEquals(listOf(20), dao.observeForFacet(2).first().map { it.userId })
+        assertEquals(listOf(20), dao.observe(PlacementList.FAVORITES, 2).first().map { it.userId })
     }
 
     @Test
@@ -164,7 +128,7 @@ class FavoriteAppRepositoryTest {
         val b = appInfo('b')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b)))
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
         repository.addFavorite(facetId = 2, app = b, position = 0)
@@ -185,7 +149,7 @@ class FavoriteAppRepositoryTest {
         val appRepository = mock(AppRepository::class.java)
         val installedApps = MutableStateFlow(listOf(a, b))
         `when`(appRepository.observeInstalledApps()).thenReturn(installedApps)
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = a, position = 0)
         repository.addFavorite(facetId = 1, app = b, position = 1)
@@ -211,7 +175,7 @@ class FavoriteAppRepositoryTest {
         val c = appInfo('c')
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(listOf(a, b, c)))
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
         repository.addFavorite(facetId = 1, app = c, position = 0)
 
@@ -231,8 +195,8 @@ class FavoriteAppRepositoryTest {
         val folderDao = FakeFolderDao()
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
         val folderRepository = FolderRepository(folderDao, appRepository)
-        val dao = FakeFavoriteAppDao()
-        val repository = FavoriteAppRepository(dao, FakeFavoriteFolderPlacementDao(), folderRepository, appRepository)
+        val dao = FakeAppPlacementDao()
+        val repository = FavoriteAppRepository(dao, FakeFolderPlacementDao(), folderRepository, appRepository)
 
         // When replacing this facet's favorites with an app and the folder together
         val folder = com.facetlauncher.app.data.model.Folder(folderId, "Games", emptyList())
@@ -247,7 +211,7 @@ class FavoriteAppRepositoryTest {
     fun `observeFavoritesForFacets with an empty id list emits an empty map`() = runTest {
         // Given no facets to observe
         val appRepository = mock(AppRepository::class.java)
-        val dao = FakeFavoriteAppDao()
+        val dao = FakeAppPlacementDao()
         val repository = repository(dao, appRepository)
 
         // Then it emits immediately without needing AppRepository at all

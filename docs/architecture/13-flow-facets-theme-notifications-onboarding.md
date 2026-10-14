@@ -28,8 +28,8 @@ flowchart TB
     end
     subgraph OVERRIDE["Destination screens — each owns its own Inherit/Override switch"]
         C1["ClockStyleGalleryScreen\nupdateOverridingClock(facet, overriding, 10 values)"]
-        C2["HomeAppsListSettingsScreen\nupdateOverridingApps(...) — content only now\n(mode, count, favorites); copies default favorites into\nfavorite_apps first if the facet's own list is empty"]
-        C3["DockSettingsScreen\nupdateOverridingDock(facet, overriding) — content only now\n(the dock's own app list); same copy-on-first-override into facet_dock_apps"]
+        C2["HomeAppsListSettingsScreen\nupdateOverridingApps(...) — content only now\n(mode, count, favorites); copies default favorites into\nthe facet's own Favorites list (app_placements) first if empty"]
+        C3["DockSettingsScreen\nupdateOverridingDock(facet, overriding) — content only now\n(the dock's own app list); same copy-on-first-override into the facet's own Dock list (app_placements)"]
         C4["CalendarSettingsScreen\nupdateOverridingCalendar(...)"]
     end
     subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
@@ -113,18 +113,25 @@ flowchart TB
   caps how many favorites it renders — `previewItemCap`/`PREVIEW_ROW_BUDGET` — a row budget ×
   items-per-row so `TWO_COLUMN`/`GRID` show proportionally more of the real list than
   `SINGLE_COLUMN`'s tighter cap without overflowing the card.
+- **A third, smaller preview card: `HomeSurfacePreview`** (`ui/components/HomeSurfacePreview.kt`) heads
+  `HomeAppsListSettingsScreen` and `DockSettingsScreen`. It is a short wallpaper band that shows
+  *only* the surface that screen governs — the app list or the dock, never the clock — so it honors
+  the app list's row position and presentation, layout, column alignment and grid options, and the dock
+  display mode, but has no clock position or app-list Top/Bottom placement to honor. It is separate
+  from `HomePreview` because it is not a scale model of the screen.
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.
 - **Turning an override on copies the inherited list** (`replaceItems(facetId, defaultItems)`)
-  so the card never goes blank — the per-facet table becomes an independent copy from that moment.
+  so the card never goes blank — the facet's own list (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) becomes an independent copy from that moment.
 - **Turning it off does not delete the facet's rows**; they're just ignored until the flag is set
   again (and are still exported by backup).
-- `FacetCarouselViewModel` exposes 19 `xxx(facetId)` resolvers that apply `resolveOverride`/
+- `FacetCarouselViewModel` exposes 20 `xxx(facetId)` resolvers that apply `resolveOverride`/
   `resolveSentinel` per facet so each card renders with its own effective clock/apps/dock styling
   (dropped to 14 when calendar/appearance styling consolidation removed the four calendar-specific
   resolvers, then rose to 19 with the four `appListLayout`/`appListColumnAlignment`/
-  `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added).
+  `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added, and to 20 with
+  `appListVerticalAlignment(facetId)`, which the carousel preview needs to place the app list under the clock).
 
 ### 1a. Facet limits and the free plan
 

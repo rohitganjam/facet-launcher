@@ -56,8 +56,8 @@ class DockSettingsScreenTest {
                 val facetRepository = FacetRepository(database.facetDao())
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val dockAppRepository = DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), folderRepository, appRepository)
-                val facetDockAppRepository = FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), folderRepository, appRepository)
+                val dockAppRepository = DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val facetDockAppRepository = FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }

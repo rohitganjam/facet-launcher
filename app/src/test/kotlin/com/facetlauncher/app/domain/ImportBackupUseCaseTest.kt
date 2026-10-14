@@ -9,7 +9,8 @@ import com.facetlauncher.app.data.FacetDockAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FavoriteAppEntity
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -173,9 +174,9 @@ class ImportBackupUseCaseTest {
         verify(dockAppRepository).deleteAllDockApps()
         verify(defaultFavoriteAppRepository).deleteAllDefaultFavorites()
         // ...the backup's own data is restored, favorites attached to the newly-created facet's real id...
-        verify(favoriteAppRepository).restoreFavorite(FavoriteAppEntity(facetId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
+        verify(favoriteAppRepository).restoreFavorite(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
         verify(facetDockAppRepository).restoreDockApp(
-            com.facetlauncher.app.data.local.FacetDockAppEntity(facetId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0),
+            AppPlacementEntity(list = PlacementList.DOCK, facetId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0),
         )
         // ...the active facet resolves from an index to that new id...
         verify(settingsRepository).setActiveFacetId(99L)

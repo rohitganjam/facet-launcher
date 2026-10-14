@@ -1,21 +1,20 @@
 # Facet Launcher — Living Blueprint
 
-An architecture reference derived from the code as it stands on `feature/work-profile-support`
-(app `0.1.5`, Room schema v23, 244 Kotlin files under `app/src/main`). Every claim below was
+An architecture reference derived from the code at app `0.1.26` (Room schema v28, 349 Kotlin files under `app/src/main`). Every claim below was
 checked against source, not against planning docs; where the code diverges from
 `CLAUDE.md`'s stated conventions, [05-findings.md](05-findings.md) says so.
 
 | Doc | What it covers |
 |---|---|
 | [01-architecture-and-layers.md](01-architecture-and-layers.md) | Layer boundaries, unidirectional data flow, Hilt components/scopes/modules, entry points |
-| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (13 tables), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v23, the complete DataStore key registry (47 keys, read/write paths, all 49 writers), backup file format |
+| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (7 tables: placements are two tables, `app_placements` and `folder_placements`), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v28, the complete DataStore key registry (60 keys, read/write paths, all 62 writers), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
-| [05-findings.md](05-findings.md) | Architect's review: 12 findings ranked by severity with concrete fixes, plus what's working well |
+| [05-findings.md](05-findings.md) | Architect's review: 9 open findings ranked by severity with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
-| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (189 classes / 1693 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories (deps, source wrapped, API, consumers), 43 use cases, 30 ViewModels |
-| [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder; override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
+| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (201 classes / 1862 cases), regenerate with `scripts/gen-test-registry.py` |
+| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories (deps, source wrapped, API, consumers), 46 use cases, 32 ViewModels |
+| [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
 | [11-flow-profiles-and-spaces.md](11-flow-profiles-and-spaces.md) | Flow: profile classification, Work Profile, Private Space, Secure Folder, tear-down |
@@ -30,14 +29,15 @@ checked against source, not against planning docs; where the code diverges from
 | Concern | Choice (verified in `app/build.gradle.kts`) |
 |---|---|
 | Language / UI | Kotlin only, Jetpack Compose (BOM `2026.09.00`, Material3 overridden to `1.5.0-beta01` for the wavy progress indicator), no XML layouts |
-| Module layout | `:app` (`minSdk 30`, `targetSdk/compileSdk 36`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
+| Module layout | `:app` (`minSdk 30`, `targetSdk 36`, `compileSdk 37`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
-| Navigation | `navigation-compose 2.9.6` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
-| Persistence | Room `2.8.4` (`facet.db`, v20, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
+| Navigation | `navigation-compose 2.10.2` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
+| Persistence | Room `2.8.5` (`facet.db`, v28, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |
+| Billing | Google Play Billing `billing-ktx 9.1.0` for the one-time `facet_pro` purchase ([16](16-flow-billing.md)); the manifest removes the `INTERNET` permission the library merges in |
 | Networking | **None** — no Retrofit/OkHttp dependency, no `INTERNET` permission |
-| Tests | JUnit4 + Robolectric `4.16.1` + `kotlinx-coroutines-test` (JVM); Compose UI tests + `room-testing` + Orchestrator (instrumented) |
+| Tests | JUnit4 + Robolectric `4.17` + `kotlinx-coroutines-test` (JVM); Compose UI tests + `room-testing` + Orchestrator (instrumented) |
 
 ## Keeping this blueprint alive
 

@@ -1,7 +1,10 @@
 package com.facetlauncher.app.data
 
-import com.facetlauncher.app.data.local.FacetDockAppDao
-import com.facetlauncher.app.data.local.FacetDockAppEntity
+import com.facetlauncher.app.data.local.AppPlacementDao
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.local.FolderPlacementDao
+import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.local.FolderEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
@@ -21,54 +24,15 @@ import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** In-memory fake — mirrors `FavoriteAppRepositoryTest`'s `FakeFavoriteAppDao`. */
-private class FakeFacetDockAppDao : FacetDockAppDao {
-    private val state = MutableStateFlow<List<FacetDockAppEntity>>(emptyList())
-
-    override fun observeForFacet(facetId: Long): Flow<List<FacetDockAppEntity>> =
-        state.map { entries -> entries.filter { it.facetId == facetId } }
-
-    override suspend fun upsert(dockApp: FacetDockAppEntity): Long {
-        state.value = state.value.filterNot {
-            it.facetId == dockApp.facetId && it.packageName == dockApp.packageName && it.activityName == dockApp.activityName && it.userId == dockApp.userId
-        } + dockApp
-        return 0
-    }
-
-    override suspend fun delete(dockApp: FacetDockAppEntity) {
-        state.value = state.value.filterNot { it.id == dockApp.id }
-    }
-
-    override suspend fun deleteByComponent(facetId: Long, packageName: String, activityName: String, userId: Int) {
-        state.value = state.value.filterNot {
-            it.facetId == facetId && it.packageName == packageName && it.activityName == activityName && it.userId == userId
-        }
-    }
-
-    override suspend fun deleteByPackage(packageName: String, userId: Int) {
-        state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
-    }
-
-    override suspend fun deleteByUserId(userId: Int) {
-        state.value = state.value.filterNot { it.userId == userId }
-    }
-
-    override suspend fun deleteAllForFacet(facetId: Long) {
-        state.value = state.value.filterNot { it.facetId == facetId }
-    }
-
-    override suspend fun getOrphaned(): List<FacetDockAppEntity> = state.value.filter { it.userId == -1 }
-}
-
 @RunWith(RobolectricTestRunner::class)
 class FacetDockAppRepositoryTest {
 
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
-    private fun repository(appRepository: AppRepository, dao: FacetDockAppDao = FakeFacetDockAppDao()): FacetDockAppRepository {
+    private fun repository(appRepository: AppRepository, dao: AppPlacementDao = FakeAppPlacementDao()): FacetDockAppRepository {
         val folderRepository = FolderRepository(FakeFolderDao(), appRepository)
-        return FacetDockAppRepository(dao, FakeFacetDockFolderPlacementDao(), folderRepository, appRepository)
+        return FacetDockAppRepository(dao, FakeFolderPlacementDao(), folderRepository, appRepository)
     }
 
     @Test
@@ -172,7 +136,7 @@ class FacetDockAppRepositoryTest {
         val folderDao = FakeFolderDao()
         val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
         val folderRepository = FolderRepository(folderDao, appRepository)
-        val repository = FacetDockAppRepository(FakeFacetDockAppDao(), FakeFacetDockFolderPlacementDao(), folderRepository, appRepository)
+        val repository = FacetDockAppRepository(FakeAppPlacementDao(), FakeFolderPlacementDao(), folderRepository, appRepository)
 
         val folder = com.facetlauncher.app.data.model.Folder(folderId, "Games", emptyList())
         repository.replaceItems(facetId = 1, items = listOf(PlacedItem.SingleApp(a), PlacedItem.FolderItem(folder)))
@@ -187,9 +151,9 @@ class FacetDockAppRepositoryTest {
         // e.g. a clone-profile collision below API 35) but come from two distinct real handles
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
-        val dao = FakeFacetDockAppDao()
-        dao.upsert(FacetDockAppEntity(facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
-        dao.upsert(FacetDockAppEntity(facetId = 2, packageName = "com.example.b", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 20))
+        val dao = FakeAppPlacementDao()
+        dao.upsert(AppPlacementEntity(list = PlacementList.DOCK, facetId = 1, packageName = "com.example.a", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 10))
+        dao.upsert(AppPlacementEntity(list = PlacementList.DOCK, facetId = 2, packageName = "com.example.b", activityName = ".Main", position = 0, profile = AppProfile.OTHER, userId = 20))
         val repository = repository(appRepository, dao)
 
         // When removing only the first handle's rows
@@ -197,7 +161,7 @@ class FacetDockAppRepositoryTest {
 
         // Then only that handle's row is gone — the other colliding-category row survives
         assertEquals(emptyList<AppInfo>(), repository.observeDockAppsForFacet(1).first())
-        assertEquals(listOf(20), dao.observeForFacet(2).first().map { it.userId })
+        assertEquals(listOf(20), dao.observe(PlacementList.DOCK, 2).first().map { it.userId })
     }
 
     @Test

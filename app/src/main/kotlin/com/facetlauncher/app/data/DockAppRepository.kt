@@ -1,9 +1,11 @@
 package com.facetlauncher.app.data
 
-import com.facetlauncher.app.data.local.DockAppDao
-import com.facetlauncher.app.data.local.DockAppEntity
-import com.facetlauncher.app.data.local.DockFolderPlacementDao
-import com.facetlauncher.app.data.local.DockFolderPlacementEntity
+import com.facetlauncher.app.data.local.AppPlacementDao
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.local.FolderPlacementDao
+import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.local.GLOBAL_OWNER_KEY
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.PlacedItem
@@ -13,14 +15,16 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private val LIST = PlacementList.DOCK
+
 /**
- * Wraps [DockAppDao], hydrating stored (packageName, activityName) rows against the live
+ * Wraps [AppPlacementDao], hydrating stored (packageName, activityName) rows against the live
  * installed-app list (via [AppRepository.observeInstalledApps]). An entry whose app is no
  * longer installed is filtered out of the emitted list (F3's uninstall-collapse rule) rather
  * than shown as a dead tile — live, so an uninstall via F12's long-press menu collapses the
  * dock immediately rather than needing a restart.
  *
- * A folder ([DockFolderPlacementDao]) occupies one slot in the same `position` ordering space as
+ * A folder ([FolderPlacementDao]) occupies one slot in the same `position` ordering space as
  * standalone dock apps — merged in Kotlin by [observeDockItems] rather than enforced across
  * tables by Room, the same way [observeDockApps] already merges Room rows against installed
  * apps. Folder identity/membership itself lives in [FolderRepository]; this repository only
@@ -28,8 +32,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class DockAppRepository @Inject constructor(
-    private val dockAppDao: DockAppDao,
-    private val dockFolderPlacementDao: DockFolderPlacementDao,
+    private val appPlacementDao: AppPlacementDao,
+    private val folderPlacementDao: FolderPlacementDao,
     private val folderRepository: FolderRepository,
     private val appRepository: AppRepository,
 ) {
@@ -41,7 +45,7 @@ class DockAppRepository @Inject constructor(
     }
 
     fun observeDockApps(): Flow<List<AppInfo>> {
-        return combine(dockAppDao.observeAll(), appRepository.observeInstalledApps()) { entities, installed ->
+        return combine(appPlacementDao.observe(LIST, GLOBAL_OWNER_KEY), appRepository.observeInstalledApps()) { entities, installed ->
             val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
             entities.sortedBy { it.position }
                 .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)] }
@@ -55,8 +59,8 @@ class DockAppRepository @Inject constructor(
      */
     fun observeDockItems(): Flow<List<PlacedItem>> {
         return combine(
-            dockAppDao.observeAll(),
-            dockFolderPlacementDao.observeAll(),
+            appPlacementDao.observe(LIST, GLOBAL_OWNER_KEY),
+            folderPlacementDao.observe(LIST, GLOBAL_OWNER_KEY),
             folderRepository.observeFolders(),
             appRepository.observeInstalledApps(),
         ) { appEntities, placements, folders, installed ->
@@ -80,21 +84,21 @@ class DockAppRepository @Inject constructor(
     }
 
     suspend fun addDockApp(app: AppInfo, position: Int) {
-        dockAppDao.upsert(
-            DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = position, profile = app.profile, userId = app.userHandle.hashCode()),
+        appPlacementDao.upsert(
+            AppPlacementEntity(list = LIST, packageName = app.packageName, activityName = app.activityName, position = position, profile = app.profile, userId = app.userHandle.hashCode()),
         )
     }
 
     suspend fun removeDockApp(app: AppInfo) {
-        dockAppDao.deleteByComponent(app.packageName, app.activityName, app.userHandle.hashCode())
+        appPlacementDao.deleteByComponent(LIST, GLOBAL_OWNER_KEY, app.packageName, app.activityName, app.userHandle.hashCode())
     }
 
     suspend fun placeFolderInDock(folderId: Long, position: Int) {
-        dockFolderPlacementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = position))
+        folderPlacementDao.upsert(FolderPlacementEntity(list = LIST, folderId = folderId, position = position))
     }
 
     suspend fun removeFolderFromDock(folderId: Long) {
-        dockFolderPlacementDao.deleteByFolderId(folderId)
+        folderPlacementDao.deleteByFolderId(LIST, GLOBAL_OWNER_KEY, folderId)
     }
 
     /**
@@ -106,48 +110,48 @@ class DockAppRepository @Inject constructor(
      * without deleting anything — this only runs for a genuine, permanent uninstall.
      */
     suspend fun removeByPackage(packageName: String, userId: Int) {
-        dockAppDao.deleteByPackage(packageName, userId)
+        appPlacementDao.deleteByPackage(LIST, global = true, packageName, userId)
     }
 
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
     suspend fun removeByUserId(userId: Int) {
-        dockAppDao.deleteByUserId(userId)
+        appPlacementDao.deleteByUserId(LIST, global = true, userId)
     }
 
     /** F14 Backup & Restore export — raw, unhydrated rows (an app not currently installed still gets backed up). */
-    suspend fun getRawDockApps(): List<DockAppEntity> = dockAppDao.observeAll().first()
+    suspend fun getRawDockApps(): List<AppPlacementEntity> = appPlacementDao.observe(LIST, GLOBAL_OWNER_KEY).first()
 
     /** F14 Backup & Restore export — raw folder-placement rows (the folder library itself is exported once, globally, by [FolderRepository]). */
-    suspend fun getRawDockFolderPlacements(): List<DockFolderPlacementEntity> = dockFolderPlacementDao.observeAll().first()
+    suspend fun getRawDockFolderPlacements(): List<FolderPlacementEntity> = folderPlacementDao.observe(LIST, GLOBAL_OWNER_KEY).first()
 
     /** F14 Backup & Restore import — inserts [entity] as a brand-new row (its own `id` is ignored). */
-    suspend fun restoreDockApp(entity: DockAppEntity) {
-        dockAppDao.upsert(entity.copy(id = 0))
+    suspend fun restoreDockApp(entity: AppPlacementEntity) {
+        appPlacementDao.upsert(entity.copy(id = 0))
     }
 
     /** Rows still at the migration's `-1` `userId` sentinel — see `RepairOrphanedProfileRowsUseCase`. */
-    suspend fun getOrphanedRows(): List<DockAppEntity> = dockAppDao.getOrphaned()
+    suspend fun getOrphanedRows(): List<AppPlacementEntity> = appPlacementDao.getOrphaned(LIST, global = true)
 
     /** Backfills [entity]'s real `userId` once [RepairOrphanedProfileRowsUseCase] resolves it — updates in place (same `id`), doesn't create a new row. */
-    suspend fun backfillUserId(entity: DockAppEntity, userId: Int) {
-        dockAppDao.upsert(entity.copy(userId = userId))
+    suspend fun backfillUserId(entity: AppPlacementEntity, userId: Int) {
+        appPlacementDao.upsert(entity.copy(userId = userId))
     }
 
     /** F14 Backup & Restore import — places a restored folder (by its already-remapped [folderId]) into the Dock. */
     suspend fun restoreDockFolderPlacement(folderId: Long, position: Int) {
-        dockFolderPlacementDao.upsert(DockFolderPlacementEntity(folderId = folderId, position = position))
+        folderPlacementDao.upsert(FolderPlacementEntity(list = LIST, folderId = folderId, position = position))
     }
 
     /** F14 Backup & Restore — wipes the whole dock (apps and folder placements) before restoring from a backup. */
     suspend fun deleteAllDockApps() {
-        dockAppDao.deleteAll()
-        dockFolderPlacementDao.deleteAll()
+        appPlacementDao.deleteAllForOwner(LIST, GLOBAL_OWNER_KEY)
+        folderPlacementDao.deleteAllForOwner(LIST, GLOBAL_OWNER_KEY)
     }
 
     suspend fun reorderDockApps(orderedApps: List<AppInfo>) {
         orderedApps.forEachIndexed { index, app ->
-            dockAppDao.upsert(
-                DockAppEntity(packageName = app.packageName, activityName = app.activityName, position = index, profile = app.profile, userId = app.userHandle.hashCode()),
+            appPlacementDao.upsert(
+                AppPlacementEntity(list = LIST, packageName = app.packageName, activityName = app.activityName, position = index, profile = app.profile, userId = app.userHandle.hashCode()),
             )
         }
     }
@@ -156,8 +160,9 @@ class DockAppRepository @Inject constructor(
     suspend fun reorderDockItems(orderedItems: List<PlacedItem>) {
         orderedItems.forEachIndexed { index, item ->
             when (item) {
-                is PlacedItem.SingleApp -> dockAppDao.upsert(
-                    DockAppEntity(
+                is PlacedItem.SingleApp -> appPlacementDao.upsert(
+                    AppPlacementEntity(
+                        list = LIST,
                         packageName = item.app.packageName,
                         activityName = item.app.activityName,
                         position = index,
@@ -165,8 +170,8 @@ class DockAppRepository @Inject constructor(
                         userId = item.app.userHandle.hashCode(),
                     ),
                 )
-                is PlacedItem.FolderItem -> dockFolderPlacementDao.upsert(
-                    DockFolderPlacementEntity(folderId = item.folder.id, position = index),
+                is PlacedItem.FolderItem -> folderPlacementDao.upsert(
+                    FolderPlacementEntity(list = LIST, folderId = item.folder.id, position = index),
                 )
             }
         }

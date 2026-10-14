@@ -229,11 +229,11 @@ class HomeDrawerRouteTest {
                     `when`(repo.profileFor(any())).thenReturn(AppProfile.PERSONAL)
                 }
             }
-            val dockAppRepository = remember { DockAppRepository(database.dockAppDao(), database.dockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
-            val facetDockAppRepository = remember { FacetDockAppRepository(database.facetDockAppDao(), database.facetDockFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
-            val favoriteAppRepository = remember { FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
+            val dockAppRepository = remember { DockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
+            val facetDockAppRepository = remember { FacetDockAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
+            val favoriteAppRepository = remember { FavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository) }
             val defaultFavoriteAppRepository = remember {
-                DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
+                DefaultFavoriteAppRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
                     // Never seeded otherwise — observeDefaultFavorites() combines DB rows against
                     // installed apps, so with zero rows the app list stays permanently empty
                     // regardless of how fast/slow the installed-apps side is.

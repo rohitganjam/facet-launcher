@@ -6,20 +6,20 @@ independent entry points feed one shared ingestion path; from there it rejoins t
 flow ([13 §1](13-flow-facets-theme-notifications-onboarding.md)) with no separate propagation
 mechanism of its own.
 
-## 1. Shortcut sync — kept in lockstep with `FacetRepository`
+## 1. Shortcut sync — kept in lockstep with the selectable facets
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant LVM as LauncherViewModel (init)
     participant UC as SyncFacetShortcutsUseCase
-    participant FR as FacetRepository
+    participant SF as SelectableFacetsUseCase
     participant SR as FacetShortcutRepository
     participant SM as ShortcutManagerCompat
     LVM->>UC: invoke()   (launched once, runs for the app's lifetime)
-    UC->>FR: observeFacets()
-    loop every emission (add / rename / reorder / delete)
-        FR-->>UC: List of FacetEntity
+    UC->>SF: observe()   (facets the user may switch to, from FacetRepository + entitlement)
+    loop every emission (add / rename / reorder / delete / entitlement change)
+        SF-->>UC: List of FacetEntity
         UC->>SR: syncShortcuts(facets)
         SR->>SM: setDynamicShortcuts(context, shortcuts)   (full atomic replace)
     end
@@ -36,8 +36,10 @@ sequenceDiagram
   trigger `Uri`, so an already-configured automation rule keeps working and just shows the new name.
 - **Full replace, not a diff.** `setDynamicShortcuts` republishes the entire set every emission
   rather than hand-rolled add/update/remove — simpler, and it can't drift from `FacetRepository`'s
-  actual state. `FacetRepository.MAX_FACETS` (3) is well under `ShortcutManagerCompat`'s
-  per-activity cap, so no eviction logic is needed.
+  actual state. Only facets the user may switch to are published (`SelectableFacetsUseCase`: all for Pro, the
+  first 3 in list order on the free plan, [13 §1a](13-flow-facets-theme-notifications-onboarding.md)),
+  and `FacetLimits.PRO_MAX_FACETS` (10) is well under `ShortcutManagerCompat`'s per-activity cap, so no
+  eviction logic is needed.
 
 ## 2. Ingestion — deep link or shortcut, one shared path
 
@@ -98,7 +100,7 @@ sequenceDiagram
 |---|---|
 | Deep link `Uri` format (build + parse) | `data/model/FacetDeepLink.kt` |
 | Shortcut publishing | `data/FacetShortcutRepository.kt` |
-| Live shortcut/`FacetRepository` sync | `domain/SyncFacetShortcutsUseCase.kt` |
+| Live shortcut sync (selectable facets) | `domain/SyncFacetShortcutsUseCase.kt` |
 | Facet activation by id, with the no-op guard | `domain/ActivateFacetByIdUseCase.kt` |
 | Manifest intent-filter + cold/warm-start ingestion | `AndroidManifest.xml`, `LauncherActivity.kt` |
 | ViewModel entry point | `ui/launcher/LauncherViewModel.kt` (`activateFacetFromDeepLink`) |

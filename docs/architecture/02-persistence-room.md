@@ -4,8 +4,8 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v27**, `exportSchema = true` → `app/schemas/.../1.json … 27.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 47 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v28**, `exportSchema = true` → `app/schemas/.../1.json … 28.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 7 repositories (§2) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 60 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -69,56 +69,11 @@ erDiagram
         string selectedCalendarIdsCsv "nullable"
     }
 
-    favorite_apps {
+    app_placements {
         long id PK
-        long facetId FK "CASCADE"
-        string packageName
-        string activityName
-        int position
-        string profile "PERSONAL default"
-        int userId "-1 = unresolved"
-    }
-
-    automation_rules {
-        long id PK "autoGenerate"
-        int position "list order and evaluator tie-break"
-        boolean enabled
-        long targetFacetId FK "CASCADE"
-        string endBehavior "RETURN_TO_BASELINE / SWITCH_TO / STAY (plain string)"
-        long endFacetId FK "nullable, SET NULL"
-        string triggerType "SCHEDULE / BLUETOOTH / WIFI / HEADPHONES / BATTERY (plain string)"
-        boolean negated "while not connected / not charging"
-        int scheduleDays "bitmask, Monday = bit 0"
-        int scheduleStartMinute
-        int scheduleEndMinute
-        string deviceAddress "nullable, Bluetooth"
-        string deviceName "nullable, Bluetooth"
-        string wifiSsid "nullable, null = any network"
-        int batteryThreshold "nullable, required for a battery rule"
-        string batteryDirection "nullable, BELOW or ABOVE (plain string), required with the threshold for a battery rule"
-    }
-
-    facet_dock_apps {
-        long id PK
-        long facetId FK "CASCADE"
-        string packageName
-        string activityName
-        int position
-        string profile
-        int userId
-    }
-
-    dock_apps {
-        long id PK
-        string packageName
-        string activityName
-        int position
-        string profile
-        int userId
-    }
-
-    default_favorite_apps {
-        long id PK
+        string list "DOCK or FAVORITES"
+        long facetId FK "nullable, CASCADE — null = launcher-wide default list"
+        long ownerKey "facetId or 0, unique key column"
         string packageName
         string activityName
         int position
@@ -141,29 +96,12 @@ erDiagram
         int userId
     }
 
-    favorite_folder_placements {
+    folder_placements {
         long id PK
-        long facetId FK "CASCADE"
+        string list "DOCK or FAVORITES"
+        long facetId FK "nullable, CASCADE — null = launcher-wide default list"
+        long ownerKey "facetId or 0, unique key column"
         long folderId FK "CASCADE"
-        int position
-    }
-
-    facet_dock_folder_placements {
-        long id PK
-        long facetId FK "CASCADE"
-        long folderId FK "CASCADE"
-        int position
-    }
-
-    dock_folder_placements {
-        long id PK
-        long folderId FK "CASCADE, unique"
-        int position
-    }
-
-    default_favorite_folder_placements {
-        long id PK
-        long folderId FK "CASCADE, unique"
         int position
     }
 
@@ -181,32 +119,30 @@ erDiagram
 
     facets ||--o{ automation_rules : "rule target (CASCADE)"
     facets |o--o{ automation_rules : "switch-to end facet (SET NULL)"
-    facets ||--o{ favorite_apps : "per-facet favorites"
-    facets ||--o{ facet_dock_apps : "per-facet dock"
-    facets ||--o{ favorite_folder_placements : "folder in favorites"
-    facets ||--o{ facet_dock_folder_placements : "folder in dock"
-    folders ||--o{ folder_apps : "members"
-    folders ||--o{ favorite_folder_placements : ""
-    folders ||--o{ facet_dock_folder_placements : ""
-    folders ||--o| dock_folder_placements : "global dock"
-    folders ||--o| default_favorite_folder_placements : "global favorites"
+    facets |o--o{ app_placements : "per-facet dock and favorites"
+    facets |o--o{ folder_placements : "folder in a facet's dock or favorites"
+    folders ||--o{ folder_placements : "placed in dock or favorites"
 ```
 
 ### Reading the diagram
 
-- **Two scopes for every placement.** Each of dock and favorites exists twice: a *global default*
-  (`dock_apps`, `default_favorite_apps`, `dock_folder_placements`, `default_favorite_folder_placements`)
-  and a *per-facet override* (`facet_dock_apps`, `favorite_apps`, `facet_dock_folder_placements`,
-  `favorite_folder_placements`). Which one is live for a facet is decided by its `overrideDock` /
-  `overridingFavorites` flags via `FacetEntity.resolveOverride(...)`; the use cases
-  `Add/RemoveAppTo/FromDock|Favorites` and `Add/RemoveFolder…` route the write to the right table.
+- **One table per kind, two lists, two scopes.** `app_placements` and `folder_placements` hold every
+  Dock and Favorites entry. `list` (`PlacementList.DOCK | FAVORITES`) picks the list; a null `facetId`
+  is the *global default* list and a facet id is that facet's *per-facet override*. Which one is live
+  for a facet is decided by its `overrideDock` / `overridingFavorites` flags via
+  `FacetEntity.resolveOverride(...)`; the use cases `Add/RemoveAppTo/FromDock|Favorites` and
+  `Add/RemoveFolder…` route the write to the right `(list, owner)` through the four placement
+  repositories, which each pin one `PlacementList` and one scope.
+- **`ownerKey` exists because SQLite treats NULLs as distinct in a unique index.** It stores `facetId`,
+  or `GLOBAL_OWNER_KEY` (`0`) for the global lists, so the unique keys below also hold for global rows.
+  The entity derives it from `facetId` at construction; never set it independently.
 - **Apps and folders share a position axis.** `PlacedItem` (`SingleApp` | `FolderItem`) is the
   in-memory union; app rows and folder-placement rows in the same scope are merged and sorted by
   `position` at read time (no cross-table constraint enforces uniqueness of `position`).
 - **Uniqueness indices** (all `unique = true`):
-  `(packageName, activityName, userId)` on global tables, `(facetId, packageName, activityName, userId)`
-  on per-facet tables, `(folderId, packageName, activityName, userId)` on `folder_apps`,
-  `(facetId, folderId)` / `(folderId)` on folder placements. `userId` is part of every key so the
+  `(list, ownerKey, packageName, activityName, userId)` on `app_placements`,
+  `(list, ownerKey, folderId)` on `folder_placements`, and
+  `(folderId, packageName, activityName, userId)` on `folder_apps`. `userId` is part of every key so the
   same component can be placed once per profile (personal + work).
 - **Profile identity.** `profile` (`AppProfile`: `PERSONAL | WORK | PRIVATE | OTHER`) is a display
   classification; `userId` (`UserHandle.hashCode()`) is the identity. `-1` marks rows written before
@@ -220,14 +156,8 @@ erDiagram
 flowchart LR
     subgraph DB["FacetDatabase (Room)"]
         FD[FacetDao]
-        FAD[FavoriteAppDao]
-        FFPD[FavoriteFolderPlacementDao]
-        DAD[DockAppDao]
-        DFPD[DockFolderPlacementDao]
-        FDAD[FacetDockAppDao]
-        FDFPD[FacetDockFolderPlacementDao]
-        DFAD[DefaultFavoriteAppDao]
-        DFFPD[DefaultFavoriteFolderPlacementDao]
+        APD[AppPlacementDao]
+        FPD[FolderPlacementDao]
         FOD["FolderDao\n(@Transaction FolderWithApps)"]
         WPD[WidgetPlacementDao]
         ARD[AutomationRuleDao]
@@ -246,14 +176,14 @@ flowchart LR
     end
 
     FD --> FR
-    FAD --> FAR
-    FFPD --> FAR
-    DAD --> DAR
-    DFPD --> DAR
-    FDAD --> FDAR
-    FDFPD --> FDAR
-    DFAD --> DFAR
-    DFFPD --> DFAR
+    APD --> FAR
+    FPD --> FAR
+    APD --> DAR
+    FPD --> DAR
+    APD --> FDAR
+    FPD --> FDAR
+    APD --> DFAR
+    FPD --> DFAR
     FOD --> FOR
     WPD --> WPR
     ARD --> ARR
@@ -285,25 +215,19 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 
 | Kind | Signature pattern | Room behaviour |
 |---|---|---|
-| Observe | `fun observeAll(): Flow<List<Entity>>` / `observeForFacet(facetId)` — always `ORDER BY position ASC` | Cold `Flow`; re-emits after any write to the queried table(s). Main-safe. |
+| Observe | `fun observe(list, ownerKey): Flow<List<Entity>>` (placements) / `observeAll()` — always `ORDER BY position ASC` | Cold `Flow`; re-emits after any write to the queried table(s). Main-safe. |
 | Write | `suspend fun upsert(entity): Long` with `OnConflictStrategy.REPLACE`; `suspend fun delete…` | Runs on Room's own I/O executor; the caller just `suspend`s. |
-| Scoped delete | `deleteByComponent(pkg, activity, userId)`, `deleteByPackage(pkg, userId)`, `deleteByUserId(userId)`, `deleteAllForFacet(facetId)` | Used by `CleanUpUninstalledAppsUseCase` (uninstall), profile-removal handling, facet deletion, and backup restore. |
-| Repair | `suspend fun getOrphaned(): List<Entity>` (`WHERE userId = -1`) | One-shot; only `RepairOrphanedProfileRowsUseCase` calls it. |
-| Raw export | (repository) `getRawXxx() = dao.observeAll().first()` | Backup export reads *unhydrated* rows so an app that is currently uninstalled still gets backed up. |
+| Scoped delete | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(list, global, pkg, userId)`, `deleteByUserId(list, global, userId)`, `deleteAllForOwner(list, ownerKey)` | Used by `CleanUpUninstalledAppsUseCase` (uninstall), profile-removal handling, facet deletion, and backup restore. |
+| Repair | `suspend fun getOrphaned(list, global): List<Entity>` (`WHERE userId = -1`) | One-shot; only `RepairOrphanedProfileRowsUseCase` calls it. |
+| Raw export | (repository) `getRawXxx() = dao.observe(list, owner).first()` | Backup export reads *unhydrated* rows so an app that is currently uninstalled still gets backed up. |
 
 ### DAO method matrix (every method, every DAO)
 
 | DAO | Observe | Write | Delete | Read one-shot |
 |---|---|---|---|---|
 | `FacetDao` | `observeAll()` | `insert(facet): Long` (plain `@Insert`, **no** REPLACE — ids are never reused), `update(facet)` | `delete(facet)`, `deleteAll()` | `getById(id)` |
-| `FavoriteAppDao` | `observeForFacet(facetId)` | `upsert(entity): Long` (REPLACE) | `delete(entity)`, `deleteByComponent(facetId, pkg, activity, userId)`, `deleteByPackage(pkg, userId)`, `deleteByUserId(userId)`, `deleteAllForFacet(facetId)` | `getOrphaned()` (`userId = -1`) |
-| `FacetDockAppDao` | `observeForFacet(facetId)` | `upsert` | same five as `FavoriteAppDao` | `getOrphaned()` |
-| `DockAppDao` | `observeAll()` | `upsert` | `delete`, `deleteByComponent(pkg, activity, userId)`, `deleteByPackage`, `deleteByUserId`, `deleteAll()` | `getOrphaned()` |
-| `DefaultFavoriteAppDao` | `observeAll()` | `upsert` | same five as `DockAppDao` | `getOrphaned()` |
-| `FavoriteFolderPlacementDao` | `observeForFacet(facetId)` | `upsert` | `deleteByFolderId(facetId, folderId)`, `deleteAllForFacet(facetId)`, `deleteAll()` | — |
-| `FacetDockFolderPlacementDao` | `observeForFacet(facetId)` | `upsert` | same three | — |
-| `DockFolderPlacementDao` | `observeAll()` | `upsert` | `deleteByFolderId(folderId)`, `deleteAll()` | — |
-| `DefaultFavoriteFolderPlacementDao` | `observeAll()` | `upsert` | `deleteByFolderId(folderId)`, `deleteAll()` | — |
+| `AppPlacementDao` | `observe(list, ownerKey)` | `upsert(entity): Long` (REPLACE) | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(list, global, pkg, userId)`, `deleteByUserId(list, global, userId)`, `deleteAllForOwner(list, ownerKey)` | `getOrphaned(list, global)` (`userId = -1`) |
+| `FolderPlacementDao` | `observe(list, ownerKey)` | `upsert` (REPLACE) | `deleteByFolderId(list, ownerKey, folderId)`, `deleteAllForOwner(list, ownerKey)` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
 | `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
 | `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`) | `deleteById(appWidgetId)`, `delete(placement)` | `getById(appWidgetId)` |
@@ -312,10 +236,10 @@ Exceptions to the common shape, all deliberate:
 
 - **`FacetDao.insert` is not an upsert.** Facet ids are referenced by `activeFacetId` in DataStore and by every per-facet placement FK; `restoreFacet` in backup import explicitly copies with `id = 0` to force a fresh id.
 - **`FacetDao` has no `deleteByUserId`/`getOrphaned`** — facets are not profile-scoped.
-- **Folder placement DAOs have no `getOrphaned`** — they reference folders by id, not apps by component; profile repair happens on `folder_apps` instead.
+- **`FolderPlacementDao` has no `getOrphaned`** — they reference folders by id, not apps by component; profile repair happens on `folder_apps` instead.
 - **`WidgetPlacementDao` has no profile-scoped deletes.** A removed Work Profile's widgets are handled by `ObserveHubStateUseCase` flagging them `isOrphaned` (provider info gone) rather than a DAO sweep.
 - **`AutomationRuleDao` rows are addressed by `id` all the way up.** Rule ids are public: `AutomationState` stores them (`activeRuleIds`, `suppressedRuleIds`) and the evaluator matches on them. `AutomationRuleRepository` also skips rows it can't interpret (unknown `triggerType`, or a missing required parameter) instead of failing the whole list.
-- **Every `delete*` for a placement is by component/user, never by row `id`** except `@Delete(entity)` — repositories always resolve the row from an `AppInfo`, so `id` never leaks above `data/`.
+- **Every `delete*` for a placement is by component/user, never by row `id`** — repositories always resolve the row from an `AppInfo`, so `id` never leaks above `data/`.
 
 `FolderDao` is the one relational DAO: `observeAllWithApps()` is a `@Transaction` query returning
 `FolderWithApps(@Embedded folder, @Relation apps)`.
@@ -324,10 +248,10 @@ Exceptions to the common shape, all deliberate:
 
 1. A ViewModel launches a write, e.g. `viewModelScope.launch { addAppToDock(app) }`.
 2. The use case reads `settings.first()` + `facetRepository.getById(...)` to pick the table, then
-   calls `dockAppRepository.addDockApp(app, position)` → `dockAppDao.upsert(DockAppEntity(...))`.
-3. Room commits and invalidates the `dock_apps` table tracker.
-4. Every live `dockAppDao.observeAll()` collector re-queries and emits the new `List<DockAppEntity>`.
-5. `DockAppRepository.observeDockItems()` is a `combine(dao.observeAll(), folderPlacementDao.observeAll(), folderRepository.observeFolders(), appRepository.observeInstalledApps())`; the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
+   calls `dockAppRepository.addDockApp(app, position)` → `appPlacementDao.upsert(AppPlacementEntity(list = DOCK, ...))`.
+3. Room commits and invalidates the `app_placements` table tracker.
+4. Every live `appPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)` collector re-queries and emits the new `List<AppPlacementEntity>`.
+5. `DockAppRepository.observeDockItems()` is a `combine(appPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY), folderPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY), folderRepository.observeFolders(), appRepository.observeInstalledApps())`; the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
 6. `ObserveHomeScreenStateUseCase` combines that with settings/facets/calendar/badges → `HomeScreenState`.
 7. `HomeViewModel` maps it into `HomeUiState` and sets `_uiState.value`.
 8. `HomeScreen` recomposes from `collectAsStateWithLifecycle()`.
@@ -344,7 +268,7 @@ null converter result. Renaming an enum constant therefore never needs a migrati
 
 ```kotlin
 Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
-    .addMigrations(*Migrations.ALL)                       // 10→11 … 26→27, explicit SQL
+    .addMigrations(*Migrations.ALL)                       // 10→11 … 27→28, explicit SQL
     .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
     .build()
 ```
@@ -365,8 +289,8 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 14→15 | `profiles.clockAccentColorOption`, `clockDateStyle`, `clockScale` |
 | 15→16 | `profiles.overrideDock`, `dockDisplayMode`; new `profile_dock_apps` table |
 | 16→17 | **Rename** `profiles` → `facets`; rebuild `favorite_apps` / `profile_dock_apps` → `facet_dock_apps` with `facetId` FKs (copy-table pattern) |
-| 17→18 | Folders: `folders`, `folder_apps` + the four `*_folder_placements` tables |
-| 18→19 | `profile` column on all six app/widget tables |
+| 17→18 | Folders: `folders`, `folder_apps` + the four `*_folder_placements` tables (folded into the single `folder_placements` table by 27→28) |
+| 18→19 | `profile` column on all six app/widget tables (the four app placement tables, `folder_apps`, `widget_placements`) |
 | 19→20 | `userId` column on the same six tables (backfilled from personal user), unique indices rebuilt to include it |
 | 20→21 | `facets.clockWidgetAppWidgetId` (PRD F15) |
 | 21→22 | `facets.clockWidgetWidthDp`, `clockWidgetHeightDp` (PRD F15) |
@@ -375,6 +299,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 24→25 | `facets.appListLayout`, `appListColumnAlignment`, `appListGridColumns`, `appListGridDisplayMode` — Home app list two-column/grid layouts; brand-new columns (`DEFAULT 'LAUNCHER_DEFAULT'`), no data-reset step needed |
 | 25→26 | New table `automation_rules` (facet automation rules) with two foreign keys to `facets` (`targetFacetId` CASCADE, `endFacetId` SET NULL) and an index on each; DDL copied from the exported `26.json`, no data to carry over. Tested by `FacetDatabaseMigrationTest.migration25To26…` (schema validation plus both FK actions) |
 | 26→27 | `ALTER TABLE facets ADD COLUMN` `showCalendarIndicator INTEGER NOT NULL DEFAULT 1` and `calendarItemsToShow INTEGER NOT NULL DEFAULT 3` (per-facet calendar display overrides, gated by `overrideCalendar`); existing rows keep today's look |
+| 27→28 | **F6 consolidation.** Creates `app_placements` and `folder_placements` (DDL copied from the exported `28.json`), copies every row from the eight old tables in `id` order (`list` = `DOCK`/`FAVORITES`, `facetId` null and `ownerKey` 0 for the former global tables), then drops the eight old tables (`dock_apps`, `facet_dock_apps`, `favorite_apps`, `default_favorite_apps` and the four `*_folder_placements`). Tested by `FacetDatabaseMigrationTest.migration27To28…` (seeded rows in all eight tables, work-profile `userId`, orphan `-1`, facet cascade, old tables gone) |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -455,8 +380,8 @@ erDiagram
         long id PK
         boolean overrideClock "gate: 10 clock design columns (also positions the calendar strip)"
         boolean overrideApps "gate: listContentMode, appsToShowCount (content only now)"
-        boolean overridingFavorites "gate: favorite_apps vs default_favorite_apps"
-        boolean overrideDock "gate: facet_dock_apps vs dock_apps (content only now)"
+        boolean overridingFavorites "gate: this facet's Favorites vs the global default list"
+        boolean overrideDock "gate: this facet's Dock vs the global default list (content only now)"
         boolean overrideCalendar "gate: showAllDayEvents, showCalendarIndicator, calendarItemsToShow, selectedCalendarIdsCsv"
     }
 
@@ -513,7 +438,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (51 functions)
+### 5.3 Write path — the complete writer API (62 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -527,7 +452,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setUse24HourTime(Boolean)` | `use_24_hour_time` | set | `ClockStyleGalleryViewModel` |
 | `setClockShowMeridiem(Boolean)` | `clock_show_meridiem` | set | `ClockStyleGalleryViewModel` |
 | `setClockDateStyle(ClockDateStyle)` | `clock_date_style` | set | `ClockStyleGalleryViewModel` |
-| `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel` |
+| `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
 | `setClockScale(Float)` | `clock_scale` | set | `HomeViewModel` (corner handle) |
@@ -539,13 +464,17 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
-| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `HomeAppsListSettingsViewModel` |
-| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `HomeAppsListSettingsViewModel` |
-| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `HomeAppsListSettingsViewModel` |
+| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `AppearanceSettingsViewModel` |
+| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `AppearanceSettingsViewModel` |
+| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `AppearanceSettingsViewModel` |
+| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setHomeAppsFontWeight(FontWeightOption)` | `home_apps_font_weight` | set | `AppearanceSettingsViewModel` |
 | `setAppLabelColorOption(ClockColorOption)` | `app_label_color_option` | set | `AppearanceSettingsViewModel` |
-| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `DockSettingsViewModel` |
-| `setActiveFacetId(Long)` | `active_facet_id` | set | `FacetCarouselViewModel`, `ManageFacetsViewModel`, `EnsureActiveFacetUseCase`, `ImportBackupUseCase` |
+| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `AppearanceSettingsViewModel` |
+| `setActiveFacetId(Long)` | `active_facet_id` | set | `FacetCarouselViewModel`, `ManageFacetsViewModel`, `EnsureActiveFacetUseCase`, `ActivateFacetByIdUseCase`, `ImportBackupUseCase` |
 | `setThemeMode(ThemeMode)` | `theme_mode` | set | `AppearanceSettingsViewModel` |
 | `setSystemBarIconStyle(SystemBarIconStyle)` | `system_bar_icon_style` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setAccentFromSystem(Boolean)` | `accent_from_system` | set | `AppearanceSettingsViewModel` |
@@ -573,19 +502,19 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setShowNotificationsInAppMenu(Boolean)` | `show_notifications_in_app_menu` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
-| `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel` |
-| `setLocationPermissionRequested(Boolean)` | `location_permission_requested` | set | `PermissionsViewModel` |
+| `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel`, `RuleEditorViewModel` |
+| `setLocationPermissionRequested(Boolean)` | `location_permission_requested` | set | `PermissionsViewModel`, `RuleEditorViewModel` |
 | `setOnboardingCompleted(Boolean)` | `onboarding_completed` | set | `LauncherViewModel.completeOnboarding()` |
 | `setDefaultsSeeded(Boolean)` | `defaults_seeded` | set | `SeedDefaultDockUseCase` |
 | `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel` |
 
-`ImportBackupUseCase.applySettings()` restores settings by calling these same setters one at a time (30 calls, plus `setActiveFacetId` after facets are re-inserted) —
+`ImportBackupUseCase.applySettings()` restores settings by calling these same setters one at a time (42 calls, plus `setActiveFacetId` after facets are re-inserted) —
 there is no bulk "replace all preferences" entry point, so a restore is not atomic at the
 DataStore level either.
 
 ### 5.4 Key registry by section
 
-Same 47 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 60 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock design (global; overridden per facet when `facets.overrideClock`)
@@ -743,11 +672,11 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 41 of the 57 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 42 of the 60 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
 `clock_zone_height_dp`, `clock_scale`, `app_list_vertical_alignment`, `selected_calendar_ids`,
-`calendar_colors`, `search_settings_enabled`, all four `*_permission_requested` flags,
+`calendar_colors`, `recently_installed_position`, `search_settings_enabled`, all four `*_permission_requested` flags,
 `onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.
 `BackupFacet` has the same six omissions per facet (`facets.clockAccentColorOption`,

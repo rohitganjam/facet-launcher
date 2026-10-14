@@ -10,11 +10,9 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
-import com.facetlauncher.app.data.local.DefaultFavoriteAppEntity
-import com.facetlauncher.app.data.local.DockAppEntity
-import com.facetlauncher.app.data.local.FavoriteAppEntity
-import com.facetlauncher.app.data.local.FacetDockAppEntity
+import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.PlacementList
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -86,18 +84,18 @@ class ExportBackupUseCaseTest {
         )
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(favoriteAppRepository.getRawFavoritesForFacet(7)).thenReturn(
-            listOf(FavoriteAppEntity(id = 1, facetId = 7, packageName = "com.example.a", activityName = ".Main", position = 0)),
+            listOf(AppPlacementEntity(list = PlacementList.FAVORITES, id = 1, facetId = 7, packageName = "com.example.a", activityName = ".Main", position = 0)),
         )
         `when`(dockAppRepository.getRawDockApps()).thenReturn(
-            listOf(DockAppEntity(id = 1, packageName = "com.example.b", activityName = ".Main", position = 0)),
+            listOf(AppPlacementEntity(list = PlacementList.DOCK, id = 1, packageName = "com.example.b", activityName = ".Main", position = 0)),
         )
         `when`(facetDockAppRepository.getRawDockAppsForFacet(7)).thenReturn(
-            listOf(FacetDockAppEntity(id = 1, facetId = 7, packageName = "com.example.d", activityName = ".Main", position = 0)),
+            listOf(AppPlacementEntity(list = PlacementList.DOCK, id = 1, facetId = 7, packageName = "com.example.d", activityName = ".Main", position = 0)),
         )
         `when`(facetDockAppRepository.getRawDockFolderPlacementsForFacet(7)).thenReturn(emptyList())
         `when`(favoriteAppRepository.getRawFavoriteFolderPlacementsForFacet(7)).thenReturn(emptyList())
         `when`(defaultFavoriteAppRepository.getRawDefaultFavorites()).thenReturn(
-            listOf(DefaultFavoriteAppEntity(id = 1, packageName = "com.example.c", activityName = ".Main", position = 0)),
+            listOf(AppPlacementEntity(list = PlacementList.FAVORITES, id = 1, packageName = "com.example.c", activityName = ".Main", position = 0)),
         )
         `when`(dockAppRepository.getRawDockFolderPlacements()).thenReturn(emptyList())
         `when`(defaultFavoriteAppRepository.getRawDefaultFavoriteFolderPlacements()).thenReturn(emptyList())
