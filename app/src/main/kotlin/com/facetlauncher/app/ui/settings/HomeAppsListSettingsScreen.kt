@@ -243,7 +243,7 @@ private val DEFAULT_FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
 
 /** A [PlacedItem]'s stable identity for keying/reordering — a folder's own id, or its app's component. */
 private fun PlacedItem.reorderKey(): Any = when (this) {
-    is PlacedItem.SingleApp -> app.packageName to app.activityName
+    is PlacedItem.SingleApp -> app.listKey
     is PlacedItem.FolderItem -> "folder_${folder.id}"
 }
 
@@ -310,7 +310,7 @@ private fun DefaultFavoritesReorderList(favorites: List<PlacedItem>, onReorder: 
                 )
                 when (item) {
                     is PlacedItem.SingleApp -> {
-                        AppIcon(icon = item.app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                        AppIcon(app = item.app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
                         Text(text = item.app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
                     }
                     is PlacedItem.FolderItem -> {

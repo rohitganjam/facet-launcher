@@ -309,7 +309,7 @@ private fun HomePreviewGridTile(
         } else {
             when (item) {
                 is PlacedItem.SingleApp -> AppIcon(
-                    icon = item.app.icon,
+                    app = item.app,
                     size = AppIconSize.TILE,
                     contentDescription = label,
                     modifier = Modifier.testTag("${testTagPrefix}grid_icon_$tagSuffix"),

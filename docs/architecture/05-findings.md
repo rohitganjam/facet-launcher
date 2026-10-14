@@ -92,14 +92,25 @@ becomes a maintenance problem.
 
 `dock_apps`, `default_favorite_apps`, `facet_dock_apps`, `favorite_apps` are the same table with
 or without a `facetId`; the four `*_folder_placements` tables mirror them. That is 8 entities,
-8 DAOs, 4 repositories (~770 lines) and 8 near-identical `Add/Remove…UseCase`s whose only
-difference is which pair they route to. Every new column (`profile` in v19, `userId` in v20) had
-to be added six times with six index rebuilds.
+8 DAOs, 4 repositories (~770 lines) and 8 near-identical `Add/Remove…UseCase`s (App/Folder ×
+Dock/Favorites) whose only difference is which repository pair they route to.
 
-A future `placements(id, scope TEXT, facetId NULL, kind TEXT, packageName, activityName, folderId NULL, position, profile, userId)`
-would collapse this to one entity/DAO/repository and one migration per column. It is a large
-migration with real user data behind it, so this is a "when the next schema change is big anyway"
-item, not a now item.
+**Cost today.** Adding a column to the app-placement tables means one `ALTER TABLE` plus one unique-index
+rebuild per table. `profile` (`MIGRATION_18_19`) and `userId` (`MIGRATION_19_20`) each did this in
+6 tables: the four app tables above, plus `folder_apps` and `widget_placements`. The four
+`*_folder_placements` tables were not touched by either, so only 4 of those 6 are this finding's
+copies; `folder_apps` and `widget_placements` are separate tables that would still need their own migration.
+
+**Proposed fix.** A single
+`placements(id, scope TEXT, facetId NULL, kind TEXT, packageName, activityName, folderId NULL, position, profile, userId)`
+would collapse the 8 entities, 8 DAOs and 4 repositories into one each, and a new column would
+cost one migration step instead of four.
+
+**What it would not remove.** The facet-or-global choice (`overrideDock`, `overridingFavorites`) lives in the
+use cases and is business logic, so those branches stay; only the repository pair they call changes.
+
+**Risk and timing.** The database is at version 27 with real user data, so this is a large migration
+that must copy every existing row. It is a "when the next schema change is big anyway" item, not a now item.
 
 ## F7 — Lifetime collection in ViewModels (Low)
 

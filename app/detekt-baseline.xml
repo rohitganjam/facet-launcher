@@ -169,7 +169,7 @@
     <ID>UnstableCollections:AppPickerScreen.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:AppPickerScreen.kt:List&lt;Folder&gt;</ID>
     <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Long&gt;</ID>
-    <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Pair&lt;String, String&gt;&gt;</ID>
+    <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;String&gt;</ID>
     <ID>UnstableCollections:AppearancePreview.kt:List&lt;CalendarEvent&gt;</ID>
     <ID>UnstableCollections:AppearancePreview.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:CalendarEventsBlock.kt:List&lt;CalendarEvent&gt;</ID>

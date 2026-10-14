@@ -293,7 +293,7 @@ private fun FolderContentsAppRow(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box {
-                AppIcon(icon = app.icon, size = AppIconSize.ROW_REGULAR, contentDescription = null)
+                AppIcon(app = app, size = AppIconSize.ROW_REGULAR, contentDescription = null)
                 if (showRecencyBadge) {
                     RecencyBadge(modifier = Modifier.align(Alignment.BottomEnd).testTag("recency_badge_${app.packageName}"))
                 }
@@ -393,7 +393,7 @@ private fun FolderContentsGridTile(
                 .testTag("folder_contents_grid_tile_${app.packageName}"),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            AppIcon(icon = app.icon, size = AppIconSize.TILE, contentDescription = null)
+            AppIcon(app = app, size = AppIconSize.TILE, contentDescription = null)
             Text(
                 text = app.label,
                 style = MaterialTheme.typography.labelSmall,

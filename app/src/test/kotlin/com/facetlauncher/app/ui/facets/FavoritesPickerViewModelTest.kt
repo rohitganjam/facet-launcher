@@ -51,6 +51,16 @@ class FavoritesPickerViewModelTest {
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
+    /** The same app as [app] but in another user's profile (a Work Profile copy). */
+    private fun workCopyOf(app: AppInfo): AppInfo {
+        val parcel = android.os.Parcel.obtain()
+        parcel.writeInt(10)
+        parcel.setDataPosition(0)
+        val handle = android.os.UserHandle(parcel)
+        parcel.recycle()
+        return app.copy(profile = com.facetlauncher.app.data.model.AppProfile.WORK, userHandle = handle)
+    }
+
     private suspend fun createViewModel(
         facetId: Long,
         installed: List<AppInfo>,
@@ -159,5 +169,20 @@ class FavoritesPickerViewModelTest {
         viewModel.refreshUsageAccessGranted()
 
         assertEquals(true, viewModel.usageAccessGranted.value)
+    }
+
+    @Test
+    fun `a Work Profile copy of a favorite is not shown as selected`() = runTest {
+        // Given the personal copy of an app is a favorite and its Work Profile copy is installed too
+        val personal = appInfo('a')
+        val work = workCopyOf(personal)
+        val viewModel = createViewModel(facetId = 1L, installed = listOf(personal, work), favorites = listOf(personal))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then only the personal copy is selected, and the Work copy stays available to add
+        assertEquals(listOf(personal), viewModel.uiState.value.selectedResults)
+        assertEquals(listOf(work), viewModel.uiState.value.otherResults)
+        assertEquals(setOf(personal.listKey), viewModel.uiState.value.favoriteComponents)
     }
 }

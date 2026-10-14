@@ -37,7 +37,7 @@ data class FavoritesPickerUiState(
     val selectedResults: List<AppInfo> = emptyList(),
     /** Every other matching, not-already-placed app, sorted by [sortOption]/[sortDirection] — a member of a folder currently placed here is excluded (see [placedFolderMemberComponents]) rather than offered as a second, standalone placement. */
     val otherResults: List<AppInfo> = emptyList(),
-    val favoriteComponents: Set<Pair<String, String>> = emptySet(),
+    val favoriteComponents: Set<String> = emptySet(),
     /** The full folder library — every folder, regardless of where (if anywhere) it's placed. */
     val folders: List<Folder> = emptyList(),
     /** Which of [folders] are currently placed in *this* Favorites list — the Folders tab's own checkbox state. */
@@ -46,8 +46,8 @@ data class FavoritesPickerUiState(
     val sortOption: AppSortOption = AppSortOption.ALPHABETICAL,
     val sortDirection: SortDirection = SortDirection.ASCENDING,
 ) {
-    val placedFolderMemberComponents: Set<Pair<String, String>>
-        get() = folders.filter { it.id in placedFolderIds }.flatMap { it.apps }.map { it.packageName to it.activityName }.toSet()
+    val placedFolderMemberComponents: Set<String>
+        get() = folders.filter { it.id in placedFolderIds }.flatMap { it.apps }.map { it.listKey }.toSet()
 }
 
 /**
@@ -83,7 +83,7 @@ class FavoritesPickerViewModel @Inject constructor(
         facetId?.let { favoriteAppRepository.observeFavoriteItems(it) } ?: defaultFavoriteAppRepository.observeDefaultItems()
 
     /** Latched from the favorites' live order the first time it's observed; never updated after — see [FavoritesPickerUiState.selectedResults]. */
-    private val loadOrder = MutableStateFlow<List<Pair<String, String>>?>(null)
+    private val loadOrder = MutableStateFlow<List<String>?>(null)
 
     val uiState: StateFlow<FavoritesPickerUiState> = combine(
         query,
@@ -95,26 +95,26 @@ class FavoritesPickerViewModel @Inject constructor(
         sortDirection,
     ) { query, installed, items, frozenOrder, folders, sortOption, sortDirection ->
         val favorites = items.filterIsInstance<PlacedItem.SingleApp>().map { it.app }
-        val liveOrder = favorites.map { it.packageName to it.activityName }
+        val liveOrder = favorites.map { it.listKey }
         if (frozenOrder == null) loadOrder.value = liveOrder
         val order = frozenOrder ?: liveOrder
         val placedFolderIds = items.filterIsInstance<PlacedItem.FolderItem>().map { it.folder.id }.toSet()
         val placedFolderMemberComponents = folders.filter { it.id in placedFolderIds }
-            .flatMap { it.apps }.map { it.packageName to it.activityName }.toSet()
+            .flatMap { it.apps }.map { it.listKey }.toSet()
 
         val filtered = installed.filter { it.label.contains(query, ignoreCase = true) }
-        val (selected, otherCandidates) = filtered.partition { (it.packageName to it.activityName) in order }
+        val (selected, otherCandidates) = filtered.partition { it.listKey in order }
         // A member of a folder currently placed here is already occupying a Favorites slot
         // (inside that folder) — offering it again as a standalone checkbox would let it get
         // added a second time, rendering twice.
-        val other = otherCandidates.filterNot { (it.packageName to it.activityName) in placedFolderMemberComponents }
+        val other = otherCandidates.filterNot { it.listKey in placedFolderMemberComponents }
         // Item-counted, matching every other capacity check — a folder costs exactly one slot
         // regardless of how many apps it holds.
         val itemCount = favorites.size + placedFolderIds.size
         FavoritesPickerUiState(
             isFacetScoped = facetId != null,
             query = query,
-            selectedResults = selected.sortedBy { order.indexOf(it.packageName to it.activityName) },
+            selectedResults = selected.sortedBy { order.indexOf(it.listKey) },
             otherResults = sortAppsForPicker(other, sortOption, sortDirection),
             favoriteComponents = liveOrder.toSet(),
             folders = folders,
@@ -152,7 +152,7 @@ class FavoritesPickerViewModel @Inject constructor(
 
     fun toggleFavorite(app: AppInfo) {
         val state = uiState.value
-        val isFavorite = (app.packageName to app.activityName) in state.favoriteComponents
+        val isFavorite = app.listKey in state.favoriteComponents
         viewModelScope.launch {
             if (facetId != null) {
                 if (isFavorite) {
