@@ -156,6 +156,17 @@
     <!-- AppContextMenu -->
     <string name="app_context_menu_app_info">App info</string>
     <string name="app_context_menu_uninstall">Uninstall</string>
+    <string name="app_menu_notifications_header">Notifications · %1$d</string>
+    <string name="app_menu_notifications_clear_all">Clear all</string>
+    <string name="app_menu_notifications_title">Notifications</string>
+    <string name="app_menu_notifications_empty">No notifications</string>
+    <string name="app_menu_notifications_access_needed">Notifications need access from system settings.</string>
+    <string name="relative_age_seconds">%1$ds</string>
+    <string name="relative_age_minutes">%1$dm</string>
+    <string name="relative_age_hours">%1$dh</string>
+    <string name="relative_age_days">%1$dd</string>
+    <!-- Screen-reader text for a Favorites/Dock action: the action, then which list it edits (Global or a facet's name). -->
+    <string name="placement_action_description">%1$s, %2$s</string>
 
     <!-- AppPickerScreen -->
     <string name="app_picker_search_apps">Search apps</string>
@@ -283,6 +294,7 @@
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Notification badges</string>
     <string name="notification_badge_style_row_title">Badge style</string>
+    <string name="notification_app_menu_row_title">Show notifications in app menu</string>
     <string name="media_player_row_title">Show media player in home screen</string>
     <string name="media_skip_buttons_row_title">Show skip buttons</string>
 

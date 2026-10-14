@@ -239,6 +239,8 @@ data class LauncherSettings(
     /** Opt-in: the media player row under Home's clock. Also needs notification access (a media session is read through the listener grant). */
     val showMediaPlayerOnHome: Boolean = false,
     val showMediaSkipButtons: Boolean = true,
+    /** Lists an app's notifications in its long-press menu. Also needs notification access. */
+    val showNotificationsInAppMenu: Boolean = true,
     val showDrawerIcons: Boolean = true,
     val showDrawerLabels: Boolean = true,
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,

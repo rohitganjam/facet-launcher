@@ -156,6 +156,7 @@ class ImportBackupUseCase @Inject constructor(
             setNotificationBadgeStyle(settings.notificationBadgeStyle.toEnumOrDefault(NotificationBadgeStyle.DOT))
             setShowMediaPlayerOnHome(settings.showMediaPlayerOnHome)
             setShowMediaSkipButtons(settings.showMediaSkipButtons)
+            setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))

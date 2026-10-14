@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
+import android.os.Process
 import android.os.UserManager
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -40,7 +41,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.BatteryRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
@@ -57,9 +57,11 @@ import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NextAlarmRepository
+import com.facetlauncher.app.data.NotificationActionController
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.NotificationOpener
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.PrivateSpaceState
@@ -75,6 +77,7 @@ import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
@@ -90,6 +93,7 @@ import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
@@ -120,6 +124,7 @@ import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.facetlauncher.app.ui.settings.FakeNotificationAccessRepository
 import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -132,6 +137,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
 
 /**
  * Home and Drawer are one merged composable now ([HomeDrawerRoute]) rather than two NavHost
@@ -146,6 +152,14 @@ class HomeDrawerRouteTest {
     val composeRule = createComposeRule()
 
     private lateinit var launcherViewModel: LauncherViewModel
+
+    /** One snapshot shared by Home and the Drawer, so a test can seed notifications the long-press sheet then lists. */
+    private val notificationBadges = NotificationBadgeRepository()
+
+    /** A spy on the notification shade, to prove a gesture inside the sheet never reaches it. */
+    private val notificationShade: NotificationShadeRepository = mock(NotificationShadeRepository::class.java)
+
+    private var notificationAccessGranted = false
 
     /** Enough apps (one per letter) that the drawer list can actually scroll. */
     private val apps = ('A'..'Z').map { letter ->
@@ -232,8 +246,8 @@ class HomeDrawerRouteTest {
                     appRepository,
                 )
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
-                val notificationBadgeRepository = NotificationBadgeRepository()
-                val notificationAccessRepository = NotificationAccessRepository(context)
+                val notificationBadgeRepository = notificationBadges
+                val notificationAccessRepository = FakeNotificationAccessRepository(context, notificationAccessGranted)
                 val appWidgetRepository = AppWidgetRepository(
                     context,
                     AppWidgetManager.getInstance(context),
@@ -258,7 +272,7 @@ class HomeDrawerRouteTest {
                         ObserveClockAccessoriesUseCase(BatteryRepository(context), NextAlarmRepository(context, Clock.systemDefaultZone())),
                         MediaSessionRepository(context, notificationBadgeRepository),
                     ),
-                    NotificationShadeRepository(context),
+                    notificationShade,
                     settingsRepository,
                     facetRepository,
                     mock(DefaultLauncherRepository::class.java).also { repo ->
@@ -302,15 +316,16 @@ class HomeDrawerRouteTest {
                         produceFile = { File(context.cacheDir, "test-drawer-settings-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
+                val notificationBadgeRepository = notificationBadges
+                val notificationAccessRepository = FakeNotificationAccessRepository(context, notificationAccessGranted)
                 DrawerViewModel(
                     appRepository,
                     settingsRepository,
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
-                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
-                    NotificationBadgeRepository(),
-                    NotificationAccessRepository(context),
+                    notificationBadgeRepository,
+                    notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),
                     AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     RemoveAppFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
@@ -323,6 +338,9 @@ class HomeDrawerRouteTest {
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
                     privateSpaceRepository,
+                    NotificationActionController(),
+                    NotificationOpener(context),
+                    ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
                 )
             }
             val privateSpaceViewModel = remember {
@@ -423,7 +441,11 @@ class HomeDrawerRouteTest {
                 )
             }
 
-            CompositionLocalProvider(LocalHomeSwipeGate provides remember { HomeSwipeGate() }) {
+            // LauncherActivity provides the Home-press signal the sheets close on; this harness has to as well.
+            CompositionLocalProvider(
+                LocalHomeSwipeGate provides remember { HomeSwipeGate() },
+                LocalHomePressedEvent provides launcherViewModel.homePressedEvent,
+            ) {
                 FacetLauncherTheme {
                     HomeDrawerRoute(
                         apps = apps,
@@ -871,6 +893,150 @@ class HomeDrawerRouteTest {
         composeRule.onNodeWithTag("app_context_menu").assertExists()
         composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
         composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
+    }
+
+    /** Home with notification access granted and [count] notifications for the first favorite app, its long-press sheet open. */
+    private fun openTheSheetWithNotifications(count: Int = 6) {
+        notificationAccessGranted = true
+        notificationBadges.setActiveNotifications(
+            (1..count).map {
+                NotificationInfo(
+                    packageName = "com.example.A",
+                    silent = false,
+                    key = "k$it",
+                    title = "Sender $it",
+                    text = "Message number $it",
+                    postTime = 1L,
+                    userHandle = Process.myUserHandle(),
+                )
+            },
+        )
+        setContent()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).performTouchInput { longClick() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("app_notifications_list").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun assertNothingBehindTheSheetOpened() {
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
+        verifyNoInteractions(notificationShade)
+    }
+
+    @Test
+    fun theLongPressSheetListsTheAppsNotificationsOverHome() {
+        // Given Home with notifications for its first favorite
+        openTheSheetWithNotifications()
+
+        // Then the sheet shows them, over a Home that is otherwise untouched
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+        composeRule.onNodeWithTag("app_notification_k1").assertExists()
+        composeRule.onNodeWithText("Notifications · 6").assertExists()
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun swipingUpOnTheNotificationListScrollsItAndDoesNotOpenTheDrawer() {
+        openTheSheetWithNotifications()
+
+        // When swiping up on the notification list (a drag Home would otherwise read as "open the drawer")
+        composeRule.onNodeWithTag("app_notifications_list").performTouchInput { swipeUp() }
+        settleAnimation()
+
+        // Then the sheet is still up, the list moved on to later notifications, and nothing behind it opened
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+        composeRule.onNodeWithTag("app_notification_k6").assertExists()
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun swipingDownOnTheNotificationListDoesNotExpandTheNotificationShade() {
+        openTheSheetWithNotifications()
+
+        // When swiping down on the list (a drag Home would otherwise read as "pull the shade down")
+        composeRule.onNodeWithTag("app_notifications_list").performTouchInput { swipeDown() }
+        settleAnimation()
+
+        // Then neither the shade nor anything behind the sheet opened
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun scrollingTheNotificationListUpAndBackDownNeverOpensAnythingBehindTheSheet() {
+        openTheSheetWithNotifications()
+
+        // When scrolling the list to its end and back
+        composeRule.onNodeWithTag("app_notifications_list").performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("app_notifications_list").performTouchInput { swipeDown() }
+        settleAnimation()
+
+        // Then nothing behind the sheet opened
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun swipingANotificationSidewaysNeitherOpensTheHubNorTheFacetCarousel() {
+        openTheSheetWithNotifications()
+
+        // When swiping a notification card left, then right (a drag Home reads as "open the carousel" or "open the hub")
+        composeRule.onNodeWithTag("app_notification_k1").performTouchInput { swipeLeft() }
+        settleAnimation()
+        composeRule.onNodeWithTag("app_notification_k2").performTouchInput { swipeRight() }
+        settleAnimation()
+
+        // Then neither opened
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun swipesOnHomeItselfWhileTheNotificationSheetIsOpenDoNotOpenTheDrawerOrShade() {
+        openTheSheetWithNotifications()
+
+        // When swiping up and down through Home's own root with the sheet showing
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { swipeDown() }
+        settleAnimation()
+
+        // Then Home ignored them
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun swipingUpOnTheSheetsPlacementActionsDoesNotOpenTheDrawer() {
+        openTheSheetWithNotifications()
+
+        // When swiping up on the placement area at the bottom of the sheet
+        composeRule.onNodeWithTag("app_context_menu_add_to_favorites").performTouchInput { swipeUp() }
+        settleAnimation()
+
+        // Then nothing behind the sheet opened
+        assertNothingBehindTheSheetOpened()
+    }
+
+    @Test
+    fun homeSwipesWorkAgainOnceTheNotificationSheetIsClosed() {
+        // Given the sheet was open over Home, and then Home was pressed
+        openTheSheetWithNotifications()
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("app_context_menu").fetchSemanticsNodes().isEmpty()
+        }
+        settleAnimation()
+
+        // When swiping up on Home
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+
+        // Then the drawer opens as usual: the sheet's swipe blocking is gone with it
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
     }
 
     @Test

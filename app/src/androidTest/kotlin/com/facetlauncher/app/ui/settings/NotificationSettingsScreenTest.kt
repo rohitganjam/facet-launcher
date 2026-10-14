@@ -220,4 +220,60 @@ class NotificationSettingsScreenTest {
         // Then it navigates back
         assertEquals(true, backInvoked)
     }
+
+    @Test
+    fun appMenuNotificationsAreOnByDefaultWhenAccessIsGranted() {
+        // Given the screen with access granted and settings at their defaults
+        setContent(accessGranted = true)
+
+        // Then the app menu switch is on
+        composeRule.onNodeWithTag("notification_app_menu_toggle").assertIsOn()
+    }
+
+    @Test
+    fun appMenuSwitchStaysOffWithoutAccessEvenThoughTheStoredSettingDefaultsOn() {
+        // Given the screen with access not granted
+        setContent(accessGranted = false)
+
+        // Then the switch honors the real permission
+        composeRule.onNodeWithTag("notification_app_menu_toggle").assertIsOff()
+    }
+
+    @Test
+    fun turningAppMenuNotificationsOffPersists() {
+        // Given the screen with access granted
+        val settingsRepository = setContent(accessGranted = true)
+
+        // When turning the switch off
+        composeRule.onNodeWithTag("notification_app_menu_toggle").performClick()
+
+        // Then the choice persists and the switch shows off
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { !settingsRepository.settings.first().showNotificationsInAppMenu }
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("notification_app_menu_toggle").assertIsOff() }.isSuccess
+        }
+    }
+
+    @Test
+    fun turningAppMenuNotificationsOnWithoutAccessRoutesToTheExplanationScreen() {
+        // Given the screen with access not granted and the setting already off
+        var navigatedToExplanation = false
+        val settingsRepository = setContent(
+            onNavigateToNotificationAccessExplanation = { navigatedToExplanation = true },
+            accessGranted = false,
+        )
+        runBlocking { settingsRepository.setShowNotificationsInAppMenu(false) }
+        composeRule.waitForIdle()
+
+        // When turning the switch on
+        composeRule.onNodeWithTag("notification_app_menu_toggle").performClick()
+
+        // Then it sends the user to grant access and keeps the choice for when access lands
+        composeRule.waitUntil(timeoutMillis = 3_000) { navigatedToExplanation }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().showNotificationsInAppMenu }
+        }
+    }
 }

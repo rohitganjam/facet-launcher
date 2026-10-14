@@ -62,4 +62,8 @@ class NotificationSettingsViewModel @Inject constructor(
     fun setShowSkipButtons(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setShowMediaSkipButtons(enabled) }
     }
+
+    fun setShowNotificationsInAppMenu(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setShowNotificationsInAppMenu(enabled) }
+    }
 }

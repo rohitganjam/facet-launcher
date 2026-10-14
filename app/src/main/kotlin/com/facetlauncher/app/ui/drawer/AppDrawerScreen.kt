@@ -103,7 +103,6 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
-import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
@@ -125,6 +124,7 @@ import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.DismissOnHomePress
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
@@ -211,8 +211,7 @@ fun AppDrawerScreen(
     showPrivateSpaceRow: Boolean = false,
     onPrivateSpaceRowClick: () -> Unit = {},
     contacts: List<ContactInfo> = emptyList(),
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
-    onLaunchShortcut: (AppShortcut) -> Unit = {},
+    appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
     onAppInfo: (AppInfo) -> Unit = {},
     /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
@@ -482,8 +481,7 @@ fun AppDrawerScreen(
                 badgeCounts = badgeCounts,
                 onAppClick = onAppClick,
                 onClearSearch = { onQueryChange("") },
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
                 onRequestQuickAddState = onRequestQuickAddState,
                 onFavoritesAction = onFavoritesAction,
@@ -522,8 +520,7 @@ fun AppDrawerScreen(
                     labelFontWeight = labelFontWeight,
                     badgeStyle = notificationBadgeStyle,
                     badgeCounts = badgeCounts,
-                    onRequestShortcuts = onRequestShortcuts,
-                    onLaunchShortcut = onLaunchShortcut,
+                    appMenuNotifications = appMenuNotifications,
                     onAppInfo = onAppInfo,
                     onRequestQuickAddState = onRequestQuickAddState,
                     onFavoritesAction = onFavoritesAction,
@@ -552,8 +549,7 @@ fun AppDrawerScreen(
                     labelFontWeight = labelFontWeight,
                     badgeStyle = notificationBadgeStyle,
                     badgeCounts = badgeCounts,
-                    onRequestShortcuts = onRequestShortcuts,
-                    onLaunchShortcut = onLaunchShortcut,
+                    appMenuNotifications = appMenuNotifications,
                     onAppInfo = onAppInfo,
                     onRequestQuickAddState = onRequestQuickAddState,
                     onFavoritesAction = onFavoritesAction,
@@ -909,8 +905,7 @@ private fun DrawerSearchResults(
     badgeCounts: Map<String, Int>,
     onAppClick: (AppInfo) -> Unit,
     onClearSearch: () -> Unit,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
@@ -961,8 +956,7 @@ private fun DrawerSearchResults(
                                     labelFontWeight = labelFontWeight,
                                     badgeCount = badgeCounts[app.packageName],
                                     badgeStyle = badgeStyle,
-                                    onRequestShortcuts = onRequestShortcuts,
-                                    onLaunchShortcut = onLaunchShortcut,
+                                    appMenuNotifications = appMenuNotifications,
                                     onAppInfo = onAppInfo,
                                     onRequestQuickAddState = onRequestQuickAddState,
                                     onFavoritesAction = onFavoritesAction,
@@ -985,8 +979,7 @@ private fun DrawerSearchResults(
                         labelFontWeight = labelFontWeight,
                         badgeCount = badgeCounts[app.packageName],
                         badgeStyle = badgeStyle,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
+                        appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRequestQuickAddState = onRequestQuickAddState,
                         onFavoritesAction = onFavoritesAction,
@@ -1301,8 +1294,7 @@ private fun DrawerListContent(
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCounts: Map<String, Int>,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
@@ -1334,8 +1326,7 @@ private fun DrawerListContent(
                     onAppClick = onAppClick,
                     itemSize = itemSize,
                     labelFontWeight = labelFontWeight,
-                    onRequestShortcuts = onRequestShortcuts,
-                    onLaunchShortcut = onLaunchShortcut,
+                    appMenuNotifications = appMenuNotifications,
                     onAppInfo = onAppInfo,
                 )
             }
@@ -1346,8 +1337,7 @@ private fun DrawerListContent(
                 onAppClick = onAppClick,
                 itemSize = itemSize,
                 labelFontWeight = labelFontWeight,
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
                 onRemoveFromFolder = onRemoveFromFolder,
                 onRenameFolder = onRenameFolder,
@@ -1377,8 +1367,7 @@ private fun DrawerListContent(
                         labelFontWeight = labelFontWeight,
                         badgeCount = badgeCounts[item.app.packageName],
                         badgeStyle = badgeStyle,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
+                        appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRequestQuickAddState = onRequestQuickAddState,
                         onFavoritesAction = onFavoritesAction,
@@ -1392,8 +1381,7 @@ private fun DrawerListContent(
                         onAppClick = onAppClick,
                         itemSize = itemSize,
                         labelFontWeight = labelFontWeight,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
+                        appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRemoveFromFolder = onRemoveFromFolder,
                         onRenameFolder = onRenameFolder,
@@ -1410,8 +1398,7 @@ private fun DrawerListContent(
                 onAppClick = onAppClick,
                 itemSize = itemSize,
                 labelFontWeight = labelFontWeight,
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
                 onRemoveFromFolder = onRemoveFromFolder,
                 onRenameFolder = onRenameFolder,
@@ -1428,8 +1415,7 @@ private fun DrawerListContent(
                     onAppClick = onAppClick,
                     itemSize = itemSize,
                     labelFontWeight = labelFontWeight,
-                    onRequestShortcuts = onRequestShortcuts,
-                    onLaunchShortcut = onLaunchShortcut,
+                    appMenuNotifications = appMenuNotifications,
                     onAppInfo = onAppInfo,
                 )
             }
@@ -1449,8 +1435,7 @@ private fun LazyListScope.drawerFolderSection(
     onAppClick: (AppInfo) -> Unit,
     itemSize: DrawerListItemSize,
     labelFontWeight: FontWeight,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit,
     onRemoveFromFolder: (Long, AppInfo) -> Unit,
     onRenameFolder: (Long, String) -> Unit,
@@ -1475,8 +1460,7 @@ private fun LazyListScope.drawerFolderSection(
             onAppClick = onAppClick,
             itemSize = itemSize,
             labelFontWeight = labelFontWeight,
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = onAppInfo,
             onRemoveFromFolder = onRemoveFromFolder,
             onRenameFolder = onRenameFolder,
@@ -1514,8 +1498,7 @@ private fun DrawerRecentlyInstalledRow(
     onAppClick: (AppInfo) -> Unit,
     itemSize: DrawerListItemSize,
     labelFontWeight: FontWeight,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1547,8 +1530,7 @@ private fun DrawerRecentlyInstalledRow(
                 onRemoveFromFolder = { _, _ -> },
                 headerAction = FolderSheetHeaderAction.None,
                 showRecencyBadge = true,
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
             )
         }
@@ -1594,8 +1576,7 @@ private fun DrawerFolderRow(
     onAppClick: (AppInfo) -> Unit,
     itemSize: DrawerListItemSize,
     labelFontWeight: FontWeight,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit,
     onRemoveFromFolder: (Long, AppInfo) -> Unit,
     onRenameFolder: (Long, String) -> Unit,
@@ -1628,8 +1609,7 @@ private fun DrawerFolderRow(
                 presentation = DrawerPresentation.LIST,
                 onRemoveFromFolder = onRemoveFromFolder,
                 headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
             )
         }
@@ -1655,8 +1635,7 @@ private fun DrawerAppRow(
     labelFontWeight: FontWeight = FontWeight.Normal,
     badgeCount: Int?,
     badgeStyle: NotificationBadgeStyle,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -1702,8 +1681,7 @@ private fun DrawerAppRow(
             app = app,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = onAppInfo,
             onRequestQuickAddState = onRequestQuickAddState,
             onFavoritesAction = onFavoritesAction,
@@ -1749,8 +1727,7 @@ private fun DrawerGridContent(
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCounts: Map<String, Int>,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
@@ -1781,7 +1758,7 @@ private fun DrawerGridContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
-                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, onRequestShortcuts, onLaunchShortcut, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
+                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, appMenuNotifications, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
             }
             items(items, key = { it.itemKey() }) { item ->
                 when (item) {
@@ -1792,8 +1769,7 @@ private fun DrawerGridContent(
                         labelFontWeight = labelFontWeight,
                         badgeCount = badgeCounts[item.app.packageName],
                         badgeStyle = badgeStyle,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
+                        appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRequestQuickAddState = onRequestQuickAddState,
                         onFavoritesAction = onFavoritesAction,
@@ -1808,8 +1784,7 @@ private fun DrawerGridContent(
                         onAppClick = onAppClick,
                         showLabel = showLabels,
                         labelFontWeight = labelFontWeight,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
+                        appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRemoveFromFolder = onRemoveFromFolder,
                         onRenameFolder = onRenameFolder,
@@ -1821,7 +1796,7 @@ private fun DrawerGridContent(
                 }
             }
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
-                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, onRequestShortcuts, onLaunchShortcut, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
+                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, appMenuNotifications, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
             }
         }
     }
@@ -1834,8 +1809,7 @@ private fun LazyGridScope.drawerFolderTiles(
     onAppClick: (AppInfo) -> Unit,
     showLabels: Boolean,
     labelFontWeight: FontWeight,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit,
     onRemoveFromFolder: (Long, AppInfo) -> Unit,
     onRenameFolder: (Long, String) -> Unit,
@@ -1849,8 +1823,7 @@ private fun LazyGridScope.drawerFolderTiles(
             onAppClick = onAppClick,
             showLabel = showLabels,
             labelFontWeight = labelFontWeight,
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = onAppInfo,
             onRemoveFromFolder = onRemoveFromFolder,
             onRenameFolder = onRenameFolder,
@@ -1871,8 +1844,7 @@ private fun DrawerGridTile(
     labelFontWeight: FontWeight = FontWeight.Normal,
     badgeCount: Int?,
     badgeStyle: NotificationBadgeStyle,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -1927,8 +1899,7 @@ private fun DrawerGridTile(
             app = app,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
-            onRequestShortcuts = onRequestShortcuts,
-            onLaunchShortcut = onLaunchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = onAppInfo,
             onRequestQuickAddState = onRequestQuickAddState,
             onFavoritesAction = onFavoritesAction,
@@ -1949,8 +1920,7 @@ private fun DrawerFolderTile(
     onAppClick: (AppInfo) -> Unit,
     showLabel: Boolean,
     labelFontWeight: FontWeight = FontWeight.Normal,
-    onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut>,
-    onLaunchShortcut: (AppShortcut) -> Unit,
+    appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: (Long, AppInfo) -> Unit,
     onRenameFolder: (Long, String) -> Unit,
@@ -1992,8 +1962,7 @@ private fun DrawerFolderTile(
                 presentation = DrawerPresentation.GRID,
                 onRemoveFromFolder = onRemoveFromFolder,
                 headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
-                onRequestShortcuts = onRequestShortcuts,
-                onLaunchShortcut = onLaunchShortcut,
+                appMenuNotifications = appMenuNotifications,
                 onAppInfo = onAppInfo,
             )
         }

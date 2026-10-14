@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +69,7 @@ import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ProReason
+import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.GestureHintOverlay
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
@@ -270,6 +272,8 @@ fun HomeDrawerRoute(
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
     onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
+    /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
+    onNavigateToNotificationAccessExplanation: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
@@ -294,6 +298,15 @@ fun HomeDrawerRoute(
     val privateSpaceRecentlyInstalledApps by privateSpaceViewModel.recentlyInstalledApps.collectAsStateWithLifecycle()
     var privateSpaceQuery by remember { mutableStateOf("") }
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
+    val currentOnNavigateToNotificationAccess by rememberUpdatedState(onNavigateToNotificationAccessExplanation)
+    val appMenuNotifications = remember(drawerViewModel) {
+        AppMenuNotifications(
+            observe = drawerViewModel::observeAppNotifications,
+            onOpen = drawerViewModel::openNotification,
+            onDismiss = drawerViewModel::dismissNotifications,
+            onEnableAccess = { currentOnNavigateToNotificationAccess() },
+        )
+    }
 
     if (homeUiState.isLoading) {
         // Real Home state (dock/app list, theme-driven colors and fonts) hasn't loaded yet —
@@ -778,8 +791,7 @@ fun HomeDrawerRoute(
             launcherFontOption = homeUiState.settings.launcherFontOption,
             appLabelColorOption = homeUiState.settings.appLabelColorOption,
             homeAppsFontWeight = homeUiState.settings.homeAppsFontWeight,
-            onRequestShortcuts = drawerViewModel::getShortcuts,
-            onLaunchShortcut = drawerViewModel::launchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = drawerViewModel::openAppInfo,
             onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
             onFavoritesAction = drawerViewModel::onFavoritesAction,
@@ -899,8 +911,7 @@ fun HomeDrawerRoute(
                 }
             },
             contacts = contactResults,
-            onRequestShortcuts = drawerViewModel::getShortcuts,
-            onLaunchShortcut = drawerViewModel::launchShortcut,
+            appMenuNotifications = appMenuNotifications,
             onAppInfo = drawerViewModel::openAppInfo,
             onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
             onFavoritesAction = drawerViewModel::onFavoritesAction,

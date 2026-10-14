@@ -22,7 +22,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.BatteryRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
@@ -39,9 +38,11 @@ import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.FavoriteAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.NextAlarmRepository
+import com.facetlauncher.app.data.NotificationActionController
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.NotificationOpener
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.SecureFolderRepository
@@ -68,6 +69,7 @@ import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
@@ -218,15 +220,16 @@ class KeyboardDismissalTest {
                 val favoriteAppRepository = FavoriteAppRepository(database.favoriteAppDao(), database.favoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val defaultFavoriteAppRepository = DefaultFavoriteAppRepository(database.defaultFavoriteAppDao(), database.defaultFavoriteFolderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
+                val notificationBadgeRepository = NotificationBadgeRepository()
+                val notificationAccessRepository = NotificationAccessRepository(context)
                 DrawerViewModel(
                     appRepository,
                     settingsRepository,
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
-                    AppShortcutRepository(context.getSystemService(LauncherApps::class.java)),
-                    NotificationBadgeRepository(),
-                    NotificationAccessRepository(context),
+                    notificationBadgeRepository,
+                    notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),
                     AddAppToFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
                     RemoveAppFromFavoritesUseCase(settingsRepository, facetRepository, favoriteAppRepository, defaultFavoriteAppRepository),
@@ -239,6 +242,9 @@ class KeyboardDismissalTest {
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
                     PrivateSpaceRepository(context.getSystemService(UserManager::class.java), appRepository, context),
+                    NotificationActionController(),
+                    NotificationOpener(context),
+                    ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
                 )
             }
             val privateSpaceViewModel = remember {

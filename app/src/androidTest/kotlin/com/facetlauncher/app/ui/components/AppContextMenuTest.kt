@@ -7,28 +7,40 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.unit.height
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
-import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.data.model.NotificationInfo
+import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.flowOf
 import org.hamcrest.CoreMatchers.allOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -51,8 +63,6 @@ class AppContextMenuTest {
 
     private fun setContent(
         app: AppInfo = this.app,
-        onRequestShortcuts: suspend (AppInfo) -> List<AppShortcut> = { emptyList() },
-        onLaunchShortcut: (AppShortcut) -> Unit = {},
         onDismissRequest: () -> Unit = {},
         homePressedEvent: SharedFlow<Unit>? = null,
         onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
@@ -63,6 +73,7 @@ class AppContextMenuTest {
         onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
         removeFromFolderId: Long? = null,
         onRemoveFromFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+        appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
         onAppInfo: (AppInfo) -> Unit = {},
     ) {
         composeRule.setContent {
@@ -72,8 +83,6 @@ class AppContextMenuTest {
                         app = app,
                         expanded = true,
                         onDismissRequest = onDismissRequest,
-                        onRequestShortcuts = onRequestShortcuts,
-                        onLaunchShortcut = onLaunchShortcut,
                         onRequestQuickAddState = onRequestQuickAddState,
                         onFavoritesAction = onFavoritesAction,
                         onDockAction = onDockAction,
@@ -83,6 +92,7 @@ class AppContextMenuTest {
                         removeFromFolderId = removeFromFolderId,
                         onRemoveFromFolder = onRemoveFromFolder,
                         onAppInfo = onAppInfo,
+                        appMenuNotifications = appMenuNotifications,
                     )
                 }
             }
@@ -99,17 +109,12 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun headerShowsAWorkBadgeForAWorkProfileAppButNotAPersonalOne() {
+    fun headerShowsNoProfileBadgeEvenForAWorkApp() {
         setContent(app = app.copy(profile = AppProfile.WORK))
 
-        composeRule.onNodeWithTag("app_context_menu_work_badge").assertExists()
-    }
-
-    @Test
-    fun headerShowsNoWorkBadgeForAPersonalApp() {
-        setContent(app = app.copy(profile = AppProfile.PERSONAL))
-
         composeRule.onNodeWithTag("app_context_menu_work_badge").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_context_menu_other_badge").assertDoesNotExist()
+        composeRule.onNodeWithText("Mail").assertExists()
     }
 
     @Test
@@ -147,47 +152,6 @@ class AppContextMenuTest {
                 hasData(Uri.fromParts("package", app.packageName, null)),
             ),
         )
-    }
-
-    @Test
-    fun quickActionsSectionIsOmittedWhenTheAppPublishesNoShortcuts() {
-        setContent(onRequestShortcuts = { emptyList() })
-
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("app_context_menu_shortcut_compose").assertDoesNotExist()
-    }
-
-    @Test
-    fun quickActionRowRendersAndFiresOnLaunchShortcutWhenTapped() {
-        var launched: AppShortcut? = null
-        val shortcut = AppShortcut(id = "compose", packageName = app.packageName, label = "Compose")
-        var dismissed = false
-        setContent(
-            onRequestShortcuts = { listOf(shortcut) },
-            onLaunchShortcut = { launched = it },
-            onDismissRequest = { dismissed = true },
-        )
-
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("app_context_menu_shortcut_compose").assertExists() }.isSuccess
-        }
-        composeRule.onNodeWithText("Compose").assertExists()
-        composeRule.onNodeWithTag("app_context_menu_shortcut_compose").performClick()
-
-        assert(launched == shortcut)
-        assert(dismissed)
-    }
-
-    @Test
-    fun shortcutsBeyondTheCapAreNotShown() {
-        val shortcuts = (1..5).map { AppShortcut(id = "shortcut_$it", packageName = app.packageName, label = "Shortcut $it") }
-        setContent(onRequestShortcuts = { shortcuts })
-
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("app_context_menu_shortcut_shortcut_3").assertExists() }.isSuccess
-        }
-        composeRule.onNodeWithTag("app_context_menu_shortcut_shortcut_4").assertDoesNotExist()
-        composeRule.onNodeWithTag("app_context_menu_shortcut_shortcut_5").assertDoesNotExist()
     }
 
     @Test
@@ -487,4 +451,265 @@ class AppContextMenuTest {
         assert(removedFolderId == 3L)
         assert(dismissed)
     }
+
+    @Test
+    fun appInfoAndUninstallAreIconButtonsWithScreenReaderLabels() {
+        setContent()
+
+        composeRule.onNodeWithContentDescription("App info").assertExists()
+        composeRule.onNodeWithContentDescription("Uninstall").assertExists()
+    }
+
+    @Test
+    fun tappingAppInfoAlsoDismissesTheSheet() {
+        var dismissed = false
+        setContent(onDismissRequest = { dismissed = true })
+
+        composeRule.onNodeWithTag("app_context_menu_app_info").performClick()
+
+        assert(dismissed)
+    }
+
+    @Test
+    fun aPlacementTileDescribesItsActionAndListToScreenReaders() {
+        setContent(
+            onRequestQuickAddState = {
+                QuickAddState(
+                    favoritesAction = QuickPlacementAction.Add(facetName = null),
+                    dockAction = QuickPlacementAction.Remove(facetName = "Work"),
+                )
+            },
+        )
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Add to Favorites, Global").assertExists()
+        composeRule.onNodeWithContentDescription("Remove from Dock, Work").assertExists()
+    }
+
+    @Test
+    fun theFolderTileNamesNoListSoItsDescriptionIsJustItsLabel() {
+        setContent(folderCandidates = emptyList())
+
+        composeRule.onNodeWithContentDescription("Add to folder").assertExists()
+    }
+
+    @Test
+    fun noNotificationZoneIsShownWhenTheSettingIsOff() {
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(enabled = false)) }))
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Notifications").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_list").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_empty").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_enable").assertDoesNotExist()
+    }
+
+    @Test
+    fun theZoneStaysWithAnEmptyStateAndAGreyedClearAllWhenThereAreNoNotifications() {
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState()) }))
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_empty").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithText("Notifications").assertExists()
+        composeRule.onNodeWithText("No notifications").assertExists()
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertExists().assertIsNotEnabled()
+        composeRule.onNodeWithTag("app_notifications_list").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_enable").assertDoesNotExist()
+    }
+
+    @Test
+    fun clearAllIsEnabledWhenThereAreNotificationsToClear() {
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(twoNotifications)) }))
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_list").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertIsEnabled()
+        composeRule.onNodeWithTag("app_notifications_empty").assertDoesNotExist()
+    }
+
+    @Test
+    fun theEmptyStateTurnsIntoTheListWhenANotificationArrives() {
+        val state = MutableStateFlow(AppNotificationsState())
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { state }))
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_empty").assertExists() }.isSuccess
+        }
+
+        state.value = AppNotificationsState(twoNotifications)
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k1").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("app_notifications_empty").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertIsEnabled()
+    }
+
+    @Test
+    fun theAppsOwnNotificationsAreObservedAndListedWithACount() {
+        var observedApp: AppInfo? = null
+        setContent(
+            appMenuNotifications = AppMenuNotifications(
+                observe = { observedApp = it; flowOf(AppNotificationsState(twoNotifications)) },
+            ),
+        )
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_list").assertExists() }.isSuccess
+        }
+        assertEquals(app, observedApp)
+        composeRule.onNodeWithText("Priya").assertExists()
+        composeRule.onNodeWithText("Are we still on?").assertExists()
+        composeRule.onNodeWithText("Notifications · 2").assertExists()
+    }
+
+    @Test
+    fun tappingANotificationOpensItAndClosesTheSheet() {
+        var opened: NotificationInfo? = null
+        var dismissed = false
+        setContent(
+            onDismissRequest = { dismissed = true },
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(twoNotifications)) },
+                onOpen = { opened = it },
+            ),
+        )
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k1").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("app_notification_k1").performClick()
+
+        assertEquals(twoNotifications[0], opened)
+        assert(dismissed)
+    }
+
+    @Test
+    fun clearAllDismissesEveryListedNotificationAndKeepsTheSheetOpen() {
+        var dismissedKeys: List<String>? = null
+        var sheetDismissed = false
+        setContent(
+            onDismissRequest = { sheetDismissed = true },
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(twoNotifications)) },
+                onDismiss = { dismissedKeys = it; true },
+            ),
+        )
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_clear_all").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("app_notifications_clear_all").performClick()
+
+        assertEquals(listOf("k1", "k2"), dismissedKeys)
+        assert(!sheetDismissed)
+    }
+
+    @Test
+    fun swipingANotificationAwayDismissesOnlyThatOne() {
+        var dismissedKeys: List<String>? = null
+        setContent(
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(twoNotifications)) },
+                onDismiss = { dismissedKeys = it; true },
+            ),
+        )
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k2").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("app_notification_k2").performTouchInput { swipeLeft() }
+
+        composeRule.waitUntil(timeoutMillis = 3_000) { dismissedKeys != null }
+        assertEquals(listOf("k2"), dismissedKeys)
+    }
+
+    @Test
+    fun theListFollowsNotificationsThatArriveWhileTheSheetIsOpen() {
+        val state = MutableStateFlow(AppNotificationsState(twoNotifications.take(1)))
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { state }))
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k1").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithTag("app_notification_k2").assertDoesNotExist()
+
+        // When a second notification arrives
+        state.value = AppNotificationsState(twoNotifications)
+
+        // Then it appears without reopening the sheet
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k2").assertExists() }.isSuccess
+        }
+    }
+
+    @Test
+    fun missingAccessShowsAnEnableRowThatClosesTheSheetAndAsksForAccess() {
+        var asked = false
+        var dismissed = false
+        setContent(
+            onDismissRequest = { dismissed = true },
+            appMenuNotifications = AppMenuNotifications(
+                observe = { flowOf(AppNotificationsState(needsAccess = true)) },
+                onEnableAccess = { asked = true },
+            ),
+        )
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notifications_enable").assertExists() }.isSuccess
+        }
+        composeRule.onNodeWithText("Notifications need access from system settings.").assertExists()
+        composeRule.onNodeWithText("Open settings").assertExists()
+        composeRule.onNodeWithText("Notifications").assertExists()
+        composeRule.onNodeWithTag("app_notifications_clear_all").assertIsNotEnabled()
+        composeRule.onNodeWithTag("app_notifications_list").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_empty").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_notifications_enable").performClick()
+
+        assert(asked)
+        assert(dismissed)
+    }
+
+    @Test
+    fun manyNotificationsScrollInsideAWindowOfAboutTwoCards() {
+        val many = (1..6).map { notification("k$it", "Sender $it", "Message $it") }
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(many)) }))
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k1").assertExists() }.isSuccess
+        }
+        composeRule.waitForIdle()
+
+        // Then the window is roughly two cards and a peek tall, not six cards tall
+        val cardHeight = composeRule.onNodeWithTag("app_notification_k1").getBoundsInRoot().height
+        val windowHeight = composeRule.onNodeWithTag("app_notifications_list").getBoundsInRoot().height
+        assert(windowHeight >= cardHeight * 2) { "window $windowHeight should hold two cards of $cardHeight" }
+        assert(windowHeight <= cardHeight * 3) { "window $windowHeight should not show three whole cards of $cardHeight" }
+
+        // And the last one is reachable by scrolling it
+        composeRule.onNodeWithTag("app_notifications_list").performScrollToNode(hasTestTag("app_notification_k6"))
+        composeRule.onNodeWithTag("app_notification_k6").assertIsDisplayed()
+    }
+
+    @Test
+    fun aNotificationShowsItsAgeAsACompactLabel() {
+        val twoMinutesOld = notification("k9", "Priya", "Hi").copy(postTime = System.currentTimeMillis() - 125_000L)
+        setContent(appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(listOf(twoMinutesOld))) }))
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("app_notification_k9").assertExists() }.isSuccess
+        }
+
+        composeRule.onNodeWithText("2m").assertExists()
+    }
+
+    private val twoNotifications = listOf(
+        notification("k1", "Priya", "Are we still on?"),
+        notification("k2", "Team chat", "Build is green"),
+    )
+
+    private fun notification(key: String, title: String, text: String) =
+        NotificationInfo(packageName = app.packageName, silent = false, key = key, title = title, text = text, postTime = 1L)
 }

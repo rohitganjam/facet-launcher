@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.Accent
@@ -21,31 +22,35 @@ import com.facetlauncher.app.ui.theme.Muted
  * every such pill in the app reads as one visual family.
  */
 @Composable
-private fun ScopeBadge(label: String, color: Color, modifier: Modifier = Modifier) {
+private fun ScopeBadge(label: String, color: Color, modifier: Modifier = Modifier, textScaleRatio: Float = 1f) {
+    val style = MaterialTheme.typography.labelSmall.let { it.copy(fontSize = it.fontSize * textScaleRatio, lineHeight = it.lineHeight * textScaleRatio) }
     Box(
         modifier = modifier
             .background(color.copy(alpha = 0.14f), MaterialTheme.shapes.small)
-            .padding(horizontal = 9.dp, vertical = 3.dp),
+            .padding(horizontal = ScopeBadgeHorizontalPadding, vertical = 3.dp),
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = color)
+        Text(text = label, style = style, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+
+/** The pill's side padding, so a layout can measure whether a name fits. */
+internal val ScopeBadgeHorizontalPadding = 9.dp
 
 /**
  * Trailing pill naming which scope a row applies to — "Global" in a neutral [Muted] tone for the
  * launcher-wide default, or the active facet's own real name in a tonal [Accent] wash when
  * [facetName] is non-null (decided explicitly by the user, to distinguish the facet-override case
  * from the plain default without folding it into the row's own label text — see chat history).
- * Shared by [QuickPlacementBadge] (the app/folder context menu's Favorites/Dock rows) and the
- * clock long-press menu's "Edit clock styles" row.
+ * Shared by the app/folder context menus' Favorites/Dock tiles and the clock long-press menu's
+ * "Edit clock styles" row. [textScaleRatio] shrinks its text where a layout caps how far chrome grows with text size.
  */
 @Composable
-fun FacetScopeBadge(facetName: String?, modifier: Modifier = Modifier) {
+fun FacetScopeBadge(facetName: String?, modifier: Modifier = Modifier, textScaleRatio: Float = 1f) {
     val color = if (facetName != null) Accent else Muted
-    ScopeBadge(label = facetName ?: stringResource(R.string.facet_scope_global), color = color, modifier = modifier)
+    ScopeBadge(label = facetName ?: stringResource(R.string.facet_scope_global), color = color, modifier = modifier, textScaleRatio = textScaleRatio)
 }
 
-/** Marks a row as belonging to a Work Profile app — [AppContextMenu]'s header, alongside the app's name. */
+/** Marks a row as belonging to a Work Profile app. */
 @Composable
 fun WorkScopeBadge(modifier: Modifier = Modifier) {
     ScopeBadge(label = stringResource(R.string.facet_scope_work), color = Accent, modifier = modifier)

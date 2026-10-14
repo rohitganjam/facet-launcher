@@ -4023,3 +4023,69 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] `FacetProContentTest.theUnlockedScreenHasAddAFacetAndRestoreAtTheEndOfTheContent`: a test bug (Done is in the scrolling header and is scrolled off-screen after reaching Restore on the shorter API 30 emulator); the test now scrolls to Done. 14/14 on API 30 and 36.
 - [x] The four wallpaper-accent tests (`FontsThemesIconsScreenTest`) use `@SdkSuppress(minSdkVersion = S)` instead of `assumeTrue`, so they no longer run (or report as failures) on Android 11: 12 tests on API 30, 16 on API 36, all passing. The full API 30 run should now have no failures.
+
+## Long-press sheet redesign: notifications, no shortcuts (direct request)
+
+Design agreed in chat (mocks 14a/14b/15a/15b). Sheet = header (icon, name, bare Info + red Uninstall) / separator / notifications (only when present) / separator / placement actions. Shortcuts are removed. Sheet design values follow M3 and `CLAUDE.md`'s shape table.
+
+### Decisions
+
+- **Placement actions** are three tiles (Favorites, Dock, Folder), each with: scope pill on top (`FacetScopeBadge`, reused as-is, 8dp `shapes.small`; Folder has an empty slot of the same height so icons align), icon with a +/- badge (16dp, fixed size), a label ("Add to" or "Remove from" + noun). A tile whose action is "Remove" is filled (already in that list). Tiles are `shapes.medium` (12dp).
+- **Tiles become rows when a label needs more than two lines**, measured (not a fixed text-scale threshold): `TextMeasurer` at the tile's inner width, so long translations and long facet names switch correctly. All three switch together. Rows: 56dp minimum, icon, full label, pill at the right, no pill for Folder.
+- **Notifications**: scrolling window of two cards plus a peek of the third (height derived from measured card height, capped at about a third of the screen), "Clear all" `TextActionButton` in the section header, tap opens the notification's content intent, swipe dismisses one. Not shown without access, without notifications, or with the setting off.
+- **Icons capped at 1.3x** (app icon, header icon buttons, placement icons); text is not capped. Cap is based on the combined system and in-app scale. Header buttons keep a 48dp hit area.
+- **Folder sheet** uses the same layout: header with a Rename pencil in the Info slot, no notifications zone, tiles Favorites and Dock only. (The folder menu has no Delete today and this does not add one; `12 §3` wrongly lists it, fix the doc.)
+- **No new dependency or permission.** The notification listener, `NotificationAccessRepository` and `NotificationAccessExplanationScreen` already exist.
+
+### 1. Notification data (`data/`)
+
+- [x] `NotificationInfo` gains `key`, `userHandle` (`sbn.user`), `title`, `text`, `postTime`, `isClearable`, `isSecret`, `contentIntent`; all defaulted, so badge and media code is untouched. Nothing persisted.
+- [x] `FacetNotificationListenerService.refresh()` fills the new fields; titles and text come from `notificationTitleAndText` (`NotificationMapping.kt`: compact text over expanded, trimmed, cut to 300 chars). The listing filter lives in the repository, not the service, so it is unit-testable: silent, media, non-clearable, secret and contentless notifications are left out (group summaries are still dropped in the service).
+- [x] `NotificationBadgeRepository.notificationsFor(packageName, userHandle)`: a `Flow`, newest first, matched on package and profile so Work copies never mix. Badge counts and `mediaNotificationPackages` are unchanged.
+- [x] `NotificationActionController` (singleton): the service attaches a `cancelNotifications` lambda in `onListenerConnected` and detaches in `onListenerDisconnected` and `onDestroy`; `dismiss(keys)` returns whether it was dispatched, and is a no-op while detached or on an empty list. The snapshot refreshes through the service's existing `onNotificationRemoved`. (One `dismiss(keys)` covers a single swipe and Clear all.)
+- [x] Tests: `NotificationBadgeRepositoryTest` (+6: ordering, package and profile matching, each filter, title-only or text-only, follows new snapshots, counts unaffected), `NotificationMappingTest` (5), `NotificationActionControllerTest` (5). 21 pass; `TEST_REGISTRY.md` regenerated.
+- [ ] Not covered by a test: the service's own mapping and attach/detach (needs a bound listener). Check on the emulator once the UI reads it (step 3).
+
+### 2. Setting and domain
+
+- [x] DataStore key `show_notifications_in_app_menu` (default on, only effective with access granted): `LauncherSettings.showNotificationsInAppMenu`, `Keys` constant, read line and `setShowNotificationsInAppMenu` in `SettingsRepository`. In `BackupSettings` as an additive defaulted field (no `CURRENT_BACKUP_VERSION` bump), exported and imported. F11 (older clock/app-list fields missing from backup) is unrelated and unchanged.
+- [x] Notifications settings page: a "Show notifications in app menu" switch in the first card, after Badge style, tag `notification_app_menu_toggle`. Same access gating as the badges toggle (shows off without access); turning it on without access saves the choice then routes to `NotificationAccessExplanationScreen`, like the media player. Strings in en/de/es/fr/pt.
+- [x] `ObserveAppNotificationsUseCase(packageName, userHandle)` (`domain/`): setting off gives nothing and no access prompt; setting on without access gives `needsAccess`; otherwise the live `notificationsFor` list. Access is read when the flow starts (no grant-change callback). Returns `AppNotificationsState(notifications, needsAccess)`.
+- [ ] `DrawerViewModel` exposure (observe and dismiss) is done in step 3 with the sheet wiring, since it changes the constructor used by three tests and nothing would use it yet.
+- [x] Tests: `ObserveAppNotificationsUseCaseTest` (6), `SettingsRepositoryTest` (default and round trip), `ExportBackupUseCaseTest` and `ImportBackupUseCaseTest` (field exported and applied), `NotificationSettingsScreenTest` (+4, 15 pass on the API 30 emulator). Docs: `02` (ER diagram, writer table, key table); `TEST_REGISTRY.md` regenerated.
+- [ ] Known gap: the service never clears the snapshot when the listener disconnects, so after access is revoked the sheet could list stale items until the process restarts. Decide in step 3 whether `onListenerDisconnected` should clear it.
+
+### 3. Sheet UI (`ui/components/`)
+
+- [x] `AppContextMenu` rebuilt as one scrolling page of three zones behind 1dp `CardDivider`s, each omitted when empty: header (app icon, name up to two lines, App info and Uninstall as 48dp `IconButton`s, uninstall in `ErrorColor`; no profile badge), notifications, placement actions. Opens at full content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.
+- [x] `PlacementActions` (`PlacementActions.kt`, `PlacementParts.kt`): Favorites, Dock and Folder (or "Remove from folder") as tiles with the scope pill on top (Folder keeps an invisible pill's height so icons align), an icon with a 16dp +/- badge, and the full label; filled with an accent wash when the app is already there. Measured fallback to 56dp rows when a label needs a third line, a word is wider than the tile, or a pill doesn't fit; all actions switch together. One merged semantics node per action: "Remove from Dock, Work".
+- [x] `AppNotificationsSection`: always present while the setting is on (design change): a header ("Notifications · n", "Clear all" greyed out unless there is something to clear) with, below it, the access row, an empty state ("No notifications") or the list; only the setting hides the zone. The list is a `LazyColumn` window sized from the measured first card to two cards plus a 40% peek and never over a third of the screen, `SwipeToDismissBox` per card, tap opens (sheet closes first), compact age label (`1s`, `2m`, `3h`, `4d`, `ShortAge.kt`, localised units). "Enable notifications" row when access is missing.
+- [x] Scaling: header and placement icons grow with the text up to 1.3x (`ChromeScale.kt`), scope pills and the notifications heading are held to 1.3x, the badge keeps 16dp; text itself is never capped. Checked with screenshots at default, dark, in-app 1.45x, system 2x and both (2.9x).
+- [x] Shortcuts removed from `AppContextMenu` (`MAX_SHORTCUTS`, rows, `onRequestShortcuts`, `onLaunchShortcut`).
+- [x] `FolderTileContextMenu`: same header (folder glyph, name, app count, Rename as an icon button) and the shared `PlacementActions` for Favorites and Dock.
+- [x] One `AppMenuNotifications` holder (observe, open, dismiss, enable access) replaces the two shortcut parameters through `HomeScreen`, `AppDrawerScreen`, `FolderContentsSheet` and the previews; `HomeDrawerRoute` builds it from `DrawerViewModel` and gains `onNavigateToNotificationAccessExplanation`, wired in `FacetNavHost`. Sheets still close on Home press.
+- [x] `DrawerViewModel`: `observeAppNotifications`, `dismissNotifications`, `openNotification` (opens through `NotificationOpener`, then clears it only if it asked for `autoCancel`).
+- [x] Strings in en/de/es/fr/pt; no hardcoded text (previews use existing string resources).
+- [x] `@Preview` light and dark for the main page, empty, tiles, rows, notifications and the folder menu.
+
+### 4. Remove shortcuts
+
+- [x] Deleted `AppShortcutRepository`, `AppShortcut` and `AppShortcutRepositoryTest`; removed `DrawerViewModel.getShortcuts/launchShortcut` and the shortcut wiring. `AppIconSize.SHORTCUT` stays (a 20dp size used elsewhere). `FacetShortcutRepository` (facet deep links, doc `14`) is untouched.
+- [ ] List the removal in the What's new notes when the release is cut (`scripts/release.sh --notes-only`).
+
+### 5. Tests
+
+- [x] Unit: `ChromeScaleTest` (icon cap and chrome text ratio), `ShortAgeTest`, `NotificationOpenerTest`, `DrawerViewModelTest` (+5), plus steps 1 and 2. Full unit suite: 1,144 pass.
+- [x] Compose (emulator, pinned serial, no animation-scale changes): `PlacementActionsTest` (18: tiles vs rows, alignment, icon cap and growth at each scale, filled state, taps), `AppContextMenuScalingTest` (every action reachable at default, small, large, extra large, huge, system 2x and both; 48dp targets; name and heading on one line; pills compact; notification window within a third of the screen; folder page; folder menu), `AppContextMenuTest` (header buttons, descriptions, notification zone, tap, clear all, swipe, live updates, enable row, window size, age label), `FolderTileContextMenuTest`.
+- [x] Real-sheet screenshots on the emulator at default, dark, long facet name (rows), in-app 1.45x, system 2x and both. They found three bugs fixed in this change: the app name broke mid-word beside a badge, scope pills grew with text and crowded the rows, and the notifications heading wrapped.
+- [ ] Not exercised: a real notification-listener grant (the emulator has none), a Work-profile app's notifications on a device, and a real third-party notification's content intent. Check these on a device when convenient.
+
+### 6. Docs
+
+- [x] `12 §3`, `07`, `13 §3`, `02`, `04`, `01`, `05` (F12) updated; `TEST_REGISTRY.md` regenerated; detekt baseline updated (the `FacetNavHost` call signature and three `List<PlacementActionUi>` entries).
+
+### Risks and open points
+
+- **Privacy:** notification text is rendered inside the launcher, in memory only, with the setting to turn it off. Work-profile notifications are shown in full; redacting them is a possible follow-up.
+- **Cross-profile open:** a Work-profile notification's `PendingIntent` sent from a third-party launcher is unverified on a device.
+- **Stale snapshot after access is revoked** (service doesn't clear on disconnect): hidden in practice because access is read when the sheet opens.

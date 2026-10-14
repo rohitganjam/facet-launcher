@@ -1,24 +1,31 @@
 package com.facetlauncher.app.ui.drawer
 
+import android.app.PendingIntent
 import android.content.Intent
+import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.NotificationActionController
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.NotificationOpener
 import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
+import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFolderToDockUseCase
 import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
+import com.facetlauncher.app.domain.AppNotificationsState
+import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
 import com.facetlauncher.app.domain.RemoveAppFromFavoritesUseCase
@@ -28,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -76,6 +84,9 @@ class DrawerViewModelTest {
         },
         secureFolderIntent: Intent? = null,
         privateSpaceState: PrivateSpaceState = PrivateSpaceState.NotConfigured,
+        notificationActionController: NotificationActionController = NotificationActionController(),
+        notificationOpener: NotificationOpener = mock(NotificationOpener::class.java),
+        observeAppNotifications: ObserveAppNotificationsUseCase = mock(ObserveAppNotificationsUseCase::class.java),
     ): DrawerViewModel {
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(contactsPermissionGranted)
@@ -98,7 +109,6 @@ class DrawerViewModelTest {
             contactPermissionRepository = contactPermissionRepository,
             contactRepository = mock(ContactRepository::class.java),
             systemSettingsRepository = systemSettingsRepository,
-            appShortcutRepository = mock(AppShortcutRepository::class.java),
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
@@ -113,7 +123,91 @@ class DrawerViewModelTest {
             folderRepository = folderRepository,
             secureFolderRepository = secureFolderRepository,
             privateSpaceRepository = privateSpaceRepository,
+            notificationActionController = notificationActionController,
+            notificationOpener = notificationOpener,
+            observeAppNotificationsUseCase = observeAppNotifications,
         )
+    }
+
+    private val chatApp = AppInfo(packageName = "com.example.chat", activityName = ".Main", label = "Chat", icon = null, userHandle = mock(UserHandle::class.java))
+    private val message = NotificationInfo(packageName = "com.example.chat", silent = false, key = "k1", title = "Priya", text = "Hi", contentIntent = mock(PendingIntent::class.java))
+
+    @Test
+    fun `observeAppNotifications asks the use case for this app's package and profile`() = runTest {
+        // Given a use case that reports one notification for the app
+        val useCase = mock(ObserveAppNotificationsUseCase::class.java)
+        `when`(useCase(chatApp.packageName, chatApp.userHandle)).thenReturn(flowOf(AppNotificationsState(listOf(message))))
+        val viewModel = drawerViewModel(observeAppNotifications = useCase)
+
+        // When observing the app's notifications
+        val state = viewModel.observeAppNotifications(chatApp).first()
+
+        // Then the use case's state comes through
+        assertEquals(AppNotificationsState(listOf(message)), state)
+    }
+
+    @Test
+    fun `dismissNotifications reports whether the listener took the request`() {
+        // Given a listener that is connected
+        val controller = NotificationActionController()
+        val dismissed = mutableListOf<List<String>>()
+        controller.attach { dismissed += it }
+        val viewModel = drawerViewModel(notificationActionController = controller)
+
+        // When dismissing, then the keys reach it and success is reported
+        assertEquals(true, viewModel.dismissNotifications(listOf("k1", "k2")))
+        assertEquals(listOf(listOf("k1", "k2")), dismissed)
+
+        // And with the listener gone, nothing is dismissed and failure is reported
+        controller.detach()
+        assertEquals(false, viewModel.dismissNotifications(listOf("k1")))
+    }
+
+    @Test
+    fun `openNotification sends the intent and clears a notification that asked to auto-cancel`() {
+        // Given an auto-cancel notification, a listener that is connected, and an intent that sends
+        val opener = mock(NotificationOpener::class.java)
+        `when`(opener.open(message.contentIntent)).thenReturn(true)
+        val controller = NotificationActionController()
+        val dismissed = mutableListOf<List<String>>()
+        controller.attach { dismissed += it }
+        val viewModel = drawerViewModel(notificationOpener = opener, notificationActionController = controller)
+
+        // When opening it
+        viewModel.openNotification(message.copy(autoCancel = true))
+
+        // Then it is cleared, as the notification shade would
+        assertEquals(listOf(listOf("k1")), dismissed)
+    }
+
+    @Test
+    fun `openNotification leaves a notification that did not ask to auto-cancel`() {
+        // Given a notification that stays after being opened
+        val opener = mock(NotificationOpener::class.java)
+        `when`(opener.open(message.contentIntent)).thenReturn(true)
+        val controller = NotificationActionController()
+        val dismissed = mutableListOf<List<String>>()
+        controller.attach { dismissed += it }
+        val viewModel = drawerViewModel(notificationOpener = opener, notificationActionController = controller)
+
+        // When opening it, then nothing is dismissed
+        viewModel.openNotification(message.copy(autoCancel = false))
+        assertEquals(emptyList<List<String>>(), dismissed)
+    }
+
+    @Test
+    fun `openNotification does not clear a notification whose intent could not be sent`() {
+        // Given an intent that fails to send, as when the app has since cancelled it
+        val opener = mock(NotificationOpener::class.java)
+        `when`(opener.open(message.contentIntent)).thenReturn(false)
+        val controller = NotificationActionController()
+        val dismissed = mutableListOf<List<String>>()
+        controller.attach { dismissed += it }
+        val viewModel = drawerViewModel(notificationOpener = opener, notificationActionController = controller)
+
+        // When opening an auto-cancel notification, then it is left alone
+        viewModel.openNotification(message.copy(autoCancel = true))
+        assertEquals(emptyList<List<String>>(), dismissed)
     }
 
     @Test

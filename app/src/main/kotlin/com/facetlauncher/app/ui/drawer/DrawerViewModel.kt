@@ -3,28 +3,31 @@ package com.facetlauncher.app.ui.drawer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.AppShortcutRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SecureFolderRepository
+import com.facetlauncher.app.data.NotificationActionController
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
+import com.facetlauncher.app.data.NotificationOpener
 import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.AppShortcut
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AddAppToDockUseCase
 import com.facetlauncher.app.domain.AddAppToFavoritesUseCase
 import com.facetlauncher.app.domain.AddFolderToDockUseCase
 import com.facetlauncher.app.domain.AddFolderToFavoritesUseCase
+import com.facetlauncher.app.domain.AppNotificationsState
+import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RemoveAppFromDockUseCase
@@ -34,6 +37,7 @@ import com.facetlauncher.app.domain.RemoveFolderFromFavoritesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -58,7 +62,6 @@ class DrawerViewModel @Inject constructor(
     private val contactPermissionRepository: ContactPermissionRepository,
     private val contactRepository: ContactRepository,
     private val systemSettingsRepository: SystemSettingsRepository,
-    private val appShortcutRepository: AppShortcutRepository,
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
@@ -73,6 +76,9 @@ class DrawerViewModel @Inject constructor(
     private val folderRepository: FolderRepository,
     private val secureFolderRepository: SecureFolderRepository,
     private val privateSpaceRepository: PrivateSpaceRepository,
+    private val notificationActionController: NotificationActionController,
+    private val notificationOpener: NotificationOpener,
+    private val observeAppNotificationsUseCase: ObserveAppNotificationsUseCase,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings
@@ -209,10 +215,18 @@ class DrawerViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setSearchContactsEnabled(true) }
     }
 
-    /** F12's long-press context menu — fetched fresh per app, only when its menu actually opens. */
-    suspend fun getShortcuts(app: AppInfo): List<AppShortcut> = appShortcutRepository.getShortcuts(app.packageName, app.userHandle)
+    /** The notifications zone of an app's long-press menu, live for as long as the menu is open. */
+    fun observeAppNotifications(app: AppInfo): Flow<AppNotificationsState> = observeAppNotificationsUseCase(app.packageName, app.userHandle)
 
-    fun launchShortcut(shortcut: AppShortcut) = appShortcutRepository.launchShortcut(shortcut)
+    /** Dismisses these notifications by key. False when the listener isn't connected, so nothing was dismissed. */
+    fun dismissNotifications(keys: List<String>): Boolean = notificationActionController.dismiss(keys)
+
+    /** Opens the notification's own screen, then clears it if its app asked for that on open. */
+    fun openNotification(notification: NotificationInfo) {
+        if (notificationOpener.open(notification.contentIntent) && notification.autoCancel) {
+            notificationActionController.dismiss(listOf(notification.key))
+        }
+    }
 
     /** F12's long-press "App info" row — see [AppRepository.openAppDetails]. */
     fun openAppInfo(app: AppInfo) = appRepository.openAppDetails(app)
@@ -282,6 +296,6 @@ class DrawerViewModel @Inject constructor(
         viewModelScope.launch { folderRepository.renameFolder(folderId, name) }
     }
 
-    /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (same fetch-on-open precedent as [getShortcuts]). */
+    /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (fetched on open like the app menu's notifications). */
     suspend fun getConnections(contact: ContactInfo): List<ContactConnection> = contactRepository.getConnections(contact.id)
 }

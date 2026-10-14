@@ -27,9 +27,23 @@ class FacetNotificationListenerService : NotificationListenerService() {
     @Inject
     lateinit var notificationBadgeRepository: NotificationBadgeRepository
 
+    @Inject
+    lateinit var notificationActionController: NotificationActionController
+
     override fun onListenerConnected() {
         super.onListenerConnected()
+        notificationActionController.attach { keys -> cancelNotifications(keys.toTypedArray()) }
         refresh()
+    }
+
+    override fun onListenerDisconnected() {
+        notificationActionController.detach()
+        super.onListenerDisconnected()
+    }
+
+    override fun onDestroy() {
+        notificationActionController.detach()
+        super.onDestroy()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -48,7 +62,21 @@ class FacetNotificationListenerService : NotificationListenerService() {
             .map { sbn ->
                 val silent = currentRanking?.getRanking(sbn.key, ranking) == true &&
                     ranking.importance == NotificationManager.IMPORTANCE_NONE
-                NotificationInfo(packageName = sbn.packageName, silent = silent, isMedia = isMediaNotification(sbn.notification.extras))
+                val (title, text) = notificationTitleAndText(sbn.notification.extras)
+                NotificationInfo(
+                    packageName = sbn.packageName,
+                    silent = silent,
+                    isMedia = isMediaNotification(sbn.notification.extras),
+                    key = sbn.key,
+                    userHandle = sbn.user,
+                    title = title,
+                    text = text,
+                    postTime = sbn.postTime,
+                    isClearable = sbn.isClearable,
+                    isSecret = sbn.notification.visibility == Notification.VISIBILITY_SECRET,
+                    autoCancel = sbn.notification.flags and Notification.FLAG_AUTO_CANCEL != 0,
+                    contentIntent = sbn.notification.contentIntent,
+                )
             }
         notificationBadgeRepository.setActiveNotifications(notifications)
     }

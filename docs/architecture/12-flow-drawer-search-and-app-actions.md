@@ -147,15 +147,49 @@ flowchart LR
 | Action | Path | Notes |
 |---|---|---|
 | Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity` |
-| App shortcuts | `DrawerViewModel.getShortcuts(app)` → `AppShortcutRepository.getShortcuts(pkg, handle)` (`LauncherApps.getShortcuts`, `Dispatchers.Default`) → `launchShortcut` | fetched on menu open; profile-aware via the handle |
+| Notifications zone | `DrawerViewModel.observeAppNotifications(app)` → `ObserveAppNotificationsUseCase` (setting `show_notifications_in_app_menu` + `NotificationAccessRepository.isGranted()` + `NotificationBadgeRepository.notificationsFor(pkg, handle)`) → `AppNotificationsState(notifications, needsAccess)` | live while the sheet is open; only this app in this profile; see below |
+| Open / dismiss a notification | `DrawerViewModel.openNotification(n)` → `NotificationOpener.open(contentIntent)`, then `NotificationActionController.dismiss` if the notification asked for `autoCancel`; swipe and "Clear all" → `dismissNotifications(keys)` → the listener's `cancelNotifications` | a dismiss with no connected listener is a no-op that returns false |
 | Add/remove to Favorites / Dock | `QuickAddState` from `ObserveQuickAddStateUseCase` decides which action is offered; `DrawerViewModel.onFavoritesAction / onDockAction` → the 4 app use cases | routing in [08 §1](08-flow-placements.md) |
 | Add to folder / create folder | `DrawerViewModel.createFolder(app, name)`, `addToFolder(app, folderId)` → `FolderRepository` | `folders` observed for the submenu |
 | Notification dot/count | `badgeCounts` = `NotificationBadgeRepository.badgeCounts` gated by `notification_dots_enabled` | style from `notification_badge_style` |
-| App info | `DrawerViewModel.openAppInfo(app)` → `AppRepository.openAppDetails` (`LauncherApps.startAppDetailsActivity`, profile-aware) | |
-| Uninstall | composable fires `Intent(ACTION_DELETE, package:…)` (`REQUEST_DELETE_PACKAGES`) | the system dialog uninstalls; `CleanUpUninstalledAppsUseCase` then deletes any placements |
+| App info | `DrawerViewModel.openAppInfo(app)` → `AppRepository.openAppDetails` (`LauncherApps.startAppDetailsActivity`, profile-aware) | header icon button |
+| Uninstall | composable fires `Intent(ACTION_DELETE, package:…)` (`REQUEST_DELETE_PACKAGES`) | header icon button; the system dialog uninstalls; `CleanUpUninstalledAppsUseCase` then deletes any placements |
 
-Folder tiles get the mirror menu (`FolderTileContextMenu`): rename, add/remove from
-Favorites/Dock, delete.
+App shortcuts (`LauncherApps.getShortcuts`) are no longer shown in the menu.
+
+**Sheet layout.** `AppContextMenu` is one scrolling page with three zones, each behind a 1dp
+`CardDivider`: a header (icon, name, and App info and
+Uninstall as 48dp icon buttons), the notifications zone (left out only when the setting is off), and the
+placement actions. It opens at its full
+content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.
+
+- **Notifications zone.** Present whenever "Show notifications in app menu" is on, and only the setting
+  hides it. A header ("Notifications · n" or "Notifications") carries "Clear all", greyed out unless there
+  is something to clear. Below it, one of: the access row, an empty state ("No notifications", access
+  granted but nothing posted), or the list. The list is a `LazyColumn` window sized from the measured first
+  card to two cards plus a 40% peek of the next, and never over a third of the screen. Each card shows the
+  title, a compact age (`1s`, `2m`, `3h`, `4d`; `ShortAge.kt`, localised unit strings) and up to two lines
+  of text. Cards open on tap (the sheet closes first) and swipe away singly; "Clear all" dismisses every
+  listed key and leaves the sheet open. With the setting on but no notification access the body is one
+  "Enable notifications" row that closes the sheet and calls
+  `HomeDrawerRoute.onNavigateToNotificationAccessExplanation` (→ the access explanation route). It is fed to
+  the sheet as one `AppMenuNotifications` holder threaded through `HomeScreen`, `AppDrawerScreen` and
+  `FolderContentsSheet`.
+- **Placement actions** (`PlacementActions`): Favorites, Dock and Folder (or "Remove from folder") as
+  `PlacementActionUi`. Each is a tile with its scope pill (`FacetScopeBadge`: "Global" or the facet name)
+  on top, an icon with a +/− badge, and the label ("Add to X" / "Remove from X"); an action the app is
+  already in is filled with an accent wash. Folder has no pill but its tile keeps an invisible pill's
+  height so the three icons align. The tiles become full-width 56dp rows when a measured fit fails:
+  any label needs more than two lines, any word is wider than the tile's text width, or any pill is
+  wider than it. The check uses `TextMeasurer` at the tile width, so it holds for any language, facet
+  name, system font scale or in-app Text size, and all actions switch together.
+- **Text scaling.** Text follows both the system font scale and the in-app Text size. Header and
+  placement icons grow with them up to `MAX_CHROME_ICON_SCALE` (1.3x, `ChromeScale.kt`) and never shrink
+  below their base size; the +/− badge keeps a fixed 16dp.
+
+Folder tiles get the mirror menu (`FolderTileContextMenu`): the same header (folder glyph, name, app
+count, Rename as an icon button) over Favorites/Dock tiles. A folder has no notifications, no Uninstall
+and no Delete there — a folder is only deleted from Settings → Folders.
 
 **Long-press timing:** the menu opens at the long-press threshold itself, not on release. Every
 long-press row/tile across Home, Dock, and Drawer (`AppRow`, `SingleAppDockIcon`,

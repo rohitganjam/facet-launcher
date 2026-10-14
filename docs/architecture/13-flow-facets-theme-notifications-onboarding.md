@@ -240,7 +240,7 @@ sequenceDiagram
     participant UI as AppIcon badge
     SYS-)SVC: onListenerConnected / onNotificationPosted / onNotificationRemoved
     SVC->>SVC: activeNotifications.filterNot(FLAG_GROUP_SUMMARY), silent = ranking.importance == IMPORTANCE_NONE
-    SVC->>NBR: setActiveNotifications(list of NotificationInfo(packageName, silent))
+    SVC->>NBR: setActiveNotifications(list of NotificationInfo - package, silent, key, user, title, text, ...)
     NBR->>NBR: _badgeCounts = non-silent, grouped by package → count
     NBR-->>UC: badgeCounts StateFlow of Map(package to count)
     UC->>UC: combine(settings, badgeCounts) → empty map unless notification_dots_enabled
@@ -253,7 +253,32 @@ sequenceDiagram
 - Nothing about notifications is persisted; the map is rebuilt on every listener callback and is
   empty until the service connects after process start.
 - Badge counts are keyed by package only — a Work-profile app shares its badge with the personal
-  copy (the service can't see the profile of a notification without extra plumbing).
+  copy. `NotificationInfo.userHandle` (`sbn.user`) is carried for the app menu below, but the badge
+  count ignores it.
+
+### Notifications in the app menu
+
+The same snapshot also feeds the long-press sheet's notifications zone ([12 §3](12-flow-drawer-search-and-app-actions.md)).
+`NotificationInfo` carries the listener `key`, `userHandle`, `title`, `text` (compact text preferred over
+expanded, trimmed and cut to 300 characters by `notificationTitleAndText`), `postTime`, `isClearable`,
+`isSecret`, `autoCancel` and the `contentIntent`. All of it is in memory only.
+
+- `NotificationBadgeRepository.notificationsFor(pkg, handle)` lists, newest first, the notifications that are
+  not silent, not media (Home's player row owns those), clearable, not `VISIBILITY_SECRET`, and have a
+  title or text; group summaries are already dropped by the service. It matches package **and** profile,
+  so a Work copy of an app never shows the personal app's notifications.
+- `ObserveAppNotificationsUseCase` gates the list on `show_notifications_in_app_menu` (default on) and
+  notification access. `AppNotificationsState(notifications, needsAccess, enabled)`: `enabled = false` hides the
+  zone (setting off); otherwise the zone shows, with `needsAccess` when access is missing and an empty list
+  when there is nothing posted.
+- Dismissing goes through `NotificationActionController`: the service attaches a
+  `cancelNotifications` lambda in `onListenerConnected` and detaches it in `onListenerDisconnected` and
+  `onDestroy`; `dismiss(keys)` returns false when detached. The snapshot updates through the service's
+  own `onNotificationRemoved`. Opening sends `contentIntent` through `NotificationOpener`; the
+  notification is then dismissed only if it asked for `autoCancel`, as the system shade would.
+- Known gap: the service never clears the snapshot on `onListenerDisconnected`, so after access is
+  revoked the list can show stale items until the process restarts. The use case reads access when the
+  sheet opens, which hides it in practice.
 
 ### Media player row
 

@@ -1,18 +1,23 @@
 package com.facetlauncher.app.data
 
+import android.os.UserHandle
 import com.facetlauncher.app.data.model.NotificationInfo
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * F13's live notification-badge state — a plain in-memory singleton, not persisted (repopulated
  * from [android.service.notification.NotificationListenerService.getActiveNotifications] every
  * time the listener reconnects, which is the correct source of truth; nothing here survives
  * process death, nor should it). [com.facetlauncher.app.data.FacetNotificationListenerService] is
- * the only writer; every other consumer (Home, Drawer) only ever reads [badgeCounts].
+ * the only writer; every other consumer (Home, Drawer) only ever reads [badgeCounts],
+ * [mediaNotificationPackages] and [notificationsFor].
  */
 @Singleton
 class NotificationBadgeRepository @Inject constructor() {
@@ -24,6 +29,8 @@ class NotificationBadgeRepository @Inject constructor() {
 
     /** Packages that currently have a media notification posted, silent or not. */
     val mediaNotificationPackages: StateFlow<Set<String>> = _mediaNotificationPackages.asStateFlow()
+
+    private val _listedNotifications = MutableStateFlow<List<NotificationInfo>>(emptyList())
 
     /**
      * Replaces the whole snapshot — always recomputed wholesale from the listener's current
@@ -37,5 +44,18 @@ class NotificationBadgeRepository @Inject constructor() {
             .filterNot { it.silent }
             .groupingBy { it.packageName }
             .eachCount()
+        _listedNotifications.value = notifications.filter { it.isListable() }.sortedByDescending { it.postTime }
     }
+
+    /**
+     * The notifications worth listing for one app in one profile, newest first. Leaves out silent,
+     * media (Home's player row owns those), non-clearable, secret and contentless ones.
+     */
+    fun notificationsFor(packageName: String, userHandle: UserHandle): Flow<List<NotificationInfo>> =
+        _listedNotifications
+            .map { all -> all.filter { it.packageName == packageName && it.userHandle == userHandle } }
+            .distinctUntilChanged()
 }
+
+private fun NotificationInfo.isListable(): Boolean =
+    !silent && !isMedia && isClearable && !isSecret && (!title.isNullOrBlank() || !text.isNullOrBlank())

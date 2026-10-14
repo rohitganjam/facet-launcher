@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.components
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -201,5 +202,40 @@ class FolderTileContextMenuTest {
 
         assert(actedFolder == folder)
         assert(actedAction == QuickPlacementAction.Remove(facetName = null))
+    }
+
+    @Test
+    fun theHeaderShowsTheFolderNameWithItsAppCountAndRenameAsAnIconButton() {
+        setContent()
+
+        composeRule.onNodeWithText("Games").assertExists()
+        composeRule.onNodeWithText("0 apps").assertExists()
+        composeRule.onNodeWithContentDescription("Rename").assertExists()
+    }
+
+    @Test
+    fun noPlacementZoneIsShownWhenNeitherListCanTakeTheFolder() {
+        setContent(onRequestQuickAddState = { QuickAddState(favoritesAction = null, dockAction = null) })
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("folder_tile_context_menu_add_to_favorites").assertDoesNotExist()
+        composeRule.onNodeWithTag("folder_tile_context_menu_add_to_dock").assertDoesNotExist()
+        composeRule.onNodeWithTag("folder_tile_context_menu_rename").assertExists()
+    }
+
+    @Test
+    fun aTileForAFolderAlreadyInAListIsDescribedAsARemoveForThatList() {
+        setContent(
+            onRequestQuickAddState = {
+                QuickAddState(
+                    favoritesAction = QuickPlacementAction.Remove(facetName = null),
+                    dockAction = QuickPlacementAction.Remove(facetName = "Work"),
+                )
+            },
+        )
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Remove from Favorites, Global").assertExists()
+        composeRule.onNodeWithContentDescription("Remove from Dock, Work").assertExists()
     }
 }
