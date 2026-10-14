@@ -93,6 +93,11 @@ Run tests:
 - Check `adb devices -l` first; if more than one device is listed, prefix with `ANDROID_SERIAL=<emulator-serial>` (e.g. `ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest`).
 - Applies to every run, including a targeted `-Pandroid.testInstrumentationRunnerArguments.class=...` — the phone doesn't need to have been freshly connected this session for the risk to apply.
 
+**Check whether a test run is already in progress before starting another.**
+- A full instrumented run takes ~25 minutes, and runs share the emulator and Gradle's results directory — a second run can overlap the first or overwrite its results.
+- Before any `./gradlew test` or `connectedDebugAndroidTest`: `pgrep -fl "gradlew|GradleWrapperMain"`, and check any background task already started. If one is running, wait for it to finish and read its result first.
+- Run one test class per `-Pandroid.testInstrumentationRunnerArguments.class=...` invocation — a comma-separated list runs only the first class (and the same for `package=`).
+
 **Never disable device/emulator animation scales (`animator_duration_scale`/`window_animation_scale`/`transition_animation_scale`) as a test-reliability workaround.**
 - Compose scales *every* animation by these system-wide settings — not just in tests, in the real app too. A `0` left over from a test session silently breaks animations for the next person testing on that device (this happened once — see `IMPLEMENTATION_PLAN.md`'s Post-shape-conformance polish section).
 - Write tests that tolerate animation lag instead: `composeRule.waitForIdle()` and any assertion after `performClick()` already wait out Compose's real-time animation clock, so most interactions need no special handling.
