@@ -202,7 +202,7 @@ private val DOCK_TILE_SHAPE = RoundedCornerShape(14.dp)
 
 /** A [PlacedItem]'s stable identity for keying/reordering — a folder's own id, or its app's component. */
 private fun PlacedItem.reorderKey(): Any = when (this) {
-    is PlacedItem.SingleApp -> app.packageName to app.activityName
+    is PlacedItem.SingleApp -> app.listKey
     is PlacedItem.FolderItem -> "folder_${folder.id}"
 }
 
@@ -257,7 +257,7 @@ private fun DockAppsRow(
                         .then(reorderState.dragModifier(item)),
                 ) {
                     when (item) {
-                        is PlacedItem.SingleApp -> AppIcon(icon = item.app.icon, size = AppIconSize.TILE, contentDescription = item.app.label)
+                        is PlacedItem.SingleApp -> AppIcon(app = item.app, size = AppIconSize.TILE, contentDescription = item.app.label)
                         is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
                     }
                 }

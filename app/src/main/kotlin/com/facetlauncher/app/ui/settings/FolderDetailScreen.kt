@@ -226,12 +226,12 @@ private fun FolderAppsReorderList(
     onRemoveApp: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val componentsKey = apps.map { it.packageName to it.activityName }
+    val componentsKey = apps.map { it.listKey }
     var order by remember(componentsKey) { mutableStateOf(apps) }
     val rowHeightPx = with(LocalDensity.current) { ReorderRowDefaults.FAVORITE_ROW_HEIGHT.toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
-        key = { it.packageName to it.activityName },
+        key = { it.listKey },
         axis = Orientation.Vertical,
         slotSizePx = rowHeightPx,
         onOrderChange = { order = it },
@@ -242,7 +242,7 @@ private fun FolderAppsReorderList(
         modifier = modifier.fillMaxWidth().height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT * order.size),
         userScrollEnabled = false,
     ) {
-        items(order, key = { it.packageName + it.activityName }) { app ->
+        items(order, key = { it.listKey }) { app ->
             val isDragging = reorderState.isDragging(app)
             Row(
                 modifier = Modifier
@@ -272,7 +272,7 @@ private fun FolderAppsReorderList(
                         .testTag("folder_detail_reorder_handle_${app.packageName}")
                         .then(reorderState.dragModifier(app)),
                 )
-                AppIcon(icon = app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                AppIcon(app = app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
                 Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
                 IconButton(
                     onClick = { onRemoveApp(app) },

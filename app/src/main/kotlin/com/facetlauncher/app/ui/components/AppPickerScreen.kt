@@ -87,7 +87,7 @@ fun AppPickerScreen(
     query: String,
     selectedResults: List<AppInfo>,
     otherResults: List<AppInfo>,
-    selectedComponents: Set<Pair<String, String>>,
+    selectedComponents: Set<String>,
     canAddMore: Boolean,
     canRemove: Boolean,
     sortOption: AppSortOption,
@@ -215,7 +215,7 @@ private fun AppPickerAppsList(
     query: String,
     selectedResults: List<AppInfo>,
     otherResults: List<AppInfo>,
-    selectedComponents: Set<Pair<String, String>>,
+    selectedComponents: Set<String>,
     canAddMore: Boolean,
     canRemove: Boolean,
     sortOption: AppSortOption,
@@ -251,8 +251,8 @@ private fun AppPickerAppsList(
 
         if (selectedResults.isNotEmpty()) {
             item { AppPickerSectionHeader(selectedSectionLabel) }
-            items(selectedResults, key = { it.packageName + it.activityName }) { app ->
-                val isSelected = (app.packageName to app.activityName) in selectedComponents
+            items(selectedResults, key = { it.listKey }) { app ->
+                val isSelected = app.listKey in selectedComponents
                 AppPickerRow(
                     app = app,
                     checked = isSelected,
@@ -264,8 +264,8 @@ private fun AppPickerAppsList(
         }
         if (otherResults.isNotEmpty()) {
             item { AppPickerSectionHeader(stringResource(R.string.app_picker_all_apps)) }
-            items(otherResults, key = { it.packageName + it.activityName }) { app ->
-                val isSelected = (app.packageName to app.activityName) in selectedComponents
+            items(otherResults, key = { it.listKey }) { app ->
+                val isSelected = app.listKey in selectedComponents
                 AppPickerRow(
                     app = app,
                     checked = isSelected,
@@ -403,7 +403,7 @@ private fun AppPickerRow(app: AppInfo, checked: Boolean, enabled: Boolean, tagPr
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        AppIcon(icon = app.icon, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+        AppIcon(app = app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
         Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
         Checkbox(
             checked = checked,

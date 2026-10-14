@@ -24,6 +24,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -63,6 +65,28 @@ object AppIconSize {
 
     /** Grid-tile-scale UI: App Drawer's Grid layout, the real Home Dock, and its Settings/onboarding management tiles. */
     val TILE = 44.dp
+}
+
+/** [AppIcon] for an [AppInfo]: also draws the Work / other-profile badge, so two copies of one app (personal and Work) can be told apart. */
+@Composable
+fun AppIcon(
+    app: AppInfo,
+    size: Dp,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    notificationCount: Int? = null,
+    badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
+) {
+    AppIcon(
+        icon = app.icon,
+        size = size,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        notificationCount = notificationCount,
+        badgeStyle = badgeStyle,
+        isWorkApp = app.profile == AppProfile.WORK,
+        isOtherProfileApp = app.profile == AppProfile.OTHER,
+    )
 }
 
 /**

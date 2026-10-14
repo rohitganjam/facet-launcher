@@ -31,7 +31,7 @@ data class FolderAppPickerUiState(
     val selectedResults: List<AppInfo> = emptyList(),
     /** Every other matching app, sorted by [sortOption]/[sortDirection]. */
     val otherResults: List<AppInfo> = emptyList(),
-    val folderAppComponents: Set<Pair<String, String>> = emptySet(),
+    val folderAppComponents: Set<String> = emptySet(),
     val sortOption: AppSortOption = AppSortOption.ALPHABETICAL,
     val sortDirection: SortDirection = SortDirection.ASCENDING,
 )
@@ -61,7 +61,7 @@ class FolderAppPickerViewModel @Inject constructor(
     val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
     /** Latched from the folder's live membership order the first time it's observed; never updated after — see [FolderAppPickerUiState.selectedResults]. */
-    private val loadOrder = MutableStateFlow<List<Pair<String, String>>?>(null)
+    private val loadOrder = MutableStateFlow<List<String>?>(null)
 
     val uiState: StateFlow<FolderAppPickerUiState> = combine(
         query,
@@ -72,16 +72,16 @@ class FolderAppPickerViewModel @Inject constructor(
         sortDirection,
     ) { query, installed, folders, frozenOrder, sortOption, sortDirection ->
         val folder = folders.find { it.id == folderId }
-        val liveOrder = folder?.apps.orEmpty().map { it.packageName to it.activityName }
+        val liveOrder = folder?.apps.orEmpty().map { it.listKey }
         if (frozenOrder == null) loadOrder.value = liveOrder
         val order = frozenOrder ?: liveOrder
 
         val filtered = installed.filter { it.label.contains(query, ignoreCase = true) }
-        val (selected, other) = filtered.partition { (it.packageName to it.activityName) in order }
+        val (selected, other) = filtered.partition { it.listKey in order }
         FolderAppPickerUiState(
             folderName = folder?.name.orEmpty(),
             query = query,
-            selectedResults = selected.sortedBy { order.indexOf(it.packageName to it.activityName) },
+            selectedResults = selected.sortedBy { order.indexOf(it.listKey) },
             otherResults = sortAppsForPicker(other, sortOption, sortDirection),
             folderAppComponents = liveOrder.toSet(),
             sortOption = sortOption,
@@ -115,7 +115,7 @@ class FolderAppPickerViewModel @Inject constructor(
     }
 
     fun toggleApp(app: AppInfo) {
-        val isInFolder = (app.packageName to app.activityName) in uiState.value.folderAppComponents
+        val isInFolder = app.listKey in uiState.value.folderAppComponents
         viewModelScope.launch {
             if (isInFolder) {
                 folderRepository.removeAppFromFolder(folderId, app)
