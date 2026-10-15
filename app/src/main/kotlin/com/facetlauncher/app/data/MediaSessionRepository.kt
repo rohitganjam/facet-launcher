@@ -172,6 +172,22 @@ open class MediaSessionRepository @Inject constructor(
             ?.takeIf { it.scheme == "content" || it.scheme == "file" }
 
     private fun decodeArt(uri: Uri): Bitmap? = runCatching {
-        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = artSampleSize(bounds.outWidth, bounds.outHeight)
+        }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
     }.getOrNull()
+}
+
+// The art tile is a small square, so decoding past this edge only wastes memory.
+internal const val MAX_ART_EDGE_PX = 512
+
+/** Largest power-of-two `inSampleSize` that keeps both edges at or above [MAX_ART_EDGE_PX]. */
+internal fun artSampleSize(width: Int, height: Int): Int {
+    if (width <= 0 || height <= 0) return 1
+    var sample = 1
+    while (width / (sample * 2) >= MAX_ART_EDGE_PX && height / (sample * 2) >= MAX_ART_EDGE_PX) sample *= 2
+    return sample
 }
