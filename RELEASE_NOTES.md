@@ -1,26 +1,33 @@
-# Facet Launcher 0.1.26
+# Facet Launcher 0.1.27
 
 ## New Features
-- Added a "What's new" screen under Settings → About, listing what's new and improved in each release.
-- Added a 3-column option for the Home screen app grid, alongside the existing 4, 5, and 6 column choices.
-- The long-press menu for an app now shows its notifications directly, with a setting to turn this on or off (on by default). You can tap a notification to open it, or swipe/use "Clear all" to dismiss it.
+- Ongoing notifications, such as music playback or active downloads, now show when you long-press an app. You can tap them to open the app. They can't be swiped away, "Clear all" skips them, and "Clear all" is greyed out when only ongoing notifications are left.
 
 ## Fixes
-- Fixed the media player's progress wave so it correctly flattens out when playback is paused or stopped, and animates again on resume.
+- Fixed a crash when opening an app picker on a phone with a Work Profile, if the same app was installed in both your personal and work profiles.
+- If an app is installed in both your personal and work profiles, you can now add each copy to the Dock or Favorites separately. Before, adding one copy made the other look like it was already added.
+- Fixed apps that showed a notification badge but opened an empty notification list on long-press.
+- The preview on the Appearance screen now matches your Home screen, including the clock position and whether the app list sits at the top or bottom.
+- The setup screen no longer flashes or reappears by mistake when the launcher starts. If loading takes too long, the launcher now goes to your Home screen instead of setup.
 
 ## Improvements
-- Redesigned the app long-press menu into clearer sections: app info/uninstall, notifications, and placement actions (favorites, dock, folder).
-- Placement actions (add to favorites/dock/folder) in the long-press menu are now clearer buttons that show whether the app is already placed there, and adapt their layout for long app names or larger text sizes.
-- Removed app shortcuts from the long-press menu to keep it simpler.
-- Removed the separate flat/wavy progress style setting for the media player, since the wave now always animates appropriately on its own.
-- Updated the Play Store listing and permission explanations to better describe the app's features and data usage.
+- Work apps now show the Work badge on your Home screen favorites, Home grid and Dock, so you can tell them apart from your personal apps.
+- The Work badge now also appears in app pickers, folder lists, Dock and Home app settings, and during setup.
+- The launcher's home screen previews now match your actual Home screen more closely.
+- Album art for media now uses less memory.
+- The launcher now loads faster at startup because it no longer waits for your full app list before deciding whether to show setup.
 
 ## Internal
-- Refreshed the graphify knowledge graph (multiple commits).
-- Fixed a flaky test by measuring the media progress wave's ink by comparing pixel colors against the background instead of counting any pixel with alpha.
-- Added a test for the media progress wave flattening on playback stop.
-- Added tests for the new notification zone, placement layout at various text scales, and gesture handling in the long-press sheet; updated docs, plan, and test registry.
-- Added tests for the 3-column grid option (enum, backup round trip, per-facet persistence, UI).
-- Added `scripts/gen-whats-new.py` and wired release note drafting into `scripts/release.sh`, with `--notes-only` and `--resume` flags and a check preventing release with unfinished notes.
-- Backfilled release notes content for versions 0.1.10–0.1.25.
-- Released version 0.1.25 (code 26).
+- Onboarding gate: `onboardingCompleted` is now nullable and collected separately from the app list and work profiles. The loading timeout now falls back to "done".
+- `decodeArt` reads image bounds first and decodes with a power-of-two `inSampleSize` that keeps both edges at or above 512px. This addresses a Play Console memory warning.
+- Added `AppInfo.listKey` (package + activity + user). It replaces the package + activity keys in pickers, folder detail, onboarding reorder lists, the long-press Add/Remove check and the settings reorder keys.
+- Home favorites, grid tiles and dock icons now use `AppIcon(app = ...)`, which also passes the notification count through.
+- Pickers, folder lists, Dock/Home-apps settings and onboarding lists now use `AppIcon(app = ...)`.
+- Carousel and Appearance now share a single scaled `HomePreview`.
+- Merged the eight Dock/Favorites tables into `app_placements` and `folder_placements` (schema v28, `MIGRATION_27_28`). `ownerKey` carries the unique keys.
+- Merged the four placement repositories into `PlacementRepository` (addressed by `PlacementTarget`), and the eight Add/Remove use cases into `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` and `ResolveActivePlacementTargetUseCase`.
+- Dock and favorites caps moved to `AppListLimits`, which resolves finding F3. The uninstall and orphan queries now cover every list.
+- Tests: `HomeScreenTest` Work badge coverage, `AppPickerScreenTest` crash reproduction, `AppInfoTest`, picker key and membership tests, `PlacementRepositoryTest`, the v27→v28 migration test, real-Room DAO tests, and persistent-notification tests. 1115 unit and 732 instrumented tests pass.
+- Regenerated `TEST_REGISTRY.md` for the selection and picker key tests.
+- Docs: CLAUDE.md now checks for a test run that's already going (fixed the running-Gradle pattern) and runs one class per instrumented invocation. Clarified the F6 findings. Updated docs 01–14, the README and the plan.
+- Release 0.1.26 (code 27).
