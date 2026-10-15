@@ -133,6 +133,42 @@ class LauncherViewModelTest {
         // Then it stops loading anyway, still with the (empty/default) state it had
         assertFalse(viewModel.uiState.value.isLoading)
         assertEquals(emptyList<AppInfo>(), viewModel.uiState.value.apps)
+
+        // And an unknown onboarding state falls back to done, never to showing onboarding
+        assertEquals(true, viewModel.uiState.value.onboardingCompleted)
+    }
+
+    @Test
+    fun `onboardingCompleted stays unknown until settings emit and resolves without the app list`() = runTest {
+        // Given an app list that never emits, and settings we control
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(kotlinx.coroutines.flow.MutableSharedFlow())
+        val settingsFlow = kotlinx.coroutines.flow.MutableSharedFlow<LauncherSettings>()
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(settingsFlow)
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            mock(EnsureActiveFacetUseCase::class.java),
+            mock(CleanUpUninstalledAppsUseCase::class.java),
+            mock(RepairOrphanedProfileRowsUseCase::class.java),
+            mock(SeedDefaultDockUseCase::class.java),
+            mock(SyncFacetShortcutsUseCase::class.java),
+            mock(ActivateFacetByIdUseCase::class.java),
+            mock(RunFacetAutomationUseCase::class.java),
+            settingsRepository,
+            fakeWorkProfileRepository(),
+        )
+
+        // Then before settings answer it is unknown, not false
+        testDispatcher.scheduler.advanceTimeBy(1_000)
+        assertEquals(null, viewModel.uiState.value.onboardingCompleted)
+
+        // When settings emit while the app list is still stuck
+        settingsFlow.emit(LauncherSettings(onboardingCompleted = false))
+        testDispatcher.scheduler.advanceTimeBy(100)
+
+        // Then the gate resolves on its own
+        assertEquals(false, viewModel.uiState.value.onboardingCompleted)
     }
 
     @Test
@@ -163,7 +199,7 @@ class LauncherViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then the ui state reflects it
-        assertFalse(viewModel.uiState.value.onboardingCompleted)
+        assertEquals(false, viewModel.uiState.value.onboardingCompleted)
 
         // When onboarding completes
         viewModel.completeOnboarding()

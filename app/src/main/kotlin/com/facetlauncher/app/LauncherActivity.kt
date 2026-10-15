@@ -75,7 +75,7 @@ class LauncherActivity : ComponentActivity() {
                 ) {
                     ProvideSystemBars(uiState.systemBarIconStyle, systemBarsState) {
                         when {
-                            uiState.isLoading -> {
+                            uiState.isLoading || uiState.onboardingCompleted == null -> {
                                 // Real settings/apps haven't loaded yet — render nothing rather than a
                                 // frame styled with defaults that don't match the user's actual choices
                                 // (see chat history). The window already shows the wallpaper through it
@@ -83,7 +83,7 @@ class LauncherActivity : ComponentActivity() {
                                 // an empty Box is a blank Home, not a black/white flash.
                                 Box(modifier = Modifier.fillMaxSize())
                             }
-                            !uiState.onboardingCompleted -> {
+                            uiState.onboardingCompleted == false -> {
                                 // A top-level branch, outside FacetNavHost entirely — never lands on the
                                 // back stack, same isolation HomeDrawerRoute gets. See ONBOARDING_FLOW.md.
                                 OnboardingScreen(onFinish = viewModel::completeOnboarding)

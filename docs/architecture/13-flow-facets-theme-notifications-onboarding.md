@@ -346,6 +346,8 @@ flowchart LR
     SEED["SeedDefaultDockUseCase (runs in parallel from LauncherViewModel.init,\nnot gated on onboarding)"] --> SETUP
 ```
 
+- The gate is `LauncherUiState.onboardingCompleted: Boolean?`, fed by its own settings collector (not the apps/work-profile
+  `combine`): `null` shows the blank frame, only `false` shows onboarding, and the 3s loading timeout resolves `null` to `true`.
 - Onboarding is outside the nav graph (a top-level `when` branch in `LauncherActivity`), so Back
   can never pop into it and it never appears on the back stack.
 - The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at

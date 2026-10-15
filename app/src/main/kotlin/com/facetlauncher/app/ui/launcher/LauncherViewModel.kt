@@ -34,7 +34,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -64,8 +66,11 @@ data class LauncherUiState(
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
-    /** Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted]. */
-    val onboardingCompleted: Boolean = false,
+    /**
+     * Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted].
+     * `null` until DataStore has answered, so onboarding never shows on a default.
+     */
+    val onboardingCompleted: Boolean? = null,
     /**
      * Every genuine Work Profile currently on this device — sourced from [WorkProfileRepository]
      * rather than inferred from `apps.any { it.profile == WORK }`, so the App Drawer's Work tab(s)
@@ -122,7 +127,7 @@ class LauncherViewModel @Inject constructor(
         // (including via the app long-press menu's Uninstall action) must be reflected without
         // requiring a process restart; see AppRepository.observeInstalledApps.
         combine(getInstalledApps.observe(), settingsRepository.settings, workProfileRepository.observeWorkProfiles()) { apps, settings, workProfiles ->
-            LauncherUiState(
+            _uiState.value.copy(
                 apps = apps,
                 isLoading = false,
                 themeMode = settings.themeMode,
@@ -135,10 +140,15 @@ class LauncherViewModel @Inject constructor(
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,
-                onboardingCompleted = settings.onboardingCompleted,
                 workProfiles = workProfiles,
             )
-        }.onEach { _uiState.value = it }.launchIn(viewModelScope)
+        }.onEach { combined -> _uiState.update { combined.copy(onboardingCompleted = it.onboardingCompleted) } }.launchIn(viewModelScope)
+        // Own collector: the onboarding gate must not wait on the app list or work profiles.
+        settingsRepository.settings
+            .map { it.onboardingCompleted }
+            .distinctUntilChanged()
+            .onEach { completed -> _uiState.update { it.copy(onboardingCompleted = completed) } }
+            .launchIn(viewModelScope)
         // Not one-shot: the active facet must stay a usable one when facets or the entitlement change.
         viewModelScope.launch { ensureActiveFacet.keepUsable() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
@@ -159,7 +169,10 @@ class LauncherViewModel @Inject constructor(
 
         viewModelScope.launch {
             delay(LOADING_TIMEOUT_MS)
-            _uiState.update { if (it.isLoading) it.copy(isLoading = false) else it }
+            // Unknown onboarding state falls back to "done": Home beats a spurious onboarding.
+            _uiState.update {
+                if (it.isLoading) it.copy(isLoading = false, onboardingCompleted = it.onboardingCompleted ?: true) else it
+            }
         }
     }
 

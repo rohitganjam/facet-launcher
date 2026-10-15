@@ -83,8 +83,10 @@ when {
 }
 ```
 
-- `LauncherUiState` gains `onboardingComplete` (folded into `LauncherViewModel.init`'s existing
-  `combine`). `isLoading` already prevents any flash before the real value loads.
+- `LauncherUiState.onboardingCompleted` is `Boolean?`: `null` until DataStore answers, collected by its
+  own flow in `LauncherViewModel.init` so it never waits on the app list or work profiles. The activity
+  shows onboarding only for `== false`; `null` renders the blank frame. If nothing answers within the
+  3s loading timeout, `null` falls back to `true` (Home), never to onboarding.
 - `LauncherViewModel.completeOnboarding()` → `settingsRepository.setOnboardingComplete(true)` →
   `settings` re-emits → activity swaps to `FacetNavHost` at Home.
 
