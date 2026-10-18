@@ -278,6 +278,8 @@
     <string name="notification_app_menu_row_title">Mostrar notificaciones en el menú de la app</string>
     <string name="media_player_row_title">Mostrar el reproductor multimedia en la pantalla de inicio</string>
     <string name="media_skip_buttons_row_title">Mostrar botones de salto</string>
+    <string name="notification_preview_title">Vista previa</string>
+    <string name="notification_preview_app">Mensajes</string>
     <string name="media_player_open_cd">Abrir reproductor</string>
     <string name="media_player_previous_cd">Pista anterior</string>
     <string name="media_player_next_cd">Pista siguiente</string>

@@ -297,6 +297,10 @@
     <string name="notification_app_menu_row_title">Show notifications in app menu</string>
     <string name="media_player_row_title">Show media player in home screen</string>
     <string name="media_skip_buttons_row_title">Show skip buttons</string>
+    <string name="notification_preview_title">Preview</string>
+    <string name="notification_preview_app">Messages</string>
+    <string name="notification_preview_track" translatable="false">Midnight City</string>
+    <string name="notification_preview_artist" translatable="false">M83</string>
 
     <!-- MediaPlayerRow -->
     <string name="media_player_open_cd">Open player</string>

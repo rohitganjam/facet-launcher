@@ -278,6 +278,8 @@
     <string name="notification_app_menu_row_title">Benachrichtigungen im App-Menü anzeigen</string>
     <string name="media_player_row_title">Medienplayer auf dem Startbildschirm anzeigen</string>
     <string name="media_skip_buttons_row_title">Überspringen-Tasten anzeigen</string>
+    <string name="notification_preview_title">Vorschau</string>
+    <string name="notification_preview_app">Nachrichten</string>
     <string name="media_player_open_cd">Player öffnen</string>
     <string name="media_player_previous_cd">Vorheriger Titel</string>
     <string name="media_player_next_cd">Nächster Titel</string>

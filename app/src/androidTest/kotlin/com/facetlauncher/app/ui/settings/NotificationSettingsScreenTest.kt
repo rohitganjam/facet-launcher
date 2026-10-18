@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.settings
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -52,6 +54,30 @@ class NotificationSettingsScreenTest {
         }
         composeRule.waitForIdle()
         return settingsRepository
+    }
+
+    @Test
+    fun `preview shows even without notification access`() {
+        // Given the screen with no notification access granted
+        setContent(accessGranted = false)
+
+        // Then the preview is still there rather than the area being blank
+        composeRule.onNodeWithTag("notification_preview").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("home_media_player").assertIsDisplayed()
+    }
+
+    @Test
+    fun `preview badge follows the selected badge style`() {
+        // Given the screen with the default Dot style
+        val settings = setContent(accessGranted = true)
+
+        // When the style is switched to Count
+        runBlocking { settings.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT) }
+        composeRule.waitForIdle()
+
+        // Then the preview badge shows its count
+        composeRule.onNodeWithTag("notification_preview").performScrollTo()
+        composeRule.onNodeWithText("3").assertIsDisplayed()
     }
 
     @Test

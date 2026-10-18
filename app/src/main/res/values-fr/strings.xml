@@ -278,6 +278,8 @@
     <string name="notification_app_menu_row_title">Afficher les notifications dans le menu de l\'appli</string>
     <string name="media_player_row_title">Afficher le lecteur multimédia sur l\'écran d\'accueil</string>
     <string name="media_skip_buttons_row_title">Afficher les boutons de saut</string>
+    <string name="notification_preview_title">Aperçu</string>
+    <string name="notification_preview_app">Messages</string>
     <string name="media_player_open_cd">Ouvrir le lecteur</string>
     <string name="media_player_previous_cd">Piste précédente</string>
     <string name="media_player_next_cd">Piste suivante</string>

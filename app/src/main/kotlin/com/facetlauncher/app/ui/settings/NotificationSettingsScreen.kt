@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -118,6 +120,7 @@ private fun NotificationSettingsContent(
             .background(SurfaceContainer)
             .testTag("notification_settings_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
     ) {
         Row(
@@ -144,6 +147,11 @@ private fun NotificationSettingsContent(
             onEnabledChange = onShowMediaPlayerChange,
             onShowSkipButtonsChange = onShowSkipButtonsChange,
             modifier = Modifier.padding(top = 16.dp),
+        )
+
+        NotificationPreview(
+            badgeStyle = uiState.settings.notificationBadgeStyle,
+            showSkipButtons = uiState.settings.showMediaSkipButtons,
         )
     }
 }
