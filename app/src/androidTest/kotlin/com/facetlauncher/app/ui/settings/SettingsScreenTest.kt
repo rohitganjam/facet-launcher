@@ -143,7 +143,7 @@ class SettingsScreenTest {
 
     @Test
     fun appearanceRowIsClickableAndShowsAGenericSubtitle() {
-        // Given the settings screen, scrolled to the "Launcher Appearance" row — the theme/accent/
+        // Given the settings screen, scrolled to the "Appearance" row — the theme/accent/
         // icons/font block lives on its own screen, reached through this single summary row
         // instead of inline controls. The subtitle is a static, generic description rather than
         // the live theme/font values (see chat history — the dynamic subtitle wasn't wanted here).

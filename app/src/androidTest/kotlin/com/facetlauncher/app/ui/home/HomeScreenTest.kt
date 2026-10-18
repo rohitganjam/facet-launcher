@@ -539,6 +539,37 @@ class HomeScreenTest {
     }
 
     @Test
+    fun centerPositionKeepsTheIconAndLabelWhereTheyAreWhenABadgeAppears() {
+        // Given a Center row with no badge
+        var badgeCounts by mutableStateOf(emptyMap<String, Int>())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(1).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    appRowPosition = AppRowPosition.CENTER,
+                    badgeCounts = badgeCounts,
+                )
+            }
+        }
+        val icon = composeRule.onNodeWithTag("home_app_icon_com.example.app1", useUnmergedTree = true)
+        val label = composeRule.onNodeWithTag("home_app_label_com.example.app1", useUnmergedTree = true)
+        val iconLeftBefore = icon.fetchSemanticsNode().boundsInRoot.left
+        val labelRightBefore = label.fetchSemanticsNode().boundsInRoot.right
+
+        // When a notification badge arrives
+        badgeCounts = mapOf("com.example.app1" to 3)
+        composeRule.waitForIdle()
+
+        // Then the icon and label stay exactly put, and the badge sits to the right of the label
+        assertEquals(iconLeftBefore, icon.fetchSemanticsNode().boundsInRoot.left, 0.5f)
+        assertEquals(labelRightBefore, label.fetchSemanticsNode().boundsInRoot.right, 0.5f)
+        val badge = composeRule.onNodeWithTag("app_icon_badge", useUnmergedTree = true).fetchSemanticsNode()
+        assertTrue(badge.boundsInRoot.left >= labelRightBefore)
+    }
+
+    @Test
     fun iconOnlyPresentationHidesTheLabelButKeepsTheIconAccessible() {
         // Given Icon Only presentation
         composeRule.setContent {

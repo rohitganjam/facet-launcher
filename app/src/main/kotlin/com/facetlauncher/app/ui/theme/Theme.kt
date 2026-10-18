@@ -104,7 +104,14 @@ fun FacetLauncherTheme(
         dynamicColorRefreshSignal++
         onPauseOrDispose { }
     }
+    val fontWeight = homeAppsFontWeight.resolve()
+    val typography = remember(launcherFontOption, fontWeight, fontScaleOption) {
+        facetTypography(launcherFontOption.fontFamily, fontWeight, fontScaleOption.scale)
+    }
+    val unscaledTypography = remember(launcherFontOption) { facetTypography(launcherFontOption.fontFamily) }
     CompositionLocalProvider(
+        LocalLauncherTypography provides typography,
+        LocalUnscaledTypography provides unscaledTypography,
         LocalIsDarkTheme provides isDark,
         LocalAccentFromSystem provides accentFromSystem,
         LocalCustomAccentSwatch provides customAccentSwatch,
@@ -115,7 +122,7 @@ fun FacetLauncherTheme(
     ) {
         MaterialTheme(
             colorScheme = facetColorScheme(isDark),
-            typography = facetTypography(launcherFontOption.fontFamily, homeAppsFontWeight.resolve(), fontScaleOption.scale),
+            typography = typography,
         ) {
             CompositionLocalProvider(
                 LocalRippleConfiguration provides RippleConfiguration(color = Ink, rippleAlpha = FacetRippleAlpha),

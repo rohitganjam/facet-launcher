@@ -209,7 +209,7 @@
     <string name="settings_facets_subtitle">Créez et gérez des réglages propres à chaque facette</string>
     <string name="settings_change_wallpaper_title">Changer le fond d\'écran</string>
     <string name="settings_change_wallpaper_subtitle">Change le fond d\'écran du système</string>
-    <string name="settings_appearance_title">Apparence du launcher</string>
+    <string name="settings_appearance_title">Apparence</string>
     <string name="settings_appearance_subtitle">Personnalisez horloge, calendrier, accueil, notifications, thèmes</string>
     <string name="settings_clock_calendar_title">Style d\'horloge</string>
     <string name="settings_time_format_24h">Format 24 heures</string>
@@ -367,16 +367,22 @@
     <string name="theme_mode_light">Clair</string>
     <string name="theme_mode_dark">Sombre</string>
     <string name="theme_mode_system">Système</string>
-    <string name="system_bar_icons_match_theme">Comme le thème</string>
+    <string name="system_bar_icons_match_theme">Par défaut</string>
     <string name="system_bar_icons_light">Clair</string>
     <string name="system_bar_icons_dark">Sombre</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Apparence</string>
     <string name="appearance_launcher_theme">Thème du launcher</string>
-    <string name="appearance_system_bar_icons">Icônes des barres système</string>
+    <string name="appearance_system_bar_icons">Icônes de la barre d\'état</string>
     <string name="appearance_icon_style">Style d\'icône</string>
-    <string name="appearance_launcher_font">Police du launcher</string>
+    <string name="appearance_launcher_font">Style de police du launcher</string>
+    <string name="appearance_section_theme">Thème</string>
+    <string name="appearance_section_icons">Icônes</string>
+    <string name="appearance_section_fonts">Polices</string>
+    <string name="font_preview_row">Liste des applis d\'accueil</string>
+    <string name="font_preview_body">Texte du dock</string>
+    <string name="font_preview_label">Texte de la grille</string>
     <string name="appearance_font_color">Couleur de police</string>
     <string name="appearance_font_size">Taille de police</string>
     <string name="appearance_font_weight">Graisse de police</string>

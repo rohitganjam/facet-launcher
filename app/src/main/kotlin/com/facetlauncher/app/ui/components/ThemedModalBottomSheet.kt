@@ -13,6 +13,7 @@ import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
 import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
+import com.facetlauncher.app.ui.theme.UnscaledTypography
 
 /**
  * The one bottom sheet every Home action menu uses ([AppContextMenu], [FolderTileContextMenu], the
@@ -20,7 +21,8 @@ import com.facetlauncher.app.ui.theme.Surface
  * component explicitly"), so its surface runs behind the system bars and swipe-down and Back
  * dismiss it the same way everywhere. It's showing for exactly as long as it's composed; callers
  * gate it on their own `expanded`/mode state. Composing it blocks Home's swipes and makes Home
- * close it ([BlockHomeSwipesWhileShown], [DismissOnHomePress]).
+ * close it ([BlockHomeSwipesWhileShown], [DismissOnHomePress]). Its text ignores the Font size and Font weight options
+ * ([UnscaledTypography]); the system font scale still applies.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +57,9 @@ fun ThemedModalBottomSheet(
         containerColor = containerColor,
         scrimColor = Scrim,
         dragHandle = { AppContextMenuDragHandle() },
-        content = content,
+        content = {
+            val columnScope = this
+            UnscaledTypography { columnScope.content() }
+        },
     )
 }

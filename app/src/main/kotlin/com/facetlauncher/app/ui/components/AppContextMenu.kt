@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.outlined.CreateNewFolder
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Folder as FolderIcon
@@ -201,7 +200,7 @@ fun AppContextMenu(
             add(
                 PlacementActionUi(
                     tag = "app_context_menu_add_to_folder",
-                    icon = Icons.Outlined.CreateNewFolder,
+                    icon = Icons.Outlined.FolderIcon,
                     label = stringResource(R.string.folder_add_to_folder),
                     scope = null,
                     isRemove = false,
@@ -274,41 +273,12 @@ fun AppContextMenu(
                     },
                 )
             } else {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = stringResource(R.string.content_description_back),
-                            tint = Ink,
-                            modifier = Modifier
-                                .testTag("app_context_menu_folder_page_back")
-                                .clickable(onClick = { addingToFolder = false })
-                                .padding(8.dp),
-                        )
-                        Text(
-                            text = stringResource(R.string.folder_add_to_folder),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Ink,
-                            modifier = Modifier.padding(start = 4.dp),
-                        )
-                    }
-                    AppContextMenuItem(
-                        label = stringResource(R.string.folder_create_new_folder),
-                        modifier = Modifier.testTag("app_context_menu_create_folder"),
-                        leadingIcon = { Icon(imageVector = Icons.Outlined.CreateNewFolder, contentDescription = null, tint = Accent) },
-                        onClick = { showCreateFolderDialog = true },
-                    )
-                    CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-                    Column(modifier = Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState())) {
-                        folderCandidates.orEmpty().forEach { folder ->
-                            FolderCandidateRow(
-                                folder = folder,
-                                onClick = { previewingFolder = folder },
-                            )
-                        }
+                AppMenuFolderPage(
+                    onBack = { addingToFolder = false },
+                    onCreateFolder = { showCreateFolderDialog = true },
+                ) {
+                    folderCandidates.orEmpty().forEach { folder ->
+                        FolderCandidateRow(folder = folder, onClick = { previewingFolder = folder })
                     }
                 }
             }
@@ -440,7 +410,7 @@ internal fun MenuIconButton(
 }
 
 @Composable
-private fun FolderCandidateRow(folder: Folder, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun FolderCandidateRow(folder: Folder, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -528,7 +498,7 @@ private fun previewNotifications(): List<NotificationInfo> = listOf(
 private fun previewPlacementActions() = listOf(
     PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Add to Favorites", PlacementScope(null), isRemove = false, onClick = {}),
     PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope("Work"), isRemove = true, onClick = {}),
-    PlacementActionUi("p_folder", Icons.Outlined.CreateNewFolder, stringResource(R.string.folder_add_to_folder), scope = null, isRemove = false, onClick = {}),
+    PlacementActionUi("p_folder", Icons.Outlined.FolderIcon, stringResource(R.string.folder_add_to_folder), scope = null, isRemove = false, onClick = {}),
 )
 
 @Preview(showBackground = true, widthDp = 390)

@@ -209,7 +209,7 @@
     <string name="settings_facets_subtitle">Facettenspezifische Einstellungen erstellen und verwalten</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
     <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
-    <string name="settings_appearance_title">Launcher-Design</string>
+    <string name="settings_appearance_title">Design</string>
     <string name="settings_appearance_subtitle">Uhr, Kalender, Startbildschirm, Benachrichtigungen, Designs anpassen</string>
     <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
@@ -367,16 +367,22 @@
     <string name="theme_mode_light">Hell</string>
     <string name="theme_mode_dark">Dunkel</string>
     <string name="theme_mode_system">System</string>
-    <string name="system_bar_icons_match_theme">Wie das Design</string>
+    <string name="system_bar_icons_match_theme">Standard</string>
     <string name="system_bar_icons_light">Hell</string>
     <string name="system_bar_icons_dark">Dunkel</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Design</string>
     <string name="appearance_launcher_theme">Launcher-Design</string>
-    <string name="appearance_system_bar_icons">Symbole der Systemleisten</string>
+    <string name="appearance_system_bar_icons">Symbole der Statusleiste</string>
     <string name="appearance_icon_style">Symbolstil</string>
-    <string name="appearance_launcher_font">Launcher-Schriftart</string>
+    <string name="appearance_launcher_font">Launcher-Schriftstil</string>
+    <string name="appearance_section_theme">Design</string>
+    <string name="appearance_section_icons">Symbole</string>
+    <string name="appearance_section_fonts">Schriften</string>
+    <string name="font_preview_row">Startbildschirm-App-Liste</string>
+    <string name="font_preview_body">Dock-Text</string>
+    <string name="font_preview_label">Raster-Text</string>
     <string name="appearance_font_color">Schriftfarbe</string>
     <string name="appearance_font_size">Schriftgröße</string>
     <string name="appearance_font_weight">Schriftstärke</string>

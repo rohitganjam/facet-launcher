@@ -8,6 +8,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -47,6 +50,7 @@ import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
 import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
+import com.facetlauncher.app.ui.theme.UnscaledTypography
 
 object FacetDestinations {
     const val HOME = "home"
@@ -188,10 +192,10 @@ fun FacetNavHost(
                 launcherViewModel = launcherViewModel,
             )
         }
-        composable(FacetDestinations.USAGE_ACCESS_EXPLANATION) {
+        settingsComposable(FacetDestinations.USAGE_ACCESS_EXPLANATION) {
             UsageAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(FacetDestinations.SETTINGS) {
+        settingsComposable(FacetDestinations.SETTINGS) {
             SettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
@@ -207,19 +211,19 @@ fun FacetNavHost(
                 onNavigateToAbout = { navController.navigate(FacetDestinations.ABOUT) },
             )
         }
-        composable(FacetDestinations.BACKUP_RESTORE) {
+        settingsComposable(FacetDestinations.BACKUP_RESTORE) {
             BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(FacetDestinations.ABOUT) {
+        settingsComposable(FacetDestinations.ABOUT) {
             AboutScreen(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
             )
         }
-        composable(FacetDestinations.WHATS_NEW) {
+        settingsComposable(FacetDestinations.WHATS_NEW) {
             WhatsNewScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(
+        settingsComposable(
             FacetDestinations.APPEARANCE_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) { backStackEntry ->
@@ -236,16 +240,16 @@ fun FacetNavHost(
                 onNavigateToFontsThemesIcons = { navController.navigate(FacetDestinations.FONTS_THEMES_ICONS) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.DOCK_APPS_APPEARANCE,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) {
             DockAppsAppearanceScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(FacetDestinations.FONTS_THEMES_ICONS) {
+        settingsComposable(FacetDestinations.FONTS_THEMES_ICONS) {
             FontsThemesIconsScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(
+        settingsComposable(
             FacetDestinations.DOCK_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) { backStackEntry ->
@@ -255,7 +259,7 @@ fun FacetNavHost(
                 onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.HOME_APPS_LIST_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) { backStackEntry ->
@@ -265,19 +269,19 @@ fun FacetNavHost(
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
             )
         }
-        composable(FacetDestinations.APP_DRAWER_SETTINGS) {
+        settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
             AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(FacetDestinations.CLOCK_STYLE_GALLERY) {
+        settingsComposable(FacetDestinations.CLOCK_STYLE_GALLERY) {
             ClockStyleGalleryRoute(onBack = { navController.popBackStackSafely() })
         }
-        composable(
+        settingsComposable(
             FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
         ) {
             FacetClockStyleGalleryScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(FacetDestinations.PERMISSIONS) {
+        settingsComposable(FacetDestinations.PERMISSIONS) {
             PermissionsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
@@ -286,7 +290,7 @@ fun FacetNavHost(
                 },
             )
         }
-        composable(FacetDestinations.NOTIFICATION_SETTINGS) {
+        settingsComposable(FacetDestinations.NOTIFICATION_SETTINGS) {
             NotificationSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToNotificationAccessExplanation = {
@@ -294,16 +298,16 @@ fun FacetNavHost(
                 },
             )
         }
-        composable(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) {
+        settingsComposable(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) {
             NotificationAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
         }
-        composable(FacetDestinations.FOLDERS_SETTINGS) {
+        settingsComposable(FacetDestinations.FOLDERS_SETTINGS) {
             FoldersSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onOpenFolder = { folderId -> navController.navigate(FacetDestinations.folderDetail(folderId)) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.FOLDER_DETAIL,
             arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
         ) { backStackEntry ->
@@ -313,7 +317,7 @@ fun FacetNavHost(
                 onAddToFolder = { navController.navigate(FacetDestinations.folderAppPicker(folderId)) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.FOLDER_APP_PICKER,
             arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
         ) {
@@ -322,7 +326,7 @@ fun FacetNavHost(
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.DOCK_PICKER,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) {
@@ -331,13 +335,13 @@ fun FacetNavHost(
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
             )
         }
-        composable(FacetDestinations.FACET_AUTOMATION) {
+        settingsComposable(FacetDestinations.FACET_AUTOMATION) {
             FacetAutomationScreen(
                 onBack = { navController.popBackStackSafely() },
                 onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.FACET_PRO,
             arguments = listOf(navArgument("reason") { type = NavType.StringType }),
         ) { entry ->
@@ -348,7 +352,7 @@ fun FacetNavHost(
                 onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
             )
         }
-        composable(FacetDestinations.FACET_MANAGE) {
+        settingsComposable(FacetDestinations.FACET_MANAGE) {
             // Settings → Facets (and the carousel's Reorder button): a normal settings screen.
             ManageFacetsScreen(
                 onBack = { navController.popBackStackSafely() },
@@ -358,7 +362,7 @@ fun FacetNavHost(
                 onOpenFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.FACET_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
         ) {
@@ -372,7 +376,7 @@ fun FacetNavHost(
                 onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.FAVORITES_PICKER,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) {
@@ -381,11 +385,20 @@ fun FacetNavHost(
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
             )
         }
-        composable(
+        settingsComposable(
             FacetDestinations.CALENDAR_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) {
             CalendarSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
     }
+}
+
+/** A non-Home destination: its text ignores the Font size option, which only Home and the previews follow. */
+private fun NavGraphBuilder.settingsComposable(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit,
+) {
+    composable(route, arguments = arguments) { entry -> UnscaledTypography { content(entry) } }
 }

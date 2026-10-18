@@ -65,7 +65,7 @@ internal fun PlacementIcon(action: PlacementActionUi) {
 }
 
 @Composable
-private fun PlacementBadge(isRemove: Boolean, modifier: Modifier = Modifier) {
+internal fun PlacementBadge(isRemove: Boolean, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.size(BADGE_SIZE).background(if (isRemove) Accent else Ink, CircleShape),
         contentAlignment = Alignment.Center,

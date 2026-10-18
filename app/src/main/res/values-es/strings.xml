@@ -209,7 +209,7 @@
     <string name="settings_facets_subtitle">Crea y gestiona ajustes específicos de cada faceta</string>
     <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>
     <string name="settings_change_wallpaper_subtitle">Cambia el fondo de pantalla del sistema</string>
-    <string name="settings_appearance_title">Apariencia del launcher</string>
+    <string name="settings_appearance_title">Apariencia</string>
     <string name="settings_appearance_subtitle">Personaliza reloj, calendario, inicio, notificaciones, temas</string>
     <string name="settings_clock_calendar_title">Estilo de reloj</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
@@ -367,16 +367,22 @@
     <string name="theme_mode_light">Claro</string>
     <string name="theme_mode_dark">Oscuro</string>
     <string name="theme_mode_system">Sistema</string>
-    <string name="system_bar_icons_match_theme">Igual que el tema</string>
+    <string name="system_bar_icons_match_theme">Predeterminado</string>
     <string name="system_bar_icons_light">Claro</string>
     <string name="system_bar_icons_dark">Oscuro</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Apariencia</string>
     <string name="appearance_launcher_theme">Tema del launcher</string>
-    <string name="appearance_system_bar_icons">Iconos de las barras del sistema</string>
+    <string name="appearance_system_bar_icons">Iconos de la barra de estado</string>
     <string name="appearance_icon_style">Estilo de icono</string>
-    <string name="appearance_launcher_font">Fuente del launcher</string>
+    <string name="appearance_launcher_font">Estilo de fuente del launcher</string>
+    <string name="appearance_section_theme">Tema</string>
+    <string name="appearance_section_icons">Iconos</string>
+    <string name="appearance_section_fonts">Fuentes</string>
+    <string name="font_preview_row">Lista de apps de inicio</string>
+    <string name="font_preview_body">Texto del dock</string>
+    <string name="font_preview_label">Texto de la cuadrícula</string>
     <string name="appearance_font_color">Color de fuente</string>
     <string name="appearance_font_size">Tamaño de fuente</string>
     <string name="appearance_font_weight">Grosor de fuente</string>

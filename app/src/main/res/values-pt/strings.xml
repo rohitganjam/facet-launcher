@@ -209,7 +209,7 @@
     <string name="settings_facets_subtitle">Crie e gerencie configurações específicas de cada faceta</string>
     <string name="settings_change_wallpaper_title">Mudar papel de parede</string>
     <string name="settings_change_wallpaper_subtitle">Altere o papel de parede do sistema</string>
-    <string name="settings_appearance_title">Aparência do launcher</string>
+    <string name="settings_appearance_title">Aparência</string>
     <string name="settings_appearance_subtitle">Personalize relógio, calendário, início, notificações, temas</string>
     <string name="settings_clock_calendar_title">Estilo do relógio</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
@@ -367,16 +367,22 @@
     <string name="theme_mode_light">Claro</string>
     <string name="theme_mode_dark">Escuro</string>
     <string name="theme_mode_system">Sistema</string>
-    <string name="system_bar_icons_match_theme">Igual ao tema</string>
+    <string name="system_bar_icons_match_theme">Padrão</string>
     <string name="system_bar_icons_light">Claro</string>
     <string name="system_bar_icons_dark">Escuro</string>
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Aparência</string>
     <string name="appearance_launcher_theme">Tema do launcher</string>
-    <string name="appearance_system_bar_icons">Ícones das barras do sistema</string>
+    <string name="appearance_system_bar_icons">Ícones da barra de status</string>
     <string name="appearance_icon_style">Estilo de ícone</string>
-    <string name="appearance_launcher_font">Fonte do launcher</string>
+    <string name="appearance_launcher_font">Estilo da fonte do launcher</string>
+    <string name="appearance_section_theme">Tema</string>
+    <string name="appearance_section_icons">Ícones</string>
+    <string name="appearance_section_fonts">Fontes</string>
+    <string name="font_preview_row">Lista de apps da tela inicial</string>
+    <string name="font_preview_body">Texto do dock</string>
+    <string name="font_preview_label">Texto da grade</string>
     <string name="appearance_font_color">Cor da fonte</string>
     <string name="appearance_font_size">Tamanho da fonte</string>
     <string name="appearance_font_weight">Peso da fonte</string>

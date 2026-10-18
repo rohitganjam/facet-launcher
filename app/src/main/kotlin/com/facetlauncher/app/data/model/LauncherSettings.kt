@@ -269,7 +269,7 @@ data class LauncherSettings(
     val searchSettingsEnabled: Boolean = false,
     /** F11 — Settings → Theme → "Select launcher theme". */
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    /** Settings → Appearance → "System bar icons" — see [SystemBarIconStyle]. Global, not facet-overridable. */
+    /** Settings → Appearance → "Status bar icons" — see [SystemBarIconStyle]. Global, not facet-overridable. */
     val systemBarIconStyle: SystemBarIconStyle = SystemBarIconStyle.MATCH_THEME,
     /** F11 — "Wallpaper colors" (Material You) by default; `false` selects "Basic colors" — [customAccentSwatch]'s fixed pick. */
     val accentFromSystem: Boolean = true,

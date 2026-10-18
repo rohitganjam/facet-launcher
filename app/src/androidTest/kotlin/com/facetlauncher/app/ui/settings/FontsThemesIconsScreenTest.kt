@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -55,6 +56,22 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
+    fun settingsAreGroupedIntoThemeIconsAndFontsCards() {
+        // Given the screen
+        setContent()
+
+        // Then each group has its own section header, with the launcher font row renamed to "style"
+        listOf("Theme", "Icons", "Fonts").forEach { header ->
+            composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasText(header))
+            composeRule.onNodeWithText(header).assertIsDisplayed()
+        }
+        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_font_row"))
+        composeRule.onNodeWithText("Launcher Font Style").assertIsDisplayed()
+        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("font_preview_card"))
+        composeRule.onNodeWithTag("font_preview_card").assertIsDisplayed()
+    }
+
+    @Test
     fun themeModeDropdownSwitchesBetweenLightDarkAndSystem() {
         // Given the screen, System selected by default — now in the separate "General" card,
         // below the "Dock & Home" and "Clock" cards (see chat history), so it needs scrolling into
@@ -75,11 +92,11 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
-    fun systemBarIconsDropdownDefaultsToMatchThemeAndSwitchesToDark() {
-        // Given the screen, "Match theme" selected by default, in the General card under "Launcher theme"
+    fun statusBarIconsDropdownDefaultsToDefaultAndSwitchesToDark() {
+        // Given the screen, "Default" selected by default, in the Theme card under "Launcher theme"
         setContent()
         composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_system_bar_icons_row"))
-        composeRule.onNodeWithTag("appearance_system_bar_icons_row").assertTextContains("Match theme")
+        composeRule.onNodeWithTag("appearance_system_bar_icons_row").assertTextContains("Default")
 
         // When opening the dropdown and choosing "Dark"
         composeRule.onNodeWithTag("appearance_system_bar_icons_row").performClick()
@@ -111,7 +128,8 @@ class FontsThemesIconsScreenTest {
         }
         composeRule.onNodeWithContentDescription("Blue").assertExists()
 
-        // When picking a different swatch (Teal)
+        // When picking a different swatch (Teal) — its row sits below the fold, so scroll it in first
+        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("accent_swatch_TEAL"))
         composeRule.onNodeWithTag("accent_swatch_TEAL").performClick()
 
         // Then that swatch shows as checked instead — poll, since the pick round-trips through

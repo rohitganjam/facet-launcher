@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.MaterialTheme
@@ -207,7 +207,7 @@ private fun PlacementActionsPreview() {
                 actions = listOf(
                     PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Add to Favorites", PlacementScope(null), isRemove = false, onClick = {}),
                     PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope("Work"), isRemove = true, onClick = {}),
-                    PlacementActionUi("p_folder", Icons.Outlined.CreateNewFolder, "Add to folder", scope = null, isRemove = false, onClick = {}),
+                    PlacementActionUi("p_folder", Icons.Outlined.Folder, "Add to folder", scope = null, isRemove = false, onClick = {}),
                 ),
             )
         }
@@ -223,7 +223,7 @@ private fun PlacementActionsRowsPreview() {
                 actions = listOf(
                     PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Add to Favorites with a very long label here", PlacementScope(null), isRemove = false, onClick = {}),
                     PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope("Weekend reading"), isRemove = true, onClick = {}),
-                    PlacementActionUi("p_folder", Icons.Outlined.CreateNewFolder, "Add to folder", scope = null, isRemove = false, onClick = {}),
+                    PlacementActionUi("p_folder", Icons.Outlined.Folder, "Add to folder", scope = null, isRemove = false, onClick = {}),
                 ),
             )
         }

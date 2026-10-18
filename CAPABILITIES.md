@@ -174,7 +174,7 @@ from the `release_notes/` change log. English only. Backfilled from 0.1.10.
 | Capability | Where | Notes |
 |---|---|---|
 | Light + dark scheme | `ui/theme/Theme.kt` | `ThemeMode` LIGHT / DARK / SYSTEM (default). |
-| System bar icons | `SystemBarIconStyle`, `ui/theme/SystemBars.kt` | Match theme (default) / Light / Dark for status + 3-button nav icon color over the wallpaper (Home, Hub, carousel, Drawer). Opaque screens always follow the theme; Private Space is always light. Global; in backups. The gesture pill adapts by itself. |
+| Status bar icons | `SystemBarIconStyle`, `ui/theme/SystemBars.kt` | Default (matches the theme) / Light / Dark for status + 3-button nav icon color over the wallpaper (Home, Hub, carousel, Drawer). Opaque screens always follow the theme; Private Space is always light. Global; in backups. The gesture pill adapts by itself. |
 | Accent color | `accentFromSystem` (default true) | Material You from wallpaper (`WallpaperAccentRole` primary/secondary/tertiary) OR a fixed `AccentSwatch` picker. |
 | Icon render mode | `IconRenderMode` | System default OR monochrome overlay (tints via `Icon.getMonochrome()` or a bitmap transform with the accent). Global, not per-app. |
 | Launcher font | `LauncherFontOption` | Base font for all text roles except clock/calendar (which have their own picker + a "Default launcher font" option). |
@@ -199,14 +199,14 @@ four sections, each a card of icon-badge rows:
     trigger; one card with an icon, a message and an "Add rule" row when empty)
 - **Appearance**
   - Change wallpaper → `ACTION_SET_WALLPAPER` system picker
-  - Launcher Appearance → `AppearanceSettingsScreen` (Clock & calendar: Clock Style row → clock
+  - Appearance → `AppearanceSettingsScreen` (Clock & calendar: Clock Style row → clock
     style gallery, Calendars to display → `CalendarSettingsScreen` (show all-day events, calendar
     picker — real once granted); Dock & home → "Dock & Apps appearance" → `DockAppsAppearanceScreen`
     (dock style, app list layout, position, presentation, alignment; both scopes; live preview);
     Notifications section with a "Notifications and media" row → `NotificationSettingsScreen`
     (badges on/off + Dot/Count style, and the Home media player: on/off, skip buttons, Flat/Wavy
     progress; routes to the access explanation screen if not granted); General → "Fonts, themes
-    and icons" → `FontsThemesIconsScreen` (theme, system bar icons, accent, icon style and shape,
+    and icons" → `FontsThemesIconsScreen` (theme, status bar icons, accent, icon style and shape,
     launcher font, font color/size/weight; global only; live preview); live preview on the hub)
 - **Apps and folders**
   - Dock → `DockSettingsScreen` (display style, pick apps, reorder)

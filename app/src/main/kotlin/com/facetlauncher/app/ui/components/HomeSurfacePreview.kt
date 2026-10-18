@@ -42,6 +42,7 @@ import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.home.stableKey
+import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Muted
 
@@ -88,51 +89,53 @@ fun HomeSurfacePreview(
         // short band, so it shows the wallpaper's lower part (where Home's dock sits).
         WallpaperBackground(homeWallpaper, Modifier.matchParentSize(), alignment = Alignment.BottomCenter)
 
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            if (items.isEmpty() && dockApps.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.home_surface_preview_nothing_yet),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Muted,
-                )
-            }
-            when (appListLayout) {
-                AppListLayout.GRID -> HomeSurfacePreviewGrid(
-                    items = items,
-                    columns = appListGridColumns.columns,
-                    displayMode = appListGridDisplayMode,
-                    labelColor = labelColor,
-                    labelFontWeight = labelFontWeight,
-                )
-                AppListLayout.TWO_COLUMN -> HomeSurfacePreviewTwoColumns(
-                    items = items,
-                    columnAlignment = appListColumnAlignment,
-                    appRowPresentation = appRowPresentation,
-                    labelColor = labelColor,
-                    labelFontWeight = labelFontWeight,
-                )
-                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> items.forEach { item ->
-                    HomeSurfacePreviewRow(
-                        item = item,
-                        position = appRowPosition,
-                        presentation = appRowPresentation,
+        LauncherScaledTypography {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                if (items.isEmpty() && dockApps.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.home_surface_preview_nothing_yet),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Muted,
+                    )
+                }
+                when (appListLayout) {
+                    AppListLayout.GRID -> HomeSurfacePreviewGrid(
+                        items = items,
+                        columns = appListGridColumns.columns,
+                        displayMode = appListGridDisplayMode,
                         labelColor = labelColor,
                         labelFontWeight = labelFontWeight,
                     )
-                }
-            }
-            if (dockApps.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    dockApps.forEach { item ->
-                        DockIcon(
+                    AppListLayout.TWO_COLUMN -> HomeSurfacePreviewTwoColumns(
+                        items = items,
+                        columnAlignment = appListColumnAlignment,
+                        appRowPresentation = appRowPresentation,
+                        labelColor = labelColor,
+                        labelFontWeight = labelFontWeight,
+                    )
+                    AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> items.forEach { item ->
+                        HomeSurfacePreviewRow(
                             item = item,
-                            displayMode = dockDisplayMode,
-                            onClick = {},
+                            position = appRowPosition,
+                            presentation = appRowPresentation,
                             labelColor = labelColor,
                             labelFontWeight = labelFontWeight,
-                            enableLongPressMenu = false,
                         )
+                    }
+                }
+                if (dockApps.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        dockApps.forEach { item ->
+                            DockIcon(
+                                item = item,
+                                displayMode = dockDisplayMode,
+                                onClick = {},
+                                labelColor = labelColor,
+                                labelFontWeight = labelFontWeight,
+                                enableLongPressMenu = false,
+                            )
+                        }
                     }
                 }
             }
