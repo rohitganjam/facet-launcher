@@ -1,0 +1,64 @@
+package com.facetlauncher.app.ui.home
+
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import kotlin.math.abs
+
+/** The clock pane never takes more than this share of the window width. */
+internal const val HOME_LANDSCAPE_CLOCK_PANE_MAX_FRACTION = 0.5f
+
+/**
+ * Width of the clock pane in px: the saved width (or a default share of [contentWidthPx]), kept
+ * between [floorPx] (the clock plus its margins, so the pane never squeezes it) and half the
+ * window, so the apps pane always keeps room.
+ */
+internal fun landscapeClockPaneWidthPx(persistedPx: Float?, contentWidthPx: Float, floorPx: Float): Float {
+    val wanted = persistedPx ?: (HOME_LANDSCAPE_CLOCK_PANE_FRACTION * contentWidthPx)
+    val ceilingPx = maxOf(floorPx, HOME_LANDSCAPE_CLOCK_PANE_MAX_FRACTION * contentWidthPx)
+    return wanted.coerceIn(floorPx, ceilingPx)
+}
+
+/**
+ * The largest clock scale that still fits its pane: the clock is scaled in place from its left edge,
+ * so it may grow to the pane's inner width ([paneWidthPx] less the margins) and to the pane's height.
+ */
+internal fun landscapeMaxClockScale(
+    naturalSize: Size,
+    paneWidthPx: Float,
+    paneHeightPx: Float,
+    horizontalMarginsPx: Float,
+    minScale: Float,
+    maxScale: Float,
+): Float {
+    // Nothing measured yet: don't clamp to a pane of zero size.
+    if (naturalSize.width <= 0f || naturalSize.height <= 0f || paneHeightPx <= 0f) return maxScale
+    val byWidth = (paneWidthPx - horizontalMarginsPx) / naturalSize.width
+    val byHeight = paneHeightPx / naturalSize.height
+    return minOf(maxScale, byWidth, byHeight).coerceIn(minScale, maxScale)
+}
+
+/**
+ * Where the scaled clock sits. The clock keeps its natural footprint and is scaled around
+ * (left edge, [originY]) of it, where [originY] is 0 for a top-aligned clock, 0.5 for middle and 1 for bottom.
+ */
+internal fun landscapeVisualClockRect(naturalTopLeft: Offset, naturalSize: Size, originY: Float, scale: Float): Rect {
+    val height = naturalSize.height * scale
+    val top = naturalTopLeft.y + originY * naturalSize.height * (1f - scale)
+    return Rect(naturalTopLeft.x, top, naturalTopLeft.x + naturalSize.width * scale, top + height)
+}
+
+/**
+ * The scale a touch at [touch] implies if it were the dragged corner. Horizontally the clock grows
+ * from its left edge. Vertically the dragged corner is the one away from the anchor: the bottom
+ * corners for a top-aligned clock, the top corners otherwise.
+ */
+internal fun landscapeScaleAtTouch(touch: Offset, naturalTopLeft: Offset, naturalSize: Size, originY: Float): Float {
+    val scaleX = (touch.x - naturalTopLeft.x) / naturalSize.width
+    val scaleY = when {
+        originY <= 0f -> (touch.y - naturalTopLeft.y) / naturalSize.height
+        originY >= 1f -> (naturalTopLeft.y + naturalSize.height - touch.y) / naturalSize.height
+        else -> abs(naturalTopLeft.y + naturalSize.height * originY - touch.y) / (naturalSize.height * originY)
+    }
+    return (scaleX + scaleY) / 2f
+}

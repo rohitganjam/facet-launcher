@@ -24,14 +24,36 @@ class ClockAdjustToolbarTest {
     private var alignment by mutableStateOf(ClockAlignment.LEFT)
     private val picked = mutableListOf<ClockAlignment>()
 
-    private fun setContent(initial: ClockAlignment = ClockAlignment.LEFT, enabled: Boolean = true) {
+    private fun setContent(initial: ClockAlignment = ClockAlignment.LEFT, enabled: Boolean = true, vertical: Boolean = false) {
         alignment = initial
         picked.clear()
         composeRule.setContent {
             FacetLauncherTheme {
-                ClockAdjustToolbar(alignment = alignment, onAlignmentChange = { picked += it; alignment = it }, enabled = enabled)
+                ClockAdjustToolbar(alignment = alignment, onAlignmentChange = { picked += it; alignment = it }, enabled = enabled, vertical = vertical)
             }
         }
+    }
+
+    @Test
+    fun `the vertical pill offers top middle and bottom instead of left center and right`() {
+        setContent(initial = ClockAlignment.CENTER, vertical = true)
+
+        composeRule.onNodeWithTag("clock_align_top").assertIsNotSelected()
+        composeRule.onNodeWithTag("clock_align_middle").assertIsSelected()
+        composeRule.onNodeWithTag("clock_align_bottom").assertIsNotSelected()
+        composeRule.onNodeWithTag("clock_align_left").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_align_right").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the vertical pill reports top middle and bottom as left center and right`() {
+        setContent(vertical = true)
+
+        composeRule.onNodeWithTag("clock_align_middle").performClick()
+        composeRule.onNodeWithTag("clock_align_bottom").performClick()
+        composeRule.onNodeWithTag("clock_align_top").performClick()
+
+        assertEquals(listOf(ClockAlignment.CENTER, ClockAlignment.RIGHT, ClockAlignment.LEFT), picked)
     }
 
     @Test

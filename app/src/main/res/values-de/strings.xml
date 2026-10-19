@@ -773,6 +773,9 @@
     <string name="clock_adjust_align_left">Linksbündig</string>
     <string name="clock_adjust_align_center">Zentriert</string>
     <string name="clock_adjust_align_right">Rechtsbündig</string>
+    <string name="clock_adjust_align_top">Oben ausrichten</string>
+    <string name="clock_adjust_align_middle">Mittig ausrichten</string>
+    <string name="clock_adjust_align_bottom">Unten ausrichten</string>
     <string name="clock_adjust_edit_styles">Uhrstile bearbeiten</string>
     <string name="clock_adjust_edit_styles_subtitle">Vorlagen, Schriftarten, Farben und Ausrichtung</string>
     <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>

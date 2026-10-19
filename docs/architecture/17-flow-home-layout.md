@@ -37,18 +37,41 @@ slots.
 | Media row | Under the clock, pushes the list down | Under the clock inside the clock pane |
 | App list | Below the clock; Top or Bottom anchor; single column, two columns or grid | In the apps pane; same Top or Bottom anchor; always a single column when two columns is chosen; a grid has its columns narrowed so a cell stays at least 64dp (`landscapeGridColumns`); scrolls when taller than the pane |
 | Dock | A row along the bottom, honouring the dock display mode | A column at the right edge, icons only, vertically centred, scrolls on overflow, inset from the edge and excluded from the system back gesture |
-| Panes | n/a | Clock pane 40% of the width, a 24dp gap (where the divider handle will sit), apps pane the rest |
-| Clock adjust mode | Handles and the alignment pill | Not available yet: the long-press menu has no "Adjust" row, and the alignment pill, zone handle and scale handles are not composed |
+| Panes | n/a | Clock pane (40% of the window until a width is saved), a 24dp gap holding the divider handle, apps pane the rest |
+| Clock adjust mode | A horizontal height handle, an alignment pill (left / center / right) and top corner scale handles | A vertical divider handle, an alignment pill (top / middle / bottom) and scale handles; see section 4 |
 
 ## 3. Portrait-only logic that landscape must not run
 
 The scale re-clamp (`maxScaleThatFits`) is portrait geometry, and in landscape it would persist a wrong
 `clockScale`, so it is skipped. The compact-spacing check reserves nothing above the list in landscape
-(`appListTopTargetPx` is 0). If the window becomes landscape while adjust mode is on, adjust mode is
-turned off.
+(`appListTopTargetPx` is 0).
 
-## 4. Not built yet
+## 4. Landscape adjust mode
 
-The draggable divider (the zone handle turned 90°, reusing `clockZoneHeightDp` as the pane width), the
-top / middle / bottom alignment pill and landscape scale handles, the landscape widget grid
-(`FlowPackWidgetsUseCase` exists but is not wired in), and landscape facet-preview cards.
+Long-pressing the clock opens the same menu, now with "Adjust clock size & position". The controls:
+
+- **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
+  between the panes, dragged left and right. The pane width is saved in `clockZoneHeightDp`, the field
+  portrait uses for its zone height, so one value serves both orientations and is clamped to what fits
+  (`landscapeClockPaneWidthPx`: at least the margins plus the smallest clock, at most half the window). A
+  value from the other orientation is therefore always valid, though it can look big or small after a
+  rotation.
+- **Alignment pill.** `ClockAdjustToolbar(vertical = true)`: top / middle / bottom, writing the same
+  `clockAlignment` as left / center / right (see the table above). It sits in the clock pane at the
+  bottom edge, or at the top when the clock is bottom-aligned.
+- **Scale handles.** On the clock's corners away from the anchor (bottom corners for a top-aligned clock,
+  top corners otherwise). The clock scales from its left edge around top, middle or bottom
+  (`ClockBlock(clockScaleOriginY)`); `landscapeScaleAtTouch` turns a touch into a scale and
+  `landscapeMaxClockScale` limits it to the pane. Dragging one saves `clockScale`, which both
+  orientations share.
+- **Narrow pane.** A pane too narrow for the clock shrinks it on screen only; the saved scale is not
+  changed, because it is shared with portrait. Landscape always clamps the rendered scale to its pane
+  the same way, whether or not adjust mode is on.
+
+The geometry is pure functions in `HomeLandscapeGeometry.kt`. A hosted clock widget has no landscape
+adjust yet: the menu hides the Adjust row for it, and adjust mode ends if a widget gets bound.
+
+## 5. Not built yet
+
+The landscape widget grid (`FlowPackWidgetsUseCase` exists but is not wired in), landscape
+facet-preview cards, and gesture thresholds for a short window.

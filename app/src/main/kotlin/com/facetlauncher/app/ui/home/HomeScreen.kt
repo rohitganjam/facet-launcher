@@ -14,6 +14,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,6 +61,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -324,6 +326,9 @@ fun HomeScreen(
     var contentHeightPx by remember { mutableFloatStateOf(0f) }
     // Landscape only: the apps pane's width, for narrowing the grid to what fits.
     var appsPaneWidthPx by remember { mutableFloatStateOf(0f) }
+    var landscapeContentWidthPx by remember { mutableFloatStateOf(0f) }
+    // The divider's live width while dragging, held until the saved value round-trips (as liveHandlePx is).
+    var liveDividerWidthPx by remember { mutableStateOf<Float?>(null) }
     var clockNaturalHeightPx by remember { mutableFloatStateOf(0f) }
     // Natural (unconstrained) height of the app-list content, measured inside the scrollable
     // region — see the one-shot compact-spacing check below.
@@ -340,7 +345,10 @@ fun HomeScreen(
     // end until clockZoneHeightDp round-trips, then released so any external change (reset, facet
     // switch) takes effect.
     var liveHandlePx by remember { mutableStateOf<Float?>(null) }
-    LaunchedEffect(clockZoneHeightDp) { liveHandlePx = null }
+    LaunchedEffect(clockZoneHeightDp) {
+        liveHandlePx = null
+        liveDividerWidthPx = null
+    }
 
     // The clock's live scale while resizing, as an absolute value (not a delta — a delta briefly
     // double-counts against the committed clockScale in the frame the commit lands). Held past the
@@ -541,21 +549,56 @@ fun HomeScreen(
         label = "clockAppearance",
     )
 
+    // Landscape geometry. The clock pane's width is saved in the same field as portrait's zone
+    // height (clockZoneHeightDp) and clamped to what fits, so a value from the other orientation is
+    // still valid. The clock scales from its left edge around top, middle or bottom, per its alignment.
+    val landscapeOriginY = when (clockAlignment) {
+        ClockAlignment.LEFT -> 0f
+        ClockAlignment.CENTER -> 0.5f
+        ClockAlignment.RIGHT -> 1f
+    }
+    val landscapeMarginsPx = with(density) { (HOME_LANDSCAPE_CLOCK_PANE_START_PADDING + HOME_LANDSCAPE_CLOCK_PANE_END_MARGIN).toPx() }
+    val landscapeContentWidth = if (landscapeContentWidthPx > 0f) landscapeContentWidthPx else (rootSize?.width?.toFloat() ?: 0f)
+    val landscapeWantedPaneWidthPx = liveDividerWidthPx ?: clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
+    val landscapeNaturalSize = clockBoxSize?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Zero
+    // Resolved against the smallest clock first, so a narrow pane shrinks the clock to fit (as
+    // portrait's height handle does) rather than being refused.
+    val landscapeMaxScale = landscapeMaxClockScale(
+        naturalSize = landscapeNaturalSize,
+        paneWidthPx = landscapeClockPaneWidthPx(
+            landscapeWantedPaneWidthPx,
+            landscapeContentWidth,
+            floorPx = landscapeMarginsPx + landscapeNaturalSize.width * HOME_CLOCK_MIN_SCALE,
+        ),
+        paneHeightPx = contentHeightPx,
+        horizontalMarginsPx = landscapeMarginsPx,
+        minScale = HOME_CLOCK_MIN_SCALE,
+        maxScale = HOME_CLOCK_MAX_SCALE,
+    )
+
     // The scale the clock actually renders at. Normally just the persisted value (constant, no
     // geometry read). While ADJUST mode is live it's also clamped to whatever currently fits —
     // reading the clock's live position — so dragging the move handle upward shrinks the clock in
     // real time instead of letting it clip.
+    // Landscape instead always clamps to what its pane fits (at render time only; the saved scale is untouched).
     val effectiveClockScale = run {
         val raw = liveScale ?: clockScale
         val size = clockBoxSize
         val origin = clockBoxOriginInRoot
         val rootW = rootSize?.width
-        if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
+        if (isLandscape) {
+            raw.coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale)
+        } else if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
             raw.coerceIn(HOME_CLOCK_MIN_SCALE, maxScaleThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW))
         } else {
             raw.coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
         }
     }
+    val landscapePaneWidthPx = landscapeClockPaneWidthPx(
+        landscapeWantedPaneWidthPx,
+        landscapeContentWidth,
+        floorPx = landscapeMarginsPx + landscapeNaturalSize.width * effectiveClockScale,
+    )
 
     // PRD F15's analog of effectiveClockScale above — real width/height, only meaningful once
     // clockWidgetWidthDp/HeightDp are both resolved (the caller only supplies these once a hosted
@@ -622,7 +665,7 @@ fun HomeScreen(
             .testTag("home_screen_root"),
     ) {
         // Shared by the portrait and landscape layouts below.
-        val clockBlock: @Composable (Modifier, ClockAlignment) -> Unit = { blockModifier, blockAlignment ->
+        val clockBlock: @Composable (Modifier, ClockAlignment, Float) -> Unit = { blockModifier, blockAlignment, scaleOriginY ->
             ClockBlock(
                 modifier = blockModifier,
                 // A plain tap opens the default clock app; a long-press instead reveals the
@@ -667,6 +710,7 @@ fun HomeScreen(
                 dateStyle = clockDateStyle,
                 clockAlignment = blockAlignment,
                 clockScale = effectiveClockScale,
+                clockScaleOriginY = scaleOriginY,
                 events = calendarEvents,
                 calendarColors = calendarColors,
                 calendarDisplay = calendarDisplay,
@@ -887,17 +931,19 @@ fun HomeScreen(
                     ClockAlignment.CENTER -> Alignment.CenterStart
                     ClockAlignment.RIGHT -> Alignment.BottomStart
                 },
+                clockPaneWidth = with(density) { landscapePaneWidthPx.toDp() },
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(top = 8.dp, bottom = 16.dp),
+                    .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM)
+                    .onSizeChanged { landscapeContentWidthPx = it.width.toFloat() },
                 onAppsPaneSizeChange = {
                     contentHeightPx = it.height.toFloat()
                     appsPaneWidthPx = it.width.toFloat()
                 },
                 clock = {
                     Column {
-                        clockBlock(Modifier.graphicsLayer { alpha = clockAppearAlpha.value }, ClockAlignment.LEFT)
-                        if (shownMediaPlayer != null && mediaFraction > 0f) {
+                        clockBlock(Modifier.graphicsLayer { alpha = clockAppearAlpha.value }, ClockAlignment.LEFT, landscapeOriginY)
+                        if (shownMediaPlayer != null && mediaFraction > 0f && clockAdjustMode == ClockAdjustMode.NONE) {
                             mediaRow(
                                 shownMediaPlayer,
                                 Modifier
@@ -946,6 +992,7 @@ fun HomeScreen(
                             .onGloballyPositioned { clockNaturalHeightPx = it.size.height.toFloat() }
                             .graphicsLayer { alpha = clockAppearAlpha.value },
                         clockAlignment,
+                        1f,
                     )
 
                     // Not composed in clock adjust mode (the handles own that space); mediaRowHeightPx
@@ -997,12 +1044,46 @@ fun HomeScreen(
             }
         }
 
-        // Adjust mode (the handles and the alignment pill) is portrait geometry; landscape has its own in a later stage.
+        // Portrait and landscape each have their own adjust handles and pill. Landscape adjusts the
+        // native clock only: a hosted clock widget has no landscape adjust yet, so leave adjust mode.
         val currentOnAdjustModeChange by rememberUpdatedState(onAdjustModeChange)
-        LaunchedEffect(isLandscape, clockAdjustMode) {
-            if (isLandscape && clockAdjustMode == ClockAdjustMode.ADJUST) currentOnAdjustModeChange(ClockAdjustMode.NONE)
+        LaunchedEffect(isLandscape, clockAdjustMode, clockWidgetAppWidgetId) {
+            if (isLandscape && clockWidgetAppWidgetId != null && clockAdjustMode == ClockAdjustMode.ADJUST) {
+                currentOnAdjustModeChange(ClockAdjustMode.NONE)
+            }
         }
-        val adjustingInPortrait = clockAdjustMode == ClockAdjustMode.ADJUST && !isLandscape
+        val adjusting = clockAdjustMode == ClockAdjustMode.ADJUST
+        val adjustingInPortrait = adjusting && !isLandscape
+        val adjustingInLandscape = adjusting && isLandscape && clockWidgetAppWidgetId == null
+
+        if (adjustingInLandscape) {
+            // The divider between the clock and apps panes: dragging it sets the clock pane's width. A pane
+            // too narrow for the clock only shrinks it on screen (the saved scale is left alone), unlike
+            // portrait's height handle, because the scale is shared with the other orientation.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM),
+            ) {
+                ClockZoneHandle(
+                    dragOrientation = Orientation.Horizontal,
+                    modifier = Modifier.offset {
+                        val centerInGapPx = with(density) { ((HOME_LANDSCAPE_PANE_GAP - CLOCK_ZONE_HANDLE_TOUCH_HEIGHT) / 2).toPx() }
+                        IntOffset((landscapePaneWidthPx + centerInGapPx).roundToInt(), 0)
+                    },
+                    onDragStart = { onDraggingHandleChange(true) },
+                    onDrag = { deltaDp ->
+                        liveDividerWidthPx = (liveDividerWidthPx ?: landscapePaneWidthPx) + with(density) { deltaDp.dp.toPx() }
+                    },
+                    onDragEnd = {
+                        onDraggingHandleChange(false)
+                        // liveDividerWidthPx is held until LaunchedEffect(clockZoneHeightDp) sees the commit land.
+                        onClockZoneHeightCommit(with(density) { landscapePaneWidthPx.toDp().value })
+                    },
+                )
+            }
+        }
 
         if (adjustingInPortrait) {
             // Move handle — always present in adjust mode. On release it also persists the scale if
@@ -1057,6 +1138,30 @@ fun HomeScreen(
                 onAlignmentChange = onClockAlignmentChange,
                 modifier = Modifier.graphicsLayer { alpha = toolbarAlpha.value },
                 enabled = toolbarActive,
+            )
+        }
+
+        // Landscape's pill: in the clock pane at its bottom edge, or at the top when the clock is
+        // aligned to the bottom, so it never covers the clock. Same dimming as the portrait pill.
+        AnimatedVisibility(
+            visible = adjustingInLandscape,
+            enter = fadeIn(tween(120)),
+            exit = fadeOut(tween(80)),
+            modifier = Modifier
+                .align(if (clockAlignment == ClockAlignment.RIGHT) Alignment.TopStart else Alignment.BottomStart)
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(
+                    start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING,
+                    top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP,
+                    bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM,
+                ),
+        ) {
+            ClockAdjustToolbar(
+                alignment = clockAlignment,
+                onAlignmentChange = onClockAlignmentChange,
+                modifier = Modifier.graphicsLayer { alpha = toolbarAlpha.value },
+                enabled = toolbarActive,
+                vertical = true,
             )
         }
 
@@ -1156,6 +1261,55 @@ fun HomeScreen(
                 modifier = Modifier.offset {
                     IntOffset((visualTopLeftX + visualWidth - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
                 },
+                onDragStart = onHandleDragStart,
+                onDrag = onHandleDrag,
+                onDragEnd = onHandleDragEnd,
+            )
+        }
+
+        // Landscape's scale handles for the native clock: the corners away from the anchor (the bottom
+        // ones for a top-aligned clock, the top ones otherwise), scaling around the clock's left edge.
+        if (adjustingInLandscape && clockGeometryReady) {
+            val rootOrigin = rootOriginInRoot!!
+            val natTopLeft = clockBoxOriginInRoot!! - rootOrigin
+            val visual = landscapeVisualClockRect(natTopLeft, landscapeNaturalSize, landscapeOriginY, effectiveClockScale)
+            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
+            val handleY = if (landscapeOriginY <= 0f) visual.bottom - handleInsetPx else (visual.top - handleInsetPx).coerceAtLeast(topInsetPx)
+            val onHandleDragStart: () -> Unit = {
+                dragGrabOffset = Float.NaN
+                onDraggingHandleChange(true)
+            }
+            val onHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
+                val implied = landscapeScaleAtTouch(touchInAbsolute - rootOrigin, natTopLeft, landscapeNaturalSize, landscapeOriginY)
+                // First move: capture where the finger sits vs the corner, so the clock doesn't pop.
+                if (dragGrabOffset.isNaN()) dragGrabOffset = implied - (liveScale ?: clockScale)
+                liveScale = (implied - dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale)
+            }
+            val onHandleDragEnd: () -> Unit = {
+                onDraggingHandleChange(false)
+                // liveScale is held until LaunchedEffect(clockScale) sees the commit land.
+                onClockScaleCommit((liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale))
+            }
+            handleExclusionRects = listOf(
+                handleExclusionRect(visual.left - handleInsetPx, handleY),
+                handleExclusionRect(visual.right - handleInsetPx, handleY),
+            )
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(visual.left.roundToInt(), visual.top.roundToInt()) }
+                    .size(with(density) { visual.width.toDp() }, with(density) { visual.height.toDp() })
+                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+            )
+            ClockCornerHandle(
+                isRightSide = false,
+                modifier = Modifier.offset { IntOffset((visual.left - handleInsetPx).roundToInt(), handleY.roundToInt()) },
+                onDragStart = onHandleDragStart,
+                onDrag = onHandleDrag,
+                onDragEnd = onHandleDragEnd,
+            )
+            ClockCornerHandle(
+                isRightSide = true,
+                modifier = Modifier.offset { IntOffset((visual.right - handleInsetPx).roundToInt(), handleY.roundToInt()) },
                 onDragStart = onHandleDragStart,
                 onDrag = onHandleDrag,
                 onDragEnd = onHandleDragEnd,
@@ -1322,7 +1476,7 @@ fun HomeScreen(
                     overrideFacetName = clockPositionOwnerFacetName,
                     hasCustomClockWidget = hasCustomClockWidget,
                     isPro = isPro,
-                    adjustAvailable = !isLandscape,
+                    adjustAvailable = !isLandscape || clockWidgetAppWidgetId == null,
                 )
             }
         }

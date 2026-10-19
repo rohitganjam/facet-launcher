@@ -773,6 +773,9 @@
     <string name="clock_adjust_align_left">Alinear a la izquierda</string>
     <string name="clock_adjust_align_center">Centrar</string>
     <string name="clock_adjust_align_right">Alinear a la derecha</string>
+    <string name="clock_adjust_align_top">Alinear arriba</string>
+    <string name="clock_adjust_align_middle">Alinear en el centro</string>
+    <string name="clock_adjust_align_bottom">Alinear abajo</string>
     <string name="clock_adjust_edit_styles">Editar estilos de reloj</string>
     <string name="clock_adjust_edit_styles_subtitle">Plantillas, fuentes, colores y alineación</string>
     <string name="clock_adjust_facet_settings_subtitle">Ajustes específicos de la faceta: lista de apps, dock, reloj y calendario</string>

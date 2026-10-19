@@ -3,10 +3,14 @@ package com.facetlauncher.app.ui.home
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -60,7 +64,10 @@ fun ClockZoneHandle(
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
     onDragStart: () -> Unit = {},
+    /** [Orientation.Vertical] is portrait's height handle (a horizontal rail dragged up and down). [Orientation.Horizontal] is landscape's divider between the clock and apps panes (a vertical rail dragged left and right). */
+    dragOrientation: Orientation = Orientation.Vertical,
 ) {
+    val isVertical = dragOrientation == Orientation.Vertical
     val density = LocalDensity.current
     // pointerInput(Unit) launches its gesture-detection coroutine once and never restarts it, so
     // the callbacks it closes over must go through rememberUpdatedState — otherwise it would keep
@@ -72,16 +79,26 @@ fun ClockZoneHandle(
     val currentOnDragEnd by rememberUpdatedState(onDragEnd)
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(CLOCK_ZONE_HANDLE_TOUCH_HEIGHT)
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragStart = { currentOnDragStart() },
-                    onDragEnd = { currentOnDragEnd() },
-                    onDragCancel = { currentOnDragEnd() },
-                ) { change, dragAmountPx ->
-                    change.consume()
-                    currentOnDrag(with(density) { dragAmountPx.toDp().value })
+            .let { if (isVertical) it.fillMaxWidth().height(CLOCK_ZONE_HANDLE_TOUCH_HEIGHT) else it.fillMaxHeight().width(CLOCK_ZONE_HANDLE_TOUCH_HEIGHT) }
+            .pointerInput(dragOrientation) {
+                if (isVertical) {
+                    detectVerticalDragGestures(
+                        onDragStart = { currentOnDragStart() },
+                        onDragEnd = { currentOnDragEnd() },
+                        onDragCancel = { currentOnDragEnd() },
+                    ) { change, dragAmountPx ->
+                        change.consume()
+                        currentOnDrag(with(density) { dragAmountPx.toDp().value })
+                    }
+                } else {
+                    detectHorizontalDragGestures(
+                        onDragStart = { currentOnDragStart() },
+                        onDragEnd = { currentOnDragEnd() },
+                        onDragCancel = { currentOnDragEnd() },
+                    ) { change, dragAmountPx ->
+                        change.consume()
+                        currentOnDrag(with(density) { dragAmountPx.toDp().value })
+                    }
                 }
             }
             .testTag("home_clock_zone_handle"),
@@ -95,8 +112,7 @@ fun ClockZoneHandle(
         val railShape = RoundedCornerShape(5.dp)
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
+                .let { if (isVertical) it.fillMaxWidth().height(10.dp) else it.fillMaxHeight().width(10.dp) }
                 .shadow(elevation = 2.dp, shape = railShape)
                 .background(Muted, railShape)
                 .border(1.dp, Surface.copy(alpha = RAIL_HALO_ALPHA), railShape),
@@ -113,7 +129,7 @@ fun ClockZoneHandle(
                 painter = painterResource(R.drawable.expand_content_24),
                 contentDescription = stringResource(R.string.clock_zone_handle_drag_to_resize),
                 tint = Muted,
-                modifier = Modifier.padding(4.dp).rotate(315f),
+                modifier = Modifier.padding(4.dp).rotate(if (isVertical) 315f else 45f),
             )
         }
     }

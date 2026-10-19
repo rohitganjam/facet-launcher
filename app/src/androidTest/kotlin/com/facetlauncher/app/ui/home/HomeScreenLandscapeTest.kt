@@ -1,12 +1,17 @@
 package com.facetlauncher.app.ui.home
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -19,14 +24,29 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-/** Landscape Home (panes, divider room, dock column), forced regardless of the device's own orientation. */
+/**
+ * Landscape Home (panes, divider, dock column) in a genuinely landscape window: the test activity is
+ * rotated before each test and `HomeScreen` picks its layout from the window, as it does for real.
+ */
 class HomeScreenLandscapeTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    @Before
+    fun rotateToLandscape() {
+        composeRule.activityRule.scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        }
+        composeRule.waitForIdle()
+    }
 
     private fun apps(count: Int, prefix: String = "App") = (1..count).map {
         AppInfo(packageName = "com.example.${prefix.lowercase()}$it", activityName = ".Main", label = "$prefix $it", icon = null)
@@ -39,8 +59,14 @@ class HomeScreenLandscapeTest {
         clockAlignment: ClockAlignment = ClockAlignment.LEFT,
         appListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
         dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+        clockZoneHeightDp: Float? = null,
+        onClockZoneHeightCommit: (Float) -> Unit = {},
+        clockScale: Float = 0.8f,
+        onClockScaleCommit: (Float) -> Unit = {},
+        onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+        var dragging by remember { mutableStateOf(false) }
         FacetLauncherTheme {
             HomeScreen(
                 appListItems = appListItems.map { PlacedItem.SingleApp(it) },
@@ -49,11 +75,37 @@ class HomeScreenLandscapeTest {
                 clockAlignment = clockAlignment,
                 appListLayout = appListLayout,
                 dockDisplayMode = dockDisplayMode,
+                clockZoneHeightDp = clockZoneHeightDp,
+                onClockZoneHeightCommit = onClockZoneHeightCommit,
+                clockScale = clockScale,
+                onClockScaleCommit = onClockScaleCommit,
+                onClockAlignmentChange = onClockAlignmentChange,
                 clockAdjustMode = adjustMode,
                 onAdjustModeChange = { adjustMode = it },
-                layoutMode = HomeLayoutMode.LANDSCAPE,
+                draggingHandle = dragging,
+                onDraggingHandleChange = { dragging = it },
             )
         }
+    }
+
+    /** Long-presses the clock, then picks "Adjust size & position". */
+    private fun enterAdjustMode() {
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.waitForIdle()
+    }
+
+    /** Drags the divider by [totalDeltaX] px in separate steps, so each move gets its own recomposition. */
+    private fun dragDividerBy(totalDeltaX: Float, steps: Int = 6) {
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { down(center) }
+        composeRule.waitForIdle()
+        repeat(steps) {
+            composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { moveBy(Offset(totalDeltaX / steps, 0f)) }
+            composeRule.waitForIdle()
+        }
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { up() }
+        composeRule.waitForIdle()
     }
 
     private fun boundsOf(tag: String) = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
@@ -150,16 +202,129 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
-    fun clockMenuHasNoAdjustRowInLandscape() {
+    fun adjustModeShowsTheDividerTheVerticalPillAndTheScaleHandles() {
         composeRule.setContent { LandscapeHome() }
 
-        // When the clock is long-pressed
+        // When the clock menu's adjust row is chosen
+        enterAdjustMode()
+
+        // Then landscape's own controls appear: the divider, a top / middle / bottom pill, and scale handles
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_align_top").assertExists()
+        composeRule.onNodeWithTag("clock_align_middle").assertExists()
+        composeRule.onNodeWithTag("clock_align_bottom").assertExists()
+        composeRule.onNodeWithTag("clock_align_left").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_resize_handle_left").assertExists()
+        composeRule.onNodeWithTag("clock_resize_handle_right").assertExists()
+    }
+
+    @Test
+    fun pillButtonsReportLeftCenterAndRightAsTopMiddleAndBottom() {
+        val picked = mutableListOf<ClockAlignment>()
+        composeRule.setContent { LandscapeHome(onClockAlignmentChange = { picked += it }) }
+        enterAdjustMode()
+        // The pill stays dimmed and disabled for a moment after adjust mode starts
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("clock_align_middle").assertIsEnabled() }.isSuccess
+        }
+
+        composeRule.onNodeWithTag("clock_align_top").performClick()
+        composeRule.onNodeWithTag("clock_align_middle").performClick()
+        composeRule.onNodeWithTag("clock_align_bottom").performClick()
+
+        assert(picked == listOf(ClockAlignment.LEFT, ClockAlignment.CENTER, ClockAlignment.RIGHT)) { "got $picked" }
+    }
+
+    @Test
+    fun draggingTheDividerResizesTheClockPaneAndSavesTheWidth() {
+        // Given a saved width that is driven by state, as the real route does
+        var saved by mutableStateOf<Float?>(null)
+        composeRule.setContent { LandscapeHome(clockZoneHeightDp = saved, onClockZoneHeightCommit = { saved = it }) }
+        enterAdjustMode()
+        val before = boundsOf("home_clock_pane").width
+
+        // When the divider is dragged right
+        dragDividerBy(120f)
+
+        // Then the pane is wider and the width was saved
+        val after = boundsOf("home_clock_pane").width
+        assert(after > before) { "pane should widen: $before -> $after" }
+        assert(saved != null) { "the width should be committed" }
+    }
+
+    @Test
+    fun draggingTheDividerLeftNarrowsThePaneButNeverBelowTheClock() {
+        var saved by mutableStateOf<Float?>(null)
+        composeRule.setContent { LandscapeHome(clockZoneHeightDp = saved, onClockZoneHeightCommit = { saved = it }) }
+        enterAdjustMode()
+        val before = boundsOf("home_clock_pane").width
+
+        dragDividerBy(-2000f)
+
+        val after = boundsOf("home_clock_pane").width
+        val clock = boundsOf("home_clock_block")
+        assert(after < before) { "pane should narrow: $before -> $after" }
+        assert(clock.right <= boundsOf("home_clock_pane").right) { "clock $clock should still fit its pane" }
+    }
+
+    @Test
+    fun theSavedWidthSetsThePaneWidth() {
+        // Given a saved width driven by state, so one composition can find the narrowest and widest pane
+        var saved by mutableStateOf<Float?>(1f)
+        composeRule.setContent { LandscapeHome(clockZoneHeightDp = saved) }
+        composeRule.waitForIdle()
+        val narrowest = with(composeRule.density) { boundsOf("home_clock_pane").width.toDp().value }
+        saved = 5000f
+        composeRule.waitForIdle()
+        val widest = with(composeRule.density) { boundsOf("home_clock_pane").width.toDp().value }
+
+        // When a width halfway between them is saved
+        val middle = (narrowest + widest) / 2f
+        saved = middle
+        composeRule.waitForIdle()
+        val actual = with(composeRule.density) { boundsOf("home_clock_pane").width.toDp().value }
+
+        // Then the pane is that wide
+        assert(widest > narrowest) { "expected room between $narrowest and $widest" }
+        assert(kotlin.math.abs(actual - middle) < 2f) { "pane should be about ${middle}dp wide, was $actual (narrowest $narrowest, widest $widest)" }
+    }
+
+    @Test
+    fun paneWidthIsCappedAtHalfTheWindow() {
+        composeRule.setContent { LandscapeHome(clockZoneHeightDp = 5000f) }
+        composeRule.waitForIdle()
+
+        val pane = boundsOf("home_clock_pane").width
+        val root = boundsOf("home_landscape_layout").width
+
+        assert(pane <= root * 0.5f + 2f) { "pane $pane should be at most half of $root" }
+    }
+
+    @Test
+    fun draggingAScaleHandleSavesANewScale() {
+        var committed: Float? = null
+        composeRule.setContent { LandscapeHome(onClockScaleCommit = { committed = it }) }
+        enterAdjustMode()
+
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(30f, 30f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        assert(committed != null) { "a scale should be committed after dragging a handle" }
+    }
+
+    @Test
+    fun theLongPressMenuOffersAdjustInLandscape() {
+        composeRule.setContent { LandscapeHome() }
+
         composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
         composeRule.waitForIdle()
 
-        // Then the sheet opens without "Adjust size and position", which has no landscape version yet
         composeRule.onNodeWithTag("clock_adjust_sheet").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_open").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
+        composeRule.onNodeWithTag("clock_adjust_open").assertExists()
     }
 }

@@ -23,11 +23,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 
-/** Share of the width the clock pane takes, until the divider handle persists a real width. */
+/** Share of the width the clock pane takes until the divider handle saves a width. */
 internal const val HOME_LANDSCAPE_CLOCK_PANE_FRACTION = 0.4f
 
-/** Width of the gap between the clock and apps panes — where the divider handle will sit. */
-private val HOME_LANDSCAPE_PANE_GAP = 24.dp
+/** The clock pane's left margin, inside its width. */
+internal val HOME_LANDSCAPE_CLOCK_PANE_START_PADDING = 24.dp
+
+/** Vertical padding around the panes, below the system bars. */
+internal val HOME_LANDSCAPE_VERTICAL_PADDING_TOP = 8.dp
+internal val HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM = 16.dp
+
+/** Room kept between the clock and the pane's right edge, inside its width. */
+internal val HOME_LANDSCAPE_CLOCK_PANE_END_MARGIN = 16.dp
+
+/** Width of the gap between the clock and apps panes — where the divider handle sits. */
+internal val HOME_LANDSCAPE_PANE_GAP = 24.dp
 
 /** Home grids need at least this many columns, and each cell at least this wide, to stay readable. */
 private const val HOME_LANDSCAPE_MIN_GRID_COLUMNS = 3
@@ -39,13 +49,14 @@ private val HOME_LANDSCAPE_MIN_GRID_CELL_WIDTH = 64.dp
  * bar insets.
  *
  * [clockPaneAlignment] places the clock pane's content (top, middle or bottom) and also fixes its
- * left edge. The dock column is icons only, scrolls if it overflows, and sits inset from the right
+ * left edge. [clockPaneWidth] includes the pane's own left margin. The dock column is icons only, scrolls if it overflows, and sits inset from the right
  * edge and excluded from the system back gesture, so a swipe that starts on it is not taken as Back.
  */
 @Composable
 internal fun HomeLandscapeLayout(
     hasDock: Boolean,
     clockPaneAlignment: Alignment,
+    clockPaneWidth: Dp,
     clock: @Composable BoxScope.() -> Unit,
     apps: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
@@ -55,17 +66,17 @@ internal fun HomeLandscapeLayout(
     Row(modifier = modifier.fillMaxSize().testTag("home_landscape_layout")) {
         Box(
             modifier = Modifier
-                .weight(HOME_LANDSCAPE_CLOCK_PANE_FRACTION)
+                .width(clockPaneWidth)
                 .fillMaxHeight()
-                .padding(start = 24.dp)
-                .testTag("home_clock_pane"),
+                .testTag("home_clock_pane")
+                .padding(start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING),
             contentAlignment = clockPaneAlignment,
             content = clock,
         )
         Spacer(modifier = Modifier.width(HOME_LANDSCAPE_PANE_GAP))
         Box(
             modifier = Modifier
-                .weight(1f - HOME_LANDSCAPE_CLOCK_PANE_FRACTION)
+                .weight(1f)
                 .fillMaxHeight()
                 .onSizeChanged(onAppsPaneSizeChange)
                 .testTag("home_apps_pane"),
