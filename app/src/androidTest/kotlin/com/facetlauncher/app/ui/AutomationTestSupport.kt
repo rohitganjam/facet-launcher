@@ -14,6 +14,7 @@ import com.facetlauncher.app.data.HeadphonesRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
 import com.facetlauncher.app.data.WifiRepository
+import androidx.room.Room
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.ApplyFacetAutomationUseCase
@@ -35,12 +36,20 @@ fun testAutomationStateRepository(context: Context) = AutomationStateRepository(
     ),
 )
 
-/** A real [DeviceStateRepository] over the device's own sources, for hand-built ViewModels. */
-fun testDeviceStateRepository(context: Context) = DeviceStateRepository(
+/**
+ * A real [DeviceStateRepository] over the device's own sources, for hand-built ViewModels. [rules]
+ * decides which sources subscribe; the default is an empty in-memory rule set, so none do.
+ */
+fun testDeviceStateRepository(
+    context: Context,
+    rules: AutomationRuleRepository = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).build()
+        .let { AutomationRuleRepository(it.automationRuleDao(), it.facetDao()) },
+) = DeviceStateRepository(
     BatteryRepository(context),
     HeadphonesRepository(context),
     WifiRepository(context),
     BluetoothRepository(context),
+    rules,
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
 )
 
@@ -56,7 +65,7 @@ fun testAutomation(
 ): TestAutomation {
     val rules = AutomationRuleRepository(database.automationRuleDao(), database.facetDao())
     val state = testAutomationStateRepository(context)
-    val devices = testDeviceStateRepository(context)
+    val devices = testDeviceStateRepository(context, rules)
     val selectable = SelectableFacetsUseCase(facetRepository, entitlement)
     val refresh = RefreshAutomationStateUseCase(
         rules, state, selectable, settingsRepository, EvaluateFacetAutomationUseCase(),

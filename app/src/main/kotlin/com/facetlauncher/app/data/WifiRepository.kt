@@ -34,8 +34,12 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
 
     private val connectivityManager: ConnectivityManager? get() = context.getSystemService(ConnectivityManager::class.java)
 
-    /** Emits the current state on subscribe (read synchronously, so there is no false "disconnected" at start), then on every change. */
-    fun observeWifiState(): Flow<WifiState> = callbackFlow {
+    /**
+     * Emits the current state on subscribe (read synchronously, so there is no false "disconnected" at start), then on every change.
+     * With [includeSsid] false the network name is neither requested nor read, so Android has no
+     * reason to treat this as a location read — enough for "connected to any Wi-Fi".
+     */
+    fun observeWifiState(includeSsid: Boolean = true): Flow<WifiState> = callbackFlow {
         val manager = connectivityManager
         if (manager == null) {
             trySend(WifiState())
@@ -46,12 +50,12 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
             @Suppress("DEPRECATION")
             manager.allNetworks.forEach { network ->
                 manager.getNetworkCapabilities(network)?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }
-                    ?.let { networks[network] = ssidOf(it) }
+                    ?.let { networks[network] = ssidOf(it, includeSsid) }
             }
             trySend(networks.toWifiState())
 
             val onChanged = { network: Network, capabilities: NetworkCapabilities ->
-                networks[network] = ssidOf(capabilities)
+                networks[network] = ssidOf(capabilities, includeSsid)
                 trySend(networks.toWifiState())
                 Unit
             }
@@ -60,8 +64,8 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
                 trySend(networks.toWifiState())
                 Unit
             }
-            // The flag that lets the callback carry the SSID is Android 12+; earlier versions read it via WifiManager.
-            val callback = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // The flag that lets the callback carry the SSID is Android 12+; earlier versions read it via WifiManager (see ssidOf).
+            val callback = if (includeSsid && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
                     override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = onChanged(network, capabilities)
                     override fun onLost(network: Network) = onGone(network)
@@ -78,8 +82,10 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
     }.distinctUntilChanged()
 
     /** Android 12+ puts the SSID in the capabilities; Android 11 only exposes it through [WifiManager.getConnectionInfo]. */
-    private fun ssidOf(capabilities: NetworkCapabilities): String? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    private fun ssidOf(capabilities: NetworkCapabilities, includeSsid: Boolean): String? =
+        if (!includeSsid) {
+            null
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             capabilities.ssidOrNull()
         } else {
             @Suppress("DEPRECATION")

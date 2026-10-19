@@ -106,6 +106,19 @@ class WifiRepositoryTest {
     }
 
     @Test
+    fun `without the ssid the name is never read`() = runTest {
+        val results = mutableListOf<WifiState>()
+        val job = launch { repository.observeWifiState(includeSsid = false).collect { results.add(it) } }
+        idle()
+
+        deliver(ShadowNetwork.newInstance(4), wifiCapabilities("Office"))
+        idle()
+        job.cancel()
+
+        assertEquals(WifiState(connected = true, ssid = null), results.last())
+    }
+
+    @Test
     fun `connected but unreadable keeps the name null`() = runTest {
         val results = mutableListOf<WifiState>()
         val job = collectInto(results)

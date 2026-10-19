@@ -1,5 +1,9 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.AutomationRule
+import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.BatteryDirection
+import com.facetlauncher.app.data.model.BatteryLevelCondition
 import com.facetlauncher.app.data.model.BatteryStatus
 import com.facetlauncher.app.data.model.DeviceState
 import com.facetlauncher.app.data.model.WifiState
@@ -14,9 +18,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.atLeast
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+
+private fun rule(id: Long, trigger: AutomationTrigger, enabled: Boolean = true) =
+    AutomationRule(id = id, targetFacetId = 1, trigger = trigger, enabled = enabled)
+
+private val batteryRule = rule(1, AutomationTrigger.Battery(false, BatteryLevelCondition(BatteryDirection.BELOW, 20)))
+private val headphonesRule = rule(2, AutomationTrigger.Headphones())
+private val bluetoothRule = rule(4, AutomationTrigger.Bluetooth("AA:BB", "Buds"))
+private fun wifiRule(ssid: String?, enabled: Boolean = true) = rule(3, AutomationTrigger.Wifi(ssid = ssid), enabled)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeviceStateRepositoryTest {
@@ -29,10 +42,17 @@ class DeviceStateRepositoryTest {
 
         val batteryRepository = mock(BatteryRepository::class.java).also { `when`(it.observeBatteryStatus()).thenReturn(battery) }
         val headphonesRepository = mock(HeadphonesRepository::class.java).also { `when`(it.observeHeadphonesPluggedIn()).thenReturn(headphones) }
-        val wifiRepository = mock(WifiRepository::class.java).also { `when`(it.observeWifiState()).thenReturn(wifi) }
+        val wifiRepository = mock(WifiRepository::class.java).also {
+            `when`(it.observeWifiState(true)).thenReturn(wifi)
+            `when`(it.observeWifiState(false)).thenReturn(wifi)
+        }
         val bluetoothRepository = mock(BluetoothRepository::class.java).also { `when`(it.observeConnectedAddresses()).thenReturn(bluetooth) }
 
-        val repository = DeviceStateRepository(batteryRepository, headphonesRepository, wifiRepository, bluetoothRepository, scope)
+        /** Every source in use by default, as if a rule read each one; tests narrow it. */
+        val rules = MutableStateFlow(listOf(batteryRule, headphonesRule, wifiRule(ssid = "Home"), bluetoothRule))
+        val ruleRepository = mock(AutomationRuleRepository::class.java).also { `when`(it.observeRules()).thenReturn(rules) }
+
+        val repository = DeviceStateRepository(batteryRepository, headphonesRepository, wifiRepository, bluetoothRepository, ruleRepository, scope)
     }
 
     private fun TestScope.start(fixture: Fixture) {
@@ -99,7 +119,7 @@ class DeviceStateRepositoryTest {
         repeat(5) { fixture.repository.current() }
 
         verify(fixture.bluetoothRepository, times(1)).observeConnectedAddresses()
-        verify(fixture.wifiRepository, times(1)).observeWifiState()
+        verify(fixture.wifiRepository, times(1)).observeWifiState(true)
     }
 
     @Test
@@ -111,8 +131,67 @@ class DeviceStateRepositoryTest {
         runCurrent()
 
         verify(fixture.bluetoothRepository, times(2)).observeConnectedAddresses()
-        verify(fixture.wifiRepository, times(2)).observeWifiState()
+        verify(fixture.wifiRepository, times(2)).observeWifiState(true)
         verify(fixture.batteryRepository, times(1)).observeBatteryStatus()
         verify(fixture.headphonesRepository, atLeast(1)).observeHeadphonesPluggedIn()
+    }
+
+    @Test
+    fun `with no rules no source is subscribed`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = emptyList()
+        start(fixture)
+
+        verify(fixture.batteryRepository, never()).observeBatteryStatus()
+        verify(fixture.headphonesRepository, never()).observeHeadphonesPluggedIn()
+        verify(fixture.bluetoothRepository, never()).observeConnectedAddresses()
+        verify(fixture.wifiRepository, never()).observeWifiState(true)
+        verify(fixture.wifiRepository, never()).observeWifiState(false)
+        assertEquals(DeviceState(), fixture.repository.current())
+    }
+
+    @Test
+    fun `a disabled rule does not subscribe its source`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = listOf(wifiRule(ssid = null, enabled = false))
+        start(fixture)
+
+        verify(fixture.wifiRepository, never()).observeWifiState(true)
+        verify(fixture.wifiRepository, never()).observeWifiState(false)
+    }
+
+    @Test
+    fun `an any network rule subscribes wifi without the ssid`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = listOf(wifiRule(ssid = null))
+        start(fixture)
+
+        verify(fixture.wifiRepository, times(1)).observeWifiState(false)
+        verify(fixture.wifiRepository, never()).observeWifiState(true)
+    }
+
+    @Test
+    fun `a named network rule subscribes wifi with the ssid`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = listOf(wifiRule(ssid = "Home"))
+        start(fixture)
+
+        verify(fixture.wifiRepository, times(1)).observeWifiState(true)
+    }
+
+    @Test
+    fun `adding a rule starts only its source and leaves the others running`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = listOf(bluetoothRule)
+        start(fixture)
+        fixture.bluetooth.value = setOf("AA:BB")
+        runCurrent()
+
+        fixture.rules.value = listOf(bluetoothRule, headphonesRule)
+        runCurrent()
+
+        verify(fixture.bluetoothRepository, times(1)).observeConnectedAddresses()
+        verify(fixture.headphonesRepository, times(1)).observeHeadphonesPluggedIn()
+        assertEquals(setOf("AA:BB"), fixture.repository.current().connectedBluetoothAddresses)
     }
 }
