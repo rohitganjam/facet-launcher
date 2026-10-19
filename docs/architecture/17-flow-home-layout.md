@@ -81,8 +81,13 @@ Long-pressing the clock opens the same menu, now with "Adjust clock size & posit
 `ClockBlock` measures its clock box at the clock's natural width even when the column is narrower (a
 narrow pane), because the resize maths relies on that size; clamping it let the divider go past the clock.
 
-The geometry is pure functions in `HomeLandscapeGeometry.kt`. A hosted clock widget has no landscape
-adjust yet: the menu hides the Adjust row for it, and adjust mode ends if a widget gets bound.
+A hosted clock widget adjusts too, by real size rather than scale: the corner handles (bottom corners
+for a top-aligned widget, top corners otherwise) resize it between its provider minimum and the pane
+(`landscapeMaxWidgetSize`, `landscapeWidgetSizeAtTouch`), and the divider stops at the widget's minimum
+width, shrinking the widget live and saving that size on release. The rendered size is always clamped to
+the pane without being saved.
+
+The geometry is pure functions in `HomeLandscapeGeometry.kt`.
 
 ## 5. Not built yet
 

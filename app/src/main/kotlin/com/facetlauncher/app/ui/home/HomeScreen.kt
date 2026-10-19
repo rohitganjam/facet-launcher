@@ -567,15 +567,25 @@ fun HomeScreen(
     val landscapeContentWidth = if (landscapeContentWidthPx > 0f) landscapeContentWidthPx else (rootSize?.width?.toFloat() ?: 0f)
     val landscapeWantedPaneWidthPx = liveDividerWidthPx ?: clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
     val landscapeNaturalSize = clockBoxSize?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Zero
-    // Resolved against the smallest clock first, so a narrow pane shrinks the clock to fit (as
+    val clockWidgetMinWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
+    val clockWidgetMinHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
+    // The narrowest the clock may be: the native clock at its smallest scale, or the hosted widget's own minimum.
+    val landscapeMinClockWidthPx = if (clockWidgetAppWidgetId != null) clockWidgetMinWidthPx else landscapeNaturalSize.width * HOME_CLOCK_MIN_SCALE
+    // The pane resolved against the smallest clock, so a narrow pane shrinks the clock to fit (as
     // portrait's height handle does) rather than being refused.
+    val landscapePaneWidthForFitPx = landscapeClockPaneWidthPx(
+        landscapeWantedPaneWidthPx,
+        landscapeContentWidth,
+        floorPx = landscapeMarginsPx + landscapeMinClockWidthPx,
+    )
+    val landscapeMaxWidgetSize = if (landscapeContentWidth > 0f) {
+        landscapeMaxWidgetSize(landscapePaneWidthForFitPx, contentHeightPx, landscapeMarginsPx)
+    } else {
+        Size(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+    }
     val landscapeMaxScale = landscapeMaxClockScale(
         naturalSize = landscapeNaturalSize,
-        paneWidthPx = landscapeClockPaneWidthPx(
-            landscapeWantedPaneWidthPx,
-            landscapeContentWidth,
-            floorPx = landscapeMarginsPx + landscapeNaturalSize.width * HOME_CLOCK_MIN_SCALE,
-        ),
+        paneWidthPx = landscapePaneWidthForFitPx,
         paneHeightPx = contentHeightPx,
         horizontalMarginsPx = landscapeMarginsPx,
         minScale = HOME_CLOCK_MIN_SCALE,
@@ -600,12 +610,6 @@ fun HomeScreen(
             raw.coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
         }
     }
-    val landscapePaneWidthPx = landscapeClockPaneWidthPx(
-        landscapeWantedPaneWidthPx,
-        landscapeContentWidth,
-        floorPx = landscapeMarginsPx + landscapeNaturalSize.width * effectiveClockScale,
-    )
-
     // PRD F15's analog of effectiveClockScale above — real width/height, only meaningful once
     // clockWidgetWidthDp/HeightDp are both resolved (the caller only supplies these once a hosted
     // widget is actually bound). While ADJUST mode is live it's clamped to whatever currently fits
@@ -616,12 +620,18 @@ fun HomeScreen(
     } else {
         val rawWidthPx = liveWidgetWidthPx ?: with(density) { clockWidgetWidthDp.toPx() }
         val rawHeightPx = liveWidgetHeightPx ?: with(density) { clockWidgetHeightDp.toPx() }
-        val minWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
-        val minHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
+        val minWidthPx = clockWidgetMinWidthPx
+        val minHeightPx = clockWidgetMinHeightPx
         val size = clockBoxSize
         val origin = clockBoxOriginInRoot
         val rootW = rootSize?.width
-        if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
+        if (isLandscape) {
+            // Landscape always clamps to what its pane fits (render time only; the saved size is untouched).
+            Offset(
+                rawWidthPx.coerceIn(minWidthPx, maxOf(minWidthPx, landscapeMaxWidgetSize.width)),
+                rawHeightPx.coerceIn(minHeightPx, maxOf(minHeightPx, landscapeMaxWidgetSize.height)),
+            )
+        } else if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
             val maxSize = maxWidgetSizePxThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
             Offset(
                 rawWidthPx.coerceIn(minWidthPx, maxOf(minWidthPx, maxSize.x)),
@@ -633,6 +643,19 @@ fun HomeScreen(
     }
     val effectiveClockWidgetWidthDp = effectiveClockWidgetSizePx?.let { with(density) { it.x.toDp() } } ?: clockWidgetWidthDp
     val effectiveClockWidgetHeightDp = effectiveClockWidgetSizePx?.let { with(density) { it.y.toDp() } } ?: clockWidgetHeightDp
+
+    // The landscape clock pane's width: at least the margins plus the clock as drawn (a hosted widget is
+    // its own width, the native clock its natural width times its scale).
+    val landscapeClockDrawnWidthPx = if (clockWidgetAppWidgetId != null) {
+        effectiveClockWidgetSizePx?.x ?: landscapeNaturalSize.width
+    } else {
+        landscapeNaturalSize.width * effectiveClockScale
+    }
+    val landscapePaneWidthPx = landscapeClockPaneWidthPx(
+        landscapeWantedPaneWidthPx,
+        landscapeContentWidth,
+        floorPx = landscapeMarginsPx + landscapeClockDrawnWidthPx,
+    )
 
     Box(
         modifier = modifier
@@ -1056,24 +1079,17 @@ fun HomeScreen(
             }
         }
 
-        // Portrait and landscape each have their own adjust handles and pill. Landscape adjusts the
-        // native clock only: a hosted clock widget has no landscape adjust yet, so leave adjust mode.
-        val currentOnAdjustModeChange by rememberUpdatedState(onAdjustModeChange)
-        LaunchedEffect(isLandscape, clockAdjustMode, clockWidgetAppWidgetId) {
-            if (isLandscape && clockWidgetAppWidgetId != null && clockAdjustMode == ClockAdjustMode.ADJUST) {
-                currentOnAdjustModeChange(ClockAdjustMode.NONE)
-            }
-        }
+        // Portrait and landscape each have their own adjust handles and pill, for the native clock and for a hosted clock widget.
         val adjusting = clockAdjustMode == ClockAdjustMode.ADJUST
         val adjustingInPortrait = adjusting && !isLandscape
-        val adjustingInLandscape = adjusting && isLandscape && clockWidgetAppWidgetId == null
+        val adjustingInLandscape = adjusting && isLandscape
 
         if (adjustingInLandscape) {
             // The divider between the clock and apps panes: dragging it sets the clock pane's width. As with
-            // portrait's height handle, a narrower pane shrinks the clock in real time, down to its smallest
-            // scale where the divider stops, and on release the shrunk scale is saved so it doesn't snap back.
-            // (A saved width that is already too narrow for the saved scale, e.g. one carried over from
-            // portrait, shrinks the clock on screen only until it is dragged.)
+            // portrait's height handle, a narrower pane shrinks the clock in real time (the native clock to its
+            // smallest scale, a hosted widget to its own minimum size), where the divider stops, and on release
+            // the shrunk scale or size is saved so it doesn't snap back. (A saved width that is already too
+            // narrow, e.g. one carried over from portrait, shrinks the clock on screen only until it is dragged.)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1091,7 +1107,7 @@ fun HomeScreen(
                         liveDividerWidthPx = landscapeDividerDragWidthPx(
                             currentPx = liveDividerWidthPx ?: landscapePaneWidthPx,
                             deltaPx = with(density) { deltaDp.dp.toPx() },
-                            floorPx = landscapeMarginsPx + landscapeNaturalSize.width * HOME_CLOCK_MIN_SCALE,
+                            floorPx = landscapeMarginsPx + landscapeMinClockWidthPx,
                             contentWidthPx = landscapeContentWidth,
                         )
                     },
@@ -1099,7 +1115,17 @@ fun HomeScreen(
                         onDraggingHandleChange(false)
                         // liveDividerWidthPx is held until LaunchedEffect(clockZoneHeightDp) sees the commit land.
                         onClockZoneHeightCommit(with(density) { landscapePaneWidthPx.toDp().value })
-                        if (effectiveClockScale < clockScale - 0.005f) onClockScaleCommit(effectiveClockScale)
+                        val shrunkWidget = effectiveClockWidgetSizePx
+                        if (clockWidgetAppWidgetId != null && shrunkWidget != null) {
+                            if (shrunkWidget.x < with(density) { (clockWidgetWidthDp ?: 0.dp).toPx() } - 1f) {
+                                onClockWidgetSizeCommit(
+                                    with(density) { shrunkWidget.x.toDp().value }.roundToInt(),
+                                    with(density) { shrunkWidget.y.toDp().value }.roundToInt(),
+                                )
+                            }
+                        } else if (effectiveClockScale < clockScale - 0.005f) {
+                            onClockScaleCommit(effectiveClockScale)
+                        }
                     },
                 )
             }
@@ -1290,7 +1316,7 @@ fun HomeScreen(
 
         // Landscape's scale handles for the native clock: the corners away from the anchor (the bottom
         // ones for a top-aligned clock, the top ones otherwise), scaling around the clock's left edge.
-        if (adjustingInLandscape && clockGeometryReady) {
+        if (adjustingInLandscape && clockWidgetAppWidgetId == null && clockGeometryReady) {
             val rootOrigin = rootOriginInRoot!!
             val natTopLeft = clockBoxOriginInRoot!! - rootOrigin
             val visual = landscapeVisualClockRect(natTopLeft, landscapeNaturalSize, landscapeOriginY, effectiveClockScale)
@@ -1334,6 +1360,62 @@ fun HomeScreen(
                 onDragStart = onHandleDragStart,
                 onDrag = onHandleDrag,
                 onDragEnd = onHandleDragEnd,
+            )
+        }
+
+        // Landscape's resize handles for a hosted clock widget: its real width and height (not a scale), kept
+        // to the pane, on the corners away from its anchor (bottom for a top-aligned widget, top otherwise).
+        if (adjustingInLandscape && clockWidgetAppWidgetId != null && clockGeometryReady) {
+            val rootOrigin = rootOriginInRoot!!
+            val boxTopLeft = clockBoxOriginInRoot!! - rootOrigin
+            val boxSize = landscapeNaturalSize
+            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
+            val handleY = if (landscapeOriginY <= 0f) boxTopLeft.y + boxSize.height - handleInsetPx else (boxTopLeft.y - handleInsetPx).coerceAtLeast(topInsetPx)
+            val onWidgetHandleDragStart: () -> Unit = {
+                widgetDragGrabOffset = null
+                onDraggingHandleChange(true)
+            }
+            val onWidgetHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
+                val implied = landscapeWidgetSizeAtTouch(touchInAbsolute - rootOrigin, boxTopLeft, boxSize, landscapeOriginY)
+                // First move: capture where the finger sits vs the corner, so the box doesn't pop.
+                val grab = widgetDragGrabOffset
+                    ?: Offset(implied.width - (liveWidgetWidthPx ?: boxSize.width), implied.height - (liveWidgetHeightPx ?: boxSize.height))
+                        .also { widgetDragGrabOffset = it }
+                liveWidgetWidthPx = (implied.width - grab.x).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
+                liveWidgetHeightPx = (implied.height - grab.y).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
+            }
+            val onWidgetHandleDragEnd: () -> Unit = {
+                onDraggingHandleChange(false)
+                val finalWidthPx = (liveWidgetWidthPx ?: boxSize.width).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
+                val finalHeightPx = (liveWidgetHeightPx ?: boxSize.height).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
+                onClockWidgetSizeCommit(
+                    with(density) { finalWidthPx.toDp().value }.roundToInt(),
+                    with(density) { finalHeightPx.toDp().value }.roundToInt(),
+                )
+            }
+            handleExclusionRects = listOf(
+                handleExclusionRect(boxTopLeft.x - handleInsetPx, handleY),
+                handleExclusionRect(boxTopLeft.x + boxSize.width - handleInsetPx, handleY),
+            )
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(boxTopLeft.x.roundToInt(), boxTopLeft.y.roundToInt()) }
+                    .size(with(density) { boxSize.width.toDp() }, with(density) { boxSize.height.toDp() })
+                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+            )
+            ClockCornerHandle(
+                isRightSide = false,
+                modifier = Modifier.offset { IntOffset((boxTopLeft.x - handleInsetPx).roundToInt(), handleY.roundToInt()) },
+                onDragStart = onWidgetHandleDragStart,
+                onDrag = onWidgetHandleDrag,
+                onDragEnd = onWidgetHandleDragEnd,
+            )
+            ClockCornerHandle(
+                isRightSide = true,
+                modifier = Modifier.offset { IntOffset((boxTopLeft.x + boxSize.width - handleInsetPx).roundToInt(), handleY.roundToInt()) },
+                onDragStart = onWidgetHandleDragStart,
+                onDrag = onWidgetHandleDrag,
+                onDragEnd = onWidgetHandleDragEnd,
             )
         }
 
@@ -1497,7 +1579,6 @@ fun HomeScreen(
                     overrideFacetName = clockPositionOwnerFacetName,
                     hasCustomClockWidget = hasCustomClockWidget,
                     isPro = isPro,
-                    adjustAvailable = !isLandscape || clockWidgetAppWidgetId == null,
                 )
             }
         }

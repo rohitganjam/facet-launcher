@@ -84,6 +84,48 @@ class HomeLandscapeGeometryTest {
     }
 
     @Test
+    fun `a widget may be as wide as the pane's inner width and as tall as the pane`() {
+        val max = landscapeMaxWidgetSize(paneWidthPx = 440f, paneHeightPx = 300f, horizontalMarginsPx = 40f)
+
+        assertEquals(Size(400f, 300f), max)
+    }
+
+    @Test
+    fun `an unmeasured pane height puts no limit on the widget's height`() {
+        assertEquals(Float.POSITIVE_INFINITY, landscapeMaxWidgetSize(paneWidthPx = 440f, paneHeightPx = 0f, horizontalMarginsPx = 40f).height, 0f)
+    }
+
+    @Test
+    fun `a pane narrower than its margins allows no widget width`() {
+        assertEquals(0f, landscapeMaxWidgetSize(paneWidthPx = 30f, paneHeightPx = 300f, horizontalMarginsPx = 40f).width, 0.001f)
+    }
+
+    @Test
+    fun `dragging the bottom right corner of a top anchored widget gives the size below and right of its top left`() {
+        // Given a widget box at (24, 50), 200 x 100, anchored at the top
+        val size = landscapeWidgetSizeAtTouch(Offset(324f, 250f), naturalTopLeft, natural, originY = 0f)
+
+        // Then the corner at (324, 250) means 300 wide and 200 tall
+        assertEquals(Size(300f, 200f), size)
+    }
+
+    @Test
+    fun `dragging the top right corner of a bottom anchored widget measures up from its bottom edge`() {
+        // The box's bottom is at 150, so a corner at y = 30 means 120 tall
+        val size = landscapeWidgetSizeAtTouch(Offset(124f, 30f), naturalTopLeft, natural, originY = 1f)
+
+        assertEquals(Size(100f, 120f), size)
+    }
+
+    @Test
+    fun `dragging the top right corner of a middle anchored widget grows it around its centre`() {
+        // The centre is at y = 100, so a corner 40 above it means 80 tall
+        val size = landscapeWidgetSizeAtTouch(Offset(124f, 60f), naturalTopLeft, natural, originY = 0.5f)
+
+        assertEquals(Size(100f, 80f), size)
+    }
+
+    @Test
     fun `a top aligned clock scales down and to the right from its top left corner`() {
         val rect = landscapeVisualClockRect(naturalTopLeft, natural, originY = 0f, scale = 0.5f)
 

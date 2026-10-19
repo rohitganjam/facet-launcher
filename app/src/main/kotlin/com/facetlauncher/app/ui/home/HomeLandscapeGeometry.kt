@@ -49,6 +49,33 @@ internal fun landscapeMaxClockScale(
 }
 
 /**
+ * The most a hosted clock widget may be in landscape: the pane's inner width ([paneWidthPx] less the
+ * margins) by the pane's height. Unlike the native clock it is resized directly, not scaled.
+ */
+internal fun landscapeMaxWidgetSize(paneWidthPx: Float, paneHeightPx: Float, horizontalMarginsPx: Float): Size = Size(
+    (paneWidthPx - horizontalMarginsPx).coerceAtLeast(0f),
+    // Not measured yet: no limit, rather than shrinking the widget to nothing for a frame.
+    if (paneHeightPx > 0f) paneHeightPx else Float.POSITIVE_INFINITY,
+)
+
+/**
+ * The size a hosted widget takes if a touch at [touch] were its dragged corner. The widget keeps its
+ * left edge and the vertical edge given by [originY] (0 top, 0.5 middle, 1 bottom) of its current
+ * box ([boxTopLeft], [boxSize]), so a top-anchored widget grows downward, a bottom-anchored one
+ * upward and a middle-anchored one both ways around its centre.
+ */
+internal fun landscapeWidgetSizeAtTouch(touch: Offset, boxTopLeft: Offset, boxSize: Size, originY: Float): Size {
+    val width = touch.x - boxTopLeft.x
+    val anchorY = boxTopLeft.y + boxSize.height * originY
+    val height = when {
+        originY <= 0f -> touch.y - anchorY
+        originY >= 1f -> anchorY - touch.y
+        else -> abs(anchorY - touch.y) / originY
+    }
+    return Size(width, height)
+}
+
+/**
  * Where the scaled clock sits. The clock keeps its natural footprint and is scaled around
  * (left edge, [originY]) of it, where [originY] is 0 for a top-aligned clock, 0.5 for middle and 1 for bottom.
  */

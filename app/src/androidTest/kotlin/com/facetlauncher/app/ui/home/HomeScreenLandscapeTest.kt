@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.activity.ComponentActivity
+import android.appwidget.AppWidgetHostView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -19,6 +21,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -51,6 +55,23 @@ class HomeScreenLandscapeTest {
         composeRule.waitForIdle()
     }
 
+    /** A hosted clock widget for [LandscapeHome]: its size, minimum size and what to do with a saved size. */
+    private class TestClockWidget(
+        val widthDp: Int,
+        val heightDp: Int,
+        val minWidthDp: Int = 60,
+        val minHeightDp: Int = 40,
+        val onSizeCommit: (Int, Int) -> Unit = { _, _ -> },
+    )
+
+    /** Long-presses empty space (the top strip) to open the clock menu, then picks "Adjust". */
+    private fun enterAdjustModeFromEmptySpace() {
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.waitForIdle()
+    }
+
     private fun apps(count: Int, prefix: String = "App") = (1..count).map {
         AppInfo(packageName = "com.example.${prefix.lowercase()}$it", activityName = ".Main", label = "$prefix $it", icon = null)
     }
@@ -69,11 +90,20 @@ class HomeScreenLandscapeTest {
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
         mediaPlayer: MediaPlayerState? = null,
         appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+        widget: TestClockWidget? = null,
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
         FacetLauncherTheme {
             HomeScreen(
+                hasCustomClockWidget = widget != null,
+                clockWidgetAppWidgetId = widget?.let { WIDGET_ID },
+                createClockWidgetHostView = { context, _ -> AppWidgetHostView(context) },
+                clockWidgetWidthDp = widget?.widthDp?.dp,
+                clockWidgetHeightDp = widget?.heightDp?.dp,
+                clockWidgetMinWidthDp = widget?.minWidthDp?.dp,
+                clockWidgetMinHeightDp = widget?.minHeightDp?.dp,
+                onClockWidgetSizeCommit = { w, h -> widget?.onSizeCommit?.invoke(w, h) },
                 appListItems = appListItems.map { PlacedItem.SingleApp(it) },
                 dockApps = dockApps.map { PlacedItem.SingleApp(it) },
                 onAppClick = {},
@@ -434,5 +464,92 @@ class HomeScreenLandscapeTest {
 
         composeRule.onNodeWithTag("clock_adjust_sheet").assertExists()
         composeRule.onNodeWithTag("clock_adjust_open").assertExists()
+    }
+
+    // --- A hosted (custom) clock widget in landscape ---
+
+    private fun widgetBounds() = composeRule.onNodeWithTag("clock_widget_host_$WIDGET_ID").getUnclippedBoundsInRoot()
+
+    @Test
+    fun aCustomClockWidgetStillOffersAdjustInLandscape() {
+        composeRule.setContent { LandscapeHome(widget = TestClockWidget(widthDp = 180, heightDp = 90)) }
+        composeRule.onNodeWithTag("clock_widget_host_$WIDGET_ID").assertExists()
+
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("clock_adjust_open").assertExists()
+    }
+
+    @Test
+    fun adjustModeForACustomWidgetShowsTheDividerThePillAndCornerHandles() {
+        composeRule.setContent { LandscapeHome(widget = TestClockWidget(widthDp = 180, heightDp = 90)) }
+
+        enterAdjustModeFromEmptySpace()
+
+        composeRule.onNodeWithTag("home_clock_zone_handle").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_align_top").assertExists()
+        composeRule.onNodeWithTag("clock_resize_handle_left").assertExists()
+        composeRule.onNodeWithTag("clock_resize_handle_right").assertExists()
+    }
+
+    @Test
+    fun draggingACustomWidgetCornerHandleSavesTheNewSize() {
+        var committed: Pair<Int, Int>? = null
+        composeRule.setContent {
+            LandscapeHome(widget = TestClockWidget(widthDp = 180, heightDp = 90, onSizeCommit = { w, h -> committed = w to h }))
+        }
+        enterAdjustModeFromEmptySpace()
+
+        // When the bottom right handle (the widget is top aligned) is pulled out and down
+        // (in small steps, like a finger: the first move only records where the handle was grabbed)
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            repeat(8) { moveBy(Offset(10f, 7f)) }
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then a larger size is saved
+        val size = committed
+        assert(size != null && size.first > 180 && size.second > 90) { "expected a size larger than 180 x 90dp, got $size" }
+    }
+
+    @Test
+    fun aCustomWidgetWiderThanItsPaneIsShownInsideThePane() {
+        composeRule.setContent { LandscapeHome(widget = TestClockWidget(widthDp = 900, heightDp = 90)) }
+        composeRule.waitForIdle()
+
+        val pane = composeRule.onNodeWithTag("home_clock_pane").getUnclippedBoundsInRoot()
+        assert(widgetBounds().right <= pane.right) { "widget ${widgetBounds()} should stay inside its pane $pane" }
+    }
+
+    @Test
+    fun pullingTheDividerLeftShrinksACustomWidgetOnlyToItsMinimumAndSavesIt() {
+        var committed: Pair<Int, Int>? = null
+        composeRule.setContent {
+            LandscapeHome(
+                widget = TestClockWidget(widthDp = 200, heightDp = 90, minWidthDp = 120, minHeightDp = 60, onSizeCommit = { w, h -> committed = w to h }),
+            )
+        }
+        enterAdjustModeFromEmptySpace()
+
+        // When the divider is pulled far to the left
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(-300f, 0f)) }
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then the widget shrank to its minimum width and no further, and that size was saved
+        val width = widgetBounds().width.value
+        assert(width < 200f && width >= 119f) { "widget should be about 120dp wide, was $width" }
+        assert(committed != null && committed!!.first in 119..121) { "expected the shrunk size to be saved, got $committed" }
+    }
+
+    private companion object {
+        const val WIDGET_ID = 42
     }
 }
