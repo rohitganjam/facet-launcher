@@ -74,7 +74,7 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (41) — unscoped, constructor-injected unless noted
+## 2. Use cases (42) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -91,6 +91,7 @@ cycles; `AppRepository` is the single root.
 | `EnsureActiveFacetUseCase` | seeds the first facet, and (`keepUsable()`, a collector) keeps the active facet one the user may use: missing or disabled → the first selectable facet | `FacetRepository`, `SettingsRepository`, `SelectableFacetsUseCase` | `LauncherViewModel` |
 | `EvaluateFacetAutomationUseCase` | pure (rules + trigger truth + `AutomationState` → desired facet + new state) | — | `RefreshAutomationStateUseCase` |
 | `ExportBackupUseCase` | one-shot read + file write | `SettingsRepository`, `FacetRepository`, `PlacementRepository`, `WidgetPlacementRepository`, `FolderRepository`, `BackupRepository` | `BackupRestoreViewModel` |
+| `FlowPackWidgetsUseCase` | pure grid (landscape Hub flow-pack — not wired yet) | — | — |
 | `GetInstalledAppsUseCase` | read (`invoke()` one-shot / `observe()` live) | `AppRepository` | `LauncherViewModel`, 4 picker/settings ViewModels, `SeedDefaultDockUseCase` |
 | `GroupAppsByLetterUseCase` | pure (ICU `AlphabeticIndex`) | — (**constructed in `AppDrawerScreen` composable**, see F2) | `AppDrawerScreen` |
 | `ImportBackupUseCase` | destructive full-replace restore | `BackupRepository`, `SettingsRepository`, `FacetRepository`, `PlacementRepository`, `FolderRepository`, `RepairOrphanedProfileRowsUseCase` | `BackupRestoreViewModel` |

@@ -18,7 +18,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (44)  41 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (45)  42 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -33,7 +33,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (27 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)
-    ├── home/                      (16)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
+    ├── home/                      (17)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
     │                                    ClockAdjustToolbar, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, shared scaled `HomePreview` + `HomePreviewState`
     │   ├── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
     │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
@@ -79,10 +79,10 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
 ├── data/          39   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
 │   ├── local/      7   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)
-│   ├── model/      8   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
+│   ├── model/     10   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
-├── domain/        38   one test per use case (pure logic — no Android needed for most)
-└── ui/            48   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
+├── domain/        39   one test per use case (pure logic — no Android needed for most)
+└── ui/            50   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)

@@ -4157,7 +4157,7 @@ Chosen over locking to portrait: foldables and tablets ignore a portrait lock, a
 - [ ] **Previews.** Facet carousel cards and `HomePreview` are portrait-shaped; they need a landscape aspect.
 
 **Stages.**
-1. Window-shape rule and a pure widget flow-pack function (order + spans + row count → positions), with tests.
+1. **Done.** Window-shape rule (`homeLayoutModeFor`: landscape when width > height) and a pure widget flow-pack use case (`FlowPackWidgetsUseCase`: order + spans + row count → positions, sparse so order is always preserved), with tests. Neither is wired into the UI yet.
 2. Landscape Home container: panes, divider, dock rail, insets.
 3. Clock pane: mapped alignment, new pill, scale handle, divider handle.
 4. Widget grid in landscape (fixed cell size, per-orientation positions, editing).
