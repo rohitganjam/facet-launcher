@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -21,7 +22,9 @@ import androidx.compose.ui.test.performTouchInput
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import androidx.test.platform.app.InstrumentationRegistry
@@ -64,6 +67,8 @@ class HomeScreenLandscapeTest {
         clockScale: Float = 0.8f,
         onClockScaleCommit: (Float) -> Unit = {},
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
+        mediaPlayer: MediaPlayerState? = null,
+        appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
@@ -80,6 +85,8 @@ class HomeScreenLandscapeTest {
                 clockScale = clockScale,
                 onClockScaleCommit = onClockScaleCommit,
                 onClockAlignmentChange = onClockAlignmentChange,
+                mediaPlayer = mediaPlayer,
+                appListVerticalAlignment = appListVerticalAlignment,
                 clockAdjustMode = adjustMode,
                 onAdjustModeChange = { adjustMode = it },
                 draggingHandle = dragging,
@@ -198,6 +205,49 @@ class HomeScreenLandscapeTest {
         // Then the apps sit in two columns, so some of them share a row and the left edges differ
         assert(labels.map { it.top.toInt() }.distinct().size < labels.size) { "expected two apps to share a row: ${labels.map { it.top }}" }
         assert(labels.map { it.left.toInt() }.distinct().size >= 2) { "expected two columns: ${labels.map { it.left }}" }
+    }
+
+    private val track = MediaPlayerState(
+        packageName = "com.example.music", title = "Song", artist = "Artist", art = null, isPlaying = true,
+        positionMs = 0, durationMs = 180_000, positionUpdatedAtMs = 0, playbackSpeed = 1f, canSkipPrevious = true, canSkipNext = true,
+    )
+
+    @Test
+    fun mediaRowIsPinnedToTheTopOfTheAppsPaneWhateverTheListAlignment() {
+        // Given a playing track and the list alignment driven by state, so one composition covers both
+        var alignment by mutableStateOf(AppListVerticalAlignment.BOTTOM)
+        composeRule.setContent { LandscapeHome(mediaPlayer = track, appListVerticalAlignment = alignment) }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("home_media_player").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitForIdle()
+
+        listOf(AppListVerticalAlignment.BOTTOM, AppListVerticalAlignment.TOP).forEach { each ->
+            alignment = each
+            composeRule.waitForIdle()
+            val pane = boundsOf("home_apps_pane")
+            val media = boundsOf("home_media_player")
+            val firstApp = boundsOf("home_app_label_com.example.app1")
+
+            // Then the row is in the apps pane, at its top, and the list is below it
+            assert(media.left >= pane.left && media.right <= pane.right) { "$each: media $media should be inside the apps pane $pane" }
+            assert(kotlin.math.abs(media.top - pane.top) < 2f) { "$each: media $media should sit at the pane's top $pane" }
+            assert(firstApp.top >= media.bottom) { "$each: the list ($firstApp) should start below the media row ($media)" }
+        }
+    }
+
+    @Test
+    fun mediaRowIsNotInTheClockPane() {
+        composeRule.setContent { LandscapeHome(mediaPlayer = track) }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("home_media_player").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitForIdle()
+
+        val clockPane = boundsOf("home_clock_pane")
+        val media = boundsOf("home_media_player")
+
+        assert(media.left >= clockPane.right) { "media $media should be right of the clock pane $clockPane" }
     }
 
     @Test

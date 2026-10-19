@@ -939,24 +939,30 @@ fun HomeScreen(
                     appsPaneWidthPx = it.width.toFloat()
                 },
                 clock = {
-                    Column {
-                        clockBlock(Modifier.graphicsLayer { alpha = clockAppearAlpha.value }, ClockAlignment.LEFT, landscapeOriginY)
-                        if (shownMediaPlayer != null && mediaFraction > 0f && clockAdjustMode == ClockAdjustMode.NONE) {
-                            mediaRow(
-                                shownMediaPlayer,
-                                Modifier
-                                    .padding(top = HOME_MEDIA_ROW_TOP_GAP)
-                                    .graphicsLayer { alpha = mediaFraction },
-                            )
-                        }
-                    }
+                    clockBlock(Modifier.graphicsLayer { alpha = clockAppearAlpha.value }, ClockAlignment.LEFT, landscapeOriginY)
                 },
                 apps = {
+                    // The media row is pinned to the top of the pane whatever the list's alignment; the
+                    // list sits below it (top-aligned) or at the bottom, in the height the row leaves.
+                    // Its height is kept across hides and animated in, as in portrait, so the list doesn't jump.
+                    val mediaReservedPx = mediaRowHeightPx * mediaFraction
+                    if (shownMediaPlayer != null && mediaFraction > 0f) {
+                        mediaRow(
+                            shownMediaPlayer,
+                            Modifier
+                                .align(Alignment.TopStart)
+                                .onSizeChanged { if (it.height > 0) mediaRowHeightPx = it.height.toFloat() }
+                                .padding(bottom = HOME_MEDIA_ROW_BOTTOM_GAP)
+                                .graphicsLayer { alpha = mediaFraction },
+                        )
+                    }
                     appListRegion(
-                        Modifier.align(
-                            if (appListVerticalAlignment == AppListVerticalAlignment.TOP) Alignment.TopStart else Alignment.BottomStart,
-                        ),
-                        with(density) { contentHeightPx.toDp() },
+                        if (appListVerticalAlignment == AppListVerticalAlignment.TOP) {
+                            Modifier.align(Alignment.TopStart).offset { IntOffset(0, mediaReservedPx.roundToInt()) }
+                        } else {
+                            Modifier.align(Alignment.BottomStart)
+                        },
+                        with(density) { (contentHeightPx - mediaReservedPx).coerceAtLeast(0f).toDp() },
                     )
                 },
                 dock = {
