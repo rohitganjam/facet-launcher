@@ -17,6 +17,8 @@ data class HubWidgetState(
     val rowSpan: Int,
     val providerLabel: String?,
     val isOrphaned: Boolean,
+    /** Place in the landscape Hub's flow order — see [com.facetlauncher.app.data.local.WidgetPlacementEntity.landscapeOrder]. */
+    val landscapeOrder: Int? = null,
 )
 
 data class HubDomainState(
@@ -63,6 +65,7 @@ class ObserveHubStateUseCase @Inject constructor(
                         rowSpan = placement.rowSpan,
                         providerLabel = if (info != null) appWidgetRepository.getProviderLabel(placement.appWidgetId) else null,
                         isOrphaned = info == null,
+                        landscapeOrder = placement.landscapeOrder,
                     )
                 },
             )

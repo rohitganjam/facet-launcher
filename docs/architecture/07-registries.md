@@ -74,7 +74,7 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (42) — unscoped, constructor-injected unless noted
+## 2. Use cases (45) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -91,9 +91,10 @@ cycles; `AppRepository` is the single root.
 | `EnsureActiveFacetUseCase` | seeds the first facet, and (`keepUsable()`, a collector) keeps the active facet one the user may use: missing or disabled → the first selectable facet | `FacetRepository`, `SettingsRepository`, `SelectableFacetsUseCase` | `LauncherViewModel` |
 | `EvaluateFacetAutomationUseCase` | pure (rules + trigger truth + `AutomationState` → desired facet + new state) | — | `RefreshAutomationStateUseCase` |
 | `ExportBackupUseCase` | one-shot read + file write | `SettingsRepository`, `FacetRepository`, `PlacementRepository`, `WidgetPlacementRepository`, `FolderRepository`, `BackupRepository` | `BackupRestoreViewModel` |
-| `FlowPackWidgetsUseCase` | pure grid (landscape Hub flow-pack — not wired yet) | — | — |
+| `FlowPackWidgetsUseCase` | pure grid (lays widgets out in a fixed number of rows, in list order) | — | `LandscapeHubUseCase` |
 | `GetInstalledAppsUseCase` | read (`invoke()` one-shot / `observe()` live) | `AppRepository` | `LauncherViewModel`, 4 picker/settings ViewModels, `SeedDefaultDockUseCase` |
 | `GroupAppsByLetterUseCase` | pure (ICU `AlphabeticIndex`) | — (**constructed in `AppDrawerScreen` composable**, see F2) | `AppDrawerScreen` |
+| `LandscapeHubUseCase` | pure (composes the three below: lays widgets out in the landscape Hub, and works out the new order after a drop) | `OrderWidgetsForLandscapeUseCase`, `FlowPackWidgetsUseCase`, `ReorderLandscapeWidgetUseCase` | `HubViewModel` |
 | `ImportBackupUseCase` | destructive full-replace restore | `BackupRepository`, `SettingsRepository`, `FacetRepository`, `PlacementRepository`, `FolderRepository`, `RepairOrphanedProfileRowsUseCase` | `BackupRestoreViewModel` |
 | `ObserveClockAccessoriesUseCase` | observe | `BatteryRepository`, `NextAlarmRepository` | `ObserveHomeScreenStateUseCase` |
 | `ObserveFacetAutomationUseCase` | observe (`Flow<FacetAutomationScreenState>`: rule rows with facet names, "why Home looks like this" status, permission and Pro availability, `canAddRule`, `isPro`). Takes a refresh tick that re-reads permission grants | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase` | `FacetAutomationViewModel` |
@@ -103,7 +104,9 @@ cycles; `AppRepository` is the single root.
 | `ObserveAppNotificationsUseCase` | read, `flatMapLatest` over the `show_notifications_in_app_menu` setting; `AppNotificationsState(notifications, needsAccess)` | `SettingsRepository`, `NotificationBadgeRepository`, `NotificationAccessRepository` | `DrawerViewModel` |
 | `ObserveQuickAddStateUseCase` | pure (`forApp` / `forFolder`) | — | `HomeViewModel` |
 | `ObserveSettingsScreenStateUseCase` | observe | `SettingsRepository`, `PlacementRepository`, `FolderRepository` | `SettingsViewModel` |
+| `OrderWidgetsForLandscapeUseCase` | pure (saved landscape order first, the rest in portrait reading order) | — | `LandscapeHubUseCase` |
 | `PlaceWidgetUseCase` | pure grid (`Placed` / `HubFull`) | — | `HubWidgetPickerViewModel`, `BackupRestoreViewModel` |
+| `ReorderLandscapeWidgetUseCase` | pure (moves one widget in the order, renumbers all) | — | `LandscapeHubUseCase` |
 | `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen`, F2) |
 | `RecentlyInstalledAppsUseCase` | pure (filters `firstInstallTime` within 72h) | — | `AppDrawerScreen` (inline `remember`), `PrivateSpaceViewModel` |
 | `RemoveFromActiveListUseCase` | write: removes an app or folder from a list for the active facet | `ResolveActivePlacementTargetUseCase`, `PlacementRepository` | `DrawerViewModel` |

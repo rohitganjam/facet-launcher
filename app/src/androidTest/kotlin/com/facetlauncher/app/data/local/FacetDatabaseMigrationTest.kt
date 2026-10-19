@@ -665,6 +665,36 @@ class FacetDatabaseMigrationTest {
     }
 
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
+    @Test
+    fun migration28To29AddsAnEmptyLandscapeOrderToEveryWidgetWithoutChangingThem() {
+        // Given a v28 database with two placed widgets (one a work-profile widget)
+        val dbV28 = helper.createDatabase(TEST_DB, 28)
+        dbV28.execSQL(
+            "INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile, userId) " +
+                "VALUES (1, 'com.example.a', '.A', 0, 0, 2, 2, 'PERSONAL', 0), (2, 'com.example.b', '.B', 2, 1, 3, 1, 'WORK', 10)",
+        )
+        dbV28.close()
+
+        // When migrating to v29 (Room also validates the result against the exported v29 schema)
+        val dbV29 = helper.runMigrationsAndValidate(TEST_DB, 29, true, Migrations.MIGRATION_28_29)
+
+        // Then both widgets are unchanged and neither has a landscape order yet
+        val cursor = dbV29.query("SELECT appWidgetId, row, col, colSpan, rowSpan, profile, userId, landscapeOrder FROM widget_placements ORDER BY appWidgetId")
+        val rows = mutableListOf<String>()
+        while (cursor.moveToNext()) {
+            rows += "${cursor.getInt(0)}|${cursor.getInt(1)}|${cursor.getInt(2)}|${cursor.getInt(3)}|${cursor.getInt(4)}|${cursor.getString(5)}|${cursor.getInt(6)}|${cursor.isNull(7)}"
+        }
+        cursor.close()
+        assertEquals(listOf("1|0|0|2|2|PERSONAL|0|true", "2|2|1|3|1|WORK|10|true"), rows)
+
+        // And an order can be written afterwards
+        dbV29.execSQL("UPDATE widget_placements SET landscapeOrder = 4 WHERE appWidgetId = 2")
+        val ordered = dbV29.query("SELECT landscapeOrder FROM widget_placements WHERE appWidgetId = 2")
+        ordered.moveToFirst()
+        assertEquals(4, ordered.getInt(0))
+        ordered.close()
+    }
+
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")
     }

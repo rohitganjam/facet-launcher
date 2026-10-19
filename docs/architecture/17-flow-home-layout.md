@@ -86,5 +86,5 @@ adjust yet: the menu hides the Adjust row for it, and adjust mode ends if a widg
 
 ## 5. Not built yet
 
-The landscape widget grid (`FlowPackWidgetsUseCase` exists but is not wired in), landscape
+The landscape widget grid is built (see [10](10-flow-hub-widgets.md) §5). Not built yet: landscape
 facet-preview cards, and gesture thresholds for a short window.

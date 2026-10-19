@@ -23,6 +23,10 @@ import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
 import com.facetlauncher.app.domain.ObserveHubStateUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
+import com.facetlauncher.app.domain.FlowPackWidgetsUseCase
+import com.facetlauncher.app.domain.LandscapeHubUseCase
+import com.facetlauncher.app.domain.OrderWidgetsForLandscapeUseCase
+import com.facetlauncher.app.domain.ReorderLandscapeWidgetUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.runBlocking
@@ -58,6 +62,7 @@ class HubScreenTest {
                     ResolveWidgetDropUseCase(),
                     ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
+                    LandscapeHubUseCase(OrderWidgetsForLandscapeUseCase(), FlowPackWidgetsUseCase(), ReorderLandscapeWidgetUseCase()),
                 )
             }
             FacetLauncherTheme {

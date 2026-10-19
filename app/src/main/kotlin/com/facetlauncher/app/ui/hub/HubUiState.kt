@@ -16,10 +16,24 @@ data class HubWidgetUi(
     val rowSpan: Int,
     val providerLabel: String?,
     val isOrphaned: Boolean,
+    val landscapeOrder: Int? = null,
+)
+
+/** A widget placed in the landscape grid: [row]/[col] are landscape's own, packed from the saved order (see [com.facetlauncher.app.domain.LandscapeHubUseCase]), and [rowSpan] is clamped to the rows shown. */
+data class HubLandscapeWidgetUi(
+    val appWidgetId: Int,
+    val row: Int,
+    val col: Int,
+    val colSpan: Int,
+    val rowSpan: Int,
+    val providerLabel: String?,
+    val isOrphaned: Boolean,
 )
 
 data class HubUiState(
     val widgets: List<HubWidgetUi> = emptyList(),
+    /** The widgets laid out for landscape in the number of rows the screen last reported; empty until it has. */
+    val landscapeWidgets: List<HubLandscapeWidgetUi> = emptyList(),
     val isLoading: Boolean = true,
 ) {
     val columns: Int get() = HUB_COLUMNS

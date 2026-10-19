@@ -92,7 +92,7 @@ class ExportBackupUseCaseTest {
         `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock)).thenReturn(emptyList())
         `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(
-            flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1))),
+            flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 3))),
         )
         val uri = mock(Uri::class.java)
 
@@ -125,6 +125,7 @@ class ExportBackupUseCaseTest {
         assertEquals(1, bundle.widgetPlacements.size)
         assertEquals("com.example.widgets", bundle.widgetPlacements[0].providerPackageName)
         assertEquals(2, bundle.widgetPlacements[0].colSpan)
+        assertEquals(3, bundle.widgetPlacements[0].landscapeOrder)
     }
 
     @Test

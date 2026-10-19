@@ -36,7 +36,7 @@ fun BackupAppEntry.toAppPlacementEntity(list: PlacementList, facetId: Long? = nu
     AppPlacementEntity(list = list, facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
-    BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name)
+    BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name, landscapeOrder)
 
 fun FolderWithApps.toBackupFolder(): BackupFolder = BackupFolder(
     name = folder.name,

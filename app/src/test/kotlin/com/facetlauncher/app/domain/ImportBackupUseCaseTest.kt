@@ -140,7 +140,7 @@ class ImportBackupUseCaseTest {
             ),
             dockApps = listOf(BackupAppEntry(packageName = "com.example.b", activityName = ".Main", position = 0)),
             defaultFavoriteApps = listOf(BackupAppEntry(packageName = "com.example.c", activityName = ".Main", position = 0)),
-            widgetPlacements = listOf(BackupWidgetPlacement("com.example.widgets", ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1)),
+            widgetPlacements = listOf(BackupWidgetPlacement("com.example.widgets", ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 4)),
         )
         `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
         // A concrete expected entity, not any(...): Mockito's static any()/eq() return a raw
@@ -188,6 +188,7 @@ class ImportBackupUseCaseTest {
         assertEquals(1, result.defaultFavoriteCount)
         assertEquals(1, result.pendingWidgetPlacements.size)
         assertEquals("com.example.widgets", result.pendingWidgetPlacements[0].providerPackageName)
+        assertEquals(4, result.pendingWidgetPlacements[0].landscapeOrder)
     }
 
     @Test

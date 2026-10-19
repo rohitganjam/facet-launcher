@@ -211,4 +211,6 @@ data class BackupWidgetPlacement(
     val rowSpan: Int,
     /** Raw `AppProfile.name` — defaulted so a backup exported before Work Profile support still imports cleanly (as `PERSONAL`). Only a hint for the guided re-add queue's initial bind attempt; re-adding always goes through a real bind, since a Work Profile widget's grant can't be restored from a backup file. */
     val profile: String = "PERSONAL",
+    /** The widget's place in the landscape Hub's flow order, if it had one — defaulted so older backups import as "no order" (landscape then follows portrait's reading order). */
+    val landscapeOrder: Int? = null,
 )

@@ -18,7 +18,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (45)  42 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (47)  45 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -39,7 +39,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel
-    ├── hub/                       (11)  HubScreen / HubViewModel / HubUiState, HubGrid, widget tiles, resize/grab gestures
+    ├── hub/                       (13)  HubScreen / HubViewModel / HubUiState, HubGrid, widget tiles, resize/grab gestures
     │   └── picker/                (3)   HubWidgetPickerScreen / ViewModel / UiState
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
@@ -79,14 +79,14 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
 ├── data/          39   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
 │   ├── local/      7   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)
-│   ├── model/     10   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
+│   ├── model/     11   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
-├── domain/        39   one test per use case (pure logic — no Android needed for most)
-└── ui/            53   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
+├── domain/        41   one test per use case (pure logic — no Android needed for most)
+└── ui/            54   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/            66   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
+└── ui/            67   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

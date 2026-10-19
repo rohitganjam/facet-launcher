@@ -12,8 +12,8 @@ checked against source, not against planning docs; where the code diverges from
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
 | [05-findings.md](05-findings.md) | Architect's review: 9 open findings ranked by severity with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
-| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (209 classes / 1960 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories and data singletons (deps, source wrapped, API, consumers), 42 use cases, 32 ViewModels |
+| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (214 classes / 2001 cases), regenerate with `scripts/gen-test-registry.py` |
+| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories and data singletons (deps, source wrapped, API, consumers), 45 use cases, 32 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |

@@ -25,4 +25,12 @@ data class WidgetPlacementEntity(
     val rowSpan: Int,
     val profile: AppProfile = AppProfile.PERSONAL,
     val userId: Int = -1,
+    /**
+     * Position in the landscape Hub's flow layout (lowest first); `null` until set. Landscape packs
+     * the widgets in this order instead of using [row]/[col], which are portrait's. Widgets without an
+     * order follow the ordered ones, in portrait reading order — so an install that never reordered
+     * in landscape lays out exactly like portrait's reading order. The sizes ([colSpan]/[rowSpan])
+     * are shared by both orientations.
+     */
+    val landscapeOrder: Int? = null,
 )

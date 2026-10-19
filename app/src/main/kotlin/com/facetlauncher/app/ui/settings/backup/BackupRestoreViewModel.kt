@@ -212,6 +212,7 @@ class BackupRestoreViewModel @Inject constructor(
                         rowSpan = placement.rowSpan,
                         profile = appWidgetRepository.profileForWidget(appWidgetId),
                         userId = appWidgetRepository.userIdForWidget(appWidgetId),
+                        landscapeOrder = placement.landscapeOrder,
                     ),
                 )
                 pendingIndex = null

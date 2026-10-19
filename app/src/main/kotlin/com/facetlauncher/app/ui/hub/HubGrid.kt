@@ -58,8 +58,8 @@ import com.facetlauncher.app.ui.theme.Accent
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-private val HUB_GRID_GAP = 4.dp
-private val HUB_GRID_HORIZONTAL_PADDING = 16.dp
+internal val HUB_GRID_GAP = 4.dp
+internal val HUB_GRID_HORIZONTAL_PADDING = 16.dp
 
 /** README `4a` — "Six rows fit the screen"; the grid still scrolls past that for however many more are placed. */
 private const val HUB_VISIBLE_ROWS = 6
@@ -69,13 +69,13 @@ private const val HUB_VISIBLE_ROWS = 6
  * grabbed, before any drag movement, so it's obvious it's now in motion rather than just sitting
  * there (see chat history — this was previously too subtle to notice on a real device).
  */
-private val GRAB_ELEVATION = 16.dp
-private val GRAB_LIFT = 10.dp
-private const val GRAB_SCALE = 1.08f
+internal val GRAB_ELEVATION = 16.dp
+internal val GRAB_LIFT = 10.dp
+internal const val GRAB_SCALE = 1.08f
 
 /** Dragging a grabbed widget within this distance of the viewport's top/bottom edge auto-scrolls the grid, so a widget can be placed below (or above) whatever's currently on screen. */
-private val AUTO_SCROLL_EDGE_ZONE = 48.dp
-private const val AUTO_SCROLL_SPEED_PX_PER_FRAME = 14f
+internal val AUTO_SCROLL_EDGE_ZONE = 48.dp
+internal const val AUTO_SCROLL_SPEED_PX_PER_FRAME = 14f
 
 /** Which side of a widget a resize handle is anchored to — START (left/top) moves that edge, and with it row/col; END (right/bottom) only grows/shrinks span. */
 private enum class ResizeEdge { START, END }
@@ -705,5 +705,5 @@ fun HubGrid(
 private fun Dp.toPx(density: Density): Float = with(density) { this@toPx.toPx() }
 
 /** Grows/shrinks by whole cells only, floored at 1 — matches how the commit-time span is computed. */
-private fun resizedSpan(baseSpan: Int, deltaPx: Float, cellSizePx: Float): Int =
+internal fun resizedSpan(baseSpan: Int, deltaPx: Float, cellSizePx: Float): Int =
     (baseSpan + (deltaPx / cellSizePx).roundToInt()).coerceAtLeast(1)

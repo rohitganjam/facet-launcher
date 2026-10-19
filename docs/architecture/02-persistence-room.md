@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v28**, `exportSchema = true` → `app/schemas/.../1.json … 28.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 5 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v29**, `exportSchema = true` → `app/schemas/…/1.json … 29.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 5 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 60 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -115,6 +115,7 @@ erDiagram
         int rowSpan
         string profile
         int userId
+        int landscapeOrder "nullable; landscape Hub flow order"
     }
 
     facets ||--o{ automation_rules : "rule target (CASCADE)"
@@ -250,7 +251,7 @@ null converter result. Renaming an enum constant therefore never needs a migrati
 
 ```kotlin
 Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
-    .addMigrations(*Migrations.ALL)                       // 10→11 … 27→28, explicit SQL
+    .addMigrations(*Migrations.ALL)                       // 10→11 … 28→29, explicit SQL
     .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
     .build()
 ```
@@ -282,6 +283,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 25→26 | New table `automation_rules` (facet automation rules) with two foreign keys to `facets` (`targetFacetId` CASCADE, `endFacetId` SET NULL) and an index on each; DDL copied from the exported `26.json`, no data to carry over. Tested by `FacetDatabaseMigrationTest.migration25To26…` (schema validation plus both FK actions) |
 | 26→27 | `ALTER TABLE facets ADD COLUMN` `showCalendarIndicator INTEGER NOT NULL DEFAULT 1` and `calendarItemsToShow INTEGER NOT NULL DEFAULT 3` (per-facet calendar display overrides, gated by `overrideCalendar`); existing rows keep today's look |
 | 27→28 | **F6 consolidation.** Creates `app_placements` and `folder_placements` (DDL copied from the exported `28.json`), copies every row from the eight old tables in `id` order (`list` = `DOCK`/`FAVORITES`, `facetId` null and `ownerKey` 0 for the former global tables), then drops the eight old tables (`dock_apps`, `facet_dock_apps`, `favorite_apps`, `default_favorite_apps` and the four `*_folder_placements`). Tested by `FacetDatabaseMigrationTest.migration27To28…` (seeded rows in all eight tables, work-profile `userId`, orphan `-1`, facet cascade, old tables gone) |
+| 28→29 | `landscape_order` for the landscape Hub: `widget_placements.landscapeOrder INTEGER` (nullable, no default). Existing rows stay `NULL`, which makes landscape follow portrait reading order, so nothing is rewritten. `FacetDatabaseMigrationTest.migration28To29…` seeds two widgets and checks both survive with a `NULL` order. |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 

@@ -118,3 +118,43 @@ flowchart TB
 | Work Profile removed | bindings gone | rows kept (`userId` still set) | orphan tiles |
 | Facet data cleared / reinstalled | **kept** (host id 1024 is stable) | gone | nothing — the bindings leak until the system GCs them |
 | Backup restore | new ids allocated per widget | re-created via the picker state machine | interactive re-bind list (see 09 §3) |
+
+## 5. Landscape layout
+
+In a window wider than it is tall (see [17](17-flow-home-layout.md) §1) the Hub shows `HubLandscapeGrid`
+instead of `HubGrid`. Same widgets, same sizes, a different arrangement:
+
+- **Fixed cells.** Each cell is `HUB_LANDSCAPE_CELL_SIZE` (64dp, 4dp gaps), so a widget has the same size
+  on any window, as the app grid's cells do. The grid has as many rows as fit the height
+  (`hubLandscapeRows`, at least 2) and grows to the right, scrolling sideways.
+- **Flow, not free placement.** Positions are not stored. `LandscapeHubUseCase.layout` orders the widgets
+  (`OrderWidgetsForLandscapeUseCase`: those with a saved `landscapeOrder` first, lowest first, then the rest
+  in portrait reading order) and packs them with `FlowPackWidgetsUseCase`: down each column, then across,
+  each widget at the first free spot at or after the previous one, so the visual order always matches the
+  list order. A widget taller than the rows is clamped to the rows on screen only.
+- **`HubViewModel`** gets the row count from the screen (`onLandscapeRowsChange`) and exposes
+  `HubUiState.landscapeWidgets`, empty until it has.
+
+```mermaid
+flowchart TB
+    G["HubLandscapeGrid gesture"]
+    G -- "onLandscapeWidgetDrop(id, dropRow, dropCol)" --> O["LandscapeHubUseCase.ordersAfterDrop\ncount the other widgets before the drop cell\nthen ReorderLandscapeWidgetUseCase renumbers all"]
+    O --> S["upsert landscapeOrder on each changed row"]
+    G -- "onLandscapeWidgetResize(id, colSpan, rowSpan)" --> R["onWidgetResize(id, portraitRow, portraitCol, ...)\nResolveWidgetResizeUseCase + CompactWidgetsUseCase"]
+    G -- "Remove" --> D["onWidgetDroppedOnTrash"]
+    S --> ROOM[(widget_placements)]
+    R --> ROOM
+```
+
+- **Move** is a reorder: the dragged widget goes to the place in the flow where its top-left corner lands
+  (landing on another widget's cell puts it just before that widget). It writes only `landscapeOrder` and
+  renumbers every widget, so portrait positions are untouched.
+- **Resize** has a right and a bottom handle only (the top-left is where the flow put it). The size is shared
+  with portrait, so it goes through portrait's own resolution, anchored on the widget's portrait cell, and may
+  push portrait neighbours down. Portrait can therefore change from a landscape resize; landscape never
+  changes portrait positions otherwise.
+- **Add** (the picker) is unchanged and leaves `landscapeOrder` null, so a widget added later follows the
+  ordered ones; before any landscape reorder it sits where portrait's reading order puts it.
+- **Delete** renumbers nothing: the order is relative.
+- **Backup:** `BackupWidgetPlacement.landscapeOrder` is optional (null for older files) and restored onto the
+  re-added widget (see [09](09-flow-backup-restore.md) §3). No `CURRENT_BACKUP_VERSION` bump: it is additive.

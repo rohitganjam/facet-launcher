@@ -193,6 +193,7 @@
     <ID>UnstableCollections:HomeScreen.kt:Map&lt;String, String&gt;</ID>
     <ID>UnstableCollections:HomeSurfacePreview.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:HubGrid.kt:List&lt;HubWidgetUi&gt;</ID>
+    <ID>UnstableCollections:HubLandscapeGrid.kt:List&lt;HubLandscapeWidgetUi&gt;</ID>
     <ID>UnstableCollections:LabeledDropdownRow.kt:List&lt;T&gt;</ID>
     <ID>UnstableCollections:ManageFacetsScreen.kt:List&lt;FacetEntity&gt;</ID>
     <ID>UnstableCollections:OnboardingHomeSetupPage.kt:List&lt;AppInfo&gt;</ID>

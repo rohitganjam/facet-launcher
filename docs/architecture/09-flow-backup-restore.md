@@ -87,7 +87,7 @@ Widget ids are allocated by the system `AppWidgetHost` and are meaningless on an
 after a data clear), so `widgetPlacements` are never auto-restored. The screen lists each pending
 widget and re-runs the same bind/configure state machine the Hub picker uses
 ([10-flow-hub-widgets.md](10-flow-hub-widgets.md) §2), with the backup's `row/col/colSpan/rowSpan`
-as the *preferred* slot:
+as the *preferred* slot. Its `landscapeOrder` (the widget's place in the landscape Hub's flow, an optional field that older backups lack) is restored onto the new row too:
 
 ```mermaid
 stateDiagram-v2

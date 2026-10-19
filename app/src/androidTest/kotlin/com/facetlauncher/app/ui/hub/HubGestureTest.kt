@@ -22,6 +22,10 @@ import com.facetlauncher.app.domain.DeleteWidgetUseCase
 import com.facetlauncher.app.domain.ObserveHubStateUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
+import com.facetlauncher.app.domain.FlowPackWidgetsUseCase
+import com.facetlauncher.app.domain.LandscapeHubUseCase
+import com.facetlauncher.app.domain.OrderWidgetsForLandscapeUseCase
+import com.facetlauncher.app.domain.ReorderLandscapeWidgetUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.emptyFlow
@@ -83,6 +87,7 @@ class HubGestureTest {
                     ResolveWidgetDropUseCase(),
                     ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
+                    LandscapeHubUseCase(OrderWidgetsForLandscapeUseCase(), FlowPackWidgetsUseCase(), ReorderLandscapeWidgetUseCase()),
                 )
             }
             FacetLauncherTheme {

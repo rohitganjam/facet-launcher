@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.home.HomeLayoutMode
+import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
@@ -36,6 +38,10 @@ fun HubScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HubContent(
         uiState = uiState,
+        isLandscape = rememberHomeLayoutMode() == HomeLayoutMode.LANDSCAPE,
+        onLandscapeRowsChange = viewModel::onLandscapeRowsChange,
+        onLandscapeWidgetDrop = viewModel::onLandscapeWidgetDrop,
+        onLandscapeWidgetResize = viewModel::onLandscapeWidgetResize,
         createHostView = viewModel::createHostView,
         onWidgetSizeChange = viewModel::updateWidgetSize,
         onAddClick = onAddClick,
@@ -53,6 +59,10 @@ fun HubScreen(
 @Composable
 private fun HubContent(
     uiState: HubUiState,
+    isLandscape: Boolean,
+    onLandscapeRowsChange: (Int) -> Unit,
+    onLandscapeWidgetDrop: (appWidgetId: Int, dropRow: Int, dropCol: Int) -> Unit,
+    onLandscapeWidgetResize: (appWidgetId: Int, colSpan: Int, rowSpan: Int) -> Unit,
     createHostView: (Context, Int) -> AppWidgetHostView?,
     onWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     onAddClick: () -> Unit,
@@ -90,18 +100,33 @@ private fun HubContent(
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                             )
                         }
-                        HubGrid(
-                            widgets = uiState.widgets,
-                            columns = uiState.columns,
-                            createHostView = createHostView,
-                            onWidgetSizeChange = onWidgetSizeChange,
-                            onRemoveOrphan = onRemoveOrphan,
-                            onKeepOrphanSpace = onKeepOrphanSpace,
-                            onWidgetDrop = onWidgetDrop,
-                            onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
-                            onWidgetResize = onWidgetResize,
-                            modifier = Modifier.weight(1f),
-                        )
+                        if (isLandscape) {
+                            HubLandscapeGrid(
+                                widgets = uiState.landscapeWidgets,
+                                createHostView = createHostView,
+                                onWidgetSizeChange = onWidgetSizeChange,
+                                onRowsChange = onLandscapeRowsChange,
+                                onRemoveOrphan = onRemoveOrphan,
+                                onKeepOrphanSpace = onKeepOrphanSpace,
+                                onWidgetDrop = onLandscapeWidgetDrop,
+                                onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
+                                onWidgetResize = onLandscapeWidgetResize,
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            HubGrid(
+                                widgets = uiState.widgets,
+                                columns = uiState.columns,
+                                createHostView = createHostView,
+                                onWidgetSizeChange = onWidgetSizeChange,
+                                onRemoveOrphan = onRemoveOrphan,
+                                onKeepOrphanSpace = onKeepOrphanSpace,
+                                onWidgetDrop = onWidgetDrop,
+                                onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
+                                onWidgetResize = onWidgetResize,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
                 }
             }

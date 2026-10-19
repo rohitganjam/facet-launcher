@@ -65,7 +65,7 @@ class BackupRestoreViewModelTest {
     private val viewModel = BackupRestoreViewModel(exportBackup, importBackup, appRepository, appWidgetRepository, widgetPlacementRepository, placeWidget)
 
     private val provider = ComponentName("com.example.widgets", ".Provider")
-    private val placement = BackupWidgetPlacement("com.example.widgets", ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1)
+    private val placement = BackupWidgetPlacement("com.example.widgets", ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 7)
 
     @Test
     fun `a null export destination (picker cancelled) is a no-op`() = runTest {
@@ -189,7 +189,7 @@ class BackupRestoreViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(widgetPlacementRepository).upsert(
-            WidgetPlacementEntity(appWidgetId = 5, providerPackageName = "com.example.widgets", providerClassName = ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL, userId = 0),
+            WidgetPlacementEntity(appWidgetId = 5, providerPackageName = "com.example.widgets", providerClassName = ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, profile = AppProfile.PERSONAL, userId = 0, landscapeOrder = 7),
         )
         assertEquals(true, viewModel.uiState.value.pendingWidgets[0].done)
     }

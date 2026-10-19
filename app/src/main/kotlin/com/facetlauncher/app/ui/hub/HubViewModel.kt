@@ -9,14 +9,17 @@ import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
+import com.facetlauncher.app.domain.HubWidgetState
+import com.facetlauncher.app.domain.LandscapeHubUseCase
 import com.facetlauncher.app.domain.ObserveHubStateUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -30,9 +33,14 @@ class HubViewModel @Inject constructor(
     private val resolveWidgetDrop: ResolveWidgetDropUseCase,
     private val resolveWidgetResize: ResolveWidgetResizeUseCase,
     private val compactWidgets: CompactWidgetsUseCase,
+    private val landscapeHub: LandscapeHubUseCase,
 ) : ViewModel() {
 
-    val uiState = observeHubState().map { domainState ->
+    /** How many rows the landscape grid currently fits; 0 until the landscape screen reports it. */
+    private val landscapeRows = MutableStateFlow(0)
+
+    val uiState = combine(observeHubState(), landscapeRows) { domainState, rows ->
+        val byId = domainState.widgets.associateBy { it.appWidgetId }
         HubUiState(
             widgets = domainState.widgets.map { widget ->
                 HubWidgetUi(
@@ -43,11 +51,73 @@ class HubViewModel @Inject constructor(
                     rowSpan = widget.rowSpan,
                     providerLabel = widget.providerLabel,
                     isOrphaned = widget.isOrphaned,
+                    landscapeOrder = widget.landscapeOrder,
                 )
+            },
+            landscapeWidgets = if (rows > 0) {
+                landscapeHub.layout(domainState.widgets, rows).mapNotNull { packed ->
+                    byId[packed.id]?.let { widget ->
+                        HubLandscapeWidgetUi(
+                            appWidgetId = packed.id,
+                            row = packed.row,
+                            col = packed.col,
+                            colSpan = packed.colSpan,
+                            rowSpan = packed.rowSpan,
+                            providerLabel = widget.providerLabel,
+                            isOrphaned = widget.isOrphaned,
+                        )
+                    }
+                }
+            } else {
+                emptyList()
             },
             isLoading = false,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubUiState())
+
+    /** The landscape grid reports how many rows fit, so the widgets can be packed to that height. */
+    fun onLandscapeRowsChange(rows: Int) {
+        landscapeRows.value = rows
+    }
+
+    /**
+     * A landscape drop: the widget is moved in the flow to where its top-left corner landed, which
+     * renumbers every widget's landscape order. Nothing else changes (portrait positions are untouched).
+     */
+    fun onLandscapeWidgetDrop(appWidgetId: Int, dropRow: Int, dropCol: Int) {
+        val rows = landscapeRows.value
+        if (rows <= 0) return
+        val orders = landscapeHub.ordersAfterDrop(currentDomainWidgets(), rows, appWidgetId, dropRow, dropCol)
+        viewModelScope.launch {
+            orders.forEach { (id, order) ->
+                val existing = widgetPlacementRepository.getById(id) ?: return@forEach
+                if (existing.landscapeOrder != order) widgetPlacementRepository.upsert(existing.copy(landscapeOrder = order))
+            }
+        }
+    }
+
+    /**
+     * A landscape resize changes the size both orientations share, so it goes through the same
+     * resolution as portrait's, anchored on the widget's portrait position — which may displace
+     * portrait neighbours, as a portrait resize would.
+     */
+    fun onLandscapeWidgetResize(appWidgetId: Int, colSpan: Int, rowSpan: Int) {
+        val widget = uiState.value.widgets.firstOrNull { it.appWidgetId == appWidgetId } ?: return
+        onWidgetResize(appWidgetId, widget.row, widget.col, colSpan, rowSpan)
+    }
+
+    private fun currentDomainWidgets(): List<HubWidgetState> = uiState.value.widgets.map { widget ->
+        HubWidgetState(
+            appWidgetId = widget.appWidgetId,
+            row = widget.row,
+            col = widget.col,
+            colSpan = widget.colSpan,
+            rowSpan = widget.rowSpan,
+            providerLabel = widget.providerLabel,
+            isOrphaned = widget.isOrphaned,
+            landscapeOrder = widget.landscapeOrder,
+        )
+    }
 
     /** Scoped to Hub's own visible lifetime — avoids unnecessary background IPC/battery cost. */
     fun onHubVisible() {

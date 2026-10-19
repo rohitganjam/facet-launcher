@@ -57,6 +57,10 @@ import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
+import com.facetlauncher.app.domain.FlowPackWidgetsUseCase
+import com.facetlauncher.app.domain.LandscapeHubUseCase
+import com.facetlauncher.app.domain.OrderWidgetsForLandscapeUseCase
+import com.facetlauncher.app.domain.ReorderLandscapeWidgetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
@@ -250,6 +254,7 @@ class KeyboardDismissalTest {
                     ResolveWidgetDropUseCase(),
                     ResolveWidgetResizeUseCase(),
                     CompactWidgetsUseCase(),
+                    LandscapeHubUseCase(OrderWidgetsForLandscapeUseCase(), FlowPackWidgetsUseCase(), ReorderLandscapeWidgetUseCase()),
                 )
             }
             val widgetPickerViewModel = remember {
