@@ -189,16 +189,26 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
-    fun twoColumnListIsShownAsASingleColumn() {
+    fun twoColumnListKeepsItsTwoColumnsInLandscape() {
         composeRule.setContent { LandscapeHome(appListItems = apps(4), appListLayout = AppListLayout.TWO_COLUMN) }
         composeRule.waitForIdle()
 
-        val first = boundsOf("home_app_label_com.example.app1")
-        val second = boundsOf("home_app_label_com.example.app2")
+        val labels = (1..4).map { boundsOf("home_app_label_com.example.app$it") }
 
-        // Then the second app is below the first, not beside it
-        assert(second.top > first.top) { "second $second should be below first $first" }
-        assert(kotlin.math.abs(second.left - first.left) < 1f) { "second $second should share the first's left edge $first" }
+        // Then the apps sit in two columns, so some of them share a row and the left edges differ
+        assert(labels.map { it.top.toInt() }.distinct().size < labels.size) { "expected two apps to share a row: ${labels.map { it.top }}" }
+        assert(labels.map { it.left.toInt() }.distinct().size >= 2) { "expected two columns: ${labels.map { it.left }}" }
+    }
+
+    @Test
+    fun singleColumnListStaysOneColumnInLandscape() {
+        composeRule.setContent { LandscapeHome(appListItems = apps(3), appListLayout = AppListLayout.SINGLE_COLUMN) }
+        composeRule.waitForIdle()
+
+        val labels = (1..3).map { boundsOf("home_app_label_com.example.app$it") }
+
+        assert(labels.map { it.left.toInt() }.distinct().size == 1) { "expected one column: ${labels.map { it.left }}" }
+        assert(labels.map { it.top.toInt() }.distinct().size == 3) { "expected three rows: ${labels.map { it.top }}" }
     }
 
     @Test

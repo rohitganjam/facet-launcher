@@ -307,8 +307,6 @@ fun HomeScreen(
     layoutMode: HomeLayoutMode = rememberHomeLayoutMode(),
 ) {
     val isLandscape = layoutMode == HomeLayoutMode.LANDSCAPE
-    // Landscape's list is always a single column; the two-column layout is a portrait choice.
-    val effectiveAppListLayout = if (isLandscape && appListLayout == AppListLayout.TWO_COLUMN) AppListLayout.SINGLE_COLUMN else appListLayout
     val appLabelColor = appLabelColorOption.resolve()
     val appLabelFontWeight = homeAppsFontWeight.resolve()
     val density = LocalDensity.current
@@ -766,7 +764,7 @@ fun HomeScreen(
                     // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
                     // second verticalScroll would double up the scroll gesture. Single-
                     // column/two-column still use this Column's own scroll, same as today.
-                    .let { if (effectiveAppListLayout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
+                    .let { if (appListLayout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
                     .testTag("home_app_list_scroll_region"),
             ) {
                 // A scrollable Column measures its content at its natural, unconstrained
@@ -783,7 +781,7 @@ fun HomeScreen(
                     if (showUsageAccessPrompt) {
                         UsageAccessStrip(onClick = onUsageAccessPromptClick)
                     } else {
-                        when (effectiveAppListLayout) {
+                        when (appListLayout) {
                             AppListLayout.TWO_COLUMN -> HomeAppTwoColumnList(
                                 appListItems = appListItems,
                                 columnAlignment = appListColumnAlignment,
