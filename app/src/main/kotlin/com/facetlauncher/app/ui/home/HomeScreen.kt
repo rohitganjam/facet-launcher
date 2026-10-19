@@ -394,7 +394,15 @@ fun HomeScreen(
     // rendering branch is needed for the default state.
     val basePersistedHandlePx = clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
         ?: (defaultTopOffsetPx + clockNaturalHeightPx + minGapPx)
-    val floorPx = clockNaturalHeightPx + minGapPx
+    // See clockHandleFloorPx: the native clock shrinks live (effectiveClockScale) to let the handle go higher.
+    val floorPx = clockHandleFloorPx(
+        blockHeightPx = clockNaturalHeightPx,
+        clockBoxHeightPx = clockBoxSize?.height?.toFloat() ?: clockNaturalHeightPx,
+        headroomPx = with(density) { (HOME_CLOCK_RESIZE_HANDLE_INSET + 12.dp).toPx() },
+        minGapPx = minGapPx,
+        minScale = HOME_CLOCK_MIN_SCALE,
+        canShrink = clockWidgetAppWidgetId == null && clockBoxSize != null,
+    )
     // maxOf guards against contentHeightPx still being 0f before the first layout pass, which
     // would otherwise make the ceiling fall below the floor and crash coerceIn.
     val ceilingPx = maxOf(floorPx, HOME_CLOCK_ZONE_MAX_FRACTION * contentHeightPx)
@@ -1106,7 +1114,8 @@ fun HomeScreen(
                     .offset { IntOffset(0, handlePx.roundToInt()) },
                 onDragStart = { onDraggingHandleChange(true) },
                 onDrag = { deltaDp ->
-                    liveHandlePx = (liveHandlePx ?: basePersistedHandlePx) + with(density) { deltaDp.dp.toPx() }
+                    // Clamped here too, so the handle follows the finger straight away when a drag reverses.
+                    liveHandlePx = ((liveHandlePx ?: basePersistedHandlePx) + with(density) { deltaDp.dp.toPx() }).coerceIn(floorPx, ceilingPx)
                 },
                 onDragEnd = {
                     onDraggingHandleChange(false)

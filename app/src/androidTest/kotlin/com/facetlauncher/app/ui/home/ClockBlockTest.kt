@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home
 
 import android.appwidget.AppWidgetHostView
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -30,6 +32,29 @@ class ClockBlockTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun clockBoxKeepsItsNaturalWidthInAColumnNarrowerThanTheClock() {
+        // Given a clock block squeezed into a 40dp wide slot, as a narrow landscape pane would
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        var measuredWidthPx = 0
+        composeRule.setContent {
+            FacetLauncherTheme {
+                androidx.compose.foundation.layout.Box(modifier = androidx.compose.ui.Modifier.width(40.dp)) {
+                    ClockBlock(
+                        clock = fixedClock,
+                        locale = Locale.US,
+                        clockBoxModifier = androidx.compose.ui.Modifier.onGloballyPositioned { measuredWidthPx = it.size.width },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        // Then the box that the resize maths uses reports the clock's real width, not the slot's
+        val slotPx = with(composeRule.density) { 40.dp.roundToPx() }
+        assertTrue("clock box ($measuredWidthPx px) should be wider than its 40dp slot ($slotPx px)", measuredWidthPx > slotPx)
+    }
 
     @Test
     fun rendersTimeAndDateForAFixedClock() {

@@ -40,6 +40,14 @@ slots.
 | Panes | n/a | Clock pane (40% of the window until a width is saved), a 24dp gap holding the divider handle, apps pane the rest |
 | Clock adjust mode | A horizontal height handle, an alignment pill (left / center / right) and top corner scale handles | A vertical divider handle, an alignment pill (top / middle / bottom) and scale handles; see section 4 |
 
+## 2a. Portrait's height handle limit
+
+The handle's upper limit (`clockHandleFloorPx`) is not the clock's full-size footprint but the clock at
+its smallest scale plus the headroom its resize handles need: dragging the handle up shrinks the clock
+live (`effectiveClockScale`), and the handle stops where it reaches the smallest scale. Anything below the
+clock box keeps its height, and a hosted clock widget, which can't shrink that way, keeps its whole block.
+The live drag value is clamped too, so the handle follows the finger as soon as a drag reverses.
+
 ## 3. Portrait-only logic that landscape must not run
 
 The scale re-clamp (`maxScaleThatFits`) is portrait geometry, and in landscape it would persist a wrong
@@ -69,6 +77,9 @@ Long-pressing the clock opens the same menu, now with "Adjust clock size & posit
   handle never loses the finger), and on release the shrunk scale is saved so it doesn't snap back.
   Landscape also always clamps the *rendered* scale to its pane, adjust mode or not, without saving it:
   a saved scale or width carried over from portrait can look smaller here until it is dragged.
+
+`ClockBlock` measures its clock box at the clock's natural width even when the column is narrower (a
+narrow pane), because the resize maths relies on that size; clamping it let the divider go past the clock.
 
 The geometry is pure functions in `HomeLandscapeGeometry.kt`. A hosted clock widget has no landscape
 adjust yet: the menu hides the Adjust row for it, and adjust mode ends if a widget gets bound.

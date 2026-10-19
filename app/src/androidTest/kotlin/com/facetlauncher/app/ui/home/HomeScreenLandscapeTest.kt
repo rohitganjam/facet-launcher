@@ -385,6 +385,20 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
+    fun aSavedWidthTooNarrowForTheClockIsRaisedSoTheClockStillFits() {
+        // Given a saved width of 1dp, far narrower than any clock
+        composeRule.setContent { LandscapeHome(clockZoneHeightDp = 1f) }
+        enterAdjustMode()
+
+        val pane = boundsOf("home_clock_pane")
+        val clock = boundsOf("home_clock_block")
+
+        // Then the pane is wide enough for the shrunk clock and its margins, and the clock is inside it
+        assert(pane.width > clock.width) { "pane $pane should be wider than the clock $clock" }
+        assert(clock.left >= pane.left && clock.right <= pane.right) { "clock $clock should be inside the pane $pane" }
+    }
+
+    @Test
     fun paneWidthIsCappedAtHalfTheWindow() {
         composeRule.setContent { LandscapeHome(clockZoneHeightDp = 5000f) }
         composeRule.waitForIdle()

@@ -962,6 +962,25 @@ class HomeScreenTest {
     }
 
     @Test
+    fun zoneHandleCanGoHigherThanTheClocksFullSizeFootprintWhenTheClockIsScaledDown() {
+        // Given a clock already scaled to its smallest size, so half its footprint is empty headroom
+        composeRule.setContent { TestHomeScreen(appListItems = apps(3), clockScale = 0.5f) }
+        enterAdjustMode()
+        val handleTopBefore = composeRule.onNodeWithTag("home_clock_zone_handle").fetchSemanticsNode().boundsInRoot.top
+
+        // When the handle is dragged as far up as it will go
+        dragHandleBy(-3000f)
+
+        // Then it moved further than the default top offset (the old limit was the full footprint, which
+        // is exactly that far above the default position), and the clock stays inside the content area
+        val handleTopAfter = composeRule.onNodeWithTag("home_clock_zone_handle").fetchSemanticsNode().boundsInRoot.top
+        val moved = handleTopBefore - handleTopAfter
+        val oldLimit = with(composeRule.density) { 52.dp.toPx() }
+        assertTrue("handle moved $moved px, expected more than the old limit of $oldLimit px", moved > oldLimit + 20f)
+        assertTrue(composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.top >= 0f)
+    }
+
+    @Test
     fun zoneHeightCannotExceedHalfOfContentHeight() {
         // Given the default layout
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }

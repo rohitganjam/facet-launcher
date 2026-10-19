@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -128,6 +129,9 @@ fun ClockBlock(
         Box(
             modifier = Modifier
                 .align(clockAlignment.resolve())
+                // Measure the clock at its natural width even when the column is narrower (a narrow
+                // landscape pane): otherwise the box size, which the resize maths relies on, is clamped.
+                .wrapContentWidth(align = clockAlignment.resolve(), unbounded = true)
                 .then(clockBoxModifier),
         ) {
             ClockOrWidgetContent(
