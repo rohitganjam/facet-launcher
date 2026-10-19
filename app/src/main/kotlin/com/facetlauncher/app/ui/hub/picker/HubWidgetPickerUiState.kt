@@ -9,6 +9,12 @@ data class WidgetProviderGroup(
     val options: List<WidgetProviderOption>,
 )
 
+/** Groups by owning app, apps A-Z by name (case-insensitive) and each app's widgets A-Z by widget name. */
+fun List<WidgetProviderOption>.toSortedGroups(): List<WidgetProviderGroup> =
+    groupBy { it.appLabel }
+        .map { (appLabel, options) -> WidgetProviderGroup(appLabel, options.sortedBy { it.widgetLabel.lowercase() }) }
+        .sortedBy { it.appLabel.lowercase() }
+
 data class HubWidgetPickerUiState(
     val query: String = "",
     val groups: List<WidgetProviderGroup> = emptyList(),

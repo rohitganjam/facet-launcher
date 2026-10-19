@@ -8,7 +8,7 @@ import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.ui.hub.picker.AddFailureReason
 import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerUiState
-import com.facetlauncher.app.ui.hub.picker.WidgetProviderGroup
+import com.facetlauncher.app.ui.hub.picker.toSortedGroups
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -59,7 +59,7 @@ class ClockWidgetPickerViewModel @Inject constructor(
         }
         HubWidgetPickerUiState(
             query = currentQuery,
-            groups = filtered.groupBy { it.appLabel }.map { (appLabel, options) -> WidgetProviderGroup(appLabel, options) },
+            groups = filtered.toSortedGroups(),
             remaining = null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState(remaining = null))

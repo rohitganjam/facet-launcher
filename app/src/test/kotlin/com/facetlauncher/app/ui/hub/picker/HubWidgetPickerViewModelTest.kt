@@ -272,6 +272,36 @@ class HubWidgetPickerViewModelTest {
     }
 
     @Test
+    fun `groups are sorted by app name ignoring case and widgets by widget name`() = runTest {
+        // Given options returned in no particular order
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+        val placeWidget = mock(PlaceWidgetUseCase::class.java)
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(
+            listOf(
+                WidgetProviderOption(ComponentName("p.zed", ".W1"), "Zed", "Clock", 2, 2),
+                WidgetProviderOption(ComponentName("p.bee", ".W1"), "bee", "Weather", 2, 2),
+                WidgetProviderOption(ComponentName("p.alp", ".W1"), "Alpha", "Notes", 2, 2),
+                WidgetProviderOption(ComponentName("p.bee", ".W2"), "bee", "Calendar", 2, 2),
+            ),
+        )
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+
+        // When the picker loads
+        val states = mutableListOf<HubWidgetPickerUiState>()
+        val job = launch { viewModel.uiState.collect { states.add(it) } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then apps are A-Z regardless of case, and each app's widgets are A-Z
+        val groups = states.last().groups
+        assertEquals(listOf("Alpha", "bee", "Zed"), groups.map { it.appLabel })
+        assertEquals(listOf("Calendar", "Weather"), groups[1].options.map { it.widgetLabel })
+
+        job.cancel()
+    }
+
+    @Test
     fun `reset clears query and cached options`() = runTest {
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)

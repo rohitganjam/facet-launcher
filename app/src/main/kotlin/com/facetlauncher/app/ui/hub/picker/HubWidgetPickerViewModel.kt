@@ -58,7 +58,7 @@ class HubWidgetPickerViewModel @Inject constructor(
         }
         HubWidgetPickerUiState(
             query = currentQuery,
-            groups = filtered.groupBy { it.appLabel }.map { (appLabel, options) -> WidgetProviderGroup(appLabel, options) },
+            groups = filtered.toSortedGroups(),
             remaining = (HUB_MAX_WIDGETS - placements.size).coerceAtLeast(0),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState())
