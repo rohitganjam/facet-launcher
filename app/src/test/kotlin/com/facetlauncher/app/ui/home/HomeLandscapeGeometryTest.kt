@@ -36,6 +36,32 @@ class HomeLandscapeGeometryTest {
     }
 
     @Test
+    fun `a divider drag step moves the pane by the drag amount`() {
+        assertEquals(350f, landscapeDividerDragWidthPx(currentPx = 300f, deltaPx = 50f, floorPx = 200f, contentWidthPx = 1000f), 0.01f)
+        assertEquals(250f, landscapeDividerDragWidthPx(currentPx = 300f, deltaPx = -50f, floorPx = 200f, contentWidthPx = 1000f), 0.01f)
+    }
+
+    @Test
+    fun `a divider drag stops at the smallest clock plus its margins`() {
+        assertEquals(200f, landscapeDividerDragWidthPx(currentPx = 220f, deltaPx = -500f, floorPx = 200f, contentWidthPx = 1000f), 0.01f)
+    }
+
+    @Test
+    fun `a divider drag past the floor comes back as soon as the finger reverses`() {
+        // Given a drag that overshot the floor, then moved back by 30px
+        val atFloor = landscapeDividerDragWidthPx(currentPx = 220f, deltaPx = -500f, floorPx = 200f, contentWidthPx = 1000f)
+        val reversed = landscapeDividerDragWidthPx(currentPx = atFloor, deltaPx = 30f, floorPx = 200f, contentWidthPx = 1000f)
+
+        // Then the pane follows the finger straight away instead of sitting in a dead zone
+        assertEquals(230f, reversed, 0.01f)
+    }
+
+    @Test
+    fun `a divider drag stops at half the window`() {
+        assertEquals(500f, landscapeDividerDragWidthPx(currentPx = 480f, deltaPx = 400f, floorPx = 200f, contentWidthPx = 1000f), 0.01f)
+    }
+
+    @Test
     fun `max scale is limited by the pane width`() {
         // Given a 440px pane with 40px of margins around a 200px wide clock
         assertEquals(2f, landscapeMaxClockScale(natural, paneWidthPx = 440f, paneHeightPx = 1000f, horizontalMarginsPx = 40f, minScale = 0.5f, maxScale = 3f), 0.001f)

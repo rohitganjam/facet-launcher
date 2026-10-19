@@ -314,18 +314,52 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
-    fun draggingTheDividerLeftNarrowsThePaneButNeverBelowTheClock() {
+    fun draggingTheDividerLeftShrinksTheClockDownToItsSmallestScaleAndStopsThere() {
+        // Given the default 0.8 clock scale
+        var saved by mutableStateOf<Float?>(null)
+        var scaleCommitted: Float? = null
+        composeRule.setContent {
+            LandscapeHome(clockZoneHeightDp = saved, onClockZoneHeightCommit = { saved = it }, onClockScaleCommit = { scaleCommitted = it })
+        }
+        enterAdjustMode()
+        val paneBefore = boundsOf("home_clock_pane").width
+        val clockBefore = boundsOf("home_clock_block").width
+
+        // When the divider is pulled far to the left
+        dragDividerBy(-3000f)
+
+        // Then the pane narrowed and the clock shrank with it, but only to 0.5 / 0.8 of its size
+        val paneAfter = boundsOf("home_clock_pane").width
+        val clockAfter = boundsOf("home_clock_block")
+        assert(paneAfter < paneBefore) { "pane should narrow: $paneBefore -> $paneAfter" }
+        assert(clockAfter.width < clockBefore) { "clock should shrink: $clockBefore -> ${clockAfter.width}" }
+        assert(clockAfter.width >= clockBefore * 0.5f / 0.8f - 2f) { "clock should not go below its smallest scale: $clockBefore -> ${clockAfter.width}" }
+        assert(clockAfter.right <= boundsOf("home_clock_pane").right) { "clock $clockAfter should still fit its pane" }
+        // And, as in portrait, the shrunk scale was saved on release
+        assert(scaleCommitted != null && scaleCommitted!! < 0.8f) { "expected the shrunk scale to be saved, got $scaleCommitted" }
+    }
+
+    @Test
+    fun theDividerFollowsTheFingerStraightAwayAfterHittingTheLimit() {
         var saved by mutableStateOf<Float?>(null)
         composeRule.setContent { LandscapeHome(clockZoneHeightDp = saved, onClockZoneHeightCommit = { saved = it }) }
         enterAdjustMode()
-        val before = boundsOf("home_clock_pane").width
 
-        dragDividerBy(-2000f)
+        // When the divider is pulled well past its limit and then back right by a little
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { down(center) }
+        composeRule.waitForIdle()
+        repeat(4) {
+            composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { moveBy(Offset(-400f, 0f)) }
+            composeRule.waitForIdle()
+        }
+        val atLimit = boundsOf("home_clock_pane").width
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { moveBy(Offset(60f, 0f)) }
+        composeRule.waitForIdle()
+        val afterReverse = boundsOf("home_clock_pane").width
+        composeRule.onNodeWithTag("home_clock_zone_handle").performTouchInput { up() }
 
-        val after = boundsOf("home_clock_pane").width
-        val clock = boundsOf("home_clock_block")
-        assert(after < before) { "pane should narrow: $before -> $after" }
-        assert(clock.right <= boundsOf("home_clock_pane").right) { "clock $clock should still fit its pane" }
+        // Then the pane widened right away instead of the finger sitting in a dead zone
+        assert(afterReverse > atLimit + 20f) { "pane should widen at once: $atLimit -> $afterReverse" }
     }
 
     @Test

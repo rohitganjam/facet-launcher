@@ -20,6 +20,16 @@ internal fun landscapeClockPaneWidthPx(persistedPx: Float?, contentWidthPx: Floa
 }
 
 /**
+ * The pane width after one divider drag step. It stops at [floorPx] (the smallest the clock may be
+ * scaled to, plus its margins) and at half the window. Clamping the live value, not just what is
+ * drawn, keeps the handle under the finger when the drag reverses.
+ */
+internal fun landscapeDividerDragWidthPx(currentPx: Float, deltaPx: Float, floorPx: Float, contentWidthPx: Float): Float {
+    val ceilingPx = maxOf(floorPx, HOME_LANDSCAPE_CLOCK_PANE_MAX_FRACTION * contentWidthPx)
+    return (currentPx + deltaPx).coerceIn(floorPx, ceilingPx)
+}
+
+/**
  * The largest clock scale that still fits its pane: the clock is scaled in place from its left edge,
  * so it may grow to the pane's inner width ([paneWidthPx] less the margins) and to the pane's height.
  */

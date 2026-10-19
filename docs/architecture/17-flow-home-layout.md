@@ -64,9 +64,11 @@ Long-pressing the clock opens the same menu, now with "Adjust clock size & posit
   (`ClockBlock(clockScaleOriginY)`); `landscapeScaleAtTouch` turns a touch into a scale and
   `landscapeMaxClockScale` limits it to the pane. Dragging one saves `clockScale`, which both
   orientations share.
-- **Narrow pane.** A pane too narrow for the clock shrinks it on screen only; the saved scale is not
-  changed, because it is shared with portrait. Landscape always clamps the rendered scale to its pane
-  the same way, whether or not adjust mode is on.
+- **Narrow pane.** As with portrait's height handle, pulling the divider left shrinks the clock in real
+  time. It stops at the smallest clock scale plus the margins (the live drag value is clamped too, so the
+  handle never loses the finger), and on release the shrunk scale is saved so it doesn't snap back.
+  Landscape also always clamps the *rendered* scale to its pane, adjust mode or not, without saving it:
+  a saved scale or width carried over from portrait can look smaller here until it is dragged.
 
 The geometry is pure functions in `HomeLandscapeGeometry.kt`. A hosted clock widget has no landscape
 adjust yet: the menu hides the Adjust row for it, and adjust mode ends if a widget gets bound.

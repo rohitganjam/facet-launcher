@@ -1061,9 +1061,11 @@ fun HomeScreen(
         val adjustingInLandscape = adjusting && isLandscape && clockWidgetAppWidgetId == null
 
         if (adjustingInLandscape) {
-            // The divider between the clock and apps panes: dragging it sets the clock pane's width. A pane
-            // too narrow for the clock only shrinks it on screen (the saved scale is left alone), unlike
-            // portrait's height handle, because the scale is shared with the other orientation.
+            // The divider between the clock and apps panes: dragging it sets the clock pane's width. As with
+            // portrait's height handle, a narrower pane shrinks the clock in real time, down to its smallest
+            // scale where the divider stops, and on release the shrunk scale is saved so it doesn't snap back.
+            // (A saved width that is already too narrow for the saved scale, e.g. one carried over from
+            // portrait, shrinks the clock on screen only until it is dragged.)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1078,12 +1080,18 @@ fun HomeScreen(
                     },
                     onDragStart = { onDraggingHandleChange(true) },
                     onDrag = { deltaDp ->
-                        liveDividerWidthPx = (liveDividerWidthPx ?: landscapePaneWidthPx) + with(density) { deltaDp.dp.toPx() }
+                        liveDividerWidthPx = landscapeDividerDragWidthPx(
+                            currentPx = liveDividerWidthPx ?: landscapePaneWidthPx,
+                            deltaPx = with(density) { deltaDp.dp.toPx() },
+                            floorPx = landscapeMarginsPx + landscapeNaturalSize.width * HOME_CLOCK_MIN_SCALE,
+                            contentWidthPx = landscapeContentWidth,
+                        )
                     },
                     onDragEnd = {
                         onDraggingHandleChange(false)
                         // liveDividerWidthPx is held until LaunchedEffect(clockZoneHeightDp) sees the commit land.
                         onClockZoneHeightCommit(with(density) { landscapePaneWidthPx.toDp().value })
+                        if (effectiveClockScale < clockScale - 0.005f) onClockScaleCommit(effectiveClockScale)
                     },
                 )
             }
