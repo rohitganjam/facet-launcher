@@ -280,6 +280,9 @@
     <string name="media_skip_buttons_row_title">Überspringen-Tasten anzeigen</string>
     <string name="notification_preview_title">Vorschau</string>
     <string name="notification_preview_app">Nachrichten</string>
+    <string name="notification_preview_no_access">Für die Vorschau von Badges und Mediaplayer wird Benachrichtigungszugriff benötigt.</string>
+    <string name="notification_preview_allow_access">Zugriff erlauben</string>
+    <string name="notification_preview_disabled">Badges und Mediaplayer sind aus, daher zeigt Home keine Benachrichtigungen.</string>
     <string name="media_player_open_cd">Player öffnen</string>
     <string name="media_player_previous_cd">Vorheriger Titel</string>
     <string name="media_player_next_cd">Nächster Titel</string>

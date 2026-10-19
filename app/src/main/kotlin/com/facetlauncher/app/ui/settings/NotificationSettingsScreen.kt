@@ -90,6 +90,7 @@ fun NotificationSettingsScreen(
             if (checked && !uiState.isAccessGranted) onNavigateToNotificationAccessExplanation()
         },
         onShowSkipButtonsChange = viewModel::setShowSkipButtons,
+        onGrantAccess = onNavigateToNotificationAccessExplanation,
         modifier = modifier,
     )
 }
@@ -103,6 +104,7 @@ private fun NotificationSettingsContent(
     onShowInAppMenuChange: (Boolean) -> Unit,
     onShowMediaPlayerChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: (Boolean) -> Unit,
+    onGrantAccess: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // The stored preference alone isn't enough to actually show badges — it defaults to true and
@@ -149,10 +151,7 @@ private fun NotificationSettingsContent(
             modifier = Modifier.padding(top = 16.dp),
         )
 
-        NotificationPreview(
-            badgeStyle = uiState.settings.notificationBadgeStyle,
-            showSkipButtons = uiState.settings.showMediaSkipButtons,
-        )
+        NotificationPreview(uiState = uiState, onGrantAccess = onGrantAccess)
     }
 }
 
@@ -267,6 +266,7 @@ private fun NotificationSettingsScreenPreview() {
             onShowInAppMenuChange = {},
             onShowMediaPlayerChange = {},
             onShowSkipButtonsChange = {},
+            onGrantAccess = {},
         )
     }
 }

@@ -280,6 +280,9 @@
     <string name="media_skip_buttons_row_title">Mostrar botones de salto</string>
     <string name="notification_preview_title">Vista previa</string>
     <string name="notification_preview_app">Mensajes</string>
+    <string name="notification_preview_no_access">Se necesita acceso a las notificaciones para previsualizar insignias y el reproductor.</string>
+    <string name="notification_preview_allow_access">Permitir acceso</string>
+    <string name="notification_preview_disabled">Las insignias y el reproductor están desactivados, así que Inicio no mostrará notificaciones.</string>
     <string name="media_player_open_cd">Abrir reproductor</string>
     <string name="media_player_previous_cd">Pista anterior</string>
     <string name="media_player_next_cd">Pista siguiente</string>

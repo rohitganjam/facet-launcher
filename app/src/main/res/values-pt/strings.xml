@@ -280,6 +280,9 @@
     <string name="media_skip_buttons_row_title">Mostrar botões de pular</string>
     <string name="notification_preview_title">Pré-visualização</string>
     <string name="notification_preview_app">Mensagens</string>
+    <string name="notification_preview_no_access">O acesso às notificações é necessário para visualizar os selos e o player.</string>
+    <string name="notification_preview_allow_access">Permitir acesso</string>
+    <string name="notification_preview_disabled">Os selos e o player estão desativados, então o Início não mostrará notificações.</string>
     <string name="media_player_open_cd">Abrir reprodutor</string>
     <string name="media_player_previous_cd">Faixa anterior</string>
     <string name="media_player_next_cd">Próxima faixa</string>

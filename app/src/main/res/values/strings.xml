@@ -299,6 +299,9 @@
     <string name="media_skip_buttons_row_title">Show skip buttons</string>
     <string name="notification_preview_title">Preview</string>
     <string name="notification_preview_app">Messages</string>
+    <string name="notification_preview_no_access">Notification access is needed to preview badges and the media player.</string>
+    <string name="notification_preview_allow_access">Allow access</string>
+    <string name="notification_preview_disabled">Badges and the media player are off, so Home won\'t show any notifications.</string>
     <string name="notification_preview_track" translatable="false">Midnight City</string>
     <string name="notification_preview_artist" translatable="false">M83</string>
 

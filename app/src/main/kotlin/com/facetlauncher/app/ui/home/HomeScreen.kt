@@ -1786,6 +1786,9 @@ internal fun AppRow(
                         // No visible label to carry the a11y name when text is hidden — mirrors
                         // the Dock's own icons-only mode (see DockIcon below).
                         contentDescription = if (showLabel) null else app.label,
+                        // Icon-only has no label to trail, so it badges the icon's corner like a grid tile.
+                        notificationCount = badgeCount.takeUnless { showLabel },
+                        badgeStyle = badgeStyle,
                         modifier = Modifier.testTag("${testTagPrefix}app_icon_${app.packageName}"),
                     )
                 }
@@ -1801,7 +1804,7 @@ internal fun AppRow(
                 }
             }
             val badge: @Composable () -> Unit = {
-                if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
+                badgeCount.takeIf { showLabel }?.takeIf { it > 0 }?.let { NotificationBadge(count = it, style = badgeStyle) }
             }
             if (position == AppRowPosition.RIGHT) {
                 // Badge first, then label (leftmost of the packed content), icon last — landing

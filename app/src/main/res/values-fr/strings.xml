@@ -280,6 +280,9 @@
     <string name="media_skip_buttons_row_title">Afficher les boutons de saut</string>
     <string name="notification_preview_title">Aperçu</string>
     <string name="notification_preview_app">Messages</string>
+    <string name="notification_preview_no_access">L\'accès aux notifications est nécessaire pour prévisualiser les badges et le lecteur.</string>
+    <string name="notification_preview_allow_access">Autoriser l\'accès</string>
+    <string name="notification_preview_disabled">Les badges et le lecteur sont désactivés, l\'accueil n\'affichera donc aucune notification.</string>
     <string name="media_player_open_cd">Ouvrir le lecteur</string>
     <string name="media_player_previous_cd">Piste précédente</string>
     <string name="media_player_next_cd">Piste suivante</string>
