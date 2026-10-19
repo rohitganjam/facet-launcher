@@ -33,7 +33,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (27 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)
-    ├── home/                      (17)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
+    ├── home/                      (18)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
     │                                    ClockAdjustToolbar, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, shared scaled `HomePreview` + `HomePreviewState`
     │   ├── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
     │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
@@ -82,11 +82,11 @@ app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + 
 │   ├── model/     10   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
 ├── domain/        39   one test per use case (pure logic — no Android needed for most)
-└── ui/            50   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
+└── ui/            51   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/            59   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
+└── ui/            66   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

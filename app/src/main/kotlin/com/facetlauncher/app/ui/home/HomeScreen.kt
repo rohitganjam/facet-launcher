@@ -301,7 +301,12 @@ fun HomeScreen(
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    /** Portrait stacks clock, list and dock; landscape splits the window into panes — see [HomeLandscapeLayout]. */
+    layoutMode: HomeLayoutMode = rememberHomeLayoutMode(),
 ) {
+    val isLandscape = layoutMode == HomeLayoutMode.LANDSCAPE
+    // Landscape's list is always a single column; the two-column layout is a portrait choice.
+    val effectiveAppListLayout = if (isLandscape && appListLayout == AppListLayout.TWO_COLUMN) AppListLayout.SINGLE_COLUMN else appListLayout
     val appLabelColor = appLabelColorOption.resolve()
     val appLabelFontWeight = homeAppsFontWeight.resolve()
     val density = LocalDensity.current
@@ -317,6 +322,8 @@ fun HomeScreen(
     // clockNaturalHeightPx is the clock+calendar block's intrinsic height (offset-independent, so
     // this is a stable one-frame-lag measurement, same pattern as e.g. ui/components/HubGrid.kt).
     var contentHeightPx by remember { mutableFloatStateOf(0f) }
+    // Landscape only: the apps pane's width, for narrowing the grid to what fits.
+    var appsPaneWidthPx by remember { mutableFloatStateOf(0f) }
     var clockNaturalHeightPx by remember { mutableFloatStateOf(0f) }
     // Natural (unconstrained) height of the app-list content, measured inside the scrollable
     // region — see the one-shot compact-spacing check below.
@@ -405,7 +412,8 @@ fun HomeScreen(
         if (reservePx > 0f) maxOf(handlePx, mediaRowTopPx + reservePx + mediaBelowGapPx) else handlePx
     }
     val appListTopPx = appListTopFor(mediaRowHeightPx * mediaFraction)
-    val appListTopTargetPx = appListTopFor(if (mediaPlayer != null) mediaRowHeightPx else 0f)
+    // Landscape's list fills its own pane from the top, so nothing is reserved above it.
+    val appListTopTargetPx = if (isLandscape) 0f else appListTopFor(if (mediaPlayer != null) mediaRowHeightPx else 0f)
 
     // The clock renders at its persisted [clockScale] and nothing recomputes it frame to frame.
     // The largest scale that still fits — headroom above the pinned bottom (past the status bar,
@@ -452,7 +460,9 @@ fun HomeScreen(
     // only persist a smaller value if it genuinely clips. Never runs otherwise. Shares its
     // settle-wait timing (GEOMETRY_SETTLE_*) with the compact-spacing check below — same pattern,
     // same tuning.
-    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwnerFacetId) {
+    LaunchedEffect(clockTemplateId, clockAlignment, clockDateStyle, clockZoneHeightDp, clockPositionOwnerFacetId, isLandscape) {
+        // The fit maths is portrait geometry; running it in landscape would persist a wrong scale.
+        if (isLandscape) return@LaunchedEffect
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
             snapshotFlow { Triple(clockBoxSize, clockBoxOriginInRoot, rootSize) }
                 .filter { it.first != null && it.second != null && it.third != null }
@@ -611,262 +621,230 @@ fun HomeScreen(
             )
             .testTag("home_screen_root"),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without
-                // this the dock at the bottom draws under the gesture/nav bar. On the content
-                // Column, not the outer Box, so the Box stays truly full-screen for the resize
-                // handles' root-coordinate math.
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .padding(bottom = 22.dp)
-        ) {
-            // Everything but the dock keeps the screen's own 24dp side margin. The dock row is
-            // deliberately outside this padding (see below) so Arrangement.SpaceEvenly can space its
-            // icons against the true screen edge, not this inset.
-            Box(
-                modifier = Modifier
-                    .weight(1f)
+        // Shared by the portrait and landscape layouts below.
+        val clockBlock: @Composable (Modifier, ClockAlignment) -> Unit = { blockModifier, blockAlignment ->
+            ClockBlock(
+                modifier = blockModifier,
+                // A plain tap opens the default clock app; a long-press instead reveals the
+                // grab handle ("drag mode"). Both live in the SAME detector deliberately — an
+                // earlier attempt put the tap on a separate, nested pointerInput/clickable
+                // around just ClockDisplay, but any child gesture recognizer (even a bare
+                // detectTapGestures with no clickable/ripple involved) claims/consumes the down
+                // event as soon as it starts watching it, which silently prevented this
+                // ancestor's long-press from ever completing (see chat history — broke every
+                // drag-mode test the moment the clock became independently tappable). A tap
+                // that lands on one of CalendarEventsBlock's own event rows is unaffected —
+                // those are a genuine descendant clickable, which (per Compose's
+                // child-before-parent dispatch) claims the gesture before this detector ever
+                // sees it, so onTap correctly never fires for an event tap. Deliberately scoped
+                // to just the rendered clock content (via ClockBlock's own clockContentModifier
+                // param, applied inside ClockBlock to a wrap-content box around ClockDisplay
+                // only) rather than the old full-width ClockBlock modifier — the old full-width
+                // box swallowed every long-press landing in the empty space beside/around the
+                // actual clock text, which silently prevented HomeDrawerRoute's own outer
+                // long-press (open the facet carousel) from ever firing there (see chat
+                // history). Only the clock's own visible bounds are tappable now; everything
+                // outside — including beside a Left/Right-aligned clock, and beside/below the
+                // independently-aligned CalendarEventsBlock — falls through untouched.
+                clockContentModifier = Modifier
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { onClockClick() },
+                            onLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) },
+                        )
+                    }
+                    .testTag("home_clock_block"),
+                clockBoxModifier = Modifier.onGloballyPositioned {
+                    clockBoxSize = it.size
+                    clockBoxOriginInRoot = it.positionInRoot()
+                },
+                use24HourTime = use24HourTime,
+                templateId = clockTemplateId,
+                fontOption = clockFontOption,
+                colorOption = clockColorOption,
+                accentColorOption = clockAccentColorOption,
+                showMeridiem = clockShowMeridiem,
+                dateStyle = clockDateStyle,
+                clockAlignment = blockAlignment,
+                clockScale = effectiveClockScale,
+                events = calendarEvents,
+                calendarColors = calendarColors,
+                calendarDisplay = calendarDisplay,
+                homeAppsFontWeight = homeAppsFontWeight,
+                appLabelColorOption = appLabelColorOption,
+                onEventClick = onEventClick,
+                launcherFontOption = launcherFontOption,
+                nextAlarmMillis = nextAlarmMillis,
+                batteryPercent = batteryPercent,
+                isCharging = isCharging,
+                clockWidgetAppWidgetId = clockWidgetAppWidgetId,
+                createClockWidgetHostView = createClockWidgetHostView,
+                clockWidgetWidthDp = effectiveClockWidgetWidthDp,
+                clockWidgetHeightDp = effectiveClockWidgetHeightDp,
+                // The raw incoming (not live-drag-adjusted) size — only changes once a commit
+                // round-trips through Room, unlike effectiveClockWidgetWidthDp/HeightDp above.
+                // See ClockWidgetTile's own doc for why the real provider push must not track
+                // every drag frame.
+                clockWidgetCommittedWidthDp = clockWidgetWidthDp,
+                clockWidgetCommittedHeightDp = clockWidgetHeightDp,
+                onClockWidgetSizeChange = onClockWidgetSizeChange,
+                onClockWidgetLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) },
+                onClockWidgetNestedScrollStart = onClockWidgetNestedScrollStart,
+                onClockWidgetLeftoverScroll = onClockWidgetLeftoverScroll,
+                onClockWidgetNestedScrollStop = onClockWidgetNestedScrollStop,
+                onClockWidgetLeftoverFling = onClockWidgetLeftoverFling,
+            )
+        }
+        val mediaRow: @Composable (MediaPlayerState, Modifier) -> Unit = { mediaState, rowModifier ->
+            MediaPlayerRow(
+                state = mediaState,
+                showSkipButtons = showMediaSkipButtons,
+                onPrevious = onMediaPrevious,
+                onPlayPause = onMediaPlayPause,
+                onNext = onMediaNext,
+                onOpen = onMediaOpen,
+                labelColor = appLabelColor,
+                labelFontWeight = appLabelFontWeight,
+                modifier = rowModifier,
+            )
+        }
+        val appListRegion: @Composable (Modifier, Dp) -> Unit = { positionModifier, maxHeight ->
+            Column(
+                modifier = positionModifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .onSizeChanged { contentHeightPx = it.height.toFloat() },
+                    // Inert (never binds) whenever there's ample room below the handle — only
+                    // clips/scrolls in the genuine overflow case, which today has no fallback at all.
+                    .heightIn(max = maxHeight)
+                    .onGloballyPositioned {
+                        appListSize = it.size
+                        appListOriginInRoot = it.positionInRoot()
+                    }
+                    // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
+                    // second verticalScroll would double up the scroll gesture. Single-
+                    // column/two-column still use this Column's own scroll, same as today.
+                    .let { if (effectiveAppListLayout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
+                    .testTag("home_app_list_scroll_region"),
             ) {
-                ClockBlock(
-                    modifier = Modifier
-                        .offset { IntOffset(0, (handlePx - minGapPx - clockNaturalHeightPx).roundToInt()) }
-                        .onGloballyPositioned { clockNaturalHeightPx = it.size.height.toFloat() }
-                        .graphicsLayer { alpha = clockAppearAlpha.value },
-                    // A plain tap opens the default clock app; a long-press instead reveals the
-                    // grab handle ("drag mode"). Both live in the SAME detector deliberately — an
-                    // earlier attempt put the tap on a separate, nested pointerInput/clickable
-                    // around just ClockDisplay, but any child gesture recognizer (even a bare
-                    // detectTapGestures with no clickable/ripple involved) claims/consumes the down
-                    // event as soon as it starts watching it, which silently prevented this
-                    // ancestor's long-press from ever completing (see chat history — broke every
-                    // drag-mode test the moment the clock became independently tappable). A tap
-                    // that lands on one of CalendarEventsBlock's own event rows is unaffected —
-                    // those are a genuine descendant clickable, which (per Compose's
-                    // child-before-parent dispatch) claims the gesture before this detector ever
-                    // sees it, so onTap correctly never fires for an event tap. Deliberately scoped
-                    // to just the rendered clock content (via ClockBlock's own clockContentModifier
-                    // param, applied inside ClockBlock to a wrap-content box around ClockDisplay
-                    // only) rather than the old full-width ClockBlock modifier — the old full-width
-                    // box swallowed every long-press landing in the empty space beside/around the
-                    // actual clock text, which silently prevented HomeDrawerRoute's own outer
-                    // long-press (open the facet carousel) from ever firing there (see chat
-                    // history). Only the clock's own visible bounds are tappable now; everything
-                    // outside — including beside a Left/Right-aligned clock, and beside/below the
-                    // independently-aligned CalendarEventsBlock — falls through untouched.
-                    clockContentModifier = Modifier
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = { onClockClick() },
-                                onLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) },
-                            )
-                        }
-                        .testTag("home_clock_block"),
-                    clockBoxModifier = Modifier.onGloballyPositioned {
-                        clockBoxSize = it.size
-                        clockBoxOriginInRoot = it.positionInRoot()
-                    },
-                    use24HourTime = use24HourTime,
-                    templateId = clockTemplateId,
-                    fontOption = clockFontOption,
-                    colorOption = clockColorOption,
-                    accentColorOption = clockAccentColorOption,
-                    showMeridiem = clockShowMeridiem,
-                    dateStyle = clockDateStyle,
-                    clockAlignment = clockAlignment,
-                    clockScale = effectiveClockScale,
-                    events = calendarEvents,
-                    calendarColors = calendarColors,
-                    calendarDisplay = calendarDisplay,
-                    homeAppsFontWeight = homeAppsFontWeight,
-                    appLabelColorOption = appLabelColorOption,
-                    onEventClick = onEventClick,
-                    launcherFontOption = launcherFontOption,
-                    nextAlarmMillis = nextAlarmMillis,
-                    batteryPercent = batteryPercent,
-                    isCharging = isCharging,
-                    clockWidgetAppWidgetId = clockWidgetAppWidgetId,
-                    createClockWidgetHostView = createClockWidgetHostView,
-                    clockWidgetWidthDp = effectiveClockWidgetWidthDp,
-                    clockWidgetHeightDp = effectiveClockWidgetHeightDp,
-                    // The raw incoming (not live-drag-adjusted) size — only changes once a commit
-                    // round-trips through Room, unlike effectiveClockWidgetWidthDp/HeightDp above.
-                    // See ClockWidgetTile's own doc for why the real provider push must not track
-                    // every drag frame.
-                    clockWidgetCommittedWidthDp = clockWidgetWidthDp,
-                    clockWidgetCommittedHeightDp = clockWidgetHeightDp,
-                    onClockWidgetSizeChange = onClockWidgetSizeChange,
-                    onClockWidgetLongPress = { onAdjustModeChange(ClockAdjustMode.MENU) },
-                    onClockWidgetNestedScrollStart = onClockWidgetNestedScrollStart,
-                    onClockWidgetLeftoverScroll = onClockWidgetLeftoverScroll,
-                    onClockWidgetNestedScrollStop = onClockWidgetNestedScrollStop,
-                    onClockWidgetLeftoverFling = onClockWidgetLeftoverFling,
-                )
-
-                // Not composed in clock adjust mode (the handles own that space); mediaRowHeightPx
-                // is kept, so the list doesn't move.
-                if (shownMediaPlayer != null && mediaFraction > 0f && clockAdjustMode == ClockAdjustMode.NONE) {
-                    MediaPlayerRow(
-                        state = shownMediaPlayer,
-                        showSkipButtons = showMediaSkipButtons,
-                        onPrevious = onMediaPrevious,
-                        onPlayPause = onMediaPlayPause,
-                        onNext = onMediaNext,
-                        onOpen = onMediaOpen,
-                        labelColor = appLabelColor,
-                        labelFontWeight = appLabelFontWeight,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset { IntOffset(0, mediaRowTopPx.roundToInt()) }
-                            .onSizeChanged { if (it.height > 0) mediaRowHeightPx = it.height.toFloat() }
-                            .graphicsLayer { alpha = mediaFraction },
-                    )
-                }
-
+                // A scrollable Column measures its content at its natural, unconstrained
+                // height regardless of the heightIn(max=...) clamp above — wrapping the real
+                // content in this inner Column lets the compact-spacing check above read that
+                // natural height directly, even while only part of it is visible on screen.
+                // graphicsLayer alpha is a draw-phase property only, so this stays fully
+                // measured (and the check above keeps working) while invisible pre-reveal.
                 Column(
                     modifier = Modifier
-                        .let {
-                            if (appListVerticalAlignment == AppListVerticalAlignment.TOP) {
-                                it.align(Alignment.TopStart).offset { IntOffset(0, appListTopPx.roundToInt()) }
-                            } else {
-                                // Today's unchanged behavior — hugs the bottom of the content area.
-                                it.align(Alignment.BottomStart)
-                            }
-                        }
-                        .fillMaxWidth()
-                        // Inert (never binds) whenever there's ample room below the handle — only
-                        // clips/scrolls in the genuine overflow case, which today has no fallback at all.
-                        .heightIn(max = with(density) { (contentHeightPx - appListTopPx).coerceAtLeast(0f).toDp() })
-                        .onGloballyPositioned {
-                            appListSize = it.size
-                            appListOriginInRoot = it.positionInRoot()
-                        }
-                        // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
-                        // second verticalScroll would double up the scroll gesture. Single-
-                        // column/two-column still use this Column's own scroll, same as today.
-                        .let { if (appListLayout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
-                        .testTag("home_app_list_scroll_region"),
+                        .onGloballyPositioned { appListNaturalHeightPx = it.size.height.toFloat() }
+                        .graphicsLayer { alpha = appListAppearAlpha.value },
                 ) {
-                    // A scrollable Column measures its content at its natural, unconstrained
-                    // height regardless of the heightIn(max=...) clamp above — wrapping the real
-                    // content in this inner Column lets the compact-spacing check above read that
-                    // natural height directly, even while only part of it is visible on screen.
-                    // graphicsLayer alpha is a draw-phase property only, so this stays fully
-                    // measured (and the check above keeps working) while invisible pre-reveal.
-                    Column(
-                        modifier = Modifier
-                            .onGloballyPositioned { appListNaturalHeightPx = it.size.height.toFloat() }
-                            .graphicsLayer { alpha = appListAppearAlpha.value },
-                    ) {
-                        if (showUsageAccessPrompt) {
-                            UsageAccessStrip(onClick = onUsageAccessPromptClick)
-                        } else {
-                            when (appListLayout) {
-                                AppListLayout.TWO_COLUMN -> HomeAppTwoColumnList(
-                                    appListItems = appListItems,
-                                    columnAlignment = appListColumnAlignment,
-                                    onAppClick = onAppClick,
-                                    badgeCounts = badgeCounts,
-                                    notificationBadgeStyle = notificationBadgeStyle,
-                                    appMenuNotifications = appMenuNotifications,
-                                    onAppInfo = onAppInfo,
-                                    onRequestQuickAddState = onRequestQuickAddState,
-                                    onFavoritesAction = onFavoritesAction,
-                                    onDockAction = onDockAction,
-                                    folderCandidates = folderCandidates,
-                                    onCreateFolder = onCreateFolder,
-                                    onAddToFolder = onAddToFolder,
-                                    onRemoveFromFolder = onRemoveFromFolder,
-                                    onRenameFolder = onRenameFolder,
-                                    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-                                    onFolderFavoritesAction = onFolderFavoritesAction,
-                                    onFolderDockAction = onFolderDockAction,
-                                    drawerPresentation = drawerPresentation,
-                                    appRowPresentation = appRowPresentation,
-                                    labelColor = appLabelColor,
-                                    labelFontWeight = appLabelFontWeight,
-                                    verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
-                                    iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
-                                )
-                                AppListLayout.GRID -> HomeAppGrid(
-                                    appListItems = appListItems,
-                                    columns = appListGridColumns.columns,
-                                    displayMode = appListGridDisplayMode,
-                                    onAppClick = onAppClick,
-                                    badgeCounts = badgeCounts,
-                                    notificationBadgeStyle = notificationBadgeStyle,
-                                    appMenuNotifications = appMenuNotifications,
-                                    onAppInfo = onAppInfo,
-                                    onRequestQuickAddState = onRequestQuickAddState,
-                                    onFavoritesAction = onFavoritesAction,
-                                    onDockAction = onDockAction,
-                                    folderCandidates = folderCandidates,
-                                    onCreateFolder = onCreateFolder,
-                                    onAddToFolder = onAddToFolder,
-                                    onRemoveFromFolder = onRemoveFromFolder,
-                                    onRenameFolder = onRenameFolder,
-                                    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-                                    onFolderFavoritesAction = onFolderFavoritesAction,
-                                    onFolderDockAction = onFolderDockAction,
-                                    drawerPresentation = drawerPresentation,
-                                    labelColor = appLabelColor,
-                                    labelFontWeight = appLabelFontWeight,
-                                )
-                                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = when (appRowPosition) {
-                                        AppRowPosition.RIGHT -> Alignment.End
-                                        AppRowPosition.CENTER -> Alignment.CenterHorizontally
-                                        AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Alignment.Start
-                                    },
-                                ) {
-                                    appListItems.forEach { item ->
-                                        when (item) {
-                                            is PlacedItem.SingleApp -> AppRow(
-                                                modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
-                                                app = item.app,
-                                                onClick = { onAppClick(item.app) },
-                                                badgeCount = badgeCounts[item.app.packageName],
-                                                badgeStyle = notificationBadgeStyle,
-                                                appMenuNotifications = appMenuNotifications,
-                                                onAppInfo = onAppInfo,
-                                                onRequestQuickAddState = onRequestQuickAddState,
-                                                onFavoritesAction = onFavoritesAction,
-                                                onDockAction = onDockAction,
-                                                folderCandidates = folderCandidates,
-                                                onCreateFolder = onCreateFolder,
-                                                onAddToFolder = onAddToFolder,
-                                                drawerPresentation = drawerPresentation,
-                                                position = appRowPosition,
-                                                presentation = appRowPresentation,
-                                                labelColor = appLabelColor,
-                                                labelFontWeight = appLabelFontWeight,
-                                                verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
-                                                iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
-                                            )
-                                            is PlacedItem.FolderItem -> FolderRow(
-                                                modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
-                                                folder = item.folder,
-                                                onAppClick = onAppClick,
-                                                appMenuNotifications = appMenuNotifications,
-                                                onAppInfo = onAppInfo,
-                                                onRemoveFromFolder = onRemoveFromFolder,
-                                                onRenameFolder = onRenameFolder,
-                                                drawerPresentation = drawerPresentation,
-                                                onRequestQuickAddState = onRequestFolderQuickAddState,
-                                                onFavoritesAction = onFolderFavoritesAction,
-                                                onDockAction = onFolderDockAction,
-                                                position = appRowPosition,
-                                                presentation = appRowPresentation,
-                                                labelColor = appLabelColor,
-                                                labelFontWeight = appLabelFontWeight,
-                                                verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
-                                                iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
-                                            )
-                                        }
+                    if (showUsageAccessPrompt) {
+                        UsageAccessStrip(onClick = onUsageAccessPromptClick)
+                    } else {
+                        when (effectiveAppListLayout) {
+                            AppListLayout.TWO_COLUMN -> HomeAppTwoColumnList(
+                                appListItems = appListItems,
+                                columnAlignment = appListColumnAlignment,
+                                onAppClick = onAppClick,
+                                badgeCounts = badgeCounts,
+                                notificationBadgeStyle = notificationBadgeStyle,
+                                appMenuNotifications = appMenuNotifications,
+                                onAppInfo = onAppInfo,
+                                onRequestQuickAddState = onRequestQuickAddState,
+                                onFavoritesAction = onFavoritesAction,
+                                onDockAction = onDockAction,
+                                folderCandidates = folderCandidates,
+                                onCreateFolder = onCreateFolder,
+                                onAddToFolder = onAddToFolder,
+                                onRemoveFromFolder = onRemoveFromFolder,
+                                onRenameFolder = onRenameFolder,
+                                onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                                onFolderFavoritesAction = onFolderFavoritesAction,
+                                onFolderDockAction = onFolderDockAction,
+                                drawerPresentation = drawerPresentation,
+                                appRowPresentation = appRowPresentation,
+                                labelColor = appLabelColor,
+                                labelFontWeight = appLabelFontWeight,
+                                verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
+                            )
+                            AppListLayout.GRID -> HomeAppGrid(
+                                appListItems = appListItems,
+                                columns = if (isLandscape) {
+                                    landscapeGridColumns(appListGridColumns.columns, with(density) { appsPaneWidthPx.toDp() })
+                                } else {
+                                    appListGridColumns.columns
+                                },
+                                displayMode = appListGridDisplayMode,
+                                onAppClick = onAppClick,
+                                badgeCounts = badgeCounts,
+                                notificationBadgeStyle = notificationBadgeStyle,
+                                appMenuNotifications = appMenuNotifications,
+                                onAppInfo = onAppInfo,
+                                onRequestQuickAddState = onRequestQuickAddState,
+                                onFavoritesAction = onFavoritesAction,
+                                onDockAction = onDockAction,
+                                folderCandidates = folderCandidates,
+                                onCreateFolder = onCreateFolder,
+                                onAddToFolder = onAddToFolder,
+                                onRemoveFromFolder = onRemoveFromFolder,
+                                onRenameFolder = onRenameFolder,
+                                onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                                onFolderFavoritesAction = onFolderFavoritesAction,
+                                onFolderDockAction = onFolderDockAction,
+                                drawerPresentation = drawerPresentation,
+                                labelColor = appLabelColor,
+                                labelFontWeight = appLabelFontWeight,
+                            )
+                            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = when (appRowPosition) {
+                                    AppRowPosition.RIGHT -> Alignment.End
+                                    AppRowPosition.CENTER -> Alignment.CenterHorizontally
+                                    AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Alignment.Start
+                                },
+                            ) {
+                                appListItems.forEach { item ->
+                                    when (item) {
+                                        is PlacedItem.SingleApp -> AppRow(
+                                            modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
+                                            app = item.app,
+                                            onClick = { onAppClick(item.app) },
+                                            badgeCount = badgeCounts[item.app.packageName],
+                                            badgeStyle = notificationBadgeStyle,
+                                            appMenuNotifications = appMenuNotifications,
+                                            onAppInfo = onAppInfo,
+                                            onRequestQuickAddState = onRequestQuickAddState,
+                                            onFavoritesAction = onFavoritesAction,
+                                            onDockAction = onDockAction,
+                                            folderCandidates = folderCandidates,
+                                            onCreateFolder = onCreateFolder,
+                                            onAddToFolder = onAddToFolder,
+                                            drawerPresentation = drawerPresentation,
+                                            position = appRowPosition,
+                                            presentation = appRowPresentation,
+                                            labelColor = appLabelColor,
+                                            labelFontWeight = appLabelFontWeight,
+                                            verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                            iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
+                                        )
+                                        is PlacedItem.FolderItem -> FolderRow(
+                                            modifier = Modifier.fillMaxWidth(SINGLE_COLUMN_ROW_WIDTH_FRACTION),
+                                            folder = item.folder,
+                                            onAppClick = onAppClick,
+                                            appMenuNotifications = appMenuNotifications,
+                                            onAppInfo = onAppInfo,
+                                            onRemoveFromFolder = onRemoveFromFolder,
+                                            onRenameFolder = onRenameFolder,
+                                            drawerPresentation = drawerPresentation,
+                                            onRequestQuickAddState = onRequestFolderQuickAddState,
+                                            onFavoritesAction = onFolderFavoritesAction,
+                                            onDockAction = onFolderDockAction,
+                                            position = appRowPosition,
+                                            presentation = appRowPresentation,
+                                            labelColor = appLabelColor,
+                                            labelFontWeight = appLabelFontWeight,
+                                            verticalPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
+                                            iconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR,
+                                        )
                                     }
                                 }
                             }
@@ -874,52 +852,159 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+        val dockIcon: @Composable (PlacedItem, DockDisplayMode) -> Unit = { item, mode ->
+            DockIcon(
+                item = item,
+                displayMode = mode,
+                onClick = onAppClick,
+                badgeCount = (item as? PlacedItem.SingleApp)?.let { badgeCounts[it.app.packageName] },
+                badgeStyle = notificationBadgeStyle,
+                appMenuNotifications = appMenuNotifications,
+                onAppInfo = onAppInfo,
+                onRequestQuickAddState = onRequestQuickAddState,
+                onFavoritesAction = onFavoritesAction,
+                onDockAction = onDockAction,
+                onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+                onFolderFavoritesAction = onFolderFavoritesAction,
+                onFolderDockAction = onFolderDockAction,
+                folderCandidates = folderCandidates,
+                onCreateFolder = onCreateFolder,
+                onAddToFolder = onAddToFolder,
+                onRemoveFromFolder = onRemoveFromFolder,
+                onRenameFolder = onRenameFolder,
+                drawerPresentation = drawerPresentation,
+                labelColor = appLabelColor,
+                labelFontWeight = appLabelFontWeight,
+            )
+        }
 
-            // Fixed gap between the app list and whatever follows — the dock, or (when the
-            // dock is empty, see MIN_APPS=0) the screen's own bottom padding.
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (dockApps.isNotEmpty()) {
-                // Full screen width, no horizontal inset — SpaceEvenly then puts an equal gap before
-                // the first icon, between every pair of icons, and after the last, so dock icons sit
-                // at the same distance from each other as from the screen edges.
-                Row(
+        if (isLandscape) {
+            HomeLandscapeLayout(
+                hasDock = dockApps.isNotEmpty(),
+                clockPaneAlignment = when (clockAlignment) {
+                    ClockAlignment.LEFT -> Alignment.TopStart
+                    ClockAlignment.CENTER -> Alignment.CenterStart
+                    ClockAlignment.RIGHT -> Alignment.BottomStart
+                },
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(top = 8.dp, bottom = 16.dp),
+                onAppsPaneSizeChange = {
+                    contentHeightPx = it.height.toFloat()
+                    appsPaneWidthPx = it.width.toFloat()
+                },
+                clock = {
+                    Column {
+                        clockBlock(Modifier.graphicsLayer { alpha = clockAppearAlpha.value }, ClockAlignment.LEFT)
+                        if (shownMediaPlayer != null && mediaFraction > 0f) {
+                            mediaRow(
+                                shownMediaPlayer,
+                                Modifier
+                                    .padding(top = HOME_MEDIA_ROW_TOP_GAP)
+                                    .graphicsLayer { alpha = mediaFraction },
+                            )
+                        }
+                    }
+                },
+                apps = {
+                    appListRegion(
+                        Modifier.align(
+                            if (appListVerticalAlignment == AppListVerticalAlignment.TOP) Alignment.TopStart else Alignment.BottomStart,
+                        ),
+                        with(density) { contentHeightPx.toDp() },
+                    )
+                },
+                dock = {
+                    dockApps.forEach { item -> dockIcon(item, DockDisplayMode.ICONS) }
+                },
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without
+                    // this the dock at the bottom draws under the gesture/nav bar. On the content
+                    // Column, not the outer Box, so the Box stays truly full-screen for the resize
+                    // handles' root-coordinate math.
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(bottom = 22.dp)
+            ) {
+                // Everything but the dock keeps the screen's own 24dp side margin. The dock row is
+                // deliberately outside this padding (see below) so Arrangement.SpaceEvenly can space its
+                // icons against the true screen edge, not this inset.
+                Box(
                     modifier = Modifier
+                        .weight(1f)
                         .fillMaxWidth()
-                        .padding(top = 12.dp, bottom = 4.dp)
-                        .testTag("home_dock_row"),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                        .padding(horizontal = 24.dp)
+                        .onSizeChanged { contentHeightPx = it.height.toFloat() },
                 ) {
-                    dockApps.forEach { item ->
-                        DockIcon(
-                            item = item,
-                            displayMode = dockDisplayMode,
-                            onClick = onAppClick,
-                            badgeCount = (item as? PlacedItem.SingleApp)?.let { badgeCounts[it.app.packageName] },
-                            badgeStyle = notificationBadgeStyle,
-                            appMenuNotifications = appMenuNotifications,
-                            onAppInfo = onAppInfo,
-                            onRequestQuickAddState = onRequestQuickAddState,
-                            onFavoritesAction = onFavoritesAction,
-                            onDockAction = onDockAction,
-                            onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-                            onFolderFavoritesAction = onFolderFavoritesAction,
-                            onFolderDockAction = onFolderDockAction,
-                            folderCandidates = folderCandidates,
-                            onCreateFolder = onCreateFolder,
-                            onAddToFolder = onAddToFolder,
-                            onRemoveFromFolder = onRemoveFromFolder,
-                            onRenameFolder = onRenameFolder,
-                            drawerPresentation = drawerPresentation,
-                            labelColor = appLabelColor,
-                            labelFontWeight = appLabelFontWeight,
+                    clockBlock(
+                        Modifier
+                            .offset { IntOffset(0, (handlePx - minGapPx - clockNaturalHeightPx).roundToInt()) }
+                            .onGloballyPositioned { clockNaturalHeightPx = it.size.height.toFloat() }
+                            .graphicsLayer { alpha = clockAppearAlpha.value },
+                        clockAlignment,
+                    )
+
+                    // Not composed in clock adjust mode (the handles own that space); mediaRowHeightPx
+                    // is kept, so the list doesn't move.
+                    if (shownMediaPlayer != null && mediaFraction > 0f && clockAdjustMode == ClockAdjustMode.NONE) {
+                        mediaRow(
+                            shownMediaPlayer,
+                            Modifier
+                                .align(Alignment.TopStart)
+                                .offset { IntOffset(0, mediaRowTopPx.roundToInt()) }
+                                .onSizeChanged { if (it.height > 0) mediaRowHeightPx = it.height.toFloat() }
+                                .graphicsLayer { alpha = mediaFraction },
                         )
+                    }
+
+                    appListRegion(
+                        Modifier.let {
+                            if (appListVerticalAlignment == AppListVerticalAlignment.TOP) {
+                                it.align(Alignment.TopStart).offset { IntOffset(0, appListTopPx.roundToInt()) }
+                            } else {
+                                // Today's unchanged behavior — hugs the bottom of the content area.
+                                it.align(Alignment.BottomStart)
+                            }
+                        },
+                        with(density) { (contentHeightPx - appListTopPx).coerceAtLeast(0f).toDp() },
+                    )
+                }
+
+                // Fixed gap between the app list and whatever follows — the dock, or (when the
+                // dock is empty, see MIN_APPS=0) the screen's own bottom padding.
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (dockApps.isNotEmpty()) {
+                    // Full screen width, no horizontal inset — SpaceEvenly then puts an equal gap before
+                    // the first icon, between every pair of icons, and after the last, so dock icons sit
+                    // at the same distance from each other as from the screen edges.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp, bottom = 4.dp)
+                            .testTag("home_dock_row"),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                    ) {
+                        dockApps.forEach { item ->
+                            dockIcon(item, dockDisplayMode)
+                        }
                     }
                 }
             }
         }
 
-        if (clockAdjustMode == ClockAdjustMode.ADJUST) {
+        // Adjust mode (the handles and the alignment pill) is portrait geometry; landscape has its own in a later stage.
+        val currentOnAdjustModeChange by rememberUpdatedState(onAdjustModeChange)
+        LaunchedEffect(isLandscape, clockAdjustMode) {
+            if (isLandscape && clockAdjustMode == ClockAdjustMode.ADJUST) currentOnAdjustModeChange(ClockAdjustMode.NONE)
+        }
+        val adjustingInPortrait = clockAdjustMode == ClockAdjustMode.ADJUST && !isLandscape
+
+        if (adjustingInPortrait) {
             // Move handle — always present in adjust mode. On release it also persists the scale if
             // the reposition forced a shrink-to-fit, so it doesn't snap back.
             ClockZoneHandle(
@@ -960,7 +1045,7 @@ fun HomeScreen(
             label = "clockAdjustToolbarAlpha",
         )
         AnimatedVisibility(
-            visible = clockAdjustMode == ClockAdjustMode.ADJUST,
+            visible = adjustingInPortrait,
             enter = fadeIn(tween(120)),
             exit = fadeOut(tween(80)),
             modifier = Modifier
@@ -988,7 +1073,7 @@ fun HomeScreen(
         // PRD F15 — the native clock's own scale-based resize handles only apply when there's no
         // hosted widget to resize instead (see the parallel, real-size-based block below).
         val clockGeometryReady = clockBoxSize != null && clockBoxOriginInRoot != null && rootOriginInRoot != null && rootSize != null
-        if (clockAdjustMode == ClockAdjustMode.ADJUST && clockWidgetAppWidgetId == null && clockGeometryReady) {
+        if (adjustingInPortrait && clockWidgetAppWidgetId == null && clockGeometryReady) {
             val rootOrigin = rootOriginInRoot!!
             // The clock's natural (unscaled) box in root coords — stable throughout a drag (uniformScale
             // keeps the layout footprint at natural size). Everything below is a pure function of this
@@ -1082,7 +1167,7 @@ fun HomeScreen(
         // from, unlike the native clock's own block above), otherwise the same bottom- and
         // alignment-anchored geometry, corner-handle placement, and live-clamped-while-dragging
         // behavior.
-        if (clockAdjustMode == ClockAdjustMode.ADJUST && clockWidgetAppWidgetId != null && clockGeometryReady) {
+        if (adjustingInPortrait && clockWidgetAppWidgetId != null && clockGeometryReady) {
             val rootOrigin = rootOriginInRoot!!
             val boxW = clockBoxSize!!.width.toFloat()
             val boxH = clockBoxSize!!.height.toFloat()
@@ -1237,6 +1322,7 @@ fun HomeScreen(
                     overrideFacetName = clockPositionOwnerFacetName,
                     hasCustomClockWidget = hasCustomClockWidget,
                     isPro = isPro,
+                    adjustAvailable = !isLandscape,
                 )
             }
         }

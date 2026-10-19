@@ -74,6 +74,8 @@ fun ClockAdjustSheet(
     hasCustomClockWidget: Boolean = false,
     /** `false` marks "Use custom widget" as Pro; the click is still reported so the caller can open Facet Pro. */
     isPro: Boolean = true,
+    /** `false` hides "Adjust size and position" — landscape has no adjust mode yet. */
+    adjustAvailable: Boolean = true,
 ) {
     Column(
         modifier = modifier
@@ -83,15 +85,18 @@ fun ClockAdjustSheet(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         SettingsCard(fullBleedRows = true) {
-            AdjustRow(
-                icon = Icons.Outlined.OpenInFull,
-                hue = SettingsSectionHue.APPEARANCE,
-                label = stringResource(R.string.clock_adjust_adjust_size_position),
-                subtitle = stringResource(R.string.clock_adjust_size_position_subtitle),
-                onClick = onAdjustClick,
-                testTag = "clock_adjust_open",
-            )
+            if (adjustAvailable) {
+                AdjustRow(
+                    icon = Icons.Outlined.OpenInFull,
+                    hue = SettingsSectionHue.APPEARANCE,
+                    label = stringResource(R.string.clock_adjust_adjust_size_position),
+                    subtitle = stringResource(R.string.clock_adjust_size_position_subtitle),
+                    onClick = onAdjustClick,
+                    testTag = "clock_adjust_open",
+                )
+            }
             ClockWidgetChoiceRows(
+                leadingDivider = adjustAvailable,
                 onEditStylesClick = onEditStylesClick,
                 onUseCustomWidgetClick = onUseCustomWidgetClick,
                 onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
@@ -130,6 +135,7 @@ fun ClockAdjustSheet(
  */
 @Composable
 private fun ClockWidgetChoiceRows(
+    leadingDivider: Boolean,
     onEditStylesClick: () -> Unit,
     onUseCustomWidgetClick: () -> Unit,
     onSwitchToLauncherClockClick: () -> Unit,
@@ -138,7 +144,7 @@ private fun ClockWidgetChoiceRows(
     isPro: Boolean,
 ) = Column {
     if (!hasCustomClockWidget) {
-        CardDivider(startInset = SettingsIconBadgeInset)
+        if (leadingDivider) CardDivider(startInset = SettingsIconBadgeInset)
         AdjustRow(
             icon = Icons.Outlined.Palette,
             hue = SettingsSectionHue.APPEARANCE,
@@ -149,7 +155,7 @@ private fun ClockWidgetChoiceRows(
             trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
         )
     }
-    CardDivider(startInset = SettingsIconBadgeInset)
+    if (!hasCustomClockWidget || leadingDivider) CardDivider(startInset = SettingsIconBadgeInset)
     AdjustRow(
         icon = Icons.Outlined.Widgets,
         hue = SettingsSectionHue.APPEARANCE,

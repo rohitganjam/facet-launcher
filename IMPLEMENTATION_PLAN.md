@@ -4158,7 +4158,7 @@ Chosen over locking to portrait: foldables and tablets ignore a portrait lock, a
 
 **Stages.**
 1. **Done.** Window-shape rule (`homeLayoutModeFor`: landscape when width > height) and a pure widget flow-pack use case (`FlowPackWidgetsUseCase`: order + spans + row count → positions, sparse so order is always preserved), with tests. Neither is wired into the UI yet.
-2. Landscape Home container: panes, divider, dock rail, insets.
+2. **Done.** Landscape Home container (`HomeLandscapeLayout`): clock pane, apps pane, dock column, with the clock alignment mapped to top / middle / bottom, a single-column list, an icons-only scrolling dock inset from the right edge, and the long-press menu without "Adjust" until stage 3. The pane gap is where the divider handle goes; the clock pane is a fixed 40% until then. Documented in `17`. Checked on the unfolded Pixel Fold emulator; a phone on its side is covered by `HomeScreenLandscapeTest` only (the Pixel 5 AVD would not rotate).
 3. Clock pane: mapped alignment, new pill, scale handle, divider handle.
 4. Widget grid in landscape (fixed cell size, per-orientation positions, editing).
 5. Previews, gesture thresholds, docs `03`, `10`, `12`, `13`, tests registry.
