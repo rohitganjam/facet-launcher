@@ -1,11 +1,13 @@
 package com.facetlauncher.app.ui.components
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import com.facetlauncher.app.data.model.AppInfo
@@ -44,6 +46,17 @@ class FolderContentsSheetTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun headerShowsTheFolderNameItsAppCountAndARenameAction() {
+        // Given the folder sheet is showing a one-app folder
+        setContent(DrawerPresentation.LIST)
+
+        // Then the header names the folder, counts its apps and offers Rename, like the app sheet's header
+        composeRule.onNodeWithText("Folder").assertIsDisplayed()
+        composeRule.onNodeWithText("1 app").assertIsDisplayed()
+        composeRule.onNodeWithTag("folder_contents_sheet_rename").assertIsDisplayed()
     }
 
     @Test

@@ -19,6 +19,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.home.clock.CalendarEventsBlock
+import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.fontFamily
 import com.facetlauncher.app.ui.theme.resolve
@@ -70,7 +71,7 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
             .testTag("calendar_preview_strip"),
     ) {
         WallpaperBackground(uiState.homeWallpaper, Modifier.matchParentSize(), alignment = Alignment.TopCenter)
-        CalendarEventsBlock(
+        LauncherScaledTypography { CalendarEventsBlock(
             events = events,
             modifier = Modifier.padding(horizontal = 18.dp),
             clock = Clock.systemDefaultZone(),
@@ -81,7 +82,7 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
             textColor = settings.appLabelColorOption.resolve(),
             alignment = uiState.previewClockAlignment,
             display = uiState.calendarDisplay,
-        )
+        ) }
         if (showSamples) {
             Text(
                 text = stringResource(R.string.calendar_settings_preview_sample_note),

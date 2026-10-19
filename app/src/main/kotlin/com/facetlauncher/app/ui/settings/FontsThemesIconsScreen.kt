@@ -64,6 +64,7 @@ import com.facetlauncher.app.ui.components.FontSizeSlider
 import com.facetlauncher.app.ui.components.FontWeightSlider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.toComposeShape
 import com.facetlauncher.app.ui.theme.Accent
@@ -80,7 +81,7 @@ import com.facetlauncher.app.ui.theme.dynamicColorSupported
 import com.facetlauncher.app.ui.theme.toneOf
 
 /**
- * Settings → Appearance → Fonts, themes and icons — theme, system bar icons, accent color, icon style and shape, launcher font,
+ * Settings → Appearance → Fonts, themes and icons — theme, status bar icons, accent color, icon style and shape, launcher font,
  * font color, size and weight. Global only: a facet has no override for any of these, so a facet's Appearance screen has no link here.
  * Moved off the main Appearance screen. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
  */
@@ -152,6 +153,7 @@ private fun FontsThemesIconsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_section_theme)) }
                 item {
                     SettingsCard {
                         LabeledDropdownRow(
@@ -180,7 +182,11 @@ private fun FontsThemesIconsContent(
                             onCustomAccentSwatchChange = onCustomAccentSwatchChange,
                             onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
                         )
-                        CardDivider()
+                    }
+                }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_section_icons)) }
+                item {
+                    SettingsCard {
                         LabeledDropdownRow(
                             title = stringResource(R.string.appearance_icon_style),
                             options = IconRenderMode.entries,
@@ -191,7 +197,11 @@ private fun FontsThemesIconsContent(
                         )
                         CardDivider()
                         IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
-                        CardDivider()
+                    }
+                }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_section_fonts)) }
+                item {
+                    SettingsCard {
                         LabeledDropdownRow(
                             title = stringResource(R.string.appearance_launcher_font),
                             options = LauncherFontOption.entries,
@@ -233,6 +243,8 @@ private fun FontsThemesIconsContent(
                                 .testTag("appearance_font_weight_slider"),
                             sliderTestTag = "appearance_font_weight_slider_control",
                         )
+                        CardDivider()
+                        FontPreviewRow(settings = settings)
                     }
                 }
             }

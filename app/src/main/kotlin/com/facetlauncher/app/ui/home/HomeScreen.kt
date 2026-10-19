@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
@@ -1785,6 +1786,9 @@ internal fun AppRow(
                         // No visible label to carry the a11y name when text is hidden — mirrors
                         // the Dock's own icons-only mode (see DockIcon below).
                         contentDescription = if (showLabel) null else app.label,
+                        // Icon-only has no label to trail, so it badges the icon's corner like a grid tile.
+                        notificationCount = badgeCount.takeUnless { showLabel },
+                        badgeStyle = badgeStyle,
                         modifier = Modifier.testTag("${testTagPrefix}app_icon_${app.packageName}"),
                     )
                 }
@@ -1800,7 +1804,7 @@ internal fun AppRow(
                 }
             }
             val badge: @Composable () -> Unit = {
-                if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
+                badgeCount.takeIf { showLabel }?.takeIf { it > 0 }?.let { NotificationBadge(count = it, style = badgeStyle) }
             }
             if (position == AppRowPosition.RIGHT) {
                 // Badge first, then label (leftmost of the packed content), icon last — landing
@@ -1808,6 +1812,17 @@ internal fun AppRow(
                 badge()
                 label()
                 icon()
+            } else if (position == AppRowPosition.CENTER) {
+                CenteredWithBadge(
+                    modifier = Modifier.weight(1f),
+                    badge = badge,
+                    content = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            icon()
+                            label()
+                        }
+                    },
+                )
             } else {
                 icon()
                 label()
@@ -1829,6 +1844,26 @@ internal fun AppRow(
                 onAddToFolder = onAddToFolder,
                 drawerPresentation = drawerPresentation,
             )
+        }
+    }
+}
+
+/** Centers [content] in the available width and puts [badge] just past its trailing edge, so the badge never shifts it. */
+@Composable
+private fun CenteredWithBadge(badge: @Composable () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = { content(); badge() }, modifier = modifier) { measurables, constraints ->
+        val gap = 14.dp.roundToPx()
+        val badgePlaceable = measurables.getOrNull(1)?.measure(constraints.copy(minWidth = 0))
+        val badgeSpace = badgePlaceable?.let { it.width + gap } ?: 0
+        // Reserve the badge's room on both sides so a long label stays centered and the badge still fits.
+        val contentPlaceable = measurables[0].measure(
+            constraints.copy(minWidth = 0, maxWidth = (constraints.maxWidth - 2 * badgeSpace).coerceAtLeast(0)),
+        )
+        val height = maxOf(contentPlaceable.height, badgePlaceable?.height ?: 0)
+        layout(constraints.maxWidth, height) {
+            val contentX = (constraints.maxWidth - contentPlaceable.width) / 2
+            contentPlaceable.placeRelative(contentX, (height - contentPlaceable.height) / 2)
+            badgePlaceable?.placeRelative(contentX + contentPlaceable.width + gap, (height - badgePlaceable.height) / 2)
         }
     }
 }

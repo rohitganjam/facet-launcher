@@ -13,6 +13,8 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -419,6 +421,18 @@ class AppContextMenuTest {
         assert(createdApp == app)
         assert(createdName == "Games")
         assert(dismissed)
+    }
+
+    @Test
+    fun folderPageTitleUsesTheSameTextStyleAsTheAppHeaderName() {
+        setContent(folderCandidates = emptyList())
+        val appNameHeight = composeRule.onNodeWithTag("app_context_menu_name", useUnmergedTree = true).getUnclippedBoundsInRoot().height
+
+        composeRule.onNodeWithTag("app_context_menu_add_to_folder").performClick()
+
+        composeRule.onNodeWithTag("app_context_menu_folder_page_title", useUnmergedTree = true).assertTextEquals("Add to folder")
+        val titleHeight = composeRule.onNodeWithTag("app_context_menu_folder_page_title", useUnmergedTree = true).getUnclippedBoundsInRoot().height
+        assertEquals(appNameHeight, titleHeight)
     }
 
     @Test

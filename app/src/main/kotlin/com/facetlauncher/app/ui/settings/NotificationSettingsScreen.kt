@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -88,6 +90,7 @@ fun NotificationSettingsScreen(
             if (checked && !uiState.isAccessGranted) onNavigateToNotificationAccessExplanation()
         },
         onShowSkipButtonsChange = viewModel::setShowSkipButtons,
+        onGrantAccess = onNavigateToNotificationAccessExplanation,
         modifier = modifier,
     )
 }
@@ -101,6 +104,7 @@ private fun NotificationSettingsContent(
     onShowInAppMenuChange: (Boolean) -> Unit,
     onShowMediaPlayerChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: (Boolean) -> Unit,
+    onGrantAccess: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // The stored preference alone isn't enough to actually show badges — it defaults to true and
@@ -118,6 +122,7 @@ private fun NotificationSettingsContent(
             .background(SurfaceContainer)
             .testTag("notification_settings_screen")
             .windowInsetsPadding(WindowInsets.systemBars)
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
     ) {
         Row(
@@ -145,6 +150,8 @@ private fun NotificationSettingsContent(
             onShowSkipButtonsChange = onShowSkipButtonsChange,
             modifier = Modifier.padding(top = 16.dp),
         )
+
+        NotificationPreview(uiState = uiState, onGrantAccess = onGrantAccess)
     }
 }
 
@@ -259,6 +266,7 @@ private fun NotificationSettingsScreenPreview() {
             onShowInAppMenuChange = {},
             onShowMediaPlayerChange = {},
             onShowSkipButtonsChange = {},
+            onGrantAccess = {},
         )
     }
 }

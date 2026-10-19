@@ -42,6 +42,7 @@ import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.home.stableKey
+import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Muted
 
@@ -73,6 +74,9 @@ fun HomeSurfacePreview(
     appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
     appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     maxAppItems: Int = 3,
+    notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
+    /** Sample unread count for a package; the default draws no badges. */
+    badgeCountFor: (String) -> Int? = { null },
 ) {
     val items = appList.take(maxAppItems)
     val shape = RoundedCornerShape(14.dp)
@@ -88,51 +92,61 @@ fun HomeSurfacePreview(
         // short band, so it shows the wallpaper's lower part (where Home's dock sits).
         WallpaperBackground(homeWallpaper, Modifier.matchParentSize(), alignment = Alignment.BottomCenter)
 
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            if (items.isEmpty() && dockApps.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.home_surface_preview_nothing_yet),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Muted,
-                )
-            }
-            when (appListLayout) {
-                AppListLayout.GRID -> HomeSurfacePreviewGrid(
-                    items = items,
-                    columns = appListGridColumns.columns,
-                    displayMode = appListGridDisplayMode,
-                    labelColor = labelColor,
-                    labelFontWeight = labelFontWeight,
-                )
-                AppListLayout.TWO_COLUMN -> HomeSurfacePreviewTwoColumns(
-                    items = items,
-                    columnAlignment = appListColumnAlignment,
-                    appRowPresentation = appRowPresentation,
-                    labelColor = labelColor,
-                    labelFontWeight = labelFontWeight,
-                )
-                AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> items.forEach { item ->
-                    HomeSurfacePreviewRow(
-                        item = item,
-                        position = appRowPosition,
-                        presentation = appRowPresentation,
-                        labelColor = labelColor,
-                        labelFontWeight = labelFontWeight,
+        LauncherScaledTypography {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                if (items.isEmpty() && dockApps.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.home_surface_preview_nothing_yet),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Muted,
                     )
                 }
-            }
-            if (dockApps.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    dockApps.forEach { item ->
-                        DockIcon(
+                when (appListLayout) {
+                    AppListLayout.GRID -> HomeSurfacePreviewGrid(
+                        items = items,
+                        columns = appListGridColumns.columns,
+                        displayMode = appListGridDisplayMode,
+                        labelColor = labelColor,
+                        labelFontWeight = labelFontWeight,
+                        badgeStyle = notificationBadgeStyle,
+                        badgeCountFor = badgeCountFor,
+                    )
+                    AppListLayout.TWO_COLUMN -> HomeSurfacePreviewTwoColumns(
+                        items = items,
+                        columnAlignment = appListColumnAlignment,
+                        appRowPresentation = appRowPresentation,
+                        labelColor = labelColor,
+                        labelFontWeight = labelFontWeight,
+                        badgeStyle = notificationBadgeStyle,
+                        badgeCountFor = badgeCountFor,
+                    )
+                    AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> items.forEach { item ->
+                        HomeSurfacePreviewRow(
                             item = item,
-                            displayMode = dockDisplayMode,
-                            onClick = {},
+                            position = appRowPosition,
+                            presentation = appRowPresentation,
                             labelColor = labelColor,
                             labelFontWeight = labelFontWeight,
-                            enableLongPressMenu = false,
+                            badgeStyle = notificationBadgeStyle,
+                            badgeCountFor = badgeCountFor,
                         )
+                    }
+                }
+                if (dockApps.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        dockApps.forEach { item ->
+                            DockIcon(
+                                item = item,
+                                displayMode = dockDisplayMode,
+                                onClick = {},
+                                labelColor = labelColor,
+                                labelFontWeight = labelFontWeight,
+                                enableLongPressMenu = false,
+                                badgeCount = (item as? PlacedItem.SingleApp)?.let { badgeCountFor(it.app.packageName) },
+                                badgeStyle = notificationBadgeStyle,
+                            )
+                        }
                     }
                 }
             }
@@ -148,6 +162,8 @@ private fun HomeSurfacePreviewTwoColumns(
     appRowPresentation: AppRowPresentation,
     labelColor: Color,
     labelFontWeight: FontWeight,
+    badgeStyle: NotificationBadgeStyle,
+    badgeCountFor: (String) -> Int?,
 ) {
     val (leftPosition, rightPosition) = columnAlignment.toColumnPositions()
     Row(modifier = Modifier.fillMaxWidth()) {
@@ -163,6 +179,8 @@ private fun HomeSurfacePreviewTwoColumns(
                         presentation = appRowPresentation,
                         labelColor = labelColor,
                         labelFontWeight = labelFontWeight,
+                        badgeStyle = badgeStyle,
+                        badgeCountFor = badgeCountFor,
                     )
                 }
             }
@@ -172,13 +190,21 @@ private fun HomeSurfacePreviewTwoColumns(
 
 /** [HomeSurfacePreview]'s single/two-column row dispatch — identical [AppRow]/[FolderRow] call either layout needs, just with a different [position] and item subset. */
 @Composable
-private fun HomeSurfacePreviewRow(item: PlacedItem, position: AppRowPosition, presentation: AppRowPresentation, labelColor: Color, labelFontWeight: FontWeight) {
+private fun HomeSurfacePreviewRow(
+    item: PlacedItem,
+    position: AppRowPosition,
+    presentation: AppRowPresentation,
+    labelColor: Color,
+    labelFontWeight: FontWeight,
+    badgeStyle: NotificationBadgeStyle,
+    badgeCountFor: (String) -> Int?,
+) {
     when (item) {
         is PlacedItem.SingleApp -> AppRow(
             app = item.app,
             onClick = {},
-            badgeCount = null,
-            badgeStyle = NotificationBadgeStyle.DOT,
+            badgeCount = badgeCountFor(item.app.packageName),
+            badgeStyle = badgeStyle,
             appMenuNotifications = AppMenuNotifications.None,
             onAppInfo = {},
             position = position,
@@ -218,6 +244,8 @@ private fun HomeSurfacePreviewGrid(
     displayMode: AppListGridDisplayMode,
     labelColor: Color,
     labelFontWeight: FontWeight,
+    badgeStyle: NotificationBadgeStyle,
+    badgeCountFor: (String) -> Int?,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
@@ -242,7 +270,13 @@ private fun HomeSurfacePreviewGrid(
                     )
                 } else {
                     when (item) {
-                        is PlacedItem.SingleApp -> AppIcon(app = item.app, size = AppIconSize.TILE, contentDescription = label)
+                        is PlacedItem.SingleApp -> AppIcon(
+                            app = item.app,
+                            size = AppIconSize.TILE,
+                            contentDescription = label,
+                            notificationCount = badgeCountFor(item.app.packageName),
+                            badgeStyle = badgeStyle,
+                        )
                         is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
                     }
                 }

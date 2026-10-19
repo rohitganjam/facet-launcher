@@ -1,7 +1,20 @@
 package com.facetlauncher.app.ui.settings
 
+import android.app.WallpaperManager
+import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
+import androidx.room.Room
+import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.DefaultAppRepository
+import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
@@ -10,6 +23,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -40,7 +54,18 @@ class NotificationSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "notification-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                NotificationSettingsViewModel(settingsRepository, FakeNotificationAccessRepository(context, granted = accessGranted))
+                val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
+                val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
+                val folderRepository = FolderRepository(database.folderDao(), appRepository)
+                NotificationSettingsViewModel(
+                    settingsRepository,
+                    FakeNotificationAccessRepository(context, granted = accessGranted),
+                    PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository),
+                    WallpaperRepository(WallpaperManager.getInstance(context)),
+                    DefaultAppRepository(context),
+                    GetInstalledAppsUseCase(appRepository),
+                    SelectPreviewAppsUseCase(),
+                )
             }
             FacetLauncherTheme {
                 NotificationSettingsScreen(
@@ -52,6 +77,29 @@ class NotificationSettingsScreenTest {
         }
         composeRule.waitForIdle()
         return settingsRepository
+    }
+
+    @Test
+    fun `preview shows a prompt without notification access`() {
+        // Given the screen with no notification access granted
+        setContent(accessGranted = false)
+
+        // Then the preview area says access is needed rather than showing a sample
+        composeRule.onNodeWithTag("notification_preview_no_access").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `preview badge follows the selected badge style`() {
+        // Given the screen with the default Dot style
+        val settings = setContent(accessGranted = true)
+
+        // When the style is switched to Count
+        runBlocking { settings.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT) }
+        composeRule.waitForIdle()
+
+        // Then the preview badge shows its count
+        composeRule.onNodeWithTag("notification_preview").performScrollTo()
+        composeRule.onNodeWithText("3").assertIsDisplayed()
     }
 
     @Test

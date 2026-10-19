@@ -55,6 +55,7 @@ import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.WallpaperBackground
+import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.resolve
 import com.facetlauncher.app.data.model.AppListLimits
@@ -98,7 +99,7 @@ internal fun HomePreview(
         CompositionLocalProvider(
             LocalDensity provides Density(baseDensity.density * contentScale, baseDensity.fontScale),
         ) {
-            HomePreviewContent(state, testTagPrefix, onClick, showEmptyHint, clockTestTag)
+            LauncherScaledTypography { HomePreviewContent(state, testTagPrefix, onClick, showEmptyHint, clockTestTag) }
         }
     }
 }

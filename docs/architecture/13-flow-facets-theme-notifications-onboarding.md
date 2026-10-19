@@ -70,8 +70,9 @@ flowchart TB
   only, "Notifications" and "General" (one "Fonts, themes and icons" row → `FontsThemesIconsScreen`, route `fontsThemesIcons`).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
-  fields above, always shown; `FontsThemesIconsScreen` holds theme / system bar icons / accent / icon style and shape /
-  launcher font / app label color / size / weight. Row titles on the dock screen:
+  fields above, always shown; `FontsThemesIconsScreen` holds three cards, each under a `SettingsSectionHeader`: "Theme"
+  (launcher theme, status bar icons, accent), "Icons" (icon style and shape) and "Fonts" (launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
+  Home's styles as the card's last row). Row titles on the dock screen:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
   position". Within "Dock & home", `appListLayout` ("App list layout" — always visible) then gates
@@ -195,6 +196,16 @@ flowchart LR
   `Surface` read stayed legible for one and went low-contrast for the other, since `THEME_INVERTED`
   deliberately lands the panel on `Surface`'s own end of the scale).
 - Per-facet Private Space screens use `PrivateSpaceTheme`, a fixed override of the scheme.
+- **Settings ignores the Font size and Font weight options.** `FacetLauncherTheme` provides two typographies as locals
+  (`LocalLauncherTypography`, scaled and weighted, and `LocalUnscaledTypography`, same family at scale 1 and regular weight). `FacetNavHost`
+  registers every destination except Home through `settingsComposable`, which wraps it in `UnscaledTypography`, so
+  Settings text never changes size or weight. `ThemedModalBottomSheet` wraps its content in the same `UnscaledTypography`, so every
+  bottom sheet is unscaled too. `FolderContentsSheet` is a dialog, not a `ThemedModalBottomSheet`, but it matches one: edge-to-edge
+  window (`decorFitsSystemWindows = false`), scrim up to the status bar, surface behind the nav bar with its content clear of it,
+  bar icon colours from `LocalLightStatusBarIcons`/theme, and the same `UnscaledTypography`. Its header mirrors the app sheet's: `FolderTileGlyph`, the name in `titleLarge`, an app count, a
+  rename icon button (or the back chevron and "Add to folder" in `AddHere` mode) and a `CardDivider` below. It slides in from the bottom and out again (scrim fading) with the nav transition's timing; scrim tap, Back and Home press play the exit before calling `onDismissRequest`. Previews that show how Home will look (`HomePreview`, `HomeSurfacePreview`, the
+  calendar strip) re-wrap in `LauncherScaledTypography`, so they still follow both options. The system font scale is not
+  touched.
 - `facetTypography`'s `fontScale` multiplies every role's `fontSize`/`lineHeight` app-wide except
   the clock (`FacetType.clock`, defined outside `facetTypography`); `fontWeight` only overrides
   `bodyLarge`/`bodyMedium`/`bodySmall` — not `title*`/`label*`/`headline*`/`display*`, so dialog
@@ -258,6 +269,9 @@ sequenceDiagram
   live, and `NotificationAccessExplanationScreen` explains the permission before deep-linking.
 - Nothing about notifications is persisted; the map is rebuilt on every listener callback and is
   empty until the service connects after process start.
+- On Home's app list, `AppRow` places the badge outside the alignment: in Center the icon and label are centred in
+  the row and the badge sits just past them (`CenteredWithBadge`), so a badge never shifts them. Left and Right keep
+  the badge trailing and leading the label.
 - Badge counts are keyed by package only — a Work-profile app shares its badge with the personal
   copy. `NotificationInfo.userHandle` (`sbn.user`) is carried for the app menu below, but the badge
   count ignores it.

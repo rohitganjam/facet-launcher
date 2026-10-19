@@ -1,6 +1,10 @@
 package com.facetlauncher.app.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -25,12 +30,17 @@ import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +52,8 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.graphics.vector.group
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,14 +61,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
+import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
+import com.facetlauncher.app.ui.theme.FacetTransitionEasing
+import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
+import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
+import com.facetlauncher.app.ui.theme.UnscaledTypography
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.theme.Accent
-import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
+import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
@@ -111,98 +129,117 @@ fun FolderContentsSheet(
     showRecencyBadge: Boolean = false,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberSheetSlideState(onDismiss = onDismissRequest)
 
-    DismissOnHomePress(onDismiss = onDismissRequest)
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        // Disable the platform Dialog's own default window dim — it would stack on top of the Scrim Box below.
-        val view = LocalView.current
-        SideEffect { (view.parent as? DialogWindowProvider)?.window?.setDimAmount(0f) }
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .then(if (headerAction is FolderSheetHeaderAction.AddHere) Modifier else Modifier.background(Scrim))
-                .clickable(onClick = onDismissRequest),
-        ) {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)) {
-                val minHeight = maxHeight * 0.3f
-                val maxSheetHeight = maxHeight * 0.7f
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("folder_contents_sheet")
-                        // M3's ModalBottomSheet default shape (SheetDefaults.ExpandedShape) is
-                        // extraLarge (28dp), applied top-only — see CLAUDE.md's Material 3 shape section.
-                        .background(Surface, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                        // clickable after background/clip so a ripple (if this were ever enabled) would
-                        // respect the shape above rather than fill the full rectangular bounds.
-                        .clickable(enabled = false, onClick = {})
-                        .heightIn(min = minHeight, max = maxSheetHeight),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(top = 12.dp, bottom = 8.dp)
-                            .size(width = 34.dp, height = 4.dp)
-                            .background(color = Faint, shape = RoundedCornerShape(2.dp)),
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 24.dp, bottom = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
+    DismissOnHomePress(onDismiss = sheetState::dismiss)
+    UnscaledTypography {
+        Dialog(onDismissRequest = sheetState::dismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            SheetDialogWindow()
+            val scrim = Scrim
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .then(
                         if (headerAction is FolderSheetHeaderAction.AddHere) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = stringResource(R.string.content_description_back),
-                                tint = Ink,
-                                modifier = Modifier
-                                    .testTag("folder_contents_sheet_back")
-                                    .clickable(onClick = headerAction.onBack)
-                                    .padding(8.dp),
+                            Modifier
+                        } else {
+                            Modifier.drawBehind { drawRect(scrim, alpha = sheetState.progress) }
+                        },
+                    )
+                    .clickable(onClick = sheetState::dismiss),
+            ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)) {
+                    val minHeight = maxHeight * 0.3f
+                    val maxSheetHeight = maxHeight * 0.7f
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("folder_contents_sheet")
+                            .graphicsLayer { translationY = (1f - sheetState.progress) * size.height }
+                            // M3's ModalBottomSheet default shape (SheetDefaults.ExpandedShape) is
+                            // extraLarge (28dp), applied top-only — see CLAUDE.md's Material 3 shape section.
+                            .background(Surface, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                            // clickable after background/clip so a ripple (if this were ever enabled) would
+                            // respect the shape above rather than fill the full rectangular bounds.
+                            .clickable(enabled = false, onClick = {})
+                            // After the background, so the surface runs behind the nav bar and the content clears it.
+                            .navigationBarsPadding()
+                            .heightIn(min = minHeight, max = maxSheetHeight),
+                    ) {
+                        AppContextMenuDragHandle()
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(
+                                start = if (headerAction is FolderSheetHeaderAction.AddHere) 12.dp else MENU_SIDE_PADDING,
+                                end = MENU_SIDE_PADDING - 12.dp,
+                                top = 8.dp,
+                                bottom = 8.dp,
+                            ),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (headerAction is FolderSheetHeaderAction.AddHere) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = stringResource(R.string.content_description_back),
+                                    tint = Ink,
+                                    modifier = Modifier
+                                        .testTag("folder_contents_sheet_back")
+                                        .clickable(onClick = headerAction.onBack)
+                                        .padding(8.dp),
+                                )
+                            }
+                            FolderTileGlyph(folder = folder)
+                            Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                                Text(
+                                    text = folder.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = Ink,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = pluralStringResource(R.plurals.folder_app_count, folder.apps.size, folder.apps.size),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Muted,
+                                )
+                            }
+                            when (headerAction) {
+                                is FolderSheetHeaderAction.Rename -> MenuIconButton(
+                                    icon = Icons.Outlined.DriveFileRenameOutline,
+                                    contentDescription = stringResource(R.string.action_rename),
+                                    tint = Muted,
+                                    onClick = { showRenameDialog = true },
+                                    modifier = Modifier.testTag("folder_contents_sheet_rename"),
+                                )
+                                is FolderSheetHeaderAction.AddHere -> TextActionButton(
+                                    text = stringResource(R.string.folder_add_to_folder),
+                                    onClick = headerAction.onAdd,
+                                    modifier = Modifier.testTag("folder_contents_sheet_add"),
+                                )
+                                FolderSheetHeaderAction.None -> Unit
+                            }
+                        }
+                        CardDivider()
+                        if (folder.apps.isEmpty()) {
+                            FolderContentsEmptyState()
+                        } else if (presentation == DrawerPresentation.GRID) {
+                            FolderContentsGrid(
+                                folder = folder,
+                                columns = gridColumns,
+                                onAppClick = { app -> onDismissRequest(); onAppClick(app) },
+                                appMenuNotifications = appMenuNotifications,
+                                onAppInfo = onAppInfo,
+                                onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
+                            )
+                        } else {
+                            FolderContentsList(
+                                folder = folder,
+                                onAppClick = { app -> onDismissRequest(); onAppClick(app) },
+                                appMenuNotifications = appMenuNotifications,
+                                onAppInfo = onAppInfo,
+                                onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
+                                showRecencyBadge = showRecencyBadge,
                             )
                         }
-                        Text(
-                            text = folder.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Ink,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f).padding(start = if (headerAction is FolderSheetHeaderAction.AddHere) 0.dp else 12.dp),
-                        )
-                        when (headerAction) {
-                            is FolderSheetHeaderAction.Rename -> TextActionButton(
-                                text = stringResource(R.string.action_rename),
-                                onClick = { showRenameDialog = true },
-                                modifier = Modifier.testTag("folder_contents_sheet_rename"),
-                            )
-                            is FolderSheetHeaderAction.AddHere -> TextActionButton(
-                                text = stringResource(R.string.folder_add_to_folder),
-                                onClick = headerAction.onAdd,
-                                modifier = Modifier.testTag("folder_contents_sheet_add"),
-                            )
-                            FolderSheetHeaderAction.None -> Unit
-                        }
-                    }
-                    if (folder.apps.isEmpty()) {
-                        FolderContentsEmptyState()
-                    } else if (presentation == DrawerPresentation.GRID) {
-                        FolderContentsGrid(
-                            folder = folder,
-                            columns = gridColumns,
-                            onAppClick = { app -> onDismissRequest(); onAppClick(app) },
-                            appMenuNotifications = appMenuNotifications,
-                            onAppInfo = onAppInfo,
-                            onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
-                        )
-                    } else {
-                        FolderContentsList(
-                            folder = folder,
-                            onAppClick = { app -> onDismissRequest(); onAppClick(app) },
-                            appMenuNotifications = appMenuNotifications,
-                            onAppInfo = onAppInfo,
-                            onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
-                            showRecencyBadge = showRecencyBadge,
-                        )
                     }
                 }
             }
@@ -221,6 +258,48 @@ fun FolderContentsSheet(
             },
             onDismiss = { showRenameDialog = false },
         )
+    }
+}
+
+/** Slides the sheet in from the bottom and back out; [dismiss] plays the exit, then calls `onDismiss`. */
+private class SheetSlideState(val visibleState: MutableTransitionState<Boolean>, private val progressState: State<Float>) {
+    val progress: Float get() = progressState.value
+
+    fun dismiss() {
+        visibleState.targetState = false
+    }
+}
+
+@Composable
+private fun rememberSheetSlideState(onDismiss: () -> Unit): SheetSlideState {
+    val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
+    val progress = rememberTransition(visibleState, label = "folder_sheet_slide").animateFloat(
+        transitionSpec = { tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing) },
+        label = "folder_sheet_slide_progress",
+    ) { visible -> if (visible) 1f else 0f }
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    LaunchedEffect(visibleState.currentState, visibleState.isIdle) {
+        if (visibleState.isIdle && !visibleState.currentState) currentOnDismiss()
+    }
+    return remember(visibleState, progress) { SheetSlideState(visibleState, progress) }
+}
+
+/** Makes the dialog's window behave like [ThemedModalBottomSheet]'s: no platform dim, the scrim reaches the status bar, and the bar icons match Home and the theme. */
+@Composable
+private fun SheetDialogWindow() {
+    val view = LocalView.current
+    val statusIconsLight = LocalLightStatusBarIcons.current
+    val isDarkTheme = LocalIsDarkTheme.current
+    SideEffect {
+        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        // Disable the platform Dialog's own default dim — it would stack on top of the Scrim Box.
+        window.setDimAmount(0f)
+        window.isNavigationBarContrastEnforced = false
+        val controller = WindowCompat.getInsetsController(window, view)
+        if (statusIconsLight != null) {
+            controller.isAppearanceLightStatusBars = !statusIconsLight
+            controller.isAppearanceLightNavigationBars = !isDarkTheme
+        }
     }
 }
 
