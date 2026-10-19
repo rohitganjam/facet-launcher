@@ -526,11 +526,11 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
-    fun pullingTheDividerLeftShrinksACustomWidgetOnlyToItsMinimumAndSavesIt() {
+    fun pullingTheDividerLeftShrinksACustomWidgetToOneHubCellAndSavesIt() {
         var committed: Pair<Int, Int>? = null
         composeRule.setContent {
             LandscapeHome(
-                widget = TestClockWidget(widthDp = 200, heightDp = 90, minWidthDp = 120, minHeightDp = 60, onSizeCommit = { w, h -> committed = w to h }),
+                widget = TestClockWidget(widthDp = 200, heightDp = 90, minWidthDp = 120, minHeightDp = 120, onSizeCommit = { w, h -> committed = w to h }),
             )
         }
         enterAdjustModeFromEmptySpace()
@@ -543,10 +543,10 @@ class HomeScreenLandscapeTest {
         }
         composeRule.waitForIdle()
 
-        // Then the widget shrank to its minimum width and no further, and that size was saved
+        // Then the widget shrank to one landscape Hub cell (64dp), whatever the provider declares, and that size was saved
         val width = widgetBounds().width.value
-        assert(width < 200f && width >= 119f) { "widget should be about 120dp wide, was $width" }
-        assert(committed != null && committed!!.first in 119..121) { "expected the shrunk size to be saved, got $committed" }
+        assert(width < 200f && width >= 63f) { "widget should be about 64dp wide, was $width" }
+        assert(committed != null && committed!!.first in 63..65) { "expected the shrunk size to be saved, got $committed" }
     }
 
     private companion object {

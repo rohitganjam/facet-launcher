@@ -114,6 +114,7 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.ui.hub.HUB_LANDSCAPE_CELL_SIZE
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
@@ -567,8 +568,9 @@ fun HomeScreen(
     val landscapeContentWidth = if (landscapeContentWidthPx > 0f) landscapeContentWidthPx else (rootSize?.width?.toFloat() ?: 0f)
     val landscapeWantedPaneWidthPx = liveDividerWidthPx ?: clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
     val landscapeNaturalSize = clockBoxSize?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Zero
-    val clockWidgetMinWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
-    val clockWidgetMinHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
+    // The resize floor is one Hub cell; landscape's cells are a fixed size, not a share of the window width.
+    val clockWidgetMinWidthPx = if (isLandscape) with(density) { HUB_LANDSCAPE_CELL_SIZE.toPx() } else clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
+    val clockWidgetMinHeightPx = if (isLandscape) clockWidgetMinWidthPx else clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
     // The narrowest the clock may be: the native clock at its smallest scale, or the hosted widget's own minimum.
     val landscapeMinClockWidthPx = if (clockWidgetAppWidgetId != null) clockWidgetMinWidthPx else landscapeNaturalSize.width * HOME_CLOCK_MIN_SCALE
     // The pane resolved against the smallest clock, so a narrow pane shrinks the clock to fit (as
