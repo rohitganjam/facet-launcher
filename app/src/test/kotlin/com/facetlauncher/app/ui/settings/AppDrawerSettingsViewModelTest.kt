@@ -2,7 +2,7 @@ package com.facetlauncher.app.ui.settings
 
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -54,10 +54,10 @@ class AppDrawerSettingsViewModelTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
-        viewModel.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
+        viewModel.setDrawerGridDensity(DrawerGridDensity.AIRY)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
+        verify(settingsRepository).setDrawerGridDensity(DrawerGridDensity.AIRY)
     }
 
     @Test

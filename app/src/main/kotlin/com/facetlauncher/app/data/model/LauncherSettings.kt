@@ -25,11 +25,25 @@ enum class DrawerPresentation(@param:StringRes val displayNameRes: Int) {
     GRID(R.string.drawer_presentation_grid),
 }
 
-enum class DrawerGridSize(val columns: Int, val rows: Int) {
-    FOUR_BY_FOUR(4, 4),
-    FOUR_BY_FIVE(4, 5),
-    FIVE_BY_FIVE(5, 5),
-    FIVE_BY_SIX(5, 6),
+/**
+ * App Drawer grid density — the grid's column and row counts are computed from the window size
+ * (`ui/drawer/DrawerGridLayout.kt`), so one setting fits a phone, a foldable or a tablet.
+ * Persisted under the old `drawer_grid_size` key / `drawerGridSize` backup field; [fromStored]
+ * also maps the retired column×row names.
+ */
+enum class DrawerGridDensity(@param:StringRes val displayNameRes: Int) {
+    COMPACT(R.string.drawer_grid_density_compact),
+    REGULAR(R.string.drawer_grid_density_regular),
+    AIRY(R.string.drawer_grid_density_airy);
+
+    companion object {
+        fun fromStored(name: String): DrawerGridDensity? = when (name) {
+            "FIVE_BY_SIX" -> COMPACT
+            "FOUR_BY_FIVE", "FIVE_BY_FIVE" -> REGULAR
+            "FOUR_BY_FOUR" -> AIRY
+            else -> entries.firstOrNull { it.name == name }
+        }
+    }
 }
 
 /**
@@ -230,7 +244,7 @@ data class LauncherSettings(
     val use24HourTime: Boolean = false,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
-    val drawerGridSize: DrawerGridSize = DrawerGridSize.FIVE_BY_SIX,
+    val drawerGridDensity: DrawerGridDensity = DrawerGridDensity.COMPACT,
     val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     val drawerOpacity: Float = 0.6f,
     val notificationDotsEnabled: Boolean = true,

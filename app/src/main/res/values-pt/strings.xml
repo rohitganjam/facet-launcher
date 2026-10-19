@@ -292,7 +292,9 @@
     <!-- Drawer enums -->
     <string name="drawer_presentation_list">Lista</string>
     <string name="drawer_presentation_grid">Grade</string>
-    <string name="drawer_grid_size_label">%1$d colunas × %2$d linhas</string>
+    <string name="drawer_grid_density_compact">Compacta</string>
+    <string name="drawer_grid_density_regular">Normal</string>
+    <string name="drawer_grid_density_airy">Espaçosa</string>
     <string name="drawer_list_item_size_compact">Compacto</string>
     <string name="drawer_list_item_size_regular">Regular</string>
     <string name="drawer_list_item_size_spacious">Espaçoso</string>
@@ -352,7 +354,7 @@
     <!-- AppDrawerSettingsScreen -->
     <string name="app_drawer_settings_header_title">Gaveta de apps</string>
     <string name="app_drawer_show_apps_as">Exibir apps como</string>
-    <string name="app_drawer_grid_size">Tamanho da grade</string>
+    <string name="app_drawer_grid_density">Densidade da grade</string>
     <string name="app_drawer_list_item_size">Tamanho do item da lista</string>
     <string name="app_drawer_show_icons_title">Exibir ícones</string>
     <string name="app_drawer_show_icons_subtitle">Exibe ícones com o nome do app</string>

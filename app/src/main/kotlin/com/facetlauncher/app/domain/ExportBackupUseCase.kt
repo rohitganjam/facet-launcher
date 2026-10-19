@@ -73,7 +73,7 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     use24HourTime = use24HourTime,
     dockDisplayMode = dockDisplayMode.name,
     drawerPresentation = drawerPresentation.name,
-    drawerGridSize = drawerGridSize.name,
+    drawerGridSize = drawerGridDensity.name,
     drawerListItemSize = drawerListItemSize.name,
     drawerOpacity = drawerOpacity,
     notificationDotsEnabled = notificationDotsEnabled,

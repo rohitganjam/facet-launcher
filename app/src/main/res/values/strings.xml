@@ -312,13 +312,15 @@
     <string name="media_player_play_cd">Play</string>
     <string name="media_player_pause_cd">Pause</string>
 
-    <!-- DrawerPresentation/DrawerGridSize/DrawerListItemSize/SearchBarPosition/DrawerFolderDisplayMode
+    <!-- DrawerPresentation/DrawerGridDensity/DrawerListItemSize/SearchBarPosition/DrawerFolderDisplayMode
          — enum option labels, same pattern as section 1's data/model enums (LabeledDropdownRow
          consumers) — centralized here rather than left as private per-screen displayLabel()
          mappings, so AppDrawerSettingsScreen and any future consumer share one translation. -->
     <string name="drawer_presentation_list">List</string>
     <string name="drawer_presentation_grid">Grid</string>
-    <string name="drawer_grid_size_label">%1$d cols × %2$d rows</string>
+    <string name="drawer_grid_density_compact">Compact</string>
+    <string name="drawer_grid_density_regular">Regular</string>
+    <string name="drawer_grid_density_airy">Airy</string>
     <string name="drawer_list_item_size_compact">Compact</string>
     <string name="drawer_list_item_size_regular">Regular</string>
     <string name="drawer_list_item_size_spacious">Spacious</string>
@@ -390,7 +392,7 @@
     <!-- AppDrawerSettingsScreen -->
     <string name="app_drawer_settings_header_title">App Drawer</string>
     <string name="app_drawer_show_apps_as">Show apps as</string>
-    <string name="app_drawer_grid_size">Grid size</string>
+    <string name="app_drawer_grid_density">Grid density</string>
     <string name="app_drawer_list_item_size">List item size</string>
     <string name="app_drawer_show_icons_title">Show icons</string>
     <string name="app_drawer_show_icons_subtitle">Shows icons with the application name</string>

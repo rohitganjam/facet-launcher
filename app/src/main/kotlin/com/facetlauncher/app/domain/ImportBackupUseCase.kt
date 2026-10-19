@@ -20,7 +20,7 @@ import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.CURRENT_BACKUP_VERSION
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
@@ -147,7 +147,7 @@ class ImportBackupUseCase @Inject constructor(
             setUse24HourTime(settings.use24HourTime)
             setDockDisplayMode(settings.dockDisplayMode.toEnumOrDefault(DockDisplayMode.ICONS))
             setDrawerPresentation(settings.drawerPresentation.toEnumOrDefault(DrawerPresentation.LIST))
-            setDrawerGridSize(settings.drawerGridSize.toEnumOrDefault(DrawerGridSize.FIVE_BY_SIX))
+            setDrawerGridDensity(DrawerGridDensity.fromStored(settings.drawerGridSize) ?: DrawerGridDensity.COMPACT)
             setDrawerListItemSize(settings.drawerListItemSize.toEnumOrDefault(DrawerListItemSize.REGULAR))
             setDrawerOpacity(settings.drawerOpacity)
             setNotificationDotsEnabled(settings.notificationDotsEnabled)

@@ -110,7 +110,7 @@
     <ID>MatchingDeclarationName:OnboardingScreen.kt:OnboardingStep</ID>
     <ID>Material2:Theme.kt:import androidx.compose.material.ripple.RippleAlpha</ID>
     <ID>ModifierNaming:ClockBlock.kt:clockContentModifier: Modifier</ID>
-    <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true }) .testTag("drawer_grid_tile_${app.packageName}")</ID>
+    <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .fillMaxWidth() .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true }) .testTag("drawer_grid_tile_${app.packageName}")</ID>
     <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true }) .testTag("drawer_grid_folder_tile_${folder.id}")</ID>
     <ID>ModifierWithoutDefault:ClockBlock.kt:clockContentModifier: Modifier</ID>
     <ID>ModifierWithoutDefault:ClockTemplates.kt:modifier: Modifier</ID>

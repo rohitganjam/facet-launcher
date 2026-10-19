@@ -25,7 +25,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
@@ -122,8 +122,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.dockDisplayMode,
             drawerPresentation = preferences[Keys.DRAWER_PRESENTATION]?.let { runCatching { DrawerPresentation.valueOf(it) }.getOrNull() }
                 ?: defaults.drawerPresentation,
-            drawerGridSize = preferences[Keys.DRAWER_GRID_SIZE]?.let { runCatching { DrawerGridSize.valueOf(it) }.getOrNull() }
-                ?: defaults.drawerGridSize,
+            drawerGridDensity = preferences[Keys.DRAWER_GRID_SIZE]?.let(DrawerGridDensity::fromStored)
+                ?: defaults.drawerGridDensity,
             drawerListItemSize = preferences[Keys.DRAWER_LIST_ITEM_SIZE]?.let { runCatching { DrawerListItemSize.valueOf(it) }.getOrNull() }
                 ?: defaults.drawerListItemSize,
             drawerOpacity = preferences[Keys.DRAWER_OPACITY] ?: defaults.drawerOpacity,
@@ -231,8 +231,8 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.DRAWER_PRESENTATION] = presentation.name }
     }
 
-    suspend fun setDrawerGridSize(gridSize: DrawerGridSize) {
-        dataStore.edit { it[Keys.DRAWER_GRID_SIZE] = gridSize.name }
+    suspend fun setDrawerGridDensity(density: DrawerGridDensity) {
+        dataStore.edit { it[Keys.DRAWER_GRID_SIZE] = density.name }
     }
 
     suspend fun setDrawerListItemSize(itemSize: DrawerListItemSize) {

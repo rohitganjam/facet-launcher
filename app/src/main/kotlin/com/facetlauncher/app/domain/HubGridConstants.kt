@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import android.content.Context
 
-/** Hub's grid is fixed at 5 columns (matching `DrawerGridSize.FIVE_BY_SIX`'s column count). */
+/** Hub's grid is fixed at 5 columns. */
 const val HUB_COLUMNS = 5
 
 /** Rows grow as widgets are added, up to this scroll cap (F5). */

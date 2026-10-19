@@ -13,7 +13,7 @@ flowchart TB
     S --> TAB["DrawerTab.Personal → profile ∈ {PERSONAL, OTHER}\nDrawerTab.Work(handle) → userHandle == handle"]
     TAB --> GRP["GroupAppsByLetterUseCase(items, locale) { displayName }\nICU AlphabeticIndex buckets → GroupedItems&lt;DrawerItem&gt;\n(headers + AlphabetRail index maps)\nitems = apps only, or apps+folders merged when INLINE"]
     DVM[DrawerViewModel] -- "badgeCounts, contactResults, settingsResults,\nshowContactsPermissionPrompt, showContactsSettingPrompt,\nprivateSpaceState, secureFolderIntent, folders" --> S
-    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridSize,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode, recentlyInstalledPosition" --> S
+    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridDensity,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode, recentlyInstalledPosition" --> S
 ```
 
 ### 1a. Folders in the drawer (`DrawerFolderDisplayMode`)
@@ -114,6 +114,17 @@ either, just the row's own position in its flat `LazyColumn`. The row there
 (`PrivateSpaceRecentlyInstalledRow`) is styled through `PrivateSpaceTheme`'s own
 `MaterialTheme.colorScheme.*` tokens, like every other Private Space row, not this app's usual
 `Accent`/`Ink`, and also gets the sheet's recency badge (`showRecencyBadge = true`).
+
+### 1c. Grid density (`DrawerGridDensity`)
+
+Grid presentation only. `COMPACT`/`REGULAR`/`AIRY` pick a target cell width and row pitch
+(`ui/drawer/DrawerGridLayout.kt`); the column and row counts are computed from the viewport, so one
+setting fits a phone, a foldable and a tablet (a typical phone gets 5/4/4 columns and 6/5/4 rows).
+`DrawerGridContent` derives both counts from its own constraints and divides the height into equal
+rows; search results use the same column count, laid out as equal-weight cells so tiles sit on the
+same grid. The setting persists under the old `drawer_grid_size` key; the retired `FIVE_BY_SIX`-style
+names still load (`DrawerGridDensity.fromStored`) and map to the nearest density. Home's own grid
+(`AppListGridColumns`) is a separate setting and still fixed-column.
 
 ## 2. Search pipeline
 

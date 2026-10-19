@@ -292,7 +292,9 @@
     <!-- Drawer enums -->
     <string name="drawer_presentation_list">Liste</string>
     <string name="drawer_presentation_grid">Raster</string>
-    <string name="drawer_grid_size_label">%1$d Spalten × %2$d Zeilen</string>
+    <string name="drawer_grid_density_compact">Kompakt</string>
+    <string name="drawer_grid_density_regular">Normal</string>
+    <string name="drawer_grid_density_airy">Luftig</string>
     <string name="drawer_list_item_size_compact">Kompakt</string>
     <string name="drawer_list_item_size_regular">Standard</string>
     <string name="drawer_list_item_size_spacious">Geräumig</string>
@@ -352,7 +354,7 @@
     <!-- AppDrawerSettingsScreen -->
     <string name="app_drawer_settings_header_title">App-Drawer</string>
     <string name="app_drawer_show_apps_as">Apps anzeigen als</string>
-    <string name="app_drawer_grid_size">Rastergröße</string>
+    <string name="app_drawer_grid_density">Rasterdichte</string>
     <string name="app_drawer_list_item_size">Listenelementgröße</string>
     <string name="app_drawer_show_icons_title">Symbole anzeigen</string>
     <string name="app_drawer_show_icons_subtitle">Zeigt Symbole mit dem App-Namen</string>

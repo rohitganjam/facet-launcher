@@ -888,7 +888,7 @@ fun HomeDrawerRoute(
             gridState = gridState,
             searchListState = searchListState,
             presentation = drawerSettings.drawerPresentation,
-            gridSize = drawerSettings.drawerGridSize,
+            gridDensity = drawerSettings.drawerGridDensity,
             listItemSize = drawerSettings.drawerListItemSize,
             showIcons = drawerSettings.showDrawerIcons,
             showLabels = drawerSettings.showDrawerLabels,

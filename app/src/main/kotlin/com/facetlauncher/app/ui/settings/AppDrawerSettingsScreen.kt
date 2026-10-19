@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -71,7 +71,7 @@ fun AppDrawerSettingsScreen(
         settings = settings,
         onBack = onBack,
         onDrawerPresentationChange = viewModel::setDrawerPresentation,
-        onDrawerGridSizeChange = viewModel::setDrawerGridSize,
+        onDrawerGridDensityChange = viewModel::setDrawerGridDensity,
         onDrawerListItemSizeChange = viewModel::setDrawerListItemSize,
         onShowDrawerIconsChange = viewModel::setShowDrawerIcons,
         onShowDrawerLabelsChange = viewModel::setShowDrawerLabels,
@@ -95,7 +95,7 @@ private fun AppDrawerSettingsContent(
     settings: LauncherSettings,
     onBack: () -> Unit,
     onDrawerPresentationChange: (DrawerPresentation) -> Unit,
-    onDrawerGridSizeChange: (DrawerGridSize) -> Unit,
+    onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
     onDrawerListItemSizeChange: (DrawerListItemSize) -> Unit,
     onShowDrawerIconsChange: (Boolean) -> Unit,
     onShowDrawerLabelsChange: (Boolean) -> Unit,
@@ -135,11 +135,11 @@ private fun AppDrawerSettingsContent(
                         if (presentation == DrawerPresentation.GRID) {
                             CardDivider()
                             LabeledDropdownRow(
-                                title = stringResource(R.string.app_drawer_grid_size),
-                                options = DrawerGridSize.entries,
-                                selected = settings.drawerGridSize,
-                                label = { it.appDrawerDisplayLabel() },
-                                onSelect = onDrawerGridSizeChange,
+                                title = stringResource(R.string.app_drawer_grid_density),
+                                options = DrawerGridDensity.entries,
+                                selected = settings.drawerGridDensity,
+                                label = { stringResource(it.displayNameRes) },
+                                onSelect = onDrawerGridDensityChange,
                                 testTag = "drawer_grid_size_row",
                             )
                         }
@@ -241,12 +241,6 @@ private fun AppDrawerSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mod
     }
 }
 
-/** Not a fixed per-value [androidx.annotation.StringRes] like this file's other enum labels — the
- *  actual column/row counts are [DrawerGridSize]'s own numeric fields, so this stays a format
- *  template rather than 4 near-identical fixed strings. */
-@Composable
-private fun DrawerGridSize.appDrawerDisplayLabel(): String = stringResource(R.string.drawer_grid_size_label, columns, rows)
-
 @Composable
 private fun AppDrawerToggleRow(
     title: String,
@@ -303,7 +297,7 @@ private fun AppDrawerSettingsScreenPreview() {
             settings = LauncherSettings(),
             onBack = {},
             onDrawerPresentationChange = {},
-            onDrawerGridSizeChange = {},
+            onDrawerGridDensityChange = {},
             onDrawerListItemSizeChange = {},
             onShowDrawerIconsChange = {},
             onShowDrawerLabelsChange = {},

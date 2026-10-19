@@ -334,7 +334,7 @@ erDiagram
         string launcher_font_option "LauncherFontOption, default SYSTEM"
         string font_scale_option "FontScaleOption, default DEFAULT"
         string drawer_presentation "DrawerPresentation, default LIST"
-        string drawer_grid_size "DrawerGridSize, default FIVE_BY_SIX"
+        string drawer_grid_size "DrawerGridDensity, default COMPACT (legacy FIVE_BY_SIX etc. still read)"
         string drawer_list_item_size "DrawerListItemSize, default REGULAR"
         float drawer_opacity "default 0.6"
         boolean show_drawer_icons "default true"
@@ -467,7 +467,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setLauncherFontOption(LauncherFontOption)` | `launcher_font_option` | set | `AppearanceSettingsViewModel` |
 | `setFontScaleOption(FontScaleOption)` | `font_scale_option` | set | `AppearanceSettingsViewModel` |
 | `setDrawerPresentation(DrawerPresentation)` | `drawer_presentation` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel` |
-| `setDrawerGridSize(DrawerGridSize)` | `drawer_grid_size` | set | `AppDrawerSettingsViewModel` |
+| `setDrawerGridDensity(DrawerGridDensity)` | `drawer_grid_size` | set | `AppDrawerSettingsViewModel` |
 | `setDrawerListItemSize(DrawerListItemSize)` | `drawer_list_item_size` | set | `AppDrawerSettingsViewModel` |
 | `setDrawerOpacity(Float)` | `drawer_opacity` | set | `AppDrawerSettingsViewModel` |
 | `setShowDrawerIcons(Boolean)` | `show_drawer_icons` | set | `AppDrawerSettingsViewModel` |
@@ -576,7 +576,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | Key | Type | Field | Default |
 |---|---|---|---|
 | `drawer_presentation` | String (`DrawerPresentation`) | `drawerPresentation` | `LIST` |
-| `drawer_grid_size` | String (`DrawerGridSize`) | `drawerGridSize` | `FIVE_BY_SIX` |
+| `drawer_grid_size` | String (`DrawerGridDensity`) | `drawerGridDensity` | `COMPACT` |
 | `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` |
 | `drawer_opacity` | Float | `drawerOpacity` | `0.6` |
 | `show_drawer_icons` | Boolean | `showDrawerIcons` | `true` |

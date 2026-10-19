@@ -4116,3 +4116,17 @@ Folds the eight Dock/Favorites tables into `app_placements` and `folder_placemen
 - [x] `FolderContentsSheet` header mirrors the app sheet's: folder icon, larger name with an app count, rename icon button, divider. `FolderContentsSheetTest` covers it.
 - [x] The "Add to folder" page of the app sheet gets the same header treatment: back chevron, the Add to folder icon, "Add to folder" in the same title style as the app name, and a divider. `AppContextMenuTest` covers it.
 - [x] `FolderContentsSheet` slides in from the bottom and out again, with the scrim fading, using the app's nav transition timing (`FACET_TRANSITION_DURATION_MS`, `FacetTransitionEasing`). Scrim, Back and Home-press play the exit first; the caller-driven closes (a tapped app, Add, back chevron) close at once.
+
+## Wide-screen App Drawer (foldable / landscape)
+
+Found on the unfolded Pixel Fold emulator: the fixed-column grid left most of the screen empty, search results packed to the left, and grid icons sat off-centre in their cells.
+
+- [x] `DrawerGridSize` (columns × rows, portrait-shaped) replaced by `DrawerGridDensity` (`COMPACT`/`REGULAR`/`AIRY`). Column and row counts are computed from the viewport (`ui/drawer/DrawerGridLayout.kt`), so one setting fits any window. Persisted under the old `drawer_grid_size` key; the retired names still load and map to the nearest density (`DrawerGridDensity.fromStored`), and old backups import the same way.
+- [x] `DrawerGridTile` fills its cell width: the icon centres in its column and the whole cell is tappable.
+- [x] Search tiles are equal-weight cells using the same column count, so they sit on the browse grid's columns instead of packing together.
+- [x] Settings row "Grid size" → "Grid density" (all five locales).
+- [x] Tests: `DrawerGridLayoutTest`, `DrawerGridDensityTest`, `SettingsRepositoryTest` (legacy value), `AppDrawerScreenTest` (`gridDensityControlsTileHeight`, `gridSearchResultsSitOnEvenlySpacedEqualWidthCells`). Docs: `02`, `12` updated.
+- [ ] Tune the cell width / row pitch targets on a real phone and a tablet (set from the Pixel Fold emulator and phone-height arithmetic only).
+- [ ] Check Grid on a phone-sized screen against the old 5×6 / 4×5 / 4×4 looks.
+- [ ] Home's own grid (`AppListGridColumns`) has the same fixed-column assumption — separate change.
+- [ ] Still open from the fold review: Home dock scattering, status-bar icon contrast on a wide window, list view column count, landscape Home layout.

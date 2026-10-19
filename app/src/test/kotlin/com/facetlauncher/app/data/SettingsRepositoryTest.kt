@@ -3,6 +3,7 @@ package com.facetlauncher.app.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -18,7 +19,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
@@ -54,6 +55,21 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `a grid size stored by an older version loads as the nearest density`() = runTest {
+        // Given a DataStore that still holds the retired column by row value
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            produceFile = { tempFolder.newFile("legacy-${System.nanoTime()}.preferences_pb") },
+        )
+        dataStore.edit { it[androidx.datastore.preferences.core.stringPreferencesKey("drawer_grid_size")] = "FOUR_BY_FIVE" }
+
+        // When the settings are read
+        val settings = SettingsRepository(dataStore).settings.first()
+
+        // Then it maps to Regular
+        assertEquals(DrawerGridDensity.REGULAR, settings.drawerGridDensity)
+    }
+
+    @Test
     fun `defaults match the design spec before anything is written`() = runTest {
         // Given a fresh repository with nothing written yet
         val repository = createRepository()
@@ -63,7 +79,7 @@ class SettingsRepositoryTest {
         assertFalse(settings.use24HourTime)
         assertEquals(DockDisplayMode.ICONS, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.LIST, settings.drawerPresentation)
-        assertEquals(DrawerGridSize.FIVE_BY_SIX, settings.drawerGridSize)
+        assertEquals(DrawerGridDensity.COMPACT, settings.drawerGridDensity)
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
         assertEquals(IconShape.SQUIRCLE, settings.iconShape)
@@ -277,7 +293,7 @@ class SettingsRepositoryTest {
         repository.setUse24HourTime(true)
         repository.setDockDisplayMode(DockDisplayMode.TEXT)
         repository.setDrawerPresentation(DrawerPresentation.GRID)
-        repository.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
+        repository.setDrawerGridDensity(DrawerGridDensity.AIRY)
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
         repository.setIconShape(IconShape.ROUNDED)
@@ -317,7 +333,7 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.use24HourTime)
         assertEquals(DockDisplayMode.TEXT, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.GRID, settings.drawerPresentation)
-        assertEquals(DrawerGridSize.FOUR_BY_FOUR, settings.drawerGridSize)
+        assertEquals(DrawerGridDensity.AIRY, settings.drawerGridDensity)
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
         assertEquals(IconShape.ROUNDED, settings.iconShape)
