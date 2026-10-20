@@ -20,13 +20,15 @@ import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
+import com.facetlauncher.app.ui.home.HomeItemActions
+import com.facetlauncher.app.ui.home.HomeItemStyle
 
 /**
  * What every app and folder tile on Home does when tapped, long-pressed or edited. One group, so the
  * rows, grid tiles and dock icons share one parameter instead of a dozen callbacks each.
  */
 @Immutable
-class HomeItemActions(
+data class HomeItemActions(
     val onAppClick: (AppInfo) -> Unit,
     val onAppInfo: (AppInfo) -> Unit = {},
     val onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
@@ -43,7 +45,7 @@ class HomeItemActions(
 
 /** How Home's app and folder tiles look, and the context their menus offer. */
 @Immutable
-class HomeItemStyle(
+data class HomeItemStyle(
     /** Home's label colour; it is a themed value, so callers pass it in. */
     val labelColor: Color,
     /** Notification counts by package name. */
@@ -58,7 +60,7 @@ class HomeItemStyle(
 
 /** The items an app list shows, with the style they are drawn in. */
 @Immutable
-class HomeAppListContent(val items: List<PlacedItem>, val style: HomeItemStyle)
+data class HomeAppListContent(val items: List<PlacedItem>, val style: HomeItemStyle)
 
 /** [app]'s long-press menu, wired to [actions] and [style]. */
 @Composable

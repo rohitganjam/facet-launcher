@@ -13,17 +13,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -37,8 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
@@ -52,6 +52,7 @@ import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -60,6 +61,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -79,7 +81,20 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeCalendarState
+import com.facetlauncher.app.ui.home.HomeClockActions
+import com.facetlauncher.app.ui.home.HomeClockState
+import com.facetlauncher.app.ui.home.HomeClockWidgetActions
+import com.facetlauncher.app.ui.home.HomeClockWidgetState
+import com.facetlauncher.app.ui.home.HomeDockState
+import com.facetlauncher.app.ui.home.HomeItemActions
+import com.facetlauncher.app.ui.home.HomeItemLook
+import com.facetlauncher.app.ui.home.HomeListState
+import com.facetlauncher.app.ui.home.HomeMediaActions
+import com.facetlauncher.app.ui.home.HomeMediaState
 import com.facetlauncher.app.ui.home.HomeScreen
+import com.facetlauncher.app.ui.home.HomeScreenActions
+import com.facetlauncher.app.ui.home.HomeScreenState
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.home.rememberHomeLandscapeSpace
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
@@ -89,6 +104,8 @@ import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
+import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
+import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
@@ -97,6 +114,7 @@ import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
 import com.facetlauncher.app.ui.theme.resolve
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** README's drawer-transform timing/easing (`.34s cubic-bezier(.32,.72,0,1)`), reused for the settle animation. */
@@ -667,154 +685,177 @@ fun HomeDrawerRoute(
             },
     ) {
         HomeScreen(
-            appListItems = homeUiState.appListItems,
+            state = HomeScreenState(
+                list = HomeListState(
+                    items = homeUiState.appListItems,
+                    look = HomeItemLook(
+                        badgeCounts = homeUiState.badgeCounts,
+                        badgeStyle = homeUiState.settings.notificationBadgeStyle,
+                        appMenuNotifications = appMenuNotifications,
+                        folderCandidates = folders,
+                        labelColorOption = homeUiState.settings.appLabelColorOption,
+                        labelFontWeightOption = homeUiState.settings.homeAppsFontWeight,
+                    ),
+                    layout = homeUiState.activeAppListLayout,
+                    alignment = listAlignment,
+                    rowPresentation = homeUiState.activeAppRowPresentation,
+                    gridColumns = homeUiState.activeAppListGridColumns,
+                    gridDisplayMode = homeUiState.activeAppListGridDisplayMode,
+                    showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
+                ),
+                dock = HomeDockState(
+                    items = homeUiState.dockApps,
+                    displayMode = homeUiState.activeDockDisplayMode,
+                ),
+                clock = HomeClockState(
+                    use24HourTime = homeUiState.effectiveUse24HourTime,
+                    templateId = homeUiState.clockTemplateId,
+                    fontOption = homeUiState.clockFontOption,
+                    colorOption = homeUiState.clockColorOption,
+                    accentColorOption = homeUiState.clockAccentColorOption,
+                    showMeridiem = homeUiState.clockShowMeridiem,
+                    dateStyle = homeUiState.clockDateStyle,
+                    launcherFontOption = homeUiState.settings.launcherFontOption,
+                    placement = clockPlacement,
+                    positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
+                    positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
+                    adjustMode = clockAdjustMode,
+                    draggingHandle = draggingHandle,
+                    isPro = clockWidgetIsPro,
+                ),
+                widget = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
+                    HomeClockWidgetState(
+                        appWidgetId = appWidgetId,
+                        widthDp = clockWidgetEffectiveWidthDp?.dp,
+                        heightDp = clockWidgetEffectiveHeightDp?.dp,
+                        minWidthDp = clockWidgetResizeFloorDp?.first?.dp,
+                        minHeightDp = clockWidgetResizeFloorDp?.second?.dp,
+                    )
+                },
+                calendar = HomeCalendarState(
+                    events = homeUiState.calendarEvents,
+                    colors = homeUiState.settings.calendarColors,
+                    display = homeUiState.calendarDisplay,
+                    nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
+                    batteryPercent = homeUiState.clockAccessories.batteryPercent,
+                    isCharging = homeUiState.clockAccessories.isCharging,
+                ),
+                media = HomeMediaState(
+                    player = homeUiState.mediaPlayer,
+                    showSkipButtons = homeUiState.settings.showMediaSkipButtons,
+                ),
+            ),
+            actions = HomeScreenActions(
+                item = HomeItemActions(
+                    onAppClick = onAppClick,
+                    onAppInfo = drawerViewModel::openAppInfo,
+                    onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
+                    onFavoritesAction = drawerViewModel::onFavoritesAction,
+                    onDockAction = drawerViewModel::onDockAction,
+                    onRequestFolderQuickAddState = { folder -> homeViewModel.quickAddStateForFolder(folder) },
+                    onFolderFavoritesAction = drawerViewModel::onFolderFavoritesAction,
+                    onFolderDockAction = drawerViewModel::onFolderDockAction,
+                    onCreateFolder = drawerViewModel::createFolder,
+                    onAddToFolder = drawerViewModel::addToFolder,
+                    onRemoveFromFolder = drawerViewModel::removeFromFolder,
+                    onRenameFolder = drawerViewModel::renameFolder,
+                ),
+                clock = HomeClockActions(
+                    onClockClick = {
+                        // AlarmClock.ACTION_SHOW_ALARMS is a semantic "jump straight to the alarms list"
+                        // intent, by design — on this Samsung/One UI build it resolves to a narrow,
+                        // single-purpose alarms screen with none of the Clock app's own tab navigation
+                        // (Alarm/Clock/Timer/Stopwatch), unlike AOSP's Clock which still shows its full
+                        // shell there. So: use that intent only to find WHICH app is "the clock app" on
+                        // this device, then launch that package's own normal entry point instead — the
+                        // same way tapping its icon would, landing on its full navigable UI rather than
+                        // the walled-off alarms subview. No fallback to the alarms intent itself — every
+                        // real clock app declares a launcher activity, so resolveActivity() finding a
+                        // package but getLaunchIntentForPackage() returning null for it doesn't happen.
+                        runCatching {
+                            Intent(AlarmClock.ACTION_SHOW_ALARMS).resolveActivity(context.packageManager)
+                                ?.packageName
+                                ?.let { context.packageManager.getLaunchIntentForPackage(it) }
+                                ?.let { context.startActivity(it) }
+                        }
+                    },
+                    onEditClockStyles = {
+                        clockAdjustMode = ClockAdjustMode.NONE
+                        onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)
+                    },
+                    onNavigateToSettings = onNavigateToSettings,
+                    onNavigateToFacetSettings = {
+                        homeUiState.activeFacet?.let { onNavigateToFacetSettings(it.id) }
+                    },
+                    onUseCustomWidgetClick = {
+                        if (!clockWidgetIsPro) {
+                            onNavigateToFacetPro(ProReason.CUSTOM_WIDGET)
+                        } else {
+                            homeUiState.activeFacet?.let { facet ->
+                                clockWidgetPickerFacetId = facet.id
+                                showClockWidgetPicker = true
+                            }
+                        }
+                    },
+                    onSwitchToLauncherClockClick = {
+                        homeUiState.activeFacet?.let { facet ->
+                            coroutineScope.launch { homeViewModel.clockWidgetFacet.switchToNativeClock(facet) }
+                        }
+                    },
+                    onEventClick = { event ->
+                        val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+                    },
+                    onZoneHeightCommit = { homeViewModel.onClockZoneHeightCommit(it, homeLayoutMode) },
+                    onScaleCommit = { homeViewModel.onClockScaleCommit(it, homeLayoutMode) },
+                    onAlignmentChange = { homeViewModel.onClockAlignmentCommit(it, homeLayoutMode) },
+                    onAdjustModeChange = { clockAdjustMode = it },
+                    onDraggingHandleChange = { draggingHandle = it },
+                ),
+                widget = HomeClockWidgetActions(
+                    createHostView = homeViewModel.clockWidgetHost::createHostView,
+                    onSizeChange = homeViewModel.clockWidgetHost::updateSize,
+                    onSizeCommit = { widthDp, heightDp ->
+                        homeUiState.activeFacet?.let { facet ->
+                            coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, homeLayoutMode) }
+                        }
+                    },
+                    onBoundsChange = { clockWidgetBoundsInHomeRoot = it },
+                    onNestedScrollStart = {
+                        nestedScrollFlingHandledSettle = false
+                        onHomeSwipeStart()
+                    },
+                    onLeftoverScroll = { dxPx, dyPx ->
+                        // Android's nested-scroll delta is a scroll-offset convention — the negation of
+                        // raw finger movement (see onHomeSwipeDrag's own doc) — negate back before reusing
+                        // the same drag handler the Compose pointer-input path feeds raw movement into.
+                        onHomeSwipeDrag(-dxPx, -dyPx)
+                    },
+                    onNestedScrollStop = {
+                        // Skipped when a fling already settled this session — see
+                        // nestedScrollFlingHandledSettle's own doc for why calling settle() twice risks
+                        // flipping an already-committed outcome.
+                        if (!nestedScrollFlingHandledSettle) onHomeSwipeSettle(0f)
+                    },
+                    onLeftoverFling = { velocityXPx, velocityYPx ->
+                        nestedScrollFlingHandledSettle = true
+                        onHomeSwipeSettle(if (homeDragAxis == Axis.HORIZONTAL) velocityXPx else velocityYPx)
+                    },
+                ),
+                media = HomeMediaActions(
+                    onPrevious = homeViewModel::onMediaPrevious,
+                    onPlayPause = homeViewModel::onMediaPlayPause,
+                    onNext = homeViewModel::onMediaNext,
+                    onOpen = homeViewModel::onMediaOpen,
+                ),
+                onUsageAccessPromptClick = {
+                    homeViewModel.dismissUsageAccessPrompt()
+                    onNavigateToUsageAccessExplanation()
+                },
+                onAppListBoundsChange = { appListBoundsInHomeRoot = it },
+            ),
             layoutMode = homeLayoutMode,
             landscapeSpace = homeLandscapeSpace,
-            appRowPosition = listAlignment.rowPosition,
-            appRowPresentation = homeUiState.activeAppRowPresentation,
-            showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
-            onUsageAccessPromptClick = {
-                homeViewModel.dismissUsageAccessPrompt()
-                onNavigateToUsageAccessExplanation()
-            },
-            dockApps = homeUiState.dockApps,
-            dockDisplayMode = homeUiState.activeDockDisplayMode,
-            notificationBadgeStyle = homeUiState.settings.notificationBadgeStyle,
-            badgeCounts = homeUiState.badgeCounts,
-            mediaPlayer = homeUiState.mediaPlayer,
-            showMediaSkipButtons = homeUiState.settings.showMediaSkipButtons,
-            onMediaPrevious = homeViewModel::onMediaPrevious,
-            onMediaPlayPause = homeViewModel::onMediaPlayPause,
-            onMediaNext = homeViewModel::onMediaNext,
-            onMediaOpen = homeViewModel::onMediaOpen,
-            use24HourTime = homeUiState.effectiveUse24HourTime,
-            clockTemplateId = homeUiState.clockTemplateId,
-            clockFontOption = homeUiState.clockFontOption,
-            clockColorOption = homeUiState.clockColorOption,
-            clockAccentColorOption = homeUiState.clockAccentColorOption,
-            clockShowMeridiem = homeUiState.clockShowMeridiem,
-            clockDateStyle = homeUiState.clockDateStyle,
-            clockAlignment = clockPlacement.alignment,
-            clockZoneHeightDp = clockPlacement.zoneHeightDp,
-            onClockZoneHeightCommit = { homeViewModel.onClockZoneHeightCommit(it, homeLayoutMode) },
-            clockScale = clockPlacement.scale,
-            clockPositionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
-            clockPositionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
-            clockAdjustMode = clockAdjustMode,
-            onAdjustModeChange = { clockAdjustMode = it },
-            draggingHandle = draggingHandle,
-            onDraggingHandleChange = { draggingHandle = it },
-            onClockScaleCommit = { homeViewModel.onClockScaleCommit(it, homeLayoutMode) },
-            onClockAlignmentChange = { homeViewModel.onClockAlignmentCommit(it, homeLayoutMode) },
-            onEditClockStyles = {
-                clockAdjustMode = ClockAdjustMode.NONE
-                onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)
-            },
-            onNavigateToSettings = onNavigateToSettings,
-            onNavigateToFacetSettings = {
-                homeUiState.activeFacet?.let { onNavigateToFacetSettings(it.id) }
-            },
-            hasCustomClockWidget = homeUiState.clockWidgetAppWidgetId != null,
-            isPro = clockWidgetIsPro,
-            onUseCustomWidgetClick = {
-                if (!clockWidgetIsPro) {
-                    onNavigateToFacetPro(ProReason.CUSTOM_WIDGET)
-                } else {
-                    homeUiState.activeFacet?.let { facet ->
-                        clockWidgetPickerFacetId = facet.id
-                        showClockWidgetPicker = true
-                    }
-                }
-            },
-            onSwitchToLauncherClockClick = {
-                homeUiState.activeFacet?.let { facet ->
-                    coroutineScope.launch { homeViewModel.clockWidgetFacet.switchToNativeClock(facet) }
-                }
-            },
-            clockWidgetAppWidgetId = homeUiState.clockWidgetAppWidgetId,
-            createClockWidgetHostView = homeViewModel.clockWidgetHost::createHostView,
-            clockWidgetMinWidthDp = clockWidgetResizeFloorDp?.first?.dp,
-            clockWidgetMinHeightDp = clockWidgetResizeFloorDp?.second?.dp,
-            clockWidgetWidthDp = clockWidgetEffectiveWidthDp?.dp,
-            clockWidgetHeightDp = clockWidgetEffectiveHeightDp?.dp,
-            onClockWidgetSizeChange = homeViewModel.clockWidgetHost::updateSize,
-            onClockWidgetSizeCommit = { widthDp, heightDp ->
-                homeUiState.activeFacet?.let { facet ->
-                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, homeLayoutMode) }
-                }
-            },
-            onClockWidgetBoundsChange = { clockWidgetBoundsInHomeRoot = it },
-            onAppListBoundsChange = { appListBoundsInHomeRoot = it },
-            onClockWidgetNestedScrollStart = {
-                nestedScrollFlingHandledSettle = false
-                onHomeSwipeStart()
-            },
-            onClockWidgetLeftoverScroll = { dxPx, dyPx ->
-                // Android's nested-scroll delta is a scroll-offset convention — the negation of
-                // raw finger movement (see onHomeSwipeDrag's own doc) — negate back before reusing
-                // the same drag handler the Compose pointer-input path feeds raw movement into.
-                onHomeSwipeDrag(-dxPx, -dyPx)
-            },
-            onClockWidgetNestedScrollStop = {
-                // Skipped when a fling already settled this session — see
-                // nestedScrollFlingHandledSettle's own doc for why calling settle() twice risks
-                // flipping an already-committed outcome.
-                if (!nestedScrollFlingHandledSettle) onHomeSwipeSettle(0f)
-            },
-            onClockWidgetLeftoverFling = { velocityXPx, velocityYPx ->
-                nestedScrollFlingHandledSettle = true
-                onHomeSwipeSettle(if (homeDragAxis == Axis.HORIZONTAL) velocityXPx else velocityYPx)
-            },
-            appListVerticalAlignment = listAlignment.verticalAlignment,
-            appListLayout = homeUiState.activeAppListLayout,
-            appListColumnAlignment = listAlignment.columnAlignment,
-            appListGridColumns = homeUiState.activeAppListGridColumns,
-            appListGridDisplayMode = homeUiState.activeAppListGridDisplayMode,
-            nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
-            batteryPercent = homeUiState.clockAccessories.batteryPercent,
-            isCharging = homeUiState.clockAccessories.isCharging,
-            calendarEvents = homeUiState.calendarEvents,
-            calendarColors = homeUiState.settings.calendarColors,
-            calendarDisplay = homeUiState.calendarDisplay,
-            onEventClick = { event ->
-                val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
-                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
-            },
-            onClockClick = {
-                // AlarmClock.ACTION_SHOW_ALARMS is a semantic "jump straight to the alarms list"
-                // intent, by design — on this Samsung/One UI build it resolves to a narrow,
-                // single-purpose alarms screen with none of the Clock app's own tab navigation
-                // (Alarm/Clock/Timer/Stopwatch), unlike AOSP's Clock which still shows its full
-                // shell there. So: use that intent only to find WHICH app is "the clock app" on
-                // this device, then launch that package's own normal entry point instead — the
-                // same way tapping its icon would, landing on its full navigable UI rather than
-                // the walled-off alarms subview. No fallback to the alarms intent itself — every
-                // real clock app declares a launcher activity, so resolveActivity() finding a
-                // package but getLaunchIntentForPackage() returning null for it doesn't happen.
-                runCatching {
-                    Intent(AlarmClock.ACTION_SHOW_ALARMS).resolveActivity(context.packageManager)
-                        ?.packageName
-                        ?.let { context.packageManager.getLaunchIntentForPackage(it) }
-                        ?.let { context.startActivity(it) }
-                }
-            },
-            onAppClick = onAppClick,
-            launcherFontOption = homeUiState.settings.launcherFontOption,
-            appLabelColorOption = homeUiState.settings.appLabelColorOption,
-            homeAppsFontWeight = homeUiState.settings.homeAppsFontWeight,
-            appMenuNotifications = appMenuNotifications,
-            onAppInfo = drawerViewModel::openAppInfo,
-            onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
-            onFavoritesAction = drawerViewModel::onFavoritesAction,
-            onDockAction = drawerViewModel::onDockAction,
-            onRequestFolderQuickAddState = { folder -> homeViewModel.quickAddStateForFolder(folder) },
-            onFolderFavoritesAction = drawerViewModel::onFolderFavoritesAction,
-            onFolderDockAction = drawerViewModel::onFolderDockAction,
-            folderCandidates = folders,
-            onCreateFolder = drawerViewModel::createFolder,
-            onAddToFolder = drawerViewModel::addToFolder,
-            onRemoveFromFolder = drawerViewModel::removeFromFolder,
-            onRenameFolder = drawerViewModel::renameFolder,
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {

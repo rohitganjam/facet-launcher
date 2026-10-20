@@ -56,7 +56,6 @@
     <ID>LambdaParameterInRestartableEffect:AppPickerScreen.kt:onResume: () -&gt; Unit = {}</ID>
     <ID>LambdaParameterInRestartableEffect:ClockWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onRequestQuickAddState: suspend (Folder) -&gt; QuickAddState = { QuickAddState() }</ID>
-    <ID>LambdaParameterInRestartableEffect:HomeScreen.kt:/** Fired once, on release, by the clock's resize handles. */ onClockScaleCommit: (Float) -&gt; Unit = { _ -&gt; }</ID>
     <ID>LambdaParameterInRestartableEffect:HubWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:NotificationAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:UsageAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
@@ -179,11 +178,6 @@
     <ID>UnstableCollections:FolderDetailScreen.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:HomeAppsListSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:HomeDrawerRoute.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:HomeScreen.kt:List&lt;CalendarEvent&gt;</ID>
-    <ID>UnstableCollections:HomeScreen.kt:List&lt;Folder&gt;?</ID>
-    <ID>UnstableCollections:HomeScreen.kt:List&lt;PlacedItem&gt;</ID>
-    <ID>UnstableCollections:HomeScreen.kt:Map&lt;String, Int&gt;</ID>
-    <ID>UnstableCollections:HomeScreen.kt:Map&lt;String, String&gt;</ID>
     <ID>UnstableCollections:HomeSurfacePreview.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:HubGrid.kt:List&lt;HubWidgetUi&gt;</ID>
     <ID>UnstableCollections:HubLandscapeGrid.kt:List&lt;HubLandscapeWidgetUi&gt;</ID>
@@ -196,7 +190,6 @@
     <ID>UnusedParameter:ClockAccessoryRow.kt:accentColor: Color</ID>
     <ID>UnusedParameter:ClockTemplates.kt:horizontalAlignment: Alignment.Horizontal</ID>
     <ID>UnusedParameter:ClockTemplates.kt:mutedTextColor: Color</ID>
-    <ID>UnusedParameter:HomeScreen.kt:/** True when a handle is actively being dragged — used to suppress screen gestures. */ draggingHandle: Boolean = false</ID>
     <ID>UnusedParameter:HubHeader.kt:columns: Int</ID>
     <ID>UnusedParameter:OnboardingFacetsPage.kt:uiState: OnboardingUiState</ID>
     <ID>ViewModelForwarding:ClockStyleGalleryScreen.kt:ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)</ID>

@@ -66,7 +66,7 @@ class HomeScreenTest {
     /**
      * [HomeScreen] with the clock-adjust state hoisted the way [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]
      * does it in the real app — so a long-press actually reveals the menu/handles. A bare
-     * `HomeScreen(...)` call leaves `onAdjustModeChange` a no-op.
+     * `FlatHomeScreen(...)` call leaves `onAdjustModeChange` a no-op.
      */
     @Composable
     private fun TestHomeScreen(
@@ -83,7 +83,7 @@ class HomeScreenTest {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
         FacetLauncherTheme {
-            HomeScreen(
+            FlatHomeScreen(
                 appListItems = appListItems.map { PlacedItem.SingleApp(it) },
                 dockApps = dockApps.map { PlacedItem.SingleApp(it) },
                 onAppClick = {},
@@ -138,7 +138,7 @@ class HomeScreenTest {
         val all = apps(9)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = all.take(5).map { PlacedItem.SingleApp(it) }, dockApps = all.drop(5).map { PlacedItem.SingleApp(it) }, onAppClick = {})
+                FlatHomeScreen(appListItems = all.take(5).map { PlacedItem.SingleApp(it) }, dockApps = all.drop(5).map { PlacedItem.SingleApp(it) }, onAppClick = {})
             }
         }
 
@@ -158,7 +158,7 @@ class HomeScreenTest {
         var clicked: AppInfo? = null
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(5).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = { clicked = it })
+                FlatHomeScreen(appListItems = apps(5).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = { clicked = it })
             }
         }
 
@@ -175,7 +175,7 @@ class HomeScreenTest {
         val clicks = mutableListOf<AppInfo>()
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = { clicks += it },
@@ -202,7 +202,7 @@ class HomeScreenTest {
         val clicks = mutableListOf<AppInfo>()
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = { clicks += it },
@@ -229,7 +229,7 @@ class HomeScreenTest {
         var clicked = false
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, onClockClick = { clicked = true })
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, onClockClick = { clicked = true })
             }
         }
 
@@ -252,7 +252,7 @@ class HomeScreenTest {
         // own doc comment on the hit-box fix), so there's real empty space to its right.
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
             }
         }
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
@@ -282,7 +282,7 @@ class HomeScreenTest {
         var clockClicked = false
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -306,7 +306,7 @@ class HomeScreenTest {
         // Given no dock apps (the dock floor was removed — 0 is now a valid dock size)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(3).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
+                FlatHomeScreen(appListItems = apps(3).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
             }
         }
 
@@ -320,7 +320,7 @@ class HomeScreenTest {
         val dockApps = apps(4)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = emptyList(),
                     dockApps = dockApps.map { PlacedItem.SingleApp(it) },
                     dockDisplayMode = DockDisplayMode.TEXT,
@@ -339,7 +339,7 @@ class HomeScreenTest {
         val dockApps = apps(2)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = emptyList(),
                     dockApps = dockApps.map { PlacedItem.SingleApp(it) },
                     dockDisplayMode = DockDisplayMode.TEXT,
@@ -365,7 +365,7 @@ class HomeScreenTest {
         val folder = Folder(id = 1L, name = "Games", apps = folderApps)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = emptyList(),
                     dockApps = listOf(PlacedItem.SingleApp(standalone), PlacedItem.FolderItem(folder)),
                     onAppClick = {},
@@ -390,7 +390,7 @@ class HomeScreenTest {
         val folder = Folder(id = 1L, name = "Empty", apps = emptyList())
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = emptyList(),
                     dockApps = listOf(PlacedItem.FolderItem(folder)),
                     onAppClick = {},
@@ -411,7 +411,7 @@ class HomeScreenTest {
         var clicked = false
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -435,7 +435,7 @@ class HomeScreenTest {
         // Given a favorite row
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
@@ -452,7 +452,7 @@ class HomeScreenTest {
         // Given a favorite row
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
@@ -482,7 +482,7 @@ class HomeScreenTest {
         // Given the default Left position
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.LEFT)
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.LEFT)
             }
         }
 
@@ -501,7 +501,7 @@ class HomeScreenTest {
         // Given Right position
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.RIGHT)
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.RIGHT)
             }
         }
 
@@ -523,7 +523,7 @@ class HomeScreenTest {
         // Given Center position
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.CENTER)
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, appRowPosition = AppRowPosition.CENTER)
             }
         }
 
@@ -546,7 +546,7 @@ class HomeScreenTest {
         var badgeCounts by mutableStateOf(emptyMap<String, Int>())
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -576,7 +576,7 @@ class HomeScreenTest {
         // Given Icon Only presentation
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -597,7 +597,7 @@ class HomeScreenTest {
         // Given Text Only presentation
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -617,7 +617,7 @@ class HomeScreenTest {
         var clicked: AppInfo? = null
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(1).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = { clicked = it },
@@ -645,7 +645,7 @@ class HomeScreenTest {
             }
             CompositionLocalProvider(LocalConfiguration provides darkConfiguration) {
                 FacetLauncherTheme {
-                    HomeScreen(appListItems = all.take(5).map { PlacedItem.SingleApp(it) }, dockApps = all.drop(5).map { PlacedItem.SingleApp(it) }, onAppClick = {})
+                    FlatHomeScreen(appListItems = all.take(5).map { PlacedItem.SingleApp(it) }, dockApps = all.drop(5).map { PlacedItem.SingleApp(it) }, onAppClick = {})
                 }
             }
         }
@@ -864,7 +864,7 @@ class HomeScreenTest {
         composeRule.setContent {
             var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -894,7 +894,7 @@ class HomeScreenTest {
         composeRule.setContent {
             var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -922,7 +922,7 @@ class HomeScreenTest {
         // Given the default (untouched) layout — clockZoneHeightDp is fed back in from the commit
         // callback, same as the real app's HomeUiState/HomeViewModel round-trip, so the position
         // persists after release instead of snapping back to the (still-null) default the moment
-        // the drag ends. A stateless HomeScreen(onClockZoneHeightCommit = { local var }) call with
+        // the drag ends. A stateless FlatHomeScreen(onClockZoneHeightCommit = { local var }) call with
         // no such feedback loop would correctly revert on release by design (see chat history) —
         // that's not what this test means to exercise.
         var committedHeightDp: Float? = null
@@ -1107,7 +1107,7 @@ class HomeScreenTest {
         // Given Center alignment
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, clockAlignment = ClockAlignment.CENTER)
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, clockAlignment = ClockAlignment.CENTER)
             }
         }
 
@@ -1125,7 +1125,7 @@ class HomeScreenTest {
         // Given Right alignment
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, clockAlignment = ClockAlignment.RIGHT)
+                FlatHomeScreen(appListItems = apps(1).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {}, clockAlignment = ClockAlignment.RIGHT)
             }
         }
 
@@ -1172,7 +1172,7 @@ class HomeScreenTest {
         // (driven directly rather than via a live gesture, for a deterministic setup)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(10).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1193,7 +1193,7 @@ class HomeScreenTest {
         var clicked: AppInfo? = null
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(10).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = { clicked = it },
@@ -1223,7 +1223,7 @@ class HomeScreenTest {
         // Given the same forced-overflow setup as aLongAppListScrollsIndependentlyOnceTheZoneHeightForcesItTo
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(10).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1248,7 +1248,7 @@ class HomeScreenTest {
         // the right, each column preserving its own top-to-bottom original order.
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(4).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1276,7 +1276,7 @@ class HomeScreenTest {
         // Given Two column layout with BOTH_LEFT — both columns render as AppRowPosition.LEFT
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(2).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1301,7 +1301,7 @@ class HomeScreenTest {
         // Given Two column layout with BOTH_RIGHT — both columns render as AppRowPosition.RIGHT
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(2).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1327,7 +1327,7 @@ class HomeScreenTest {
         // flips to RIGHT ("left aligns to the edge, right aligns to the other edge")
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(2).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1352,7 +1352,7 @@ class HomeScreenTest {
         // Given Grid layout, 4 columns, icon-only display, and 5 apps (one wraps to a second row)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(5).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1380,7 +1380,7 @@ class HomeScreenTest {
         // Given Grid layout, 3 columns, icon-only display, and 4 apps (the fourth wraps)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(4).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1407,7 +1407,7 @@ class HomeScreenTest {
         // Given Grid layout with text-only display
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(5).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
@@ -1431,7 +1431,7 @@ class HomeScreenTest {
         val workDock = AppInfo(packageName = "com.example.workdock", activityName = ".Main", label = "WorkDock", icon = null, profile = AppProfile.WORK)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = listOf(personal, workFavorite).map { PlacedItem.SingleApp(it) },
                     dockApps = listOf(PlacedItem.SingleApp(workDock)),
                     onAppClick = {},
@@ -1449,7 +1449,7 @@ class HomeScreenTest {
         val other = AppInfo(packageName = "com.example.other", activityName = ".Main", label = "Other", icon = null, profile = AppProfile.OTHER)
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = listOf(PlacedItem.SingleApp(other)), dockApps = emptyList(), onAppClick = {})
+                FlatHomeScreen(appListItems = listOf(PlacedItem.SingleApp(other)), dockApps = emptyList(), onAppClick = {})
             }
         }
 
@@ -1461,7 +1461,7 @@ class HomeScreenTest {
     fun aPersonalAppHasNoProfileBadgeOnHome() {
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(appListItems = apps(2).map { PlacedItem.SingleApp(it) }, dockApps = apps(1).map { PlacedItem.SingleApp(it) }, onAppClick = {})
+                FlatHomeScreen(appListItems = apps(2).map { PlacedItem.SingleApp(it) }, dockApps = apps(1).map { PlacedItem.SingleApp(it) }, onAppClick = {})
             }
         }
 
@@ -1474,7 +1474,7 @@ class HomeScreenTest {
         // Given a hosted clock widget saved at a width only landscape could fit, in read mode
         composeRule.setContent {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},

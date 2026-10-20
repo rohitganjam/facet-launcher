@@ -6,7 +6,7 @@ marks what does not yet.
 
 ## 1. Choosing a layout
 
-`HomeScreen` takes `layoutMode: HomeLayoutMode`, defaulting to `rememberHomeLayoutMode()`. That reads
+`HomeScreen(state, actions, modifier, layoutMode, landscapeSpace)` takes two groups, `HomeScreenState` (list, dock, clock, hosted widget, calendar, media: `HomeScreenState.kt`) and `HomeScreenActions` (the item, clock, widget and media callbacks), instead of the 89 flat parameters it used to have; `HomeDrawerRoute` builds them from the view models. Its `layoutMode: HomeLayoutMode` defaults to `rememberHomeLayoutMode()`. That reads
 the window size from `LocalConfiguration` and calls `homeLayoutModeFor(width, height)`: **portrait when
 the window is taller than it is wide, whatever its size, or narrower than 600dp; landscape otherwise**.
 The rule follows the window, not a rotation flag, so a phone held upright and a tablet held upright both

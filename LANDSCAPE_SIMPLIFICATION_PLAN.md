@@ -75,7 +75,8 @@ No logic change. Keep the baseline.
 
 ## Phase C — group `HomeScreen`'s state (changes its signature)
 
-- [ ] **C1. Design the groups.** (Started in phase B: `HomeItemActions`, `HomeItemStyle` and `HomeAppListContent` exist and are used below `HomeScreen`; `HomeScreen` still builds them from its flat parameters, so phase C passes them in directly.)
+- [x] **C1. Design the groups.** (Started in phase B: `HomeItemActions`, `HomeItemStyle` and `HomeAppListContent` exist and are used below `HomeScreen`; `HomeScreen` still builds them from its flat parameters, so phase C passes them in directly.)
+  - *Done.* Built as designed in `HomeScreenState.kt`, with two changes: the clock style fields sit directly in `HomeClockState` (no separate style class), and the items' label look is `HomeItemLook` (options, resolved to a `HomeItemStyle` where drawn, because resolving a themed colour needs composition). Every group is a `data class` so an unchanged group lets its composables skip.
   - **Design (89 flat parameters today, of which tests use 41).** `HomeScreen(state: HomeScreenState, actions: HomeScreenActions, modifier, layoutMode, landscapeSpace)`. All state classes are `@Immutable`, built once per change by `HomeUiState.toScreenState(mode)`.
 
     | Group | Fields |
@@ -97,10 +98,14 @@ No logic change. Keep the baseline.
     | `HomeScreenActions` | the four above, plus `onUsageAccessPromptClick` and `onAppListBoundsChange` |
 
   - **Tests.** `HomeScreenTest` / `HomeScreenLandscapeTest` call a test-only `TestHomeScreen(...)` helper with the 41 flat parameters they use (Detekt only checks `src/main`), which builds the groups and calls the real `HomeScreen`. The rewrite of the 66 call sites is then a rename.
-- [ ] **C2. `HomeScreen(state, actions, modifier, layoutMode, landscapeSpace)`.** Update the body to read from the groups; behaviour unchanged.
-- [ ] **C3. `HomeUiState.toScreenState(mode)`** builds the groups; `HomeDrawerRoute` shrinks accordingly.
-- [ ] **C4. Test fixtures.** A `homeState(...)` / `homeActions(...)` builder with the old defaults; rewrite the 66 call sites mechanically (script the rewrite, review the diff).
-- [ ] **C5. Unstable collections.** The remaining `UnstableCollections` baseline entries go away because the lists now sit inside `@Immutable` groups. Check recomposition counts in the clock and list paths haven't regressed.
+- [x] **C2. `HomeScreen(state, actions, modifier, layoutMode, landscapeSpace)`.** Update the body to read from the groups; behaviour unchanged.
+  - *Done.* The body reads the groups through short local aliases with the old parameter names (86 `val`s at the top of `HomeScreen`); phase D removes them as each part moves into its own composable.
+- [x] **C3. `HomeUiState.toScreenState(mode)`** builds the groups; `HomeDrawerRoute` shrinks accordingly.
+  - *Done differently.* The route builds `HomeScreenState` and `HomeScreenActions` inline: much of the data comes from route-local state (adjust mode, drag state, nested-scroll handoff, intents), so a `HomeUiState` method would not have had it. The route's call now reads as structured groups rather than 89 flat arguments.
+- [x] **C4. Test fixtures.** A `homeState(...)` / `homeActions(...)` builder with the old defaults; rewrite the 66 call sites mechanically (script the rewrite, review the diff).
+  - *Done.* Also a new `HomeScreenWiringTest` (11 tests): 49 of the 88 old parameters were never set by any `HomeScreen` test (they are tested one level down), so it sets each untested group to distinct values and checks they arrive (favorites vs dock, app vs folder callbacks, media buttons, clock menu rows, hosted-widget hooks, badge style, battery). A mutation check (swapping favorites and dock in `AppItemMenu`) fails it as intended. `FlatHomeScreen` (androidTest) keeps the 41 flat parameters tests use and builds the groups; the 45 direct `HomeScreen(` calls were renamed to it. `HomeScreenTest`'s own `TestHomeScreen` wrapper is unchanged.
+- [x] **C5. Unstable collections.** The remaining `UnstableCollections` baseline entries go away because the lists now sit inside `@Immutable` groups. Check recomposition counts in the clock and list paths haven't regressed.
+  - *Done.* Removed 7 more baseline entries (5 UnstableCollections, UnusedParameter, LambdaParameterInRestartableEffect). 4 remain, all on the `HomeScreen` body (LongMethod, CyclomaticComplexMethod, ComplexCondition, ComposableNestingDepth), for phases D and E.
   - Verify: verification set; fold install.
 
 ## Phase D — decompose the `HomeScreen` body

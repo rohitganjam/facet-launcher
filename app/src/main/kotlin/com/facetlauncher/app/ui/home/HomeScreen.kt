@@ -1,7 +1,5 @@
 package com.facetlauncher.app.ui.home
 
-import android.appwidget.AppWidgetHostView
-import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Rect as AndroidRect
 import androidx.compose.animation.AnimatedVisibility
@@ -49,11 +47,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
@@ -71,35 +71,21 @@ import androidx.compose.ui.unit.toSize
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
-import com.facetlauncher.app.data.model.AppListGridColumns
-import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
-import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
-import com.facetlauncher.app.data.model.ClockColorOption
-import com.facetlauncher.app.data.model.ClockDateStyle
-import com.facetlauncher.app.data.model.ClockFontOption
-import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.DrawerPresentation
-import com.facetlauncher.app.data.model.Folder
-import com.facetlauncher.app.data.model.FontWeightOption
-import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.MediaPlayerState
-import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.domain.QuickAddState
-import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.components.AppIconSize
-import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.DockIcon
+import com.facetlauncher.app.ui.home.HomeItemActions
+import com.facetlauncher.app.ui.home.HomeItemStyle
 import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.MediaPlayerRow
@@ -131,153 +117,100 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Composable
 fun HomeScreen(
-    appListItems: List<PlacedItem>,
-    dockApps: List<PlacedItem>,
-    onAppClick: (AppInfo) -> Unit,
+    state: HomeScreenState,
+    actions: HomeScreenActions,
     modifier: Modifier = Modifier,
-    appRowPosition: AppRowPosition = AppRowPosition.LEFT,
-    appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
-    showUsageAccessPrompt: Boolean = false,
-    onUsageAccessPromptClick: () -> Unit = {},
-    dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
-    notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
-    badgeCounts: Map<String, Int> = emptyMap(),
-    /** The media row under the clock, shown while non-null — see [MediaPlayerRow]. */
-    mediaPlayer: MediaPlayerState? = null,
-    showMediaSkipButtons: Boolean = true,
-    onMediaPrevious: () -> Unit = {},
-    onMediaPlayPause: () -> Unit = {},
-    onMediaNext: () -> Unit = {},
-    onMediaOpen: () -> Unit = {},
-    use24HourTime: Boolean = false,
-    clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    clockFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    clockColorOption: ClockColorOption = ClockColorOption.THEME,
-    clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
-    clockShowMeridiem: Boolean = false,
-    clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    clockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
-    clockScale: Float = 0.8f,
-    /** Current adjustment mode — hoisted to the caller (e.g. [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]) so screen gestures can be coordinated. */
-    clockAdjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
-    /** `null` until the user drags the clock's grab handle for the first time — see [ClockZoneHandle] and this composable's own body for how the default and persisted cases resolve to one shared position formula. */
-    clockZoneHeightDp: Float? = null,
-    /** Fired once, on release, by the clock's grab handle. */
-    onClockZoneHeightCommit: (Float) -> Unit = {},
-    /** Fired once, on release, by the clock's resize handles. */
-    onClockScaleCommit: (Float) -> Unit = { _ -> },
-    /** Fired when the user picks left/center/right on the adjust-mode alignment toolbar. */
-    onClockAlignmentChange: (ClockAlignment) -> Unit = {},
-    /** Fired whenever the adjustment mode changes (e.g. via the bottom sheet or tap-away). */
-    onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
-    /** True when a handle is actively being dragged — used to suppress screen gestures. */
-    draggingHandle: Boolean = false,
-    /** Fired when the user starts or stops actively dragging one of the adjustment handles. */
-    onDraggingHandleChange: (Boolean) -> Unit = {},
-    /** Id of the facet whose `overrideClock` bundle governs the clock widget's position/scale right now, or `null` if the global default applies. */
-    clockPositionOwnerFacetId: Long? = null,
-    /** That same facet's own real name, for [ClockAdjustSheet]'s "Edit clock styles" row badge — `null` alongside [clockPositionOwnerFacetId] when the global default applies. */
-    clockPositionOwnerFacetName: String? = null,
-    /** Fired by a plain tap on the clock (time/date), not a calendar event row — opens the device's default clock app. */
-    onClockClick: () -> Unit = {},
-    /** Fired when the user selects "Edit Styles" from the clock's adjustment menu. */
-    onEditClockStyles: () -> Unit = {},
-    /** Fired when the user selects "Launcher settings" from the long-press menu. */
-    onNavigateToSettings: () -> Unit = {},
-    /** Fired when the user selects "Facet settings" from the long-press menu — the caller resolves this to the active facet. */
-    onNavigateToFacetSettings: () -> Unit = {},
-    /** PRD F15 — whether the active facet currently has a hosted `AppWidget` bound as its clock. */
-    hasCustomClockWidget: Boolean = false,
-    /** Whether picking a custom clock widget is allowed; `false` marks the sheet row as Pro. */
-    isPro: Boolean = true,
-    /** Fired when the user selects "Use custom widget" from the clock's adjustment menu. */
-    onUseCustomWidgetClick: () -> Unit = {},
-    /** Fired when the user selects "Switch to launcher clock widget" from the clock's adjustment menu. */
-    onSwitchToLauncherClockClick: () -> Unit = {},
-    /** PRD F15 — non-null when [hasCustomClockWidget] is true; threaded straight to [ClockBlock]'s own identically-named param. */
-    clockWidgetAppWidgetId: Int? = null,
-    createClockWidgetHostView: (Context, Int) -> AppWidgetHostView? = { _, _ -> null },
-    /** Current effective size — the persisted value if the user has resized it before, otherwise the provider's own declared default (the caller resolves that fallback; see `HomeDrawerRoute`). */
-    clockWidgetWidthDp: Dp? = null,
-    clockWidgetHeightDp: Dp? = null,
-    /** Resize floor: one Hub grid cell (see `ClockWidgetHostController.resizeFloorDp`). */
-    clockWidgetMinWidthDp: Dp? = null,
-    clockWidgetMinHeightDp: Dp? = null,
-    onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit = { _, _, _ -> },
-    /** Fired once, on release, by the hosted clock widget's own resize handles — see `ClockWidgetFacetController.commitSize`'s own doc. */
-    onClockWidgetSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
-    /**
-     * The hosted clock widget's current on-screen bounds, relative to this composable's own root —
-     * the same frame [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own swipe-gesture
-     * `pointerInput` (applied directly to this composable's [modifier]) sees touch positions in.
-     * `null` whenever no widget is active. Real bug found on-device: that swipe detector claims
-     * drags at `PointerEventPass.Initial` specifically so it can win against a descendant's own
-     * tap/long-press detector (e.g. an app icon's) — correct there, but it meant a swipe starting
-     * on a *hosted widget's own scrollable content* was being claimed as "open the drawer/shade"
-     * before the widget's own internal `ListView` ever got a chance to recognize its own scroll.
-     * The caller uses this to exclude the widget's own touch region from that claim.
-     */
-    onClockWidgetBoundsChange: (Rect?) -> Unit = {},
-    /** PRD F15's nested-scroll handoff, threaded straight to [ClockBlock]'s own identically-named params — see [ClockWidgetTile]'s own doc. */
-    onClockWidgetNestedScrollStart: () -> Unit = {},
-    onClockWidgetLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit = { _, _ -> },
-    onClockWidgetNestedScrollStop: () -> Unit = {},
-    onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit = { _, _ -> },
-    /**
-     * Reports the app list's own scrollable viewport bounds, in the same root-relative coordinate
-     * space [onClockWidgetBoundsChange] uses — so [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s
-     * swipe-gesture detector can exclude it from its `PointerEventPass.Initial` claim exactly the way
-     * it already does for a hosted clock widget's own bounds (see that param's doc for why the
-     * Initial-pass claim otherwise wins before a descendant's own scroll ever gets a chance). Real
-     * bug found on-device: once the favorites/recents/most-used list had more rows than fit on
-     * screen, dragging within it always opened the Drawer/notification shade instead of scrolling,
-     * since the swipe detector claimed every vertical drag on Home's surface regardless of where it
-     * started. `null` whenever the list hasn't been measured yet.
-     */
-    onAppListBoundsChange: (Rect?) -> Unit = {},
-    appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
-    /** Single column (today's unchanged layout), two columns, or a grid — see [AppListLayout]'s own doc. */
-    appListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
-    /** Only meaningful while [appListLayout] is [AppListLayout.TWO_COLUMN]. */
-    appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
-    /** Only meaningful while [appListLayout] is [AppListLayout.GRID]. */
-    appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
-    /** Only meaningful while [appListLayout] is [AppListLayout.GRID]. */
-    appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
-    /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
-    nextAlarmMillis: Long? = null,
-    batteryPercent: Int? = null,
-    isCharging: Boolean = false,
-    calendarEvents: List<CalendarEvent> = emptyList(),
-    calendarColors: Map<String, String> = emptyMap(),
-    calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
-    onEventClick: (CalendarEvent) -> Unit = {},
-    appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
-    onAppInfo: (AppInfo) -> Unit = {},
-    /** F12's long-press "Add to Favorites"/"Add to Dock" (or "Remove from…") rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc. */
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    /** Folder-tile counterpart of [onRequestQuickAddState]/[onFavoritesAction]/[onDockAction]. */
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
-    /** F-Folders' "Add to folder" row on Dock icons' long-press menu, and folder-tile rendering/interaction — see [DockIcon]'s own doc. The full folder library, not just those already placed here. */
-    folderCandidates: List<Folder>? = null,
-    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
-    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
-    onRemoveFromFolder: (Long, AppInfo) -> Unit = { _, _ -> },
-    onRenameFolder: (Long, String) -> Unit = { _, _ -> },
-    /** Folder-contents sheets (Home tiles, and the "Add to folder" preview) follow this exactly, mirroring the App Drawer's own List/Grid setting. */
-    drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
-    launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
-    appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
-    homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
-    /** Portrait stacks clock, list and dock; landscape splits the window into panes — see [HomeLandscapeLayout]. */
     layoutMode: HomeLayoutMode = rememberHomeLayoutMode(),
     landscapeSpace: HomeLandscapeSpace = rememberHomeLandscapeSpace(),
 ) {
+    // Short names for the groups below; phase D replaces them as the body is split up.
+    val appListItems = state.list.items
+    val dockApps = state.dock.items
+    val onAppClick = actions.item.onAppClick
+    val appRowPosition = state.list.alignment.rowPosition
+    val appRowPresentation = state.list.rowPresentation
+    val showUsageAccessPrompt = state.list.showUsageAccessPrompt
+    val onUsageAccessPromptClick = actions.onUsageAccessPromptClick
+    val dockDisplayMode = state.dock.displayMode
+    val notificationBadgeStyle = state.list.look.badgeStyle
+    val badgeCounts = state.list.look.badgeCounts
+    val mediaPlayer = state.media.player
+    val showMediaSkipButtons = state.media.showSkipButtons
+    val onMediaPrevious = actions.media.onPrevious
+    val onMediaPlayPause = actions.media.onPlayPause
+    val onMediaNext = actions.media.onNext
+    val onMediaOpen = actions.media.onOpen
+    val use24HourTime = state.clock.use24HourTime
+    val clockTemplateId = state.clock.templateId
+    val clockFontOption = state.clock.fontOption
+    val clockColorOption = state.clock.colorOption
+    val clockAccentColorOption = state.clock.accentColorOption
+    val clockShowMeridiem = state.clock.showMeridiem
+    val clockDateStyle = state.clock.dateStyle
+    val clockAlignment = state.clock.placement.alignment
+    val clockScale = state.clock.placement.scale
+    val clockZoneHeightDp = state.clock.placement.zoneHeightDp
+    val clockAdjustMode = state.clock.adjustMode
+    val onClockZoneHeightCommit = actions.clock.onZoneHeightCommit
+    val onClockScaleCommit = actions.clock.onScaleCommit
+    val onClockAlignmentChange = actions.clock.onAlignmentChange
+    val onAdjustModeChange = actions.clock.onAdjustModeChange
+    val draggingHandle = state.clock.draggingHandle
+    val onDraggingHandleChange = actions.clock.onDraggingHandleChange
+    val clockPositionOwnerFacetId = state.clock.positionOwnerFacetId
+    val clockPositionOwnerFacetName = state.clock.positionOwnerFacetName
+    val onClockClick = actions.clock.onClockClick
+    val onEditClockStyles = actions.clock.onEditClockStyles
+    val onNavigateToSettings = actions.clock.onNavigateToSettings
+    val onNavigateToFacetSettings = actions.clock.onNavigateToFacetSettings
+    val hasCustomClockWidget = state.widget != null
+    val isPro = state.clock.isPro
+    val onUseCustomWidgetClick = actions.clock.onUseCustomWidgetClick
+    val onSwitchToLauncherClockClick = actions.clock.onSwitchToLauncherClockClick
+    val clockWidgetAppWidgetId = state.widget?.appWidgetId
+    val createClockWidgetHostView = actions.widget.createHostView
+    val clockWidgetWidthDp = state.widget?.widthDp
+    val clockWidgetHeightDp = state.widget?.heightDp
+    val clockWidgetMinWidthDp = state.widget?.minWidthDp
+    val clockWidgetMinHeightDp = state.widget?.minHeightDp
+    val onClockWidgetSizeChange = actions.widget.onSizeChange
+    val onClockWidgetSizeCommit = actions.widget.onSizeCommit
+    val onClockWidgetBoundsChange = actions.widget.onBoundsChange
+    val onClockWidgetNestedScrollStart = actions.widget.onNestedScrollStart
+    val onClockWidgetLeftoverScroll = actions.widget.onLeftoverScroll
+    val onClockWidgetNestedScrollStop = actions.widget.onNestedScrollStop
+    val onClockWidgetLeftoverFling = actions.widget.onLeftoverFling
+    val onAppListBoundsChange = actions.onAppListBoundsChange
+    val appListVerticalAlignment = state.list.alignment.verticalAlignment
+    val appListLayout = state.list.layout
+    val appListColumnAlignment = state.list.alignment.columnAlignment
+    val appListGridColumns = state.list.gridColumns
+    val appListGridDisplayMode = state.list.gridDisplayMode
+    val nextAlarmMillis = state.calendar.nextAlarmMillis
+    val batteryPercent = state.calendar.batteryPercent
+    val isCharging = state.calendar.isCharging
+    val calendarEvents = state.calendar.events
+    val calendarColors = state.calendar.colors
+    val calendarDisplay = state.calendar.display
+    val onEventClick = actions.clock.onEventClick
+    val appMenuNotifications = state.list.look.appMenuNotifications
+    val onAppInfo = actions.item.onAppInfo
+    val onRequestQuickAddState = actions.item.onRequestQuickAddState
+    val onFavoritesAction = actions.item.onFavoritesAction
+    val onDockAction = actions.item.onDockAction
+    val onRequestFolderQuickAddState = actions.item.onRequestFolderQuickAddState
+    val onFolderFavoritesAction = actions.item.onFolderFavoritesAction
+    val onFolderDockAction = actions.item.onFolderDockAction
+    val folderCandidates = state.list.look.folderCandidates
+    val onCreateFolder = actions.item.onCreateFolder
+    val onAddToFolder = actions.item.onAddToFolder
+    val onRemoveFromFolder = actions.item.onRemoveFromFolder
+    val onRenameFolder = actions.item.onRenameFolder
+    val drawerPresentation = state.list.look.drawerPresentation
+    val launcherFontOption = state.clock.launcherFontOption
+    val appLabelColorOption = state.list.look.labelColorOption
+    val homeAppsFontWeight = state.list.look.labelFontWeightOption
+
     val isLandscape = layoutMode == HomeLayoutMode.LANDSCAPE
     val appLabelColor = appLabelColorOption.resolve()
     val appLabelFontWeight = homeAppsFontWeight.resolve()
@@ -766,26 +699,7 @@ fun HomeScreen(
                 modifier = rowModifier,
             )
         }
-        // The callbacks and look every app and folder tile shares, built once per change of their inputs.
-        val itemActions = remember(
-            onAppClick, onAppInfo, onRequestQuickAddState, onFavoritesAction, onDockAction, onRequestFolderQuickAddState,
-            onFolderFavoritesAction, onFolderDockAction, onCreateFolder, onAddToFolder, onRemoveFromFolder, onRenameFolder,
-        ) {
-            HomeItemActions(
-                onAppClick = onAppClick,
-                onAppInfo = onAppInfo,
-                onRequestQuickAddState = onRequestQuickAddState,
-                onFavoritesAction = onFavoritesAction,
-                onDockAction = onDockAction,
-                onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-                onFolderFavoritesAction = onFolderFavoritesAction,
-                onFolderDockAction = onFolderDockAction,
-                onCreateFolder = onCreateFolder,
-                onAddToFolder = onAddToFolder,
-                onRemoveFromFolder = onRemoveFromFolder,
-                onRenameFolder = onRenameFolder,
-            )
-        }
+        val itemActions = actions.item
         val itemStyle = remember(badgeCounts, notificationBadgeStyle, appMenuNotifications, folderCandidates, drawerPresentation, appLabelColor, appLabelFontWeight) {
             HomeItemStyle(
                 badgeCounts = badgeCounts,
@@ -1602,9 +1516,11 @@ private fun HomeScreenPreview() {
             AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
         }
         HomeScreen(
-            appListItems = apps.take(5).map { PlacedItem.SingleApp(it) },
-            dockApps = apps.drop(5).take(4).map { PlacedItem.SingleApp(it) },
-            onAppClick = {},
+            state = HomeScreenState(
+                list = HomeListState(items = apps.take(5).map { PlacedItem.SingleApp(it) }),
+                dock = HomeDockState(items = apps.drop(5).take(4).map { PlacedItem.SingleApp(it) }),
+            ),
+            actions = HomeScreenActions(item = HomeItemActions(onAppClick = {})),
         )
     }
 }
@@ -1625,10 +1541,14 @@ private fun HomeScreenRightPositionPreview() {
             AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
         }
         HomeScreen(
-            appListItems = apps.map { PlacedItem.SingleApp(it) },
-            dockApps = emptyList(),
-            onAppClick = {},
-            appRowPosition = AppRowPosition.RIGHT,
+            state = HomeScreenState(
+                list = HomeListState(
+                    items = apps.map { PlacedItem.SingleApp(it) },
+                    alignment = ListAlignment(AppRowPosition.RIGHT, AppListVerticalAlignment.BOTTOM, AppListColumnAlignment.BOTH_LEFT),
+                ),
+                dock = HomeDockState(items = emptyList()),
+            ),
+            actions = HomeScreenActions(item = HomeItemActions(onAppClick = {})),
         )
     }
 }
@@ -1642,10 +1562,11 @@ private fun HomeScreenTextOnlyPresentationPreview() {
             AppInfo(packageName = "com.example.app$it", activityName = ".MainActivity", label = "App $it", icon = null)
         }
         HomeScreen(
-            appListItems = apps.map { PlacedItem.SingleApp(it) },
-            dockApps = emptyList(),
-            onAppClick = {},
-            appRowPresentation = AppRowPresentation.TEXT_ONLY,
+            state = HomeScreenState(
+                list = HomeListState(items = apps.map { PlacedItem.SingleApp(it) }, rowPresentation = AppRowPresentation.TEXT_ONLY),
+                dock = HomeDockState(items = emptyList()),
+            ),
+            actions = HomeScreenActions(item = HomeItemActions(onAppClick = {})),
         )
     }
 }

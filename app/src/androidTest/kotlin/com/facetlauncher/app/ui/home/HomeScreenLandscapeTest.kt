@@ -99,7 +99,7 @@ class HomeScreenLandscapeTest {
         var dragging by remember { mutableStateOf(false) }
         CompositionLocalProvider(LocalAllowLandscape provides allowLandscape) {
             FacetLauncherTheme {
-                HomeScreen(
+                FlatHomeScreen(
                     landscapeSpace = landscapeSpace ?: rememberHomeLandscapeSpace(),
                     hasCustomClockWidget = widget != null,
                     clockWidgetAppWidgetId = widget?.let { WIDGET_ID },
