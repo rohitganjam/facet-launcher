@@ -640,7 +640,8 @@ fun HomeScreen(
                 rawWidthPx.coerceIn(minWidthPx, maxOf(minWidthPx, landscapeMaxWidgetSize.width)),
                 rawHeightPx.coerceIn(minHeightPx, maxOf(minHeightPx, landscapeMaxWidgetSize.height)),
             )
-        } else if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
+        } else if (size != null && origin != null && rootW != null) {
+            // Clamped in read mode too, so a size saved when the window was bigger can't spill out of portrait.
             val maxSize = maxWidgetSizePxThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
             Offset(
                 rawWidthPx.coerceIn(minWidthPx, maxOf(minWidthPx, maxSize.x)),

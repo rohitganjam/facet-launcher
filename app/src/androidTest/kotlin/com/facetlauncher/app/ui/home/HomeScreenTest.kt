@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import android.appwidget.AppWidgetHostView
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -30,6 +31,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
 import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -1465,5 +1467,32 @@ class HomeScreenTest {
 
         composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(0)
         composeRule.onAllNodesWithTag("other_profile_badge", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun aSavedClockWidgetWiderThanPortraitIsShownInsideTheScreen() {
+        // Given a hosted clock widget saved at a width only landscape could fit, in read mode
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    appListItems = apps(3).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    hasCustomClockWidget = true,
+                    clockWidgetAppWidgetId = 42,
+                    createClockWidgetHostView = { context, _ -> AppWidgetHostView(context) },
+                    clockWidgetWidthDp = 900.dp,
+                    clockWidgetHeightDp = 120.dp,
+                    clockWidgetMinWidthDp = 64.dp,
+                    clockWidgetMinHeightDp = 64.dp,
+                )
+            }
+        }
+
+        // Then once it has been measured it is clamped to the screen, with its saved size untouched
+        val rootWidth = composeRule.onNodeWithTag("home_screen_root").getUnclippedBoundsInRoot().width
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width <= rootWidth
+        }
     }
 }

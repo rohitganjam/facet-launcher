@@ -405,4 +405,34 @@ class FacetRepositoryTest {
         assertNull(switched.clockWidgetWidthDp)
         assertNull(switched.clockWidgetHeightDp)
     }
+
+    @Test
+    fun `a landscape size is saved apart from the portrait size`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockWidgetAppWidgetId(facet, 42)
+        repository.setClockWidgetSize(repository.observeFacets().first().single(), 160, 120)
+
+        // When a landscape size is saved
+        repository.setClockWidgetSize(repository.observeFacets().first().single(), 400, 300, landscape = true)
+
+        // Then each orientation keeps its own
+        val saved = repository.observeFacets().first().single()
+        assertEquals(160 to 120, saved.clockWidgetWidthDp to saved.clockWidgetHeightDp)
+        assertEquals(400 to 300, saved.landscapeClockWidgetWidthDp to saved.landscapeClockWidgetHeightDp)
+    }
+
+    @Test
+    fun `setClockWidgetAppWidgetId clears the landscape size too`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockWidgetAppWidgetId(facet, 42)
+        repository.setClockWidgetSize(repository.observeFacets().first().single(), 400, 300, landscape = true)
+
+        repository.setClockWidgetAppWidgetId(repository.observeFacets().first().single(), 99)
+
+        val switched = repository.observeFacets().first().single()
+        assertNull(switched.landscapeClockWidgetWidthDp)
+        assertNull(switched.landscapeClockWidgetHeightDp)
+    }
 }

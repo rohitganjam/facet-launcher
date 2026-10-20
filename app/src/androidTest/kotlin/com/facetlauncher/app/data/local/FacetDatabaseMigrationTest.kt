@@ -664,7 +664,6 @@ class FacetDatabaseMigrationTest {
         assertEquals(listOf("DOCK|null|0|d.one|.A|0|PERSONAL|0", "DOCK|null|0|d.work|.A|1|WORK|10", "DOCK|2|2|fd.two|.A|0|PERSONAL|-1", "FAVORITES|null|0|df.one|.A|0|PERSONAL|0", "FAVORITES|null|0|df.two|.A|1|PERSONAL|0"), apps())
     }
 
-    /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     @Test
     fun migration28To29AddsAnEmptyLandscapeOrderToEveryWidgetWithoutChangingThem() {
         // Given a v28 database with two placed widgets (one a work-profile widget)
@@ -695,6 +694,27 @@ class FacetDatabaseMigrationTest {
         ordered.close()
     }
 
+    @Test
+    fun migration29To30AddsEmptyLandscapeClockWidgetSizesToEveryFacetWithoutChangingThem() {
+        // Given a v29 database with a facet that has a portrait clock widget size
+        val dbV29 = helper.createDatabase(TEST_DB, 29)
+        insertFacetV27(dbV29, id = 1, name = "Work")
+        dbV29.execSQL("UPDATE facets SET clockWidgetAppWidgetId = 7, clockWidgetWidthDp = 180, clockWidgetHeightDp = 90 WHERE id = 1")
+        dbV29.close()
+
+        // When migrating to v30 (Room also validates the result against the exported v30 schema)
+        val dbV30 = helper.runMigrationsAndValidate(TEST_DB, 30, true, Migrations.MIGRATION_29_30)
+
+        // Then the portrait size is kept and there is no landscape size yet
+        val cursor = dbV30.query("SELECT clockWidgetWidthDp, clockWidgetHeightDp, landscapeClockWidgetWidthDp, landscapeClockWidgetHeightDp FROM facets WHERE id = 1")
+        cursor.moveToFirst()
+        assertEquals(180, cursor.getInt(0))
+        assertEquals(90, cursor.getInt(1))
+        assertTrue(cursor.isNull(2) && cursor.isNull(3))
+        cursor.close()
+    }
+
+    /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")
     }

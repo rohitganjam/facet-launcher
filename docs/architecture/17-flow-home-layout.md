@@ -85,7 +85,10 @@ A hosted clock widget adjusts too, by real size rather than scale: the corner ha
 for a top-aligned widget, top corners otherwise) resize it between one landscape Hub cell (64dp square, not the portrait cell) and the pane
 (`landscapeMaxWidgetSize`, `landscapeWidgetSizeAtTouch`), and the divider stops at that one-cell
 width, shrinking the widget live and saving that size on release. The rendered size is always clamped to
-the pane without being saved.
+the pane without being saved. Landscape saves its own size (`facets.landscapeClockWidgetWidthDp`/`HeightDp`) and
+uses the portrait one until it has one, so a resize in one orientation never changes the other.
+`HomeDrawerRoute` picks the pair by layout mode. Portrait clamps the rendered size in read mode too, so a
+larger size can't spill out of the screen.
 
 The geometry is pure functions in `HomeLandscapeGeometry.kt`.
 

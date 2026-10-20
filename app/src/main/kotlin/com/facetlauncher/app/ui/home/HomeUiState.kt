@@ -70,6 +70,12 @@ data class HomeUiState(
     val clockWidgetHeightDp: Int?
         get() = activeFacet?.clockWidgetHeightDp
 
+    /** Landscape's own hosted-widget size — `null` until resized there, when landscape uses [clockWidgetWidthDp]/[clockWidgetHeightDp]. */
+    val landscapeClockWidgetWidthDp: Int?
+        get() = activeFacet?.landscapeClockWidgetWidthDp
+    val landscapeClockWidgetHeightDp: Int?
+        get() = activeFacet?.landscapeClockWidgetHeightDp
+
     /** The active facet's clock settings, falling back to the global defaults when not overriding. */
     val clockTemplateId: ClockTemplateId
         get() = activeFacet?.let { if (it.overrideClock) it.clockTemplateId else settings.clockTemplateId } ?: settings.clockTemplateId

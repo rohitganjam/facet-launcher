@@ -39,6 +39,17 @@ class ClockWidgetFacetControllerTest {
     }
 
     @Test
+    fun `commitSize passes the landscape flag to the repository`() = runTest {
+        val facetRepository = mock(FacetRepository::class.java)
+        val controller = ClockWidgetFacetController(facetRepository, mock(SwitchFacetToNativeClockUseCase::class.java), EntitlementRepository())
+        val facet = FacetEntity(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
+
+        controller.commitSize(facet, 300, 200, landscape = true)
+
+        verify(facetRepository).setClockWidgetSize(facet, 300, 200, true)
+    }
+
+    @Test
     fun `isPro follows the entitlement`() {
         val entitlement = FakeEntitlementRepository(initial = false)
         val controller = ClockWidgetFacetController(mock(FacetRepository::class.java), mock(SwitchFacetToNativeClockUseCase::class.java), entitlement)

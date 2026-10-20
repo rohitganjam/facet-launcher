@@ -125,12 +125,26 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         // which provider is picked — matches FacetEntity.clockWidgetWidthDp's own doc ("meaningless
         // whenever clockWidgetAppWidgetId is null"), extended here to "meaningless for a *different*
         // non-null id too".
-        facetDao.update(facet.copy(clockWidgetAppWidgetId = appWidgetId, clockWidgetWidthDp = null, clockWidgetHeightDp = null))
+        facetDao.update(
+            facet.copy(
+                clockWidgetAppWidgetId = appWidgetId,
+                clockWidgetWidthDp = null,
+                clockWidgetHeightDp = null,
+                landscapeClockWidgetWidthDp = null,
+                landscapeClockWidgetHeightDp = null,
+            ),
+        )
     }
 
-    /** PRD F15's interactive resize commit — see [FacetEntity.clockWidgetWidthDp]'s own doc. */
-    suspend fun setClockWidgetSize(facet: FacetEntity, widthDp: Int, heightDp: Int) {
-        facetDao.update(facet.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp))
+    /** PRD F15's interactive resize commit — see [FacetEntity.clockWidgetWidthDp]'s own doc. Landscape keeps its own size. */
+    suspend fun setClockWidgetSize(facet: FacetEntity, widthDp: Int, heightDp: Int, landscape: Boolean = false) {
+        facetDao.update(
+            if (landscape) {
+                facet.copy(landscapeClockWidgetWidthDp = widthDp, landscapeClockWidgetHeightDp = heightDp)
+            } else {
+                facet.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp)
+            },
+        )
     }
 
     /**

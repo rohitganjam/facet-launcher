@@ -71,6 +71,9 @@ data class FacetEntity(
      */
     val clockWidgetWidthDp: Int? = null,
     val clockWidgetHeightDp: Int? = null,
+    /** Landscape's own size for the hosted clock widget; `null` falls back to the portrait size above (clamped to the pane on screen). */
+    val landscapeClockWidgetWidthDp: Int? = null,
+    val landscapeClockWidgetHeightDp: Int? = null,
 
     // Apps section
     val overrideApps: Boolean = false,

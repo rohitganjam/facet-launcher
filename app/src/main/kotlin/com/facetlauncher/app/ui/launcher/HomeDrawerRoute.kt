@@ -79,8 +79,10 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
+import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubScreen
@@ -536,8 +538,13 @@ fun HomeDrawerRoute(
         remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(appWidgetId) }
     }
     // The persisted size (once the user has actually resized) wins over the provider's own default.
-    val clockWidgetEffectiveWidthDp = homeUiState.clockWidgetWidthDp ?: clockWidgetDefaultSizeDp?.first
-    val clockWidgetEffectiveHeightDp = homeUiState.clockWidgetHeightDp ?: clockWidgetDefaultSizeDp?.second
+    // Landscape keeps its own size and falls back to the portrait one (clamped to its pane on screen).
+    val homeLayoutMode = rememberHomeLayoutMode()
+    val clockWidgetIsLandscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE
+    val clockWidgetSavedWidthDp = homeUiState.landscapeClockWidgetWidthDp.takeIf { clockWidgetIsLandscape } ?: homeUiState.clockWidgetWidthDp
+    val clockWidgetSavedHeightDp = homeUiState.landscapeClockWidgetHeightDp.takeIf { clockWidgetIsLandscape } ?: homeUiState.clockWidgetHeightDp
+    val clockWidgetEffectiveWidthDp = clockWidgetSavedWidthDp ?: clockWidgetDefaultSizeDp?.first
+    val clockWidgetEffectiveHeightDp = clockWidgetSavedHeightDp ?: clockWidgetDefaultSizeDp?.second
 
     // PRD F15's nested-scroll handoff (see ClockWidgetTile's own doc) drives the exact same
     // drawerAxis/hubAxis/facetAxis state detectHomeSwipeGestures' own Compose-pointer-input path
@@ -729,7 +736,7 @@ fun HomeDrawerRoute(
             onClockWidgetSizeChange = homeViewModel.clockWidgetHost::updateSize,
             onClockWidgetSizeCommit = { widthDp, heightDp ->
                 homeUiState.activeFacet?.let { facet ->
-                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp) }
+                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, landscape = clockWidgetIsLandscape) }
                 }
             },
             onClockWidgetBoundsChange = { clockWidgetBoundsInHomeRoot = it },
