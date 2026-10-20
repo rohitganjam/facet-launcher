@@ -528,14 +528,14 @@ fun HomeDrawerRoute(
     }
 
     // PRD F15 — the provider's own declared default (getAppWidgetInfo is a real system query, so
-    // resolved once per bound widget id, not every recomposition) and resize floor. The persisted
+    // resolved once per bound widget id, not every recomposition). The persisted
     // size (homeUiState.clockWidgetWidthDp/HeightDp) — once the user has actually dragged a resize
     // handle — takes precedence over this default; see HomeScreen's own effectiveClockWidgetSize.
     val clockWidgetDefaultSizeDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
         remember(appWidgetId) { homeViewModel.clockWidgetHost.defaultSizeDp(appWidgetId) }
     }
     val clockWidgetResizeFloorDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-        remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(appWidgetId) }
+        remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(context, appWidgetId) }
     }
     // The persisted size (once the user has actually resized) wins over the provider's own default.
     // The layout mode, and everything that differs between orientations, resolved once: landscape's own
@@ -733,10 +733,10 @@ fun HomeDrawerRoute(
             },
             clockWidgetAppWidgetId = homeUiState.clockWidgetAppWidgetId,
             createClockWidgetHostView = homeViewModel.clockWidgetHost::createHostView,
-            clockWidgetWidthDp = clockWidgetEffectiveWidthDp?.dp,
-            clockWidgetHeightDp = clockWidgetEffectiveHeightDp?.dp,
             clockWidgetMinWidthDp = clockWidgetResizeFloorDp?.first?.dp,
             clockWidgetMinHeightDp = clockWidgetResizeFloorDp?.second?.dp,
+            clockWidgetWidthDp = clockWidgetEffectiveWidthDp?.dp,
+            clockWidgetHeightDp = clockWidgetEffectiveHeightDp?.dp,
             onClockWidgetSizeChange = homeViewModel.clockWidgetHost::updateSize,
             onClockWidgetSizeCommit = { widthDp, heightDp ->
                 homeUiState.activeFacet?.let { facet ->

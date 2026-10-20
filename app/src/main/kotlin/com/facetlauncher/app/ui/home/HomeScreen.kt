@@ -201,7 +201,7 @@ fun HomeScreen(
     /** Current effective size — the persisted value if the user has resized it before, otherwise the provider's own declared default (the caller resolves that fallback; see `HomeDrawerRoute`). */
     clockWidgetWidthDp: Dp? = null,
     clockWidgetHeightDp: Dp? = null,
-    /** The floor an interactive resize drag may not shrink below — see `ClockWidgetHostController.resizeFloorDp`'s own doc. */
+    /** Resize floor: one Hub grid cell (see `ClockWidgetHostController.resizeFloorDp`). */
     clockWidgetMinWidthDp: Dp? = null,
     clockWidgetMinHeightDp: Dp? = null,
     onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit = { _, _, _ -> },

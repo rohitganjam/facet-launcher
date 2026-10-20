@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.domain.calculateHubCellWidth
 import javax.inject.Inject
 
 /**
@@ -46,27 +47,12 @@ class ClockWidgetHostController @Inject constructor(
         appWidgetRepository.updateWidgetSize(appWidgetId, widthDp, heightDp)
 
     /**
-     * The floor an interactive resize drag may not shrink below — `null` when orphaned. See
-     * [clockWidgetResizeFloorDp]'s own doc for the min-vs-minResize preference.
+     * The smallest a resize drag may make the widget: one Hub grid cell (square), whatever the
+     * provider declares — `null` when orphaned.
      */
-    fun resizeFloorDp(appWidgetId: Int): Pair<Int, Int>? =
+    fun resizeFloorDp(context: Context, appWidgetId: Int): Pair<Int, Int>? =
         appWidgetRepository.getAppWidgetInfo(appWidgetId)?.let {
-            clockWidgetResizeFloorDp(it.minWidth, it.minHeight, it.minResizeWidth, it.minResizeHeight)
+            val cellDp = calculateHubCellWidth(context)
+            cellDp to cellDp
         }
-}
-
-/**
- * PRD F15 — the real floor a resize drag may not shrink a hosted clock widget below. Prefers the
- * provider's own declared `minResizeWidth`/`minResizeHeight` (the size it explicitly says it can
- * still render sanely at) over its `minWidth`/`minHeight` (its *default* placement size, which is
- * commonly larger than what it can actually shrink to) — falls back to `minWidth`/`minHeight` only
- * when a provider leaves `minResizeWidth`/`minResizeHeight` unset (`0`, the platform's own "not
- * declared" sentinel for these fields). A pure function of the provider's own declared ints, kept
- * top-level (not a method) so it's trivially unit-testable without mocking
- * [android.appwidget.AppWidgetProviderInfo] or [AppWidgetRepository] at all.
- */
-fun clockWidgetResizeFloorDp(minWidth: Int, minHeight: Int, minResizeWidth: Int, minResizeHeight: Int): Pair<Int, Int> {
-    val width = if (minResizeWidth > 0) minResizeWidth else minWidth
-    val height = if (minResizeHeight > 0) minResizeHeight else minHeight
-    return width to height
 }
