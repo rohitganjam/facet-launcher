@@ -2787,7 +2787,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - adjustModeForACustomWidgetShowsTheDividerThePillAndCornerHandles
 - draggingACustomWidgetCornerHandleSavesTheNewSize
 - aCustomWidgetWiderThanItsPaneIsShownInsideThePane
-- pullingTheDividerLeftShrinksACustomWidgetOnlyToItsMinimumAndSavesIt
+- pullingTheDividerLeftShrinksACustomWidgetToOneHubCellAndSavesIt
 
 </details>
 
