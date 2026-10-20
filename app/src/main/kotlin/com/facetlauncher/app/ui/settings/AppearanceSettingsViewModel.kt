@@ -85,6 +85,8 @@ data class AppearanceSettingsUiState(
     val appListVerticalAlignment: AppListVerticalAlignment get() = facet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
     val appListLayout: AppListLayout get() = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout)
     val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
+    /** Launcher-wide: off keeps Home in portrait, and the landscape settings below are hidden. */
+    val allowLandscape: Boolean get() = settings.allowLandscape
     /** What the Landscape rows show: this scope's own stored landscape value, `null` meaning "same as portrait". */
     val landscapeAppRowPosition: AppRowPosition? get() = if (facet != null) facet.landscapeAppRowPosition else settings.landscapeAppRowPosition
     val landscapeAppListVerticalAlignment: AppListVerticalAlignment? get() = if (facet != null) facet.landscapeAppListVerticalAlignment else settings.landscapeAppListVerticalAlignment
@@ -275,6 +277,10 @@ class AppearanceSettingsViewModel @Inject constructor(
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPosition(it, position) } }
                 ?: settingsRepository.setAppRowPosition(position)
         }
+    }
+
+    fun setAllowLandscape(allow: Boolean) {
+        viewModelScope.launch { settingsRepository.setAllowLandscape(allow) }
     }
 
     fun setLandscapeAppRowPosition(position: AppRowPosition?) {

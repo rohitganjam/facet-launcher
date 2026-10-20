@@ -5,7 +5,7 @@
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
 | Room `FacetDatabase` | `facet.db` (schema **v32**, `exportSchema = true` → `app/schemas/…/1.json … 32.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 5 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 66 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 67 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -315,6 +315,7 @@ erDiagram
         string clock_alignment "ClockAlignment, default LEFT; also positions the calendar events strip"
         float clock_zone_height_dp "nullable, absent = template height"
         float clock_scale "default 0.8"
+        boolean allow_landscape "default true; off = portrait only"
         string landscape_clock_alignment "nullable, absent = use clock_alignment"
         float landscape_clock_zone_height_dp "nullable, absent = use clock_zone_height_dp"
         float landscape_clock_scale "nullable, absent = use clock_scale"
@@ -431,7 +432,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (66 functions)
+### 5.3 Write path — the complete writer API (67 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -445,6 +446,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setUse24HourTime(Boolean)` | `use_24_hour_time` | set | `ClockStyleGalleryViewModel` |
 | `setClockShowMeridiem(Boolean)` | `clock_show_meridiem` | set | `ClockStyleGalleryViewModel` |
 | `setClockDateStyle(ClockDateStyle)` | `clock_date_style` | set | `ClockStyleGalleryViewModel` |
+| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment, landscape)` | `clock_alignment` or `landscape_clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setClockZoneHeight(Float, landscape)` | `clock_zone_height_dp` or `landscape_clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
@@ -511,7 +513,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-The same 66 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 67 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock design (global; overridden per facet when `facets.overrideClock`)
@@ -533,6 +535,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | also positions the calendar events strip |
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
 | `clock_scale` | Float | `clockScale` | `0.8` | `resetClockScale()` removes the key |
+| `allow_landscape` | Boolean | `allowLandscape` | `true` | launcher-wide: off keeps Home in portrait, locks the screen to portrait and hides the landscape settings |
 | `landscape_clock_alignment` | String (`ClockAlignment`) | `landscapeClockAlignment` | `null` (= `clock_alignment`) | landscape's own placement, written from Home's adjust mode in landscape |
 | `landscape_clock_zone_height_dp` | Float | `landscapeClockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
 | `landscape_clock_scale` | Float | `landscapeClockScale` | `null` (= `clock_scale`) | removed by `resetClockScale()` too |
@@ -675,10 +678,10 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 42 of the 66 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 42 of the 67 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
-`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, the three `landscape_app_*` keys, `app_list_vertical_alignment`, `selected_calendar_ids`,
+`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, the three `landscape_app_*` keys, `allow_landscape` (device-local: it follows the device's orientation), `app_list_vertical_alignment`, `selected_calendar_ids`,
 `calendar_colors`, `recently_installed_position`, `search_settings_enabled`, all four `*_permission_requested` flags,
 `onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.

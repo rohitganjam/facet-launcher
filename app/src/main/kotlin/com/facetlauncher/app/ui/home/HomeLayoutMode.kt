@@ -1,6 +1,8 @@
 package com.facetlauncher.app.ui.home
 
+import android.content.pm.ActivityInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -30,10 +32,19 @@ enum class HomeLandscapeSpace { COMPACT, ROOMY }
 internal fun homeLandscapeSpaceFor(height: Dp): HomeLandscapeSpace =
     if (height < HOME_LANDSCAPE_COMPACT_HEIGHT) HomeLandscapeSpace.COMPACT else HomeLandscapeSpace.ROOMY
 
-/** [homeLayoutModeFor] for the current window (its configuration tracks multi-window and fold changes). */
+/**
+ * Whether the landscape layout is allowed at all (Settings → Appearance → Dock & Apps appearance). When it is
+ * off, [rememberHomeLayoutMode] is always portrait. Provided app-wide by `LauncherActivity`; allowed by default
+ * wherever nothing provides it (previews, tests).
+ */
+@Suppress("CompositionLocalAllowlist") // Read by every layout-mode consumer (Home, Hub, the route); threading it would touch them all.
+val LocalAllowLandscape = staticCompositionLocalOf { true }
+
+/** [homeLayoutModeFor] for the current window (its configuration tracks multi-window and fold changes), always portrait when [LocalAllowLandscape] is off. */
 @Composable
 internal fun rememberHomeLayoutMode(): HomeLayoutMode {
     val configuration = LocalConfiguration.current
+    if (!LocalAllowLandscape.current) return HomeLayoutMode.PORTRAIT
     return homeLayoutModeFor(configuration.screenWidthDp.dp, configuration.screenHeightDp.dp)
 }
 
@@ -41,3 +52,7 @@ internal fun rememberHomeLayoutMode(): HomeLayoutMode {
 @Composable
 internal fun rememberHomeLandscapeSpace(): HomeLandscapeSpace =
     homeLandscapeSpaceFor(LocalConfiguration.current.screenHeightDp.dp)
+
+/** The screen orientation the activity requests: portrait only while landscape is off, the device's own choice otherwise. */
+internal fun homeRequestedOrientation(allowLandscape: Boolean): Int =
+    if (allowLandscape) ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT

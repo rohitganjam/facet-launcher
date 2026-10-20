@@ -377,6 +377,8 @@
     <string name="home_apps_list_header_title">Home Apps List</string>
     <string name="home_apps_list_position">Home Apps Alignment</string>
     <string name="home_apps_list_list_position">Home Apps list position</string>
+    <string name="appearance_allow_landscape_title">Allow landscape mode</string>
+    <string name="appearance_allow_landscape_subtitle">Use a landscape layout when the screen is wide enough. Off keeps Home in portrait.</string>
     <string name="appearance_alignment_portrait_title">Portrait alignment</string>
     <string name="appearance_alignment_landscape_title">Landscape alignment</string>
     <string name="home_apps_list_same_as_portrait">Same as portrait</string>

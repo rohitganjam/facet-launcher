@@ -33,6 +33,7 @@ import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.SurfaceContainer
@@ -59,6 +60,7 @@ fun DockAppsAppearanceScreen(
         onAppRowPositionChange = viewModel::setAppRowPosition,
         onAppRowPresentationChange = viewModel::setAppRowPresentation,
         onAppListVerticalAlignmentChange = viewModel::setAppListVerticalAlignment,
+        onAllowLandscapeChange = viewModel::setAllowLandscape,
         onLandscapeAppRowPositionChange = viewModel::setLandscapeAppRowPosition,
         onLandscapeAppListVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
         onLandscapeAppListColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
@@ -79,6 +81,7 @@ private fun DockAppsAppearanceContent(
     onAppRowPositionChange: (AppRowPosition) -> Unit,
     onAppRowPresentationChange: (AppRowPresentation) -> Unit,
     onAppListVerticalAlignmentChange: (AppListVerticalAlignment) -> Unit,
+    onAllowLandscapeChange: (Boolean) -> Unit,
     onLandscapeAppRowPositionChange: (AppRowPosition?) -> Unit,
     onLandscapeAppListVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
     onLandscapeAppListColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
@@ -108,6 +111,20 @@ private fun DockAppsAppearanceContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
+                // Launcher-wide, so only on the global screen. Off hides the landscape alignment below.
+                if (!uiState.isFacetScoped) {
+                    item {
+                        SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
+                            SettingsToggleRow(
+                                title = stringResource(R.string.appearance_allow_landscape_title),
+                                subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
+                                checked = uiState.allowLandscape,
+                                onCheckedChange = onAllowLandscapeChange,
+                                testTag = "appearance_allow_landscape_row",
+                            )
+                        }
+                    }
+                }
                 item {
                     // Always shown at both scopes: LAUNCHER_DEFAULT itself (filtered from the option list in
                     // global mode) is what lets a facet revert to inheriting, so no Inherit/Override switch.
@@ -129,14 +146,16 @@ private fun DockAppsAppearanceContent(
                         onAppListVerticalAlignmentChange = onAppListVerticalAlignmentChange,
                     )
                 }
-                item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
-                item {
-                    LandscapeAlignmentCard(
-                        uiState = uiState,
-                        onAppRowPositionChange = onLandscapeAppRowPositionChange,
-                        onAppListColumnAlignmentChange = onLandscapeAppListColumnAlignmentChange,
-                        onAppListVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
-                    )
+                if (uiState.allowLandscape) {
+                    item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
+                    item {
+                        LandscapeAlignmentCard(
+                            uiState = uiState,
+                            onAppRowPositionChange = onLandscapeAppRowPositionChange,
+                            onAppListColumnAlignmentChange = onLandscapeAppListColumnAlignmentChange,
+                            onAppListVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
+                        )
+                    }
                 }
             }
         },
@@ -316,6 +335,7 @@ private fun DockAppsAppearanceScreenPreview() {
             onAppRowPositionChange = {},
             onAppRowPresentationChange = {},
             onAppListVerticalAlignmentChange = {},
+            onAllowLandscapeChange = {},
             onLandscapeAppRowPositionChange = {},
             onLandscapeAppListVerticalAlignmentChange = {},
             onLandscapeAppListColumnAlignmentChange = {},

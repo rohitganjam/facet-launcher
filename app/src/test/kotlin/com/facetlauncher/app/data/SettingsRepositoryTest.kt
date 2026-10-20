@@ -567,4 +567,14 @@ class SettingsRepositoryTest {
         assertEquals(null, cleared.landscapeAppListVerticalAlignment)
         assertEquals(null, cleared.landscapeAppListColumnAlignment)
     }
+
+    @Test
+    fun `allow landscape defaults to on and persists when turned off`() = runTest {
+        val repository = createRepository()
+        assertEquals(true, repository.settings.first().allowLandscape)
+
+        repository.setAllowLandscape(false)
+
+        assertEquals(false, repository.settings.first().allowLandscape)
+    }
 }

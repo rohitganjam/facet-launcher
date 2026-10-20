@@ -532,4 +532,18 @@ class AppearanceSettingsViewModelTest {
         assertEquals(AppRowPosition.CENTER, viewModel.uiState.value.landscapeAppRowPosition)
         assertEquals(null, viewModel.uiState.value.landscapeAppListVerticalAlignment)
     }
+
+    @Test
+    fun `setAllowLandscape writes to SettingsRepository and the state reflects the setting`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository, settings = LauncherSettings(allowLandscape = false))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setAllowLandscape(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setAllowLandscape(true)
+        assertEquals(false, viewModel.uiState.value.allowLandscape)
+    }
 }

@@ -404,6 +404,11 @@ data class LauncherSettings(
      * Uniform scaling ensures proportions are preserved.
      */
     val clockScale: Float = 0.8f,
+    /**
+     * Whether Home may use its landscape layout and the screen may rotate. Off keeps everything in portrait and hides
+     * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
+     */
+    val allowLandscape: Boolean = true,
     /** Landscape's own [clockAlignment] (top, middle or bottom there); `null` uses the portrait value. */
     val landscapeClockAlignment: ClockAlignment? = null,
     /** Landscape's own [clockZoneHeightDp] (its divider position, a pane width); `null` uses the portrait value. */

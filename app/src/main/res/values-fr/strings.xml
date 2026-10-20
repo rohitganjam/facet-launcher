@@ -339,6 +339,8 @@
     <string name="home_apps_list_header_title">Liste d\'apps de l\'accueil</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Position de la liste</string>
+    <string name="appearance_allow_landscape_title">Autoriser le mode paysage</string>
+    <string name="appearance_allow_landscape_subtitle">Utilise une disposition paysage quand l’écran est assez large. Désactivé garde l’accueil en portrait.</string>
     <string name="appearance_alignment_portrait_title">Alignement en portrait</string>
     <string name="appearance_alignment_landscape_title">Alignement en paysage</string>
     <string name="home_apps_list_same_as_portrait">Comme en portrait</string>

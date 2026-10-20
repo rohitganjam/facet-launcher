@@ -15,6 +15,16 @@ get portrait, while a phone on its side, an unfolded foldable (the Pixel Fold's 
 portrait even when it is wider than tall (a narrow split-screen window). The manifest sets no `screenOrientation`, so a rotation recreates the
 activity, and state lives in the ViewModels. Callers and tests can force a mode with the parameter.
 
+### 1.0 Allowing landscape at all
+
+Settings → Appearance → Dock & Apps appearance has a launcher-wide **Allow landscape mode** switch
+(`allow_landscape`, default on, global screen only). Off, everything stays portrait:
+`rememberHomeLayoutMode()` returns portrait whatever the window (it reads `LocalAllowLandscape`, which
+`LauncherActivity` provides from the setting, so Home, the Hub and the route all follow), `LauncherActivity`
+requests a portrait orientation (`homeRequestedOrientation`, applied once settings have loaded; Android
+ignores it on large screens, where the layout is still forced portrait), and the Landscape alignment card is
+hidden. The landscape values already saved are kept and come back when the switch is turned on.
+
 ### 1.1 Compact and roomy landscape
 
 `HomeScreen` also takes `landscapeSpace: HomeLandscapeSpace`, defaulting to `rememberHomeLandscapeSpace()`,

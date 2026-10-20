@@ -1,16 +1,17 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.assertCountEquals
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -280,7 +281,8 @@ class DockAppsAppearanceScreenTest {
         // The Clock card sits above these rows, so each is scrolled into view before it's checked.
         listOf("Show Dock apps as", "Home Apps Alignment", "Show Home apps as", "Home Apps list position").forEach { title ->
             composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasText(title))
-            composeRule.onNodeWithText(title).assertIsDisplayed()
+            // The Portrait and Landscape alignment cards share these two titles; the first is the Portrait one.
+            composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
         }
     }
 
@@ -367,5 +369,34 @@ class DockAppsAppearanceScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { settingsRepository.settings.first().landscapeAppRowPosition == null }
         }
+    }
+
+    @Test
+    fun theAllowLandscapeSwitchTurnsLandscapeOffAndHidesTheLandscapeAlignment() {
+        // Given the global screen with landscape allowed
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertExists()
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
+        composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").assertExists()
+
+        // When the switch is turned off
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").performClick()
+
+        // Then the setting is saved and the landscape alignment rows go away
+        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { !settingsRepository.settings.first().allowLandscape } }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("appearance_landscape_app_list_vertical_alignment_row").fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    @Test
+    fun aFacetScopedScreenHasNoAllowLandscapeSwitch() {
+        // Given a facet-scoped screen
+        val facetId = 1L
+        setContent(facetId = facetId)
+        awaitFacetScoped()
+
+        // Then the launcher-wide switch isn't there
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertDoesNotExist()
     }
 }

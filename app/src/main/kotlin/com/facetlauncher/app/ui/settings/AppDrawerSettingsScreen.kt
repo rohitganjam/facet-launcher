@@ -45,6 +45,7 @@ import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
@@ -154,7 +155,7 @@ private fun AppDrawerSettingsContent(
                                 testTag = "drawer_list_item_size_row",
                             )
                             CardDivider()
-                            AppDrawerToggleRow(
+                            SettingsToggleRow(
                                 title = stringResource(R.string.app_drawer_show_icons_title),
                                 subtitle = stringResource(R.string.app_drawer_show_icons_subtitle),
                                 checked = settings.showDrawerIcons,
@@ -164,7 +165,7 @@ private fun AppDrawerSettingsContent(
                         }
                         if (presentation == DrawerPresentation.GRID) {
                             CardDivider()
-                            AppDrawerToggleRow(
+                            SettingsToggleRow(
                                 title = stringResource(R.string.app_drawer_show_labels_title),
                                 subtitle = stringResource(R.string.app_drawer_show_labels_subtitle),
                                 checked = settings.showDrawerLabels,
@@ -173,7 +174,7 @@ private fun AppDrawerSettingsContent(
                             )
                         }
                         CardDivider()
-                        AppDrawerToggleRow(
+                        SettingsToggleRow(
                             title = stringResource(R.string.app_drawer_search_contacts_title),
                             subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
                             checked = settings.searchContactsEnabled,
@@ -181,7 +182,7 @@ private fun AppDrawerSettingsContent(
                             testTag = "search_contacts_toggle",
                         )
                         CardDivider()
-                        AppDrawerToggleRow(
+                        SettingsToggleRow(
                             title = stringResource(R.string.app_drawer_search_settings_title),
                             subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
                             checked = settings.searchSettingsEnabled,
@@ -238,32 +239,6 @@ private fun AppDrawerSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mod
     ) {
         BackButton(onClick = onBack)
         Text(text = stringResource(R.string.app_drawer_settings_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
-    }
-}
-
-@Composable
-private fun AppDrawerToggleRow(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    testTag: String,
-    subtitle: String? = null,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 13.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Constrains the label/subtitle to the space left of the Switch so a long subtitle wraps
-        // onto a second line instead of pushing the Switch out past the card's own edge.
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
-            if (subtitle != null) {
-                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
-            }
-        }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = Modifier.testTag(testTag))
     }
 }
 

@@ -339,6 +339,8 @@
     <string name="home_apps_list_header_title">Lista de apps de inicio</string>
     <string name="home_apps_list_position">Posición</string>
     <string name="home_apps_list_list_position">Posición de la lista</string>
+    <string name="appearance_allow_landscape_title">Permitir modo horizontal</string>
+    <string name="appearance_allow_landscape_subtitle">Usa un diseño horizontal cuando la pantalla es lo bastante ancha. Desactivado mantiene Inicio en vertical.</string>
     <string name="appearance_alignment_portrait_title">Alineación en vertical</string>
     <string name="appearance_alignment_landscape_title">Alineación en horizontal</string>
     <string name="home_apps_list_same_as_portrait">Igual que en vertical</string>

@@ -339,6 +339,8 @@
     <string name="home_apps_list_header_title">Startbildschirm-App-Liste</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Listenposition</string>
+    <string name="appearance_allow_landscape_title">Querformat erlauben</string>
+    <string name="appearance_allow_landscape_subtitle">Nutze ein Querformat-Layout, wenn der Bildschirm breit genug ist. Aus lässt Home im Hochformat.</string>
     <string name="appearance_alignment_portrait_title">Ausrichtung im Hochformat</string>
     <string name="appearance_alignment_landscape_title">Ausrichtung im Querformat</string>
     <string name="home_apps_list_same_as_portrait">Wie im Hochformat</string>

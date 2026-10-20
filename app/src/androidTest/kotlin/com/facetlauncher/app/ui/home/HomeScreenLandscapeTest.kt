@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import androidx.activity.ComponentActivity
 import android.appwidget.AppWidgetHostView
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,38 +93,41 @@ class HomeScreenLandscapeTest {
         appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
         widget: TestClockWidget? = null,
         landscapeSpace: HomeLandscapeSpace? = null,
+        allowLandscape: Boolean = true,
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
-        FacetLauncherTheme {
-            HomeScreen(
-                landscapeSpace = landscapeSpace ?: rememberHomeLandscapeSpace(),
-                hasCustomClockWidget = widget != null,
-                clockWidgetAppWidgetId = widget?.let { WIDGET_ID },
-                createClockWidgetHostView = { context, _ -> AppWidgetHostView(context) },
-                clockWidgetWidthDp = widget?.widthDp?.dp,
-                clockWidgetHeightDp = widget?.heightDp?.dp,
-                clockWidgetMinWidthDp = widget?.minWidthDp?.dp,
-                clockWidgetMinHeightDp = widget?.minHeightDp?.dp,
-                onClockWidgetSizeCommit = { w, h -> widget?.onSizeCommit?.invoke(w, h) },
-                appListItems = appListItems.map { PlacedItem.SingleApp(it) },
-                dockApps = dockApps.map { PlacedItem.SingleApp(it) },
-                onAppClick = {},
-                clockAlignment = clockAlignment,
-                appListLayout = appListLayout,
-                dockDisplayMode = dockDisplayMode,
-                clockZoneHeightDp = clockZoneHeightDp,
-                onClockZoneHeightCommit = onClockZoneHeightCommit,
-                clockScale = clockScale,
-                onClockScaleCommit = onClockScaleCommit,
-                onClockAlignmentChange = onClockAlignmentChange,
-                mediaPlayer = mediaPlayer,
-                appListVerticalAlignment = appListVerticalAlignment,
-                clockAdjustMode = adjustMode,
-                onAdjustModeChange = { adjustMode = it },
-                draggingHandle = dragging,
-                onDraggingHandleChange = { dragging = it },
-            )
+        CompositionLocalProvider(LocalAllowLandscape provides allowLandscape) {
+            FacetLauncherTheme {
+                HomeScreen(
+                    landscapeSpace = landscapeSpace ?: rememberHomeLandscapeSpace(),
+                    hasCustomClockWidget = widget != null,
+                    clockWidgetAppWidgetId = widget?.let { WIDGET_ID },
+                    createClockWidgetHostView = { context, _ -> AppWidgetHostView(context) },
+                    clockWidgetWidthDp = widget?.widthDp?.dp,
+                    clockWidgetHeightDp = widget?.heightDp?.dp,
+                    clockWidgetMinWidthDp = widget?.minWidthDp?.dp,
+                    clockWidgetMinHeightDp = widget?.minHeightDp?.dp,
+                    onClockWidgetSizeCommit = { w, h -> widget?.onSizeCommit?.invoke(w, h) },
+                    appListItems = appListItems.map { PlacedItem.SingleApp(it) },
+                    dockApps = dockApps.map { PlacedItem.SingleApp(it) },
+                    onAppClick = {},
+                    clockAlignment = clockAlignment,
+                    appListLayout = appListLayout,
+                    dockDisplayMode = dockDisplayMode,
+                    clockZoneHeightDp = clockZoneHeightDp,
+                    onClockZoneHeightCommit = onClockZoneHeightCommit,
+                    clockScale = clockScale,
+                    onClockScaleCommit = onClockScaleCommit,
+                    onClockAlignmentChange = onClockAlignmentChange,
+                    mediaPlayer = mediaPlayer,
+                    appListVerticalAlignment = appListVerticalAlignment,
+                    clockAdjustMode = adjustMode,
+                    onAdjustModeChange = { adjustMode = it },
+                    draggingHandle = dragging,
+                    onDraggingHandleChange = { dragging = it },
+                )
+            }
         }
     }
 
@@ -599,5 +603,16 @@ class HomeScreenLandscapeTest {
         val handle = boundsOf("home_clock_zone_handle")
         val dock = boundsOf("home_dock_row")
         assert(handle.bottom <= dock.top + 1f) { "divider $handle should end above the dock row $dock" }
+    }
+
+    @Test
+    fun withLandscapeNotAllowedAWideWindowStaysInThePortraitLayout() {
+        // Given a landscape window, but landscape turned off in settings
+        composeRule.setContent { LandscapeHome(allowLandscape = false) }
+        composeRule.waitForIdle()
+
+        // Then Home is the portrait layout: no landscape panes, and the dock is the bottom row
+        composeRule.onNodeWithTag("home_landscape_layout").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_dock_row").assertExists()
     }
 }

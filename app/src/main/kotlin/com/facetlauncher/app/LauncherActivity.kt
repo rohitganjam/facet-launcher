@@ -11,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -20,6 +21,8 @@ import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
+import com.facetlauncher.app.ui.home.LocalAllowLandscape
+import com.facetlauncher.app.ui.home.homeRequestedOrientation
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.navigation.FacetNavHost
@@ -56,11 +59,19 @@ class LauncherActivity : ComponentActivity() {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val homeSwipeGate = remember { HomeSwipeGate() }
             val systemBarsState = remember { SystemBarsState() }
+            // Locked to portrait when landscape is off, free otherwise. Applied once settings have loaded, so a
+            // device already on its side doesn't flip on every start before the saved choice is known.
+            LaunchedEffect(uiState.isLoading, uiState.allowLandscape) {
+                if (!uiState.isLoading) {
+                    requestedOrientation = homeRequestedOrientation(uiState.allowLandscape)
+                }
+            }
 
             CompositionLocalProvider(
                 LocalHomePressedEvent provides viewModel.homePressedEvent,
                 LocalHomeSwipeGate provides homeSwipeGate,
                 LocalDebugSettingsEntry provides debugSettingsEntry.orElse(null),
+                LocalAllowLandscape provides uiState.allowLandscape,
             ) {
                 FacetLauncherTheme(
                     themeMode = uiState.themeMode,

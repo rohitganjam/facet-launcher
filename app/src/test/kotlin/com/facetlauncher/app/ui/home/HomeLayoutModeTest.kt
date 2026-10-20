@@ -64,4 +64,14 @@ class HomeLayoutModeTest {
         assertEquals(HomeLandscapeSpace.COMPACT, homeLandscapeSpaceFor(height = 479.dp))
         assertEquals(HomeLandscapeSpace.ROOMY, homeLandscapeSpaceFor(height = 480.dp))
     }
+
+    @Test
+    fun `landscape allowed leaves the orientation to the device`() {
+        assertEquals(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, homeRequestedOrientation(allowLandscape = true))
+    }
+
+    @Test
+    fun `landscape off locks the screen to portrait`() {
+        assertEquals(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, homeRequestedOrientation(allowLandscape = false))
+    }
 }

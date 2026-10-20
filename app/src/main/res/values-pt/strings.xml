@@ -339,6 +339,8 @@
     <string name="home_apps_list_header_title">Lista de apps da tela inicial</string>
     <string name="home_apps_list_position">Posição</string>
     <string name="home_apps_list_list_position">Posição da lista</string>
+    <string name="appearance_allow_landscape_title">Permitir modo paisagem</string>
+    <string name="appearance_allow_landscape_subtitle">Usa um layout em paisagem quando o ecrã é largo o suficiente. Desligado mantém o início em retrato.</string>
     <string name="appearance_alignment_portrait_title">Alinhamento em retrato</string>
     <string name="appearance_alignment_landscape_title">Alinhamento em paisagem</string>
     <string name="home_apps_list_same_as_portrait">Igual ao retrato</string>
