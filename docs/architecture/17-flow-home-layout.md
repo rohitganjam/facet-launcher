@@ -7,18 +7,19 @@ marks what does not yet.
 ## 1. Choosing a layout
 
 `HomeScreen` takes `layoutMode: HomeLayoutMode`, defaulting to `rememberHomeLayoutMode()`. That reads
-the window width from `LocalConfiguration` and calls `homeLayoutModeFor(width)`: **portrait below 600dp,
-landscape from 600dp up**. The rule follows the window, not a rotation flag, so a phone held upright
-(under 600dp wide) gets portrait, while a phone on its side, an unfolded foldable (the Pixel Fold's inner
-display is 841 × 700dp) and a tablet in either orientation get the landscape structure. A narrow
-split-screen window is portrait whatever its height. The manifest sets no `screenOrientation`, so a rotation recreates the
+the window size from `LocalConfiguration` and calls `homeLayoutModeFor(width, height)`: **portrait when
+the window is taller than it is wide, whatever its size, or narrower than 600dp; landscape otherwise**.
+The rule follows the window, not a rotation flag, so a phone held upright and a tablet held upright both
+get portrait, while a phone on its side, an unfolded foldable (the Pixel Fold's inner display is
+841 × 700dp) and a tablet on its side get the landscape structure. A window under 600dp wide stays
+portrait even when it is wider than tall (a narrow split-screen window). The manifest sets no `screenOrientation`, so a rotation recreates the
 activity, and state lives in the ViewModels. Callers and tests can force a mode with the parameter.
 
 ### 1.1 Compact and roomy landscape
 
 `HomeScreen` also takes `landscapeSpace: HomeLandscapeSpace`, defaulting to `rememberHomeLandscapeSpace()`,
 which calls `homeLandscapeSpaceFor(height)`: **compact below 480dp tall** (a phone on its side, Material's
-compact height class), **roomy** at 480dp or more (a tablet, an unfolded foldable).
+compact height class), **roomy** at 480dp or more (a tablet on its side, an unfolded foldable).
 
 | | Compact | Roomy |
 |---|---|---|

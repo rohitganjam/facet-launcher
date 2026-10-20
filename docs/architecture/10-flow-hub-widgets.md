@@ -121,7 +121,7 @@ flowchart TB
 
 ## 5. Landscape layout
 
-In a landscape-layout window (600dp wide or more, see [17](17-flow-home-layout.md) §1) the Hub shows `HubLandscapeGrid`
+In a landscape-layout window (see [17](17-flow-home-layout.md) §1) the Hub shows `HubLandscapeGrid`
 instead of `HubGrid`. Same widgets, same sizes, a different arrangement:
 
 - **Fixed cells.** Each cell is `HUB_LANDSCAPE_CELL_SIZE` (64dp, 4dp gaps), so a widget has the same size

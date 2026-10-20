@@ -8,17 +8,18 @@ import androidx.compose.ui.unit.dp
 /** Which Home layout a window gets. */
 enum class HomeLayoutMode { PORTRAIT, LANDSCAPE }
 
-/** Windows narrower than this are a phone held upright; anything wider has room for the landscape structure. */
+/** Windows narrower than this are a phone's width, so they keep the portrait layout even when wider than tall. */
 internal val HOME_PORTRAIT_MAX_WIDTH = 600.dp
 
 /**
- * Follows the window's width, not a rotation flag or its shape: a phone held upright (narrow) gets the
- * portrait layout, and anything 600dp or wider gets the landscape one: a phone on its side, an
- * unfolded foldable, and a tablet in either orientation. [homeLandscapeSpaceFor] then tells a short
- * phone window from a roomy one.
+ * Follows the window, not a rotation flag. A window taller than it is wide is portrait whatever its
+ * size (a tablet held upright included), and so is one narrower than [HOME_PORTRAIT_MAX_WIDTH]. Any
+ * other window, wide enough and not taller than wide (a phone on its side, an unfolded foldable, a
+ * tablet on its side), gets the landscape structure. [homeLandscapeSpaceFor] then tells a short phone
+ * window from a roomy one.
  */
-internal fun homeLayoutModeFor(width: Dp): HomeLayoutMode =
-    if (width < HOME_PORTRAIT_MAX_WIDTH) HomeLayoutMode.PORTRAIT else HomeLayoutMode.LANDSCAPE
+internal fun homeLayoutModeFor(width: Dp, height: Dp): HomeLayoutMode =
+    if (height > width || width < HOME_PORTRAIT_MAX_WIDTH) HomeLayoutMode.PORTRAIT else HomeLayoutMode.LANDSCAPE
 
 /** Landscape windows shorter than this are a phone on its side; taller ones (a tablet, an unfolded foldable) have room to spare. */
 internal val HOME_LANDSCAPE_COMPACT_HEIGHT = 480.dp
@@ -33,7 +34,7 @@ internal fun homeLandscapeSpaceFor(height: Dp): HomeLandscapeSpace =
 @Composable
 internal fun rememberHomeLayoutMode(): HomeLayoutMode {
     val configuration = LocalConfiguration.current
-    return homeLayoutModeFor(configuration.screenWidthDp.dp)
+    return homeLayoutModeFor(configuration.screenWidthDp.dp, configuration.screenHeightDp.dp)
 }
 
 /** [homeLandscapeSpaceFor] for the current window. */
