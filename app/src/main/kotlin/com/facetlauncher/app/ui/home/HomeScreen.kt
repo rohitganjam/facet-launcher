@@ -37,7 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -84,10 +83,14 @@ import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.DockIcon
+import com.facetlauncher.app.ui.home.HomeDockState
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeItemStyle
 import com.facetlauncher.app.ui.home.HomeLayoutMode
+import com.facetlauncher.app.ui.home.HomeListState
 import com.facetlauncher.app.ui.home.HomeScreen
+import com.facetlauncher.app.ui.home.HomeScreenActions
+import com.facetlauncher.app.ui.home.HomeScreenState
 import com.facetlauncher.app.ui.home.MediaPlayerRow
 import com.facetlauncher.app.ui.home.rememberHomeLandscapeSpace
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
@@ -215,6 +218,7 @@ fun HomeScreen(
     val appLabelColor = appLabelColorOption.resolve()
     val appLabelFontWeight = homeAppsFontWeight.resolve()
     val density = LocalDensity.current
+    val layout = rememberHomeScreenLayout()
     // The resize handles can land right at the screen edge (e.g. a full-width hosted widget) —
     // real bug found on-device: Android's own edge-swipe back gesture (wider on some OEM skins,
     // e.g. Samsung One UI) intercepts the touch-down before the handle's own pointerInput ever
@@ -223,76 +227,22 @@ fun HomeScreen(
     // opts that specific region out of the gesture-nav intercept. Registered/cleared below,
     // scoped to whichever ADJUST block (native clock or hosted widget) is actually active.
     val view = LocalView.current
-    // Measured once per layout pass — contentHeightPx is the content Box's own height;
-    // clockNaturalHeightPx is the clock+calendar block's intrinsic height (offset-independent, so
-    // this is a stable one-frame-lag measurement, same pattern as e.g. ui/components/HubGrid.kt).
-    var contentHeightPx by remember { mutableFloatStateOf(0f) }
-    // Landscape only: the apps pane's width, for narrowing the grid to what fits.
-    var appsPaneWidthPx by remember { mutableFloatStateOf(0f) }
     // Roomy landscape windows put the dock along the bottom; the height it takes is kept out of the divider and pill.
     val landscapeDockAtBottom = isLandscape && landscapeSpace == HomeLandscapeSpace.ROOMY
-    var landscapeDockRowHeightPx by remember { mutableFloatStateOf(0f) }
-    val landscapeDockReserve = if (landscapeDockAtBottom && dockApps.isNotEmpty()) with(density) { landscapeDockRowHeightPx.toDp() } else 0.dp
-    var landscapeContentWidthPx by remember { mutableFloatStateOf(0f) }
-    // The divider's live width while dragging, held until the saved value round-trips (as liveHandlePx is).
-    var liveDividerWidthPx by remember { mutableStateOf<Float?>(null) }
-    var clockNaturalHeightPx by remember { mutableFloatStateOf(0f) }
-    // Natural (unconstrained) height of the app-list content, measured inside the scrollable
-    // region — see the one-shot compact-spacing check below.
-    var appListNaturalHeightPx by remember { mutableFloatStateOf(0f) }
-    // Whether the app list's rows render at App Drawer's own COMPACT row density (8dp vertical
-    // padding, matching DrawerListItemSize.COMPACT) instead of Home's default 16dp — see the
-    // one-shot check below.
-    var useCompactAppSpacing by remember { mutableStateOf(false) }
-    // The move handle's live position while dragging, as an absolute value (not a delta — mirrors
-    // liveScale below exactly, and for the same reason: a real flicker found on-device, where an
-    // eagerly-zeroed delta briefly exposed the *old* basePersistedHandlePx for the one-or-two
-    // frames between the drag ending and the new clockZoneHeightDp round-tripping back through the
-    // repo/StateFlow — a visible snap-back-then-forward right at release). Held past the drag's
-    // end until clockZoneHeightDp round-trips, then released so any external change (reset, facet
-    // switch) takes effect.
-    var liveHandlePx by remember { mutableStateOf<Float?>(null) }
+    val landscapeDockReserve = if (landscapeDockAtBottom && dockApps.isNotEmpty()) with(density) { layout.landscapeDockRowHeightPx.toDp() } else 0.dp
     LaunchedEffect(clockZoneHeightDp) {
-        liveHandlePx = null
-        liveDividerWidthPx = null
+        layout.liveHandlePx = null
+        layout.liveDividerWidthPx = null
     }
 
-    // The clock's live scale while resizing, as an absolute value (not a delta — a delta briefly
-    // double-counts against the committed clockScale in the frame the commit lands). Held past the
-    // drag's end until clockScale round-trips back through the repo/StateFlow, then released so any
-    // external change to clockScale (reset, facet switch) takes effect.
-    var liveScale by remember { mutableStateOf<Float?>(null) }
-    LaunchedEffect(clockScale) { liveScale = null }
+    LaunchedEffect(clockScale) { layout.liveScale = null }
 
-    // Stored as primitives, not the LayoutCoordinates object: onGloballyPositioned reuses one
-    // instance across layout passes and only mutates its size/position, so `state = it` would
-    // structurally dedupe to a no-op and never recompose when the clock box changed size (e.g. on
-    // a template switch). IntSize/Offset are value types with real equals.
-    var rootSize by remember { mutableStateOf<IntSize?>(null) }
-    var rootOriginInRoot by remember { mutableStateOf<Offset?>(null) }
-    var clockBoxSize by remember { mutableStateOf<IntSize?>(null) }
-    // Bottom edge of the whole portrait clock block, measured in the same pass as the clock box.
-    var clockBlockBottomInRoot by remember { mutableStateOf<Float?>(null) }
-    var clockBoxOriginInRoot by remember { mutableStateOf<Offset?>(null) }
-    var appListSize by remember { mutableStateOf<IntSize?>(null) }
-    var appListOriginInRoot by remember { mutableStateOf<Offset?>(null) }
 
-    // NaN until the first drag event captures the offset between where the finger grabbed and the
-    // scale that point implies, so the clock doesn't pop on the first move.
-    var dragGrabOffset by remember { mutableFloatStateOf(Float.NaN) }
 
-    // PRD F15 — the hosted clock widget's own live width/height while resizing, real px (not a
-    // scale factor — see ClockBlock's own doc for why a hosted widget needs its actual box size).
-    // Mirrors liveScale/dragGrabOffset's own held-until-round-trip and NaN-until-first-move
-    // conventions exactly, kept fully separate since the two resize mechanisms never apply to the
-    // same clockAdjustMode session (hasCustomClockWidget picks one or the other).
-    var liveWidgetWidthPx by remember { mutableStateOf<Float?>(null) }
-    var liveWidgetHeightPx by remember { mutableStateOf<Float?>(null) }
     LaunchedEffect(clockWidgetWidthDp, clockWidgetHeightDp) {
-        liveWidgetWidthPx = null
-        liveWidgetHeightPx = null
+        layout.liveWidgetWidthPx = null
+        layout.liveWidgetHeightPx = null
     }
-    var widgetDragGrabOffset by remember { mutableStateOf<Offset?>(null) }
 
     val defaultTopOffsetPx = with(density) { HOME_CLOCK_DEFAULT_TOP_OFFSET.toPx() }
     val minGapPx = with(density) { HOME_CLOCK_MIN_GAP.toPx() }
@@ -304,28 +254,23 @@ fun HomeScreen(
     // formula below to resolve to its original, untouched top-offset position. No separate
     // rendering branch is needed for the default state.
     val basePersistedHandlePx = clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
-        ?: (defaultTopOffsetPx + clockNaturalHeightPx + minGapPx)
+        ?: (defaultTopOffsetPx + layout.clockNaturalHeightPx + minGapPx)
     // See clockHandleFloorPx: the native clock shrinks live (effectiveClockScale) to let the handle go higher.
     val floorPx = clockHandleFloorPx(
-        blockHeightPx = clockNaturalHeightPx,
-        clockBoxHeightPx = clockBoxSize?.height?.toFloat() ?: clockNaturalHeightPx,
+        blockHeightPx = layout.clockNaturalHeightPx,
+        clockBoxHeightPx = layout.clockBoxSize?.height?.toFloat() ?: layout.clockNaturalHeightPx,
         headroomPx = with(density) { (HOME_CLOCK_RESIZE_HANDLE_INSET + 12.dp).toPx() },
         minGapPx = minGapPx,
         minScale = HOME_CLOCK_MIN_SCALE,
-        canShrink = clockWidgetAppWidgetId == null && clockBoxSize != null,
+        canShrink = clockWidgetAppWidgetId == null && layout.clockBoxSize != null,
     )
     // maxOf guards against contentHeightPx still being 0f before the first layout pass, which
     // would otherwise make the ceiling fall below the floor and crash coerceIn.
-    val ceilingPx = maxOf(floorPx, HOME_CLOCK_ZONE_MAX_FRACTION * contentHeightPx)
-    val handlePx = (liveHandlePx ?: basePersistedHandlePx).coerceIn(floorPx, ceilingPx)
+    val ceilingPx = maxOf(floorPx, HOME_CLOCK_ZONE_MAX_FRACTION * layout.contentHeightPx)
+    val handlePx = (layout.liveHandlePx ?: basePersistedHandlePx).coerceIn(floorPx, ceilingPx)
 
-    // The media row sits just under the clock block (whose bottom is minGapPx above the handle) and
-    // pushes the app list down by its own height while visible. Its height is kept across hides so
-    // clock adjust mode (which hides the row) doesn't shift the list.
-    var lastMediaPlayer by remember { mutableStateOf<MediaPlayerState?>(null) }
-    LaunchedEffect(mediaPlayer) { if (mediaPlayer != null) lastMediaPlayer = mediaPlayer }
-    val shownMediaPlayer = mediaPlayer ?: lastMediaPlayer
-    var mediaRowHeightPx by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(mediaPlayer) { if (mediaPlayer != null) layout.lastMediaPlayer = mediaPlayer }
+    val shownMediaPlayer = mediaPlayer ?: layout.lastMediaPlayer
     val mediaFraction by animateFloatAsState(
         targetValue = if (mediaPlayer != null) 1f else 0f,
         animationSpec = tween(durationMillis = 200, easing = EmphasizedDecelerateEasing),
@@ -336,9 +281,9 @@ fun HomeScreen(
     val appListTopFor: (Float) -> Float = { reservePx ->
         if (reservePx > 0f) maxOf(handlePx, mediaRowTopPx + reservePx + mediaBelowGapPx) else handlePx
     }
-    val appListTopPx = appListTopFor(mediaRowHeightPx * mediaFraction)
+    val appListTopPx = appListTopFor(layout.mediaRowHeightPx * mediaFraction)
     // Landscape's list fills its own pane from the top, so nothing is reserved above it.
-    val appListTopTargetPx = if (isLandscape) 0f else appListTopFor(if (mediaPlayer != null) mediaRowHeightPx else 0f)
+    val appListTopTargetPx = if (isLandscape) 0f else appListTopFor(if (mediaPlayer != null) layout.mediaRowHeightPx else 0f)
 
     // The clock renders at its persisted [clockScale] and nothing recomputes it frame to frame.
     // The largest scale that still fits — headroom above the pinned bottom (past the status bar,
@@ -373,8 +318,8 @@ fun HomeScreen(
         val boxH = boxSize.height.toFloat()
         // The box's bottom is the block's target bottom less what sits under the box. Taking it from
         // the box's own (a frame stale) position made the height feed back on itself and jiggle.
-        val blockBottom = clockBlockBottomInRoot
-        val tailPx = blockBottom?.let { it - (rootOriginInRoot?.y ?: 0f) - (boxTopLeft.y + boxH) }
+        val blockBottom = layout.clockBlockBottomInRoot
+        val tailPx = blockBottom?.let { it - (layout.rootOriginInRoot?.y ?: 0f) - (boxTopLeft.y + boxH) }
         val boxBottom = if (tailPx != null) topInsetPx + handlePx - minGapPx - tailPx else boxTopLeft.y + boxH
         val maxHeight = boxBottom - clockTopReservePx
         val maxWidth = when (clockAlignment) {
@@ -394,15 +339,15 @@ fun HomeScreen(
         // The fit maths is portrait geometry; running it in landscape would persist a wrong scale.
         if (isLandscape) return@LaunchedEffect
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
-            snapshotFlow { Triple(clockBoxSize, clockBoxOriginInRoot, rootSize) }
+            snapshotFlow { Triple(layout.clockBoxSize, layout.clockBoxOriginInRoot, layout.rootSize) }
                 .filter { it.first != null && it.second != null && it.third != null }
                 .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
                 .first()
         }
-        val size = clockBoxSize ?: return@LaunchedEffect
-        val origin = clockBoxOriginInRoot ?: return@LaunchedEffect
-        val rootW = rootSize?.width ?: return@LaunchedEffect
-        val fit = maxScaleThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
+        val size = layout.clockBoxSize ?: return@LaunchedEffect
+        val origin = layout.clockBoxOriginInRoot ?: return@LaunchedEffect
+        val rootW = layout.rootSize?.width ?: return@LaunchedEffect
+        val fit = maxScaleThatFits(size, origin - (layout.rootOriginInRoot ?: Offset.Zero), rootW)
         if (clockScale > fit + 0.01f) onClockScaleCommit(fit)
     }
 
@@ -438,15 +383,15 @@ fun HomeScreen(
     // Evaluated once per key-set change, not continuously — flipping to compact shrinks the
     // content and re-triggers this same measurement, but this effect has already finished by
     // then, so it doesn't see its own result and flip back.
-    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt, clockZoneHeightDp, mediaPlayer != null, mediaRowHeightPx) {
-        useCompactAppSpacing = false
+    LaunchedEffect(appListKey, appRowPresentation, showUsageAccessPrompt, clockZoneHeightDp, mediaPlayer != null, layout.mediaRowHeightPx) {
+        layout.useCompactAppSpacing = false
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
-            snapshotFlow { appListNaturalHeightPx to (contentHeightPx - appListTopTargetPx) }
+            snapshotFlow { layout.appListNaturalHeightPx to (layout.contentHeightPx - appListTopTargetPx) }
                 .filter { (natural, available) -> natural > 0f && available > 0f }
                 .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
                 .first()
         }
-        useCompactAppSpacing = appListNaturalHeightPx > (contentHeightPx - appListTopTargetPx)
+        layout.useCompactAppSpacing = layout.appListNaturalHeightPx > (layout.contentHeightPx - appListTopTargetPx)
         appListRevealed = true
     }
 
@@ -459,7 +404,7 @@ fun HomeScreen(
     var clockRevealed by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withTimeoutOrNull(1_500) {
-            snapshotFlow { clockBoxSize }.filter { it != null }.debounce(120).first()
+            snapshotFlow { layout.clockBoxSize }.filter { it != null }.debounce(120).first()
         }
         clockRevealed = true
     }
@@ -480,9 +425,9 @@ fun HomeScreen(
         ClockAlignment.RIGHT -> 1f
     }
     val landscapeMarginsPx = with(density) { (HOME_LANDSCAPE_CLOCK_PANE_START_PADDING + HOME_LANDSCAPE_CLOCK_PANE_END_MARGIN).toPx() }
-    val landscapeContentWidth = if (landscapeContentWidthPx > 0f) landscapeContentWidthPx else (rootSize?.width?.toFloat() ?: 0f)
-    val landscapeWantedPaneWidthPx = liveDividerWidthPx ?: clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
-    val landscapeNaturalSize = clockBoxSize?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Zero
+    val landscapeContentWidth = if (layout.landscapeContentWidthPx > 0f) layout.landscapeContentWidthPx else (layout.rootSize?.width?.toFloat() ?: 0f)
+    val landscapeWantedPaneWidthPx = layout.liveDividerWidthPx ?: clockZoneHeightDp?.let { with(density) { it.dp.toPx() } }
+    val landscapeNaturalSize = layout.clockBoxSize?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Zero
     // The resize floor is one Hub cell; landscape's cells are a fixed size, not a share of the window width.
     val clockWidgetMinWidthPx = if (isLandscape) with(density) { HUB_LANDSCAPE_CELL_SIZE.toPx() } else clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
     val clockWidgetMinHeightPx = if (isLandscape) clockWidgetMinWidthPx else clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
@@ -496,14 +441,14 @@ fun HomeScreen(
         floorPx = landscapeMarginsPx + landscapeMinClockWidthPx,
     )
     val landscapeMaxWidgetSize = if (landscapeContentWidth > 0f) {
-        landscapeMaxWidgetSize(landscapePaneWidthForFitPx, contentHeightPx, landscapeMarginsPx)
+        landscapeMaxWidgetSize(landscapePaneWidthForFitPx, layout.contentHeightPx, landscapeMarginsPx)
     } else {
         Size(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     }
     val landscapeMaxScale = landscapeMaxClockScale(
         naturalSize = landscapeNaturalSize,
         paneWidthPx = landscapePaneWidthForFitPx,
-        paneHeightPx = contentHeightPx,
+        paneHeightPx = layout.contentHeightPx,
         horizontalMarginsPx = landscapeMarginsPx,
         minScale = HOME_CLOCK_MIN_SCALE,
         maxScale = HOME_CLOCK_MAX_SCALE,
@@ -515,14 +460,14 @@ fun HomeScreen(
     // real time instead of letting it clip.
     // Landscape instead always clamps to what its pane fits (at render time only; the saved scale is untouched).
     val effectiveClockScale = run {
-        val raw = liveScale ?: clockScale
-        val size = clockBoxSize
-        val origin = clockBoxOriginInRoot
-        val rootW = rootSize?.width
+        val raw = layout.liveScale ?: clockScale
+        val size = layout.clockBoxSize
+        val origin = layout.clockBoxOriginInRoot
+        val rootW = layout.rootSize?.width
         if (isLandscape) {
             raw.coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale)
         } else if (clockAdjustMode == ClockAdjustMode.ADJUST && size != null && origin != null && rootW != null) {
-            raw.coerceIn(HOME_CLOCK_MIN_SCALE, maxScaleThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW))
+            raw.coerceIn(HOME_CLOCK_MIN_SCALE, maxScaleThatFits(size, origin - (layout.rootOriginInRoot ?: Offset.Zero), rootW))
         } else {
             raw.coerceIn(HOME_CLOCK_MIN_SCALE, HOME_CLOCK_MAX_SCALE)
         }
@@ -535,13 +480,13 @@ fun HomeScreen(
     val effectiveClockWidgetSizePx = if (clockWidgetWidthDp == null || clockWidgetHeightDp == null) {
         null
     } else {
-        val rawWidthPx = liveWidgetWidthPx ?: with(density) { clockWidgetWidthDp.toPx() }
-        val rawHeightPx = liveWidgetHeightPx ?: with(density) { clockWidgetHeightDp.toPx() }
+        val rawWidthPx = layout.liveWidgetWidthPx ?: with(density) { clockWidgetWidthDp.toPx() }
+        val rawHeightPx = layout.liveWidgetHeightPx ?: with(density) { clockWidgetHeightDp.toPx() }
         val minWidthPx = clockWidgetMinWidthPx
         val minHeightPx = clockWidgetMinHeightPx
-        val size = clockBoxSize
-        val origin = clockBoxOriginInRoot
-        val rootW = rootSize?.width
+        val size = layout.clockBoxSize
+        val origin = layout.clockBoxOriginInRoot
+        val rootW = layout.rootSize?.width
         if (isLandscape) {
             // Landscape always clamps to what its pane fits (render time only; the saved size is untouched).
             Offset(
@@ -550,7 +495,7 @@ fun HomeScreen(
             )
         } else if (size != null && origin != null && rootW != null) {
             // Clamped in read mode too, so a size saved when the window was bigger can't spill out of portrait.
-            val maxSize = maxWidgetSizePxThatFits(size, origin - (rootOriginInRoot ?: Offset.Zero), rootW)
+            val maxSize = maxWidgetSizePxThatFits(size, origin - (layout.rootOriginInRoot ?: Offset.Zero), rootW)
             Offset(
                 rawWidthPx.coerceIn(minWidthPx, maxOf(minWidthPx, maxSize.x)),
                 rawHeightPx.coerceIn(minHeightPx, maxOf(minHeightPx, maxSize.y)),
@@ -578,7 +523,7 @@ fun HomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onGloballyPositioned { rootSize = it.size; rootOriginInRoot = it.positionInRoot() }
+            .onGloballyPositioned { layout.rootSize = it.size; layout.rootOriginInRoot = it.positionInRoot() }
             // Dismisses drag mode on a tap anywhere else on the screen, or (when nothing is active)
             // opens the same long-press menu the clock itself opens on a long-press elsewhere in
             // this empty space — README's original "long-press empty home space" gesture, now
@@ -645,8 +590,8 @@ fun HomeScreen(
                     }
                     .testTag("home_clock_block"),
                 clockBoxModifier = Modifier.onGloballyPositioned {
-                    clockBoxSize = it.size
-                    clockBoxOriginInRoot = it.positionInRoot()
+                    layout.clockBoxSize = it.size
+                    layout.clockBoxOriginInRoot = it.positionInRoot()
                 },
                 use24HourTime = use24HourTime,
                 templateId = clockTemplateId,
@@ -720,8 +665,8 @@ fun HomeScreen(
                     // clips/scrolls in the genuine overflow case, which today has no fallback at all.
                     .heightIn(max = maxHeight)
                     .onGloballyPositioned {
-                        appListSize = it.size
-                        appListOriginInRoot = it.positionInRoot()
+                        layout.appListSize = it.size
+                        layout.appListOriginInRoot = it.positionInRoot()
                     }
                     // Grid owns its own internal scroll (LazyVerticalGrid) — wrapping it in a
                     // second verticalScroll would double up the scroll gesture. Single-
@@ -737,14 +682,14 @@ fun HomeScreen(
                 // measured (and the check above keeps working) while invisible pre-reveal.
                 Column(
                     modifier = Modifier
-                        .onGloballyPositioned { appListNaturalHeightPx = it.size.height.toFloat() }
+                        .onGloballyPositioned { layout.appListNaturalHeightPx = it.size.height.toFloat() }
                         .graphicsLayer { alpha = appListAppearAlpha.value },
                 ) {
                     if (showUsageAccessPrompt) {
                         UsageAccessStrip(onClick = onUsageAccessPromptClick)
                     } else {
-                        val rowPadding = if (useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING
-                        val rowIconSize = if (useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR
+                        val rowPadding = if (layout.useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING
+                        val rowIconSize = if (layout.useCompactAppSpacing) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR
                         when (appListLayout) {
                             AppListLayout.TWO_COLUMN -> HomeAppTwoColumnList(
                                 content = listContent,
@@ -758,7 +703,7 @@ fun HomeScreen(
                                 content = listContent,
                                 actions = itemActions,
                                 columns = if (isLandscape) {
-                                    landscapeGridColumns(appListGridColumns.columns, with(density) { appsPaneWidthPx.toDp() }, landscapeSpace)
+                                    landscapeGridColumns(appListGridColumns.columns, with(density) { layout.appsPaneWidthPx.toDp() }, landscapeSpace)
                                 } else {
                                     appListGridColumns.columns
                                 },
@@ -792,7 +737,7 @@ fun HomeScreen(
             HomeLandscapeLayout(
                 hasDock = dockApps.isNotEmpty(),
                 dockAtBottom = landscapeDockAtBottom,
-                onDockRowHeightChange = { landscapeDockRowHeightPx = it.toFloat() },
+                onDockRowHeightChange = { layout.landscapeDockRowHeightPx = it.toFloat() },
                 clockPaneAlignment = when (clockAlignment) {
                     ClockAlignment.LEFT -> Alignment.TopStart
                     ClockAlignment.CENTER -> Alignment.CenterStart
@@ -802,10 +747,10 @@ fun HomeScreen(
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM)
-                    .onSizeChanged { landscapeContentWidthPx = it.width.toFloat() },
+                    .onSizeChanged { layout.landscapeContentWidthPx = it.width.toFloat() },
                 onAppsPaneSizeChange = {
-                    contentHeightPx = it.height.toFloat()
-                    appsPaneWidthPx = it.width.toFloat()
+                    layout.contentHeightPx = it.height.toFloat()
+                    layout.appsPaneWidthPx = it.width.toFloat()
                 },
                 clock = {
                     clockBlock(Modifier.graphicsLayer { alpha = clockAppearAlpha.value }, ClockAlignment.LEFT, landscapeOriginY)
@@ -814,13 +759,13 @@ fun HomeScreen(
                     // The media row is pinned to the top of the pane whatever the list's alignment; the
                     // list sits below it (top-aligned) or at the bottom, in the height the row leaves.
                     // Its height is kept across hides and animated in, as in portrait, so the list doesn't jump.
-                    val mediaReservedPx = mediaRowHeightPx * mediaFraction
+                    val mediaReservedPx = layout.mediaRowHeightPx * mediaFraction
                     if (shownMediaPlayer != null && mediaFraction > 0f) {
                         mediaRow(
                             shownMediaPlayer,
                             Modifier
                                 .align(Alignment.TopStart)
-                                .onSizeChanged { if (it.height > 0) mediaRowHeightPx = it.height.toFloat() }
+                                .onSizeChanged { if (it.height > 0) layout.mediaRowHeightPx = it.height.toFloat() }
                                 .padding(bottom = HOME_MEDIA_ROW_BOTTOM_GAP)
                                 .graphicsLayer { alpha = mediaFraction },
                         )
@@ -831,7 +776,7 @@ fun HomeScreen(
                         } else {
                             Modifier.align(Alignment.BottomStart)
                         },
-                        with(density) { (contentHeightPx - mediaReservedPx).coerceAtLeast(0f).toDp() },
+                        with(density) { (layout.contentHeightPx - mediaReservedPx).coerceAtLeast(0f).toDp() },
                     )
                 },
                 dock = {
@@ -859,14 +804,14 @@ fun HomeScreen(
                         .weight(1f)
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
-                        .onSizeChanged { contentHeightPx = it.height.toFloat() },
+                        .onSizeChanged { layout.contentHeightPx = it.height.toFloat() },
                 ) {
                     clockBlock(
                         Modifier
-                            .offset { IntOffset(0, (handlePx - minGapPx - clockNaturalHeightPx).roundToInt()) }
+                            .offset { IntOffset(0, (handlePx - minGapPx - layout.clockNaturalHeightPx).roundToInt()) }
                             .onGloballyPositioned {
-                                clockNaturalHeightPx = it.size.height.toFloat()
-                                clockBlockBottomInRoot = it.positionInRoot().y + it.size.height
+                                layout.clockNaturalHeightPx = it.size.height.toFloat()
+                                layout.clockBlockBottomInRoot = it.positionInRoot().y + it.size.height
                             }
                             .graphicsLayer { alpha = clockAppearAlpha.value },
                         clockAlignment,
@@ -881,7 +826,7 @@ fun HomeScreen(
                             Modifier
                                 .align(Alignment.TopStart)
                                 .offset { IntOffset(0, mediaRowTopPx.roundToInt()) }
-                                .onSizeChanged { if (it.height > 0) mediaRowHeightPx = it.height.toFloat() }
+                                .onSizeChanged { if (it.height > 0) layout.mediaRowHeightPx = it.height.toFloat() }
                                 .graphicsLayer { alpha = mediaFraction },
                         )
                     }
@@ -895,7 +840,7 @@ fun HomeScreen(
                                 it.align(Alignment.BottomStart)
                             }
                         },
-                        with(density) { (contentHeightPx - appListTopPx).coerceAtLeast(0f).toDp() },
+                        with(density) { (layout.contentHeightPx - appListTopPx).coerceAtLeast(0f).toDp() },
                     )
                 }
 
@@ -947,8 +892,8 @@ fun HomeScreen(
                     },
                     onDragStart = { onDraggingHandleChange(true) },
                     onDrag = { deltaDp ->
-                        liveDividerWidthPx = landscapeDividerDragWidthPx(
-                            currentPx = liveDividerWidthPx ?: landscapePaneWidthPx,
+                        layout.liveDividerWidthPx = landscapeDividerDragWidthPx(
+                            currentPx = layout.liveDividerWidthPx ?: landscapePaneWidthPx,
                             deltaPx = with(density) { deltaDp.dp.toPx() },
                             floorPx = landscapeMarginsPx + landscapeMinClockWidthPx,
                             contentWidthPx = landscapeContentWidth,
@@ -984,7 +929,7 @@ fun HomeScreen(
                 onDragStart = { onDraggingHandleChange(true) },
                 onDrag = { deltaDp ->
                     // Clamped here too, so the handle follows the finger straight away when a drag reverses.
-                    liveHandlePx = ((liveHandlePx ?: basePersistedHandlePx) + with(density) { deltaDp.dp.toPx() }).coerceIn(floorPx, ceilingPx)
+                    layout.liveHandlePx = ((layout.liveHandlePx ?: basePersistedHandlePx) + with(density) { deltaDp.dp.toPx() }).coerceIn(floorPx, ceilingPx)
                 },
                 onDragEnd = {
                     onDraggingHandleChange(false)
@@ -1067,17 +1012,17 @@ fun HomeScreen(
 
         // PRD F15 — the native clock's own scale-based resize handles only apply when there's no
         // hosted widget to resize instead (see the parallel, real-size-based block below).
-        val clockGeometryReady = clockBoxSize != null && clockBoxOriginInRoot != null && rootOriginInRoot != null && rootSize != null
+        val clockGeometryReady = layout.clockBoxSize != null && layout.clockBoxOriginInRoot != null && layout.rootOriginInRoot != null && layout.rootSize != null
         if (adjustingInPortrait && clockWidgetAppWidgetId == null && clockGeometryReady) {
-            val rootOrigin = rootOriginInRoot!!
+            val rootOrigin = layout.rootOriginInRoot!!
             // The clock's natural (unscaled) box in root coords — stable throughout a drag (uniformScale
             // keeps the layout footprint at natural size). Everything below is a pure function of this
             // box and `eff`, so the handles/border stay locked to the glyph with no lag and nothing
             // reflows on release.
-            val natW = clockBoxSize!!.width.toFloat()
-            val natH = clockBoxSize!!.height.toFloat()
-            val natTopLeft = clockBoxOriginInRoot!! - rootOrigin
-            val clockMaxScale = maxScaleThatFits(clockBoxSize!!, natTopLeft, rootSize!!.width)
+            val natW = layout.clockBoxSize!!.width.toFloat()
+            val natH = layout.clockBoxSize!!.height.toFloat()
+            val natTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
+            val clockMaxScale = maxScaleThatFits(layout.clockBoxSize!!, natTopLeft, layout.rootSize!!.width)
             val eff = effectiveClockScale
 
             val natBottom = natTopLeft.y + natH
@@ -1108,19 +1053,19 @@ fun HomeScreen(
                 (sx + sy) / 2f
             }
             val onHandleDragStart: () -> Unit = {
-                dragGrabOffset = Float.NaN
+                layout.dragGrabOffset = Float.NaN
                 onDraggingHandleChange(true)
             }
             val onHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
                 val implied = scaleAtTouch(touchInAbsolute - rootOrigin)
                 // First move: capture where the finger sits vs the corner, so the clock doesn't pop.
-                if (dragGrabOffset.isNaN()) dragGrabOffset = implied - (liveScale ?: clockScale)
-                liveScale = (implied - dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale)
+                if (layout.dragGrabOffset.isNaN()) layout.dragGrabOffset = implied - (layout.liveScale ?: clockScale)
+                layout.liveScale = (implied - layout.dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale)
             }
             val onHandleDragEnd: () -> Unit = {
                 onDraggingHandleChange(false)
                 // liveScale is held until LaunchedEffect(clockScale) sees the commit land.
-                onClockScaleCommit((liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale))
+                onClockScaleCommit((layout.liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale))
             }
 
             val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
@@ -1160,25 +1105,25 @@ fun HomeScreen(
         // Landscape's scale handles for the native clock: the corners away from the anchor (the bottom
         // ones for a top-aligned clock, the top ones otherwise), scaling around the clock's left edge.
         if (adjustingInLandscape && clockWidgetAppWidgetId == null && clockGeometryReady) {
-            val rootOrigin = rootOriginInRoot!!
-            val natTopLeft = clockBoxOriginInRoot!! - rootOrigin
+            val rootOrigin = layout.rootOriginInRoot!!
+            val natTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
             val visual = landscapeVisualClockRect(natTopLeft, landscapeNaturalSize, landscapeOriginY, effectiveClockScale)
             val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
             val handleY = if (landscapeOriginY <= 0f) visual.bottom - handleInsetPx else (visual.top - handleInsetPx).coerceAtLeast(topInsetPx)
             val onHandleDragStart: () -> Unit = {
-                dragGrabOffset = Float.NaN
+                layout.dragGrabOffset = Float.NaN
                 onDraggingHandleChange(true)
             }
             val onHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
                 val implied = landscapeScaleAtTouch(touchInAbsolute - rootOrigin, natTopLeft, landscapeNaturalSize, landscapeOriginY)
                 // First move: capture where the finger sits vs the corner, so the clock doesn't pop.
-                if (dragGrabOffset.isNaN()) dragGrabOffset = implied - (liveScale ?: clockScale)
-                liveScale = (implied - dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale)
+                if (layout.dragGrabOffset.isNaN()) layout.dragGrabOffset = implied - (layout.liveScale ?: clockScale)
+                layout.liveScale = (implied - layout.dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale)
             }
             val onHandleDragEnd: () -> Unit = {
                 onDraggingHandleChange(false)
                 // liveScale is held until LaunchedEffect(clockScale) sees the commit land.
-                onClockScaleCommit((liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale))
+                onClockScaleCommit((layout.liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale))
             }
             handleExclusionRects = listOf(
                 handleExclusionRect(visual.left - handleInsetPx, handleY),
@@ -1209,28 +1154,28 @@ fun HomeScreen(
         // Landscape's resize handles for a hosted clock widget: its real width and height (not a scale), kept
         // to the pane, on the corners away from its anchor (bottom for a top-aligned widget, top otherwise).
         if (adjustingInLandscape && clockWidgetAppWidgetId != null && clockGeometryReady) {
-            val rootOrigin = rootOriginInRoot!!
-            val boxTopLeft = clockBoxOriginInRoot!! - rootOrigin
+            val rootOrigin = layout.rootOriginInRoot!!
+            val boxTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
             val boxSize = landscapeNaturalSize
             val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
             val handleY = if (landscapeOriginY <= 0f) boxTopLeft.y + boxSize.height - handleInsetPx else (boxTopLeft.y - handleInsetPx).coerceAtLeast(topInsetPx)
             val onWidgetHandleDragStart: () -> Unit = {
-                widgetDragGrabOffset = null
+                layout.widgetDragGrabOffset = null
                 onDraggingHandleChange(true)
             }
             val onWidgetHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
                 val implied = landscapeWidgetSizeAtTouch(touchInAbsolute - rootOrigin, boxTopLeft, boxSize, landscapeOriginY)
                 // First move: capture where the finger sits vs the corner, so the box doesn't pop.
-                val grab = widgetDragGrabOffset
-                    ?: Offset(implied.width - (liveWidgetWidthPx ?: boxSize.width), implied.height - (liveWidgetHeightPx ?: boxSize.height))
-                        .also { widgetDragGrabOffset = it }
-                liveWidgetWidthPx = (implied.width - grab.x).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
-                liveWidgetHeightPx = (implied.height - grab.y).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
+                val grab = layout.widgetDragGrabOffset
+                    ?: Offset(implied.width - (layout.liveWidgetWidthPx ?: boxSize.width), implied.height - (layout.liveWidgetHeightPx ?: boxSize.height))
+                        .also { layout.widgetDragGrabOffset = it }
+                layout.liveWidgetWidthPx = (implied.width - grab.x).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
+                layout.liveWidgetHeightPx = (implied.height - grab.y).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
             }
             val onWidgetHandleDragEnd: () -> Unit = {
                 onDraggingHandleChange(false)
-                val finalWidthPx = (liveWidgetWidthPx ?: boxSize.width).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
-                val finalHeightPx = (liveWidgetHeightPx ?: boxSize.height).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
+                val finalWidthPx = (layout.liveWidgetWidthPx ?: boxSize.width).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
+                val finalHeightPx = (layout.liveWidgetHeightPx ?: boxSize.height).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
                 onClockWidgetSizeCommit(
                     with(density) { finalWidthPx.toDp().value }.roundToInt(),
                     with(density) { finalHeightPx.toDp().value }.roundToInt(),
@@ -1268,11 +1213,11 @@ fun HomeScreen(
         // alignment-anchored geometry, corner-handle placement, and live-clamped-while-dragging
         // behavior.
         if (adjustingInPortrait && clockWidgetAppWidgetId != null && clockGeometryReady) {
-            val rootOrigin = rootOriginInRoot!!
-            val boxW = clockBoxSize!!.width.toFloat()
-            val boxH = clockBoxSize!!.height.toFloat()
-            val boxTopLeft = clockBoxOriginInRoot!! - rootOrigin
-            val maxWidgetSize = maxWidgetSizePxThatFits(clockBoxSize!!, boxTopLeft, rootSize!!.width)
+            val rootOrigin = layout.rootOriginInRoot!!
+            val boxW = layout.clockBoxSize!!.width.toFloat()
+            val boxH = layout.clockBoxSize!!.height.toFloat()
+            val boxTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
+            val maxWidgetSize = maxWidgetSizePxThatFits(layout.clockBoxSize!!, boxTopLeft, layout.rootSize!!.width)
             val minWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
             val minHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
 
@@ -1294,22 +1239,22 @@ fun HomeScreen(
                 Offset(w, boxBottom - t.y)
             }
             val onWidgetHandleDragStart: () -> Unit = {
-                widgetDragGrabOffset = null
+                layout.widgetDragGrabOffset = null
                 onDraggingHandleChange(true)
             }
             val onWidgetHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
                 val implied = sizeAtTouch(touchInAbsolute - rootOrigin)
                 // First move: capture where the finger sits vs the corner, so the box doesn't pop.
-                val grab = widgetDragGrabOffset
-                    ?: Offset(implied.x - (liveWidgetWidthPx ?: boxW), implied.y - (liveWidgetHeightPx ?: boxH))
-                        .also { widgetDragGrabOffset = it }
-                liveWidgetWidthPx = (implied.x - grab.x).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
-                liveWidgetHeightPx = (implied.y - grab.y).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
+                val grab = layout.widgetDragGrabOffset
+                    ?: Offset(implied.x - (layout.liveWidgetWidthPx ?: boxW), implied.y - (layout.liveWidgetHeightPx ?: boxH))
+                        .also { layout.widgetDragGrabOffset = it }
+                layout.liveWidgetWidthPx = (implied.x - grab.x).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
+                layout.liveWidgetHeightPx = (implied.y - grab.y).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
             }
             val onWidgetHandleDragEnd: () -> Unit = {
                 onDraggingHandleChange(false)
-                val finalWidthPx = (liveWidgetWidthPx ?: boxW).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
-                val finalHeightPx = (liveWidgetHeightPx ?: boxH).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
+                val finalWidthPx = (layout.liveWidgetWidthPx ?: boxW).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
+                val finalHeightPx = (layout.liveWidgetHeightPx ?: boxH).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
                 val widthDp = with(density) { finalWidthPx.toDp().value }.roundToInt()
                 val heightDp = with(density) { finalHeightPx.toDp().value }.roundToInt()
                 onClockWidgetSizeCommit(widthDp, heightDp)
@@ -1360,9 +1305,9 @@ fun HomeScreen(
         // a swipe starting on it keeps opening the drawer/shade exactly as it does today) or its
         // box hasn't been measured yet.
         SideEffect {
-            val size = clockBoxSize
-            val origin = clockBoxOriginInRoot
-            val rootOrigin = rootOriginInRoot
+            val size = layout.clockBoxSize
+            val origin = layout.clockBoxOriginInRoot
+            val rootOrigin = layout.rootOriginInRoot
             val boundsReady = size != null && origin != null && rootOrigin != null
             onClockWidgetBoundsChange(
                 if (clockWidgetAppWidgetId != null && boundsReady) {
@@ -1382,9 +1327,9 @@ fun HomeScreen(
         val currentOnAppListBoundsChange by rememberUpdatedState(onAppListBoundsChange)
         LaunchedEffect(Unit) {
             snapshotFlow {
-                val size = appListSize
-                val origin = appListOriginInRoot
-                val rootOrigin = rootOriginInRoot
+                val size = layout.appListSize
+                val origin = layout.appListOriginInRoot
+                val rootOrigin = layout.rootOriginInRoot
                 if (size != null && origin != null && rootOrigin != null) {
                     Rect(offset = origin - rootOrigin, size = size.toSize())
                 } else {
