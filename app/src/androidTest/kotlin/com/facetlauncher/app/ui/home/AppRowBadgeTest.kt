@@ -9,8 +9,8 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
-import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -27,10 +27,12 @@ class AppRowBadgeTest {
             FacetLauncherTheme {
                 AppRow(
                     app = app,
-                    onClick = {},
-                    badgeCount = 3,
-                    badgeStyle = NotificationBadgeStyle.DOT,
-                    appMenuNotifications = AppMenuNotifications.None,
+                    actions = HomeItemActions(onAppClick = {}),
+                    style = HomeItemStyle(
+                        labelColor = HomeAppTextColor,
+                        badgeStyle = NotificationBadgeStyle.DOT,
+                        badgeCounts = mapOf(app.packageName to 3),
+                    ),
                     position = position,
                     presentation = presentation,
                     enableLongPressMenu = false,

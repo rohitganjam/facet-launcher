@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,39 +27,33 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.AppListColumnAlignment
-import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
-import com.facetlauncher.app.data.model.AppRowPresentation
-import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.model.CalendarEvent
-import com.facetlauncher.app.data.model.ClockAlignment
-import com.facetlauncher.app.data.model.ClockColorOption
-import com.facetlauncher.app.data.model.ClockDateStyle
-import com.facetlauncher.app.data.model.ClockFontOption
-import com.facetlauncher.app.data.model.ClockTemplateId
-import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.DrawerPresentation
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
-import com.facetlauncher.app.data.model.LauncherFontOption
-import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
-import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.WallpaperBackground
+import com.facetlauncher.app.ui.home.AppRow
+import com.facetlauncher.app.ui.home.DockIcon
+import com.facetlauncher.app.ui.home.FolderRow
+import com.facetlauncher.app.ui.home.FolderTileGlyph
+import com.facetlauncher.app.ui.home.HomeItemActions
+import com.facetlauncher.app.ui.home.HomeItemStyle
+import com.facetlauncher.app.ui.home.HomePreview
+import com.facetlauncher.app.ui.home.HomePreviewState
 import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.resolve
-import com.facetlauncher.app.data.model.AppListLimits
 
 /**
  * Row budget the scaled card can show before crowding out the clock/dock. Grid and two-column pack
@@ -177,16 +172,11 @@ private fun HomePreviewFavorites(state: HomePreviewState, testTagPrefix: String,
 @Composable
 private fun HomePreviewDock(state: HomePreviewState, onClick: (() -> Unit)?) {
     if (state.dockItems.isEmpty()) return
+    val actions = HomeItemActions(onAppClick = { onClick?.invoke() })
+    val style = HomeItemStyle(labelColor = state.appLabelColorOption.resolve(), labelFontWeight = state.homeAppsFontWeight.resolve())
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         state.dockItems.take(AppListLimits.MAX_DOCK_APPS).forEach { item ->
-            DockIcon(
-                item = item,
-                displayMode = state.dockDisplayMode,
-                onClick = { onClick?.invoke() },
-                labelColor = state.appLabelColorOption.resolve(),
-                labelFontWeight = state.homeAppsFontWeight.resolve(),
-                enableLongPressMenu = false,
-            )
+            DockIcon(item = item, displayMode = state.dockDisplayMode, actions = actions, style = style, enableLongPressMenu = false)
         }
     }
 }
@@ -244,38 +234,29 @@ private fun HomePreviewRow(
     testTagPrefix: String,
     onClick: (() -> Unit)?,
 ) {
+    val actions = HomeItemActions(onAppClick = { onClick?.invoke() })
+    val style = HomeItemStyle(labelColor = state.appLabelColorOption.resolve(), labelFontWeight = state.homeAppsFontWeight.resolve())
     when (item) {
         is PlacedItem.SingleApp -> AppRow(
             app = item.app,
-            onClick = { onClick?.invoke() },
-            badgeCount = null,
-            badgeStyle = NotificationBadgeStyle.DOT,
-            appMenuNotifications = AppMenuNotifications.None,
-            onAppInfo = {},
+            actions = actions,
+            style = style,
             position = position,
             presentation = state.appRowPresentation,
-            labelColor = state.appLabelColorOption.resolve(),
-            labelFontWeight = state.homeAppsFontWeight.resolve(),
-            // A preview, not a place to manage apps — no real Uninstall/App Info menu.
+            // A preview, not a place to manage apps: no real Uninstall/App Info menu.
             enableLongPressMenu = false,
             // Distinct prefix keeps tag lookups unambiguous next to Home's own rows.
             testTagPrefix = testTagPrefix,
         )
         is PlacedItem.FolderItem -> FolderRow(
             folder = item.folder,
-            onAppClick = {},
-            appMenuNotifications = AppMenuNotifications.None,
-            onAppInfo = {},
-            onRemoveFromFolder = { _, _ -> },
-            onRenameFolder = { _, _ -> },
-            drawerPresentation = DrawerPresentation.LIST,
+            actions = actions,
+            style = style,
             position = position,
             presentation = state.appRowPresentation,
-            labelColor = state.appLabelColorOption.resolve(),
-            labelFontWeight = state.homeAppsFontWeight.resolve(),
+            testTagPrefix = testTagPrefix,
             enableLongPressMenu = false,
             onClick = { onClick?.invoke() },
-            testTagPrefix = testTagPrefix,
         )
     }
 }

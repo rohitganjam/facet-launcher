@@ -52,7 +52,7 @@ portrait                         landscape
 ```
 
 `HomeScreen` defines the content once, as local composable lambdas (`clockBlock`, `mediaRow`,
-`appListRegion`, `dockIcon`), and each layout arranges them. Portrait is unchanged from before the
+`appListRegion`, `dockIcon`), and each layout arranges them. The app list, its tiles and the dock live in their own files (`HomeAppList.kt`, `AppRow.kt`, `FolderRow.kt`, `DockIcon.kt`); they take two shared groups, `HomeItemActions` (what a tap or long-press does) and `HomeItemStyle` (badges, folder candidates, label look), built once in `HomeScreen`. Portrait is unchanged from before the
 split. Landscape is `HomeLandscapeLayout`, a stateless composable that takes the clock, apps and dock as
 slots.
 

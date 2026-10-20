@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -16,12 +17,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
@@ -32,18 +35,23 @@ import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.HomeWallpaper
-import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.toColumnPositions
+import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.HomeSurfacePreview
+import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
+import com.facetlauncher.app.ui.home.HomeItemActions
+import com.facetlauncher.app.ui.home.HomeItemStyle
 import com.facetlauncher.app.ui.home.stableKey
-import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Muted
 
 /**
@@ -139,12 +147,9 @@ fun HomeSurfacePreview(
                             DockIcon(
                                 item = item,
                                 displayMode = dockDisplayMode,
-                                onClick = {},
-                                labelColor = labelColor,
-                                labelFontWeight = labelFontWeight,
+                                actions = PreviewItemActions,
+                                style = previewItemStyle(item, labelColor, labelFontWeight, notificationBadgeStyle, badgeCountFor),
                                 enableLongPressMenu = false,
-                                badgeCount = (item as? PlacedItem.SingleApp)?.let { badgeCountFor(it.app.packageName) },
-                                badgeStyle = notificationBadgeStyle,
                             )
                         }
                     }
@@ -188,6 +193,27 @@ private fun HomeSurfacePreviewTwoColumns(
     }
 }
 
+/** The preview is read-only, so nothing it draws does anything when tapped. */
+private val PreviewItemActions = HomeItemActions(onAppClick = {})
+
+/** The style for one preview [item]: its sample badge count (if it is an app) and the card's label look. */
+private fun previewItemStyle(
+    item: PlacedItem,
+    labelColor: Color,
+    labelFontWeight: FontWeight,
+    badgeStyle: NotificationBadgeStyle,
+    badgeCountFor: (String) -> Int?,
+): HomeItemStyle {
+    val packageName = (item as? PlacedItem.SingleApp)?.app?.packageName
+    val count = packageName?.let(badgeCountFor)
+    return HomeItemStyle(
+        labelColor = labelColor,
+        labelFontWeight = labelFontWeight,
+        badgeStyle = badgeStyle,
+        badgeCounts = if (packageName != null && count != null) mapOf(packageName to count) else emptyMap(),
+    )
+}
+
 /** [HomeSurfacePreview]'s single/two-column row dispatch — identical [AppRow]/[FolderRow] call either layout needs, just with a different [position] and item subset. */
 @Composable
 private fun HomeSurfacePreviewRow(
@@ -199,39 +225,28 @@ private fun HomeSurfacePreviewRow(
     badgeStyle: NotificationBadgeStyle,
     badgeCountFor: (String) -> Int?,
 ) {
+    val style = previewItemStyle(item, labelColor, labelFontWeight, badgeStyle, badgeCountFor)
     when (item) {
         is PlacedItem.SingleApp -> AppRow(
             app = item.app,
-            onClick = {},
-            badgeCount = badgeCountFor(item.app.packageName),
-            badgeStyle = badgeStyle,
-            appMenuNotifications = AppMenuNotifications.None,
-            onAppInfo = {},
+            actions = PreviewItemActions,
+            style = style,
             position = position,
             presentation = presentation,
-            labelColor = labelColor,
-            labelFontWeight = labelFontWeight,
-            enableLongPressMenu = false,
             verticalPadding = 6.dp,
+            enableLongPressMenu = false,
             // Distinguishes this preview card's rows from Home's own real AppRow for
             // the same app, in case both are ever present in one semantics tree.
             testTagPrefix = "home_surface_preview_",
         )
         is PlacedItem.FolderItem -> FolderRow(
             folder = item.folder,
-            onAppClick = {},
-            appMenuNotifications = AppMenuNotifications.None,
-            onAppInfo = {},
-            onRemoveFromFolder = { _, _ -> },
-            onRenameFolder = { _, _ -> },
-            drawerPresentation = DrawerPresentation.LIST,
+            actions = PreviewItemActions,
+            style = style,
             position = position,
             presentation = presentation,
-            labelColor = labelColor,
-            labelFontWeight = labelFontWeight,
-            enableLongPressMenu = false,
-            onClick = {},
             testTagPrefix = "home_surface_preview_",
+            enableLongPressMenu = false,
         )
     }
 }

@@ -33,8 +33,11 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (27 routes) + popBackStackSafely
     ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
     │                                    surface), LauncherLocals (CompositionLocals)
-    ├── home/                      (20)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
-    │                                    ClockAdjustToolbar, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, shared scaled `HomePreview` + `HomePreviewState`
+    ├── home/                      (27)  HomeScreen / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
+    │                                    ClockAdjustToolbar / `ClockAdjustMode`, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, shared scaled `HomePreview` + `HomePreviewState`;
+    │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`
+    │                                    (`HomeItemActions` / `HomeItemStyle` / `HomeAppListContent`, the one parameter group they share);
+    │                                    landscape: `HomeLandscapeLayout`, `HomeLandscapeGeometry`, `HomeClockHandleGeometry`, `HomeLayoutMode`; `HomePlacement` (clock and list placement resolved per orientation)
     │   ├── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
     │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,

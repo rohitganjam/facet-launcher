@@ -28,8 +28,6 @@
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun TemplateDateText</ID>
     <ID>ComposableParamOrder:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
     <ID>ComposableParamOrder:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
-    <ID>ComposableParamOrder:HomeScreen.kt:@Composable internal fun FolderRow</ID>
-    <ID>ComposableParamOrder:HomeScreen.kt:@OptIn(ExperimentalFoundationApi::class) @Composable internal fun AppRow</ID>
     <ID>ComposableParamOrder:StickyHeaderLayout.kt:@Composable fun StickyHeaderLayout</ID>
     <ID>CompositionLocalAllowlist:LauncherLocals.kt:/** * [LauncherViewModel.homePressedEvent], threaded down from [com.facetlauncher.app.LauncherActivity]'s * top-level `CompositionLocalProvider` so any transient UI state that should close when the user * returns Home — not just [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own Drawer/Hub/Facet * axes, but e.g. [com.facetlauncher.app.ui.components.AppContextMenu]'s bottom sheet — can subscribe * directly without every intermediate composable threading it through as a parameter. Same shape as * `ui/theme/ThemeLocals.kt`'s own locals. `null` wherever [com.facetlauncher.app.LauncherActivity] * hasn't provided it (`@Preview`s, unit tests), where nothing should close rather than crash. */ val LocalHomePressedEvent = staticCompositionLocalOf&lt;SharedFlow&lt;Unit&gt;?&gt; { null }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Bumped by [FacetLauncherTheme] on every `ON_RESUME` so [Accent]'s dynamic-color lookup re-reads * the OS's current wallpaper-derived palette instead of trusting a value cached from whenever the * Activity was first composed. Needed because Facet, as the Home app, is almost always *resumed* * rather than freshly launched — without this, a wallpaper/theme-palette change made in system * Settings would only show up in Facet after a full force-stop, not just returning to Home (see * chat history). */ val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }</ID>
@@ -89,8 +87,6 @@
     <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun HomeAppsListSettingsContent</ID>
     <ID>LongMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>LongMethod:HomeScreen.kt:@Composable fun HomeScreen</ID>
-    <ID>LongMethod:HomeScreen.kt:@Composable internal fun FolderRow</ID>
-    <ID>LongMethod:HomeScreen.kt:@OptIn(ExperimentalFoundationApi::class) @Composable internal fun AppRow</ID>
     <ID>LongMethod:HomeSurfacePreview.kt:@Composable fun HomeSurfacePreview</ID>
     <ID>LongMethod:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>LongMethod:Migrations.kt:Migrations.&lt;no name provided&gt;$override fun migrate</ID>
@@ -106,7 +102,6 @@
     <ID>LoopWithTooManyJumpStatements:WidgetGrabGesture.kt:while</ID>
     <ID>MatchingDeclarationName:FacetNavHost.kt:FacetDestinations</ID>
     <ID>MatchingDeclarationName:FolderContentsSheet.kt:FolderSheetHeaderAction</ID>
-    <ID>MatchingDeclarationName:HomeScreen.kt:ClockAdjustMode</ID>
     <ID>MatchingDeclarationName:OnboardingScreen.kt:OnboardingStep</ID>
     <ID>Material2:Theme.kt:import androidx.compose.material.ripple.RippleAlpha</ID>
     <ID>ModifierNaming:ClockBlock.kt:clockContentModifier: Modifier</ID>
@@ -114,7 +109,6 @@
     <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true }) .testTag("drawer_grid_folder_tile_${folder.id}")</ID>
     <ID>ModifierWithoutDefault:ClockBlock.kt:clockContentModifier: Modifier</ID>
     <ID>ModifierWithoutDefault:ClockTemplates.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:HomeScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:ManageFacetsScreen.kt:dragHandleModifier: Modifier</ID>
     <ID>ReturnCount:AlphabetRail.kt:internal fun railSelectionAt: RailSelection?</ID>
     <ID>ReturnCount:AppRepository.kt:AppRepository$fun profileFor: AppProfile</ID>
@@ -148,7 +142,6 @@
     <ID>TooManyFunctions:FacetRepository.kt:FacetRepository</ID>
     <ID>TooManyFunctions:FavoriteAppRepository.kt:FavoriteAppRepository</ID>
     <ID>TooManyFunctions:FolderRepository.kt:FolderRepository</ID>
-    <ID>TooManyFunctions:HomeScreen.kt:com.facetlauncher.app.ui.home.HomeScreen.kt</ID>
     <ID>TooManyFunctions:HubViewModel.kt:HubViewModel : ViewModel</ID>
     <ID>TooManyFunctions:SettingsRepository.kt:SettingsRepository</ID>
     <ID>TooManyFunctions:SettingsScreen.kt:com.facetlauncher.app.ui.settings.SettingsScreen.kt</ID>

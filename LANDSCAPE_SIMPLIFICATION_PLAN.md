@@ -63,16 +63,19 @@ Behaviour fixes: gap 1 and gap 2 below. Everything else is a refactor.
 
 No logic change. Keep the baseline.
 
-- [ ] **B1. `ClockAdjustMode.kt`.** Move the enum (fixes MatchingDeclarationName).
-- [ ] **B2. `HomeAppList.kt`.** `HomeAppTwoColumnList`, `HomeAppListColumn`, `HomeAppGrid`, `HomeAppGridTile`, `HomeFolderGridTile`, their constants. At most 10 functions.
-- [ ] **B3. `AppRow.kt`, `FolderRow.kt` (with the folder glyph), `DockIcon.kt`.** Shared `CenteredWithBadge` goes to `ui/components`.
-- [ ] **B4. Fix what Detekt flags in the moved code.** Decompose `AppRow` (88 lines) and `FolderRow` (68); parameter order; modifier defaults on `SingleAppDockIcon` and `FolderDockIcon`.
-- [ ] **B5. Baseline.** Remove only the `HomeScreen.kt` entries that no longer apply (the moved functions' LongMethod, ParamOrder, ModifierWithoutDefault, MatchingDeclarationName, part of TooManyFunctions); unstable-collection entries wait for phase C.
+- [x] **B1. `ClockAdjustMode.kt`.** Move the enum (fixes MatchingDeclarationName).
+- [x] **B2. `HomeAppList.kt`.** `HomeAppTwoColumnList`, `HomeAppListColumn`, `HomeAppGrid`, `HomeAppGridTile`, `HomeFolderGridTile`, their constants. At most 10 functions.
+  - *Done.* Also `dashedBorder` (shared with `UsageAccessStrip`, now `internal`). The single-column layout now uses `HomeAppListColumn` too (new `rowWidthFraction` and `horizontalAlignment` parameters), so `HomeScreen` no longer carries its own copy of the row loop.
+- [x] **B3. `AppRow.kt`, `FolderRow.kt` (with the folder glyph), `DockIcon.kt`.** Shared `CenteredWithBadge` goes to `ui/components`.
+- [x] **B4. Fix what Detekt flags in the moved code.** Decompose `AppRow` (88 lines) and `FolderRow` (68); parameter order; modifier defaults on `SingleAppDockIcon` and `FolderDockIcon`.
+  - *Done, further than planned.* The 18 or so parameters every tile repeated are now two `@Immutable` groups in `HomeItemSpec.kt`: `HomeItemActions` (callbacks) and `HomeItemStyle` (badges, folder candidates, label look), plus `HomeAppListContent` for a list and its style, and shared `AppItemMenu` / `FolderItemSheet` / `FolderItemMenu` / `appRowArrangement`. That fixed param order, length and the unstable collections in the moved code with no baseline entries. `AppRow` and `FolderRow` are split into a row plus a content composable. These groups are the start of phase C's design (see C1).
+- [x] **B5. Baseline.** Remove only the `HomeScreen.kt` entries that no longer apply (the moved functions' LongMethod, ParamOrder, ModifierWithoutDefault, MatchingDeclarationName, part of TooManyFunctions); unstable-collection entries wait for phase C.
+  - *Done.* Removed the seven `HomeScreen.kt` entries that no longer apply (ParamOrder x2, LongMethod for `AppRow` and `FolderRow`, MatchingDeclarationName, TooManyFunctions, ModifierWithoutDefault). 11 remain, all on the `HomeScreen` composable itself, for phases C and D. No entries were added for the new files.
   - Verify: verification set; fold screenshots of portrait and landscape identical before and after.
 
 ## Phase C — group `HomeScreen`'s state (changes its signature)
 
-- [ ] **C1. Design the groups.** `@Immutable` classes, each small and independently recomposing: clock, app list, dock, media, badges and notifications, hosted widget, adjust. Plus a `HomeActions` bundle of callbacks. Write the field lists in this file before coding.
+- [ ] **C1. Design the groups.** (Started in phase B: `HomeItemActions`, `HomeItemStyle`, `HomeAppListContent` exist and are used below `HomeScreen`; `HomeScreen` still builds them from its flat parameters, so phase C passes them in directly.) `@Immutable` classes, each small and independently recomposing: clock, app list, dock, media, badges and notifications, hosted widget, adjust. Plus a `HomeActions` bundle of callbacks. Write the field lists in this file before coding.
 - [ ] **C2. `HomeScreen(state, actions, modifier, layoutMode, landscapeSpace)`.** Update the body to read from the groups; behaviour unchanged.
 - [ ] **C3. `HomeUiState.toScreenState(mode)`** builds the groups; `HomeDrawerRoute` shrinks accordingly.
 - [ ] **C4. Test fixtures.** A `homeState(...)` / `homeActions(...)` builder with the old defaults; rewrite the 66 call sites mechanically (script the rewrite, review the diff).
