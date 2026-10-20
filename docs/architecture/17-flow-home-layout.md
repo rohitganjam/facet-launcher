@@ -7,11 +7,25 @@ marks what does not yet.
 ## 1. Choosing a layout
 
 `HomeScreen` takes `layoutMode: HomeLayoutMode`, defaulting to `rememberHomeLayoutMode()`. That reads
-the window size from `LocalConfiguration` and calls `homeLayoutModeFor(width, height)`: **landscape when
-the window is wider than it is tall**, portrait otherwise. The rule follows the window's shape, not a
-rotation flag, so an unfolded foldable (the Pixel Fold's inner display is 841 × 700dp) gets landscape and
-a tablet held upright does not. The manifest sets no `screenOrientation`, so a rotation recreates the
+the window width from `LocalConfiguration` and calls `homeLayoutModeFor(width)`: **portrait below 600dp,
+landscape from 600dp up**. The rule follows the window, not a rotation flag, so a phone held upright
+(under 600dp wide) gets portrait, while a phone on its side, an unfolded foldable (the Pixel Fold's inner
+display is 841 × 700dp) and a tablet in either orientation get the landscape structure. A narrow
+split-screen window is portrait whatever its height. The manifest sets no `screenOrientation`, so a rotation recreates the
 activity, and state lives in the ViewModels. Callers and tests can force a mode with the parameter.
+
+### 1.1 Compact and roomy landscape
+
+`HomeScreen` also takes `landscapeSpace: HomeLandscapeSpace`, defaulting to `rememberHomeLandscapeSpace()`,
+which calls `homeLandscapeSpaceFor(height)`: **compact below 480dp tall** (a phone on its side, Material's
+compact height class), **roomy** at 480dp or more (a tablet, an unfolded foldable).
+
+| | Compact | Roomy |
+|---|---|---|
+| Dock | A column at the right edge, icons only | A full-width row along the bottom, in the user's dock style (`home_dock_row`). The divider and the alignment pill stop above it (`HomeLandscapeLayout.onDockRowHeightChange`) |
+| Grid columns | The requested count, narrowed so a cell stays at least 64dp | The requested count scaled by the apps pane width over 360dp, never fewer than requested and at most 8 (`landscapeGridColumns`), so tiles stay about phone-sized and there are more of them |
+
+Everything else (the panes, the settings twins, the widget grid) is shared.
 
 ## 2. What each layout contains
 

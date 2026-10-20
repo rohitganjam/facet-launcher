@@ -91,11 +91,13 @@ class HomeScreenLandscapeTest {
         mediaPlayer: MediaPlayerState? = null,
         appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
         widget: TestClockWidget? = null,
+        landscapeSpace: HomeLandscapeSpace? = null,
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
         FacetLauncherTheme {
             HomeScreen(
+                landscapeSpace = landscapeSpace ?: rememberHomeLandscapeSpace(),
                 hasCustomClockWidget = widget != null,
                 clockWidgetAppWidgetId = widget?.let { WIDGET_ID },
                 createClockWidgetHostView = { context, _ -> AppWidgetHostView(context) },
@@ -551,5 +553,51 @@ class HomeScreenLandscapeTest {
 
     private companion object {
         const val WIDGET_ID = 42
+    }
+
+    @Test
+    fun aRoomyWindowPutsTheDockInARowAlongTheBottom() {
+        // Given a roomy landscape window (a tablet or an unfolded foldable)
+        composeRule.setContent { LandscapeHome(landscapeSpace = HomeLandscapeSpace.ROOMY) }
+        composeRule.waitForIdle()
+
+        // Then the dock is a row below the panes, not a column beside them
+        composeRule.onNodeWithTag("home_dock_column").assertDoesNotExist()
+        val dock = boundsOf("home_dock_row")
+        val apps = boundsOf("home_apps_pane")
+        assert(dock.top >= apps.bottom - 1f) { "dock row $dock should sit below the apps pane $apps" }
+        assert(apps.right > boundsOf("home_clock_pane").right) { "the apps pane should still be right of the clock pane" }
+    }
+
+    @Test
+    fun aRoomyWindowShowsTheDockInItsChosenStyle() {
+        // Given a roomy window with the dock set to text
+        composeRule.setContent { LandscapeHome(landscapeSpace = HomeLandscapeSpace.ROOMY, dockDisplayMode = DockDisplayMode.TEXT) }
+        composeRule.waitForIdle()
+
+        // Then the bottom dock shows labels, unlike the icons-only side column
+        composeRule.onNodeWithText("Dock 1").assertExists()
+    }
+
+    @Test
+    fun aCompactWindowKeepsTheDockColumn() {
+        composeRule.setContent { LandscapeHome(landscapeSpace = HomeLandscapeSpace.COMPACT) }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("home_dock_column").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_dock_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun theDividerStopsAboveTheBottomDockInARoomyWindow() {
+        // Given a roomy window in adjust mode
+        composeRule.setContent { LandscapeHome(landscapeSpace = HomeLandscapeSpace.ROOMY) }
+        composeRule.waitForIdle()
+        enterAdjustModeFromEmptySpace()
+
+        // Then the divider's rail ends above the dock row
+        val handle = boundsOf("home_clock_zone_handle")
+        val dock = boundsOf("home_dock_row")
+        assert(handle.bottom <= dock.top + 1f) { "divider $handle should end above the dock row $dock" }
     }
 }

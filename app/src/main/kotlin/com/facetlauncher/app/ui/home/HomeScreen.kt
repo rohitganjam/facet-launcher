@@ -306,6 +306,7 @@ fun HomeScreen(
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /** Portrait stacks clock, list and dock; landscape splits the window into panes — see [HomeLandscapeLayout]. */
     layoutMode: HomeLayoutMode = rememberHomeLayoutMode(),
+    landscapeSpace: HomeLandscapeSpace = rememberHomeLandscapeSpace(),
 ) {
     val isLandscape = layoutMode == HomeLayoutMode.LANDSCAPE
     val appLabelColor = appLabelColorOption.resolve()
@@ -325,6 +326,10 @@ fun HomeScreen(
     var contentHeightPx by remember { mutableFloatStateOf(0f) }
     // Landscape only: the apps pane's width, for narrowing the grid to what fits.
     var appsPaneWidthPx by remember { mutableFloatStateOf(0f) }
+    // Roomy landscape windows put the dock along the bottom; the height it takes is kept out of the divider and pill.
+    val landscapeDockAtBottom = isLandscape && landscapeSpace == HomeLandscapeSpace.ROOMY
+    var landscapeDockRowHeightPx by remember { mutableFloatStateOf(0f) }
+    val landscapeDockReserve = if (landscapeDockAtBottom && dockApps.isNotEmpty()) with(density) { landscapeDockRowHeightPx.toDp() } else 0.dp
     var landscapeContentWidthPx by remember { mutableFloatStateOf(0f) }
     // The divider's live width while dragging, held until the saved value round-trips (as liveHandlePx is).
     var liveDividerWidthPx by remember { mutableStateOf<Float?>(null) }
@@ -852,7 +857,7 @@ fun HomeScreen(
                             AppListLayout.GRID -> HomeAppGrid(
                                 appListItems = appListItems,
                                 columns = if (isLandscape) {
-                                    landscapeGridColumns(appListGridColumns.columns, with(density) { appsPaneWidthPx.toDp() })
+                                    landscapeGridColumns(appListGridColumns.columns, with(density) { appsPaneWidthPx.toDp() }, landscapeSpace)
                                 } else {
                                     appListGridColumns.columns
                                 },
@@ -965,6 +970,8 @@ fun HomeScreen(
         if (isLandscape) {
             HomeLandscapeLayout(
                 hasDock = dockApps.isNotEmpty(),
+                dockAtBottom = landscapeDockAtBottom,
+                onDockRowHeightChange = { landscapeDockRowHeightPx = it.toFloat() },
                 clockPaneAlignment = when (clockAlignment) {
                     ClockAlignment.LEFT -> Alignment.TopStart
                     ClockAlignment.CENTER -> Alignment.CenterStart
@@ -1007,7 +1014,9 @@ fun HomeScreen(
                     )
                 },
                 dock = {
-                    dockApps.forEach { item -> dockIcon(item, DockDisplayMode.ICONS) }
+                    // The side column is icons only; the roomy bottom row follows the user's dock style, as portrait does.
+                    val landscapeDockMode = if (landscapeDockAtBottom) dockDisplayMode else DockDisplayMode.ICONS
+                    dockApps.forEach { item -> dockIcon(item, landscapeDockMode) }
                 },
             )
         } else {
@@ -1107,7 +1116,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM),
+                    .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM + landscapeDockReserve),
             ) {
                 ClockZoneHandle(
                     dragOrientation = Orientation.Horizontal,
@@ -1213,7 +1222,7 @@ fun HomeScreen(
                 .padding(
                     start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING,
                     top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP,
-                    bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM,
+                    bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM + landscapeDockReserve,
                 ),
         ) {
             ClockAdjustToolbar(
