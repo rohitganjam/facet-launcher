@@ -363,6 +363,8 @@ fun HomeScreen(
     var rootSize by remember { mutableStateOf<IntSize?>(null) }
     var rootOriginInRoot by remember { mutableStateOf<Offset?>(null) }
     var clockBoxSize by remember { mutableStateOf<IntSize?>(null) }
+    // Bottom edge of the whole portrait clock block, measured in the same pass as the clock box.
+    var clockBlockBottomInRoot by remember { mutableStateOf<Float?>(null) }
     var clockBoxOriginInRoot by remember { mutableStateOf<Offset?>(null) }
     var appListSize by remember { mutableStateOf<IntSize?>(null) }
     var appListOriginInRoot by remember { mutableStateOf<Offset?>(null) }
@@ -461,7 +463,12 @@ fun HomeScreen(
     val maxWidgetSizePxThatFits: (boxSize: IntSize, boxTopLeft: Offset, rootW: Int) -> Offset = { boxSize, boxTopLeft, rootW ->
         val boxW = boxSize.width.toFloat()
         val boxH = boxSize.height.toFloat()
-        val maxHeight = boxTopLeft.y + boxH - clockTopReservePx
+        // The box's bottom is the block's target bottom less what sits under the box. Taking it from
+        // the box's own (a frame stale) position made the height feed back on itself and jiggle.
+        val blockBottom = clockBlockBottomInRoot
+        val tailPx = blockBottom?.let { it - (rootOriginInRoot?.y ?: 0f) - (boxTopLeft.y + boxH) }
+        val boxBottom = if (tailPx != null) topInsetPx + handlePx - minGapPx - tailPx else boxTopLeft.y + boxH
+        val maxHeight = boxBottom - clockTopReservePx
         val maxWidth = when (clockAlignment) {
             ClockAlignment.CENTER -> rootW - 2f * sideMarginPx
             ClockAlignment.LEFT -> rootW - sideMarginPx - boxTopLeft.x
@@ -1026,7 +1033,10 @@ fun HomeScreen(
                     clockBlock(
                         Modifier
                             .offset { IntOffset(0, (handlePx - minGapPx - clockNaturalHeightPx).roundToInt()) }
-                            .onGloballyPositioned { clockNaturalHeightPx = it.size.height.toFloat() }
+                            .onGloballyPositioned {
+                                clockNaturalHeightPx = it.size.height.toFloat()
+                                clockBlockBottomInRoot = it.positionInRoot().y + it.size.height
+                            }
                             .graphicsLayer { alpha = clockAppearAlpha.value },
                         clockAlignment,
                         1f,
