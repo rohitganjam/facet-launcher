@@ -75,7 +75,28 @@ No logic change. Keep the baseline.
 
 ## Phase C — group `HomeScreen`'s state (changes its signature)
 
-- [ ] **C1. Design the groups.** (Started in phase B: `HomeItemActions`, `HomeItemStyle`, `HomeAppListContent` exist and are used below `HomeScreen`; `HomeScreen` still builds them from its flat parameters, so phase C passes them in directly.) `@Immutable` classes, each small and independently recomposing: clock, app list, dock, media, badges and notifications, hosted widget, adjust. Plus a `HomeActions` bundle of callbacks. Write the field lists in this file before coding.
+- [ ] **C1. Design the groups.** (Started in phase B: `HomeItemActions`, `HomeItemStyle` and `HomeAppListContent` exist and are used below `HomeScreen`; `HomeScreen` still builds them from its flat parameters, so phase C passes them in directly.)
+  - **Design (89 flat parameters today, of which tests use 41).** `HomeScreen(state: HomeScreenState, actions: HomeScreenActions, modifier, layoutMode, landscapeSpace)`. All state classes are `@Immutable`, built once per change by `HomeUiState.toScreenState(mode)`.
+
+    | Group | Fields |
+    |---|---|
+    | `HomeClockState` | style (`clockTemplateId`, font, colour, accent, date style, `use24HourTime`, `clockShowMeridiem`, `launcherFontOption`), `placement: ClockPlacement` (exists), `positionOwnerFacetId` / `Name`, `adjustMode`, `draggingHandle` |
+    | `HomeClockWidgetState?` | `appWidgetId`, `widthDp`, `heightDp`, `minWidthDp`, `minHeightDp`, `isPro` (null: native clock; `hasCustomClockWidget` is derived) |
+    | `HomeCalendarState` | `events`, `colors`, `display`, `nextAlarmMillis`, `batteryPercent`, `isCharging` |
+    | `HomeListState` | `content: HomeAppListContent` (exists), `layout`, `alignment: ListAlignment` (exists), `rowPresentation`, `gridColumns`, `gridDisplayMode`, `showUsageAccessPrompt` |
+    | `HomeDockState` | `items`, `displayMode` |
+    | `HomeMediaState` | `player: MediaPlayerState?`, `showSkipButtons` |
+    | `HomeScreenState` | the six above, plus the label look (`appLabelColorOption`, `homeAppsFontWeight`) |
+
+    | Actions group | Callbacks |
+    |---|---|
+    | `HomeItemActions` (exists) | the twelve tile callbacks |
+    | `HomeClockActions` | `onClockClick`, `onEditClockStyles`, `onNavigateToSettings`, `onNavigateToFacetSettings`, `onUseCustomWidgetClick`, `onSwitchToLauncherClockClick`, `onEventClick`, `onZoneHeightCommit`, `onScaleCommit`, `onAlignmentChange`, `onAdjustModeChange`, `onDraggingHandleChange` |
+    | `HomeClockWidgetActions` | `createHostView`, `onSizeChange`, `onSizeCommit`, `onBoundsChange`, nested-scroll start / leftover scroll / stop / leftover fling |
+    | `HomeMediaActions` | `onPrevious`, `onPlayPause`, `onNext`, `onOpen` |
+    | `HomeScreenActions` | the four above, plus `onUsageAccessPromptClick` and `onAppListBoundsChange` |
+
+  - **Tests.** `HomeScreenTest` / `HomeScreenLandscapeTest` call a test-only `TestHomeScreen(...)` helper with the 41 flat parameters they use (Detekt only checks `src/main`), which builds the groups and calls the real `HomeScreen`. The rewrite of the 66 call sites is then a rename.
 - [ ] **C2. `HomeScreen(state, actions, modifier, layoutMode, landscapeSpace)`.** Update the body to read from the groups; behaviour unchanged.
 - [ ] **C3. `HomeUiState.toScreenState(mode)`** builds the groups; `HomeDrawerRoute` shrinks accordingly.
 - [ ] **C4. Test fixtures.** A `homeState(...)` / `homeActions(...)` builder with the old defaults; rewrite the 66 call sites mechanically (script the rewrite, review the diff).
