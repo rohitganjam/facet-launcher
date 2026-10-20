@@ -1,33 +1,32 @@
-# Facet Launcher 0.1.27
+# Facet Launcher 0.1.28
 
 ## New Features
-- Ongoing notifications, such as music playback or active downloads, now show when you long-press an app. You can tap them to open the app. They can't be swiped away, "Clear all" skips them, and "Clear all" is greyed out when only ongoing notifications are left.
+- Notification settings now include a live preview. It shows a sample notification badge in the style you picked (dot or count) and a sample media player with skip buttons that follow your setting. The preview works even before notification access is granted.
 
 ## Fixes
-- Fixed a crash when opening an app picker on a phone with a Work Profile, if the same app was installed in both your personal and work profiles.
-- If an app is installed in both your personal and work profiles, you can now add each copy to the Dock or Favorites separately. Before, adding one copy made the other look like it was already added.
-- Fixed apps that showed a notification badge but opened an empty notification list on long-press.
-- The preview on the Appearance screen now matches your Home screen, including the clock position and whether the app list sits at the top or bottom.
-- The setup screen no longer flashes or reappears by mistake when the launcher starts. If loading takes too long, the launcher now goes to your Home screen instead of setup.
+- With Center alignment on the Home screen, the notification badge no longer pushes the row off-center. The icon and name stay centered and the badge sits just beside them.
 
 ## Improvements
-- Work apps now show the Work badge on your Home screen favorites, Home grid and Dock, so you can tell them apart from your personal apps.
-- The Work badge now also appears in app pickers, folder lists, Dock and Home app settings, and during setup.
-- The launcher's home screen previews now match your actual Home screen more closely.
-- Album art for media now uses less memory.
-- The launcher now loads faster at startup because it no longer waits for your full app list before deciding whether to show setup.
+- The notification preview now uses your actual Home list and Dock layout, with sample badges in your chosen style.
+- The notification preview now shows an "Allow access" prompt if notification access hasn't been granted.
+- If badges and the media player are both turned off, the preview says so. If only one is on, the preview shows just that one.
+- On Home rows that show only an icon, the notification badge now sits on the corner of the icon instead of next to it.
+- The widget picker is now sorted by app name, then by widget name.
+- Automations use less battery: they only watch device sources such as Wi-Fi while an enabled rule needs them. Location access is only used when a rule checks for a specific Wi-Fi network name.
+- Settings screens and pop-up sheets no longer change with the in-app font size and weight options, so they stay readable and consistent. Home and the previews still follow those options, and your phone's own font and display size settings still apply.
+- The Appearance settings are reorganized into separate Theme, Icons and Fonts sections. A new font preview shows where each text style is used.
+- Some settings were renamed to be clearer:
+  - "Launcher Appearance" is now "Appearance"
+  - "System bar icons" is now "Status bar icons"
+  - "Match theme" is now "Default"
+  - The font option is now "Launcher Font Style"
+- The folder contents sheet has a new look. It fills the screen like the app sheet, has a matching header (folder icon, name, app count, rename) and slides in and out.
+- In the app sheet, "Add to folder" now has a folder icon with a "+" badge.
 
 ## Internal
-- Onboarding gate: `onboardingCompleted` is now nullable and collected separately from the app list and work profiles. The loading timeout now falls back to "done".
-- `decodeArt` reads image bounds first and decodes with a power-of-two `inSampleSize` that keeps both edges at or above 512px. This addresses a Play Console memory warning.
-- Added `AppInfo.listKey` (package + activity + user). It replaces the package + activity keys in pickers, folder detail, onboarding reorder lists, the long-press Add/Remove check and the settings reorder keys.
-- Home favorites, grid tiles and dock icons now use `AppIcon(app = ...)`, which also passes the notification count through.
-- Pickers, folder lists, Dock/Home-apps settings and onboarding lists now use `AppIcon(app = ...)`.
-- Carousel and Appearance now share a single scaled `HomePreview`.
-- Merged the eight Dock/Favorites tables into `app_placements` and `folder_placements` (schema v28, `MIGRATION_27_28`). `ownerKey` carries the unique keys.
-- Merged the four placement repositories into `PlacementRepository` (addressed by `PlacementTarget`), and the eight Add/Remove use cases into `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` and `ResolveActivePlacementTargetUseCase`.
-- Dock and favorites caps moved to `AppListLimits`, which resolves finding F3. The uninstall and orphan queries now cover every list.
-- Tests: `HomeScreenTest` Work badge coverage, `AppPickerScreenTest` crash reproduction, `AppInfoTest`, picker key and membership tests, `PlacementRepositoryTest`, the v27→v28 migration test, real-Room DAO tests, and persistent-notification tests. 1115 unit and 732 instrumented tests pass.
-- Regenerated `TEST_REGISTRY.md` for the selection and picker key tests.
-- Docs: CLAUDE.md now checks for a test run that's already going (fixed the running-Gradle pattern) and runs one class per instrumented invocation. Clarified the F6 findings. Updated docs 01–14, the README and the plan.
-- Release 0.1.26 (code 27).
+- Update test registry.
+- Register automation device-source callbacks only while an enabled rule reads them; nothing registered with no rules. Wi-Fi callback requests location info (SSID) only for named-network rules.
+- Notification preview renders the real Home and Dock layout via `HomeSurfacePreview`.
+- Added `UnscaledTypography` for the Settings screens and bottom sheets.
+- Tests: `AppRowBadgeTest`, `NotificationPreviewTest`, `NotificationSettingsScreenTest`. Other tests and docs updated for the Appearance and sheet changes.
+- Release 0.1.27 (28): version bump, in-app What's new and release notes.
