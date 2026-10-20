@@ -735,6 +735,26 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration31To32AddsEmptyLandscapeListAlignmentToEveryFacetWithoutChangingIt() {
+        // Given a v31 database with a facet that has a portrait list alignment
+        val dbV31 = helper.createDatabase(TEST_DB, 31)
+        insertFacetV27(dbV31, id = 1, name = "Work")
+        dbV31.execSQL("UPDATE facets SET appRowPosition = 'RIGHT', appListVerticalAlignment = 'TOP' WHERE id = 1")
+        dbV31.close()
+
+        // When migrating to v32 (Room also validates the result against the exported v32 schema)
+        val dbV32 = helper.runMigrationsAndValidate(TEST_DB, 32, true, Migrations.MIGRATION_31_32)
+
+        // Then the portrait alignment is kept and the landscape one is empty
+        val cursor = dbV32.query("SELECT appRowPosition, appListVerticalAlignment, landscapeAppRowPosition, landscapeAppListVerticalAlignment, landscapeAppListColumnAlignment FROM facets WHERE id = 1")
+        cursor.moveToFirst()
+        assertEquals("RIGHT", cursor.getString(0))
+        assertEquals("TOP", cursor.getString(1))
+        assertTrue(cursor.isNull(2) && cursor.isNull(3) && cursor.isNull(4))
+        cursor.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

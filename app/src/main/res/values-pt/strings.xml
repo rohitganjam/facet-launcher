@@ -339,6 +339,9 @@
     <string name="home_apps_list_header_title">Lista de apps da tela inicial</string>
     <string name="home_apps_list_position">Posição</string>
     <string name="home_apps_list_list_position">Posição da lista</string>
+    <string name="appearance_alignment_portrait_title">Alinhamento em retrato</string>
+    <string name="appearance_alignment_landscape_title">Alinhamento em paisagem</string>
+    <string name="home_apps_list_same_as_portrait">Igual ao retrato</string>
     <string name="home_apps_list_presentation">Apresentação</string>
     <string name="home_apps_list_layout">Layout da lista de apps</string>
     <string name="home_apps_list_column_alignment">Alinhamento das colunas</string>

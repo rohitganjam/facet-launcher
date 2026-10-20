@@ -77,4 +77,40 @@ class FacetEntityTest {
         // Then the global default wins, even though the facet has its own stored value
         assertEquals(com.facetlauncher.app.data.model.ClockTemplateId.ROBOTO_FLEX_WIDE, result)
     }
+
+    @Test
+    fun `resolveLandscapeSentinel prefers the facet's landscape value`() {
+        val facet = FacetEntity(name = "Work", position = 0, appRowPosition = AppRowPosition.RIGHT, landscapeAppRowPosition = AppRowPosition.CENTER)
+
+        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.LEFT, AppRowPosition.LEFT)
+
+        assertEquals(AppRowPosition.CENTER, result)
+    }
+
+    @Test
+    fun `resolveLandscapeSentinel falls back to the facet's explicit portrait value before any global value`() {
+        val facet = FacetEntity(name = "Work", position = 0, appRowPosition = AppRowPosition.RIGHT)
+
+        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.CENTER, AppRowPosition.LEFT)
+
+        assertEquals(AppRowPosition.RIGHT, result)
+    }
+
+    @Test
+    fun `resolveLandscapeSentinel uses the global landscape value when the facet's portrait value is the sentinel`() {
+        val facet = FacetEntity(name = "Work", position = 0, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT)
+
+        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.CENTER, AppRowPosition.LEFT)
+
+        assertEquals(AppRowPosition.CENTER, result)
+    }
+
+    @Test
+    fun `resolveLandscapeSentinel ends at the global portrait value with no facet and no landscape value`() {
+        val facet: FacetEntity? = null
+
+        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, null, AppRowPosition.LEFT)
+
+        assertEquals(AppRowPosition.LEFT, result)
+    }
 }

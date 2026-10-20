@@ -86,6 +86,7 @@ private object Keys {
     val BLUETOOTH_PERMISSION_REQUESTED = booleanPreferencesKey("bluetooth_permission_requested")
     val LOCATION_PERMISSION_REQUESTED = booleanPreferencesKey("location_permission_requested")
     val APP_ROW_POSITION = stringPreferencesKey("app_row_position")
+    val LANDSCAPE_APP_ROW_POSITION = stringPreferencesKey("landscape_app_row_position")
     val APP_ROW_PRESENTATION = stringPreferencesKey("app_row_presentation")
     val LIST_CONTENT_MODE = stringPreferencesKey("list_content_mode")
     val APPS_TO_SHOW_COUNT = intPreferencesKey("apps_to_show_count")
@@ -103,8 +104,10 @@ private object Keys {
     val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
     val LANDSCAPE_CLOCK_SCALE = floatPreferencesKey("landscape_clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
+    val LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("landscape_app_list_vertical_alignment")
     val APP_LIST_LAYOUT = stringPreferencesKey("app_list_layout")
     val APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("app_list_column_alignment")
+    val LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("landscape_app_list_column_alignment")
     val APP_LIST_GRID_COLUMNS = stringPreferencesKey("app_list_grid_columns")
     val APP_LIST_GRID_DISPLAY_MODE = stringPreferencesKey("app_list_grid_display_mode")
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
@@ -209,6 +212,9 @@ class SettingsRepository @Inject constructor(
             landscapeClockAlignment = preferences[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
             landscapeClockZoneHeightDp = preferences[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
             landscapeClockScale = preferences[Keys.LANDSCAPE_CLOCK_SCALE],
+            landscapeAppRowPosition = preferences[Keys.LANDSCAPE_APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() },
+            landscapeAppListVerticalAlignment = preferences[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() },
+            landscapeAppListColumnAlignment = preferences[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() },
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
             appListLayout = preferences[Keys.APP_LIST_LAYOUT]?.let { runCatching { AppListLayout.valueOf(it) }.getOrNull() }
@@ -384,6 +390,11 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.APP_ROW_POSITION] = position.name }
     }
 
+    /** Landscape's own row position; `null` clears it back to "same as portrait". */
+    suspend fun setLandscapeAppRowPosition(position: AppRowPosition?) {
+        dataStore.edit { if (position == null) it.remove(Keys.LANDSCAPE_APP_ROW_POSITION) else it[Keys.LANDSCAPE_APP_ROW_POSITION] = position.name }
+    }
+
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appRowPresentation]. */
     suspend fun setAppRowPresentation(presentation: AppRowPresentation) {
         dataStore.edit { it[Keys.APP_ROW_PRESENTATION] = presentation.name }
@@ -466,6 +477,11 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
     }
 
+    /** Landscape's own vertical alignment; `null` clears it back to "same as portrait". */
+    suspend fun setLandscapeAppListVerticalAlignment(alignment: AppListVerticalAlignment?) {
+        dataStore.edit { if (alignment == null) it.remove(Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT) else it[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
+    }
+
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListLayout]. */
     suspend fun setAppListLayout(layout: AppListLayout) {
         dataStore.edit { it[Keys.APP_LIST_LAYOUT] = layout.name }
@@ -474,6 +490,11 @@ class SettingsRepository @Inject constructor(
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListColumnAlignment]. */
     suspend fun setAppListColumnAlignment(alignment: AppListColumnAlignment) {
         dataStore.edit { it[Keys.APP_LIST_COLUMN_ALIGNMENT] = alignment.name }
+    }
+
+    /** Landscape's own two-column alignment; `null` clears it back to "same as portrait". */
+    suspend fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) {
+        dataStore.edit { if (alignment == null) it.remove(Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT) else it[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT] = alignment.name }
     }
 
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListGridColumns]. */

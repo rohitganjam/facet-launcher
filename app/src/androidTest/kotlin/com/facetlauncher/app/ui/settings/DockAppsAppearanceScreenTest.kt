@@ -323,4 +323,49 @@ class DockAppsAppearanceScreenTest {
         // Then it leaves
         assertEquals(true, backPressed)
     }
+
+    @Test
+    fun landscapeAlignmentRowsWriteTheLandscapeSettingAndLeavePortraitAlone() {
+        // Given the screen at global scope
+        val settingsRepository = setContent()
+
+        // When the landscape position and list position are chosen
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row_option_CENTER").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().landscapeAppRowPosition == com.facetlauncher.app.data.model.AppRowPosition.CENTER }
+        }
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
+        composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row_option_TOP").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().landscapeAppListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
+        }
+
+        // Then portrait's own values are unchanged
+        val settings = runBlocking { settingsRepository.settings.first() }
+        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppRowPosition.LEFT, settings.appRowPosition)
+        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
+    }
+
+    @Test
+    fun choosingSameAsPortraitClearsTheLandscapeSetting() {
+        // Given a saved landscape position
+        val settingsRepository = setContent()
+        runBlocking { settingsRepository.setLandscapeAppRowPosition(com.facetlauncher.app.data.model.AppRowPosition.RIGHT) }
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
+
+        // When "Same as portrait" is chosen
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row_option_null").performClick()
+
+        // Then the landscape value is cleared
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().landscapeAppRowPosition == null }
+        }
+    }
 }

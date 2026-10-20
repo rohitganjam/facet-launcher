@@ -32,6 +32,7 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.SurfaceContainer
@@ -58,6 +59,9 @@ fun DockAppsAppearanceScreen(
         onAppRowPositionChange = viewModel::setAppRowPosition,
         onAppRowPresentationChange = viewModel::setAppRowPresentation,
         onAppListVerticalAlignmentChange = viewModel::setAppListVerticalAlignment,
+        onLandscapeAppRowPositionChange = viewModel::setLandscapeAppRowPosition,
+        onLandscapeAppListVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
+        onLandscapeAppListColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
         onAppListLayoutChange = viewModel::setAppListLayout,
         onAppListColumnAlignmentChange = viewModel::setAppListColumnAlignment,
         onAppListGridColumnsChange = viewModel::setAppListGridColumns,
@@ -75,24 +79,15 @@ private fun DockAppsAppearanceContent(
     onAppRowPositionChange: (AppRowPosition) -> Unit,
     onAppRowPresentationChange: (AppRowPresentation) -> Unit,
     onAppListVerticalAlignmentChange: (AppListVerticalAlignment) -> Unit,
+    onLandscapeAppRowPositionChange: (AppRowPosition?) -> Unit,
+    onLandscapeAppListVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
+    onLandscapeAppListColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
     onAppListLayoutChange: (AppListLayout) -> Unit,
     onAppListColumnAlignmentChange: (AppListColumnAlignment) -> Unit,
     onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
     onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isFacetScoped = uiState.isFacetScoped
-    // LAUNCHER_DEFAULT only makes sense where there's a global value above to inherit from —
-    // offering it in global mode would be circular (see ClockFontOption's own precedent, which
-    // this mirrors).
-    val dockDisplayModeOptions = if (isFacetScoped) DockDisplayMode.entries else DockDisplayMode.entries - DockDisplayMode.LAUNCHER_DEFAULT
-    val appRowPositionOptions = if (isFacetScoped) AppRowPosition.entries else AppRowPosition.entries - AppRowPosition.LAUNCHER_DEFAULT
-    val appRowPresentationOptions = if (isFacetScoped) AppRowPresentation.entries else AppRowPresentation.entries - AppRowPresentation.LAUNCHER_DEFAULT
-    val appListVerticalAlignmentOptions = if (isFacetScoped) AppListVerticalAlignment.entries else AppListVerticalAlignment.entries - AppListVerticalAlignment.LAUNCHER_DEFAULT
-    val appListLayoutOptions = if (isFacetScoped) AppListLayout.entries else AppListLayout.entries - AppListLayout.LAUNCHER_DEFAULT
-    val appListColumnAlignmentOptions = if (isFacetScoped) AppListColumnAlignment.entries else AppListColumnAlignment.entries - AppListColumnAlignment.LAUNCHER_DEFAULT
-    val appListGridColumnsOptions = if (isFacetScoped) AppListGridColumns.entries else AppListGridColumns.entries - AppListGridColumns.LAUNCHER_DEFAULT
-    val appListGridDisplayModeOptions = if (isFacetScoped) AppListGridDisplayMode.entries else AppListGridDisplayMode.entries - AppListGridDisplayMode.LAUNCHER_DEFAULT
     StickyHeaderLayout(
         modifier = modifier,
         header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_dock_apps_title), onBack = onBack) },
@@ -114,113 +109,198 @@ private fun DockAppsAppearanceContent(
                     )
                 }
                 item {
-                    // "How things look/are placed" for Dock and the Home apps list — moved in from
-                    // Dock's/Home-Apps-List's own screens (see chat history), always shown at both
-                    // scopes: LAUNCHER_DEFAULT itself (filtered from the option list in global mode)
-                    // is what lets a facet revert to inheriting, so there's no separate
-                    // Inherit/Override switch gating this card the way Clock/Calendar/Apps/Dock's
-                    // own content screens have one.
-                    SettingsCard {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.dock_display_style),
-                            options = dockDisplayModeOptions,
-                            selected = uiState.dockDisplayMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onDockDisplayModeChange,
-                            testTag = "appearance_dock_display_style_row",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_layout),
-                            options = appListLayoutOptions,
-                            selected = uiState.appListLayout,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppListLayoutChange,
-                            testTag = "appearance_app_list_layout_row",
-                        )
-                        CardDivider()
-                        // Each layout mode gets its own alignment/presentation controls — mirrors
-                        // how "Apps to show" is already conditionally hidden for Favorites mode on
-                        // HomeAppsListSettingsScreen. AppRowPosition (per-row left/center/right)
-                        // only makes sense for a single column; AppListColumnAlignment replaces it
-                        // for two columns; grid has no per-item alignment concept at all, so
-                        // neither position nor the icon/text presentation row below applies —
-                        // AppListGridDisplayMode is grid's own separate presentation setting.
-                        when (uiState.appListLayout) {
-                            AppListLayout.TWO_COLUMN -> {
-                                LabeledDropdownRow(
-                                    title = stringResource(R.string.home_apps_list_column_alignment),
-                                    options = appListColumnAlignmentOptions,
-                                    selected = uiState.appListColumnAlignment,
-                                    label = { stringResource(it.displayNameRes) },
-                                    onSelect = onAppListColumnAlignmentChange,
-                                    testTag = "appearance_app_list_column_alignment_row",
-                                )
-                                CardDivider()
-                                LabeledDropdownRow(
-                                    title = stringResource(R.string.home_apps_list_presentation),
-                                    options = appRowPresentationOptions,
-                                    selected = uiState.appRowPresentation,
-                                    label = { stringResource(it.displayNameRes) },
-                                    onSelect = onAppRowPresentationChange,
-                                    testTag = "appearance_app_row_presentation_row",
-                                )
-                                CardDivider()
-                            }
-                            AppListLayout.GRID -> {
-                                LabeledDropdownRow(
-                                    title = stringResource(R.string.home_apps_list_grid_columns),
-                                    options = appListGridColumnsOptions,
-                                    selected = uiState.appListGridColumns,
-                                    label = { stringResource(it.displayNameRes) },
-                                    onSelect = onAppListGridColumnsChange,
-                                    testTag = "appearance_app_list_grid_columns_row",
-                                )
-                                CardDivider()
-                                LabeledDropdownRow(
-                                    title = stringResource(R.string.home_apps_list_grid_display),
-                                    options = appListGridDisplayModeOptions,
-                                    selected = uiState.appListGridDisplayMode,
-                                    label = { stringResource(it.displayNameRes) },
-                                    onSelect = onAppListGridDisplayModeChange,
-                                    testTag = "appearance_app_list_grid_display_mode_row",
-                                )
-                                CardDivider()
-                            }
-                            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
-                                LabeledDropdownRow(
-                                    title = stringResource(R.string.home_apps_list_position),
-                                    options = appRowPositionOptions,
-                                    selected = uiState.appRowPosition,
-                                    label = { stringResource(it.displayNameRes) },
-                                    onSelect = onAppRowPositionChange,
-                                    testTag = "appearance_app_row_position_row",
-                                )
-                                CardDivider()
-                                LabeledDropdownRow(
-                                    title = stringResource(R.string.home_apps_list_presentation),
-                                    options = appRowPresentationOptions,
-                                    selected = uiState.appRowPresentation,
-                                    label = { stringResource(it.displayNameRes) },
-                                    onSelect = onAppRowPresentationChange,
-                                    testTag = "appearance_app_row_presentation_row",
-                                )
-                                CardDivider()
-                            }
-                        }
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.home_apps_list_list_position),
-                            options = appListVerticalAlignmentOptions,
-                            selected = uiState.appListVerticalAlignment,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppListVerticalAlignmentChange,
-                            testTag = "appearance_app_list_vertical_alignment_row",
-                        )
-                    }
+                    // Always shown at both scopes: LAUNCHER_DEFAULT itself (filtered from the option list in
+                    // global mode) is what lets a facet revert to inheriting, so no Inherit/Override switch.
+                    SharedLookCard(
+                        uiState = uiState,
+                        onDockDisplayModeChange = onDockDisplayModeChange,
+                        onAppListLayoutChange = onAppListLayoutChange,
+                        onAppRowPresentationChange = onAppRowPresentationChange,
+                        onAppListGridColumnsChange = onAppListGridColumnsChange,
+                        onAppListGridDisplayModeChange = onAppListGridDisplayModeChange,
+                    )
+                }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_portrait_title)) }
+                item {
+                    PortraitAlignmentCard(
+                        uiState = uiState,
+                        onAppRowPositionChange = onAppRowPositionChange,
+                        onAppListColumnAlignmentChange = onAppListColumnAlignmentChange,
+                        onAppListVerticalAlignmentChange = onAppListVerticalAlignmentChange,
+                    )
+                }
+                item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
+                item {
+                    LandscapeAlignmentCard(
+                        uiState = uiState,
+                        onAppRowPositionChange = onLandscapeAppRowPositionChange,
+                        onAppListColumnAlignmentChange = onLandscapeAppListColumnAlignmentChange,
+                        onAppListVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
+                    )
                 }
             }
         },
     )
+}
+
+/** The look shared by both orientations: dock style, list layout, and the presentation or grid rows that layout has. */
+@Composable
+private fun SharedLookCard(
+    uiState: AppearanceSettingsUiState,
+    onDockDisplayModeChange: (DockDisplayMode) -> Unit,
+    onAppListLayoutChange: (AppListLayout) -> Unit,
+    onAppRowPresentationChange: (AppRowPresentation) -> Unit,
+    onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
+    onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // LAUNCHER_DEFAULT only makes sense where there's a global value above to inherit from; offering it
+    // in global mode would be circular (see ClockFontOption's own precedent).
+    val isFacetScoped = uiState.isFacetScoped
+    SettingsCard(modifier = modifier) {
+        LabeledDropdownRow(
+            title = stringResource(R.string.dock_display_style),
+            options = if (isFacetScoped) DockDisplayMode.entries else DockDisplayMode.entries - DockDisplayMode.LAUNCHER_DEFAULT,
+            selected = uiState.dockDisplayMode,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onDockDisplayModeChange,
+            testTag = "appearance_dock_display_style_row",
+        )
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.home_apps_list_layout),
+            options = if (isFacetScoped) AppListLayout.entries else AppListLayout.entries - AppListLayout.LAUNCHER_DEFAULT,
+            selected = uiState.appListLayout,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onAppListLayoutChange,
+            testTag = "appearance_app_list_layout_row",
+        )
+        // Grid has no per-item alignment, so its own display mode replaces the icon/text presentation row.
+        if (uiState.appListLayout == AppListLayout.GRID) {
+            CardDivider()
+            LabeledDropdownRow(
+                title = stringResource(R.string.home_apps_list_grid_columns),
+                options = if (isFacetScoped) AppListGridColumns.entries else AppListGridColumns.entries - AppListGridColumns.LAUNCHER_DEFAULT,
+                selected = uiState.appListGridColumns,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onAppListGridColumnsChange,
+                testTag = "appearance_app_list_grid_columns_row",
+            )
+            CardDivider()
+            LabeledDropdownRow(
+                title = stringResource(R.string.home_apps_list_grid_display),
+                options = if (isFacetScoped) AppListGridDisplayMode.entries else AppListGridDisplayMode.entries - AppListGridDisplayMode.LAUNCHER_DEFAULT,
+                selected = uiState.appListGridDisplayMode,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onAppListGridDisplayModeChange,
+                testTag = "appearance_app_list_grid_display_mode_row",
+            )
+        } else {
+            CardDivider()
+            LabeledDropdownRow(
+                title = stringResource(R.string.home_apps_list_presentation),
+                options = if (isFacetScoped) AppRowPresentation.entries else AppRowPresentation.entries - AppRowPresentation.LAUNCHER_DEFAULT,
+                selected = uiState.appRowPresentation,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onAppRowPresentationChange,
+                testTag = "appearance_app_row_presentation_row",
+            )
+        }
+    }
+}
+
+/** Portrait's list alignment: a horizontal row for the layout (none for a grid), then the vertical position. */
+@Composable
+private fun PortraitAlignmentCard(
+    uiState: AppearanceSettingsUiState,
+    onAppRowPositionChange: (AppRowPosition) -> Unit,
+    onAppListColumnAlignmentChange: (AppListColumnAlignment) -> Unit,
+    onAppListVerticalAlignmentChange: (AppListVerticalAlignment) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isFacetScoped = uiState.isFacetScoped
+    SettingsCard(modifier = modifier) {
+        when (uiState.appListLayout) {
+            AppListLayout.TWO_COLUMN -> {
+                LabeledDropdownRow(
+                    title = stringResource(R.string.home_apps_list_column_alignment),
+                    options = if (isFacetScoped) AppListColumnAlignment.entries else AppListColumnAlignment.entries - AppListColumnAlignment.LAUNCHER_DEFAULT,
+                    selected = uiState.appListColumnAlignment,
+                    label = { stringResource(it.displayNameRes) },
+                    onSelect = onAppListColumnAlignmentChange,
+                    testTag = "appearance_app_list_column_alignment_row",
+                )
+                CardDivider()
+            }
+            AppListLayout.GRID -> Unit
+            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
+                LabeledDropdownRow(
+                    title = stringResource(R.string.home_apps_list_position),
+                    options = if (isFacetScoped) AppRowPosition.entries else AppRowPosition.entries - AppRowPosition.LAUNCHER_DEFAULT,
+                    selected = uiState.appRowPosition,
+                    label = { stringResource(it.displayNameRes) },
+                    onSelect = onAppRowPositionChange,
+                    testTag = "appearance_app_row_position_row",
+                )
+                CardDivider()
+            }
+        }
+        LabeledDropdownRow(
+            title = stringResource(R.string.home_apps_list_list_position),
+            options = if (isFacetScoped) AppListVerticalAlignment.entries else AppListVerticalAlignment.entries - AppListVerticalAlignment.LAUNCHER_DEFAULT,
+            selected = uiState.appListVerticalAlignment,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onAppListVerticalAlignmentChange,
+            testTag = "appearance_app_list_vertical_alignment_row",
+        )
+    }
+}
+
+/** Landscape's list alignment — the same rows as portrait, each with a "Same as portrait" choice (stored as `null`). */
+@Composable
+private fun LandscapeAlignmentCard(
+    uiState: AppearanceSettingsUiState,
+    onAppRowPositionChange: (AppRowPosition?) -> Unit,
+    onAppListColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
+    onAppListVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val samePortrait = stringResource(R.string.home_apps_list_same_as_portrait)
+    SettingsCard(modifier = modifier) {
+        when (uiState.appListLayout) {
+            AppListLayout.TWO_COLUMN -> {
+                LabeledDropdownRow(
+                    title = stringResource(R.string.home_apps_list_column_alignment),
+                    options = listOf(null) + (AppListColumnAlignment.entries - AppListColumnAlignment.LAUNCHER_DEFAULT),
+                    selected = uiState.landscapeAppListColumnAlignment,
+                    label = { it?.let { option -> stringResource(option.displayNameRes) } ?: samePortrait },
+                    onSelect = onAppListColumnAlignmentChange,
+                    testTag = "appearance_landscape_app_list_column_alignment_row",
+                )
+                CardDivider()
+            }
+            AppListLayout.GRID -> Unit
+            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
+                LabeledDropdownRow(
+                    title = stringResource(R.string.home_apps_list_position),
+                    options = listOf(null) + (AppRowPosition.entries - AppRowPosition.LAUNCHER_DEFAULT),
+                    selected = uiState.landscapeAppRowPosition,
+                    label = { it?.let { option -> stringResource(option.displayNameRes) } ?: samePortrait },
+                    onSelect = onAppRowPositionChange,
+                    testTag = "appearance_landscape_app_row_position_row",
+                )
+                CardDivider()
+            }
+        }
+        LabeledDropdownRow(
+            title = stringResource(R.string.home_apps_list_list_position),
+            options = listOf(null) + (AppListVerticalAlignment.entries - AppListVerticalAlignment.LAUNCHER_DEFAULT),
+            selected = uiState.landscapeAppListVerticalAlignment,
+            label = { it?.let { option -> stringResource(option.displayNameRes) } ?: samePortrait },
+            onSelect = onAppListVerticalAlignmentChange,
+            testTag = "appearance_landscape_app_list_vertical_alignment_row",
+        )
+    }
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
@@ -236,6 +316,9 @@ private fun DockAppsAppearanceScreenPreview() {
             onAppRowPositionChange = {},
             onAppRowPresentationChange = {},
             onAppListVerticalAlignmentChange = {},
+            onLandscapeAppRowPositionChange = {},
+            onLandscapeAppListVerticalAlignmentChange = {},
+            onLandscapeAppListColumnAlignmentChange = {},
             onAppListLayoutChange = {},
             onAppListColumnAlignmentChange = {},
             onAppListGridColumnsChange = {},

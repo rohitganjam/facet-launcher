@@ -377,6 +377,9 @@
     <string name="home_apps_list_header_title">Home Apps List</string>
     <string name="home_apps_list_position">Home Apps Alignment</string>
     <string name="home_apps_list_list_position">Home Apps list position</string>
+    <string name="appearance_alignment_portrait_title">Portrait alignment</string>
+    <string name="appearance_alignment_landscape_title">Landscape alignment</string>
+    <string name="home_apps_list_same_as_portrait">Same as portrait</string>
     <string name="home_apps_list_presentation">Show Home apps as</string>
     <string name="home_apps_list_layout">App list layout</string>
     <string name="home_apps_list_column_alignment">Column alignment</string>

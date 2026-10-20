@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -315,5 +317,55 @@ class HomeUiStateTest {
         )
 
         assertEquals(ClockAlignment.RIGHT, state.landscapeClockAlignment)
+    }
+
+    @Test
+    fun `landscape list alignment falls back to the portrait values when no landscape value is set`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, appListVerticalAlignment = AppListVerticalAlignment.TOP),
+        )
+
+        assertEquals(AppRowPosition.RIGHT, state.landscapeAppRowPosition)
+        assertEquals(AppListVerticalAlignment.TOP, state.landscapeAppListVerticalAlignment)
+        assertEquals(AppListColumnAlignment.BOTH_LEFT, state.landscapeAppListColumnAlignment)
+    }
+
+    @Test
+    fun `landscape list alignment uses the global landscape values when set`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(
+                appRowPosition = AppRowPosition.RIGHT,
+                landscapeAppRowPosition = AppRowPosition.CENTER,
+                landscapeAppListVerticalAlignment = AppListVerticalAlignment.TOP,
+                landscapeAppListColumnAlignment = AppListColumnAlignment.MIRRORED,
+            ),
+        )
+
+        assertEquals(AppRowPosition.CENTER, state.landscapeAppRowPosition)
+        assertEquals(AppListVerticalAlignment.TOP, state.landscapeAppListVerticalAlignment)
+        assertEquals(AppListColumnAlignment.MIRRORED, state.landscapeAppListColumnAlignment)
+        assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
+    }
+
+    @Test
+    fun `a facet's explicit portrait list alignment beats the global landscape value`() {
+        val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscapeAppRowPosition = AppRowPosition.CENTER),
+            facets = listOf(facet),
+        )
+
+        assertEquals(AppRowPosition.RIGHT, state.landscapeAppRowPosition)
+    }
+
+    @Test
+    fun `a facet's own landscape list alignment wins`() {
+        val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT, landscapeAppRowPosition = AppRowPosition.LEFT)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscapeAppRowPosition = AppRowPosition.CENTER),
+            facets = listOf(facet),
+        )
+
+        assertEquals(AppRowPosition.LEFT, state.landscapeAppRowPosition)
     }
 }

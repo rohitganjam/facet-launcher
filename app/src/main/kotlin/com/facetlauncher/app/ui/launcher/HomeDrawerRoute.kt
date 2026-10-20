@@ -666,7 +666,7 @@ fun HomeDrawerRoute(
     ) {
         HomeScreen(
             appListItems = homeUiState.appListItems,
-            appRowPosition = homeUiState.activeAppRowPosition,
+            appRowPosition = if (isLandscapeHome) homeUiState.landscapeAppRowPosition else homeUiState.activeAppRowPosition,
             appRowPresentation = homeUiState.activeAppRowPresentation,
             showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
             onUsageAccessPromptClick = {
@@ -761,9 +761,9 @@ fun HomeDrawerRoute(
                 nestedScrollFlingHandledSettle = true
                 onHomeSwipeSettle(if (homeDragAxis == Axis.HORIZONTAL) velocityXPx else velocityYPx)
             },
-            appListVerticalAlignment = homeUiState.activeAppListVerticalAlignment,
+            appListVerticalAlignment = if (isLandscapeHome) homeUiState.landscapeAppListVerticalAlignment else homeUiState.activeAppListVerticalAlignment,
             appListLayout = homeUiState.activeAppListLayout,
-            appListColumnAlignment = homeUiState.activeAppListColumnAlignment,
+            appListColumnAlignment = if (isLandscapeHome) homeUiState.landscapeAppListColumnAlignment else homeUiState.activeAppListColumnAlignment,
             appListGridColumns = homeUiState.activeAppListGridColumns,
             appListGridDisplayMode = homeUiState.activeAppListGridDisplayMode,
             nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,

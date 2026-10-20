@@ -4,8 +4,8 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v31**, `exportSchema = true` → `app/schemas/…/1.json … 31.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 5 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 63 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v32**, `exportSchema = true` → `app/schemas/…/1.json … 32.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) | 5 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id — 66 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -251,7 +251,7 @@ null converter result. Renaming an enum constant therefore never needs a migrati
 
 ```kotlin
 Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
-    .addMigrations(*Migrations.ALL)                       // 10→11 … 30→31, explicit SQL
+    .addMigrations(*Migrations.ALL)                       // 10→11 … 31→32, explicit SQL
     .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
     .build()
 ```
@@ -286,6 +286,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 28→29 | `landscape_order` for the landscape Hub: `widget_placements.landscapeOrder INTEGER` (nullable, no default). Existing rows stay `NULL`, which makes landscape follow portrait reading order, so nothing is rewritten. `FacetDatabaseMigrationTest.migration28To29…` seeds two widgets and checks both survive with a `NULL` order. |
 | 29→30 | A hosted clock widget's own landscape size: `facets.landscapeClockWidgetWidthDp`, `landscapeClockWidgetHeightDp` (nullable). `NULL` makes landscape use the portrait size (`clockWidgetWidthDp`/`HeightDp`), clamped to its pane on screen, so nothing is rewritten. Binding another widget clears both pairs. Not in the backup (widget ids aren't portable). `FacetDatabaseMigrationTest.migration29To30…` checks the portrait size survives and the new pair is `NULL`. |
 | 30→31 | Landscape's own clock placement: `facets.landscapeClockAlignment` (TEXT), `landscapeClockZoneHeightDp`, `landscapeClockScale` (REAL), all nullable. `NULL` uses the facet's portrait value, so nothing is rewritten. "Reset clock position" clears them. Not in `BackupFacet` (the same gap as the portrait clock placement). `FacetDatabaseMigrationTest.migration30To31…` checks the portrait placement survives and the new columns are `NULL`. |
+| 31→32 | Landscape's own list alignment: `facets.landscapeAppRowPosition`, `landscapeAppListVerticalAlignment`, `landscapeAppListColumnAlignment` (nullable TEXT). `NULL` is "Same as portrait": a facet's landscape value, else its explicit portrait value, else the launcher's landscape value, else its portrait value (`resolveLandscapeSentinel`). Not in `BackupFacet`. `FacetDatabaseMigrationTest.migration31To32…` checks the portrait alignment survives and the new columns are `NULL`. |
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -325,6 +326,9 @@ erDiagram
         string list_content_mode "ListContentMode, default FAVORITES"
         int apps_to_show_count "default AppListLimits.DEFAULT_APPS_TO_SHOW"
         string app_row_position "AppRowPosition, default LEFT"
+        string landscape_app_row_position "nullable, absent = same as portrait"
+        string landscape_app_list_vertical_alignment "nullable, absent = same as portrait"
+        string landscape_app_list_column_alignment "nullable, absent = same as portrait"
         string app_row_presentation "AppRowPresentation, default ICON_AND_TEXT"
         string app_list_vertical_alignment "AppListVerticalAlignment, default BOTTOM"
         string home_apps_font_weight "FontWeightOption, default REGULAR"
@@ -427,7 +431,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (63 functions)
+### 5.3 Write path — the complete writer API (66 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -455,6 +459,9 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `AppearanceSettingsViewModel` |
+| `setLandscapeAppRowPosition(AppRowPosition?)` | `landscape_app_row_position` | set, or **remove** for `null` | `AppearanceSettingsViewModel` |
+| `setLandscapeAppListVerticalAlignment(AppListVerticalAlignment?)` | `landscape_app_list_vertical_alignment` | set, or **remove** for `null` | `AppearanceSettingsViewModel` |
+| `setLandscapeAppListColumnAlignment(AppListColumnAlignment?)` | `landscape_app_list_column_alignment` | set, or **remove** for `null` | `AppearanceSettingsViewModel` |
 | `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `AppearanceSettingsViewModel` |
 | `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `AppearanceSettingsViewModel` |
 | `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
@@ -504,7 +511,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-The same 63 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 66 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock design (global; overridden per facet when `facets.overrideClock`)
@@ -547,6 +554,9 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `list_content_mode` | String (`ListContentMode`) | `listContentMode` | `FAVORITES` | `FAVORITES` / `RECENTS` / `MOST_USED` |
 | `apps_to_show_count` | Int | `appsToShowCount` | `AppListLimits.DEFAULT_APPS_TO_SHOW` | |
 | `app_row_position` | String (`AppRowPosition`) | `appRowPosition` | `LEFT` | |
+| `landscape_app_row_position` | String (`AppRowPosition`) | `landscapeAppRowPosition` | `null` (= `app_row_position`) | landscape's own; the key is removed for "Same as portrait" |
+| `landscape_app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `landscapeAppListVerticalAlignment` | `null` (= `app_list_vertical_alignment`) | same |
+| `landscape_app_list_column_alignment` | String (`AppListColumnAlignment`) | `landscapeAppListColumnAlignment` | `null` (= `app_list_column_alignment`) | two-column only; same |
 | `app_row_presentation` | String (`AppRowPresentation`) | `appRowPresentation` | `ICON_AND_TEXT` | |
 | `app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `appListVerticalAlignment` | `BOTTOM` | |
 | `app_list_layout` | String (`AppListLayout`) | `appListLayout` | `SINGLE_COLUMN` | single column / two column / grid |
@@ -665,10 +675,10 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 42 of the 63 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 42 of the 66 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
-`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, `app_list_vertical_alignment`, `selected_calendar_ids`,
+`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, the three `landscape_app_*` keys, `app_list_vertical_alignment`, `selected_calendar_ids`,
 `calendar_colors`, `recently_installed_position`, `search_settings_enabled`, all four `*_permission_requested` flags,
 `onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.

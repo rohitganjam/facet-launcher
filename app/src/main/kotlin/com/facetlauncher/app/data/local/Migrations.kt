@@ -576,6 +576,15 @@ object Migrations {
         }
     }
 
+    /** Adds `facets.landscapeAppRowPosition`/`landscapeAppListVerticalAlignment`/`landscapeAppListColumnAlignment` (nullable TEXT) — landscape's own list alignment. */
+    val MIGRATION_31_32: Migration = object : Migration(31, 32) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN landscapeAppRowPosition TEXT")
+            db.execSQL("ALTER TABLE facets ADD COLUMN landscapeAppListVerticalAlignment TEXT")
+            db.execSQL("ALTER TABLE facets ADD COLUMN landscapeAppListColumnAlignment TEXT")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -583,5 +592,6 @@ object Migrations {
         MIGRATION_28_29,
         MIGRATION_29_30,
         MIGRATION_30_31,
+        MIGRATION_31_32,
     )
 }

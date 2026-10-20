@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.resolveLandscapeSentinel
 import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -106,6 +107,27 @@ data class HomeUiState(
     /** The active facet's app-row position — a look/placement field, edited from Settings → Appearance and resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideApps` (see [com.facetlauncher.app.data.local.resolveSentinel]). */
     val activeAppRowPosition: AppRowPosition
         get() = activeFacet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
+
+    /** Landscape's app-row position: the facet's landscape value, else its explicit portrait one, else the launcher's landscape, else its portrait one (see `resolveLandscapeSentinel`). */
+    val landscapeAppRowPosition: AppRowPosition
+        get() = activeFacet.resolveLandscapeSentinel(
+            { it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT,
+            settings.landscapeAppRowPosition, settings.appRowPosition,
+        )
+
+    /** Landscape's app-list vertical anchor — see [landscapeAppRowPosition]'s own doc. */
+    val landscapeAppListVerticalAlignment: AppListVerticalAlignment
+        get() = activeFacet.resolveLandscapeSentinel(
+            { it.landscapeAppListVerticalAlignment }, { it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT,
+            settings.landscapeAppListVerticalAlignment, settings.appListVerticalAlignment,
+        )
+
+    /** Landscape's two-column alignment — see [landscapeAppRowPosition]'s own doc. */
+    val landscapeAppListColumnAlignment: AppListColumnAlignment
+        get() = activeFacet.resolveLandscapeSentinel(
+            { it.landscapeAppListColumnAlignment }, { it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT,
+            settings.landscapeAppListColumnAlignment, settings.appListColumnAlignment,
+        )
 
     /** The active facet's app-row presentation — see [activeAppRowPosition]'s own doc for the resolution shape. */
     val activeAppRowPresentation: AppRowPresentation

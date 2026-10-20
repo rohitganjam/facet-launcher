@@ -540,4 +540,31 @@ class SettingsRepositoryTest {
 
         assertEquals(null, repository.settings.first().landscapeClockAlignment)
     }
+
+    @Test
+    fun `landscape list alignment is saved apart from portrait and null clears it`() = runTest {
+        val repository = createRepository()
+        assertEquals(null, repository.settings.first().landscapeAppRowPosition)
+
+        // When the landscape values are written
+        repository.setLandscapeAppRowPosition(AppRowPosition.CENTER)
+        repository.setLandscapeAppListVerticalAlignment(AppListVerticalAlignment.TOP)
+        repository.setLandscapeAppListColumnAlignment(AppListColumnAlignment.MIRRORED)
+
+        // Then they read back and portrait is untouched
+        val saved = repository.settings.first()
+        assertEquals(AppRowPosition.CENTER, saved.landscapeAppRowPosition)
+        assertEquals(AppListVerticalAlignment.TOP, saved.landscapeAppListVerticalAlignment)
+        assertEquals(AppListColumnAlignment.MIRRORED, saved.landscapeAppListColumnAlignment)
+        assertEquals(AppRowPosition.LEFT, saved.appRowPosition)
+
+        // And null is "same as portrait" again
+        repository.setLandscapeAppRowPosition(null)
+        repository.setLandscapeAppListVerticalAlignment(null)
+        repository.setLandscapeAppListColumnAlignment(null)
+        val cleared = repository.settings.first()
+        assertEquals(null, cleared.landscapeAppRowPosition)
+        assertEquals(null, cleared.landscapeAppListVerticalAlignment)
+        assertEquals(null, cleared.landscapeAppListColumnAlignment)
+    }
 }

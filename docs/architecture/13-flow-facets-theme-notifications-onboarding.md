@@ -35,6 +35,7 @@ flowchart TB
     subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
+        A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(resolveLandscapeSentinel: facet landscape, facet explicit portrait, global landscape, global portrait)"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```
@@ -70,7 +71,7 @@ flowchart TB
   only, "Notifications" and "General" (one "Fonts, themes and icons" row → `FontsThemesIconsScreen`, route `fontsThemesIcons`).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
-  fields above, always shown; `FontsThemesIconsScreen` holds three cards, each under a `SettingsSectionHeader`: "Theme"
+  fields above, always shown, in three cards: the shared look (dock style, list layout, presentation or grid rows), then "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview card stays portrait-shaped; `FontsThemesIconsScreen` holds three cards, each under a `SettingsSectionHeader`: "Theme"
   (launcher theme, status bar icons, accent), "Icons" (icon style and shape) and "Fonts" (launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
   Home's styles as the card's last row). Row titles on the dock screen:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",

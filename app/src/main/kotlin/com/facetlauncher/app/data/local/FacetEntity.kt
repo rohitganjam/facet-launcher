@@ -83,6 +83,10 @@ data class FacetEntity(
     val overrideApps: Boolean = false,
     /** Look/placement, not content — editable from Settings → Appearance now, resolved independently of [overrideApps] via [resolveSentinel]. See [com.facetlauncher.app.data.model.DockDisplayMode]'s own doc for the sentinel model. */
     val appRowPosition: AppRowPosition = AppRowPosition.LAUNCHER_DEFAULT,
+    /** Landscape's own value for [appRowPosition], [appListVerticalAlignment] and [appListColumnAlignment]; `null` is "same as portrait". */
+    val landscapeAppRowPosition: AppRowPosition? = null,
+    val landscapeAppListVerticalAlignment: AppListVerticalAlignment? = null,
+    val landscapeAppListColumnAlignment: AppListColumnAlignment? = null,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.LAUNCHER_DEFAULT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
@@ -158,6 +162,22 @@ inline fun <T> FacetEntity?.resolveOverride(overriding: (FacetEntity) -> Boolean
 inline fun <T> FacetEntity?.resolveSentinel(facetValue: (FacetEntity) -> T, sentinel: T, globalValue: T): T {
     val value = this?.let(facetValue) ?: return globalValue
     return if (value == sentinel) globalValue else value
+}
+
+/**
+ * [resolveSentinel] for landscape: the facet's landscape value, else its explicit portrait value, else the
+ * launcher's landscape value, else the launcher's portrait one. A `null` landscape value is "same as portrait".
+ */
+inline fun <T : Any> FacetEntity?.resolveLandscapeSentinel(
+    facetLandscape: (FacetEntity) -> T?,
+    facetPortrait: (FacetEntity) -> T,
+    sentinel: T,
+    globalLandscape: T?,
+    globalPortrait: T,
+): T {
+    val facet = this
+    val facetValue = facet?.let(facetLandscape) ?: facet?.let(facetPortrait)?.takeIf { it != sentinel }
+    return facetValue ?: globalLandscape ?: globalPortrait
 }
 
 /** The calendar display options in force for `this` facet (or the launcher-wide ones when it's `null` or not overriding the calendar). */

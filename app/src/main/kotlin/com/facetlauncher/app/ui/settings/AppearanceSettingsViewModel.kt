@@ -85,6 +85,10 @@ data class AppearanceSettingsUiState(
     val appListVerticalAlignment: AppListVerticalAlignment get() = facet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
     val appListLayout: AppListLayout get() = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout)
     val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
+    /** What the Landscape rows show: this scope's own stored landscape value, `null` meaning "same as portrait". */
+    val landscapeAppRowPosition: AppRowPosition? get() = if (facet != null) facet.landscapeAppRowPosition else settings.landscapeAppRowPosition
+    val landscapeAppListVerticalAlignment: AppListVerticalAlignment? get() = if (facet != null) facet.landscapeAppListVerticalAlignment else settings.landscapeAppListVerticalAlignment
+    val landscapeAppListColumnAlignment: AppListColumnAlignment? get() = if (facet != null) facet.landscapeAppListColumnAlignment else settings.landscapeAppListColumnAlignment
     val appListGridColumns: AppListGridColumns get() = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns)
     val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode)
     /** Mirrors `HomeAppsListSettingsViewModel.HomeAppsListUiState.favorites`'s own resolution exactly — same `overrideApps` flag. */
@@ -270,6 +274,27 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPosition(it, position) } }
                 ?: settingsRepository.setAppRowPosition(position)
+        }
+    }
+
+    fun setLandscapeAppRowPosition(position: AppRowPosition?) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setLandscapeAppRowPosition(it, position) } }
+                ?: settingsRepository.setLandscapeAppRowPosition(position)
+        }
+    }
+
+    fun setLandscapeAppListVerticalAlignment(alignment: AppListVerticalAlignment?) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setLandscapeAppListVerticalAlignment(it, alignment) } }
+                ?: settingsRepository.setLandscapeAppListVerticalAlignment(alignment)
+        }
+    }
+
+    fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setLandscapeAppListColumnAlignment(it, alignment) } }
+                ?: settingsRepository.setLandscapeAppListColumnAlignment(alignment)
         }
     }
 

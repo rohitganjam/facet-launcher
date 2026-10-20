@@ -215,6 +215,11 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(appRowPosition = position))
     }
 
+    /** Landscape's own row position for this facet; `null` is "same as portrait". */
+    suspend fun setLandscapeAppRowPosition(facet: FacetEntity, position: AppRowPosition?) {
+        facetDao.update(facet.copy(landscapeAppRowPosition = position))
+    }
+
     suspend fun setAppRowPresentation(facet: FacetEntity, presentation: AppRowPresentation) {
         facetDao.update(facet.copy(appRowPresentation = presentation))
     }
@@ -232,12 +237,22 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(appListVerticalAlignment = alignment))
     }
 
+    /** Landscape's own vertical alignment for this facet; `null` is "same as portrait". */
+    suspend fun setLandscapeAppListVerticalAlignment(facet: FacetEntity, alignment: AppListVerticalAlignment?) {
+        facetDao.update(facet.copy(landscapeAppListVerticalAlignment = alignment))
+    }
+
     suspend fun setAppListLayout(facet: FacetEntity, layout: AppListLayout) {
         facetDao.update(facet.copy(appListLayout = layout))
     }
 
     suspend fun setAppListColumnAlignment(facet: FacetEntity, alignment: AppListColumnAlignment) {
         facetDao.update(facet.copy(appListColumnAlignment = alignment))
+    }
+
+    /** Landscape's own two-column alignment for this facet; `null` is "same as portrait". */
+    suspend fun setLandscapeAppListColumnAlignment(facet: FacetEntity, alignment: AppListColumnAlignment?) {
+        facetDao.update(facet.copy(landscapeAppListColumnAlignment = alignment))
     }
 
     suspend fun setAppListGridColumns(facet: FacetEntity, columns: AppListGridColumns) {

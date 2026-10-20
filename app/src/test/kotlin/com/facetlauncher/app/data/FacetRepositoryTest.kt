@@ -485,4 +485,24 @@ class FacetRepositoryTest {
 
         assertNull(repository.observeFacets().first().single().landscapeClockZoneHeightDp)
     }
+
+    @Test
+    fun `landscape list alignment is saved apart from portrait and null clears it`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setAppRowPosition(facet, AppRowPosition.RIGHT)
+
+        repository.setLandscapeAppRowPosition(repository.observeFacets().first().single(), AppRowPosition.CENTER)
+        repository.setLandscapeAppListVerticalAlignment(repository.observeFacets().first().single(), AppListVerticalAlignment.TOP)
+        repository.setLandscapeAppListColumnAlignment(repository.observeFacets().first().single(), AppListColumnAlignment.MIRRORED)
+
+        val saved = repository.observeFacets().first().single()
+        assertEquals(AppRowPosition.RIGHT, saved.appRowPosition)
+        assertEquals(AppRowPosition.CENTER, saved.landscapeAppRowPosition)
+        assertEquals(AppListVerticalAlignment.TOP, saved.landscapeAppListVerticalAlignment)
+        assertEquals(AppListColumnAlignment.MIRRORED, saved.landscapeAppListColumnAlignment)
+
+        repository.setLandscapeAppRowPosition(saved, null)
+        assertNull(repository.observeFacets().first().single().landscapeAppRowPosition)
+    }
 }
