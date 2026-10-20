@@ -1,16 +1,10 @@
 package com.facetlauncher.app.ui.home
 
 import android.content.res.Configuration
-import android.graphics.Rect as AndroidRect
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +23,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,20 +31,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
@@ -101,9 +90,7 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
-import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -765,437 +752,9 @@ fun HomeScreen(
             }
         }
 
-        // Portrait and landscape each have their own adjust handles and pill, for the native clock and for a hosted clock widget.
-        val adjusting = clockAdjustMode == ClockAdjustMode.ADJUST
-        val adjustingInPortrait = adjusting && !isLandscape
-        val adjustingInLandscape = adjusting && isLandscape
-
-        if (adjustingInLandscape) {
-            // The divider between the clock and apps panes: dragging it sets the clock pane's width. As with
-            // portrait's height handle, a narrower pane shrinks the clock in real time (the native clock to its
-            // smallest scale, a hosted widget to its own minimum size), where the divider stops, and on release
-            // the shrunk scale or size is saved so it doesn't snap back. (A saved width that is already too
-            // narrow, e.g. one carried over from portrait, shrinks the clock on screen only until it is dragged.)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM + landscapeDockReserve),
-            ) {
-                ClockZoneHandle(
-                    dragOrientation = Orientation.Horizontal,
-                    modifier = Modifier.offset {
-                        val centerInGapPx = with(density) { ((HOME_LANDSCAPE_PANE_GAP - CLOCK_ZONE_HANDLE_TOUCH_HEIGHT) / 2).toPx() }
-                        IntOffset((landscapePaneWidthPx + centerInGapPx).roundToInt(), 0)
-                    },
-                    onDragStart = { onDraggingHandleChange(true) },
-                    onDrag = { deltaDp ->
-                        layout.liveDividerWidthPx = landscapeDividerDragWidthPx(
-                            currentPx = layout.liveDividerWidthPx ?: landscapePaneWidthPx,
-                            deltaPx = with(density) { deltaDp.dp.toPx() },
-                            floorPx = landscapeMarginsPx + landscapeMinClockWidthPx,
-                            contentWidthPx = landscapeContentWidth,
-                        )
-                    },
-                    onDragEnd = {
-                        onDraggingHandleChange(false)
-                        // liveDividerWidthPx is held until LaunchedEffect(clockZoneHeightDp) sees the commit land.
-                        onClockZoneHeightCommit(with(density) { landscapePaneWidthPx.toDp().value })
-                        val shrunkWidget = effectiveClockWidgetSizePx
-                        if (clockWidgetAppWidgetId != null && shrunkWidget != null) {
-                            if (shrunkWidget.x < with(density) { (clockWidgetWidthDp ?: 0.dp).toPx() } - 1f) {
-                                onClockWidgetSizeCommit(
-                                    with(density) { shrunkWidget.x.toDp().value }.roundToInt(),
-                                    with(density) { shrunkWidget.y.toDp().value }.roundToInt(),
-                                )
-                            }
-                        } else if (effectiveClockScale < clockScale - 0.005f) {
-                            onClockScaleCommit(effectiveClockScale)
-                        }
-                    },
-                )
-            }
-        }
-
-        if (adjustingInPortrait) {
-            // Move handle — always present in adjust mode. On release it also persists the scale if
-            // the reposition forced a shrink-to-fit, so it doesn't snap back.
-            ClockZoneHandle(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .offset { IntOffset(0, handlePx.roundToInt()) },
-                onDragStart = { onDraggingHandleChange(true) },
-                onDrag = { deltaDp ->
-                    // Clamped here too, so the handle follows the finger straight away when a drag reverses.
-                    layout.liveHandlePx = ((layout.liveHandlePx ?: basePersistedHandlePx) + with(density) { deltaDp.dp.toPx() }).coerceIn(floorPx, ceilingPx)
-                },
-                onDragEnd = {
-                    onDraggingHandleChange(false)
-                    onClockZoneHeightCommit(with(density) { handlePx.toDp().value })
-                    // liveHandlePx is deliberately left set — held until LaunchedEffect(clockZoneHeightDp)
-                    // above sees the commit land, same reasoning as liveScale below.
-                    if (effectiveClockScale < clockScale - 0.005f) onClockScaleCommit(effectiveClockScale)
-                },
-            )
-        }
-
-        // The alignment pill: below the height handle (its 48dp touch strip + a gap), not under the clock — the
-        // clock block is pinned only 24dp above the handle, too little room for it. During any handle/resize
-        // drag it dims to a ghost and its options are disabled, and it only becomes active again a moment after
-        // the drag ends, so a thumb that has just let go of the handle can't tap it. It stays composed (so it
-        // doesn't pop in and out) and keeps absorbing taps, which would otherwise reach the root and exit adjust mode.
-        val toolbarActive by produceState(initialValue = false, clockAdjustMode, draggingHandle) {
-            value = if (clockAdjustMode == ClockAdjustMode.ADJUST && !draggingHandle) {
-                delay(CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS)
-                true
-            } else {
-                false
-            }
-        }
-        // Not `by` — read .value only inside graphicsLayer below, so the fade runs in the draw phase.
-        val toolbarAlpha = animateFloatAsState(
-            targetValue = if (toolbarActive) 1f else CLOCK_ADJUST_TOOLBAR_DIMMED_ALPHA,
-            animationSpec = tween(if (toolbarActive) 150 else 120),
-            label = "clockAdjustToolbarAlpha",
-        )
-        AnimatedVisibility(
-            visible = adjustingInPortrait,
-            enter = fadeIn(tween(120)),
-            exit = fadeOut(tween(80)),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset { IntOffset(0, (handlePx + with(density) { (CLOCK_ZONE_HANDLE_TOUCH_HEIGHT + CLOCK_ADJUST_TOOLBAR_GAP).toPx() }).roundToInt()) },
-        ) {
-            ClockAdjustToolbar(
-                alignment = clockAlignment,
-                onAlignmentChange = onClockAlignmentChange,
-                modifier = Modifier.graphicsLayer { alpha = toolbarAlpha.value },
-                enabled = toolbarActive,
-            )
-        }
-
-        // Landscape's pill: in the clock pane at its bottom edge, or at the top when the clock is
-        // aligned to the bottom, so it never covers the clock. Same dimming as the portrait pill.
-        AnimatedVisibility(
-            visible = adjustingInLandscape,
-            enter = fadeIn(tween(120)),
-            exit = fadeOut(tween(80)),
-            modifier = Modifier
-                .align(if (clockAlignment == ClockAlignment.RIGHT) Alignment.TopStart else Alignment.BottomStart)
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .padding(
-                    start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING,
-                    top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP,
-                    bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM + landscapeDockReserve,
-                ),
-        ) {
-            ClockAdjustToolbar(
-                alignment = clockAlignment,
-                onAlignmentChange = onClockAlignmentChange,
-                modifier = Modifier.graphicsLayer { alpha = toolbarAlpha.value },
-                enabled = toolbarActive,
-                vertical = true,
-            )
-        }
-
-        // Plain local var, not remembered state — read once via the SideEffect below, after both
-        // ADJUST blocks (at most one of which is ever active) have had a chance to populate it.
-        var handleExclusionRects: List<AndroidRect> = emptyList()
-        val handleExclusionSizePx = with(density) { 40.dp.toPx() }.roundToInt()
-        fun handleExclusionRect(xPx: Float, yPx: Float): AndroidRect {
-            val left = xPx.roundToInt()
-            val top = yPx.roundToInt()
-            return AndroidRect(left, top, left + handleExclusionSizePx, top + handleExclusionSizePx)
-        }
-
-        // PRD F15 — the native clock's own scale-based resize handles only apply when there's no
-        // hosted widget to resize instead (see the parallel, real-size-based block below).
-        val clockGeometryReady = layout.clockBoxSize != null && layout.clockBoxOriginInRoot != null && layout.rootOriginInRoot != null && layout.rootSize != null
-        if (adjustingInPortrait && clockWidgetAppWidgetId == null && clockGeometryReady) {
-            val rootOrigin = layout.rootOriginInRoot!!
-            // The clock's natural (unscaled) box in root coords — stable throughout a drag (uniformScale
-            // keeps the layout footprint at natural size). Everything below is a pure function of this
-            // box and `eff`, so the handles/border stay locked to the glyph with no lag and nothing
-            // reflows on release.
-            val natW = layout.clockBoxSize!!.width.toFloat()
-            val natH = layout.clockBoxSize!!.height.toFloat()
-            val natTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
-            val clockMaxScale = maxScaleThatFits(layout.clockBoxSize!!, natTopLeft, layout.rootSize!!.width)
-            val eff = effectiveClockScale
-
-            val natBottom = natTopLeft.y + natH
-            // The x that stays put as the glyph scales (matches uniformScale's transformOrigin).
-            val anchorX = when (clockAlignment) {
-                ClockAlignment.LEFT -> natTopLeft.x
-                ClockAlignment.RIGHT -> natTopLeft.x + natW
-                ClockAlignment.CENTER -> natTopLeft.x + natW / 2f
-            }
-
-            val visualWidth = natW * eff
-            val visualHeight = natH * eff
-            val visualTopLeftY = natBottom - visualHeight
-            val visualTopLeftX = when (clockAlignment) {
-                ClockAlignment.LEFT -> anchorX
-                ClockAlignment.RIGHT -> anchorX - visualWidth
-                ClockAlignment.CENTER -> anchorX - visualWidth / 2f
-            }
-
-            // Scale a touch point in root coords implies, if that point were the dragged corner.
-            val scaleAtTouch: (Offset) -> Float = { t ->
-                val sx = when (clockAlignment) {
-                    ClockAlignment.LEFT -> (t.x - anchorX) / natW
-                    ClockAlignment.RIGHT -> (anchorX - t.x) / natW
-                    ClockAlignment.CENTER -> abs(t.x - anchorX) * 2f / natW
-                }
-                val sy = (natBottom - t.y) / natH
-                (sx + sy) / 2f
-            }
-            val onHandleDragStart: () -> Unit = {
-                layout.dragGrabOffset = Float.NaN
-                onDraggingHandleChange(true)
-            }
-            val onHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
-                val implied = scaleAtTouch(touchInAbsolute - rootOrigin)
-                // First move: capture where the finger sits vs the corner, so the clock doesn't pop.
-                if (layout.dragGrabOffset.isNaN()) layout.dragGrabOffset = implied - (layout.liveScale ?: clockScale)
-                layout.liveScale = (implied - layout.dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale)
-            }
-            val onHandleDragEnd: () -> Unit = {
-                onDraggingHandleChange(false)
-                // liveScale is held until LaunchedEffect(clockScale) sees the commit land.
-                onClockScaleCommit((layout.liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, clockMaxScale))
-            }
-
-            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
-            // Safety net for the top handles: never let them sit in the status-bar strip even if
-            // clockMaxScale is momentarily stale (e.g. right after a template switch).
-            val handleTopPx = (visualTopLeftY - handleInsetPx).coerceAtLeast(topInsetPx)
-            handleExclusionRects = listOf(
-                handleExclusionRect(visualTopLeftX - handleInsetPx, handleTopPx),
-                handleExclusionRect(visualTopLeftX + visualWidth - handleInsetPx, handleTopPx),
-            )
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(visualTopLeftX.roundToInt(), visualTopLeftY.roundToInt()) }
-                    .size(with(density) { visualWidth.toDp() }, with(density) { visualHeight.toDp() })
-                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-            )
-            ClockCornerHandle(
-                isRightSide = false,
-                modifier = Modifier.offset {
-                    IntOffset((visualTopLeftX - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
-                },
-                onDragStart = onHandleDragStart,
-                onDrag = onHandleDrag,
-                onDragEnd = onHandleDragEnd,
-            )
-            ClockCornerHandle(
-                isRightSide = true,
-                modifier = Modifier.offset {
-                    IntOffset((visualTopLeftX + visualWidth - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
-                },
-                onDragStart = onHandleDragStart,
-                onDrag = onHandleDrag,
-                onDragEnd = onHandleDragEnd,
-            )
-        }
-
-        // Landscape's scale handles for the native clock: the corners away from the anchor (the bottom
-        // ones for a top-aligned clock, the top ones otherwise), scaling around the clock's left edge.
-        if (adjustingInLandscape && clockWidgetAppWidgetId == null && clockGeometryReady) {
-            val rootOrigin = layout.rootOriginInRoot!!
-            val natTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
-            val visual = landscapeVisualClockRect(natTopLeft, landscapeNaturalSize, landscapeOriginY, effectiveClockScale)
-            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
-            val handleY = if (landscapeOriginY <= 0f) visual.bottom - handleInsetPx else (visual.top - handleInsetPx).coerceAtLeast(topInsetPx)
-            val onHandleDragStart: () -> Unit = {
-                layout.dragGrabOffset = Float.NaN
-                onDraggingHandleChange(true)
-            }
-            val onHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
-                val implied = landscapeScaleAtTouch(touchInAbsolute - rootOrigin, natTopLeft, landscapeNaturalSize, landscapeOriginY)
-                // First move: capture where the finger sits vs the corner, so the clock doesn't pop.
-                if (layout.dragGrabOffset.isNaN()) layout.dragGrabOffset = implied - (layout.liveScale ?: clockScale)
-                layout.liveScale = (implied - layout.dragGrabOffset).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale)
-            }
-            val onHandleDragEnd: () -> Unit = {
-                onDraggingHandleChange(false)
-                // liveScale is held until LaunchedEffect(clockScale) sees the commit land.
-                onClockScaleCommit((layout.liveScale ?: clockScale).coerceIn(HOME_CLOCK_MIN_SCALE, landscapeMaxScale))
-            }
-            handleExclusionRects = listOf(
-                handleExclusionRect(visual.left - handleInsetPx, handleY),
-                handleExclusionRect(visual.right - handleInsetPx, handleY),
-            )
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(visual.left.roundToInt(), visual.top.roundToInt()) }
-                    .size(with(density) { visual.width.toDp() }, with(density) { visual.height.toDp() })
-                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-            )
-            ClockCornerHandle(
-                isRightSide = false,
-                modifier = Modifier.offset { IntOffset((visual.left - handleInsetPx).roundToInt(), handleY.roundToInt()) },
-                onDragStart = onHandleDragStart,
-                onDrag = onHandleDrag,
-                onDragEnd = onHandleDragEnd,
-            )
-            ClockCornerHandle(
-                isRightSide = true,
-                modifier = Modifier.offset { IntOffset((visual.right - handleInsetPx).roundToInt(), handleY.roundToInt()) },
-                onDragStart = onHandleDragStart,
-                onDrag = onHandleDrag,
-                onDragEnd = onHandleDragEnd,
-            )
-        }
-
-        // Landscape's resize handles for a hosted clock widget: its real width and height (not a scale), kept
-        // to the pane, on the corners away from its anchor (bottom for a top-aligned widget, top otherwise).
-        if (adjustingInLandscape && clockWidgetAppWidgetId != null && clockGeometryReady) {
-            val rootOrigin = layout.rootOriginInRoot!!
-            val boxTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
-            val boxSize = landscapeNaturalSize
-            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
-            val handleY = if (landscapeOriginY <= 0f) boxTopLeft.y + boxSize.height - handleInsetPx else (boxTopLeft.y - handleInsetPx).coerceAtLeast(topInsetPx)
-            val onWidgetHandleDragStart: () -> Unit = {
-                layout.widgetDragGrabOffset = null
-                onDraggingHandleChange(true)
-            }
-            val onWidgetHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
-                val implied = landscapeWidgetSizeAtTouch(touchInAbsolute - rootOrigin, boxTopLeft, boxSize, landscapeOriginY)
-                // First move: capture where the finger sits vs the corner, so the box doesn't pop.
-                val grab = layout.widgetDragGrabOffset
-                    ?: Offset(implied.width - (layout.liveWidgetWidthPx ?: boxSize.width), implied.height - (layout.liveWidgetHeightPx ?: boxSize.height))
-                        .also { layout.widgetDragGrabOffset = it }
-                layout.liveWidgetWidthPx = (implied.width - grab.x).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
-                layout.liveWidgetHeightPx = (implied.height - grab.y).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
-            }
-            val onWidgetHandleDragEnd: () -> Unit = {
-                onDraggingHandleChange(false)
-                val finalWidthPx = (layout.liveWidgetWidthPx ?: boxSize.width).coerceIn(clockWidgetMinWidthPx, maxOf(clockWidgetMinWidthPx, landscapeMaxWidgetSize.width))
-                val finalHeightPx = (layout.liveWidgetHeightPx ?: boxSize.height).coerceIn(clockWidgetMinHeightPx, maxOf(clockWidgetMinHeightPx, landscapeMaxWidgetSize.height))
-                onClockWidgetSizeCommit(
-                    with(density) { finalWidthPx.toDp().value }.roundToInt(),
-                    with(density) { finalHeightPx.toDp().value }.roundToInt(),
-                )
-            }
-            handleExclusionRects = listOf(
-                handleExclusionRect(boxTopLeft.x - handleInsetPx, handleY),
-                handleExclusionRect(boxTopLeft.x + boxSize.width - handleInsetPx, handleY),
-            )
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(boxTopLeft.x.roundToInt(), boxTopLeft.y.roundToInt()) }
-                    .size(with(density) { boxSize.width.toDp() }, with(density) { boxSize.height.toDp() })
-                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-            )
-            ClockCornerHandle(
-                isRightSide = false,
-                modifier = Modifier.offset { IntOffset((boxTopLeft.x - handleInsetPx).roundToInt(), handleY.roundToInt()) },
-                onDragStart = onWidgetHandleDragStart,
-                onDrag = onWidgetHandleDrag,
-                onDragEnd = onWidgetHandleDragEnd,
-            )
-            ClockCornerHandle(
-                isRightSide = true,
-                modifier = Modifier.offset { IntOffset((boxTopLeft.x + boxSize.width - handleInsetPx).roundToInt(), handleY.roundToInt()) },
-                onDragStart = onWidgetHandleDragStart,
-                onDrag = onWidgetHandleDrag,
-                onDragEnd = onWidgetHandleDragEnd,
-            )
-        }
-
-        // PRD F15 — the hosted clock widget's own resize handles: real width/height directly (the
-        // widget's current box size IS its real size — no natural-size-times-scale layer to derive
-        // from, unlike the native clock's own block above), otherwise the same bottom- and
-        // alignment-anchored geometry, corner-handle placement, and live-clamped-while-dragging
-        // behavior.
-        if (adjustingInPortrait && clockWidgetAppWidgetId != null && clockGeometryReady) {
-            val rootOrigin = layout.rootOriginInRoot!!
-            val boxW = layout.clockBoxSize!!.width.toFloat()
-            val boxH = layout.clockBoxSize!!.height.toFloat()
-            val boxTopLeft = layout.clockBoxOriginInRoot!! - rootOrigin
-            val maxWidgetSize = maxWidgetSizePxThatFits(layout.clockBoxSize!!, boxTopLeft, layout.rootSize!!.width)
-            val minWidthPx = clockWidgetMinWidthDp?.let { with(density) { it.toPx() } } ?: 1f
-            val minHeightPx = clockWidgetMinHeightDp?.let { with(density) { it.toPx() } } ?: 1f
-
-            val boxBottom = boxTopLeft.y + boxH
-            // The x that stays put as the box resizes (matches the widget's own alignment anchor).
-            val anchorX = when (clockAlignment) {
-                ClockAlignment.LEFT -> boxTopLeft.x
-                ClockAlignment.RIGHT -> boxTopLeft.x + boxW
-                ClockAlignment.CENTER -> boxTopLeft.x + boxW / 2f
-            }
-
-            // Real width/height a touch point implies, if that point were the dragged corner.
-            val sizeAtTouch: (Offset) -> Offset = { t ->
-                val w = when (clockAlignment) {
-                    ClockAlignment.LEFT -> t.x - anchorX
-                    ClockAlignment.RIGHT -> anchorX - t.x
-                    ClockAlignment.CENTER -> abs(t.x - anchorX) * 2f
-                }
-                Offset(w, boxBottom - t.y)
-            }
-            val onWidgetHandleDragStart: () -> Unit = {
-                layout.widgetDragGrabOffset = null
-                onDraggingHandleChange(true)
-            }
-            val onWidgetHandleDrag: (Offset) -> Unit = { touchInAbsolute ->
-                val implied = sizeAtTouch(touchInAbsolute - rootOrigin)
-                // First move: capture where the finger sits vs the corner, so the box doesn't pop.
-                val grab = layout.widgetDragGrabOffset
-                    ?: Offset(implied.x - (layout.liveWidgetWidthPx ?: boxW), implied.y - (layout.liveWidgetHeightPx ?: boxH))
-                        .also { layout.widgetDragGrabOffset = it }
-                layout.liveWidgetWidthPx = (implied.x - grab.x).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
-                layout.liveWidgetHeightPx = (implied.y - grab.y).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
-            }
-            val onWidgetHandleDragEnd: () -> Unit = {
-                onDraggingHandleChange(false)
-                val finalWidthPx = (layout.liveWidgetWidthPx ?: boxW).coerceIn(minWidthPx, maxOf(minWidthPx, maxWidgetSize.x))
-                val finalHeightPx = (layout.liveWidgetHeightPx ?: boxH).coerceIn(minHeightPx, maxOf(minHeightPx, maxWidgetSize.y))
-                val widthDp = with(density) { finalWidthPx.toDp().value }.roundToInt()
-                val heightDp = with(density) { finalHeightPx.toDp().value }.roundToInt()
-                onClockWidgetSizeCommit(widthDp, heightDp)
-            }
-
-            val handleInsetPx = with(density) { HOME_CLOCK_RESIZE_HANDLE_INSET.toPx() }
-            val handleTopPx = (boxTopLeft.y - handleInsetPx).coerceAtLeast(topInsetPx)
-            handleExclusionRects = listOf(
-                handleExclusionRect(boxTopLeft.x - handleInsetPx, handleTopPx),
-                handleExclusionRect(boxTopLeft.x + boxW - handleInsetPx, handleTopPx),
-            )
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(boxTopLeft.x.roundToInt(), boxTopLeft.y.roundToInt()) }
-                    .size(with(density) { boxW.toDp() }, with(density) { boxH.toDp() })
-                    .border(1.dp, Accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-            )
-            ClockCornerHandle(
-                isRightSide = false,
-                modifier = Modifier.offset {
-                    IntOffset((boxTopLeft.x - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
-                },
-                onDragStart = onWidgetHandleDragStart,
-                onDrag = onWidgetHandleDrag,
-                onDragEnd = onWidgetHandleDragEnd,
-            )
-            ClockCornerHandle(
-                isRightSide = true,
-                modifier = Modifier.offset {
-                    IntOffset((boxTopLeft.x + boxW - handleInsetPx).roundToInt(), handleTopPx.roundToInt())
-                },
-                onDragStart = onWidgetHandleDragStart,
-                onDrag = onWidgetHandleDrag,
-                onDragEnd = onWidgetHandleDragEnd,
-            )
-        }
-
-        // Opts the resize handles' own touch region out of the system's edge-swipe back gesture —
-        // see handleExclusionRects' own declaration above. Empty (clearing any previously
-        // registered rects) whenever neither ADJUST block above ran this composition, e.g. leaving
-        // ADJUST mode or a hosted widget being sized small enough that its handles never land near
-        // an edge (this still runs, it just sets an empty list, a cheap no-op call).
-        SideEffect { view.systemGestureExclusionRects = handleExclusionRects }
+        val adjustEnv = ClockAdjustEnv(layout, geometry, metrics, state.clock, state.widget, actions, Offset(clockWidgetMinWidthPx, clockWidgetMinHeightPx), landscapeDockReserve)
+        ClockAdjustOverlays(adjustEnv, landscape = isLandscape)
+        ClockAdjustPills(adjustEnv, adjusting = clockAdjustMode == ClockAdjustMode.ADJUST, landscape = isLandscape)
 
         // Reports the hosted widget's current bounds so HomeDrawerRoute's own swipe-to-open-drawer
         // gesture can exclude them — see onClockWidgetBoundsChange's own doc. null whenever no
@@ -1314,15 +873,15 @@ internal val HOME_MEDIA_ROW_BOTTOM_GAP = 12.dp
 internal val CLOCK_ADJUST_TOOLBAR_GAP = 8.dp
 
 /** How long the toolbar stays dimmed and disabled after a drag ends — see its use in [HomeScreen]. */
-private const val CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS = 200L
+internal const val CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS = 200L
 
 /** The toolbar's opacity while a drag is active or just ended — a visible ghost, not gone. */
-private const val CLOCK_ADJUST_TOOLBAR_DIMMED_ALPHA = 0.25f
+internal const val CLOCK_ADJUST_TOOLBAR_DIMMED_ALPHA = 0.25f
 
 
 
 /** Half the resize handle's hit box — the amount it extends past the clock corner it sits on. */
-private val HOME_CLOCK_RESIZE_HANDLE_INSET = 20.dp
+internal val HOME_CLOCK_RESIZE_HANDLE_INSET = 20.dp
 
 /** Shared timing for this file's "wait for layout geometry to settle, then decide once" checks (the clock's own re-clamp and the app list's compact-spacing check) — long enough to skip transient double-measurement, bounded so a check that never gets valid geometry doesn't hang. */
 private const val GEOMETRY_SETTLE_DEBOUNCE_MS = 150L
