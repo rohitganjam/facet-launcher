@@ -127,6 +127,30 @@ data class HomeUiState(
     val clockScale: Float
         get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
 
+    /** Landscape's clock alignment: the landscape value where set (facet or global, same override gate), else the portrait one. */
+    val landscapeClockAlignment: ClockAlignment
+        get() = activeFacet.resolveOverride(
+            { it.overrideClock },
+            { it.landscapeClockAlignment ?: it.clockAlignment },
+            settings.landscapeClockAlignment ?: settings.clockAlignment,
+        )
+
+    /** Landscape's divider position (its clock pane width) — see [landscapeClockAlignment]'s own doc. */
+    val landscapeClockZoneHeightDp: Float?
+        get() = activeFacet.resolveOverride(
+            { it.overrideClock },
+            { it.landscapeClockZoneHeightDp ?: it.clockZoneHeightDp },
+            settings.landscapeClockZoneHeightDp ?: settings.clockZoneHeightDp,
+        )
+
+    /** Landscape's clock scale — see [landscapeClockAlignment]'s own doc. */
+    val landscapeClockScale: Float
+        get() = activeFacet.resolveOverride(
+            { it.overrideClock },
+            { it.landscapeClockScale ?: it.clockScale },
+            settings.landscapeClockScale ?: settings.clockScale,
+        )
+
     /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
     val clockPositionOwningFacet: FacetEntity?
         get() = activeFacet?.takeIf { it.overrideClock }

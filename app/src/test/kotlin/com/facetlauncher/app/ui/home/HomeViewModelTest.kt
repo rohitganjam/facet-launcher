@@ -312,4 +312,42 @@ class HomeViewModelTest {
         // be a fresh suspend fetch on every open, causing the sheet to visibly reflow).
         assertEquals(QuickPlacementAction.Remove(facetName = null), result.dockAction)
     }
+
+    @Test
+    fun `landscape clock commits write the landscape values to the settings repository when no facet is overriding`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
+
+        viewModel.onClockZoneHeightCommit(310f, landscape = true)
+        viewModel.onClockScaleCommit(1.1f, landscape = true)
+        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, landscape = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setClockZoneHeight(310f, true)
+        verify(settingsRepository).setClockScale(1.1f, true)
+        verify(settingsRepository).setClockAlignment(ClockAlignment.CENTER, true)
+    }
+
+    @Test
+    fun `landscape clock commits write the landscape values to an overriding facet`() = runTest {
+        val facetRepository = mock(FacetRepository::class.java)
+        val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val viewModel = homeViewModel(
+            notificationShadeRepository = mock(NotificationShadeRepository::class.java),
+            settingsRepository = mock(SettingsRepository::class.java),
+            facetRepository = facetRepository,
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(overridingFacet),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onClockZoneHeightCommit(310f, landscape = true)
+        viewModel.onClockScaleCommit(1.1f, landscape = true)
+        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, landscape = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(facetRepository).setClockZoneHeight(overridingFacet, 310f, true)
+        verify(facetRepository).setClockScale(overridingFacet, 1.1f, true)
+        verify(facetRepository).setClockAlignment(overridingFacet, ClockAlignment.CENTER, true)
+    }
 }

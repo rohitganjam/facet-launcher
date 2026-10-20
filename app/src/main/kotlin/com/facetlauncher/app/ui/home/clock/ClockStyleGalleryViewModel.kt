@@ -195,6 +195,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 settingsRepository.resetClockZoneHeight()
                 settingsRepository.resetClockScale()
                 settingsRepository.setClockAlignment(ClockAlignment.LEFT)
+                settingsRepository.resetLandscapeClockAlignment()
             }
         }
     }

@@ -398,6 +398,12 @@ data class LauncherSettings(
      * Uniform scaling ensures proportions are preserved.
      */
     val clockScale: Float = 0.8f,
+    /** Landscape's own [clockAlignment] (top, middle or bottom there); `null` uses the portrait value. */
+    val landscapeClockAlignment: ClockAlignment? = null,
+    /** Landscape's own [clockZoneHeightDp] (its divider position, a pane width); `null` uses the portrait value. */
+    val landscapeClockZoneHeightDp: Float? = null,
+    /** Landscape's own [clockScale]; `null` uses the portrait value. */
+    val landscapeClockScale: Float? = null,
     /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.facetlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */
     val onboardingCompleted: Boolean = false,
     /** One-shot guard for [SeedDefaultDockUseCase][com.facetlauncher.app.domain.SeedDefaultDockUseCase] — set once the dock's default apps have been seeded, so a re-run (or a later manual empty-dock) never re-seeds. Install-local — excluded from the backup bundle. */

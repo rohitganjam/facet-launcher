@@ -435,4 +435,54 @@ class FacetRepositoryTest {
         assertNull(switched.landscapeClockWidgetWidthDp)
         assertNull(switched.landscapeClockWidgetHeightDp)
     }
+
+    @Test
+    fun `the landscape clock props are saved apart from the portrait ones`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockAlignment(facet, ClockAlignment.RIGHT)
+        repository.setClockZoneHeight(repository.observeFacets().first().single(), 220f)
+        repository.setClockScale(repository.observeFacets().first().single(), 1.5f)
+
+        // When the landscape values are written
+        repository.setClockAlignment(repository.observeFacets().first().single(), ClockAlignment.CENTER, landscape = true)
+        repository.setClockZoneHeight(repository.observeFacets().first().single(), 310f, landscape = true)
+        repository.setClockScale(repository.observeFacets().first().single(), 1.1f, landscape = true)
+
+        // Then both sets are kept
+        val stored = repository.observeFacets().first().single()
+        assertEquals(ClockAlignment.RIGHT, stored.clockAlignment)
+        assertEquals(220f, stored.clockZoneHeightDp!!, 0.001f)
+        assertEquals(1.5f, stored.clockScale, 0.001f)
+        assertEquals(ClockAlignment.CENTER, stored.landscapeClockAlignment)
+        assertEquals(310f, stored.landscapeClockZoneHeightDp!!, 0.001f)
+        assertEquals(1.1f, stored.landscapeClockScale!!, 0.001f)
+    }
+
+    @Test
+    fun `resetClockPosition clears the landscape clock props too`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockAlignment(facet, ClockAlignment.CENTER, landscape = true)
+        repository.setClockZoneHeight(repository.observeFacets().first().single(), 310f, landscape = true)
+        repository.setClockScale(repository.observeFacets().first().single(), 1.1f, landscape = true)
+
+        repository.resetClockPosition(repository.observeFacets().first().single())
+
+        val stored = repository.observeFacets().first().single()
+        assertNull(stored.landscapeClockAlignment)
+        assertNull(stored.landscapeClockZoneHeightDp)
+        assertNull(stored.landscapeClockScale)
+    }
+
+    @Test
+    fun `resetClockZoneHeight clears the landscape zone height too`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockZoneHeight(facet, 310f, landscape = true)
+
+        repository.resetClockZoneHeight(repository.observeFacets().first().single())
+
+        assertNull(repository.observeFacets().first().single().landscapeClockZoneHeightDp)
+    }
 }

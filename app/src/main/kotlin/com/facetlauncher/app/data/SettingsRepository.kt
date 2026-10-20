@@ -99,6 +99,9 @@ private object Keys {
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
     val CLOCK_SCALE = floatPreferencesKey("clock_scale")
+    val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
+    val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
+    val LANDSCAPE_CLOCK_SCALE = floatPreferencesKey("landscape_clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
     val APP_LIST_LAYOUT = stringPreferencesKey("app_list_layout")
     val APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("app_list_column_alignment")
@@ -203,6 +206,9 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.clockAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
+            landscapeClockAlignment = preferences[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
+            landscapeClockZoneHeightDp = preferences[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
+            landscapeClockScale = preferences[Keys.LANDSCAPE_CLOCK_SCALE],
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
             appListLayout = preferences[Keys.APP_LIST_LAYOUT]?.let { runCatching { AppListLayout.valueOf(it) }.getOrNull() }
@@ -422,28 +428,36 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
     }
 
-    suspend fun setClockAlignment(alignment: ClockAlignment) {
-        dataStore.edit { it[Keys.CLOCK_ALIGNMENT] = alignment.name }
+    suspend fun setClockAlignment(alignment: ClockAlignment, landscape: Boolean = false) {
+        dataStore.edit { it[if (landscape) Keys.LANDSCAPE_CLOCK_ALIGNMENT else Keys.CLOCK_ALIGNMENT] = alignment.name }
     }
 
-    suspend fun setClockZoneHeight(heightDp: Float) {
-        dataStore.edit { it[Keys.CLOCK_ZONE_HEIGHT_DP] = heightDp }
+    suspend fun resetLandscapeClockAlignment() {
+        dataStore.edit { it.remove(Keys.LANDSCAPE_CLOCK_ALIGNMENT) }
+    }
+
+    suspend fun setClockZoneHeight(heightDp: Float, landscape: Boolean = false) {
+        dataStore.edit { it[if (landscape) Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP else Keys.CLOCK_ZONE_HEIGHT_DP] = heightDp }
     }
 
     /** Settings' "Reset clock height" row — restores [LauncherSettings.clockZoneHeightDp] to `null`, so the clock+calendar block and app list return to their original fixed-top, bottom-anchored layout. */
     suspend fun resetClockZoneHeight() {
-        dataStore.edit { it.remove(Keys.CLOCK_ZONE_HEIGHT_DP) }
+        dataStore.edit {
+            it.remove(Keys.CLOCK_ZONE_HEIGHT_DP)
+            it.remove(Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP)
+        }
     }
 
-    suspend fun setClockScale(scale: Float) {
+    suspend fun setClockScale(scale: Float, landscape: Boolean = false) {
         dataStore.edit {
-            it[Keys.CLOCK_SCALE] = scale
+            it[if (landscape) Keys.LANDSCAPE_CLOCK_SCALE else Keys.CLOCK_SCALE] = scale
         }
     }
 
     suspend fun resetClockScale() {
         dataStore.edit {
             it.remove(Keys.CLOCK_SCALE)
+            it.remove(Keys.LANDSCAPE_CLOCK_SCALE)
         }
     }
 

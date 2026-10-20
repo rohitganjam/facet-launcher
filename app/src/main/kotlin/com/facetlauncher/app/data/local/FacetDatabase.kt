@@ -27,6 +27,6 @@ abstract class FacetDatabase : RoomDatabase() {
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 30
+        const val VERSION = 31
     }
 }

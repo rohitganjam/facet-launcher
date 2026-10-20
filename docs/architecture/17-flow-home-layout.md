@@ -87,7 +87,7 @@ for a top-aligned widget, top corners otherwise) resize it between one landscape
 width, shrinking the widget live and saving that size on release. The rendered size is always clamped to
 the pane without being saved. Landscape saves its own size (`facets.landscapeClockWidgetWidthDp`/`HeightDp`) and
 uses the portrait one until it has one, so a resize in one orientation never changes the other.
-`HomeDrawerRoute` picks the pair by layout mode. Portrait clamps the rendered size in read mode too, so a
+`HomeDrawerRoute` picks the pair by layout mode. The same holds for the clock's alignment, divider position and scale: each has a landscape twin (global `landscape_clock_*` keys and `facets.landscapeClock*` columns) that falls back to the portrait value when unset, resolved in `HomeUiState.landscapeClock*` (facet landscape, else facet portrait, when overriding, else global landscape, else global portrait). Adjust mode in landscape writes only the landscape twins. The facet carousel and Appearance previews stay portrait-shaped, and the style gallery edits portrait values only; its reset clears both. Portrait clamps the rendered size in read mode too, so a
 larger size can't spill out of the screen.
 
 The geometry is pure functions in `HomeLandscapeGeometry.kt`.

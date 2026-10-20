@@ -493,4 +493,51 @@ class SettingsRepositoryTest {
         assertEquals(true, afterLocation.bluetoothPermissionRequested)
         assertEquals(true, afterLocation.locationPermissionRequested)
     }
+
+    @Test
+    fun `the landscape clock props are saved apart from the portrait ones and default to null`() = runTest {
+        val repository = createRepository()
+        val before = repository.settings.first()
+        assertEquals(null, before.landscapeClockAlignment)
+        assertEquals(null, before.landscapeClockZoneHeightDp)
+        assertEquals(null, before.landscapeClockScale)
+
+        // When the landscape values are written
+        repository.setClockAlignment(ClockAlignment.CENTER, landscape = true)
+        repository.setClockZoneHeight(310f, landscape = true)
+        repository.setClockScale(1.2f, landscape = true)
+
+        // Then they read back, and the portrait values are untouched
+        val after = repository.settings.first()
+        assertEquals(ClockAlignment.CENTER, after.landscapeClockAlignment)
+        assertEquals(310f, after.landscapeClockZoneHeightDp!!, 0.001f)
+        assertEquals(1.2f, after.landscapeClockScale!!, 0.001f)
+        assertEquals(ClockAlignment.LEFT, after.clockAlignment)
+        assertEquals(null, after.clockZoneHeightDp)
+        assertEquals(0.8f, after.clockScale, 0.001f)
+    }
+
+    @Test
+    fun `resetting the clock height and scale clears their landscape values too`() = runTest {
+        val repository = createRepository()
+        repository.setClockZoneHeight(310f, landscape = true)
+        repository.setClockScale(1.2f, landscape = true)
+
+        repository.resetClockZoneHeight()
+        repository.resetClockScale()
+
+        val after = repository.settings.first()
+        assertEquals(null, after.landscapeClockZoneHeightDp)
+        assertEquals(null, after.landscapeClockScale)
+    }
+
+    @Test
+    fun `resetLandscapeClockAlignment clears the landscape alignment`() = runTest {
+        val repository = createRepository()
+        repository.setClockAlignment(ClockAlignment.RIGHT, landscape = true)
+
+        repository.resetLandscapeClockAlignment()
+
+        assertEquals(null, repository.settings.first().landscapeClockAlignment)
+    }
 }

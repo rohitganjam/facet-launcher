@@ -138,30 +138,30 @@ class HomeViewModel @Inject constructor(
      * now ([HomeUiState.clockPositionOwningFacet]); otherwise falls back to the global setting,
      * same as every other facet-overridable value here.
      */
-    fun onClockZoneHeightCommit(heightDp: Float) {
+    fun onClockZoneHeightCommit(heightDp: Float, landscape: Boolean = false) {
         val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
-            owningFacet?.let { facetRepository.setClockZoneHeight(it, heightDp) }
-                ?: settingsRepository.setClockZoneHeight(heightDp)
+            owningFacet?.let { facetRepository.setClockZoneHeight(it, heightDp, landscape) }
+                ?: settingsRepository.setClockZoneHeight(heightDp, landscape)
         }
     }
 
     /** Fired once, on release, by the clock's resize handles — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
-    fun onClockScaleCommit(scale: Float) {
+    fun onClockScaleCommit(scale: Float, landscape: Boolean = false) {
         val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
-            owningFacet?.let { facetRepository.setClockScale(it, scale) }
-                ?: settingsRepository.setClockScale(scale)
+            owningFacet?.let { facetRepository.setClockScale(it, scale, landscape) }
+                ?: settingsRepository.setClockScale(scale, landscape)
         }
     }
 
 
     /** Fired by the adjust-mode alignment toolbar — same facet-or-global ownership as [onClockZoneHeightCommit]/[onClockScaleCommit] (all three sit behind `overrideClock`). */
-    fun onClockAlignmentCommit(alignment: ClockAlignment) {
+    fun onClockAlignmentCommit(alignment: ClockAlignment, landscape: Boolean = false) {
         val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
-            owningFacet?.let { facetRepository.setClockAlignment(it, alignment) }
-                ?: settingsRepository.setClockAlignment(alignment)
+            owningFacet?.let { facetRepository.setClockAlignment(it, alignment, landscape) }
+                ?: settingsRepository.setClockAlignment(alignment, landscape)
         }
     }
 

@@ -540,9 +540,9 @@ fun HomeDrawerRoute(
     // The persisted size (once the user has actually resized) wins over the provider's own default.
     // Landscape keeps its own size and falls back to the portrait one (clamped to its pane on screen).
     val homeLayoutMode = rememberHomeLayoutMode()
-    val clockWidgetIsLandscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE
-    val clockWidgetSavedWidthDp = homeUiState.landscapeClockWidgetWidthDp.takeIf { clockWidgetIsLandscape } ?: homeUiState.clockWidgetWidthDp
-    val clockWidgetSavedHeightDp = homeUiState.landscapeClockWidgetHeightDp.takeIf { clockWidgetIsLandscape } ?: homeUiState.clockWidgetHeightDp
+    val isLandscapeHome = homeLayoutMode == HomeLayoutMode.LANDSCAPE
+    val clockWidgetSavedWidthDp = homeUiState.landscapeClockWidgetWidthDp.takeIf { isLandscapeHome } ?: homeUiState.clockWidgetWidthDp
+    val clockWidgetSavedHeightDp = homeUiState.landscapeClockWidgetHeightDp.takeIf { isLandscapeHome } ?: homeUiState.clockWidgetHeightDp
     val clockWidgetEffectiveWidthDp = clockWidgetSavedWidthDp ?: clockWidgetDefaultSizeDp?.first
     val clockWidgetEffectiveHeightDp = clockWidgetSavedHeightDp ?: clockWidgetDefaultSizeDp?.second
 
@@ -690,18 +690,18 @@ fun HomeDrawerRoute(
             clockAccentColorOption = homeUiState.clockAccentColorOption,
             clockShowMeridiem = homeUiState.clockShowMeridiem,
             clockDateStyle = homeUiState.clockDateStyle,
-            clockAlignment = homeUiState.clockAlignment,
-            clockZoneHeightDp = homeUiState.clockZoneHeightDp,
-            onClockZoneHeightCommit = homeViewModel::onClockZoneHeightCommit,
-            clockScale = homeUiState.clockScale,
+            clockAlignment = if (isLandscapeHome) homeUiState.landscapeClockAlignment else homeUiState.clockAlignment,
+            clockZoneHeightDp = if (isLandscapeHome) homeUiState.landscapeClockZoneHeightDp else homeUiState.clockZoneHeightDp,
+            onClockZoneHeightCommit = { homeViewModel.onClockZoneHeightCommit(it, landscape = isLandscapeHome) },
+            clockScale = if (isLandscapeHome) homeUiState.landscapeClockScale else homeUiState.clockScale,
             clockPositionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
             clockPositionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
             clockAdjustMode = clockAdjustMode,
             onAdjustModeChange = { clockAdjustMode = it },
             draggingHandle = draggingHandle,
             onDraggingHandleChange = { draggingHandle = it },
-            onClockScaleCommit = homeViewModel::onClockScaleCommit,
-            onClockAlignmentChange = homeViewModel::onClockAlignmentCommit,
+            onClockScaleCommit = { homeViewModel.onClockScaleCommit(it, landscape = isLandscapeHome) },
+            onClockAlignmentChange = { homeViewModel.onClockAlignmentCommit(it, landscape = isLandscapeHome) },
             onEditClockStyles = {
                 clockAdjustMode = ClockAdjustMode.NONE
                 onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)
@@ -736,7 +736,7 @@ fun HomeDrawerRoute(
             onClockWidgetSizeChange = homeViewModel.clockWidgetHost::updateSize,
             onClockWidgetSizeCommit = { widthDp, heightDp ->
                 homeUiState.activeFacet?.let { facet ->
-                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, landscape = clockWidgetIsLandscape) }
+                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, landscape = isLandscapeHome) }
                 }
             },
             onClockWidgetBoundsChange = { clockWidgetBoundsInHomeRoot = it },

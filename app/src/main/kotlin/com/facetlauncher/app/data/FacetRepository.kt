@@ -93,21 +93,21 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(clockShowMeridiem = enabled))
     }
 
-    suspend fun setClockAlignment(facet: FacetEntity, alignment: ClockAlignment) {
-        facetDao.update(facet.copy(clockAlignment = alignment))
+    suspend fun setClockAlignment(facet: FacetEntity, alignment: ClockAlignment, landscape: Boolean = false) {
+        facetDao.update(if (landscape) facet.copy(landscapeClockAlignment = alignment) else facet.copy(clockAlignment = alignment))
     }
 
-    suspend fun setClockZoneHeight(facet: FacetEntity, heightDp: Float) {
-        facetDao.update(facet.copy(clockZoneHeightDp = heightDp))
+    suspend fun setClockZoneHeight(facet: FacetEntity, heightDp: Float, landscape: Boolean = false) {
+        facetDao.update(if (landscape) facet.copy(landscapeClockZoneHeightDp = heightDp) else facet.copy(clockZoneHeightDp = heightDp))
     }
 
     /** Restores this facet's clock+calendar block to its natural, undragged position. */
     suspend fun resetClockZoneHeight(facet: FacetEntity) {
-        facetDao.update(facet.copy(clockZoneHeightDp = null))
+        facetDao.update(facet.copy(clockZoneHeightDp = null, landscapeClockZoneHeightDp = null))
     }
 
-    suspend fun setClockScale(facet: FacetEntity, scale: Float) {
-        facetDao.update(facet.copy(clockScale = scale))
+    suspend fun setClockScale(facet: FacetEntity, scale: Float, landscape: Boolean = false) {
+        facetDao.update(if (landscape) facet.copy(landscapeClockScale = scale) else facet.copy(clockScale = scale))
     }
 
     /**
@@ -158,6 +158,9 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
                 clockZoneHeightDp = null,
                 clockAlignment = ClockAlignment.LEFT,
                 clockScale = 0.8f,
+                landscapeClockZoneHeightDp = null,
+                landscapeClockAlignment = null,
+                landscapeClockScale = null,
             ),
         )
     }

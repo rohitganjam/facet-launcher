@@ -714,6 +714,27 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration30To31AddsEmptyLandscapeClockPlacementToEveryFacetWithoutChangingIt() {
+        // Given a v30 database with a facet that has a portrait clock placement
+        val dbV30 = helper.createDatabase(TEST_DB, 30)
+        insertFacetV27(dbV30, id = 1, name = "Work")
+        dbV30.execSQL("UPDATE facets SET clockAlignment = 'RIGHT', clockZoneHeightDp = 240.0, clockScale = 1.3 WHERE id = 1")
+        dbV30.close()
+
+        // When migrating to v31 (Room also validates the result against the exported v31 schema)
+        val dbV31 = helper.runMigrationsAndValidate(TEST_DB, 31, true, Migrations.MIGRATION_30_31)
+
+        // Then the portrait placement is kept and the landscape one is empty
+        val cursor = dbV31.query("SELECT clockAlignment, clockZoneHeightDp, clockScale, landscapeClockAlignment, landscapeClockZoneHeightDp, landscapeClockScale FROM facets WHERE id = 1")
+        cursor.moveToFirst()
+        assertEquals("RIGHT", cursor.getString(0))
+        assertEquals(240.0, cursor.getDouble(1), 0.001)
+        assertEquals(1.3, cursor.getDouble(2), 0.001)
+        assertTrue(cursor.isNull(3) && cursor.isNull(4) && cursor.isNull(5))
+        cursor.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")
