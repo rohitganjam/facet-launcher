@@ -1,7 +1,8 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.resolveLandscapeSentinel
+import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.local.resolveLandscape
 import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -20,6 +21,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -71,12 +73,6 @@ data class HomeUiState(
     val clockWidgetHeightDp: Int?
         get() = activeFacet?.clockWidgetHeightDp
 
-    /** Landscape's own hosted-widget size — `null` until resized there, when landscape uses [clockWidgetWidthDp]/[clockWidgetHeightDp]. */
-    val landscapeClockWidgetWidthDp: Int?
-        get() = activeFacet?.landscapeClockWidgetWidthDp
-    val landscapeClockWidgetHeightDp: Int?
-        get() = activeFacet?.landscapeClockWidgetHeightDp
-
     /** The active facet's clock settings, falling back to the global defaults when not overriding. */
     val clockTemplateId: ClockTemplateId
         get() = activeFacet?.let { if (it.overrideClock) it.clockTemplateId else settings.clockTemplateId } ?: settings.clockTemplateId
@@ -108,27 +104,6 @@ data class HomeUiState(
     val activeAppRowPosition: AppRowPosition
         get() = activeFacet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
 
-    /** Landscape's app-row position: the facet's landscape value, else its explicit portrait one, else the launcher's landscape, else its portrait one (see `resolveLandscapeSentinel`). */
-    val landscapeAppRowPosition: AppRowPosition
-        get() = activeFacet.resolveLandscapeSentinel(
-            { it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT,
-            settings.landscapeAppRowPosition, settings.appRowPosition,
-        )
-
-    /** Landscape's app-list vertical anchor — see [landscapeAppRowPosition]'s own doc. */
-    val landscapeAppListVerticalAlignment: AppListVerticalAlignment
-        get() = activeFacet.resolveLandscapeSentinel(
-            { it.landscapeAppListVerticalAlignment }, { it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT,
-            settings.landscapeAppListVerticalAlignment, settings.appListVerticalAlignment,
-        )
-
-    /** Landscape's two-column alignment — see [landscapeAppRowPosition]'s own doc. */
-    val landscapeAppListColumnAlignment: AppListColumnAlignment
-        get() = activeFacet.resolveLandscapeSentinel(
-            { it.landscapeAppListColumnAlignment }, { it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT,
-            settings.landscapeAppListColumnAlignment, settings.appListColumnAlignment,
-        )
-
     /** The active facet's app-row presentation — see [activeAppRowPosition]'s own doc for the resolution shape. */
     val activeAppRowPresentation: AppRowPresentation
         get() = activeFacet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, settings.appRowPresentation)
@@ -149,29 +124,70 @@ data class HomeUiState(
     val clockScale: Float
         get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
 
-    /** Landscape's clock alignment: the landscape value where set (facet or global, same override gate), else the portrait one. */
-    val landscapeClockAlignment: ClockAlignment
-        get() = activeFacet.resolveOverride(
-            { it.overrideClock },
-            { it.landscapeClockAlignment ?: it.clockAlignment },
-            settings.landscapeClockAlignment ?: settings.clockAlignment,
+    /**
+     * The clock's alignment, divider position and scale for [mode]. Portrait is the facet's value while it overrides
+     * the clock, the launcher's otherwise. Landscape follows [resolveLandscape]: its own value where set, else portrait.
+     */
+    fun clockPlacement(mode: HomeLayoutMode): ClockPlacement {
+        val landscape = mode == HomeLayoutMode.LANDSCAPE
+        return ClockPlacement(
+            alignment = clockProp(landscape, { it.clockAlignment }, { it.clockAlignment }, settings.clockAlignment, settings.landscape.clockAlignment),
+            zoneHeightDp = clockProp(landscape, { it.clockZoneHeightDp }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp, settings.landscape.clockZoneHeightDp),
+            scale = clockProp(landscape, { it.clockScale }, { it.clockScale }, settings.clockScale, settings.landscape.clockScale),
         )
+    }
 
-    /** Landscape's divider position (its clock pane width) — see [landscapeClockAlignment]'s own doc. */
-    val landscapeClockZoneHeightDp: Float?
-        get() = activeFacet.resolveOverride(
-            { it.overrideClock },
-            { it.landscapeClockZoneHeightDp ?: it.clockZoneHeightDp },
-            settings.landscapeClockZoneHeightDp ?: settings.clockZoneHeightDp,
-        )
+    private inline fun <T> clockProp(
+        landscape: Boolean,
+        facetPortrait: (FacetEntity) -> T,
+        facetLandscape: (LandscapeOverrides) -> T?,
+        globalPortrait: T,
+        globalLandscape: T?,
+    ): T {
+        val facet = clockPositionOwningFacet
+        val portrait = if (facet != null) facetPortrait(facet) else globalPortrait
+        if (!landscape) return portrait
+        return resolveLandscape(facet?.landscape?.let(facetLandscape), portrait, facet != null, globalLandscape, globalPortrait)
+    }
 
-    /** Landscape's clock scale — see [landscapeClockAlignment]'s own doc. */
-    val landscapeClockScale: Float
-        get() = activeFacet.resolveOverride(
-            { it.overrideClock },
-            { it.landscapeClockScale ?: it.clockScale },
-            settings.landscapeClockScale ?: settings.clockScale,
+    /** The apps list's row position, vertical anchor and two-column alignment for [mode], through each field's own `LAUNCHER_DEFAULT` sentinel. */
+    fun listAlignment(mode: HomeLayoutMode): ListAlignment {
+        val landscape = mode == HomeLayoutMode.LANDSCAPE
+        return ListAlignment(
+            rowPosition = listProp(landscape, { it.appRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition, settings.landscape.appRowPosition),
+            verticalAlignment = listProp(
+                landscape, { it.appListVerticalAlignment }, { it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT,
+                settings.appListVerticalAlignment, settings.landscape.appListVerticalAlignment,
+            ),
+            columnAlignment = listProp(
+                landscape, { it.appListColumnAlignment }, { it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT,
+                settings.appListColumnAlignment, settings.landscape.appListColumnAlignment,
+            ),
         )
+    }
+
+    private inline fun <T : Any> listProp(
+        landscape: Boolean,
+        facetPortrait: (FacetEntity) -> T,
+        facetLandscape: (LandscapeOverrides) -> T?,
+        sentinel: T,
+        globalPortrait: T,
+        globalLandscape: T?,
+    ): T {
+        val facetValue = activeFacet?.let(facetPortrait)?.takeIf { it != sentinel }
+        val portrait = facetValue ?: globalPortrait
+        if (!landscape) return portrait
+        return resolveLandscape(activeFacet?.landscape?.let(facetLandscape), portrait, facetValue != null, globalLandscape, globalPortrait)
+    }
+
+    /** The hosted clock widget's saved size for [mode]: landscape's own where saved, else the portrait one; `null` before any resize. */
+    fun clockWidgetSizeDp(mode: HomeLayoutMode): Pair<Int, Int>? {
+        val facet = activeFacet ?: return null
+        val own = facet.landscape.takeIf { mode == HomeLayoutMode.LANDSCAPE }
+        val width = own?.clockWidgetWidthDp ?: facet.clockWidgetWidthDp
+        val height = own?.clockWidgetHeightDp ?: facet.clockWidgetHeightDp
+        return if (width != null && height != null) width to height else null
+    }
 
     /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
     val clockPositionOwningFacet: FacetEntity?

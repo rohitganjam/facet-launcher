@@ -79,9 +79,9 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
-import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
+import com.facetlauncher.app.ui.home.rememberHomeLandscapeSpace
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
@@ -538,13 +538,15 @@ fun HomeDrawerRoute(
         remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(appWidgetId) }
     }
     // The persisted size (once the user has actually resized) wins over the provider's own default.
-    // Landscape keeps its own size and falls back to the portrait one (clamped to its pane on screen).
+    // The layout mode, and everything that differs between orientations, resolved once: landscape's own
+    // values where saved, the portrait ones otherwise.
     val homeLayoutMode = rememberHomeLayoutMode()
-    val isLandscapeHome = homeLayoutMode == HomeLayoutMode.LANDSCAPE
-    val clockWidgetSavedWidthDp = homeUiState.landscapeClockWidgetWidthDp.takeIf { isLandscapeHome } ?: homeUiState.clockWidgetWidthDp
-    val clockWidgetSavedHeightDp = homeUiState.landscapeClockWidgetHeightDp.takeIf { isLandscapeHome } ?: homeUiState.clockWidgetHeightDp
-    val clockWidgetEffectiveWidthDp = clockWidgetSavedWidthDp ?: clockWidgetDefaultSizeDp?.first
-    val clockWidgetEffectiveHeightDp = clockWidgetSavedHeightDp ?: clockWidgetDefaultSizeDp?.second
+    val homeLandscapeSpace = rememberHomeLandscapeSpace()
+    val clockPlacement = homeUiState.clockPlacement(homeLayoutMode)
+    val listAlignment = homeUiState.listAlignment(homeLayoutMode)
+    val savedClockWidgetSize = homeUiState.clockWidgetSizeDp(homeLayoutMode)
+    val clockWidgetEffectiveWidthDp = savedClockWidgetSize?.first ?: clockWidgetDefaultSizeDp?.first
+    val clockWidgetEffectiveHeightDp = savedClockWidgetSize?.second ?: clockWidgetDefaultSizeDp?.second
 
     // PRD F15's nested-scroll handoff (see ClockWidgetTile's own doc) drives the exact same
     // drawerAxis/hubAxis/facetAxis state detectHomeSwipeGestures' own Compose-pointer-input path
@@ -666,7 +668,9 @@ fun HomeDrawerRoute(
     ) {
         HomeScreen(
             appListItems = homeUiState.appListItems,
-            appRowPosition = if (isLandscapeHome) homeUiState.landscapeAppRowPosition else homeUiState.activeAppRowPosition,
+            layoutMode = homeLayoutMode,
+            landscapeSpace = homeLandscapeSpace,
+            appRowPosition = listAlignment.rowPosition,
             appRowPresentation = homeUiState.activeAppRowPresentation,
             showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
             onUsageAccessPromptClick = {
@@ -690,18 +694,18 @@ fun HomeDrawerRoute(
             clockAccentColorOption = homeUiState.clockAccentColorOption,
             clockShowMeridiem = homeUiState.clockShowMeridiem,
             clockDateStyle = homeUiState.clockDateStyle,
-            clockAlignment = if (isLandscapeHome) homeUiState.landscapeClockAlignment else homeUiState.clockAlignment,
-            clockZoneHeightDp = if (isLandscapeHome) homeUiState.landscapeClockZoneHeightDp else homeUiState.clockZoneHeightDp,
-            onClockZoneHeightCommit = { homeViewModel.onClockZoneHeightCommit(it, landscape = isLandscapeHome) },
-            clockScale = if (isLandscapeHome) homeUiState.landscapeClockScale else homeUiState.clockScale,
+            clockAlignment = clockPlacement.alignment,
+            clockZoneHeightDp = clockPlacement.zoneHeightDp,
+            onClockZoneHeightCommit = { homeViewModel.onClockZoneHeightCommit(it, homeLayoutMode) },
+            clockScale = clockPlacement.scale,
             clockPositionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
             clockPositionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
             clockAdjustMode = clockAdjustMode,
             onAdjustModeChange = { clockAdjustMode = it },
             draggingHandle = draggingHandle,
             onDraggingHandleChange = { draggingHandle = it },
-            onClockScaleCommit = { homeViewModel.onClockScaleCommit(it, landscape = isLandscapeHome) },
-            onClockAlignmentChange = { homeViewModel.onClockAlignmentCommit(it, landscape = isLandscapeHome) },
+            onClockScaleCommit = { homeViewModel.onClockScaleCommit(it, homeLayoutMode) },
+            onClockAlignmentChange = { homeViewModel.onClockAlignmentCommit(it, homeLayoutMode) },
             onEditClockStyles = {
                 clockAdjustMode = ClockAdjustMode.NONE
                 onNavigateToClockStyleGallery(homeUiState.clockPositionOwningFacet?.id)
@@ -736,7 +740,7 @@ fun HomeDrawerRoute(
             onClockWidgetSizeChange = homeViewModel.clockWidgetHost::updateSize,
             onClockWidgetSizeCommit = { widthDp, heightDp ->
                 homeUiState.activeFacet?.let { facet ->
-                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, landscape = isLandscapeHome) }
+                    coroutineScope.launch { homeViewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, homeLayoutMode) }
                 }
             },
             onClockWidgetBoundsChange = { clockWidgetBoundsInHomeRoot = it },
@@ -761,9 +765,9 @@ fun HomeDrawerRoute(
                 nestedScrollFlingHandledSettle = true
                 onHomeSwipeSettle(if (homeDragAxis == Axis.HORIZONTAL) velocityXPx else velocityYPx)
             },
-            appListVerticalAlignment = if (isLandscapeHome) homeUiState.landscapeAppListVerticalAlignment else homeUiState.activeAppListVerticalAlignment,
+            appListVerticalAlignment = listAlignment.verticalAlignment,
             appListLayout = homeUiState.activeAppListLayout,
-            appListColumnAlignment = if (isLandscapeHome) homeUiState.landscapeAppListColumnAlignment else homeUiState.activeAppListColumnAlignment,
+            appListColumnAlignment = listAlignment.columnAlignment,
             appListGridColumns = homeUiState.activeAppListGridColumns,
             appListGridDisplayMode = homeUiState.activeAppListGridDisplayMode,
             nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,

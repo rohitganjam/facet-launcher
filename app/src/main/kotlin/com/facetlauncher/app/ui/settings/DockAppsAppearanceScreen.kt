@@ -37,6 +37,7 @@ import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlin.enums.EnumEntries
 
 /**
  * Settings → Appearance → Dock & Apps appearance — how the Dock and the Home apps list look and sit (dock style, list layout,
@@ -139,21 +140,23 @@ private fun DockAppsAppearanceContent(
                 }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_portrait_title)) }
                 item {
-                    PortraitAlignmentCard(
+                    AlignmentCard(
                         uiState = uiState,
-                        onAppRowPositionChange = onAppRowPositionChange,
-                        onAppListColumnAlignmentChange = onAppListColumnAlignmentChange,
-                        onAppListVerticalAlignmentChange = onAppListVerticalAlignmentChange,
+                        landscape = false,
+                        onRowPositionChange = { it?.let(onAppRowPositionChange) },
+                        onColumnAlignmentChange = { it?.let(onAppListColumnAlignmentChange) },
+                        onVerticalAlignmentChange = { it?.let(onAppListVerticalAlignmentChange) },
                     )
                 }
                 if (uiState.allowLandscape) {
                     item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
                     item {
-                        LandscapeAlignmentCard(
+                        AlignmentCard(
                             uiState = uiState,
-                            onAppRowPositionChange = onLandscapeAppRowPositionChange,
-                            onAppListColumnAlignmentChange = onLandscapeAppListColumnAlignmentChange,
-                            onAppListVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
+                            landscape = true,
+                            onRowPositionChange = onLandscapeAppRowPositionChange,
+                            onColumnAlignmentChange = onLandscapeAppListColumnAlignmentChange,
+                            onVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
                         )
                     }
                 }
@@ -228,98 +231,95 @@ private fun SharedLookCard(
     }
 }
 
-/** Portrait's list alignment: a horizontal row for the layout (none for a grid), then the vertical position. */
+/**
+ * The apps list's alignment in one orientation: the layout's horizontal row (none for a grid), then the list
+ * position. Landscape's rows add a "Same as portrait" choice, stored as `null`.
+ */
 @Composable
-private fun PortraitAlignmentCard(
+private fun AlignmentCard(
     uiState: AppearanceSettingsUiState,
-    onAppRowPositionChange: (AppRowPosition) -> Unit,
-    onAppListColumnAlignmentChange: (AppListColumnAlignment) -> Unit,
-    onAppListVerticalAlignmentChange: (AppListVerticalAlignment) -> Unit,
+    landscape: Boolean,
+    onRowPositionChange: (AppRowPosition?) -> Unit,
+    onColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
+    onVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isFacetScoped = uiState.isFacetScoped
+    val tags = if (landscape) "appearance_landscape_" else "appearance_"
+    val own = uiState.landscape
     SettingsCard(modifier = modifier) {
         when (uiState.appListLayout) {
             AppListLayout.TWO_COLUMN -> {
-                LabeledDropdownRow(
+                AlignmentRow(
                     title = stringResource(R.string.home_apps_list_column_alignment),
-                    options = if (isFacetScoped) AppListColumnAlignment.entries else AppListColumnAlignment.entries - AppListColumnAlignment.LAUNCHER_DEFAULT,
-                    selected = uiState.appListColumnAlignment,
-                    label = { stringResource(it.displayNameRes) },
-                    onSelect = onAppListColumnAlignmentChange,
-                    testTag = "appearance_app_list_column_alignment_row",
+                    entries = AppListColumnAlignment.entries,
+                    sentinel = AppListColumnAlignment.LAUNCHER_DEFAULT,
+                    selected = if (landscape) own.appListColumnAlignment else uiState.appListColumnAlignment,
+                    landscape = landscape,
+                    facetScoped = uiState.isFacetScoped,
+                    nameRes = { it.displayNameRes },
+                    onSelect = onColumnAlignmentChange,
+                    testTag = "${tags}app_list_column_alignment_row",
                 )
                 CardDivider()
             }
             AppListLayout.GRID -> Unit
             AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
-                LabeledDropdownRow(
+                AlignmentRow(
                     title = stringResource(R.string.home_apps_list_position),
-                    options = if (isFacetScoped) AppRowPosition.entries else AppRowPosition.entries - AppRowPosition.LAUNCHER_DEFAULT,
-                    selected = uiState.appRowPosition,
-                    label = { stringResource(it.displayNameRes) },
-                    onSelect = onAppRowPositionChange,
-                    testTag = "appearance_app_row_position_row",
+                    entries = AppRowPosition.entries,
+                    sentinel = AppRowPosition.LAUNCHER_DEFAULT,
+                    selected = if (landscape) own.appRowPosition else uiState.appRowPosition,
+                    landscape = landscape,
+                    facetScoped = uiState.isFacetScoped,
+                    nameRes = { it.displayNameRes },
+                    onSelect = onRowPositionChange,
+                    testTag = "${tags}app_row_position_row",
                 )
                 CardDivider()
             }
         }
-        LabeledDropdownRow(
+        AlignmentRow(
             title = stringResource(R.string.home_apps_list_list_position),
-            options = if (isFacetScoped) AppListVerticalAlignment.entries else AppListVerticalAlignment.entries - AppListVerticalAlignment.LAUNCHER_DEFAULT,
-            selected = uiState.appListVerticalAlignment,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onAppListVerticalAlignmentChange,
-            testTag = "appearance_app_list_vertical_alignment_row",
+            entries = AppListVerticalAlignment.entries,
+            sentinel = AppListVerticalAlignment.LAUNCHER_DEFAULT,
+            selected = if (landscape) own.appListVerticalAlignment else uiState.appListVerticalAlignment,
+            landscape = landscape,
+            facetScoped = uiState.isFacetScoped,
+            nameRes = { it.displayNameRes },
+            onSelect = onVerticalAlignmentChange,
+            testTag = "${tags}app_list_vertical_alignment_row",
         )
     }
 }
 
-/** Landscape's list alignment — the same rows as portrait, each with a "Same as portrait" choice (stored as `null`). */
+/** One dropdown of an alignment enum. `LAUNCHER_DEFAULT` is offered only to a facet (it inherits); landscape offers "Same as portrait" instead. */
 @Composable
-private fun LandscapeAlignmentCard(
-    uiState: AppearanceSettingsUiState,
-    onAppRowPositionChange: (AppRowPosition?) -> Unit,
-    onAppListColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
-    onAppListVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
-    modifier: Modifier = Modifier,
+private fun <T : Enum<T>> AlignmentRow(
+    title: String,
+    entries: EnumEntries<T>,
+    sentinel: T,
+    selected: T?,
+    landscape: Boolean,
+    facetScoped: Boolean,
+    nameRes: (T) -> Int,
+    onSelect: (T?) -> Unit,
+    testTag: String,
 ) {
     val samePortrait = stringResource(R.string.home_apps_list_same_as_portrait)
-    SettingsCard(modifier = modifier) {
-        when (uiState.appListLayout) {
-            AppListLayout.TWO_COLUMN -> {
-                LabeledDropdownRow(
-                    title = stringResource(R.string.home_apps_list_column_alignment),
-                    options = listOf(null) + (AppListColumnAlignment.entries - AppListColumnAlignment.LAUNCHER_DEFAULT),
-                    selected = uiState.landscapeAppListColumnAlignment,
-                    label = { it?.let { option -> stringResource(option.displayNameRes) } ?: samePortrait },
-                    onSelect = onAppListColumnAlignmentChange,
-                    testTag = "appearance_landscape_app_list_column_alignment_row",
-                )
-                CardDivider()
-            }
-            AppListLayout.GRID -> Unit
-            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
-                LabeledDropdownRow(
-                    title = stringResource(R.string.home_apps_list_position),
-                    options = listOf(null) + (AppRowPosition.entries - AppRowPosition.LAUNCHER_DEFAULT),
-                    selected = uiState.landscapeAppRowPosition,
-                    label = { it?.let { option -> stringResource(option.displayNameRes) } ?: samePortrait },
-                    onSelect = onAppRowPositionChange,
-                    testTag = "appearance_landscape_app_row_position_row",
-                )
-                CardDivider()
-            }
-        }
-        LabeledDropdownRow(
-            title = stringResource(R.string.home_apps_list_list_position),
-            options = listOf(null) + (AppListVerticalAlignment.entries - AppListVerticalAlignment.LAUNCHER_DEFAULT),
-            selected = uiState.landscapeAppListVerticalAlignment,
-            label = { it?.let { option -> stringResource(option.displayNameRes) } ?: samePortrait },
-            onSelect = onAppListVerticalAlignmentChange,
-            testTag = "appearance_landscape_app_list_vertical_alignment_row",
-        )
+    val options: List<T?> = when {
+        landscape -> listOf(null) + (entries - sentinel)
+        facetScoped -> entries
+        else -> entries - sentinel
     }
+    LabeledDropdownRow(
+        title = title,
+        options = options,
+        selected = selected,
+        label = { option -> option?.let { stringResource(nameRes(it)) } ?: samePortrait },
+        // Portrait always has a value, so a null can only come from landscape's "Same as portrait".
+        onSelect = { choice -> if (landscape || choice != null) onSelect(choice) },
+        testTag = testTag,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)

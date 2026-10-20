@@ -337,14 +337,14 @@ class DockAppsAppearanceScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_landscape_app_row_position_row_option_CENTER").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().landscapeAppRowPosition == com.facetlauncher.app.data.model.AppRowPosition.CENTER }
+            runBlocking { settingsRepository.settings.first().landscape.appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.CENTER }
         }
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
         composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row_option_TOP").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().landscapeAppListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
+            runBlocking { settingsRepository.settings.first().landscape.appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
         }
 
         // Then portrait's own values are unchanged
@@ -357,7 +357,7 @@ class DockAppsAppearanceScreenTest {
     fun choosingSameAsPortraitClearsTheLandscapeSetting() {
         // Given a saved landscape position
         val settingsRepository = setContent()
-        runBlocking { settingsRepository.setLandscapeAppRowPosition(com.facetlauncher.app.data.model.AppRowPosition.RIGHT) }
+        runBlocking { settingsRepository.updateLandscape { it.copy(appRowPosition = com.facetlauncher.app.data.model.AppRowPosition.RIGHT) } }
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
 
         // When "Same as portrait" is chosen
@@ -367,7 +367,7 @@ class DockAppsAppearanceScreenTest {
 
         // Then the landscape value is cleared
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().landscapeAppRowPosition == null }
+            runBlocking { settingsRepository.settings.first().landscape.appRowPosition == null }
         }
     }
 

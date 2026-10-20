@@ -330,8 +330,6 @@ data class LauncherSettings(
     /** Settings → "Apps list" section — every facet's own [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]
      * inherits [appRowPosition], [appRowPresentation], and [listContentMode] unless it sets its own override. */
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
-    /** Landscape's own [appRowPosition]; `null` is "same as portrait". */
-    val landscapeAppRowPosition: AppRowPosition? = null,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES] — see [AppListLimits]. */
@@ -387,14 +385,10 @@ data class LauncherSettings(
      * top (right below the clock's grab handle).
      */
     val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
-    /** Landscape's own [appListVerticalAlignment]; `null` is "same as portrait". */
-    val landscapeAppListVerticalAlignment: AppListVerticalAlignment? = null,
     /** The default every facet inherits unless it overrides it — see [AppListLayout]'s own doc. */
     val appListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
     /** Only meaningful while [appListLayout] is [AppListLayout.TWO_COLUMN] — see [AppListColumnAlignment]'s own doc. */
     val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
-    /** Landscape's own [appListColumnAlignment]; `null` is "same as portrait". */
-    val landscapeAppListColumnAlignment: AppListColumnAlignment? = null,
     /** Only meaningful while [appListLayout] is [AppListLayout.GRID] — see [AppListGridColumns]'s own doc. */
     val appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
     /** Only meaningful while [appListLayout] is [AppListLayout.GRID] — see [AppListGridDisplayMode]'s own doc. */
@@ -409,12 +403,8 @@ data class LauncherSettings(
      * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
      */
     val allowLandscape: Boolean = true,
-    /** Landscape's own [clockAlignment] (top, middle or bottom there); `null` uses the portrait value. */
-    val landscapeClockAlignment: ClockAlignment? = null,
-    /** Landscape's own [clockZoneHeightDp] (its divider position, a pane width); `null` uses the portrait value. */
-    val landscapeClockZoneHeightDp: Float? = null,
-    /** Landscape's own [clockScale]; `null` uses the portrait value. */
-    val landscapeClockScale: Float? = null,
+    /** Landscape's own values for the props that differ between orientations; `null` fields use the portrait value. */
+    val landscape: LandscapeOverrides = LandscapeOverrides(),
     /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.facetlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */
     val onboardingCompleted: Boolean = false,
     /** One-shot guard for [SeedDefaultDockUseCase][com.facetlauncher.app.domain.SeedDefaultDockUseCase] — set once the dock's default apps have been seeded, so a re-run (or a later manual empty-dock) never re-seeds. Install-local — excluded from the backup bundle. */

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.landscape
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -41,6 +42,8 @@ data class ClockStyleGalleryUiState(
     /** Global only — resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview here regardless of whether this instance is facet-scoped. */
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val globalClockAlignment: ClockAlignment = ClockAlignment.LEFT,
+    /** The launcher's landscape alignment (`null`: same as portrait), carried into a facet when it starts overriding. */
+    val globalLandscapeClockAlignment: ClockAlignment? = null,
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideClock ?: false
@@ -81,6 +84,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
             globalDateStyle = settings.clockDateStyle,
             launcherFontOption = settings.launcherFontOption,
             globalClockAlignment = settings.clockAlignment,
+            globalLandscapeClockAlignment = settings.landscape.clockAlignment,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ClockStyleGalleryUiState())
 
@@ -174,6 +178,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 use24HourTime = state.use24HourTime,
                 showMeridiem = state.showMeridiem,
                 clockAlignment = state.clockAlignment,
+                landscapeClockAlignment = if (overriding) state.globalLandscapeClockAlignment else facet.landscape.clockAlignment,
                 accentColorOption = state.accentColorOption,
                 dateStyle = state.dateStyle,
             )
@@ -195,7 +200,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 settingsRepository.resetClockZoneHeight()
                 settingsRepository.resetClockScale()
                 settingsRepository.setClockAlignment(ClockAlignment.LEFT)
-                settingsRepository.resetLandscapeClockAlignment()
+                settingsRepository.updateLandscape { it.copy(clockAlignment = null) }
             }
         }
     }

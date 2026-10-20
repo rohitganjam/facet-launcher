@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
@@ -263,109 +264,154 @@ class HomeUiStateTest {
         assertEquals("Work", state.favoritesOverrideFacetName)
     }
 
-    @Test
-    fun `landscape clock props fall back to the portrait ones when no landscape value is set`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 200f, clockScale = 1.2f),
-        )
-
-        assertEquals(ClockAlignment.RIGHT, state.landscapeClockAlignment)
-        assertEquals(200f, state.landscapeClockZoneHeightDp)
-        assertEquals(1.2f, state.landscapeClockScale)
-    }
+    private val portrait = HomeLayoutMode.PORTRAIT
+    private val landscape = HomeLayoutMode.LANDSCAPE
 
     @Test
-    fun `landscape clock props use the global landscape values when set`() {
+    fun `clock placement in portrait ignores the landscape values`() {
         val state = HomeUiState(
             settings = LauncherSettings(
                 clockAlignment = ClockAlignment.RIGHT,
-                landscapeClockAlignment = ClockAlignment.CENTER,
-                landscapeClockZoneHeightDp = 310f,
-                landscapeClockScale = 0.9f,
+                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockScale = 0.9f),
             ),
         )
 
-        assertEquals(ClockAlignment.CENTER, state.landscapeClockAlignment)
-        assertEquals(310f, state.landscapeClockZoneHeightDp)
-        assertEquals(0.9f, state.landscapeClockScale)
-        assertEquals(ClockAlignment.RIGHT, state.clockAlignment)
+        assertEquals(ClockPlacement(ClockAlignment.RIGHT, null, 0.8f), state.clockPlacement(portrait))
     }
 
     @Test
-    fun `an overriding facet's landscape clock props win over the global ones and fall back to its own portrait values`() {
+    fun `clock placement in landscape falls back to the portrait values when no landscape value is set`() {
+        val state = HomeUiState(settings = LauncherSettings(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 200f, clockScale = 1.2f))
+
+        assertEquals(ClockPlacement(ClockAlignment.RIGHT, 200f, 1.2f), state.clockPlacement(landscape))
+    }
+
+    @Test
+    fun `clock placement in landscape uses the launcher's landscape values when set`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(
+                clockAlignment = ClockAlignment.RIGHT,
+                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f, clockScale = 0.9f),
+            ),
+        )
+
+        assertEquals(ClockPlacement(ClockAlignment.CENTER, 310f, 0.9f), state.clockPlacement(landscape))
+    }
+
+    @Test
+    fun `an overriding facet's landscape clock values win, then its own portrait values, never the launcher's landscape ones`() {
         val facet = FacetEntity(
             id = 1L, name = "Facet 1", position = 0, overrideClock = true,
             clockAlignment = ClockAlignment.RIGHT, clockScale = 1.4f,
             landscapeClockAlignment = ClockAlignment.CENTER,
         )
         val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L, landscapeClockAlignment = ClockAlignment.LEFT, landscapeClockScale = 0.5f),
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f)),
             facets = listOf(facet),
         )
 
-        // Then alignment is the facet's landscape value, and scale (no facet landscape value) is the facet's portrait one, not the global landscape one
-        assertEquals(ClockAlignment.CENTER, state.landscapeClockAlignment)
-        assertEquals(1.4f, state.landscapeClockScale)
+        val placement = state.clockPlacement(landscape)
+
+        assertEquals(ClockAlignment.CENTER, placement.alignment)
+        assertEquals(1.4f, placement.scale)
     }
 
     @Test
-    fun `a facet that is not overriding the clock uses the global landscape values`() {
+    fun `an overriding facet that never dragged its divider keeps a natural zone height in landscape`() {
+        val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideClock = true)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, clockZoneHeightDp = 200f, landscape = LandscapeOverrides(clockZoneHeightDp = 300f)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(null, state.clockPlacement(landscape).zoneHeightDp)
+    }
+
+    @Test
+    fun `a facet that is not overriding the clock uses the launcher's values in both orientations`() {
         val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideClock = false, landscapeClockAlignment = ClockAlignment.CENTER)
         val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L, landscapeClockAlignment = ClockAlignment.RIGHT),
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT)),
             facets = listOf(facet),
         )
 
-        assertEquals(ClockAlignment.RIGHT, state.landscapeClockAlignment)
+        assertEquals(ClockAlignment.RIGHT, state.clockPlacement(landscape).alignment)
+        assertEquals(ClockAlignment.LEFT, state.clockPlacement(portrait).alignment)
     }
 
     @Test
-    fun `landscape list alignment falls back to the portrait values when no landscape value is set`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, appListVerticalAlignment = AppListVerticalAlignment.TOP),
-        )
+    fun `list alignment in landscape falls back to the portrait values when no landscape value is set`() {
+        val state = HomeUiState(settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, appListVerticalAlignment = AppListVerticalAlignment.TOP))
 
-        assertEquals(AppRowPosition.RIGHT, state.landscapeAppRowPosition)
-        assertEquals(AppListVerticalAlignment.TOP, state.landscapeAppListVerticalAlignment)
-        assertEquals(AppListColumnAlignment.BOTH_LEFT, state.landscapeAppListColumnAlignment)
+        assertEquals(ListAlignment(AppRowPosition.RIGHT, AppListVerticalAlignment.TOP, AppListColumnAlignment.BOTH_LEFT), state.listAlignment(landscape))
     }
 
     @Test
-    fun `landscape list alignment uses the global landscape values when set`() {
+    fun `list alignment in landscape uses the launcher's landscape values when set, and portrait is unaffected`() {
         val state = HomeUiState(
             settings = LauncherSettings(
                 appRowPosition = AppRowPosition.RIGHT,
-                landscapeAppRowPosition = AppRowPosition.CENTER,
-                landscapeAppListVerticalAlignment = AppListVerticalAlignment.TOP,
-                landscapeAppListColumnAlignment = AppListColumnAlignment.MIRRORED,
+                landscape = LandscapeOverrides(
+                    appRowPosition = AppRowPosition.CENTER,
+                    appListVerticalAlignment = AppListVerticalAlignment.TOP,
+                    appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+                ),
             ),
         )
 
-        assertEquals(AppRowPosition.CENTER, state.landscapeAppRowPosition)
-        assertEquals(AppListVerticalAlignment.TOP, state.landscapeAppListVerticalAlignment)
-        assertEquals(AppListColumnAlignment.MIRRORED, state.landscapeAppListColumnAlignment)
-        assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
+        assertEquals(ListAlignment(AppRowPosition.CENTER, AppListVerticalAlignment.TOP, AppListColumnAlignment.MIRRORED), state.listAlignment(landscape))
+        assertEquals(AppRowPosition.RIGHT, state.listAlignment(portrait).rowPosition)
     }
 
     @Test
-    fun `a facet's explicit portrait list alignment beats the global landscape value`() {
+    fun `a facet's explicit portrait list alignment beats the launcher's landscape value`() {
         val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT)
         val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L, landscapeAppRowPosition = AppRowPosition.CENTER),
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
             facets = listOf(facet),
         )
 
-        assertEquals(AppRowPosition.RIGHT, state.landscapeAppRowPosition)
+        assertEquals(AppRowPosition.RIGHT, state.listAlignment(landscape).rowPosition)
     }
 
     @Test
     fun `a facet's own landscape list alignment wins`() {
         val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT, landscapeAppRowPosition = AppRowPosition.LEFT)
         val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L, landscapeAppRowPosition = AppRowPosition.CENTER),
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
             facets = listOf(facet),
         )
 
-        assertEquals(AppRowPosition.LEFT, state.landscapeAppRowPosition)
+        assertEquals(AppRowPosition.LEFT, state.listAlignment(landscape).rowPosition)
+    }
+
+    @Test
+    fun `a facet that inherits its portrait list alignment uses the launcher's landscape value in landscape`() {
+        val facet = FacetEntity(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(AppRowPosition.CENTER, state.listAlignment(landscape).rowPosition)
+    }
+
+    @Test
+    fun `the hosted widget size in landscape is its own when saved, else the portrait size`() {
+        val portraitOnly = FacetEntity(id = 1L, name = "A", position = 0, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
+        val both = portraitOnly.copy(landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300)
+        val settings = LauncherSettings(activeFacetId = 1L)
+
+        assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(portraitOnly)).clockWidgetSizeDp(landscape))
+        assertEquals(400 to 300, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(landscape))
+        assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(portrait))
+    }
+
+    @Test
+    fun `there is no hosted widget size before a resize`() {
+        val state = HomeUiState(settings = LauncherSettings(activeFacetId = 1L), facets = listOf(FacetEntity(id = 1L, name = "A", position = 0)))
+
+        assertEquals(null, state.clockWidgetSizeDp(landscape))
+        assertEquals(null, HomeUiState().clockWidgetSizeDp(portrait))
     }
 }

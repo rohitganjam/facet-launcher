@@ -1,6 +1,7 @@
 package com.facetlauncher.app.data
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -32,6 +33,7 @@ import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -211,12 +213,7 @@ class SettingsRepository @Inject constructor(
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
-            landscapeClockAlignment = preferences[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
-            landscapeClockZoneHeightDp = preferences[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
-            landscapeClockScale = preferences[Keys.LANDSCAPE_CLOCK_SCALE],
-            landscapeAppRowPosition = preferences[Keys.LANDSCAPE_APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() },
-            landscapeAppListVerticalAlignment = preferences[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() },
-            landscapeAppListColumnAlignment = preferences[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() },
+            landscape = preferences.toLandscapeOverrides(),
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
             appListLayout = preferences[Keys.APP_LIST_LAYOUT]?.let { runCatching { AppListLayout.valueOf(it) }.getOrNull() }
@@ -392,11 +389,6 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.APP_ROW_POSITION] = position.name }
     }
 
-    /** Landscape's own row position; `null` clears it back to "same as portrait". */
-    suspend fun setLandscapeAppRowPosition(position: AppRowPosition?) {
-        dataStore.edit { if (position == null) it.remove(Keys.LANDSCAPE_APP_ROW_POSITION) else it[Keys.LANDSCAPE_APP_ROW_POSITION] = position.name }
-    }
-
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appRowPresentation]. */
     suspend fun setAppRowPresentation(presentation: AppRowPresentation) {
         dataStore.edit { it[Keys.APP_ROW_PRESENTATION] = presentation.name }
@@ -445,16 +437,12 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.ALLOW_LANDSCAPE] = allow }
     }
 
-    suspend fun setClockAlignment(alignment: ClockAlignment, landscape: Boolean = false) {
-        dataStore.edit { it[if (landscape) Keys.LANDSCAPE_CLOCK_ALIGNMENT else Keys.CLOCK_ALIGNMENT] = alignment.name }
+    suspend fun setClockAlignment(alignment: ClockAlignment) {
+        dataStore.edit { it[Keys.CLOCK_ALIGNMENT] = alignment.name }
     }
 
-    suspend fun resetLandscapeClockAlignment() {
-        dataStore.edit { it.remove(Keys.LANDSCAPE_CLOCK_ALIGNMENT) }
-    }
-
-    suspend fun setClockZoneHeight(heightDp: Float, landscape: Boolean = false) {
-        dataStore.edit { it[if (landscape) Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP else Keys.CLOCK_ZONE_HEIGHT_DP] = heightDp }
+    suspend fun setClockZoneHeight(heightDp: Float) {
+        dataStore.edit { it[Keys.CLOCK_ZONE_HEIGHT_DP] = heightDp }
     }
 
     /** Settings' "Reset clock height" row — restores [LauncherSettings.clockZoneHeightDp] to `null`, so the clock+calendar block and app list return to their original fixed-top, bottom-anchored layout. */
@@ -465,10 +453,15 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    suspend fun setClockScale(scale: Float, landscape: Boolean = false) {
+    suspend fun setClockScale(scale: Float) {
         dataStore.edit {
-            it[if (landscape) Keys.LANDSCAPE_CLOCK_SCALE else Keys.CLOCK_SCALE] = scale
+            it[Keys.CLOCK_SCALE] = scale
         }
+    }
+
+    /** Changes the launcher-wide landscape values in one write; a `null` field is removed ("same as portrait"). */
+    suspend fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) {
+        dataStore.edit { it.writeLandscape(transform(it.toLandscapeOverrides())) }
     }
 
     suspend fun resetClockScale() {
@@ -483,11 +476,6 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
     }
 
-    /** Landscape's own vertical alignment; `null` clears it back to "same as portrait". */
-    suspend fun setLandscapeAppListVerticalAlignment(alignment: AppListVerticalAlignment?) {
-        dataStore.edit { if (alignment == null) it.remove(Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT) else it[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }
-    }
-
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListLayout]. */
     suspend fun setAppListLayout(layout: AppListLayout) {
         dataStore.edit { it[Keys.APP_LIST_LAYOUT] = layout.name }
@@ -496,11 +484,6 @@ class SettingsRepository @Inject constructor(
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListColumnAlignment]. */
     suspend fun setAppListColumnAlignment(alignment: AppListColumnAlignment) {
         dataStore.edit { it[Keys.APP_LIST_COLUMN_ALIGNMENT] = alignment.name }
-    }
-
-    /** Landscape's own two-column alignment; `null` clears it back to "same as portrait". */
-    suspend fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) {
-        dataStore.edit { if (alignment == null) it.remove(Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT) else it[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT] = alignment.name }
     }
 
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListGridColumns]. */
@@ -525,4 +508,27 @@ class SettingsRepository @Inject constructor(
     suspend fun markCoachMarkSeen(id: String) {
         dataStore.edit { it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + id }
     }
+}
+
+private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
+    clockAlignment = this[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
+    clockZoneHeightDp = this[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
+    clockScale = this[Keys.LANDSCAPE_CLOCK_SCALE],
+    appRowPosition = this[Keys.LANDSCAPE_APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() },
+    appListVerticalAlignment = this[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() },
+    appListColumnAlignment = this[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() },
+)
+
+/** The widget size is facet-only, so it isn't stored here. */
+private fun MutablePreferences.writeLandscape(overrides: LandscapeOverrides) {
+    setOrRemove(Keys.LANDSCAPE_CLOCK_ALIGNMENT, overrides.clockAlignment?.name)
+    setOrRemove(Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP, overrides.clockZoneHeightDp)
+    setOrRemove(Keys.LANDSCAPE_CLOCK_SCALE, overrides.clockScale)
+    setOrRemove(Keys.LANDSCAPE_APP_ROW_POSITION, overrides.appRowPosition?.name)
+    setOrRemove(Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT, overrides.appListVerticalAlignment?.name)
+    setOrRemove(Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT, overrides.appListColumnAlignment?.name)
+}
+
+private fun <T> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {
+    if (value == null) remove(key) else this[key] = value
 }

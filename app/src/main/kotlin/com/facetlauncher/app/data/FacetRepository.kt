@@ -2,6 +2,8 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.local.withLandscape
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -17,6 +19,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.ListContentMode
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -93,21 +96,26 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(clockShowMeridiem = enabled))
     }
 
-    suspend fun setClockAlignment(facet: FacetEntity, alignment: ClockAlignment, landscape: Boolean = false) {
-        facetDao.update(if (landscape) facet.copy(landscapeClockAlignment = alignment) else facet.copy(clockAlignment = alignment))
+    suspend fun setClockAlignment(facet: FacetEntity, alignment: ClockAlignment) {
+        facetDao.update(facet.copy(clockAlignment = alignment))
     }
 
-    suspend fun setClockZoneHeight(facet: FacetEntity, heightDp: Float, landscape: Boolean = false) {
-        facetDao.update(if (landscape) facet.copy(landscapeClockZoneHeightDp = heightDp) else facet.copy(clockZoneHeightDp = heightDp))
+    suspend fun setClockZoneHeight(facet: FacetEntity, heightDp: Float) {
+        facetDao.update(facet.copy(clockZoneHeightDp = heightDp))
+    }
+
+    /** Changes this facet's landscape values in one write; a `null` field goes back to "same as portrait". */
+    suspend fun updateLandscape(facet: FacetEntity, transform: (LandscapeOverrides) -> LandscapeOverrides) {
+        facetDao.update(facet.withLandscape(transform(facet.landscape)))
     }
 
     /** Restores this facet's clock+calendar block to its natural, undragged position. */
     suspend fun resetClockZoneHeight(facet: FacetEntity) {
-        facetDao.update(facet.copy(clockZoneHeightDp = null, landscapeClockZoneHeightDp = null))
+        facetDao.update(facet.copy(clockZoneHeightDp = null).withLandscape(facet.landscape.copy(clockZoneHeightDp = null)))
     }
 
-    suspend fun setClockScale(facet: FacetEntity, scale: Float, landscape: Boolean = false) {
-        facetDao.update(if (landscape) facet.copy(landscapeClockScale = scale) else facet.copy(clockScale = scale))
+    suspend fun setClockScale(facet: FacetEntity, scale: Float) {
+        facetDao.update(facet.copy(clockScale = scale))
     }
 
     /**
@@ -126,25 +134,14 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         // whenever clockWidgetAppWidgetId is null"), extended here to "meaningless for a *different*
         // non-null id too".
         facetDao.update(
-            facet.copy(
-                clockWidgetAppWidgetId = appWidgetId,
-                clockWidgetWidthDp = null,
-                clockWidgetHeightDp = null,
-                landscapeClockWidgetWidthDp = null,
-                landscapeClockWidgetHeightDp = null,
-            ),
+            facet.copy(clockWidgetAppWidgetId = appWidgetId, clockWidgetWidthDp = null, clockWidgetHeightDp = null)
+                .withLandscape(facet.landscape.copy(clockWidgetWidthDp = null, clockWidgetHeightDp = null)),
         )
     }
 
-    /** PRD F15's interactive resize commit — see [FacetEntity.clockWidgetWidthDp]'s own doc. Landscape keeps its own size. */
-    suspend fun setClockWidgetSize(facet: FacetEntity, widthDp: Int, heightDp: Int, landscape: Boolean = false) {
-        facetDao.update(
-            if (landscape) {
-                facet.copy(landscapeClockWidgetWidthDp = widthDp, landscapeClockWidgetHeightDp = heightDp)
-            } else {
-                facet.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp)
-            },
-        )
+    /** PRD F15's interactive resize commit — see [FacetEntity.clockWidgetWidthDp]'s own doc. Landscape's own size goes through [updateLandscape]. */
+    suspend fun setClockWidgetSize(facet: FacetEntity, widthDp: Int, heightDp: Int) {
+        facetDao.update(facet.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp))
     }
 
     /**
@@ -154,14 +151,8 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
      */
     suspend fun resetClockPosition(facet: FacetEntity) {
         facetDao.update(
-            facet.copy(
-                clockZoneHeightDp = null,
-                clockAlignment = ClockAlignment.LEFT,
-                clockScale = 0.8f,
-                landscapeClockZoneHeightDp = null,
-                landscapeClockAlignment = null,
-                landscapeClockScale = null,
-            ),
+            facet.copy(clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = 0.8f)
+                .withLandscape(facet.landscape.copy(clockZoneHeightDp = null, clockAlignment = null, clockScale = null)),
         )
     }
 
@@ -173,7 +164,8 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
      * calendar *selection* only — which calendars, which events — see its own doc comment). The
      * calendar events strip no longer has its own font/color/weight to seed — it reads Appearance
      * (global-only) and this block's own `clockAlignment` (see chat history). Atomic upsert to
-     * avoid clobbering.
+     * avoid clobbering. The landscape alignment is seeded the same way, so starting to override doesn't change a
+     * facet's landscape look.
      */
     suspend fun updateOverridingClock(
         facet: FacetEntity,
@@ -184,6 +176,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         use24HourTime: Boolean,
         showMeridiem: Boolean,
         clockAlignment: ClockAlignment = facet.clockAlignment,
+        landscapeClockAlignment: ClockAlignment? = facet.landscape.clockAlignment,
         clockZoneHeightDp: Float? = facet.clockZoneHeightDp,
         clockScale: Float = facet.clockScale,
         accentColorOption: ClockColorOption = facet.clockAccentColorOption,
@@ -202,7 +195,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
                 clockScale = clockScale,
                 clockAccentColorOption = accentColorOption,
                 clockDateStyle = dateStyle,
-            ),
+            ).withLandscape(facet.landscape.copy(clockAlignment = landscapeClockAlignment)),
         )
     }
 
@@ -213,11 +206,6 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
 
     suspend fun setAppRowPosition(facet: FacetEntity, position: AppRowPosition) {
         facetDao.update(facet.copy(appRowPosition = position))
-    }
-
-    /** Landscape's own row position for this facet; `null` is "same as portrait". */
-    suspend fun setLandscapeAppRowPosition(facet: FacetEntity, position: AppRowPosition?) {
-        facetDao.update(facet.copy(landscapeAppRowPosition = position))
     }
 
     suspend fun setAppRowPresentation(facet: FacetEntity, presentation: AppRowPresentation) {
@@ -237,22 +225,12 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         facetDao.update(facet.copy(appListVerticalAlignment = alignment))
     }
 
-    /** Landscape's own vertical alignment for this facet; `null` is "same as portrait". */
-    suspend fun setLandscapeAppListVerticalAlignment(facet: FacetEntity, alignment: AppListVerticalAlignment?) {
-        facetDao.update(facet.copy(landscapeAppListVerticalAlignment = alignment))
-    }
-
     suspend fun setAppListLayout(facet: FacetEntity, layout: AppListLayout) {
         facetDao.update(facet.copy(appListLayout = layout))
     }
 
     suspend fun setAppListColumnAlignment(facet: FacetEntity, alignment: AppListColumnAlignment) {
         facetDao.update(facet.copy(appListColumnAlignment = alignment))
-    }
-
-    /** Landscape's own two-column alignment for this facet; `null` is "same as portrait". */
-    suspend fun setLandscapeAppListColumnAlignment(facet: FacetEntity, alignment: AppListColumnAlignment?) {
-        facetDao.update(facet.copy(landscapeAppListColumnAlignment = alignment))
     }
 
     suspend fun setAppListGridColumns(facet: FacetEntity, columns: AppListGridColumns) {

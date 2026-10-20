@@ -35,7 +35,7 @@ flowchart TB
     subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
-        A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(resolveLandscapeSentinel: facet landscape, facet explicit portrait, global landscape, global portrait)"]
+        A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(LandscapeOverrides group, resolved once by HomeUiState.listAlignment(mode))"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```

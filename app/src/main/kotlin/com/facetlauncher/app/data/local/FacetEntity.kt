@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -165,20 +166,42 @@ inline fun <T> FacetEntity?.resolveSentinel(facetValue: (FacetEntity) -> T, sent
 }
 
 /**
- * [resolveSentinel] for landscape: the facet's landscape value, else its explicit portrait value, else the
- * launcher's landscape value, else the launcher's portrait one. A `null` landscape value is "same as portrait".
+ * Landscape resolution, one rule for every prop: the facet's landscape value (callers pass `null` when the
+ * facet doesn't count, e.g. a clock override that is off), else the facet's portrait value if it applies,
+ * else the launcher's landscape value, else its portrait value.
  */
-inline fun <T : Any> FacetEntity?.resolveLandscapeSentinel(
-    facetLandscape: (FacetEntity) -> T?,
-    facetPortrait: (FacetEntity) -> T,
-    sentinel: T,
+inline fun <T> resolveLandscape(
+    facetLandscape: T?,
+    facetPortrait: T,
+    facetPortraitApplies: Boolean,
     globalLandscape: T?,
     globalPortrait: T,
-): T {
-    val facet = this
-    val facetValue = facet?.let(facetLandscape) ?: facet?.let(facetPortrait)?.takeIf { it != sentinel }
-    return facetValue ?: globalLandscape ?: globalPortrait
-}
+): T = facetLandscape ?: if (facetPortraitApplies) facetPortrait else (globalLandscape ?: globalPortrait)
+
+/** The facet's landscape twins as one group (stored as flat columns so the schema stays as it is). */
+val FacetEntity.landscape: LandscapeOverrides
+    get() = LandscapeOverrides(
+        clockAlignment = landscapeClockAlignment,
+        clockZoneHeightDp = landscapeClockZoneHeightDp,
+        clockScale = landscapeClockScale,
+        clockWidgetWidthDp = landscapeClockWidgetWidthDp,
+        clockWidgetHeightDp = landscapeClockWidgetHeightDp,
+        appRowPosition = landscapeAppRowPosition,
+        appListVerticalAlignment = landscapeAppListVerticalAlignment,
+        appListColumnAlignment = landscapeAppListColumnAlignment,
+    )
+
+/** This facet with [overrides] as its landscape twins. */
+fun FacetEntity.withLandscape(overrides: LandscapeOverrides): FacetEntity = copy(
+    landscapeClockAlignment = overrides.clockAlignment,
+    landscapeClockZoneHeightDp = overrides.clockZoneHeightDp,
+    landscapeClockScale = overrides.clockScale,
+    landscapeClockWidgetWidthDp = overrides.clockWidgetWidthDp,
+    landscapeClockWidgetHeightDp = overrides.clockWidgetHeightDp,
+    landscapeAppRowPosition = overrides.appRowPosition,
+    landscapeAppListVerticalAlignment = overrides.appListVerticalAlignment,
+    landscapeAppListColumnAlignment = overrides.appListColumnAlignment,
+)
 
 /** The calendar display options in force for `this` facet (or the launcher-wide ones when it's `null` or not overriding the calendar). */
 fun FacetEntity?.effectiveCalendarDisplay(settings: LauncherSettings): CalendarDisplayOptions =

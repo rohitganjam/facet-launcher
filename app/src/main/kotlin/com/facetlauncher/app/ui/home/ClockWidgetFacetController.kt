@@ -27,6 +27,10 @@ class ClockWidgetFacetController @Inject constructor(
     suspend fun switchToNativeClock(facet: FacetEntity) = switchFacetToNativeClock(facet)
 
     /** PRD F15's interactive resize commit, fired once on release by the clock's resize handles — see [FacetEntity.clockWidgetWidthDp]'s own doc. */
-    suspend fun commitSize(facet: FacetEntity, widthDp: Int, heightDp: Int, landscape: Boolean = false) =
-        facetRepository.setClockWidgetSize(facet, widthDp, heightDp, landscape)
+    suspend fun commitSize(facet: FacetEntity, widthDp: Int, heightDp: Int, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) =
+        if (mode == HomeLayoutMode.LANDSCAPE) {
+            facetRepository.updateLandscape(facet) { it.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp) }
+        } else {
+            facetRepository.setClockWidgetSize(facet, widthDp, heightDp)
+        }
 }

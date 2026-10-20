@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -495,80 +496,6 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `the landscape clock props are saved apart from the portrait ones and default to null`() = runTest {
-        val repository = createRepository()
-        val before = repository.settings.first()
-        assertEquals(null, before.landscapeClockAlignment)
-        assertEquals(null, before.landscapeClockZoneHeightDp)
-        assertEquals(null, before.landscapeClockScale)
-
-        // When the landscape values are written
-        repository.setClockAlignment(ClockAlignment.CENTER, landscape = true)
-        repository.setClockZoneHeight(310f, landscape = true)
-        repository.setClockScale(1.2f, landscape = true)
-
-        // Then they read back, and the portrait values are untouched
-        val after = repository.settings.first()
-        assertEquals(ClockAlignment.CENTER, after.landscapeClockAlignment)
-        assertEquals(310f, after.landscapeClockZoneHeightDp!!, 0.001f)
-        assertEquals(1.2f, after.landscapeClockScale!!, 0.001f)
-        assertEquals(ClockAlignment.LEFT, after.clockAlignment)
-        assertEquals(null, after.clockZoneHeightDp)
-        assertEquals(0.8f, after.clockScale, 0.001f)
-    }
-
-    @Test
-    fun `resetting the clock height and scale clears their landscape values too`() = runTest {
-        val repository = createRepository()
-        repository.setClockZoneHeight(310f, landscape = true)
-        repository.setClockScale(1.2f, landscape = true)
-
-        repository.resetClockZoneHeight()
-        repository.resetClockScale()
-
-        val after = repository.settings.first()
-        assertEquals(null, after.landscapeClockZoneHeightDp)
-        assertEquals(null, after.landscapeClockScale)
-    }
-
-    @Test
-    fun `resetLandscapeClockAlignment clears the landscape alignment`() = runTest {
-        val repository = createRepository()
-        repository.setClockAlignment(ClockAlignment.RIGHT, landscape = true)
-
-        repository.resetLandscapeClockAlignment()
-
-        assertEquals(null, repository.settings.first().landscapeClockAlignment)
-    }
-
-    @Test
-    fun `landscape list alignment is saved apart from portrait and null clears it`() = runTest {
-        val repository = createRepository()
-        assertEquals(null, repository.settings.first().landscapeAppRowPosition)
-
-        // When the landscape values are written
-        repository.setLandscapeAppRowPosition(AppRowPosition.CENTER)
-        repository.setLandscapeAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        repository.setLandscapeAppListColumnAlignment(AppListColumnAlignment.MIRRORED)
-
-        // Then they read back and portrait is untouched
-        val saved = repository.settings.first()
-        assertEquals(AppRowPosition.CENTER, saved.landscapeAppRowPosition)
-        assertEquals(AppListVerticalAlignment.TOP, saved.landscapeAppListVerticalAlignment)
-        assertEquals(AppListColumnAlignment.MIRRORED, saved.landscapeAppListColumnAlignment)
-        assertEquals(AppRowPosition.LEFT, saved.appRowPosition)
-
-        // And null is "same as portrait" again
-        repository.setLandscapeAppRowPosition(null)
-        repository.setLandscapeAppListVerticalAlignment(null)
-        repository.setLandscapeAppListColumnAlignment(null)
-        val cleared = repository.settings.first()
-        assertEquals(null, cleared.landscapeAppRowPosition)
-        assertEquals(null, cleared.landscapeAppListVerticalAlignment)
-        assertEquals(null, cleared.landscapeAppListColumnAlignment)
-    }
-
-    @Test
     fun `allow landscape defaults to on and persists when turned off`() = runTest {
         val repository = createRepository()
         assertEquals(true, repository.settings.first().allowLandscape)
@@ -576,5 +503,56 @@ class SettingsRepositoryTest {
         repository.setAllowLandscape(false)
 
         assertEquals(false, repository.settings.first().allowLandscape)
+    }
+
+    @Test
+    fun `landscape values are saved apart from the portrait ones and default to none`() = runTest {
+        val repository = createRepository()
+        assertEquals(LandscapeOverrides(), repository.settings.first().landscape)
+
+        // When the landscape values are written
+        val written = LandscapeOverrides(
+            clockAlignment = ClockAlignment.CENTER,
+            clockZoneHeightDp = 310f,
+            clockScale = 1.2f,
+            appRowPosition = AppRowPosition.CENTER,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
+            appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+        )
+        repository.updateLandscape { written }
+
+        // Then they read back, and the portrait values are untouched
+        val saved = repository.settings.first()
+        assertEquals(written, saved.landscape)
+        assertEquals(ClockAlignment.LEFT, saved.clockAlignment)
+        assertEquals(null, saved.clockZoneHeightDp)
+        assertEquals(0.8f, saved.clockScale, 0.001f)
+        assertEquals(AppRowPosition.LEFT, saved.appRowPosition)
+    }
+
+    @Test
+    fun `updateLandscape changes only the fields it names and a null clears one`() = runTest {
+        val repository = createRepository()
+        repository.updateLandscape { it.copy(clockScale = 1.2f, appRowPosition = AppRowPosition.RIGHT) }
+
+        repository.updateLandscape { it.copy(appRowPosition = null) }
+
+        val landscape = repository.settings.first().landscape
+        assertEquals(1.2f, landscape.clockScale!!, 0.001f)
+        assertEquals(null, landscape.appRowPosition)
+    }
+
+    @Test
+    fun `resetting the clock height and scale clears their landscape values too`() = runTest {
+        val repository = createRepository()
+        repository.updateLandscape { it.copy(clockZoneHeightDp = 310f, clockScale = 1.2f, clockAlignment = ClockAlignment.CENTER) }
+
+        repository.resetClockZoneHeight()
+        repository.resetClockScale()
+
+        val landscape = repository.settings.first().landscape
+        assertEquals(null, landscape.clockZoneHeightDp)
+        assertEquals(null, landscape.clockScale)
+        assertEquals(ClockAlignment.CENTER, landscape.clockAlignment)
     }
 }

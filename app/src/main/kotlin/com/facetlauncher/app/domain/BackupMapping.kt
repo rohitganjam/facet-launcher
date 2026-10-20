@@ -66,6 +66,8 @@ fun FacetEntity.toBackupFacet(
     appRowPresentation = appRowPresentation.name,
     appListLayout = appListLayout.name,
     appListColumnAlignment = appListColumnAlignment.name,
+    landscapeAppRowPosition = landscapeAppRowPosition?.name,
+    landscapeAppListColumnAlignment = landscapeAppListColumnAlignment?.name,
     appListGridColumns = appListGridColumns.name,
     appListGridDisplayMode = appListGridDisplayMode.name,
     listContentMode = listContentMode.name,
@@ -103,6 +105,8 @@ fun BackupFacet.toFacetEntity(): FacetEntity = FacetEntity(
     appRowPresentation = appRowPresentation.toEnumOrDefault(AppRowPresentation.LAUNCHER_DEFAULT),
     appListLayout = appListLayout.toEnumOrDefault(AppListLayout.LAUNCHER_DEFAULT),
     appListColumnAlignment = appListColumnAlignment.toEnumOrDefault(AppListColumnAlignment.LAUNCHER_DEFAULT),
+    landscapeAppRowPosition = landscapeAppRowPosition?.toEnumOrNull(),
+    landscapeAppListColumnAlignment = landscapeAppListColumnAlignment?.toEnumOrNull(),
     appListGridColumns = appListGridColumns.toEnumOrDefault(AppListGridColumns.LAUNCHER_DEFAULT),
     appListGridDisplayMode = appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.LAUNCHER_DEFAULT),
     listContentMode = listContentMode.toEnumOrDefault(ListContentMode.FAVORITES),
@@ -127,3 +131,7 @@ fun BackupAppEntry.toFolderAppEntity(): com.facetlauncher.app.data.local.FolderA
 /** An unrecognized stored name (an old export from before an enum constant was renamed) falls back to [default] rather than failing the whole import — same contract as `Converters.kt`. */
 inline fun <reified T : Enum<T>> String.toEnumOrDefault(default: T): T =
     runCatching { enumValueOf<T>(this) }.getOrDefault(default)
+
+/** [toEnumOrDefault] for an optional field: an unrecognized name is just "not set". */
+inline fun <reified T : Enum<T>> String.toEnumOrNull(): T? =
+    runCatching { enumValueOf<T>(this) }.getOrNull()

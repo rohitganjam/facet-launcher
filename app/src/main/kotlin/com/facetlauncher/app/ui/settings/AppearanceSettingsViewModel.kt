@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.effectiveCalendarDisplay
 import com.facetlauncher.app.data.local.resolveOverride
+import com.facetlauncher.app.data.local.landscape
 import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -29,6 +30,7 @@ import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
@@ -87,10 +89,8 @@ data class AppearanceSettingsUiState(
     val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
     /** Launcher-wide: off keeps Home in portrait, and the landscape settings below are hidden. */
     val allowLandscape: Boolean get() = settings.allowLandscape
-    /** What the Landscape rows show: this scope's own stored landscape value, `null` meaning "same as portrait". */
-    val landscapeAppRowPosition: AppRowPosition? get() = if (facet != null) facet.landscapeAppRowPosition else settings.landscapeAppRowPosition
-    val landscapeAppListVerticalAlignment: AppListVerticalAlignment? get() = if (facet != null) facet.landscapeAppListVerticalAlignment else settings.landscapeAppListVerticalAlignment
-    val landscapeAppListColumnAlignment: AppListColumnAlignment? get() = if (facet != null) facet.landscapeAppListColumnAlignment else settings.landscapeAppListColumnAlignment
+    /** What the Landscape rows show: this scope's own landscape values, `null` meaning "same as portrait". */
+    val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
     val appListGridColumns: AppListGridColumns get() = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns)
     val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode)
     /** Mirrors `HomeAppsListSettingsViewModel.HomeAppsListUiState.favorites`'s own resolution exactly — same `overrideApps` flag. */
@@ -283,24 +283,17 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setAllowLandscape(allow) }
     }
 
-    fun setLandscapeAppRowPosition(position: AppRowPosition?) {
-        viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setLandscapeAppRowPosition(it, position) } }
-                ?: settingsRepository.setLandscapeAppRowPosition(position)
-        }
-    }
+    fun setLandscapeAppRowPosition(position: AppRowPosition?) = updateLandscape { it.copy(appRowPosition = position) }
 
-    fun setLandscapeAppListVerticalAlignment(alignment: AppListVerticalAlignment?) {
-        viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setLandscapeAppListVerticalAlignment(it, alignment) } }
-                ?: settingsRepository.setLandscapeAppListVerticalAlignment(alignment)
-        }
-    }
+    fun setLandscapeAppListVerticalAlignment(alignment: AppListVerticalAlignment?) = updateLandscape { it.copy(appListVerticalAlignment = alignment) }
 
-    fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) {
+    fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) = updateLandscape { it.copy(appListColumnAlignment = alignment) }
+
+    /** This scope's landscape values: the facet's own when facet-scoped, the launcher-wide ones otherwise. */
+    private fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setLandscapeAppListColumnAlignment(it, alignment) } }
-                ?: settingsRepository.setLandscapeAppListColumnAlignment(alignment)
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.updateLandscape(it, transform) } }
+                ?: settingsRepository.updateLandscape(transform)
         }
     }
 

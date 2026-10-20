@@ -38,22 +38,26 @@ Instrumented: `HomeScreenTest` (60), `HomeScreenLandscapeTest` (30), `ClockBlock
 
 Behaviour fixes: gap 1 and gap 2 below. Everything else is a refactor.
 
-- [ ] **A1. `LandscapeOverrides`.** One class of nullable fields (clock alignment, divider, scale, widget width and height, row position, column alignment, vertical alignment).
+- [x] **A1. `LandscapeOverrides`.** One class of nullable fields (clock alignment, divider, scale, widget width and height, row position, column alignment, vertical alignment).
+  - *Done.* Deviation: the facet keeps its flat columns and exposes the group as `FacetEntity.landscape` / `withLandscape(...)` (an extension property and function, like `selectedCalendarIds`) instead of a Room `@Embedded`. An `@Embedded` group can't keep the existing column order, which would change the schema identity hash and break the already-installed v32 databases. Schema JSON diff is empty. Settings hold `LauncherSettings.landscape`, read from the same six keys.
   - Facet: Room `@Embedded` keeping the existing column names, so the exported schema JSON is identical (`32.json` unchanged) and no migration is needed.
   - Global: `LauncherSettings.landscape: LandscapeOverrides`, read from the same DataStore keys.
   - Tests: schema JSON diff is empty; `FacetRepositoryTest`, `SettingsRepositoryTest` round-trips still pass; migration class green.
-- [ ] **A2. Resolve once.** `HomeUiState.clockPlacement(mode)` and `listAlignment(mode)` return the resolved values; one consistent precedence rule for clock and list (decide and document it; today they differ).
+- [x] **A2. Resolve once.** `HomeUiState.clockPlacement(mode)` and `listAlignment(mode)` return the resolved values; one consistent precedence rule for clock and list (decide and document it; today they differ).
+  - *Done.* One rule for clock and list (`resolveLandscape`): facet landscape, else facet portrait if it applies, else launcher landscape, else launcher portrait. `HomeUiState.clockPlacement(mode)`, `listAlignment(mode)`, `clockWidgetSizeDp(mode)`.
   - Tests: `HomeUiStateTest` covers facet override, no override, null landscape, and each precedence step.
-- [ ] **A3. One landscape writer per layer.** `updateLandscape { copy(...) }` on `FacetRepository` and `SettingsRepository`; the orientation is `HomeLayoutMode`, not a boolean. Remove the ~14 per-prop landscape writers and the `landscape: Boolean` parameters.
+- [x] **A3. One landscape writer per layer.** `updateLandscape { copy(...) }` on `FacetRepository` and `SettingsRepository`; the orientation is `HomeLayoutMode`, not a boolean. Remove the ~14 per-prop landscape writers and the `landscape: Boolean` parameters.
+  - *Done.* `updateLandscape` on both repositories; 4 landscape writers removed and the `landscape: Boolean` parameters gone from 3 settings and 3 facet writers. The view-model commits take a `HomeLayoutMode`.
   - Tests: repository and view-model tests updated; `HomeViewModelTest` commit routing.
-- [ ] **A4. Route uses A2.** `HomeDrawerRoute` makes two calls instead of 13 `isLandscapeHome` branches, and passes `layoutMode` and `landscapeSpace` down once (no second computation in `HomeScreen`'s defaults).
-- [ ] **A5. One alignment card.** Portrait and Landscape cards in `DockAppsAppearanceScreen` share one composable keyed by orientation.
+- [x] **A4. Route uses A2.** `HomeDrawerRoute` makes two calls instead of 13 `isLandscapeHome` branches, and passes `layoutMode` and `landscapeSpace` down once (no second computation in `HomeScreen`'s defaults).
+- [x] **A5. One alignment card.** Portrait and Landscape cards in `DockAppsAppearanceScreen` share one composable keyed by orientation.
   - Tests: `DockAppsAppearanceScreenTest` unchanged and green.
-- [ ] **A6. Gap 1: seed landscape on override.** `ClockStyleGalleryViewModel.setOverridingClock` / `FacetRepository.updateOverridingClock` seed the facet's landscape overrides from the effective landscape values, so a facet starting to override doesn't change its landscape look.
+- [x] **A6. Gap 1: seed landscape on override.** `ClockStyleGalleryViewModel.setOverridingClock` / `FacetRepository.updateOverridingClock` seed the facet's landscape overrides from the effective landscape values, so a facet starting to override doesn't change its landscape look.
   - Tests: new unit test: global landscape alignment set, facet starts overriding, landscape alignment unchanged.
-- [ ] **A7. Gap 2: backup.** Add the landscape overrides to `BackupSettings` and `BackupFacet` as optional, defaulted fields (no `CURRENT_BACKUP_VERSION` bump), with mapping both ways. Decide and document `allow_landscape` (currently device-local, not backed up).
+- [x] **A7. Gap 2: backup.** Add the landscape overrides to `BackupSettings` and `BackupFacet` as optional, defaulted fields (no `CURRENT_BACKUP_VERSION` bump), with mapping both ways. Decide and document `allow_landscape` (currently device-local, not backed up).
+  - *Done.* Only what portrait also backs up: the row position and two-column alignment twins, optional and additive, in `BackupSettings` and `BackupFacet`. `allow_landscape` stays device-local.
   - Tests: export/import round-trip test; an old backup without the fields still imports.
-- [ ] **A8. Docs and commit.** `02` (columns, keys, writers, counts), `09` (backup), `13`, `17`, test registry. One commit, or two (refactor, then the two fixes) if the diff is large.
+- [x] **A8. Docs and commit.** `02` (columns, keys, writers, counts), `09` (backup), `13`, `17`, test registry. One commit, or two (refactor, then the two fixes) if the diff is large.
 
 ## Phase B — mechanical file split of `HomeScreen.kt`
 
@@ -108,5 +112,6 @@ Targets: each function ≤ 60 lines, complexity ≤ 14, no nesting or condition 
 | 2026-10-20 | Detekt baseline restored for now; removal is phase E. |
 | 2026-10-20 | Plan kept in this file; `IMPLEMENTATION_PLAN.md` links here. |
 | (open) | Order: phase A first (default) or the `HomeScreen` split (B to D) first. |
-| (open) | Precedence rule for clock vs list overrides (A2). |
-| (open) | Whether `allow_landscape` belongs in the backup (A7). |
+| 2026-10-20 | Precedence (A2): one rule for every prop, facet landscape, then facet portrait if it applies, then launcher landscape, then launcher portrait. |
+| 2026-10-20 | `allow_landscape` stays device-local and out of the backup (A7); the landscape clock placement isn't backed up because the portrait one isn't. |
+| 2026-10-20 | Facet landscape twins stay flat columns behind an accessor, not `@Embedded` (A1), to keep the schema identity hash. |

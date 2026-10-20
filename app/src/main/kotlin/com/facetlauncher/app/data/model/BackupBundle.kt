@@ -110,6 +110,9 @@ data class BackupSettings(
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, as today's unchanged single-column look). */
     val appListLayout: String = AppListLayout.SINGLE_COLUMN.name,
     val appListColumnAlignment: String = AppListColumnAlignment.BOTH_LEFT.name,
+    /** Landscape's own row position and two-column alignment: optional and additive (no version bump); absent is "same as portrait". */
+    val landscapeAppRowPosition: String? = null,
+    val landscapeAppListColumnAlignment: String? = null,
     val appListGridColumns: String = AppListGridColumns.FOUR.name,
     val appListGridDisplayMode: String = AppListGridDisplayMode.ICONS.name,
     val listContentMode: String,
@@ -138,6 +141,9 @@ data class BackupFacet(
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, inheriting the launcher-wide layout). */
     val appListLayout: String = AppListLayout.LAUNCHER_DEFAULT.name,
     val appListColumnAlignment: String = AppListColumnAlignment.LAUNCHER_DEFAULT.name,
+    /** Optional and additive, like [BackupSettings.landscapeAppRowPosition]. */
+    val landscapeAppRowPosition: String? = null,
+    val landscapeAppListColumnAlignment: String? = null,
     val appListGridColumns: String = AppListGridColumns.LAUNCHER_DEFAULT.name,
     val appListGridDisplayMode: String = AppListGridDisplayMode.LAUNCHER_DEFAULT.name,
     val listContentMode: String,

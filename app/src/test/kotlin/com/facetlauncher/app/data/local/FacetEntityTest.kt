@@ -1,5 +1,9 @@
 package com.facetlauncher.app.data.local
 
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.AppRowPosition
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -79,38 +83,47 @@ class FacetEntityTest {
     }
 
     @Test
-    fun `resolveLandscapeSentinel prefers the facet's landscape value`() {
-        val facet = FacetEntity(name = "Work", position = 0, appRowPosition = AppRowPosition.RIGHT, landscapeAppRowPosition = AppRowPosition.CENTER)
-
-        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.LEFT, AppRowPosition.LEFT)
-
-        assertEquals(AppRowPosition.CENTER, result)
+    fun `resolveLandscape prefers the facet's landscape value`() {
+        assertEquals(AppRowPosition.CENTER, resolveLandscape(AppRowPosition.CENTER, AppRowPosition.RIGHT, true, AppRowPosition.LEFT, AppRowPosition.LEFT))
     }
 
     @Test
-    fun `resolveLandscapeSentinel falls back to the facet's explicit portrait value before any global value`() {
-        val facet = FacetEntity(name = "Work", position = 0, appRowPosition = AppRowPosition.RIGHT)
-
-        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.CENTER, AppRowPosition.LEFT)
-
-        assertEquals(AppRowPosition.RIGHT, result)
+    fun `resolveLandscape falls back to the facet's portrait value before any launcher value`() {
+        assertEquals(AppRowPosition.RIGHT, resolveLandscape(null, AppRowPosition.RIGHT, true, AppRowPosition.CENTER, AppRowPosition.LEFT))
     }
 
     @Test
-    fun `resolveLandscapeSentinel uses the global landscape value when the facet's portrait value is the sentinel`() {
-        val facet = FacetEntity(name = "Work", position = 0, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT)
-
-        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.CENTER, AppRowPosition.LEFT)
-
-        assertEquals(AppRowPosition.CENTER, result)
+    fun `resolveLandscape uses the launcher's landscape value when the facet's portrait value does not apply`() {
+        assertEquals(AppRowPosition.CENTER, resolveLandscape(null, AppRowPosition.LAUNCHER_DEFAULT, false, AppRowPosition.CENTER, AppRowPosition.LEFT))
     }
 
     @Test
-    fun `resolveLandscapeSentinel ends at the global portrait value with no facet and no landscape value`() {
-        val facet: FacetEntity? = null
+    fun `resolveLandscape ends at the launcher's portrait value with nothing set for landscape`() {
+        assertEquals(AppRowPosition.LEFT, resolveLandscape(null, AppRowPosition.LAUNCHER_DEFAULT, false, null, AppRowPosition.LEFT))
+    }
 
-        val result = facet.resolveLandscapeSentinel({ it.landscapeAppRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, null, AppRowPosition.LEFT)
+    @Test
+    fun `resolveLandscape keeps a facet's own null portrait value instead of falling to the launcher`() {
+        // A clock override that has never had its divider dragged: null means "natural", not "unset".
+        assertEquals(null, resolveLandscape<Float?>(null, null, true, 300f, 200f))
+    }
 
-        assertEquals(AppRowPosition.LEFT, result)
+    @Test
+    fun `a facet's landscape group round-trips through withLandscape`() {
+        val overrides = LandscapeOverrides(
+            clockAlignment = ClockAlignment.CENTER,
+            clockZoneHeightDp = 310f,
+            clockScale = 1.1f,
+            clockWidgetWidthDp = 400,
+            clockWidgetHeightDp = 300,
+            appRowPosition = AppRowPosition.CENTER,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
+            appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+        )
+
+        val facet = FacetEntity(name = "Work", position = 0).withLandscape(overrides)
+
+        assertEquals(overrides, facet.landscape)
+        assertEquals(LandscapeOverrides(), FacetEntity(name = "Plain", position = 1).landscape)
     }
 }

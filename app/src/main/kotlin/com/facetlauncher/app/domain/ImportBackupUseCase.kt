@@ -177,6 +177,12 @@ class ImportBackupUseCase @Inject constructor(
             setAppRowPresentation(settings.appRowPresentation.toEnumOrDefault(AppRowPresentation.ICON_AND_TEXT))
             setAppListLayout(settings.appListLayout.toEnumOrDefault(AppListLayout.SINGLE_COLUMN))
             setAppListColumnAlignment(settings.appListColumnAlignment.toEnumOrDefault(AppListColumnAlignment.BOTH_LEFT))
+            updateLandscape {
+                it.copy(
+                    appRowPosition = settings.landscapeAppRowPosition?.toEnumOrNull(),
+                    appListColumnAlignment = settings.landscapeAppListColumnAlignment?.toEnumOrNull(),
+                )
+            }
             setAppListGridColumns(settings.appListGridColumns.toEnumOrDefault(AppListGridColumns.FOUR))
             setAppListGridDisplayMode(settings.appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.ICONS))
             setListContentMode(settings.listContentMode.toEnumOrDefault(ListContentMode.FAVORITES))

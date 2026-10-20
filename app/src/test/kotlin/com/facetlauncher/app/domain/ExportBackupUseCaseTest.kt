@@ -1,5 +1,7 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.AppRowPosition
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -142,5 +144,29 @@ class ExportBackupUseCaseTest {
         val bundle = useCase(uri)
 
         assertNull(bundle.settings.activeFacetIndex)
+    }
+
+    @Test
+    fun `exports the landscape row position and column alignment for the launcher and each facet`() = runTest {
+        val facet = FacetEntity(
+            id = 7, name = "Work", position = 0,
+            landscapeAppRowPosition = AppRowPosition.RIGHT, landscapeAppListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
+        )
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(LauncherSettings(landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER, appListColumnAlignment = AppListColumnAlignment.MIRRORED))),
+        )
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+            `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
+            `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
+        }
+
+        val bundle = useCase(mock(Uri::class.java))
+
+        assertEquals("CENTER", bundle.settings.landscapeAppRowPosition)
+        assertEquals("MIRRORED", bundle.settings.landscapeAppListColumnAlignment)
+        assertEquals("RIGHT", bundle.facets[0].landscapeAppRowPosition)
+        assertEquals("BOTH_RIGHT", bundle.facets[0].landscapeAppListColumnAlignment)
     }
 }

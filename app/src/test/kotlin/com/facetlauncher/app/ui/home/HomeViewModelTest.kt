@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.eqOf
+import com.facetlauncher.app.LandscapeTransformCaptor
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -313,23 +316,26 @@ class HomeViewModelTest {
         assertEquals(QuickPlacementAction.Remove(facetName = null), result.dockAction)
     }
 
+    private val landscapeCommits = LandscapeOverrides(clockZoneHeightDp = 310f, clockScale = 1.1f, clockAlignment = ClockAlignment.CENTER)
+
     @Test
-    fun `landscape clock commits write the landscape values to the settings repository when no facet is overriding`() = runTest {
+    fun `landscape clock commits write the landscape group of the settings when no facet is overriding`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
 
-        viewModel.onClockZoneHeightCommit(310f, landscape = true)
-        viewModel.onClockScaleCommit(1.1f, landscape = true)
-        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, landscape = true)
+        viewModel.onClockZoneHeightCommit(310f, HomeLayoutMode.LANDSCAPE)
+        viewModel.onClockScaleCommit(1.1f, HomeLayoutMode.LANDSCAPE)
+        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, HomeLayoutMode.LANDSCAPE)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setClockZoneHeight(310f, true)
-        verify(settingsRepository).setClockScale(1.1f, true)
-        verify(settingsRepository).setClockAlignment(ClockAlignment.CENTER, true)
+        val captor = LandscapeTransformCaptor()
+        verify(settingsRepository, org.mockito.Mockito.times(3)).updateLandscape(captor.capture())
+        assertEquals(landscapeCommits, captor.applied())
+        verify(settingsRepository, org.mockito.Mockito.never()).setClockZoneHeight(310f)
     }
 
     @Test
-    fun `landscape clock commits write the landscape values to an overriding facet`() = runTest {
+    fun `landscape clock commits write the landscape group of an overriding facet`() = runTest {
         val facetRepository = mock(FacetRepository::class.java)
         val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
         val viewModel = homeViewModel(
@@ -341,13 +347,14 @@ class HomeViewModelTest {
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onClockZoneHeightCommit(310f, landscape = true)
-        viewModel.onClockScaleCommit(1.1f, landscape = true)
-        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, landscape = true)
+        viewModel.onClockZoneHeightCommit(310f, HomeLayoutMode.LANDSCAPE)
+        viewModel.onClockScaleCommit(1.1f, HomeLayoutMode.LANDSCAPE)
+        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, HomeLayoutMode.LANDSCAPE)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setClockZoneHeight(overridingFacet, 310f, true)
-        verify(facetRepository).setClockScale(overridingFacet, 1.1f, true)
-        verify(facetRepository).setClockAlignment(overridingFacet, ClockAlignment.CENTER, true)
+        val captor = LandscapeTransformCaptor()
+        verify(facetRepository, org.mockito.Mockito.times(3)).updateLandscape(eqOf(overridingFacet), captor.capture())
+        assertEquals(landscapeCommits, captor.applied())
+        verify(facetRepository, org.mockito.Mockito.never()).setClockZoneHeight(overridingFacet, 310f)
     }
 }

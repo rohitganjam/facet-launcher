@@ -104,6 +104,8 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     appRowPresentation = appRowPresentation.name,
     appListLayout = appListLayout.name,
     appListColumnAlignment = appListColumnAlignment.name,
+    landscapeAppRowPosition = landscape.appRowPosition?.name,
+    landscapeAppListColumnAlignment = landscape.appListColumnAlignment?.name,
     appListGridColumns = appListGridColumns.name,
     appListGridDisplayMode = appListGridDisplayMode.name,
     listContentMode = listContentMode.name,

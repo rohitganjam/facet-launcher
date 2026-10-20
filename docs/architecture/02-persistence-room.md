@@ -288,6 +288,8 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 30→31 | Landscape's own clock placement: `facets.landscapeClockAlignment` (TEXT), `landscapeClockZoneHeightDp`, `landscapeClockScale` (REAL), all nullable. `NULL` uses the facet's portrait value, so nothing is rewritten. "Reset clock position" clears them. Not in `BackupFacet` (the same gap as the portrait clock placement). `FacetDatabaseMigrationTest.migration30To31…` checks the portrait placement survives and the new columns are `NULL`. |
 | 31→32 | Landscape's own list alignment: `facets.landscapeAppRowPosition`, `landscapeAppListVerticalAlignment`, `landscapeAppListColumnAlignment` (nullable TEXT). `NULL` is "Same as portrait": a facet's landscape value, else its explicit portrait value, else the launcher's landscape value, else its portrait value (`resolveLandscapeSentinel`). Not in `BackupFacet`. `FacetDatabaseMigrationTest.migration31To32…` checks the portrait alignment survives and the new columns are `NULL`. |
 
+The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
+
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
 The second store. One `DataStore<Preferences>`, provided by `DataStoreModule`
@@ -432,7 +434,7 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
   default: an absent key **means** null, and null is meaningful ("all calendars", "no custom
   swatch", "template's natural height").
 
-### 5.3 Write path — the complete writer API (67 functions)
+### 5.3 Write path — the complete writer API (64 functions)
 
 Every writer is `suspend`, wraps a single `dataStore.edit { }` and touches exactly one key.
 DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }` them.
@@ -447,12 +449,12 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setClockShowMeridiem(Boolean)` | `clock_show_meridiem` | set | `ClockStyleGalleryViewModel` |
 | `setClockDateStyle(ClockDateStyle)` | `clock_date_style` | set | `ClockStyleGalleryViewModel` |
 | `setAllowLandscape(Boolean)` | `allow_landscape` | set | `AppearanceSettingsViewModel` |
-| `setClockAlignment(ClockAlignment, landscape)` | `clock_alignment` or `landscape_clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
-| `setClockZoneHeight(Float, landscape)` | `clock_zone_height_dp` or `landscape_clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
+| `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
+| `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
-| `setClockScale(Float, landscape)` | `clock_scale` or `landscape_clock_scale` | set | `HomeViewModel` (corner handle) |
+| `setClockScale(Float)` | `clock_scale` | set | `HomeViewModel` (corner handle) |
 | `resetClockScale()` | `clock_scale` and `landscape_clock_scale` | **remove** |
-| `resetLandscapeClockAlignment()` | `landscape_clock_alignment` | **remove** | `ClockStyleGalleryViewModel` (Reset position) | `ClockStyleGalleryViewModel` |
+| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `AppearanceSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
 | `setShowCalendarIndicator(Boolean)` | `show_calendar_indicator` | set | `CalendarSettingsViewModel` |
 | `setCalendarItemsToShow(Int)` | `calendar_items_to_show` | set (clamped 1..3) | `CalendarSettingsViewModel` |
@@ -461,9 +463,6 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `AppearanceSettingsViewModel` |
-| `setLandscapeAppRowPosition(AppRowPosition?)` | `landscape_app_row_position` | set, or **remove** for `null` | `AppearanceSettingsViewModel` |
-| `setLandscapeAppListVerticalAlignment(AppListVerticalAlignment?)` | `landscape_app_list_vertical_alignment` | set, or **remove** for `null` | `AppearanceSettingsViewModel` |
-| `setLandscapeAppListColumnAlignment(AppListColumnAlignment?)` | `landscape_app_list_column_alignment` | set, or **remove** for `null` | `AppearanceSettingsViewModel` |
 | `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `AppearanceSettingsViewModel` |
 | `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `AppearanceSettingsViewModel` |
 | `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
@@ -678,10 +677,10 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 42 of the 67 DataStore keys, with `activeFacetIndex`
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — 44 of the 67 DataStore keys, with `activeFacetIndex`
 instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
 `clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
-`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, the three `landscape_app_*` keys, `allow_landscape` (device-local: it follows the device's orientation), `app_list_vertical_alignment`, `selected_calendar_ids`,
+`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, `landscape_app_list_vertical_alignment`, `allow_landscape` (device-local: it follows the device's orientation), `app_list_vertical_alignment`, `selected_calendar_ids`,
 `calendar_colors`, `recently_installed_position`, `search_settings_enabled`, all four `*_permission_requested` flags,
 `onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
 (a restored device loses clock position/scale/date style), the rest are device-local by design.
@@ -698,6 +697,7 @@ Then
 one-by-one through the picker flow, see [09-flow-backup-restore.md](09-flow-backup-restore.md)).
 Folder references are by *index into `folders`*, facet references by *index into `facets`*, because
 Room ids are regenerated on restore.
+Their landscape twins `landscapeAppRowPosition` and `landscapeAppListColumnAlignment` are exported too, in both, as optional additive fields (absent means "same as portrait", no version bump). The portrait clock placement isn't backed up, so landscape's isn't either.
 
 **Automation rules are not exported.** `automation_rules` has no field in `BackupBundle`, and import
 calls `deleteAllFacets()` first, so the foreign-key cascade deletes every rule on restore. The

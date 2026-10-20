@@ -1,5 +1,8 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.LandscapeTransformCaptor
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -208,5 +211,42 @@ class ImportBackupUseCaseTest {
 
         assertTrue(result is ImportBackupResult.Success)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.SYSTEM)
+    }
+
+    @Test
+    fun `restores the landscape row position and column alignment, and an old backup clears them`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L,
+                settings = minimalSettings().copy(landscapeAppRowPosition = "CENTER", landscapeAppListColumnAlignment = "MIRRORED"),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        val captor = LandscapeTransformCaptor()
+        verify(settingsRepository).updateLandscape(captor.capture())
+        // Only the two backed-up fields change; the rest of the landscape group is left alone
+        val before = LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.LEFT)
+        assertEquals(LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.CENTER, appListColumnAlignment = AppListColumnAlignment.MIRRORED), captor.last(before))
+    }
+
+    @Test
+    fun `a backup without landscape fields restores them as same as portrait`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L, settings = minimalSettings(),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        val captor = LandscapeTransformCaptor()
+        verify(settingsRepository).updateLandscape(captor.capture())
+        assertEquals(LandscapeOverrides(), captor.last(LandscapeOverrides(appRowPosition = AppRowPosition.LEFT, appListColumnAlignment = AppListColumnAlignment.MIRRORED)))
     }
 }
