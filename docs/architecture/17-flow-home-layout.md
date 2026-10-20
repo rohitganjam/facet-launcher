@@ -51,8 +51,7 @@ portrait                         landscape
 └──────────────────────┘         └───────────┴──────────────────┴────┘
 ```
 
-`HomeScreen` defines the content once, as local composable lambdas (`clockBlock`, `mediaRow`,
-`appListRegion`, `dockIcon`), and each layout arranges them. The app list, its tiles and the dock live in their own files (`HomeAppList.kt`, `AppRow.kt`, `FolderRow.kt`, `DockIcon.kt`); they take two shared groups, `HomeItemActions` (what a tap or long-press does) and `HomeItemStyle` (badges, folder candidates, label look), built once in `HomeScreen`. Portrait is unchanged from before the
+`HomeScreen` is a thin dispatcher: `rememberHomeFrame` (`HomeFrame.kt`) resolves one `HomeFrame` per recomposition (state, actions, measurements, `ClockGeometry`, media layout, reveal alphas, item style), `HomeScreenEffects` clears in-flight drag values and re-clamps the saved scale, and `HomePortraitContent` / `HomeLandscapeContent` (`HomeContent.kt`) arrange the shared slots in `HomeSlots.kt` (`HomeClockSlot`, `HomeMediaSlot`, `HomeAppListRegion`, `HomeDockItems`). The adjust overlays are `ClockAdjustOverlays` and `ClockAdjustPills` (`ClockAdjustControls.kt`, `ClockResizeOverlays.kt`), and the clock maths is pure (`HomeClockGeometry.kt`, tested by `HomeClockGeometryTest`). The app list, its tiles and the dock live in their own files (`HomeAppList.kt`, `AppRow.kt`, `FolderRow.kt`, `DockIcon.kt`); they take two shared groups, `HomeItemActions` (what a tap or long-press does) and `HomeItemStyle` (badges, folder candidates, label look), built once in `HomeScreen`. Portrait is unchanged from before the
 split. Landscape is `HomeLandscapeLayout`, a stateless composable that takes the clock, apps and dock as
 slots.
 

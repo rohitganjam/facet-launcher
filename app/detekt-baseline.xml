@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:AppDrawerScreen.kt:apps.isEmpty() &amp;&amp; contacts.isEmpty() &amp;&amp; settingsEntries.isEmpty() &amp;&amp; !showContactsPermissionPrompt &amp;&amp; !showContactsSettingPrompt</ID>
-    <ID>ComplexCondition:HomeScreen.kt:clockAdjustMode == ClockAdjustMode.ADJUST &amp;&amp; size != null &amp;&amp; origin != null &amp;&amp; rootW != null</ID>
     <ID>ComplexCondition:HubViewModel.kt:HubViewModel$existing.row != placement.row || existing.col != placement.col || existing.colSpan != placement.colSpan || existing.rowSpan != placement.rowSpan</ID>
     <ID>ComplexCondition:PlaceWidgetUseCase.kt:PlaceWidgetUseCase$preferredRow != null &amp;&amp; preferredCol != null &amp;&amp; preferredRow in 0..(HUB_MAX_ROWS - rowSpan) &amp;&amp; preferredCol in 0..(HUB_COLUMNS - colSpan) &amp;&amp; existing.none { placed -&gt; rectanglesOverlap(preferredRow, preferredCol, colSpan, rowSpan, placed.row, placed.col, placed.colSpan, placed.rowSpan) }</ID>
     <ID>ComposableNestingDepth:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
@@ -14,7 +13,6 @@
     <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun AddFacetPage</ID>
     <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
     <ID>ComposableNestingDepth:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
-    <ID>ComposableNestingDepth:HomeScreen.kt:@Composable fun HomeScreen</ID>
     <ID>ComposableNestingDepth:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>ComposableNestingDepth:HubWidgetPickerScreen.kt:@Composable internal fun HubWidgetPickerContent</ID>
     <ID>ComposableParamOrder:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
@@ -46,7 +44,6 @@
     <ID>CyclomaticComplexMethod:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
     <ID>CyclomaticComplexMethod:ContactRepository.kt:ContactRepository$private fun dynamicConnections: List&lt;ContactConnection&gt;</ID>
     <ID>CyclomaticComplexMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
-    <ID>CyclomaticComplexMethod:HomeScreen.kt:@Composable fun HomeScreen</ID>
     <ID>CyclomaticComplexMethod:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>CyclomaticComplexMethod:ImportBackupUseCase.kt:ImportBackupUseCase$suspend operator fun invoke: ImportBackupResult</ID>
     <ID>CyclomaticComplexMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
@@ -85,7 +82,6 @@
     <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun DefaultFavoritesReorderList</ID>
     <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun HomeAppsListSettingsContent</ID>
     <ID>LongMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
-    <ID>LongMethod:HomeScreen.kt:@Composable fun HomeScreen</ID>
     <ID>LongMethod:HomeSurfacePreview.kt:@Composable fun HomeSurfacePreview</ID>
     <ID>LongMethod:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>LongMethod:Migrations.kt:Migrations.&lt;no name provided&gt;$override fun migrate</ID>

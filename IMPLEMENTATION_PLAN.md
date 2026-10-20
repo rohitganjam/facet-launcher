@@ -4133,7 +4133,7 @@ Found on the unfolded Pixel Fold emulator: the fixed-column grid left most of th
 
 ## Landscape Home (built; simplification tracked separately)
 
-**Follow-up:** grouping the landscape twins, splitting `HomeScreen` and removing its Detekt baseline are tracked, and ticked off, in [`LANDSCAPE_SIMPLIFICATION_PLAN.md`](LANDSCAPE_SIMPLIFICATION_PLAN.md).
+**Follow-up:** grouping the landscape twins, splitting `HomeScreen` and removing its Detekt baseline are done, and ticked off, in [`LANDSCAPE_SIMPLIFICATION_PLAN.md`](LANDSCAPE_SIMPLIFICATION_PLAN.md).
 
 Chosen over locking to portrait: foldables and tablets ignore a portrait lock, and a home app that fights rotation feels broken. Found on the unfolded Pixel Fold emulator (near-square, 2208x1840) where the portrait Home is mostly empty.
 

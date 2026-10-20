@@ -116,16 +116,16 @@ Targets: each function ≤ 60 lines, complexity ≤ 14, no nesting or condition 
   - Tests: unit tests for each, including the boundary cases from the landscape bugs found so far (unmeasured pane, minimum floor, stale block bottom).
   - Done: `HomeClockGeometry.kt` (`computeClockGeometry` + `ClockFit`), `HomeClockGeometryTest` (25 tests); HomeScreen's geometry blocks now read from one `ClockGeometry`.
 - [x] **D2. `LandscapeHomeState`** holder for the measured values (pane width, dock row height, clock box, root size) so `HomeScreen` stops owning ~30 landscape locals. Done as `HomeScreenLayout` (`7fffa0c`), covering portrait measurements too.
-- [ ] **D3. Layouts.** `HomePortraitLayout` and `HomeLandscapeContent` as their own composables.
+- [x] **D3. Layouts.** `HomePortraitLayout` and `HomeLandscapeContent` as their own composables.
 - [x] **D4. Adjust overlays.** Portrait adjust, landscape native-clock adjust, landscape widget adjust, and the two pills as separate composables (~300 lines out of `HomeScreen`).
-- [ ] **D5. `HomeScreen` body is a thin dispatcher** (state holders, layout choice, overlays).
+- [x] **D5. `HomeScreen` body is a thin dispatcher** (state holders, layout choice, overlays).
   - Verify: verification set; fold install; adjust-mode gestures checked on the fold in both orientations.
 
 ## Phase E — remove the baseline
 
-- [ ] **E1.** Delete the remaining `HomeScreen.kt` entries from `app/detekt-baseline.xml`.
-- [ ] **E2.** `./gradlew :app:detekt` passes with nothing re-baselined for `HomeScreen*` or the new files.
-- [ ] **E3.** Update `docs/architecture/04` (package tree and counts), `07` (registry), `17`, `TEST_REGISTRY.md`; tick this file; update the `IMPLEMENTATION_PLAN.md` entry.
+- [x] **E1.** Delete the remaining `HomeScreen.kt` entries from `app/detekt-baseline.xml`.
+- [x] **E2.** `./gradlew :app:detekt` passes with nothing re-baselined for `HomeScreen*` or the new files.
+- [x] **E3.** Update `docs/architecture/04` (package tree and counts), `07` (registry), `17`, `TEST_REGISTRY.md`; tick this file; update the `IMPLEMENTATION_PLAN.md` entry.
 
 ## Risks and watch-points
 
