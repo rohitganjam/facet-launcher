@@ -10,10 +10,9 @@ import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.effectiveCalendarDisplay
-import com.facetlauncher.app.data.local.resolveOverride
 import com.facetlauncher.app.data.local.landscape
-import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -79,20 +78,21 @@ data class AppearanceSettingsUiState(
     /** Whether `READ_CALENDAR` is really granted — the Calendars row says so instead of summarising a selection nothing can read. */
     val calendarAccessGranted: Boolean = false,
 ) {
-    val calendarDisplay: CalendarDisplayOptions get() = facet.effectiveCalendarDisplay(settings)
+    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
+    val calendarDisplay: CalendarDisplayOptions get() = style.calendarDisplay
     val isFacetScoped: Boolean get() = facet != null
-    val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode)
-    val appRowPosition: AppRowPosition get() = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
-    val appRowPresentation: AppRowPresentation get() = facet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, settings.appRowPresentation)
-    val appListVerticalAlignment: AppListVerticalAlignment get() = facet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
-    val appListLayout: AppListLayout get() = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout)
-    val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
+    val dockDisplayMode: DockDisplayMode get() = style.dockDisplayMode
+    val appRowPosition: AppRowPosition get() = style.appList.rowPosition
+    val appRowPresentation: AppRowPresentation get() = style.appList.rowPresentation
+    val appListVerticalAlignment: AppListVerticalAlignment get() = style.appList.verticalAlignment
+    val appListLayout: AppListLayout get() = style.appList.layout
+    val appListColumnAlignment: AppListColumnAlignment get() = style.appList.columnAlignment
     /** Launcher-wide: off keeps Home in portrait, and the landscape settings below are hidden. */
     val allowLandscape: Boolean get() = settings.allowLandscape
     /** What the Landscape rows show: this scope's own landscape values, `null` meaning "same as portrait". */
     val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
-    val appListGridColumns: AppListGridColumns get() = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns)
-    val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode)
+    val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
+    val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     /** Mirrors `HomeAppsListSettingsViewModel.HomeAppsListUiState.favorites`'s own resolution exactly — same `overrideApps` flag. */
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overrideApps == true) facetFavorites else globalFavorites
     /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
@@ -105,18 +105,20 @@ data class AppearanceSettingsUiState(
     val selectedCalendarCount: Int get() = (if (facet?.overrideCalendar == true) facet.selectedCalendarIds ?: settings.selectedCalendarIds else settings.selectedCalendarIds)?.size ?: 0
 
     /** [settings] with the clock block resolved for this scope: the facet's own when `overrideClock`, else global. */
-    val clockSettings: LauncherSettings get() = settings.copy(
-        clockTemplateId = facet.resolveOverride({ it.overrideClock }, { it.clockTemplateId }, settings.clockTemplateId),
-        clockFontOption = facet.resolveOverride({ it.overrideClock }, { it.clockFontOption }, settings.clockFontOption),
-        clockColorOption = facet.resolveOverride({ it.overrideClock }, { it.clockColorOption }, settings.clockColorOption),
-        clockAccentColorOption = facet.resolveOverride({ it.overrideClock }, { it.clockAccentColorOption }, settings.clockAccentColorOption),
-        use24HourTime = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime),
-        clockShowMeridiem = facet.resolveOverride({ it.overrideClock }, { it.clockShowMeridiem }, settings.clockShowMeridiem),
-        clockDateStyle = facet.resolveOverride({ it.overrideClock }, { it.clockDateStyle }, settings.clockDateStyle),
-        clockAlignment = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment),
-        clockScale = facet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale),
-        clockZoneHeightDp = facet.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp),
-    )
+    val clockSettings: LauncherSettings get() = style.clock.let { clock ->
+        settings.copy(
+            clockTemplateId = clock.templateId,
+            clockFontOption = clock.fontOption,
+            clockColorOption = clock.colorOption,
+            clockAccentColorOption = clock.accentColorOption,
+            use24HourTime = clock.use24HourTime,
+            clockShowMeridiem = clock.showMeridiem,
+            clockDateStyle = clock.dateStyle,
+            clockAlignment = clock.alignment,
+            clockScale = clock.scale,
+            clockZoneHeightDp = clock.zoneHeightDp,
+        )
+    }
 }
 
 /**

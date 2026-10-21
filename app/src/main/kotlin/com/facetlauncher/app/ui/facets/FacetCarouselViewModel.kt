@@ -6,8 +6,6 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.resolveOverride
-import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -32,6 +30,7 @@ import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.FacetPreviewData
+import com.facetlauncher.app.domain.resolveFacetStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,66 +62,28 @@ data class FacetCarouselUiState(
 
     private fun facet(id: Long) = facets.find { it.id == id }
 
-    fun clockTemplateId(facetId: Long): ClockTemplateId =
-        facet(facetId)?.let { if (it.overrideClock) it.clockTemplateId else globalSettings.clockTemplateId } ?: globalSettings.clockTemplateId
+    /** [facetId]'s overrides resolved against [globalSettings]. */
+    private fun style(facetId: Long) = resolveFacetStyle(facet(facetId), globalSettings)
 
-    fun clockFontOption(facetId: Long): ClockFontOption =
-        facet(facetId)?.let { if (it.overrideClock) it.clockFontOption else globalSettings.clockFontOption } ?: globalSettings.clockFontOption
-
-    fun clockColorOption(facetId: Long): ClockColorOption =
-        facet(facetId)?.let { if (it.overrideClock) it.clockColorOption else globalSettings.clockColorOption } ?: globalSettings.clockColorOption
-
-    /** See [com.facetlauncher.app.data.model.LauncherSettings.clockAccentColorOption]. */
-    fun clockAccentColorOption(facetId: Long): ClockColorOption =
-        facet(facetId)?.let { if (it.overrideClock) it.clockAccentColorOption else globalSettings.clockAccentColorOption } ?: globalSettings.clockAccentColorOption
-
-    fun effectiveUse24HourTime(facetId: Long): Boolean =
-        facet(facetId)?.let { if (it.overrideClock) it.use24HourTime else globalSettings.use24HourTime } ?: globalSettings.use24HourTime
-
-    fun clockShowMeridiem(facetId: Long): Boolean =
-        facet(facetId)?.let { if (it.overrideClock) it.clockShowMeridiem else globalSettings.clockShowMeridiem } ?: globalSettings.clockShowMeridiem
-
-    /** See [com.facetlauncher.app.data.model.LauncherSettings.clockDateStyle]. */
-    fun clockDateStyle(facetId: Long): ClockDateStyle =
-        facet(facetId)?.let { if (it.overrideClock) it.clockDateStyle else globalSettings.clockDateStyle } ?: globalSettings.clockDateStyle
-
-    fun clockAlignment(facetId: Long): ClockAlignment =
-        facet(facetId).resolveOverride({ it.overrideClock }, { it.clockAlignment }, globalSettings.clockAlignment)
-
-    fun clockZoneHeightDp(facetId: Long): Float? =
-        facet(facetId).resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, globalSettings.clockZoneHeightDp)
-
-    fun clockScale(facetId: Long): Float =
-        facet(facetId).resolveOverride({ it.overrideClock }, { it.clockScale }, globalSettings.clockScale)
-
-    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeAppRowPosition]'s own resolution — a look field, resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideApps`. */
-    fun appRowPosition(facetId: Long): AppRowPosition =
-        facet(facetId).resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, globalSettings.appRowPosition)
-
-    fun appRowPresentation(facetId: Long): AppRowPresentation =
-        facet(facetId).resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalSettings.appRowPresentation)
-
-    fun appListVerticalAlignment(facetId: Long): AppListVerticalAlignment =
-        facet(facetId).resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, globalSettings.appListVerticalAlignment)
-
-    fun appListLayout(facetId: Long): AppListLayout =
-        facet(facetId).resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, globalSettings.appListLayout)
-
-    fun appListColumnAlignment(facetId: Long): AppListColumnAlignment =
-        facet(facetId).resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, globalSettings.appListColumnAlignment)
-
-    fun appListGridColumns(facetId: Long): AppListGridColumns =
-        facet(facetId).resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, globalSettings.appListGridColumns)
-
-    fun appListGridDisplayMode(facetId: Long): AppListGridDisplayMode =
-        facet(facetId).resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, globalSettings.appListGridDisplayMode)
-
-    fun listContentMode(facetId: Long): ListContentMode =
-        facet(facetId)?.let { if (it.overrideApps) it.listContentMode else globalSettings.listContentMode } ?: globalSettings.listContentMode
-
-    /** Mirrors [com.facetlauncher.app.ui.home.HomeUiState.activeDockDisplayMode]'s own resolution — a look field, resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideDock`. The dock's app list itself comes from each facet's [FacetPreviewData.dockApps]. */
-    fun dockDisplayMode(facetId: Long): DockDisplayMode =
-        facet(facetId).resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, globalSettings.dockDisplayMode)
+    fun clockTemplateId(facetId: Long): ClockTemplateId = style(facetId).clock.templateId
+    fun clockFontOption(facetId: Long): ClockFontOption = style(facetId).clock.fontOption
+    fun clockColorOption(facetId: Long): ClockColorOption = style(facetId).clock.colorOption
+    fun clockAccentColorOption(facetId: Long): ClockColorOption = style(facetId).clock.accentColorOption
+    fun effectiveUse24HourTime(facetId: Long): Boolean = style(facetId).clock.use24HourTime
+    fun clockShowMeridiem(facetId: Long): Boolean = style(facetId).clock.showMeridiem
+    fun clockDateStyle(facetId: Long): ClockDateStyle = style(facetId).clock.dateStyle
+    fun clockAlignment(facetId: Long): ClockAlignment = style(facetId).clock.alignment
+    fun clockZoneHeightDp(facetId: Long): Float? = style(facetId).clock.zoneHeightDp
+    fun clockScale(facetId: Long): Float = style(facetId).clock.scale
+    fun appRowPosition(facetId: Long): AppRowPosition = style(facetId).appList.rowPosition
+    fun appRowPresentation(facetId: Long): AppRowPresentation = style(facetId).appList.rowPresentation
+    fun appListVerticalAlignment(facetId: Long): AppListVerticalAlignment = style(facetId).appList.verticalAlignment
+    fun appListLayout(facetId: Long): AppListLayout = style(facetId).appList.layout
+    fun appListColumnAlignment(facetId: Long): AppListColumnAlignment = style(facetId).appList.columnAlignment
+    fun appListGridColumns(facetId: Long): AppListGridColumns = style(facetId).appList.gridColumns
+    fun appListGridDisplayMode(facetId: Long): AppListGridDisplayMode = style(facetId).appList.gridDisplayMode
+    fun listContentMode(facetId: Long): ListContentMode = style(facetId).appList.contentMode
+    fun dockDisplayMode(facetId: Long): DockDisplayMode = style(facetId).dockDisplayMode
 }
 
 @HiltViewModel

@@ -3,8 +3,6 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.local.landscape
 import com.facetlauncher.app.data.local.resolveLandscape
-import com.facetlauncher.app.data.local.resolveOverride
-import com.facetlauncher.app.data.local.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -27,6 +25,8 @@ import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.ClockAccessoryState
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
 
@@ -73,56 +73,27 @@ data class HomeUiState(
     val clockWidgetHeightDp: Int?
         get() = activeFacet?.clockWidgetHeightDp
 
-    /** The active facet's clock settings, falling back to the global defaults when not overriding. */
-    val clockTemplateId: ClockTemplateId
-        get() = activeFacet?.let { if (it.overrideClock) it.clockTemplateId else settings.clockTemplateId } ?: settings.clockTemplateId
+    /** The active facet's overrides resolved against [settings]. */
+    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(activeFacet, settings) }
 
-    val clockFontOption: ClockFontOption
-        get() = activeFacet?.let { if (it.overrideClock) it.clockFontOption else settings.clockFontOption } ?: settings.clockFontOption
-
-    val clockColorOption: ClockColorOption
-        get() = activeFacet?.let { if (it.overrideClock) it.clockColorOption else settings.clockColorOption } ?: settings.clockColorOption
-
-    /** The active facet's clock accent color, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
-    val clockAccentColorOption: ClockColorOption
-        get() = activeFacet?.let { if (it.overrideClock) it.clockAccentColorOption else settings.clockAccentColorOption } ?: settings.clockAccentColorOption
-
-    /** The active facet's date style, falling back to the global default when not overriding — mirrors [clockColorOption]'s own resolution shape. */
-    val clockDateStyle: ClockDateStyle
-        get() = activeFacet?.let { if (it.overrideClock) it.clockDateStyle else settings.clockDateStyle } ?: settings.clockDateStyle
-
-    val effectiveUse24HourTime: Boolean
-        get() = activeFacet?.let { if (it.overrideClock) it.use24HourTime else settings.use24HourTime } ?: settings.use24HourTime
-
-    val clockShowMeridiem: Boolean
-        get() = activeFacet?.let { if (it.overrideClock) it.clockShowMeridiem else settings.clockShowMeridiem } ?: settings.clockShowMeridiem
-
-    val activeListContentMode: ListContentMode
-        get() = activeFacet?.let { if (it.overrideApps) it.listContentMode else settings.listContentMode } ?: settings.listContentMode
-
-    /** The active facet's app-row position — a look/placement field, edited from Settings → Appearance and resolved via its own `LAUNCHER_DEFAULT` sentinel independently of `overrideApps` (see [com.facetlauncher.app.data.local.resolveSentinel]). */
-    val activeAppRowPosition: AppRowPosition
-        get() = activeFacet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition)
-
-    /** The active facet's app-row presentation — see [activeAppRowPosition]'s own doc for the resolution shape. */
-    val activeAppRowPresentation: AppRowPresentation
-        get() = activeFacet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, settings.appRowPresentation)
+    val clockTemplateId: ClockTemplateId get() = style.clock.templateId
+    val clockFontOption: ClockFontOption get() = style.clock.fontOption
+    val clockColorOption: ClockColorOption get() = style.clock.colorOption
+    val clockAccentColorOption: ClockColorOption get() = style.clock.accentColorOption
+    val clockDateStyle: ClockDateStyle get() = style.clock.dateStyle
+    val effectiveUse24HourTime: Boolean get() = style.clock.use24HourTime
+    val clockShowMeridiem: Boolean get() = style.clock.showMeridiem
+    val activeListContentMode: ListContentMode get() = style.appList.contentMode
+    val activeAppRowPosition: AppRowPosition get() = style.appList.rowPosition
+    val activeAppRowPresentation: AppRowPresentation get() = style.appList.rowPresentation
 
     /** True when the active facet's mode needs `PACKAGE_USAGE_STATS`, it isn't granted yet, and the user hasn't already dismissed this prompt by tapping its button. */
     val showUsageAccessPrompt: Boolean
         get() = activeListContentMode != ListContentMode.FAVORITES && !usageAccessGranted && !usageAccessPromptDismissed
 
-    /** The active facet's clock alignment, falling back to the global default when not overriding — mirrors [clockTemplateId]'s own resolution shape. */
-    val clockAlignment: ClockAlignment
-        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
-
-    /** The active facet's clock zone height, falling back to the global default when not overriding — see [clockAlignment]'s own doc. */
-    val clockZoneHeightDp: Float?
-        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp)
-
-    /** The active facet's clock scale factor, falling back to the global default when not overriding. */
-    val clockScale: Float
-        get() = activeFacet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale)
+    val clockAlignment: ClockAlignment get() = style.clock.alignment
+    val clockZoneHeightDp: Float? get() = style.clock.zoneHeightDp
+    val clockScale: Float get() = style.clock.scale
 
     /**
      * The clock's alignment, divider position and scale for [mode]. Portrait is the facet's value while it overrides
@@ -201,29 +172,20 @@ data class HomeUiState(
     val favoritesOverrideFacetName: String?
         get() = activeFacet?.takeIf { it.overridingFavorites }?.name
 
-    /** The active facet's app-list vertical anchor — mirrors [activeAppRowPosition]'s own resolution shape. */
-    val activeAppListVerticalAlignment: AppListVerticalAlignment
-        get() = activeFacet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment)
+    val activeAppListVerticalAlignment: AppListVerticalAlignment get() = style.appList.verticalAlignment
+    val activeAppListLayout: AppListLayout get() = style.appList.layout
 
-    /** The active facet's app-list layout (single column/two columns/grid) — mirrors [activeAppRowPosition]'s own resolution shape. */
-    val activeAppListLayout: AppListLayout
-        get() = activeFacet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout)
+    /** Only meaningful while [activeAppListLayout] is [AppListLayout.TWO_COLUMN]. */
+    val activeAppListColumnAlignment: AppListColumnAlignment get() = style.appList.columnAlignment
 
-    /** Only meaningful while [activeAppListLayout] is [AppListLayout.TWO_COLUMN] — see [activeAppRowPosition]'s own resolution shape. */
-    val activeAppListColumnAlignment: AppListColumnAlignment
-        get() = activeFacet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment)
+    /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID]. */
+    val activeAppListGridColumns: AppListGridColumns get() = style.appList.gridColumns
 
-    /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID] — see [activeAppRowPosition]'s own resolution shape. */
-    val activeAppListGridColumns: AppListGridColumns
-        get() = activeFacet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns)
+    /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID]. */
+    val activeAppListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
 
-    /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID] — see [activeAppRowPosition]'s own resolution shape. */
-    val activeAppListGridDisplayMode: AppListGridDisplayMode
-        get() = activeFacet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode)
-
-    /** The active facet's dock display style — a look field, resolved independently of `overrideDock` (that flag still gates only [dockApps], already resolved per-facet upstream in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]) — see [activeAppRowPosition]'s own doc for the resolution shape. */
-    val activeDockDisplayMode: DockDisplayMode
-        get() = activeFacet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode)
+    /** A look field, resolved independently of `overrideDock` (that flag gates only [dockApps], already resolved per-facet in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]). */
+    val activeDockDisplayMode: DockDisplayMode get() = style.dockDisplayMode
 
     /**
      * The "make Facet your home screen" step is out of the way: already dismissed, or Facet already holds the role

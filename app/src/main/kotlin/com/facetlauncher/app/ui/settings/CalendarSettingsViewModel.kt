@@ -9,8 +9,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.effectiveCalendarDisplay
-import com.facetlauncher.app.data.local.resolveOverride
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
@@ -51,10 +51,11 @@ data class CalendarSettingsUiState(
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideCalendar ?: false
     val effectiveShowAllDayEvents: Boolean get() = if (isOverriding) facet?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
-    val calendarDisplay: CalendarDisplayOptions get() = facet.effectiveCalendarDisplay(settings)
+    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
+    val calendarDisplay: CalendarDisplayOptions get() = style.calendarDisplay
     /** The clock-block look the preview strip renders with: the facet's own when it overrides the clock, else launcher-wide. */
-    val previewUse24HourTime: Boolean get() = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime)
-    val previewClockAlignment: ClockAlignment get() = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
+    val previewUse24HourTime: Boolean get() = style.clock.use24HourTime
+    val previewClockAlignment: ClockAlignment get() = style.clock.alignment
     val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverriding) facet?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
     /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
     fun calendarSwatch(calendarId: String): AccentSwatch? =
