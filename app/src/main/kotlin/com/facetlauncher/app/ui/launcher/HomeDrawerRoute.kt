@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.facetlauncher.app.ui.home.HomeLayoutMode
@@ -184,6 +185,7 @@ fun HomeDrawerRoute(
     // still-down finger that opened it, or on anything else, until it closes (back still works).
     val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
     val context = LocalContext.current
+    val activity = LocalActivity.current
 
     val isDrawerOpen by remember { derivedStateOf { swipe.drawer.progress.value > 0f } }
     val isHubOpen by remember { derivedStateOf { swipe.hub.progress.value > 0f } }
@@ -318,6 +320,8 @@ fun HomeDrawerRoute(
             ),
             layoutMode = homeLayoutMode,
             landscapeSpace = homeLandscapeSpace,
+            // Marks the app as fully drawn once Home has faded in, so startup timing covers what the user sees.
+            onFullyReveal = { activity?.reportFullyDrawn() },
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {

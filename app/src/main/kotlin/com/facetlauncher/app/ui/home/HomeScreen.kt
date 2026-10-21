@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -31,6 +34,7 @@ import com.facetlauncher.app.ui.home.HomeScreenState
 import com.facetlauncher.app.ui.home.rememberHomeLandscapeSpace
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
@@ -45,10 +49,18 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     layoutMode: HomeLayoutMode = rememberHomeLayoutMode(),
     landscapeSpace: HomeLandscapeSpace = rememberHomeLandscapeSpace(),
+    /** Called once, when the clock and the app list have both finished fading in: Home is then fully drawn. */
+    onFullyReveal: () -> Unit = {},
 ) {
     val layout = rememberHomeScreenLayout()
     val frame = rememberHomeFrame(state, actions, layout, layoutMode, landscapeSpace)
     HomeScreenEffects(frame)
+    val currentFrame by rememberUpdatedState(frame)
+    val currentOnFullyReveal by rememberUpdatedState(onFullyReveal)
+    LaunchedEffect(Unit) {
+        snapshotFlow { currentFrame.isFullyRevealed }.first { it }
+        currentOnFullyReveal()
+    }
     val clock = state.clock
     Box(
         modifier = modifier

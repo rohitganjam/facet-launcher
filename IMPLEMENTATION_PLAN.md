@@ -4202,3 +4202,25 @@ On the phone emulator the carousel's open frames are as cheap as the drawer's an
 - [ ] **On a real phone and a real foldable**, which is where the numbers mean something. Repeat with 10 facets, the Pro maximum.
 - [ ] **Screens still unmeasured:** Settings and Appearance (the preview card), the clock style gallery, Manage facets, the app drawer's search and scroll, scrolling a long app list.
 - [ ] **A hosted clock widget** on a facet, since its preview adds a second `AppWidgetHost` view.
+
+### Memory and startup (phone emulator, 2026-10-22)
+
+`scripts/bench-memory.sh <serial> [facet counts]` prints PSS from `dumpsys meminfo` after Home settles and with each panel open; `scripts/bench-startup.sh <serial> [runs] [facet counts]` times cold start from the system log: "Displayed" is the first frame, "Fully drawn" is when `HomeScreen` reports (`onFullyReveal`, which calls `Activity.reportFullyDrawn`) that the clock and the app list have finished fading in. Both need `./gradlew :app:assembleBenchmark` first.
+
+**Memory** (PSS, MB; Home at rest, then with the carousel open): the whole app is **58–67 MB** whatever the facet count, against 73–96 MB for the stock launcher on the same emulator.
+
+| Facets | Home at rest | Carousel open | Java heap | Native heap | Code |
+|---|---|---|---|---|---|
+| 1 | 63.7 | 58.4 | 6.0 | 19.9 | 13.0 |
+| 3 | 66.2 | 60.8 | 6.4 | 20.7 | 14.0 |
+| 6 | 65.8 | 64.6 | 6.4 | 20.4 | 13.3 |
+| 10 | 66.7 | 64.6 | 6.6 | 20.8 | 13.7 |
+
+The carousel adds 4–5 MB of native heap with 6 or more facets and nothing with 1–3 (it composes only the cards in view). The drawer and Hub add under 1 MB each. This emulator reports no graphics memory, so the GPU share of a real device is not in these numbers.
+
+**Startup** (cold, 8 runs, median): the first frame arrives at **176–213 ms** and Home is fully drawn at **807–889 ms**, with no trend by facet count. So a user sees the wallpaper for roughly 650 ms after the first frame before the clock and list are fully there.
+
+Where that time goes (from timestamps in a temporary log): about 360–590 ms from the first frame until `HomeViewModel` delivers its first state (the route draws nothing until then), then the reveal choreography in `HomeFrame`: the clock waits for its box to be measured and settle for 120 ms and fades in over 250 ms, and the app list waits for its geometry to settle for 150 ms and fades over 200 ms. An experiment (reverted) that dropped both debounces and shortened both fades to 80 ms brought fully drawn from 807–889 ms to **551–578 ms**, so the choreography is worth about 260–310 ms; the rest is the data load.
+
+- [ ] **Snappy startup (not done).** Remove or shorten the reveal debounces and fades (about 300 ms), and make the first frame real Home instead of a blank wallpaper by painting the last Home state from a small cache while the live state loads (the remaining ~350 ms). Profile the first-state load (Room open, DataStore, the installed-apps relist) to see what can be parallelised or deferred.
+- [ ] **Re-measure on a real phone** after that; set the budget there (first frame with content under about 150 ms, fully drawn under about 300 ms is the aim).

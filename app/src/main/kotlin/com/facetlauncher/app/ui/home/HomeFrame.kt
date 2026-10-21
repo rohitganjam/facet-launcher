@@ -64,6 +64,10 @@ internal class HomeFrame(
 ) {
     val isLandscape: Boolean get() = mode == HomeLayoutMode.LANDSCAPE
 
+    /** The clock and the app list (when there is one) have finished their fade-in. */
+    val isFullyRevealed: Boolean
+        get() = clockAppearAlpha.value >= 1f && (listAppearAlpha.value >= 1f || state.list.items.isEmpty())
+
     /** Roomy landscape windows put the dock along the bottom. */
     val dockAtBottom: Boolean get() = isLandscape && space == HomeLandscapeSpace.ROOMY
 
