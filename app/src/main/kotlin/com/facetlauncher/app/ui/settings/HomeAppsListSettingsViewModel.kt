@@ -8,7 +8,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.data.model.resolveSentinel
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -21,6 +22,7 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
@@ -50,15 +52,7 @@ private const val PREVIEW_APP_COUNT = 3
  */
 data class HomeAppsListUiState(
     val facet: Facet? = null,
-    val globalAppRowPosition: AppRowPosition = AppRowPosition.LEFT,
-    val globalAppRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
-    val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
-    val globalAppsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
-    val globalAppListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
-    val globalAppListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
-    val globalAppListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
-    val globalAppListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
-    val globalAppListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+    val settings: LauncherSettings = LauncherSettings(),
     /** The launcher-wide default Favorites list — shown (read-only) while inheriting, and copied into the facet's own list the moment it starts overriding with an empty list. */
     val globalFavorites: List<PlacedItem> = emptyList(),
     /** This facet's own favorites — only meaningful/edited while [isOverriding]. */
@@ -72,16 +66,17 @@ data class HomeAppsListUiState(
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideApps ?: false
-    /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverriding] via its own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.model.resolveSentinel]). Still read here since this screen's own preview needs it. */
-    val appRowPosition: AppRowPosition get() = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, globalAppRowPosition)
-    val appRowPresentation: AppRowPresentation get() = facet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalAppRowPresentation)
-    val listContentMode: ListContentMode get() = if (isOverriding) facet?.listContentMode ?: globalListContentMode else globalListContentMode
-    val appsToShowCount: Int get() = if (isOverriding) facet?.appsToShowCount ?: globalAppsToShowCount else globalAppsToShowCount
-    val appListVerticalAlignment: AppListVerticalAlignment get() = facet.resolveSentinel({ it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, globalAppListVerticalAlignment)
-    val appListLayout: AppListLayout get() = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, globalAppListLayout)
-    val appListColumnAlignment: AppListColumnAlignment get() = facet.resolveSentinel({ it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, globalAppListColumnAlignment)
-    val appListGridColumns: AppListGridColumns get() = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, globalAppListGridColumns)
-    val appListGridDisplayMode: AppListGridDisplayMode get() = facet.resolveSentinel({ it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, globalAppListGridDisplayMode)
+    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
+    /** Look, not content: resolved independently of [isOverriding] through each field's own `LAUNCHER_DEFAULT` sentinel. The preview needs them here. */
+    val appRowPosition: AppRowPosition get() = style.appList.rowPosition
+    val appRowPresentation: AppRowPresentation get() = style.appList.rowPresentation
+    val listContentMode: ListContentMode get() = style.appList.contentMode
+    val appsToShowCount: Int get() = if (isOverriding) facet?.appsToShowCount ?: settings.appsToShowCount else settings.appsToShowCount
+    val appListVerticalAlignment: AppListVerticalAlignment get() = style.appList.verticalAlignment
+    val appListLayout: AppListLayout get() = style.appList.layout
+    val appListColumnAlignment: AppListColumnAlignment get() = style.appList.columnAlignment
+    val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
+    val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     /** This scope's effective favorites — the facet's own while overriding, the launcher-wide default otherwise. Apps and folders interleaved, same as Home's own list. */
     val favorites: List<PlacedItem> get() = if (isOverriding) facetFavorites else globalFavorites
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
@@ -127,15 +122,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         val (wallpaper, installed, preferred) = previewInputs
         HomeAppsListUiState(
             facet = facets.find { it.id == facetId },
-            globalAppRowPosition = settings.appRowPosition,
-            globalAppRowPresentation = settings.appRowPresentation,
-            globalListContentMode = settings.listContentMode,
-            globalAppsToShowCount = settings.appsToShowCount,
-            globalAppListVerticalAlignment = settings.appListVerticalAlignment,
-            globalAppListLayout = settings.appListLayout,
-            globalAppListColumnAlignment = settings.appListColumnAlignment,
-            globalAppListGridColumns = settings.appListGridColumns,
-            globalAppListGridDisplayMode = settings.appListGridDisplayMode,
+            settings = settings,
             globalFavorites = globalFavorites,
             facetFavorites = facetFavorites,
             previewSourceApps = selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT).map { PlacedItem.SingleApp(it) },

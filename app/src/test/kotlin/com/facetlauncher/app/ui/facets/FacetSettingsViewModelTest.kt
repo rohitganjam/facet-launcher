@@ -72,7 +72,7 @@ class FacetSettingsViewModelTest {
     fun `clock template falls back to the global default when not overriding`() {
         val state = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideClock = false, clockTemplateId = ClockTemplateId.RULE_MERIDIEM),
-            globalClockTemplateId = ClockTemplateId.LIGHT_STACK,
+            settings = LauncherSettings(clockTemplateId = ClockTemplateId.LIGHT_STACK),
         )
 
         assertEquals(ClockTemplateId.LIGHT_STACK, state.clockTemplateId)
@@ -82,7 +82,7 @@ class FacetSettingsViewModelTest {
     fun `clock template uses this facet's own value when overriding`() {
         val state = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true, clockTemplateId = ClockTemplateId.RULE_MERIDIEM),
-            globalClockTemplateId = ClockTemplateId.LIGHT_STACK,
+            settings = LauncherSettings(clockTemplateId = ClockTemplateId.LIGHT_STACK),
         )
 
         assertEquals(ClockTemplateId.RULE_MERIDIEM, state.clockTemplateId)
@@ -92,11 +92,11 @@ class FacetSettingsViewModelTest {
     fun `app row position resolves via its own sentinel, independent of overrideApps`() {
         val notOverridingButExplicit = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = false, appRowPosition = AppRowPosition.RIGHT),
-            globalAppRowPosition = AppRowPosition.LEFT,
+            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT),
         )
         val overridingButDefaultSentinel = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = true, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT),
-            globalAppRowPosition = AppRowPosition.LEFT,
+            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT),
         )
 
         // A facet's own explicit position wins even without overrideApps — it's a look field,
@@ -110,7 +110,7 @@ class FacetSettingsViewModelTest {
     fun `app row presentation resolves via its own sentinel, independent of overrideApps`() {
         val state = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = false, appRowPresentation = AppRowPresentation.TEXT_ONLY),
-            globalAppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+            settings = LauncherSettings(appRowPresentation = AppRowPresentation.ICON_AND_TEXT),
         )
 
         assertEquals(AppRowPresentation.TEXT_ONLY, state.appRowPresentation)
@@ -129,10 +129,7 @@ class FacetSettingsViewModelTest {
                 appListGridColumns = AppListGridColumns.SIX,
                 appListGridDisplayMode = AppListGridDisplayMode.TEXT,
             ),
-            globalAppListLayout = AppListLayout.SINGLE_COLUMN,
-            globalAppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
-            globalAppListGridColumns = AppListGridColumns.FOUR,
-            globalAppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+            settings = LauncherSettings(appListLayout = AppListLayout.SINGLE_COLUMN, appListColumnAlignment = AppListColumnAlignment.BOTH_LEFT, appListGridColumns = AppListGridColumns.FOUR, appListGridDisplayMode = AppListGridDisplayMode.ICONS),
         )
         val overridingButDefaultSentinel = FacetSettingsUiState(
             facet = Facet(
@@ -145,10 +142,7 @@ class FacetSettingsViewModelTest {
                 appListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
                 appListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
             ),
-            globalAppListLayout = AppListLayout.SINGLE_COLUMN,
-            globalAppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
-            globalAppListGridColumns = AppListGridColumns.FOUR,
-            globalAppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+            settings = LauncherSettings(appListLayout = AppListLayout.SINGLE_COLUMN, appListColumnAlignment = AppListColumnAlignment.BOTH_LEFT, appListGridColumns = AppListGridColumns.FOUR, appListGridDisplayMode = AppListGridDisplayMode.ICONS),
         )
 
         // A facet's own explicit values win even without overrideApps — look fields, not gated by
@@ -168,8 +162,7 @@ class FacetSettingsViewModelTest {
     fun `list content mode and apps-to-show count fall back to global defaults when not overriding apps`() {
         val state = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = false, listContentMode = ListContentMode.RECENTS, appsToShowCount = 8),
-            globalListContentMode = ListContentMode.FAVORITES,
-            globalAppsToShowCount = 5,
+            settings = LauncherSettings(listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5),
         )
 
         assertEquals(ListContentMode.FAVORITES, state.listContentMode)
@@ -180,8 +173,7 @@ class FacetSettingsViewModelTest {
     fun `list content mode and apps-to-show count use this facet's own values when overriding apps`() {
         val state = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 8),
-            globalListContentMode = ListContentMode.FAVORITES,
-            globalAppsToShowCount = 5,
+            settings = LauncherSettings(listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5),
         )
 
         assertEquals(ListContentMode.RECENTS, state.listContentMode)
@@ -244,7 +236,7 @@ class FacetSettingsViewModelTest {
     fun `dock display mode resolves via its own sentinel, independent of overrideDock`() {
         val state = FacetSettingsUiState(
             facet = Facet(id = 1L, name = "Work", position = 0, overrideDock = false, dockDisplayMode = DockDisplayMode.TEXT),
-            globalDockDisplayMode = DockDisplayMode.ICONS,
+            settings = LauncherSettings(dockDisplayMode = DockDisplayMode.ICONS),
         )
 
         assertEquals(DockDisplayMode.TEXT, state.dockDisplayMode)

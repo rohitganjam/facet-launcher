@@ -127,10 +127,11 @@ flowchart TB
   so the card never goes blank — the facet's own list (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) becomes an independent copy from that moment.
 - **One resolver for portrait overrides:** `domain/ResolvedFacetStyle.kt`'s `resolveFacetStyle(facet, settings)`
   returns the clock block, apps-list look, dock display mode and calendar display in force. `HomeUiState`,
-  `FacetCarouselUiState`, `AppearanceUiState` and `CalendarSettingsUiState` delegate to it, so the
-  override rules (`overrideClock`/`overrideApps` gating, `LAUNCHER_DEFAULT` sentinels) live in one tested
-  place. The landscape rules (`clockPlacement`, `listAlignment`) and the per-facet settings screens that
-  carry separate `globalX` fields still resolve on their own.
+  `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
+  `HomeAppsListUiState` and `DockSettingsUiState` delegate to it, so the override rules
+  (`overrideClock`/`overrideApps` gating, `LAUNCHER_DEFAULT` sentinels) live in one tested place. The
+  last three hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
+  value. The landscape rules (`clockPlacement`, `listAlignment`) still resolve inside `HomeUiState`.
 - **Turning it off does not delete the facet's rows**; they're just ignored until the flag is set
   again (and are still exported by backup).
 - `FacetCarouselViewModel` exposes 20 `xxx(facetId)` resolvers that apply `resolveOverride`/

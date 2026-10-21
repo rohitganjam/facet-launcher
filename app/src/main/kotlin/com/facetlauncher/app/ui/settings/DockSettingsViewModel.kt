@@ -7,7 +7,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.data.model.resolveSentinel
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
@@ -36,7 +37,7 @@ import com.facetlauncher.app.data.model.PlacementList
  */
 data class DockSettingsUiState(
     val facet: Facet? = null,
-    val globalDockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+    val settings: LauncherSettings = LauncherSettings(),
     val globalDockItems: List<PlacedItem> = emptyList(),
     /** This facet's own dock — only meaningful/edited while [isOverriding]. */
     val facetDockItems: List<PlacedItem> = emptyList(),
@@ -47,8 +48,8 @@ data class DockSettingsUiState(
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideDock ?: false
-    /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverriding] via its own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.model.resolveSentinel]). Still read here since this screen's own preview needs it. */
-    val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, globalDockDisplayMode)
+    /** Look, not content: resolved independently of [isOverriding] through its own `LAUNCHER_DEFAULT` sentinel. The preview needs it here. */
+    val dockDisplayMode: DockDisplayMode get() = resolveFacetStyle(facet, settings).dockDisplayMode
     /** This scope's effective dock — the facet's own while overriding, the launcher-wide default otherwise. */
     val dockItems: List<PlacedItem> get() = if (isOverriding) facetDockItems else globalDockItems
 }
@@ -86,7 +87,7 @@ class DockSettingsViewModel @Inject constructor(
         val (facetDockItems, globalDockItems) = dockItems
         DockSettingsUiState(
             facet = facets.find { it.id == facetId },
-            globalDockDisplayMode = settings.dockDisplayMode,
+            settings = settings,
             globalDockItems = globalDockItems,
             facetDockItems = facetDockItems,
             appLabelColorOption = settings.appLabelColorOption,
