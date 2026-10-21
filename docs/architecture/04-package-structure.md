@@ -31,8 +31,8 @@ app/src/main/kotlin/com/facetlauncher/app/
     │                                    SettingsSectionHeader, SettingsIconBadge — and the buttons PrimaryButton,
     │                                    TonalButton, SurfaceButton, TextActionButton, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (27 routes) + popBackStackSafely
-    ├── launcher/                  (3)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
-    │                                    surface), LauncherLocals (CompositionLocals)
+    ├── launcher/                  (4)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (Home⇄Drawer gesture
+    │                                    surface), HomeSwipeGestures (swipe axes, settle rules, drag detector), LauncherLocals (CompositionLocals)
     ├── home/                      (38)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
     │                                    ClockAdjustToolbar / `ClockAdjustMode`, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, `ScaledHomeScreen` (the real Home scaled down, for previews), `HomeScreenStateBuilder` and `HomeTags`;
     │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`

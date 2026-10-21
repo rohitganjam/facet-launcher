@@ -93,7 +93,6 @@
     <ID>LoopWithTooManyJumpStatements:AppDrawerScreen.kt:while</ID>
     <ID>LoopWithTooManyJumpStatements:CalendarRepository.kt:CalendarRepository$while</ID>
     <ID>LoopWithTooManyJumpStatements:ContactRepository.kt:ContactRepository$while</ID>
-    <ID>LoopWithTooManyJumpStatements:HomeDrawerRoute.kt:while</ID>
     <ID>LoopWithTooManyJumpStatements:WidgetGrabGesture.kt:while</ID>
     <ID>MatchingDeclarationName:FacetNavHost.kt:FacetDestinations</ID>
     <ID>MatchingDeclarationName:FolderContentsSheet.kt:FolderSheetHeaderAction</ID>
