@@ -7,8 +7,6 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.data.model.effectiveCalendarDisplay
-import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -33,7 +31,6 @@ data class FacetPreviewData(
     val dockApps: List<PlacedItem> = emptyList(),
     /** Today's events for this facet's effective calendar settings — empty when ungranted or none selected, same as [HomeScreenState.calendarEvents]. */
     val calendarEvents: List<CalendarEvent> = emptyList(),
-    val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
 )
 
 /**
@@ -94,7 +91,7 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
                         inputs.defaultFavorites,
                     ),
                     observeCalendarEvents(facet, inputs.settings),
-                ) { apps, events -> facet.id to FacetPreviewData(apps, effectiveDock, events, facet.effectiveCalendarDisplay(inputs.settings)) }
+                ) { apps, events -> facet.id to FacetPreviewData(apps, effectiveDock, events) }
             }
 
             combine(flows) { it.toMap() }

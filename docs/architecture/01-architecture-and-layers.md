@@ -115,7 +115,7 @@ flowchart TB
     end
 
     subgraph EP["Entry points"]
-        ACT["LauncherActivity\n@AndroidEntryPoint\n@Inject lateinit var launcherApps"]
+        ACT["LauncherActivity\n@AndroidEntryPoint\n@Inject lateinit var launcherApps\n@Inject lateinit var clockWidgetHost (previews)"]
         SVC["FacetNotificationListenerService\n@AndroidEntryPoint\n@Inject lateinit var notificationBadgeRepository"]
     end
 

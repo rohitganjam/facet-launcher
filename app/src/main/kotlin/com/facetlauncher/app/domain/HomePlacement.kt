@@ -1,4 +1,4 @@
-package com.facetlauncher.app.ui.home
+package com.facetlauncher.app.domain
 
 import androidx.compose.runtime.Immutable
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.ClockAlignment
 
-/** The clock's placement in one orientation, already resolved from facet and launcher settings (see [HomeUiState.clockPlacement]). */
+/** The clock's placement in one orientation, already resolved from facet and launcher settings (see [ResolvedFacetStyle.clockPlacement]). */
 @Immutable
 data class ClockPlacement(
     val alignment: ClockAlignment,
@@ -15,7 +15,7 @@ data class ClockPlacement(
     val scale: Float,
 )
 
-/** How the apps list is aligned in one orientation, already resolved (see [HomeUiState.listAlignment]). */
+/** How the apps list is aligned in one orientation, already resolved (see [ResolvedFacetStyle.listAlignment]). */
 @Immutable
 data class ListAlignment(
     val rowPosition: AppRowPosition,

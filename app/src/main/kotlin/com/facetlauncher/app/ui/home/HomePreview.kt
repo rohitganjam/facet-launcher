@@ -111,6 +111,8 @@ private fun HomePreviewContent(
     // handle sits at the zone height and the clock's bottom edge ends HOME_CLOCK_MIN_GAP above it.
     var clockNaturalHeightDp by remember { mutableFloatStateOf(0f) }
     val previewDensity = LocalDensity.current
+    val widgetHost = LocalClockWidgetHost.current
+    val widgetBox = rememberPreviewWidgetBox(state.clockWidget, widgetHost)
     val topOffsetDp = state.clockZoneHeightDp
         ?.let { (it - HOME_CLOCK_MIN_GAP.value - clockNaturalHeightDp).coerceAtLeast(0f) }
         ?: HOME_CLOCK_DEFAULT_TOP_OFFSET.value
@@ -134,6 +136,14 @@ private fun HomePreviewContent(
             appLabelColorOption = state.appLabelColorOption,
             launcherFontOption = state.launcherFontOption,
             clockScale = state.clockScale,
+            clockWidgetAppWidgetId = widgetBox?.appWidgetId,
+            clockWidgetWidthDp = widgetBox?.widthDp,
+            clockWidgetHeightDp = widgetBox?.heightDp,
+            clockWidgetContent = if (widgetBox != null && widgetHost != null) {
+                { _, _, _ -> PreviewClockWidgetView(widgetHost, widgetBox) }
+            } else {
+                null
+            },
             modifier = Modifier
                 .align(state.clockAlignment.resolve())
                 .padding(top = topOffsetDp.dp)

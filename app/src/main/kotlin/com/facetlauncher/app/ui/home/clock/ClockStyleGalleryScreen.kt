@@ -99,8 +99,8 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         onOverridingChange = viewModel::setOverridingClock,
         inheritSubtitle = stringResource(
             R.string.dot_join_2,
-            stringResource(uiState.globalTemplateId.displayNameRes),
-            stringResource(if (uiState.globalUse24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
+            stringResource(uiState.settings.clockTemplateId.displayNameRes),
+            stringResource(if (uiState.settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
         ),
     )
 }

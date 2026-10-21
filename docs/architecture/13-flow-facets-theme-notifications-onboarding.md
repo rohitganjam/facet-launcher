@@ -104,10 +104,10 @@ flowchart TB
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDayEvents`/`selectedCalendarIds` resolved the same way `ObserveHomeScreenStateUseCase`
-  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `Facet?.effectiveCalendarDisplay` (gated by `overrideCalendar`) into `HomeScreenState.calendarDisplay` / `FacetPreviewData.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
+  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `Facet?.effectiveCalendarDisplay` (gated by `overrideCalendar`) (through `resolveFacetStyle`) into `HomeScreenState.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
 - **`FacetCarouselScreen`'s `FacetPreviewPage` renders the same `HomePreview`**, fed by
-  `FacetCarouselViewModel`'s per-facet resolvers (`appListLayout(facetId)`/`appListColumnAlignment(facetId)`/
-  `appListVerticalAlignment(facetId)`/`appListGridColumns(facetId)`/`appListGridDisplayMode(facetId)`).
+  `FacetCarouselUiState.style(facetId)` through `ResolvedFacetStyle.toPreviewState(...)`, the same call
+  the Appearance preview makes.
   Its tiles are tappable (`onCardClick` applies the facet), unlike the read-only Appearance preview.
   The shared Grid branch uses fixed-slot columns, not `Arrangement.SpaceEvenly`, so an incomplete
   last row packs left like `HomeScreen`'s real `LazyVerticalGrid(GridCells.Fixed(n))`. The preview
@@ -125,21 +125,27 @@ flowchart TB
   `flatMapLatest` tears down the previous facet's Room subscriptions.
 - **Turning an override on copies the inherited list** (`replaceItems(facetId, defaultItems)`)
   so the card never goes blank — the facet's own list (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) becomes an independent copy from that moment.
-- **One resolver for portrait overrides:** `domain/ResolvedFacetStyle.kt`'s `resolveFacetStyle(facet, settings)`
-  returns the clock block, apps-list look, dock display mode and calendar display in force. `HomeUiState`,
+- **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
+  `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
+  calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
+  with the landscape rules) and the facet's hosted clock widget with its size per orientation. Home
+  (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
   `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
-  `HomeAppsListUiState` and `DockSettingsUiState` delegate to it, so the override rules
-  (`overrideClock`/`overrideApps` gating, `LAUNCHER_DEFAULT` sentinels) live in one tested place. The
-  last three hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
-  value. The landscape rules (`clockPlacement`, `listAlignment`) still resolve inside `HomeUiState`.
+  `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
+  last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
+  value. `ResolvedFacetStyleTest` covers the override, sentinel, landscape and widget rules, and
+  `HomePreviewStateTest` checks that a preview's placement equals Home's for the same facet.
+- **A hosted clock widget shows in previews.** `HomePreviewState.clockWidget` carries the facet's widget
+  id and saved size (the provider's default size when it was never resized). `HomePreview` draws it
+  through `ClockBlock`'s `clockWidgetContent` slot as `PreviewClockWidgetView`: a non-live copy laid out
+  at the widget's real dp and scaled down with the card. The view comes from
+  `AppWidgetRepository.createPreviewHostView`, which uses a second, non-listening `AppWidgetHost`
+  (a host sends later updates to the newest view of an id, so one from the main host would take them
+  from the live view on Home), and nothing on the preview path writes the widget's options. The
+  controller reaches previews through `LocalClockWidgetHost`; without it a preview draws the native clock.
 - **Turning it off does not delete the facet's rows**; they're just ignored until the flag is set
   again (and are still exported by backup).
-- `FacetCarouselViewModel` exposes 20 `xxx(facetId)` resolvers that apply `resolveOverride`/
-  `resolveSentinel` per facet so each card renders with its own effective clock/apps/dock styling
-  (dropped to 14 when calendar/appearance styling consolidation removed the four calendar-specific
-  resolvers, then rose to 19 with the four `appListLayout`/`appListColumnAlignment`/
-  `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added, and to 20 with
-  `appListVerticalAlignment(facetId)`, which the carousel preview needs to place the app list under the clock).
+- `FacetCarouselUiState.style(facetId)` is the single per-facet accessor; it replaced twenty `xxx(facetId)` resolvers.
 
 ### 1a. Facet limits and the free plan
 

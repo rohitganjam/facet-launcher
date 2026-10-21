@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.domain.ListAlignment
+import com.facetlauncher.app.domain.ClockPlacement
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import androidx.compose.runtime.Composable

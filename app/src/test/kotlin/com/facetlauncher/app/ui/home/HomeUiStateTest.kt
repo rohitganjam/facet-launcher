@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.domain.ListAlignment
+import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -398,7 +400,7 @@ class HomeUiStateTest {
 
     @Test
     fun `the hosted widget size in landscape is its own when saved, else the portrait size`() {
-        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
+        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 7, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
         val both = portraitOnly.copy(landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300)
         val settings = LauncherSettings(activeFacetId = 1L)
 

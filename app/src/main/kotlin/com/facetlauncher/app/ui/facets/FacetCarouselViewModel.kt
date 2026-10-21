@@ -30,6 +30,7 @@ import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.FacetPreviewData
+import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.resolveFacetStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -60,30 +61,8 @@ data class FacetCarouselUiState(
     val selectableFacetIds: Set<Long> get() = FacetLimits.selectableIds(facets.map { it.id }, isPro)
     val canDeleteFacet: Boolean get() = facets.size > FacetRepository.MIN_FACETS
 
-    private fun facet(id: Long) = facets.find { it.id == id }
-
-    /** [facetId]'s overrides resolved against [globalSettings]. */
-    private fun style(facetId: Long) = resolveFacetStyle(facet(facetId), globalSettings)
-
-    fun clockTemplateId(facetId: Long): ClockTemplateId = style(facetId).clock.templateId
-    fun clockFontOption(facetId: Long): ClockFontOption = style(facetId).clock.fontOption
-    fun clockColorOption(facetId: Long): ClockColorOption = style(facetId).clock.colorOption
-    fun clockAccentColorOption(facetId: Long): ClockColorOption = style(facetId).clock.accentColorOption
-    fun effectiveUse24HourTime(facetId: Long): Boolean = style(facetId).clock.use24HourTime
-    fun clockShowMeridiem(facetId: Long): Boolean = style(facetId).clock.showMeridiem
-    fun clockDateStyle(facetId: Long): ClockDateStyle = style(facetId).clock.dateStyle
-    fun clockAlignment(facetId: Long): ClockAlignment = style(facetId).clock.alignment
-    fun clockZoneHeightDp(facetId: Long): Float? = style(facetId).clock.zoneHeightDp
-    fun clockScale(facetId: Long): Float = style(facetId).clock.scale
-    fun appRowPosition(facetId: Long): AppRowPosition = style(facetId).appList.rowPosition
-    fun appRowPresentation(facetId: Long): AppRowPresentation = style(facetId).appList.rowPresentation
-    fun appListVerticalAlignment(facetId: Long): AppListVerticalAlignment = style(facetId).appList.verticalAlignment
-    fun appListLayout(facetId: Long): AppListLayout = style(facetId).appList.layout
-    fun appListColumnAlignment(facetId: Long): AppListColumnAlignment = style(facetId).appList.columnAlignment
-    fun appListGridColumns(facetId: Long): AppListGridColumns = style(facetId).appList.gridColumns
-    fun appListGridDisplayMode(facetId: Long): AppListGridDisplayMode = style(facetId).appList.gridDisplayMode
-    fun listContentMode(facetId: Long): ListContentMode = style(facetId).appList.contentMode
-    fun dockDisplayMode(facetId: Long): DockDisplayMode = style(facetId).dockDisplayMode
+    /** [facetId]'s overrides resolved against [globalSettings] — what Home shows for that facet, and so what its card previews. */
+    fun style(facetId: Long): ResolvedFacetStyle = resolveFacetStyle(facets.find { it.id == facetId }, globalSettings)
 }
 
 @HiltViewModel

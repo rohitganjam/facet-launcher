@@ -30,6 +30,8 @@ import com.facetlauncher.app.ui.onboarding.OnboardingScreen
 import com.facetlauncher.app.ui.settings.DebugSettingsEntry
 import com.facetlauncher.app.ui.settings.LocalDebugSettingsEntry
 import com.facetlauncher.app.ui.theme.AccentSwatch
+import com.facetlauncher.app.ui.home.ClockWidgetHostController
+import com.facetlauncher.app.ui.home.LocalClockWidgetHost
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.ProvideSystemBars
 import com.facetlauncher.app.ui.theme.SystemBarsState
@@ -46,6 +48,8 @@ class LauncherActivity : ComponentActivity() {
     @Inject lateinit var launcherApps: LauncherApps
 
     @Inject lateinit var entitlementRepository: EntitlementRepository
+
+    @Inject lateinit var clockWidgetHost: ClockWidgetHostController
 
     /** Only a debug build provides one (see `EntitlementModule`): the extra Settings rows it adds. */
     @Inject lateinit var debugSettingsEntry: Optional<DebugSettingsEntry>
@@ -72,6 +76,7 @@ class LauncherActivity : ComponentActivity() {
                 LocalHomeSwipeGate provides homeSwipeGate,
                 LocalDebugSettingsEntry provides debugSettingsEntry.orElse(null),
                 LocalAllowLandscape provides uiState.allowLandscape,
+                LocalClockWidgetHost provides clockWidgetHost,
             ) {
                 FacetLauncherTheme(
                     themeMode = uiState.themeMode,

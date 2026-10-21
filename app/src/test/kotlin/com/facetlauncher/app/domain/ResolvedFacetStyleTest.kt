@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import org.junit.Assert.assertEquals
@@ -79,10 +80,86 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
-    fun `an overriding facet that never dragged its divider falls back to the launcher's zone height`() {
+    fun `an overriding facet that never dragged its divider keeps the natural position, not the launcher's height`() {
         val style = resolveFacetStyle(facet { it.copy(overrideClock = true, clockZoneHeightDp = null) }, settings)
 
-        assertEquals(300f, style.clock.zoneHeightDp)
+        assertEquals(null, style.clock.zoneHeightDp)
+        assertEquals(null, style.clockPlacement.portrait.zoneHeightDp)
+    }
+
+    @Test
+    fun `the portrait clock placement agrees with the clock block`() {
+        val overriding = resolveFacetStyle(
+            facet { it.copy(overrideClock = true, clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f, clockZoneHeightDp = 120f) },
+            settings,
+        )
+        val inheriting = resolveFacetStyle(facet(), settings)
+
+        for (style in listOf(overriding, inheriting)) {
+            assertEquals(style.clock.alignment, style.clockPlacement.portrait.alignment)
+            assertEquals(style.clock.scale, style.clockPlacement.portrait.scale, 0f)
+            assertEquals(style.clock.zoneHeightDp, style.clockPlacement.portrait.zoneHeightDp)
+        }
+    }
+
+    @Test
+    fun `an overriding facet's landscape clock values win, then its portrait ones, never the launcher's landscape`() {
+        val withLandscapeScale = settings.copy(landscape = LandscapeOverrides(clockScale = 2.0f, clockAlignment = ClockAlignment.CENTER))
+        val style = resolveFacetStyle(
+            facet { it.copy(overrideClock = true, clockScale = 0.5f, clockAlignment = ClockAlignment.RIGHT, landscapeClockScale = 0.9f) },
+            withLandscapeScale,
+        )
+
+        assertEquals(0.9f, style.clockPlacement.landscape.scale, 0f)
+        assertEquals(ClockAlignment.RIGHT, style.clockPlacement.landscape.alignment)
+    }
+
+    @Test
+    fun `a facet that is not overriding the clock uses the launcher's values in both orientations`() {
+        val withLandscape = settings.copy(landscape = LandscapeOverrides(clockScale = 1.5f))
+        val style = resolveFacetStyle(facet { it.copy(overrideClock = false, clockScale = 0.5f, landscapeClockScale = 0.9f) }, withLandscape)
+
+        assertEquals(1.2f, style.clockPlacement.portrait.scale, 0f)
+        assertEquals(1.5f, style.clockPlacement.landscape.scale, 0f)
+    }
+
+    @Test
+    fun `list alignment resolves each field through its sentinel, then landscape over it`() {
+        val withLandscape = settings.copy(landscape = LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT))
+        val inherits = resolveFacetStyle(facet { it.copy(appRowPosition = AppRowPosition.LAUNCHER_DEFAULT) }, withLandscape)
+        val explicit = resolveFacetStyle(facet { it.copy(appRowPosition = AppRowPosition.LEFT) }, withLandscape)
+        val ownLandscape = resolveFacetStyle(facet { it.copy(landscapeAppRowPosition = AppRowPosition.CENTER) }, withLandscape)
+
+        assertEquals(AppRowPosition.CENTER, inherits.listAlignment.portrait.rowPosition)
+        assertEquals(AppRowPosition.RIGHT, inherits.listAlignment.landscape.rowPosition)
+        // A facet's explicit portrait value beats the launcher's landscape one
+        assertEquals(AppRowPosition.LEFT, explicit.listAlignment.landscape.rowPosition)
+        assertEquals(AppRowPosition.CENTER, ownLandscape.listAlignment.landscape.rowPosition)
+    }
+
+    @Test
+    fun `the hosted clock widget is the facet's own and is not gated by the clock override`() {
+        val withWidget = facet { it.copy(overrideClock = false, clockWidgetAppWidgetId = 41, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90) }
+
+        val style = resolveFacetStyle(withWidget, settings)
+
+        assertEquals(41, style.clockWidget?.appWidgetId)
+        assertEquals(160 to 90, style.clockWidget?.sizeDp?.portrait)
+    }
+
+    @Test
+    fun `the hosted widget size in landscape is its own per dimension, else the portrait one`() {
+        val widget = facet { it.copy(clockWidgetAppWidgetId = 41, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90) }
+        val landscapeWidthOnly = widget.copy(landscapeClockWidgetWidthDp = 400)
+
+        assertEquals(160 to 90, resolveFacetStyle(widget, settings).clockWidget?.sizeDp?.landscape)
+        assertEquals(400 to 90, resolveFacetStyle(landscapeWidthOnly, settings).clockWidget?.sizeDp?.landscape)
+    }
+
+    @Test
+    fun `there is no hosted widget without a bound id or before a resize`() {
+        assertEquals(null, resolveFacetStyle(facet(), settings).clockWidget)
+        assertEquals(null, resolveFacetStyle(facet { it.copy(clockWidgetAppWidgetId = 41) }, settings).clockWidget?.sizeDp?.portrait)
     }
 
     @Test

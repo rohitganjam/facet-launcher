@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.ResolvedClockStyle
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -13,7 +16,6 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.LauncherFontOption
-import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,31 +34,23 @@ import kotlinx.coroutines.launch
  */
 data class ClockStyleGalleryUiState(
     val facet: Facet? = null,
-    val globalTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    val globalFontOption: ClockFontOption = ClockFontOption.SYSTEM,
-    val globalColorOption: ClockColorOption = ClockColorOption.THEME,
-    val globalAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
-    val globalUse24HourTime: Boolean = false,
-    val globalShowMeridiem: Boolean = false,
-    val globalDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    /** Global only — resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview here regardless of whether this instance is facet-scoped. */
-    val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
-    val globalClockAlignment: ClockAlignment = ClockAlignment.LEFT,
-    /** The launcher's landscape alignment (`null`: same as portrait), carried into a facet when it starts overriding. */
-    val globalLandscapeClockAlignment: ClockAlignment? = null,
+    val settings: LauncherSettings = LauncherSettings(),
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideClock ?: false
-    val templateId: ClockTemplateId get() = if (isOverriding) facet?.clockTemplateId ?: globalTemplateId else globalTemplateId
-    val fontOption: ClockFontOption get() = if (isOverriding) facet?.clockFontOption ?: globalFontOption else globalFontOption
-    val colorOption: ClockColorOption get() = if (isOverriding) facet?.clockColorOption ?: globalColorOption else globalColorOption
+    private val clock: ResolvedClockStyle get() = resolveFacetStyle(facet, settings).clock
+    /** Global only: resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview here regardless of whether this instance is facet-scoped. */
+    val launcherFontOption: LauncherFontOption get() = settings.launcherFontOption
+    val templateId: ClockTemplateId get() = clock.templateId
+    val fontOption: ClockFontOption get() = clock.fontOption
+    val colorOption: ClockColorOption get() = clock.colorOption
     /** Only meaningful for templates where [com.facetlauncher.app.data.model.usesAccentColor] is true. */
-    val accentColorOption: ClockColorOption get() = if (isOverriding) facet?.clockAccentColorOption ?: globalAccentColorOption else globalAccentColorOption
-    val use24HourTime: Boolean get() = if (isOverriding) facet?.use24HourTime ?: globalUse24HourTime else globalUse24HourTime
-    val showMeridiem: Boolean get() = if (isOverriding) facet?.clockShowMeridiem ?: globalShowMeridiem else globalShowMeridiem
-    val dateStyle: ClockDateStyle get() = if (isOverriding) facet?.clockDateStyle ?: globalDateStyle else globalDateStyle
-    /** Home clock's horizontal placement — part of the same Clock+Calendar design bundle as [templateId]/etc, so it resolves and persists the same way. Also positions the calendar events strip now, which has no alignment of its own. */
-    val clockAlignment: ClockAlignment get() = if (isOverriding) facet?.clockAlignment ?: globalClockAlignment else globalClockAlignment
+    val accentColorOption: ClockColorOption get() = clock.accentColorOption
+    val use24HourTime: Boolean get() = clock.use24HourTime
+    val showMeridiem: Boolean get() = clock.showMeridiem
+    val dateStyle: ClockDateStyle get() = clock.dateStyle
+    /** Home clock's horizontal placement, in the same Clock+Calendar design bundle as [templateId]; it also positions the calendar events strip. */
+    val clockAlignment: ClockAlignment get() = clock.alignment
 }
 
 /** Backs the global or facet-scoped clock style gallery. */
@@ -75,16 +69,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     ) { settings, facets ->
         ClockStyleGalleryUiState(
             facet = facets.find { it.id == facetId },
-            globalTemplateId = settings.clockTemplateId,
-            globalFontOption = settings.clockFontOption,
-            globalColorOption = settings.clockColorOption,
-            globalAccentColorOption = settings.clockAccentColorOption,
-            globalUse24HourTime = settings.use24HourTime,
-            globalShowMeridiem = settings.clockShowMeridiem,
-            globalDateStyle = settings.clockDateStyle,
-            launcherFontOption = settings.launcherFontOption,
-            globalClockAlignment = settings.clockAlignment,
-            globalLandscapeClockAlignment = settings.landscape.clockAlignment,
+            settings = settings,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ClockStyleGalleryUiState())
 
@@ -178,7 +163,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 use24HourTime = state.use24HourTime,
                 showMeridiem = state.showMeridiem,
                 clockAlignment = state.clockAlignment,
-                landscapeClockAlignment = if (overriding) state.globalLandscapeClockAlignment else facet.landscape.clockAlignment,
+                landscapeClockAlignment = if (overriding) state.settings.landscape.clockAlignment else facet.landscape.clockAlignment,
                 clockZoneHeightDp = facet.clockZoneHeightDp,
                 clockScale = facet.clockScale,
                 accentColorOption = state.accentColorOption,

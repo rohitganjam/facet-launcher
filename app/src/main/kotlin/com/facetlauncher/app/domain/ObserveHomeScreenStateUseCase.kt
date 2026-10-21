@@ -10,7 +10,6 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.data.model.effectiveCalendarDisplay
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -86,7 +85,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
 
     private fun observeCalendarEventsAndDisplay(activeFacet: Flow<Facet?>): Flow<Pair<List<CalendarEvent>, CalendarDisplayOptions>> {
         val calendarDisplay = combine(activeFacet, settingsRepository.settings) { facet, settings ->
-            facet.effectiveCalendarDisplay(settings)
+            resolveFacetStyle(facet, settings).calendarDisplay
         }.distinctUntilChanged()
         val calendarEvents = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
             facet to settings

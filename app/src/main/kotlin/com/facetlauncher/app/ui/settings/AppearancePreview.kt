@@ -16,7 +16,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.home.HomePreview
-import com.facetlauncher.app.ui.home.HomePreviewState
+import com.facetlauncher.app.ui.home.toPreviewState
 import com.facetlauncher.app.ui.theme.Hairline
 
 /** Matches `FacetCarouselScreen`'s `CAROUSEL_CARD_SCALE` — a scale model of the screen, not a full-width card. */
@@ -35,36 +35,16 @@ internal fun AppearancePreviewCard(
 ) {
     val config = LocalConfiguration.current
     val cardShape = MaterialTheme.shapes.extraLarge
-    val settings = uiState.clockSettings
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         HomePreview(
-            state = HomePreviewState(
+            state = uiState.style.toPreviewState(
                 favorites = uiState.effectiveFavorites,
                 dockItems = uiState.effectiveDockItems,
-                use24HourTime = settings.use24HourTime,
-                clockTemplateId = settings.clockTemplateId,
-                clockFontOption = settings.clockFontOption,
-                clockColorOption = settings.clockColorOption,
-                clockAccentColorOption = settings.clockAccentColorOption,
-                clockShowMeridiem = settings.clockShowMeridiem,
-                clockDateStyle = settings.clockDateStyle,
-                clockAlignment = settings.clockAlignment,
-                clockScale = settings.clockScale,
-                clockZoneHeightDp = settings.clockZoneHeightDp,
                 calendarEvents = uiState.calendarEvents,
-                calendarColors = settings.calendarColors,
-                calendarDisplay = uiState.calendarDisplay,
-                launcherFontOption = settings.launcherFontOption,
-                appRowPosition = uiState.appRowPosition,
-                appRowPresentation = uiState.appRowPresentation,
-                appListLayout = uiState.appListLayout,
-                appListVerticalAlignment = uiState.appListVerticalAlignment,
-                appListColumnAlignment = uiState.appListColumnAlignment,
-                appListGridColumns = uiState.appListGridColumns,
-                appListGridDisplayMode = uiState.appListGridDisplayMode,
-                appLabelColorOption = settings.appLabelColorOption,
-                homeAppsFontWeight = settings.homeAppsFontWeight,
-                dockDisplayMode = uiState.dockDisplayMode,
+                calendarColors = uiState.settings.calendarColors,
+                launcherFontOption = uiState.settings.launcherFontOption,
+                appLabelColorOption = uiState.settings.appLabelColorOption,
+                homeAppsFontWeight = uiState.settings.homeAppsFontWeight,
             ),
             homeWallpaper = homeWallpaper,
             testTagPrefix = "appearance_preview_",

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.domain.ListAlignment
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

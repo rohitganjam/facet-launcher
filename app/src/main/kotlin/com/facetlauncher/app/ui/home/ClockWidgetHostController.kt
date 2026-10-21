@@ -32,6 +32,17 @@ class ClockWidgetHostController @Inject constructor(
         }
 
     /**
+     * A non-live copy of the widget for a preview card, or `null` when orphaned. It never touches the
+     * widget's options, so showing it cannot change the size Home gave the real one.
+     */
+    fun createPreviewHostView(context: Context, appWidgetId: Int): AppWidgetHostView? =
+        appWidgetRepository.getAppWidgetInfo(appWidgetId)?.let { info ->
+            appWidgetRepository.createPreviewHostView(context, appWidgetId, info).apply {
+                setOnLongClickListener { true }
+            }
+        }
+
+    /**
      * A freshly-bound clock widget's starting size, straight from its own declared
      * [android.appwidget.AppWidgetProviderInfo.minWidth]/`minHeight` (already dp, per the
      * platform's own contract — no density conversion needed) — `null` when orphaned. This is a
@@ -56,3 +67,6 @@ class ClockWidgetHostController @Inject constructor(
             cellDp to cellDp
         }
 }
+
+/** The controller the previews draw hosted clock widgets with; `null` where none is provided, which draws the native clock. */
+val LocalClockWidgetHost = androidx.compose.runtime.staticCompositionLocalOf<ClockWidgetHostController?> { null }

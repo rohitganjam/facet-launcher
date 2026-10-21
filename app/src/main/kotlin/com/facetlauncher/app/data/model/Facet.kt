@@ -74,7 +74,7 @@ data class Facet(
  * stored value, [globalValue] is used when there is no facet or it isn't overriding.
  */
 inline fun <T> Facet?.resolveOverride(overriding: (Facet) -> Boolean, facetValue: (Facet) -> T, globalValue: T): T =
-    this?.let { if (overriding(it)) facetValue(it) else globalValue } ?: globalValue
+    if (this != null && overriding(this)) facetValue(this) else globalValue
 
 /**
  * Per-field override via a `LAUNCHER_DEFAULT`-style sentinel, with no separate override flag:

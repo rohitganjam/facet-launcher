@@ -74,6 +74,7 @@ import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.HomePreview
 import com.facetlauncher.app.ui.home.HomePreviewState
+import com.facetlauncher.app.ui.home.toPreviewState
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.settings.ClickableRow
@@ -265,33 +266,14 @@ private fun FacetCarouselContent(
                     facet = facet,
                     isActive = facet.id == uiState.activeFacetId,
                     locked = locked,
-                    previewState = HomePreviewState(
+                    previewState = uiState.style(facet.id).toPreviewState(
                         favorites = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
                         dockItems = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
-                        use24HourTime = uiState.effectiveUse24HourTime(facet.id),
-                        clockTemplateId = uiState.clockTemplateId(facet.id),
-                        clockFontOption = uiState.clockFontOption(facet.id),
-                        clockColorOption = uiState.clockColorOption(facet.id),
-                        clockAccentColorOption = uiState.clockAccentColorOption(facet.id),
-                        clockShowMeridiem = uiState.clockShowMeridiem(facet.id),
-                        clockDateStyle = uiState.clockDateStyle(facet.id),
-                        clockAlignment = uiState.clockAlignment(facet.id),
-                        clockScale = uiState.clockScale(facet.id),
-                        clockZoneHeightDp = uiState.clockZoneHeightDp(facet.id),
                         calendarEvents = uiState.previewsByFacetId[facet.id]?.calendarEvents.orEmpty(),
                         calendarColors = uiState.globalSettings.calendarColors,
-                        calendarDisplay = uiState.previewsByFacetId[facet.id]?.calendarDisplay ?: CalendarDisplayOptions(),
                         launcherFontOption = uiState.globalSettings.launcherFontOption,
-                        appRowPosition = uiState.appRowPosition(facet.id),
-                        appRowPresentation = uiState.appRowPresentation(facet.id),
-                        appListLayout = uiState.appListLayout(facet.id),
-                        appListVerticalAlignment = uiState.appListVerticalAlignment(facet.id),
-                        appListColumnAlignment = uiState.appListColumnAlignment(facet.id),
-                        appListGridColumns = uiState.appListGridColumns(facet.id),
-                        appListGridDisplayMode = uiState.appListGridDisplayMode(facet.id),
                         appLabelColorOption = uiState.globalSettings.appLabelColorOption,
                         homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
-                        dockDisplayMode = uiState.dockDisplayMode(facet.id),
                     ),
                     canDelete = uiState.canDeleteFacet,
                     onEditFacetClick = if (locked) onLockedFacetClick else ({ onEditFacet(facet.id) }),

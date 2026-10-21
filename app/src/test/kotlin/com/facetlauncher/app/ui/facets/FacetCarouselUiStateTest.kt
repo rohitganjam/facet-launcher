@@ -17,8 +17,8 @@ class FacetCarouselUiStateTest {
         val state = FacetCarouselUiState(facets = facets, globalSettings = LauncherSettings(use24HourTime = false))
 
         // Facet 1 has no override — falls back to the global default
-        assertEquals(false, state.effectiveUse24HourTime(1L))
+        assertEquals(false, state.style(1L).clock.use24HourTime)
         // Facet 2 overrides it — reflects its own stored value, not the global default
-        assertEquals(true, state.effectiveUse24HourTime(2L))
+        assertEquals(true, state.style(2L).clock.use24HourTime)
     }
 }

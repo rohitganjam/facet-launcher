@@ -77,7 +77,7 @@ data class AppearanceSettingsUiState(
     /** Whether `READ_CALENDAR` is really granted — the Calendars row says so instead of summarising a selection nothing can read. */
     val calendarAccessGranted: Boolean = false,
 ) {
-    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
+    val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
     val calendarDisplay: CalendarDisplayOptions get() = style.calendarDisplay
     val isFacetScoped: Boolean get() = facet != null
     val dockDisplayMode: DockDisplayMode get() = style.dockDisplayMode
