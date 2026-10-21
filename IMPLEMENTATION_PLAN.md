@@ -4169,13 +4169,36 @@ Each stage is checked on a rotated phone emulator and the Pixel Fold emulator.
 
 **Open.** (a) the "rail" wording for the dock; (b) the landscape threshold; (c) the widget cell size constant (small enough for 5 rows on a ~330dp-tall phone, or fewer rows with tall widgets clamped).
 
-## Macrobenchmarks per screen (to do)
+## Macrobenchmarks per screen
 
-Only `StartupBenchmark` (cold start) exists in `:benchmark`. The previews are now full `HomeScreen` layouts, and the facet carousel stays composed while closed, so its cost is unmeasured. Whether to compose the carousel only when it opens (or keep it composed with cheap placeholder cards until then) depends on these numbers.
+`:benchmark` has `StartupBenchmark` and `ScreenBenchmarks` (cold start, and the frames of opening the carousel, the app drawer and the Hub with a swipe from Home, with 1, 3 and 6 facets). A run seeds itself: the benchmark build has a `BenchmarkSeedReceiver` (`app/src/benchmark/`) that the test broadcasts to finish onboarding, dismiss the first-run prompts, force Pro (more than 3 facets) and add facets, each with six favorites, plus a global dock. Run with:
 
-- [ ] **Carousel, first frame on open** (swipe left from Home): always composed vs composed on open. Run it with **1, 3 and 5–6 facets** configured, since every visible card is a full Home layout and a free-plan user has 3 but a Pro user up to 10.
-- [ ] **Cold start with the carousel composed:** the same facet counts, to see what the always-on cost adds to `StartupBenchmark`.
-- [ ] **Each other screen's first frame and a scroll or swipe through it:** Home, the app drawer open (swipe up), the Hub (swipe right), Settings and Appearance (the preview card), the clock style gallery, Manage facets.
-- [ ] **Both window shapes:** the phone and the unfolded Pixel Fold, since the Fold previews use the landscape layout.
-- [ ] **Facet seeding:** a benchmark setup step that creates N facets with their own favorites, dock and a hosted clock widget on one of them, so the cards are not trivially empty.
-- [ ] Record the baseline numbers here (device, build, facet count, median and P90 frame time) before changing how the carousel composes.
+```bash
+ANDROID_SERIAL=<emulator> ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.facetlauncher.app.benchmark.ScreenBenchmarks
+```
+
+Results land in `benchmark/build/outputs/connected_android_test_additional_output/`. Gradle uninstalls the app afterwards, so Facet is gone from the emulator until it is installed again.
+
+**Baseline, 2026-10-22** (emulator API 36, debug-signed `benchmark` build, 8 iterations, warm: the activity restarts, the process stays; carousel always composed):
+
+| Measure | 1 facet | 3 facets | 6 facets |
+|---|---|---|---|
+| Cold start, time to first frame (phone) | 212 ms | 255 ms | 203 ms |
+| Open carousel, frame CPU P90 / P99 (phone) | 5.6 / 15.6 ms | 5.0 / 12.1 ms | 9.7 / 19.7 ms |
+| Open drawer, frame CPU P90 / P99 (phone) | 6.0 / 18.4 ms | 16.3 / 32.0 ms | 9.5 / 33.0 ms |
+| Open Hub, frame CPU P90 / P99 (phone) | 16.5 / 32.4 ms | 18.0 / 33.4 ms | 5.3 / 9.7 ms |
+
+On the phone emulator the carousel's open frames are as cheap as the drawer's and the Hub's, and the facet count shows no trend, so the always-composed carousel is not a measurable cost there. **The unfolded Pixel Fold emulator is not a usable measure of the app:** every panel, including the drawer and the Hub, has 65–230 ms frames there (P50 65–126 ms) and cold start is 530–700 ms, which is that emulator's rendering speed on a 2208x1840 display. Run those on a real foldable.
+
+**Composed only while open** (an experiment, reverted): the carousel's open frames got worse, with a P99 frame of 35–62 ms against 12–20 ms, and a P99 overrun of up to 84 ms (about five dropped frames) with 1 facet and 22 ms with 6, because the cards' full Home layouts compose as the swipe starts; the 3-facet case showed no difference, so the numbers are noisy. Cold start was unchanged (234–282 ms against 203–255 ms). So the always-composed carousel costs nothing on the open and a little at startup, while composing on open adds a visible hitch to the swipe. Keep it always composed unless a real device shows a startup cost.
+
+- [x] **Carousel, first frame on open** with 1, 3 and 6 facets, always composed against composed on open (phone emulator).
+- [x] **Cold start** with the carousel composed, at 1, 3 and 6 facets.
+- [x] **Drawer and Hub** open frames.
+- [x] **Both window shapes:** phone and the Pixel Fold emulator (the Fold numbers are emulator-bound, see above).
+- [x] **Facet seeding** (onboarding, Pro, N facets with favorites). Not seeded: a hosted clock widget, which needs a bind grant.
+- [ ] **On a real phone and a real foldable**, which is where the numbers mean something. Repeat with 10 facets, the Pro maximum.
+- [ ] **Screens still unmeasured:** Settings and Appearance (the preview card), the clock style gallery, Manage facets, the app drawer's search and scroll, scrolling a long app list.
+- [ ] **A hosted clock widget** on a facet, since its preview adds a second `AppWidgetHost` view.

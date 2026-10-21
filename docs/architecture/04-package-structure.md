@@ -69,7 +69,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 | A colour/typography/motion token | `ui/theme/` | — | `Color.kt`, `Motion.kt` |
 | A `NavHost` route | `ui/navigation/FacetNavHost.kt` | `FacetDestinations.X` constant | `FOLDER_DETAIL = "folderDetail/{folderId}"` |
 
-`app/src/debug/` holds debug-only code (the entitlement override and its Settings row), reached through optional Hilt bindings so release and benchmark builds contain none of it; its tests live in `app/src/testDebug/`.
+`app/src/debug/` holds debug-only code (the entitlement override and its Settings row), reached through optional Hilt bindings so a release build contains none of it; its tests live in `app/src/testDebug/`. `app/src/benchmark/` is the benchmark build's own: a Pro override (so a run can have more than three facets) and `BenchmarkSeedReceiver`, which the `:benchmark` module broadcasts to finish onboarding and set up N facets; it is never in a release build.
 
 Settings screens are the main exception to "one package per surface": all of them live flat in
 `ui/settings/` (only `backup/` and `automation/` have their own sub-package). Clock styling is split between

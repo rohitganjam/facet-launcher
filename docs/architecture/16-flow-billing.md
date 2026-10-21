@@ -44,7 +44,7 @@ flowchart TB
 | `EntitlementRepository` (`open`) | The one Pro seam. The base class answers "everyone is Pro" (tests, previews). |
 | `PlayEntitlementRepository` | The real one, bound by `EntitlementModule`. Caches the last Play answer and publishes `isPro`. |
 | `FacetProViewModel` | Buy and Restore for the Facet Pro screen. Asks the entitlement to refresh; never sets it. |
-| `EntitlementOverride` | Optional Hilt binding (`@BindsOptionalOf`). Only `src/debug` provides one, so release and benchmark builds contain none of it. |
+| `EntitlementOverride` | Optional Hilt binding (`@BindsOptionalOf`). `src/debug` provides one, and `src/benchmark` an always-Pro one for measurement runs; a release build contains none. |
 
 ## 2. The entitlement rules
 
