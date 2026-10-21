@@ -124,7 +124,7 @@ data class BackupSettings(
     val homeAppsFontWeight: String = FontWeightOption.REGULAR.name,
 )
 
-/** Mirrors every non-id field of `FacetEntity` — its own row id isn't portable, same reasoning as [BackupSettings.activeFacetIndex]. */
+/** Mirrors every non-id field of `Facet` — its own row id isn't portable, same reasoning as [BackupSettings.activeFacetIndex]. */
 @Serializable
 data class BackupFacet(
     val name: String,
@@ -159,7 +159,7 @@ data class BackupFacet(
     val showCalendarIndicator: Boolean = true,
     val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /**
-     * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.local.FacetEntity.selectedCalendarIdsCsv]'s
+     * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.model.Facet.selectedCalendarIdsCsv]'s
      * own doc comment. A real JSON array here (not the Room column's comma-joined encoding),
      * matching how [BackupBundle] generally favors the more portable/readable shape. Defaulted
      * (not required) so an older backup missing this field still deserializes cleanly — see

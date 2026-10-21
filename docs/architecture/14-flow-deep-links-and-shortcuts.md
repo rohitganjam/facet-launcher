@@ -19,7 +19,7 @@ sequenceDiagram
     LVM->>UC: invoke()   (launched once, runs for the app's lifetime)
     UC->>SF: observe()   (facets the user may switch to, from FacetRepository + entitlement)
     loop every emission (add / rename / reorder / delete / entitlement change)
-        SF-->>UC: List of FacetEntity
+        SF-->>UC: List of Facet
         UC->>SR: syncShortcuts(facets)
         SR->>SM: setDynamicShortcuts(context, shortcuts)   (full atomic replace)
     end

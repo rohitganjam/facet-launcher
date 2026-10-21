@@ -10,7 +10,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupAppEntry
@@ -148,14 +148,14 @@ class ImportBackupUseCaseTest {
         `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
         // A concrete expected entity, not any(...): Mockito's static any()/eq() return a raw
         // `null` placeholder, which Kotlin's compiler-inserted non-null check on
-        // restoreFacet's `facet: FacetEntity` parameter rejects outright.
-        val expectedFacetEntity = FacetEntity(
+        // restoreFacet's `facet: Facet` parameter rejects outright.
+        val expectedFacetEntity = Facet(
             id = 0, name = "Work", position = 0, overrideClock = false,
             clockTemplateId = ClockTemplateId.LIGHT_STACK, clockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
             clockColorOption = ClockColorOption.THEME, use24HourTime = false, clockShowMeridiem = false,
             overrideApps = false, appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
-            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIdsCsv = "3,4",
+            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIds = setOf("3", "4"),
             overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)

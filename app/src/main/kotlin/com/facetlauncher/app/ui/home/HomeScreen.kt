@@ -12,7 +12,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListVerticalAlignment

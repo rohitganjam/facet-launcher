@@ -9,10 +9,9 @@ import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.effectiveCalendarDisplay
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.effectiveCalendarDisplay
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -30,7 +29,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.local.placementTarget
+import com.facetlauncher.app.data.model.placementTarget
 
 data class HomeScreenState(
     val settings: LauncherSettings,
@@ -42,7 +41,7 @@ data class HomeScreenState(
      *  Favorites row resolve instantly from already-live state instead of a fresh repository
      *  read on every long-press, regardless of which mode Home is currently showing. */
     val favoriteItems: List<PlacedItem>,
-    val facets: List<FacetEntity>,
+    val facets: List<Facet>,
     /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
     val usageAccessGranted: Boolean,
     /** Upcoming events (midnight today to noon tomorrow) for the active facet's effective calendar settings — empty when ungranted or none selected. */
@@ -85,7 +84,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         refreshTrigger.tryEmit(Unit)
     }
 
-    private fun observeCalendarEventsAndDisplay(activeFacet: Flow<FacetEntity?>): Flow<Pair<List<CalendarEvent>, CalendarDisplayOptions>> {
+    private fun observeCalendarEventsAndDisplay(activeFacet: Flow<Facet?>): Flow<Pair<List<CalendarEvent>, CalendarDisplayOptions>> {
         val calendarDisplay = combine(activeFacet, settingsRepository.settings) { facet, settings ->
             facet.effectiveCalendarDisplay(settings)
         }.distinctUntilChanged()
@@ -163,7 +162,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
     }
 
-    private fun observeAppListItems(facet: FacetEntity?, settings: LauncherSettings): Flow<List<PlacedItem>> {
+    private fun observeAppListItems(facet: Facet?, settings: LauncherSettings): Flow<List<PlacedItem>> {
         if (facet == null) return flowOf(emptyList())
         val mode = if (facet.overrideApps) facet.listContentMode else settings.listContentMode
         val appsToShowCount = if (facet.overrideApps) facet.appsToShowCount else settings.appsToShowCount
@@ -175,7 +174,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
     }
 
-    private fun observeCalendarEvents(facet: FacetEntity?, settings: LauncherSettings): Flow<List<CalendarEvent>> {
+    private fun observeCalendarEvents(facet: Facet?, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
         val includeAllDay = if (facet?.overrideCalendar == true) facet.showAllDayEvents else settings.showAllDayEvents
         val selectedCalendarIds = if (facet?.overrideCalendar == true) facet.selectedCalendarIds else settings.selectedCalendarIds

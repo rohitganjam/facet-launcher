@@ -10,9 +10,9 @@ import com.facetlauncher.app.R
  * than being pinned to a value copied at the moment it stopped overriding. Editable from
  * Settings → Appearance now, not Dock's own screen (see chat history — dock/app "look" controls
  * moved out of their content screens into Appearance, alongside [AppRowPosition]/
- * [AppRowPresentation]/[AppListVerticalAlignment]); [com.facetlauncher.app.data.local.FacetEntity.dockDisplayMode]'s
+ * [AppRowPresentation]/[AppListVerticalAlignment]); [com.facetlauncher.app.data.model.Facet.dockDisplayMode]'s
  * resolution no longer goes through `overrideDock` (that flag still gates the dock's own app
- * list) — see [com.facetlauncher.app.data.local.resolveSentinel].
+ * list) — see [com.facetlauncher.app.data.model.resolveSentinel].
  */
 enum class DockDisplayMode(@param:StringRes val displayNameRes: Int) {
     LAUNCHER_DEFAULT(R.string.dock_display_mode_launcher_default),
@@ -327,7 +327,7 @@ data class LauncherSettings(
     /** Same "asked once" signal for the facet-automation permissions (Bluetooth, and location for named Wi-Fi networks). */
     val bluetoothPermissionRequested: Boolean = false,
     val locationPermissionRequested: Boolean = false,
-    /** Settings → "Apps list" section — every facet's own [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]
+    /** Settings → "Apps list" section — every facet's own [Facet][com.facetlauncher.app.data.model.Facet]
      * inherits [appRowPosition], [appRowPresentation], and [listContentMode] unless it sets its own override. */
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
@@ -361,7 +361,7 @@ data class LauncherSettings(
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**
      * Home clock's horizontal placement — the default every facet inherits unless it overrides
-     * it (bundled into [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]'s
+     * it (bundled into [Facet][com.facetlauncher.app.data.model.Facet]'s
      * `overrideClock`, alongside [clockTemplateId]/etc — see chat history: this and its siblings
      * below used to be global-only, like [launcherFontOption]/[themeMode], before moving into that
      * per-facet bundle).
@@ -380,7 +380,7 @@ data class LauncherSettings(
     /**
      * The default every facet inherits unless it overrides it (bundled with [AppRowPosition]/
      * [AppRowPresentation]/[ListContentMode] under `overrideApps` on
-     * [FacetEntity][com.facetlauncher.app.data.local.FacetEntity], same as those three) —
+     * [Facet][com.facetlauncher.app.data.model.Facet], same as those three) —
      * whether the app list anchors to the bottom (today's behavior, right above the dock) or the
      * top (right below the clock's grab handle).
      */

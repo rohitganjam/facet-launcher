@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
@@ -48,7 +48,7 @@ class FacetCarouselViewModelTest {
     @Test
     fun `selectFacet activates the facet and records it as a manual switch`() = runTest(dispatcher) {
         // Given a second facet and a rule the evaluator has marked active
-        val second = FacetEntity(id = 2L, name = "Work", position = 1)
+        val second = Facet(id = 2L, name = "Work", position = 1)
         val facetRepository = mock(FacetRepository::class.java).also {
             `when`(it.observeFacets()).thenReturn(flowOf(listOf(second)))
         }

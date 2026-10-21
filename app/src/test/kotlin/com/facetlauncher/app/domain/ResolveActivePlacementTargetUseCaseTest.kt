@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -15,7 +15,7 @@ import org.mockito.Mockito.`when`
 
 class ResolveActivePlacementTargetUseCaseTest {
 
-    private fun useCase(facet: FacetEntity?): ResolveActivePlacementTargetUseCase {
+    private fun useCase(facet: Facet?): ResolveActivePlacementTargetUseCase {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(MutableStateFlow(LauncherSettings(activeFacetId = 1L)))
         val facetRepository = mock(FacetRepository::class.java)
@@ -24,7 +24,7 @@ class ResolveActivePlacementTargetUseCaseTest {
     }
 
     private fun facet(overrideDock: Boolean = false, overridingFavorites: Boolean = false) =
-        FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = overrideDock, overridingFavorites = overridingFavorites)
+        Facet(id = 1L, name = "P1", position = 0, overrideDock = overrideDock, overridingFavorites = overridingFavorites)
 
     @Test
     fun `a facet overriding its dock resolves the dock to its own list`() = runTest {

@@ -1,9 +1,9 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.effectiveCalendarDisplay
-import com.facetlauncher.app.data.local.resolveOverride
-import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.effectiveCalendarDisplay
+import com.facetlauncher.app.data.model.resolveOverride
+import com.facetlauncher.app.data.model.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -56,7 +56,7 @@ data class ResolvedFacetStyle(
 )
 
 /** [facet] is `null` when there is none, which yields the launcher-wide values. */
-fun resolveFacetStyle(facet: FacetEntity?, settings: LauncherSettings): ResolvedFacetStyle = ResolvedFacetStyle(
+fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetStyle = ResolvedFacetStyle(
     clock = ResolvedClockStyle(
         templateId = facet.resolveOverride({ it.overrideClock }, { it.clockTemplateId }, settings.clockTemplateId),
         fontOption = facet.resolveOverride({ it.overrideClock }, { it.clockFontOption }, settings.clockFontOption),

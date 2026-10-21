@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationLimits
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationRule
@@ -83,7 +83,7 @@ class ObserveFacetAutomationUseCase @Inject constructor(
 internal fun buildFacetAutomationScreenState(
     rules: List<AutomationRule>,
     state: AutomationState,
-    facets: List<FacetEntity>,
+    facets: List<Facet>,
     activeFacetId: Long,
     isGranted: (AutomationPermission) -> Boolean,
     entitledRuleIds: Set<Long>,

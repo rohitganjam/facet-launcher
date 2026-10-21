@@ -9,7 +9,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.AppPlacementEntity
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -53,12 +53,12 @@ class ExportBackupUseCaseTest {
     @Test
     fun `bundles every repository's data and hands it to BackupRepository`() = runTest {
         // Given one active facet with a favorite, one dock app, one default favorite, one widget
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 7,
             name = "Work",
             position = 0,
             clockColorOption = ClockColorOption.ACCENT_PRIMARY,
-            selectedCalendarIdsCsv = "3,4",
+            selectedCalendarIds = setOf("3", "4"),
             appListLayout = AppListLayout.TWO_COLUMN,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,
             appListGridColumns = AppListGridColumns.SIX,
@@ -148,7 +148,7 @@ class ExportBackupUseCaseTest {
 
     @Test
     fun `exports the landscape row position and column alignment for the launcher and each facet`() = runTest {
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 7, name = "Work", position = 0,
             landscapeAppRowPosition = AppRowPosition.RIGHT, landscapeAppListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
         )

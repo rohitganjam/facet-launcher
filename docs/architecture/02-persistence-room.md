@@ -18,7 +18,7 @@ Nothing else is persisted: no `SharedPreferences`, no files in `filesDir`/`cache
 user sets in Settings are DataStore keys (`clock_template_id`, `clock_alignment`,
 `list_content_mode`, `dock_display_mode`, …). The `facets` table carries the same fields again
 as *overrides*, each block gated by a flag (`overrideClock`, `overrideApps`, `overrideDock`,
-`overrideCalendar`, `overridingFavorites`); `FacetEntity.resolveOverride(...)` picks the facet
+`overrideCalendar`, `overridingFavorites`); `Facet.resolveOverride(...)` picks the facet
 value when its flag is set and the DataStore value otherwise. The ER diagram in §1 is Room only —
 the defaults are in §5. The calendar events strip is the one exception to this pattern — it has no
 design fields of its own anywhere (Room or DataStore); it reads the global-only
@@ -131,7 +131,7 @@ erDiagram
   Dock and Favorites entry. `list` (`PlacementList.DOCK | FAVORITES`) picks the list; a null `facetId`
   is the *global default* list and a facet id is that facet's *per-facet override*. Which one is live
   for a facet is decided by its `overrideDock` / `overridingFavorites` flags via
-  `FacetEntity.placementTarget(list)`; `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
+  `Facet.placementTarget(list)`; `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
   `ResolveActivePlacementTargetUseCase` for the right `PlacementTarget(list, facetId)` and write it
   through `PlacementRepository`, the one repository over both tables.
 - **`ownerKey` exists because SQLite treats NULLs as distinct in a unique index.** It stores `facetId`,
@@ -185,7 +185,7 @@ flowchart LR
     AR -. "observeInstalledApps()" .-> PR
     FOR -. "observeFolders()" .-> PR
 
-    FR -- "Flow of List FacetEntity" --> OUT((use cases / ViewModels))
+    FR -- "Flow of List Facet" --> OUT((use cases / ViewModels))
     PR -- "Flow of List PlacedItem, or Map facetId to List PlacedItem" --> OUT
     FOR -- "Flow of List Folder" --> OUT
     WPR -- "Flow of List WidgetPlacementEntity" --> OUT
@@ -238,6 +238,19 @@ Exceptions to the common shape, all deliberate:
 6. `ObserveHomeScreenStateUseCase` combines that with settings/facets/calendar/badges → `HomeScreenState`.
 7. `HomeViewModel` maps it into `HomeUiState` and sets `_uiState.value`.
 8. `HomeScreen` recomposes from `collectAsStateWithLifecycle()`.
+
+### `Facet` and `FacetEntity`
+
+`FacetEntity` is the Room row and stays inside `data/local`. `FacetRepository` maps it to `Facet`
+(`data/model/Facet.kt`) with `FacetMapping.kt`, so ViewModels, use cases and composables never see the
+entity: `observeFacets()` and `getById()` return `Facet`, and `restoreFacet()` takes one. `Facet` has the
+same fields as the row except `selectedCalendarIds`, which is a real `Set<String>?` where the row keeps a
+comma-joined `selectedCalendarIdsCsv`. The override helpers (`resolveOverride`, `resolveSentinel`,
+`landscape`, `placementTarget`, …) are extensions on `Facet`.
+
+Every facet write takes a facet id (`setClockScale(facetId, …)`). The repository re-reads the row and
+writes back the change, so a caller holding an older `Facet` cannot overwrite a newer edit.
+`FacetMappingTest` fails if a column is added to `FacetEntity` without a matching `Facet` field.
 
 ## 3. Type converters
 
@@ -302,7 +315,7 @@ no migrations — evolution is "add a key with a default", and removed keys are 
 The diagram uses ER notation so it reads alongside §1. `facet_settings` is one logical record
 (there is exactly one); each dotted "overridden by" edge means the `facets` column of the same
 name replaces the global value whenever the named gate flag on that facet is `true`
-(`FacetEntity.resolveOverride`).
+(`Facet.resolveOverride`).
 
 ```mermaid
 erDiagram
@@ -399,7 +412,7 @@ edited from Settings → Appearance now (moved out of Dock's/Home Apps List's ow
 history), each resolved via its own `LAUNCHER_DEFAULT` sentinel value (mirroring
 `ClockFontOption`'s existing one) rather than a shared override flag:
 `facetValue == LAUNCHER_DEFAULT ? globalValue : facetValue`
-([`resolveSentinel`](../../app/src/main/kotlin/com/facetlauncher/app/data/local/FacetEntity.kt)),
+([`resolveSentinel`](../../app/src/main/kotlin/com/facetlauncher/app/data/model/Facet.kt)),
 independently of `overrideApps`/`overrideDock`. `LAUNCHER_DEFAULT` is filtered out of the option
 list at global scope (nothing to inherit from there) and is each `FacetEntity` column's own
 default value for a newly-created facet.

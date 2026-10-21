@@ -142,7 +142,7 @@ bump `CURRENT_BACKUP_VERSION` to 4, and extend `BackupMapping.kt` both ways. The
   *no* destructive fallback on upgrade is exactly the right posture for an app holding user layout.
 - **Profile identity via `userId` in every unique index**, with a one-time repair pass for legacy
   rows, is the correct model for Work Profile / Private Space and was clearly retrofitted carefully.
-- **`resolveOverride` on `FacetEntity`** keeps the "facet overrides global" rule in one expression
+- **`resolveOverride` on `Facet`** keeps the "facet overrides global" rule in one expression
   instead of scattered `if (facet.overrideX)` checks.
 - **Startup orchestration in one ViewModel** (`LauncherViewModel.init`) makes the app-lifetime
   side effects discoverable in a single place.

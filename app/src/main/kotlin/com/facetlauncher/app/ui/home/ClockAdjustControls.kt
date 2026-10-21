@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.HomeClockState

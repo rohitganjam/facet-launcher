@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.ui.theme.Accent
 import kotlin.math.abs

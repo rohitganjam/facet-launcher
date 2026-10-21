@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -57,7 +57,7 @@ class DockSettingsViewModelTest {
     private fun createViewModel(
         facetId: Long? = null,
         dockItems: List<PlacedItem> = emptyList(),
-        facets: List<FacetEntity> = emptyList(),
+        facets: List<Facet> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
@@ -103,7 +103,7 @@ class DockSettingsViewModelTest {
     @Test
     fun `facet-scoped reorder writes to that facet, not the launcher-wide dock`() = runTest {
         val placementRepository = mock(PlacementRepository::class.java)
-        val facet = FacetEntity(id = 7L, name = "Work", position = 0)
+        val facet = Facet(id = 7L, name = "Work", position = 0)
         val viewModel = createViewModel(
             facetId = 7L,
             facets = listOf(facet),
@@ -122,7 +122,7 @@ class DockSettingsViewModelTest {
         // A facet not overriding dock content, but with an explicit dockDisplayMode (set from
         // Appearance), still resolves to that value here — its own preview needs it, even though
         // this screen no longer edits it (see chat history).
-        val facet = FacetEntity(id = 3L, name = "Work", position = 0, overrideDock = false, dockDisplayMode = DockDisplayMode.TEXT)
+        val facet = Facet(id = 3L, name = "Work", position = 0, overrideDock = false, dockDisplayMode = DockDisplayMode.TEXT)
         val viewModel = createViewModel(facetId = 3L, facets = listOf(facet))
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()

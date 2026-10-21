@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.HomeClockWidgetState

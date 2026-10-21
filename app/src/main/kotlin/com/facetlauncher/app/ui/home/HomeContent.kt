@@ -26,7 +26,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode

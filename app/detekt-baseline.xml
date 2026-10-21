@@ -178,7 +178,6 @@
     <ID>UnstableCollections:HubGrid.kt:List&lt;HubWidgetUi&gt;</ID>
     <ID>UnstableCollections:HubLandscapeGrid.kt:List&lt;HubLandscapeWidgetUi&gt;</ID>
     <ID>UnstableCollections:LabeledDropdownRow.kt:List&lt;T&gt;</ID>
-    <ID>UnstableCollections:ManageFacetsScreen.kt:List&lt;FacetEntity&gt;</ID>
     <ID>UnstableCollections:OnboardingHomeSetupPage.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:PermissionsScreen.kt:List&lt;PermissionRowState&gt;</ID>
     <ID>UnstableCollections:PrivateSpaceScreen.kt:List&lt;AppInfo&gt;</ID>

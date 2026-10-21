@@ -1,6 +1,6 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import org.junit.Assert.assertEquals
@@ -9,7 +9,7 @@ import org.junit.Test
 
 class BackupMappingTest {
 
-    private val facet = FacetEntity(name = "Work", position = 0)
+    private val facet = Facet(name = "Work", position = 0)
 
     @Test
     fun `a facet's landscape row position and column alignment survive a backup round trip`() {
@@ -17,7 +17,7 @@ class BackupMappingTest {
         val original = facet.copy(landscapeAppRowPosition = AppRowPosition.CENTER, landscapeAppListColumnAlignment = AppListColumnAlignment.MIRRORED)
 
         // When it goes out and comes back
-        val restored = original.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacetEntity()
+        val restored = original.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet()
 
         // Then the landscape values are kept
         assertEquals(AppRowPosition.CENTER, restored.landscapeAppRowPosition)
@@ -26,7 +26,7 @@ class BackupMappingTest {
 
     @Test
     fun `a facet without landscape values restores with none`() {
-        val restored = facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacetEntity()
+        val restored = facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet()
 
         assertNull(restored.landscapeAppRowPosition)
         assertNull(restored.landscapeAppListColumnAlignment)
@@ -37,7 +37,7 @@ class BackupMappingTest {
         val backup = facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList())
             .copy(landscapeAppRowPosition = "NOT_A_REAL_VALUE", landscapeAppListColumnAlignment = "ALSO_NOT_REAL")
 
-        val restored = backup.toFacetEntity()
+        val restored = backup.toFacet()
 
         assertNull(restored.landscapeAppRowPosition)
         assertNull(restored.landscapeAppListColumnAlignment)

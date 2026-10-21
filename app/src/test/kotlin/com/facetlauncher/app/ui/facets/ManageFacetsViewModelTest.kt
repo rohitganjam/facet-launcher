@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.FacetLimits
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.widget.AppWidgetRepository

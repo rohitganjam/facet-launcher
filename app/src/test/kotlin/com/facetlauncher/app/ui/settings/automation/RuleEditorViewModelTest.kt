@@ -8,7 +8,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WifiRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationRuleError
@@ -48,8 +48,8 @@ class RuleEditorViewModelTest {
 
     @After fun tearDown() = Dispatchers.resetMain()
 
-    private val personal = FacetEntity(id = 1, name = "Personal", position = 0)
-    private val work = FacetEntity(id = 2, name = "Work", position = 1)
+    private val personal = Facet(id = 1, name = "Personal", position = 0)
+    private val work = Facet(id = 2, name = "Work", position = 1)
     private val car = PairedBluetoothDevice("AA:BB", "Car")
 
     /** Matches any rule, returning a real one because Mockito's `any` hands back null. */
@@ -58,7 +58,7 @@ class RuleEditorViewModelTest {
         return AutomationRule(0L, 1L, AutomationTrigger.Headphones())
     }
 
-    private class Fixture(val personal: FacetEntity, val work: FacetEntity, car: PairedBluetoothDevice, var bluetoothGranted: Boolean = true) {
+    private class Fixture(val personal: Facet, val work: Facet, car: PairedBluetoothDevice, var bluetoothGranted: Boolean = true) {
         val ruleRepository = mock(AutomationRuleRepository::class.java).also { runBlocking { `when`(it.getRules()).thenReturn(emptyList()) } }
         val settingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(flowOf(LauncherSettings(activeFacetId = personal.id)))

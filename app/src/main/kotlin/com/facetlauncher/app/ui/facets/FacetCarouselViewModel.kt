@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class FacetCarouselUiState(
-    val facets: List<FacetEntity> = emptyList(),
+    val facets: List<Facet> = emptyList(),
     val activeFacetId: Long = 0L,
     val previewsByFacetId: Map<Long, FacetPreviewData> = emptyMap(),
     val globalSettings: LauncherSettings = LauncherSettings(),
@@ -130,7 +130,7 @@ class FacetCarouselViewModel @Inject constructor(
         viewModelScope.launch { addFacetUseCase() }
     }
 
-    fun deleteFacet(facet: FacetEntity) {
+    fun deleteFacet(facet: Facet) {
         if (!uiState.value.canDeleteFacet) return
         viewModelScope.launch {
             deleteFacetUseCase(facet)

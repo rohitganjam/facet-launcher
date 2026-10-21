@@ -7,7 +7,7 @@ import androidx.compose.runtime.Immutable
  * value". One group, so storage, resolution and writing handle every twin the same way.
  *
  * Launcher-wide settings hold one of these, and so does each facet (stored as flat columns, see
- * `FacetEntity.landscape`). The widget size is facet-only: a hosted clock widget belongs to one facet, so
+ * `Facet.landscape`). The widget size is facet-only: a hosted clock widget belongs to one facet, so
  * the launcher-wide group never sets it.
  */
 @Immutable

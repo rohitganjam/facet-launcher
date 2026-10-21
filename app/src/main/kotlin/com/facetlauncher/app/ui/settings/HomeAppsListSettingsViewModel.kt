@@ -7,8 +7,8 @@ import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -49,7 +49,7 @@ private const val PREVIEW_APP_COUNT = 3
  * [com.facetlauncher.app.ui.settings.CalendarSettingsUiState]'s shape.
  */
 data class HomeAppsListUiState(
-    val facet: FacetEntity? = null,
+    val facet: Facet? = null,
     val globalAppRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val globalAppRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val globalListContentMode: ListContentMode = ListContentMode.FAVORITES,
@@ -72,7 +72,7 @@ data class HomeAppsListUiState(
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideApps ?: false
-    /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverriding] via its own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.local.resolveSentinel]). Still read here since this screen's own preview needs it. */
+    /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverriding] via its own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.model.resolveSentinel]). Still read here since this screen's own preview needs it. */
     val appRowPosition: AppRowPosition get() = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, globalAppRowPosition)
     val appRowPresentation: AppRowPresentation get() = facet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, globalAppRowPresentation)
     val listContentMode: ListContentMode get() = if (isOverriding) facet?.listContentMode ?: globalListContentMode else globalListContentMode
@@ -152,14 +152,14 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun setListContentMode(mode: ListContentMode) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setListContentMode(it, mode) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setListContentMode(it.id, mode) } }
                 ?: settingsRepository.setListContentMode(mode)
         }
     }
 
     fun setAppsToShowCount(count: Int) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppsToShowCount(it, count) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppsToShowCount(it.id, count) } }
                 ?: settingsRepository.setAppsToShowCount(count)
         }
     }
@@ -189,7 +189,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
                 placementRepository.replaceItems(PlacementTarget(PlacementList.FAVORITES, pid), state.globalFavorites)
             }
             facetRepository.updateOverridingApps(
-                facet = facet,
+                facetId = facet.id,
                 overriding = overriding,
                 mode = state.listContentMode,
                 count = state.appsToShowCount,

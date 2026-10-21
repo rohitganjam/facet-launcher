@@ -4,7 +4,7 @@ import android.net.Uri
 
 /**
  * The wire format shared by a facet's dynamic shortcut launch intent and any external deep link
- * targeting a facet — `facetlauncher://facet/{id}`, keyed on [com.facetlauncher.app.data.local.FacetEntity.id]
+ * targeting a facet — `facetlauncher://facet/{id}`, keyed on [com.facetlauncher.app.data.model.Facet.id]
  * (stable), never its display name (renamable, not unique). See
  * [com.facetlauncher.app.data.FacetShortcutRepository]'s own doc for why the shortcut's *visible*
  * label and this *trigger* identifier are deliberately different fields.

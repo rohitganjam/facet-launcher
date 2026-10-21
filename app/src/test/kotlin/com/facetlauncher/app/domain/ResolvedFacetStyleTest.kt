@@ -1,6 +1,6 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
@@ -26,8 +26,8 @@ class ResolvedFacetStyleTest {
         dockDisplayMode = DockDisplayMode.ICONS,
     )
 
-    private fun facet(block: (FacetEntity) -> FacetEntity = { it }) =
-        block(FacetEntity(id = 1L, name = "Facet 1", position = 0))
+    private fun facet(block: (Facet) -> Facet = { it }) =
+        block(Facet(id = 1L, name = "Facet 1", position = 0))
 
     @Test
     fun `no facet resolves to the launcher-wide values`() {

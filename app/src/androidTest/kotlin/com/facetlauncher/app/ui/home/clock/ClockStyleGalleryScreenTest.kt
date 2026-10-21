@@ -289,8 +289,8 @@ class ClockStyleGalleryScreenTest {
             // Each setter re-fetches the current row rather than reusing one stale snapshot —
             // otherwise the next call's copy() would silently clobber the previous field back to
             // its original value (see chat history: this exact bug bit this test's first draft).
-            facetRepository.setClockZoneHeight(facetRepository.observeFacets().first().single(), 180f)
-            facetRepository.setClockAlignment(facetRepository.observeFacets().first().single(), com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
+            facetRepository.setClockZoneHeight(facetRepository.observeFacets().first().single().id, 180f)
+            facetRepository.setClockAlignment(facetRepository.observeFacets().first().single().id, com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp != null }

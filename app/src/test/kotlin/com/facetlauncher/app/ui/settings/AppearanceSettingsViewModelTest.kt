@@ -11,7 +11,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -74,7 +74,7 @@ class AppearanceSettingsViewModelTest {
 
     private suspend fun createViewModel(
         facetId: Long? = null,
-        facets: List<FacetEntity> = emptyList(),
+        facets: List<Facet> = emptyList(),
         settings: LauncherSettings = LauncherSettings(),
         calendarGranted: Boolean = false,
         facetFavorites: List<PlacedItem> = emptyList(),
@@ -256,7 +256,7 @@ class AppearanceSettingsViewModelTest {
     fun `facet-scoped look setters write to that facet's row, not SettingsRepository`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
-        val facet = FacetEntity(id = 7L, name = "Work", position = 0)
+        val facet = Facet(id = 7L, name = "Work", position = 0)
         `when`(facetRepository.getById(7L)).thenReturn(facet)
         val viewModel = createViewModel(
             facetId = 7L,
@@ -268,7 +268,7 @@ class AppearanceSettingsViewModelTest {
         viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setDockDisplayMode(facet, DockDisplayMode.TEXT)
+        verify(facetRepository).setDockDisplayMode(facet.id, DockDisplayMode.TEXT)
         verify(settingsRepository, org.mockito.Mockito.never()).setDockDisplayMode(DockDisplayMode.TEXT)
     }
 
@@ -277,7 +277,7 @@ class AppearanceSettingsViewModelTest {
         // A facet not overriding dock/apps content at all, but with explicit look values already
         // chosen from this screen — it still resolves to them (see chat history: these fields no
         // longer gate on overrideDock/overrideApps, unlike Dock's/Home-Apps-List's own content).
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 9L, name = "Work", position = 0, overrideDock = false, overrideApps = false,
             dockDisplayMode = DockDisplayMode.TEXT, appRowPosition = AppRowPosition.RIGHT,
             appRowPresentation = AppRowPresentation.TEXT_ONLY, appListVerticalAlignment = AppListVerticalAlignment.TOP,
@@ -295,7 +295,7 @@ class AppearanceSettingsViewModelTest {
 
     @Test
     fun `a facet with LAUNCHER_DEFAULT look fields inherits the global values`() = runTest {
-        val facet = FacetEntity(id = 4L, name = "Work", position = 0)
+        val facet = Facet(id = 4L, name = "Work", position = 0)
         val viewModel = createViewModel(facetId = 4L, facets = listOf(facet), settings = LauncherSettings(dockDisplayMode = DockDisplayMode.TEXT))
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -318,7 +318,7 @@ class AppearanceSettingsViewModelTest {
 
     @Test
     fun `facet scope not overriding consumes the resolved default, not its own stale rows`() = runTest {
-        val facet = FacetEntity(id = 6L, name = "Work", position = 0, overrideApps = false, overrideDock = false)
+        val facet = Facet(id = 6L, name = "Work", position = 0, overrideApps = false, overrideDock = false)
         val viewModel = createViewModel(
             facetId = 6L,
             facets = listOf(facet),
@@ -336,7 +336,7 @@ class AppearanceSettingsViewModelTest {
 
     @Test
     fun `facet scope overriding consumes that facet's own favorites and dock`() = runTest {
-        val facet = FacetEntity(id = 6L, name = "Work", position = 0, overrideApps = true, overrideDock = true)
+        val facet = Facet(id = 6L, name = "Work", position = 0, overrideApps = true, overrideDock = true)
         val viewModel = createViewModel(
             facetId = 6L,
             facets = listOf(facet),
@@ -448,7 +448,7 @@ class AppearanceSettingsViewModelTest {
         // Given a facet that isn't overriding calendar, with its own (ignored) values
         val state = AppearanceSettingsUiState(
             settings = LauncherSettings(showAllDayEvents = true, selectedCalendarIds = setOf("cal-2", "cal-3")),
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = false, showAllDayEvents = false, selectedCalendarIdsCsv = "cal-1"),
+            facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = false, showAllDayEvents = false, selectedCalendarIds = setOf("cal-1")),
         )
 
         // Then the summary follows the global values
@@ -461,7 +461,7 @@ class AppearanceSettingsViewModelTest {
         // Given a facet overriding calendar
         val state = AppearanceSettingsUiState(
             settings = LauncherSettings(showAllDayEvents = true, selectedCalendarIds = setOf("cal-2", "cal-3")),
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false, selectedCalendarIdsCsv = "cal-1"),
+            facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false, selectedCalendarIds = setOf("cal-1")),
         )
 
         // Then the summary follows the facet's values
@@ -483,7 +483,7 @@ class AppearanceSettingsViewModelTest {
         // Given a facet overriding calendar but with no selection of its own
         val state = AppearanceSettingsUiState(
             settings = LauncherSettings(selectedCalendarIds = setOf("cal-1", "cal-2")),
-            facet = FacetEntity(id = 1L, name = "Work", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = null),
+            facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = true, selectedCalendarIds = null),
         )
 
         // Then it counts the global selection (like the calendar page itself does)
@@ -543,7 +543,7 @@ class AppearanceSettingsViewModelTest {
     fun `facet-scoped landscape alignment setters write that facet's landscape group`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
-        val facet = FacetEntity(id = 7L, name = "Work", position = 0)
+        val facet = Facet(id = 7L, name = "Work", position = 0)
         `when`(facetRepository.getById(7L)).thenReturn(facet)
         val viewModel = createViewModel(facetId = 7L, facets = listOf(facet), settingsRepository = settingsRepository, facetRepository = facetRepository)
 
@@ -551,14 +551,14 @@ class AppearanceSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val captor = LandscapeTransformCaptor()
-        verify(facetRepository).updateLandscape(eqOf(facet), captor.capture())
+        verify(facetRepository).updateLandscape(eqOf(facet.id), captor.capture())
         assertEquals(AppRowPosition.RIGHT, captor.last(LandscapeOverrides()).appRowPosition)
         verify(settingsRepository, org.mockito.Mockito.never()).updateLandscape(LandscapeTransformCaptor().capture())
     }
 
     @Test
     fun `the landscape rows show this scope's own landscape values, null meaning same as portrait`() = runTest {
-        val facet = FacetEntity(id = 9L, name = "Work", position = 0, landscapeAppRowPosition = AppRowPosition.CENTER)
+        val facet = Facet(id = 9L, name = "Work", position = 0, landscapeAppRowPosition = AppRowPosition.CENTER)
         val viewModel = createViewModel(
             facetId = 9L,
             facets = listOf(facet),

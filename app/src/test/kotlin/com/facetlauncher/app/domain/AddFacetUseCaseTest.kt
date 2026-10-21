@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -17,10 +17,10 @@ import org.mockito.Mockito.`when`
 class AddFacetUseCaseTest {
 
     private fun repository(count: Int): FacetRepository {
-        val facets = MutableStateFlow(List(count) { FacetEntity(id = it + 1L, name = "F$it", position = it) })
+        val facets = MutableStateFlow(List(count) { Facet(id = it + 1L, name = "F$it", position = it) })
         return mock(FacetRepository::class.java).also {
             `when`(it.observeFacets()).thenReturn(facets)
-            runBlocking { `when`(it.addFacet()).thenReturn(FacetEntity(id = 99L, name = "New", position = count)) }
+            runBlocking { `when`(it.addFacet()).thenReturn(Facet(id = 99L, name = "New", position = count)) }
         }
     }
 

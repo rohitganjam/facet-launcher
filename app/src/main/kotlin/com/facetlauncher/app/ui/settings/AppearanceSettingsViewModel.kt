@@ -9,8 +9,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -37,7 +37,6 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
-import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -57,7 +56,7 @@ import com.facetlauncher.app.data.model.PlacementList
 /**
  * `global*` are the raw stored global values; the effective, screen-bound `dockDisplayMode`/
  * `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment` resolve facet-or-global via
- * their own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.local.resolveSentinel]) —
+ * their own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.model.resolveSentinel]) —
  * independent of `overrideDock`/`overrideApps`. `facetFavorites`/`globalFavorites` and
  * `facetDockItems`/`globalDockItems` are the raw stored lists; [effectiveFavorites]/
  * [effectiveDockItems] resolve them the same `overrideApps`/`overrideDock`-gated way
@@ -66,7 +65,7 @@ import com.facetlauncher.app.data.model.PlacementList
  */
 data class AppearanceSettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
-    val facet: FacetEntity? = null,
+    val facet: Facet? = null,
     val facetFavorites: List<PlacedItem> = emptyList(),
     val globalFavorites: List<PlacedItem> = emptyList(),
     val facetDockItems: List<PlacedItem> = emptyList(),
@@ -208,7 +207,7 @@ class AppearanceSettingsViewModel @Inject constructor(
      * trigger to justify `ObserveHomeScreenStateUseCase`'s extra `flow {}` wrapping — a plain
      * `suspend` re-fetch on every `combine` emission is enough for a settings preview.
      */
-    private suspend fun observeCalendarEvents(facet: FacetEntity?, settings: LauncherSettings): List<CalendarEvent> {
+    private suspend fun observeCalendarEvents(facet: Facet?, settings: LauncherSettings): List<CalendarEvent> {
         if (!calendarPermissionRepository.isGranted()) return emptyList()
         val overriding = facet?.overrideCalendar == true
         val includeAllDay = if (overriding) facet.showAllDayEvents else settings.showAllDayEvents
@@ -263,20 +262,20 @@ class AppearanceSettingsViewModel @Inject constructor(
     /**
      * Facet-or-global write for this screen's four "look" fields — no Inherit/Override switch to
      * flip first, unlike Clock/Calendar/Apps/Dock: picking `LAUNCHER_DEFAULT` from the dropdown
-     * itself is what reverts a facet to inheriting (see [com.facetlauncher.app.data.local.resolveSentinel],
+     * itself is what reverts a facet to inheriting (see [com.facetlauncher.app.data.model.resolveSentinel],
      * and [com.facetlauncher.app.data.model.ClockFontOption]'s own precedent for this sentinel
      * model). No-op at global scope, where `LAUNCHER_DEFAULT` is filtered out of the option list.
      */
     fun setDockDisplayMode(mode: DockDisplayMode) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setDockDisplayMode(it, mode) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setDockDisplayMode(it.id, mode) } }
                 ?: settingsRepository.setDockDisplayMode(mode)
         }
     }
 
     fun setAppRowPosition(position: AppRowPosition) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPosition(it, position) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPosition(it.id, position) } }
                 ?: settingsRepository.setAppRowPosition(position)
         }
     }
@@ -294,49 +293,49 @@ class AppearanceSettingsViewModel @Inject constructor(
     /** This scope's landscape values: the facet's own when facet-scoped, the launcher-wide ones otherwise. */
     private fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.updateLandscape(it, transform) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.updateLandscape(it.id, transform) } }
                 ?: settingsRepository.updateLandscape(transform)
         }
     }
 
     fun setAppRowPresentation(presentation: AppRowPresentation) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPresentation(it, presentation) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppRowPresentation(it.id, presentation) } }
                 ?: settingsRepository.setAppRowPresentation(presentation)
         }
     }
 
     fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListVerticalAlignment(it, alignment) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListVerticalAlignment(it.id, alignment) } }
                 ?: settingsRepository.setAppListVerticalAlignment(alignment)
         }
     }
 
     fun setAppListLayout(layout: AppListLayout) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListLayout(it, layout) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListLayout(it.id, layout) } }
                 ?: settingsRepository.setAppListLayout(layout)
         }
     }
 
     fun setAppListColumnAlignment(alignment: AppListColumnAlignment) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListColumnAlignment(it, alignment) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListColumnAlignment(it.id, alignment) } }
                 ?: settingsRepository.setAppListColumnAlignment(alignment)
         }
     }
 
     fun setAppListGridColumns(columns: AppListGridColumns) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridColumns(it, columns) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridColumns(it.id, columns) } }
                 ?: settingsRepository.setAppListGridColumns(columns)
         }
     }
 
     fun setAppListGridDisplayMode(mode: AppListGridDisplayMode) {
         viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridDisplayMode(it, mode) } }
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridDisplayMode(it.id, mode) } }
                 ?: settingsRepository.setAppListGridDisplayMode(mode)
         }
     }

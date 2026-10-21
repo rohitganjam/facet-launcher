@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.resolveSentinel
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
@@ -35,7 +35,7 @@ import com.facetlauncher.app.data.model.PlacementList
  * [com.facetlauncher.app.ui.settings.CalendarSettingsUiState]'s shape.
  */
 data class DockSettingsUiState(
-    val facet: FacetEntity? = null,
+    val facet: Facet? = null,
     val globalDockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val globalDockItems: List<PlacedItem> = emptyList(),
     /** This facet's own dock — only meaningful/edited while [isOverriding]. */
@@ -47,7 +47,7 @@ data class DockSettingsUiState(
 ) {
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideDock ?: false
-    /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverriding] via its own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.local.resolveSentinel]). Still read here since this screen's own preview needs it. */
+    /** Look, not content — edited from Settings → Appearance now, resolved independently of [isOverriding] via its own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.model.resolveSentinel]). Still read here since this screen's own preview needs it. */
     val dockDisplayMode: DockDisplayMode get() = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, globalDockDisplayMode)
     /** This scope's effective dock — the facet's own while overriding, the launcher-wide default otherwise. */
     val dockItems: List<PlacedItem> get() = if (isOverriding) facetDockItems else globalDockItems
@@ -121,7 +121,7 @@ class DockSettingsViewModel @Inject constructor(
             if (overriding && state.facetDockItems.isEmpty()) {
                 placementRepository.replaceItems(PlacementTarget(PlacementList.DOCK, pid), state.globalDockItems)
             }
-            facetRepository.updateOverridingDock(facet, overriding)
+            facetRepository.updateOverridingDock(facet.id, overriding)
         }
     }
 }

@@ -10,7 +10,7 @@ import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ClockAlignment
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
@@ -140,7 +140,7 @@ class HomeViewModel @Inject constructor(
     fun onClockZoneHeightCommit(heightDp: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitClock(
         mode = mode,
         landscape = { it.copy(clockZoneHeightDp = heightDp) },
-        facetPortrait = { facetRepository.setClockZoneHeight(it, heightDp) },
+        facetPortrait = { facetRepository.setClockZoneHeight(it.id, heightDp) },
         globalPortrait = { settingsRepository.setClockZoneHeight(heightDp) },
     )
 
@@ -148,7 +148,7 @@ class HomeViewModel @Inject constructor(
     fun onClockScaleCommit(scale: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitClock(
         mode = mode,
         landscape = { it.copy(clockScale = scale) },
-        facetPortrait = { facetRepository.setClockScale(it, scale) },
+        facetPortrait = { facetRepository.setClockScale(it.id, scale) },
         globalPortrait = { settingsRepository.setClockScale(scale) },
     )
 
@@ -156,7 +156,7 @@ class HomeViewModel @Inject constructor(
     fun onClockAlignmentCommit(alignment: ClockAlignment, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitClock(
         mode = mode,
         landscape = { it.copy(clockAlignment = alignment) },
-        facetPortrait = { facetRepository.setClockAlignment(it, alignment) },
+        facetPortrait = { facetRepository.setClockAlignment(it.id, alignment) },
         globalPortrait = { settingsRepository.setClockAlignment(alignment) },
     )
 
@@ -168,13 +168,13 @@ class HomeViewModel @Inject constructor(
     private fun commitClock(
         mode: HomeLayoutMode,
         landscape: (LandscapeOverrides) -> LandscapeOverrides,
-        facetPortrait: suspend (FacetEntity) -> Unit,
+        facetPortrait: suspend (Facet) -> Unit,
         globalPortrait: suspend () -> Unit,
     ) {
         val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
             when {
-                mode == HomeLayoutMode.LANDSCAPE && owningFacet != null -> facetRepository.updateLandscape(owningFacet, landscape)
+                mode == HomeLayoutMode.LANDSCAPE && owningFacet != null -> facetRepository.updateLandscape(owningFacet.id, landscape)
                 mode == HomeLayoutMode.LANDSCAPE -> settingsRepository.updateLandscape(landscape)
                 owningFacet != null -> facetPortrait(owningFacet)
                 else -> globalPortrait()

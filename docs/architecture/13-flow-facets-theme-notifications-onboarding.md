@@ -104,7 +104,7 @@ flowchart TB
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDayEvents`/`selectedCalendarIds` resolved the same way `ObserveHomeScreenStateUseCase`
-  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `FacetEntity?.effectiveCalendarDisplay` (gated by `overrideCalendar`) into `HomeScreenState.calendarDisplay` / `FacetPreviewData.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
+  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `Facet?.effectiveCalendarDisplay` (gated by `overrideCalendar`) into `HomeScreenState.calendarDisplay` / `FacetPreviewData.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
 - **`FacetCarouselScreen`'s `FacetPreviewPage` renders the same `HomePreview`**, fed by
   `FacetCarouselViewModel`'s per-facet resolvers (`appListLayout(facetId)`/`appListColumnAlignment(facetId)`/
   `appListVerticalAlignment(facetId)`/`appListGridColumns(facetId)`/`appListGridDisplayMode(facetId)`).

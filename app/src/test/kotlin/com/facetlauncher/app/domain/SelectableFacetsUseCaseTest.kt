@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -13,7 +13,7 @@ import org.mockito.Mockito.mock
 
 class SelectableFacetsUseCaseTest {
 
-    private val five = List(5) { FacetEntity(id = it + 1L, name = "F$it", position = it) }
+    private val five = List(5) { Facet(id = it + 1L, name = "F$it", position = it) }
     private val facets = MutableStateFlow(five)
     private val facetRepository: FacetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facets) }
 

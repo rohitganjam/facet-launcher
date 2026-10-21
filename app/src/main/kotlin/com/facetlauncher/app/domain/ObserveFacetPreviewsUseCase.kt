@@ -6,14 +6,13 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.effectiveCalendarDisplay
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.effectiveCalendarDisplay
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.data.selectedCalendarIds
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -103,7 +102,7 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
     }
 
     private data class Inputs(
-        val facets: List<FacetEntity>,
+        val facets: List<Facet>,
         val settings: LauncherSettings,
         val ownFavorites: Map<Long, List<PlacedItem>>,
         val defaultFavorites: List<PlacedItem>,
@@ -112,7 +111,7 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
     )
 
     private fun observeAppListItems(
-        facet: FacetEntity,
+        facet: Facet,
         settings: LauncherSettings,
         facetFavorites: List<PlacedItem>,
         defaultFavorites: List<PlacedItem>,
@@ -128,7 +127,7 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         }
     }
 
-    private fun observeCalendarEvents(facet: FacetEntity, settings: LauncherSettings): Flow<List<CalendarEvent>> {
+    private fun observeCalendarEvents(facet: Facet, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
         val includeAllDay = if (facet.overrideCalendar) facet.showAllDayEvents else settings.showAllDayEvents
         val selectedCalendarIds = if (facet.overrideCalendar) facet.selectedCalendarIds else settings.selectedCalendarIds

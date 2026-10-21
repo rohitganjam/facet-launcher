@@ -1,6 +1,6 @@
 package com.facetlauncher.app.ui.settings.automation
 
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationRuleError
 import com.facetlauncher.app.data.model.AutomationTrigger
@@ -13,8 +13,8 @@ import java.time.DayOfWeek
 
 class RuleEditorStateTest {
 
-    private val personal = FacetEntity(id = 1, name = "Personal", position = 0)
-    private val work = FacetEntity(id = 2, name = "Work", position = 1)
+    private val personal = Facet(id = 1, name = "Personal", position = 0)
+    private val work = Facet(id = 2, name = "Work", position = 1)
     private val facets = listOf(personal, work)
 
     @Test

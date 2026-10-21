@@ -456,7 +456,7 @@ class FacetCarouselScreenTest {
                 settings.setActiveFacetId(only.id)
                 // Overriding its own favorites, rather than the launcher-wide default list, since
                 // this test seeds a favorite specifically for this facet.
-                facetRepository.setOverridingFavorites(only, true)
+                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getInstalledApps()
@@ -492,11 +492,11 @@ class FacetCarouselScreenTest {
                 // fully replaces the stored row, so chaining off the same stale snapshot would
                 // silently discard the previous setter's own write (see FacetRepositoryTest's
                 // own setAppListLayout/etc. test for the same lesson).
-                facetRepository.setOverridingFavorites(created, true)
+                facetRepository.setOverridingFavorites(created.id, true)
                 val afterOverride = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListLayout(afterOverride, AppListLayout.GRID)
+                facetRepository.setAppListLayout(afterOverride.id, AppListLayout.GRID)
                 val afterLayout = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListGridColumns(afterLayout, AppListGridColumns.FOUR)
+                facetRepository.setAppListGridColumns(afterLayout.id, AppListGridColumns.FOUR)
             },
             seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getInstalledApps()
@@ -536,11 +536,11 @@ class FacetCarouselScreenTest {
                 facetId = created.id
                 settings.setActiveFacetId(created.id)
                 // Re-fetch between setters — see the sibling grid-layout test's own comment.
-                facetRepository.setOverridingFavorites(created, true)
+                facetRepository.setOverridingFavorites(created.id, true)
                 val afterOverride = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListLayout(afterOverride, AppListLayout.GRID)
+                facetRepository.setAppListLayout(afterOverride.id, AppListLayout.GRID)
                 val afterLayout = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListGridDisplayMode(afterLayout, AppListGridDisplayMode.TEXT)
+                facetRepository.setAppListGridDisplayMode(afterLayout.id, AppListGridDisplayMode.TEXT)
             },
             seedApps = { appRepository, placementRepository ->
                 val app = appRepository.getInstalledApps()[0]
@@ -590,7 +590,7 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                facetRepository.setOverridingFavorites(only, true)
+                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getInstalledApps()[0]
@@ -648,7 +648,7 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                facetRepository.setOverridingFavorites(only, true)
+                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getInstalledApps()[0]

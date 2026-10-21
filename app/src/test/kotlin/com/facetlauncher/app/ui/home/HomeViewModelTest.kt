@@ -8,7 +8,7 @@ import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.AppInfo
@@ -69,7 +69,7 @@ class HomeViewModelTest {
             runBlocking { `when`(it.isDefaultLauncher()).thenReturn(false) }
         },
         settings: LauncherSettings = LauncherSettings(),
-        facets: List<FacetEntity> = emptyList(),
+        facets: List<Facet> = emptyList(),
         dockApps: List<PlacedItem> = emptyList(),
         favoriteItems: List<PlacedItem> = emptyList(),
         clockWidgetFacet: ClockWidgetFacetController = mock(ClockWidgetFacetController::class.java),
@@ -203,7 +203,7 @@ class HomeViewModelTest {
         // Given a HomeViewModel whose active facet has overrideClock = true
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
-        val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val overridingFacet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true)
         val viewModel = homeViewModel(
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = settingsRepository,
@@ -218,7 +218,7 @@ class HomeViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then it writes to this facet's own override instead of the global setting
-        verify(facetRepository).setClockZoneHeight(overridingFacet, 123.4f)
+        verify(facetRepository).setClockZoneHeight(overridingFacet.id, 123.4f)
     }
 
     @Test
@@ -240,7 +240,7 @@ class HomeViewModelTest {
         // Given a HomeViewModel whose active facet has overrideClock = true
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
-        val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val overridingFacet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true)
         val viewModel = homeViewModel(
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = settingsRepository,
@@ -255,7 +255,7 @@ class HomeViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then it writes this facet's own override, same as height and scale
-        verify(facetRepository).setClockAlignment(overridingFacet, ClockAlignment.RIGHT)
+        verify(facetRepository).setClockAlignment(overridingFacet.id, ClockAlignment.RIGHT)
         verify(settingsRepository, org.mockito.Mockito.never()).setClockAlignment(ClockAlignment.RIGHT)
     }
 
@@ -337,7 +337,7 @@ class HomeViewModelTest {
     @Test
     fun `landscape clock commits write the landscape group of an overriding facet`() = runTest {
         val facetRepository = mock(FacetRepository::class.java)
-        val overridingFacet = FacetEntity(id = 1L, name = "Work", position = 0, overrideClock = true)
+        val overridingFacet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true)
         val viewModel = homeViewModel(
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = mock(SettingsRepository::class.java),
@@ -353,8 +353,8 @@ class HomeViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val captor = LandscapeTransformCaptor()
-        verify(facetRepository, org.mockito.Mockito.times(3)).updateLandscape(eqOf(overridingFacet), captor.capture())
+        verify(facetRepository, org.mockito.Mockito.times(3)).updateLandscape(eqOf(overridingFacet.id), captor.capture())
         assertEquals(landscapeCommits, captor.applied())
-        verify(facetRepository, org.mockito.Mockito.never()).setClockZoneHeight(overridingFacet, 310f)
+        verify(facetRepository, org.mockito.Mockito.never()).setClockZoneHeight(overridingFacet.id, 310f)
     }
 }

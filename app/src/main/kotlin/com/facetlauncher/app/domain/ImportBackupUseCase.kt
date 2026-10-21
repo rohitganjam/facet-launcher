@@ -89,7 +89,7 @@ class ImportBackupUseCase @Inject constructor(
         facetRepository.deleteAllFacets()
         var activeFacetId: Long? = null
         bundle.facets.forEachIndexed { index, backupFacet ->
-            val newId = facetRepository.restoreFacet(backupFacet.toFacetEntity())
+            val newId = facetRepository.restoreFacet(backupFacet.toFacet())
             val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
             val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
             backupFacet.favorites.forEach { entry ->

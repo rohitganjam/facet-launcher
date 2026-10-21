@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.resolveSentinel
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.resolveSentinel
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -22,7 +22,6 @@ import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.data.selectedCalendarIds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,7 +35,7 @@ import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
 data class FacetSettingsUiState(
-    val facet: FacetEntity? = null,
+    val facet: Facet? = null,
     val activeFacetId: Long = 0L,
     /** This facet's own favorites — only meaningful/used while [isOverridingApps] is true. */
     val favorites: List<PlacedItem> = emptyList(),
@@ -160,7 +159,7 @@ class FacetSettingsViewModel @Inject constructor(
 
     fun renameFacet(newName: String) {
         val facet = uiState.value.facet ?: return
-        viewModelScope.launch { facetRepository.renameFacet(facet, newName) }
+        viewModelScope.launch { facetRepository.renameFacet(facet.id, newName) }
     }
 
     /** The header's "Apply facet" button — mirrors `ManageFacetsViewModel.applyFacet`. A no-op if already active (button is disabled in that state, but guard here too since it's cheap). */

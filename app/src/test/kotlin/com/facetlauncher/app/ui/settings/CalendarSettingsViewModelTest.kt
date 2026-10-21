@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
@@ -51,7 +51,7 @@ class CalendarSettingsViewModelTest {
     private fun createViewModel(
         facetId: Long? = null,
         globalShowAllDayEvents: Boolean = true,
-        facet: FacetEntity? = null,
+        facet: Facet? = null,
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
@@ -94,7 +94,7 @@ class CalendarSettingsViewModelTest {
 
     @Test
     fun `facet-scoped mode writes the indicator and item count to the facet`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = true)
         val facetRepository = mock(FacetRepository::class.java)
         val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -104,14 +104,14 @@ class CalendarSettingsViewModelTest {
         viewModel.setCalendarItemsToShow(1)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setShowCalendarIndicator(facet, false)
-        verify(facetRepository).setCalendarItemsToShow(facet, 1)
+        verify(facetRepository).setShowCalendarIndicator(facet.id, false)
+        verify(facetRepository).setCalendarItemsToShow(facet.id, 1)
     }
 
     @Test
     fun `calendar display follows the facet only while it overrides the calendar`() {
         val settings = LauncherSettings(showCalendarIndicator = true, calendarItemsToShow = 3)
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, showCalendarIndicator = false, calendarItemsToShow = 1)
+        val facet = Facet(id = 5L, name = "Work", position = 0, showCalendarIndicator = false, calendarItemsToShow = 1)
 
         val inheriting = CalendarSettingsUiState(facet = facet.copy(overrideCalendar = false), settings = settings)
         val overriding = CalendarSettingsUiState(facet = facet.copy(overrideCalendar = true), settings = settings)
@@ -133,7 +133,7 @@ class CalendarSettingsViewModelTest {
 
     @Test
     fun `facet-scoped mode toggling writes the facet's own override`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = true)
         val facetRepository = mock(FacetRepository::class.java)
         val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -142,12 +142,12 @@ class CalendarSettingsViewModelTest {
         viewModel.setShowAllDayEvents(false)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setShowAllDayEvents(facet, false)
+        verify(facetRepository).setShowAllDayEvents(facet.id, false)
     }
 
     @Test
     fun `switching to override seeds the facet's stored value with the current effective one`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = false)
         val facetRepository = mock(FacetRepository::class.java)
         val viewModel = createViewModel(
             facetId = 5L,
@@ -162,16 +162,18 @@ class CalendarSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(facetRepository).updateOverridingCalendar(
-            facet,
+            facet.id,
             overriding = true,
             showAllDayEvents = true,
             selectedCalendarIds = null,
+            showCalendarIndicator = true,
+            calendarItemsToShow = CalendarDisplayOptions.MAX_ITEMS,
         )
     }
 
     @Test
     fun `switching back to inherit toggles the override flag`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false)
         val facetRepository = mock(FacetRepository::class.java)
         val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -181,16 +183,18 @@ class CalendarSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(facetRepository).updateOverridingCalendar(
-            facet,
+            facet.id,
             overriding = false,
             showAllDayEvents = false,
             selectedCalendarIds = null,
+            showCalendarIndicator = true,
+            calendarItemsToShow = CalendarDisplayOptions.MAX_ITEMS,
         )
     }
 
     @Test
     fun `switching to override seeds the facet's selectedCalendarIds with the current effective set`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideCalendar = false)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = false)
         val facetRepository = mock(FacetRepository::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(selectedCalendarIds = setOf("7", "8"))))
@@ -211,10 +215,12 @@ class CalendarSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(facetRepository).updateOverridingCalendar(
-            facet,
+            facet.id,
             overriding = true,
             showAllDayEvents = true,
             selectedCalendarIds = setOf("7", "8"),
+            showCalendarIndicator = true,
+            calendarItemsToShow = CalendarDisplayOptions.MAX_ITEMS,
         )
     }
 

@@ -1,8 +1,8 @@
 package com.facetlauncher.app.ui.home
 
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.landscape
-import com.facetlauncher.app.data.local.resolveLandscape
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.landscape
+import com.facetlauncher.app.data.model.resolveLandscape
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -39,7 +39,7 @@ data class HomeUiState(
     val appListItems: List<PlacedItem> = emptyList(),
     /** The active facet's real Favorites contents, resolved unconditionally — see [com.facetlauncher.app.domain.HomeScreenState.favoriteItems]'s own doc for why this is separate from [appListItems]. */
     val favoriteItems: List<PlacedItem> = emptyList(),
-    val facets: List<FacetEntity> = emptyList(),
+    val facets: List<Facet> = emptyList(),
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
     val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
@@ -60,14 +60,14 @@ data class HomeUiState(
      */
     val isDefaultLauncher: Boolean? = null,
 ) {
-    val activeFacet: FacetEntity?
+    val activeFacet: Facet?
         get() = facets.find { it.id == settings.activeFacetId }
 
     /** PRD F15 — facet-scoped only, no global fallback (see F15's Scope: there's no meaningful "global hosted widget" to inherit). `null` means the active facet uses its own native clock. */
     val clockWidgetAppWidgetId: Int?
         get() = activeFacet?.clockWidgetAppWidgetId
 
-    /** PRD F15's persisted interactive-resize size — `null` until the user drags a resize handle for the first time; see [FacetEntity.clockWidgetWidthDp]'s own doc for what governs the effective size before that. */
+    /** PRD F15's persisted interactive-resize size — `null` until the user drags a resize handle for the first time; see [Facet.clockWidgetWidthDp]'s own doc for what governs the effective size before that. */
     val clockWidgetWidthDp: Int?
         get() = activeFacet?.clockWidgetWidthDp
     val clockWidgetHeightDp: Int?
@@ -110,7 +110,7 @@ data class HomeUiState(
 
     private inline fun <T> clockProp(
         landscape: Boolean,
-        facetPortrait: (FacetEntity) -> T,
+        facetPortrait: (Facet) -> T,
         facetLandscape: (LandscapeOverrides) -> T?,
         globalPortrait: T,
         globalLandscape: T?,
@@ -139,7 +139,7 @@ data class HomeUiState(
 
     private inline fun <T : Any> listProp(
         landscape: Boolean,
-        facetPortrait: (FacetEntity) -> T,
+        facetPortrait: (Facet) -> T,
         facetLandscape: (LandscapeOverrides) -> T?,
         sentinel: T,
         globalPortrait: T,
@@ -161,7 +161,7 @@ data class HomeUiState(
     }
 
     /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
-    val clockPositionOwningFacet: FacetEntity?
+    val clockPositionOwningFacet: Facet?
         get() = activeFacet?.takeIf { it.overrideClock }
 
     /** Names the facet overriding the Dock right now, for [com.facetlauncher.app.ui.components.QuickPlacementBadge] — `null` for the launcher-wide default, mirroring [com.facetlauncher.app.domain.QuickPlacementAction.facetName]'s own convention. */

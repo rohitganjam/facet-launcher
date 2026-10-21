@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.landscape
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
  * default otherwise — matching [com.facetlauncher.app.ui.settings.CalendarSettingsUiState]'s shape.
  */
 data class ClockStyleGalleryUiState(
-    val facet: FacetEntity? = null,
+    val facet: Facet? = null,
     val globalTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
     val globalFontOption: ClockFontOption = ClockFontOption.SYSTEM,
     val globalColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -91,7 +91,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockTemplateId(id: ClockTemplateId) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockTemplateId(it, id) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockTemplateId(it.id, id) }
             } ?: settingsRepository.setClockTemplateId(id)
         }
     }
@@ -99,7 +99,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockFontOption(option: ClockFontOption) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockFontOption(it, option) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockFontOption(it.id, option) }
             } ?: settingsRepository.setClockFontOption(option)
         }
     }
@@ -107,7 +107,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockColorOption(option: ClockColorOption) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockColorOption(it, option) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockColorOption(it.id, option) }
             } ?: settingsRepository.setClockColorOption(option)
         }
     }
@@ -115,7 +115,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockAccentColorOption(option: ClockColorOption) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockAccentColorOption(it, option) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockAccentColorOption(it.id, option) }
             } ?: settingsRepository.setClockAccentColorOption(option)
         }
     }
@@ -123,7 +123,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setUse24HourTime(enabled: Boolean) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setUse24HourTime(it, enabled) }
+                facetRepository.getById(pid)?.let { facetRepository.setUse24HourTime(it.id, enabled) }
             } ?: settingsRepository.setUse24HourTime(enabled)
         }
     }
@@ -131,7 +131,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockShowMeridiem(enabled: Boolean) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockShowMeridiem(it, enabled) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockShowMeridiem(it.id, enabled) }
             } ?: settingsRepository.setClockShowMeridiem(enabled)
         }
     }
@@ -139,7 +139,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockDateStyle(dateStyle: ClockDateStyle) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockDateStyle(it, dateStyle) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockDateStyle(it.id, dateStyle) }
             } ?: settingsRepository.setClockDateStyle(dateStyle)
         }
     }
@@ -147,7 +147,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockAlignment(alignment: ClockAlignment) {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockAlignment(it, alignment) }
+                facetRepository.getById(pid)?.let { facetRepository.setClockAlignment(it.id, alignment) }
             } ?: settingsRepository.setClockAlignment(alignment)
         }
     }
@@ -170,7 +170,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
         viewModelScope.launch {
             val facet = facetRepository.getById(pid) ?: return@launch
             facetRepository.updateOverridingClock(
-                facet = facet,
+                facetId = facet.id,
                 overriding = overriding,
                 templateId = state.templateId,
                 fontOption = state.fontOption,
@@ -179,6 +179,8 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 showMeridiem = state.showMeridiem,
                 clockAlignment = state.clockAlignment,
                 landscapeClockAlignment = if (overriding) state.globalLandscapeClockAlignment else facet.landscape.clockAlignment,
+                clockZoneHeightDp = facet.clockZoneHeightDp,
+                clockScale = facet.clockScale,
                 accentColorOption = state.accentColorOption,
                 dateStyle = state.dateStyle,
             )
@@ -195,7 +197,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun resetClockPosition() {
         viewModelScope.launch {
             facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.resetClockPosition(it) }
+                facetRepository.getById(pid)?.let { facetRepository.resetClockPosition(it.id) }
             } ?: run {
                 settingsRepository.resetClockZoneHeight()
                 settingsRepository.resetClockScale()
