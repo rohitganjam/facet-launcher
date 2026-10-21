@@ -15,7 +15,8 @@ Compose:
   ComposableNaming: { active: true }
   ComposableNestingDepth: { active: true }
   ComposableParamOrder: { active: true }
-  CompositionLocalAllowlist: { active: true }
+  # LocalHomeTagPrefix: lets a scaled preview of Home keep its test tags apart from the real Home's.
+  CompositionLocalAllowlist: { active: true, allowedCompositionLocals: ['LocalHomeTagPrefix', 'LocalClockWidgetHost'] }
   CompositionLocalNaming: { active: true }
   ConditionHoist: { active: true }
   ContentEmitterReturningValues: { active: true }

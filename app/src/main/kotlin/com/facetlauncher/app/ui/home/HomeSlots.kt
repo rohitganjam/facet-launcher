@@ -66,7 +66,7 @@ internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOri
                     onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
                 )
             }
-            .testTag("home_clock_block"),
+            .testTag(homeTag("home_clock_block")),
         clockBoxModifier = Modifier.onGloballyPositioned {
             layout.clockBoxSize = it.size
             layout.clockBoxOriginInRoot = it.positionInRoot()
@@ -139,7 +139,7 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
                 layout.appListOriginInRoot = it.positionInRoot()
             }
             .let { if (frame.state.list.layout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
-            .testTag("home_app_list_scroll_region"),
+            .testTag(homeTag("home_app_list_scroll_region")),
     ) {
         // A scrollable Column measures its content at its natural height regardless of the clamp above, so this
         // inner Column lets the compact-spacing check read that height. The alpha is draw-phase only, so the
@@ -218,7 +218,7 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .testTag("home_usage_access_strip")
+            .testTag(homeTag("home_usage_access_strip"))
             .dashedBorder(color = Ink.copy(alpha = 0.16f), cornerRadius = 10.dp)
             .padding(horizontal = 13.dp, vertical = 11.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

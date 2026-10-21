@@ -104,9 +104,9 @@ Rules this encodes:
   launcher-wide default (`facetId` null) or for one facet. The join above is identical for all of them.
 - `observeItemsForFacets(list, ids)` / `observeAppsForFacets(list, ids)` offer a batched read
   → `Flow<Map<Long, List<PlacedItem>>>` for the facet carousel previews, built the same way. Those
-  previews, and the Appearance screens' preview, render through the shared `HomePreview` composable
-  (`ui/home/HomePreview.kt`), which honors the clock's alignment, zone height and scale and the app
-  list's row, column and Top/Bottom alignment exactly as `HomeScreen` resolves them.
+  previews, and the Appearance screens' preview, render the real `HomeScreen` scaled down
+  (`ScaledHomeScreen`), built from the same `ResolvedFacetStyle` and `toHomeScreenState` as Home, so
+  they show Home's layout in either orientation.
 
 ## 3. The Home screen state graph
 

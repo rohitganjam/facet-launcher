@@ -1,5 +1,10 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.ui.home.HomeLayoutMode
+import com.facetlauncher.app.ui.home.HomeLiveState
+import com.facetlauncher.app.ui.home.HomeScreenContent
+import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.ui.home.toHomeScreenState
 import android.content.ContentUris
 import android.content.Intent
 import android.net.Uri
@@ -685,64 +690,30 @@ fun HomeDrawerRoute(
             },
     ) {
         HomeScreen(
-            state = HomeScreenState(
-                list = HomeListState(
-                    items = homeUiState.appListItems,
-                    look = HomeItemLook(
-                        badgeCounts = homeUiState.badgeCounts,
-                        badgeStyle = homeUiState.settings.notificationBadgeStyle,
-                        appMenuNotifications = appMenuNotifications,
-                        folderCandidates = folders,
-                        labelColorOption = homeUiState.settings.appLabelColorOption,
-                        labelFontWeightOption = homeUiState.settings.homeAppsFontWeight,
-                    ),
-                    layout = homeUiState.activeAppListLayout,
-                    alignment = listAlignment,
-                    rowPresentation = homeUiState.activeAppRowPresentation,
-                    gridColumns = homeUiState.activeAppListGridColumns,
-                    gridDisplayMode = homeUiState.activeAppListGridDisplayMode,
+            state = homeUiState.style.toHomeScreenState(
+                landscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE,
+                settings = homeUiState.settings,
+                content = HomeScreenContent(
+                    listItems = homeUiState.appListItems,
+                    dockItems = homeUiState.dockApps,
+                    calendarEvents = homeUiState.calendarEvents,
+                    badgeCounts = homeUiState.badgeCounts,
+                    appMenuNotifications = appMenuNotifications,
+                    folderCandidates = folders,
                     showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
+                    clockAccessories = homeUiState.clockAccessories,
+                    mediaPlayer = homeUiState.mediaPlayer,
                 ),
-                dock = HomeDockState(
-                    items = homeUiState.dockApps,
-                    displayMode = homeUiState.activeDockDisplayMode,
+                widgetSizing = HomeWidgetSizing(
+                    defaultSizeDp = { clockWidgetDefaultSizeDp },
+                    resizeFloorDp = { clockWidgetResizeFloorDp },
                 ),
-                clock = HomeClockState(
-                    use24HourTime = homeUiState.effectiveUse24HourTime,
-                    templateId = homeUiState.clockTemplateId,
-                    fontOption = homeUiState.clockFontOption,
-                    colorOption = homeUiState.clockColorOption,
-                    accentColorOption = homeUiState.clockAccentColorOption,
-                    showMeridiem = homeUiState.clockShowMeridiem,
-                    dateStyle = homeUiState.clockDateStyle,
-                    launcherFontOption = homeUiState.settings.launcherFontOption,
-                    placement = clockPlacement,
-                    positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
-                    positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
+                live = HomeLiveState(
                     adjustMode = clockAdjustMode,
                     draggingHandle = draggingHandle,
                     isPro = clockWidgetIsPro,
-                ),
-                widget = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-                    HomeClockWidgetState(
-                        appWidgetId = appWidgetId,
-                        widthDp = clockWidgetEffectiveWidthDp?.dp,
-                        heightDp = clockWidgetEffectiveHeightDp?.dp,
-                        minWidthDp = clockWidgetResizeFloorDp?.first?.dp,
-                        minHeightDp = clockWidgetResizeFloorDp?.second?.dp,
-                    )
-                },
-                calendar = HomeCalendarState(
-                    events = homeUiState.calendarEvents,
-                    colors = homeUiState.settings.calendarColors,
-                    display = homeUiState.calendarDisplay,
-                    nextAlarmMillis = homeUiState.clockAccessories.nextAlarmMillis,
-                    batteryPercent = homeUiState.clockAccessories.batteryPercent,
-                    isCharging = homeUiState.clockAccessories.isCharging,
-                ),
-                media = HomeMediaState(
-                    player = homeUiState.mediaPlayer,
-                    showSkipButtons = homeUiState.settings.showMediaSkipButtons,
+                    positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
+                    positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
                 ),
             ),
             actions = HomeScreenActions(

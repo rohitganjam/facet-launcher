@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +42,7 @@ internal fun HomePortraitContent(frame: HomeFrame) {
             // Edge-to-edge is enforced at this app's targetSdk, so without this the dock draws under the
             // gesture/nav bar. It is on this Column, not the root Box, so the Box stays truly full-screen
             // for the resize handles' root-coordinate math.
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(bottom = 22.dp),
     ) {
         // Everything but the dock keeps the screen's own 24dp side margin. The dock row sits outside it so
@@ -62,7 +62,7 @@ internal fun HomePortraitContent(frame: HomeFrame) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp, bottom = 4.dp)
-                    .testTag("home_dock_row"),
+                    .testTag(homeTag("home_dock_row")),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 HomeDockItems(frame, frame.state.dock.displayMode)
@@ -125,7 +125,7 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
         },
         clockPaneWidth = with(frame.density) { frame.geometry.landscapePaneWidthPx.toDp() },
         modifier = Modifier
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(top = HOME_LANDSCAPE_VERTICAL_PADDING_TOP, bottom = HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM)
             .onSizeChanged { layout.landscapeContentWidthPx = it.width.toFloat() },
         onAppsPaneSizeChange = {

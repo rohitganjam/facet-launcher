@@ -80,7 +80,7 @@ internal fun HomeLandscapeLayout(
             modifier = Modifier
                 .width(clockPaneWidth)
                 .fillMaxHeight()
-                .testTag("home_clock_pane")
+                .testTag(homeTag("home_clock_pane"))
                 .padding(start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING),
             contentAlignment = clockPaneAlignment,
             content = clock,
@@ -91,13 +91,13 @@ internal fun HomeLandscapeLayout(
                 .weight(1f)
                 .fillMaxHeight()
                 .onSizeChanged(onAppsPaneSizeChange)
-                .testTag("home_apps_pane"),
+                .testTag(homeTag("home_apps_pane")),
             content = apps,
         )
     }
     if (dockAtBottom) {
         // Roomy windows: the dock runs along the bottom as in portrait, using the dock style the user chose.
-        Column(modifier = modifier.fillMaxSize().testTag("home_landscape_layout")) {
+        Column(modifier = modifier.fillMaxSize().testTag(homeTag("home_landscape_layout"))) {
             Row(modifier = Modifier.weight(1f).fillMaxWidth(), content = panes)
             if (hasDock) {
                 Row(
@@ -106,14 +106,14 @@ internal fun HomeLandscapeLayout(
                         // Measured with its padding, so what the divider and pill keep clear is the whole row.
                         .onSizeChanged { onDockRowHeightChange(it.height) }
                         .padding(top = 12.dp, bottom = 4.dp)
-                        .testTag("home_dock_row"),
+                        .testTag(homeTag("home_dock_row")),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) { dockContent() }
             }
         }
         return
     }
-    Row(modifier = modifier.fillMaxSize().testTag("home_landscape_layout")) {
+    Row(modifier = modifier.fillMaxSize().testTag(homeTag("home_landscape_layout"))) {
         panes()
         if (hasDock) {
             Box(
@@ -121,7 +121,7 @@ internal fun HomeLandscapeLayout(
                     .fillMaxHeight()
                     .padding(start = 12.dp, end = 16.dp)
                     .systemGestureExclusion()
-                    .testTag("home_dock_column"),
+                    .testTag(homeTag("home_dock_column")),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(

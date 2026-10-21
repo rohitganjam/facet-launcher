@@ -119,7 +119,7 @@ private fun FolderDockIcon(
     Box(modifier = modifier) {
         if (displayMode == DockDisplayMode.TEXT) {
             Row(
-                modifier = clickModifier.testTag("dock_folder_tile_${folder.id}").padding(vertical = 14.dp, horizontal = 4.dp),
+                modifier = clickModifier.testTag(homeTag("dock_folder_tile_${folder.id}")).padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
@@ -130,7 +130,7 @@ private fun FolderDockIcon(
                 )
             }
         } else {
-            Box(modifier = clickModifier.testTag("dock_folder_tile_${folder.id}")) {
+            Box(modifier = clickModifier.testTag(homeTag("dock_folder_tile_${folder.id}"))) {
                 FolderTileGlyph(folder = folder)
             }
         }

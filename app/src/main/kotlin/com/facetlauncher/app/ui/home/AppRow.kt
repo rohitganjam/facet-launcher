@@ -142,7 +142,7 @@ private fun AppRowIcon(app: AppInfo, size: Dp, iconBadgeCount: Int?, showLabel: 
         contentDescription = if (showLabel) null else app.label,
         notificationCount = iconBadgeCount,
         badgeStyle = style.badgeStyle,
-        modifier = Modifier.testTag("${testTagPrefix}app_icon_${app.packageName}"),
+        modifier = Modifier.testTag(homeTag("${testTagPrefix}app_icon_${app.packageName}")),
     )
 }
 
@@ -152,7 +152,7 @@ private fun AppRowLabel(app: AppInfo, style: HomeItemStyle, testTagPrefix: Strin
         text = app.label,
         style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
         color = style.labelColor,
-        modifier = Modifier.testTag("${testTagPrefix}app_label_${app.packageName}"),
+        modifier = Modifier.testTag(homeTag("${testTagPrefix}app_label_${app.packageName}")),
     )
 }
 

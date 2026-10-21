@@ -117,8 +117,6 @@ fun ClockBlock(
     clockWidgetCommittedWidthDp: Dp? = null,
     clockWidgetCommittedHeightDp: Dp? = null,
     onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit = { _, _, _ -> },
-    /** Draws the hosted widget in place of the interactive [ClockWidgetTile]: a preview supplies a scaled, non-live copy. */
-    clockWidgetContent: (@Composable (appWidgetId: Int, widthDp: Dp, heightDp: Dp) -> Unit)? = null,
     /** Fired on a real long-press on the hosted widget's own surface — see [ClockWidgetTouchGate]'s own doc for why this can't be [clockContentModifier]'s Compose-level gesture, unlike the native clock. */
     onClockWidgetLongPress: () -> Unit = {},
     /** PRD F15's nested-scroll handoff — see [ClockWidgetTile]'s own doc; a swipe starting on the widget hands off to Home's own swipe axis only once the widget's own scrollable content genuinely has nothing left to do with it. */
@@ -160,7 +158,6 @@ fun ClockBlock(
                 clockWidgetCommittedWidthDp = clockWidgetCommittedWidthDp,
                 clockWidgetCommittedHeightDp = clockWidgetCommittedHeightDp,
                 onClockWidgetSizeChange = onClockWidgetSizeChange,
-                clockWidgetContent = clockWidgetContent,
                 onClockWidgetLongPress = onClockWidgetLongPress,
                 onClockWidgetNestedScrollStart = onClockWidgetNestedScrollStart,
                 onClockWidgetLeftoverScroll = onClockWidgetLeftoverScroll,
@@ -215,7 +212,6 @@ private fun ClockOrWidgetContent(
     clockWidgetCommittedWidthDp: Dp?,
     clockWidgetCommittedHeightDp: Dp?,
     onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
-    clockWidgetContent: (@Composable (appWidgetId: Int, widthDp: Dp, heightDp: Dp) -> Unit)?,
     onClockWidgetLongPress: () -> Unit,
     onClockWidgetNestedScrollStart: () -> Unit,
     onClockWidgetLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit,
@@ -228,7 +224,6 @@ private fun ClockOrWidgetContent(
             appWidgetId = clockWidgetAppWidgetId,
             widthDp = clockWidgetWidthDp,
             heightDp = clockWidgetHeightDp,
-            content = clockWidgetContent,
             committedWidthDp = clockWidgetCommittedWidthDp ?: clockWidgetWidthDp,
             committedHeightDp = clockWidgetCommittedHeightDp ?: clockWidgetHeightDp,
             createHostView = createClockWidgetHostView,
@@ -271,7 +266,6 @@ private fun ClockWidgetContent(
     appWidgetId: Int,
     widthDp: Dp,
     heightDp: Dp,
-    content: (@Composable (appWidgetId: Int, widthDp: Dp, heightDp: Dp) -> Unit)?,
     committedWidthDp: Dp,
     committedHeightDp: Dp,
     createHostView: (Context, Int) -> AppWidgetHostView?,
@@ -282,10 +276,6 @@ private fun ClockWidgetContent(
     onNestedScrollStop: () -> Unit,
     onLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit,
 ) {
-    if (content != null) {
-        content(appWidgetId, widthDp, heightDp)
-        return
-    }
     ClockWidgetTile(
         appWidgetId = appWidgetId,
         committedWidthDp = committedWidthDp,

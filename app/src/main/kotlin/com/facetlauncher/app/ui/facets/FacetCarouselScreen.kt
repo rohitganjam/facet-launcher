@@ -72,9 +72,10 @@ import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.home.AppRow
-import com.facetlauncher.app.ui.home.HomePreview
-import com.facetlauncher.app.ui.home.HomePreviewState
-import com.facetlauncher.app.ui.home.toPreviewState
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.ui.home.HomeScreenContent
+import com.facetlauncher.app.ui.home.ScaledHomeScreen
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.settings.ClickableRow
@@ -266,14 +267,12 @@ private fun FacetCarouselContent(
                     facet = facet,
                     isActive = facet.id == uiState.activeFacetId,
                     locked = locked,
-                    previewState = uiState.style(facet.id).toPreviewState(
-                        favorites = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
+                    style = uiState.style(facet.id),
+                    settings = uiState.globalSettings,
+                    content = HomeScreenContent(
+                        listItems = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
                         dockItems = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
                         calendarEvents = uiState.previewsByFacetId[facet.id]?.calendarEvents.orEmpty(),
-                        calendarColors = uiState.globalSettings.calendarColors,
-                        launcherFontOption = uiState.globalSettings.launcherFontOption,
-                        appLabelColorOption = uiState.globalSettings.appLabelColorOption,
-                        homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
                     ),
                     canDelete = uiState.canDeleteFacet,
                     onEditFacetClick = if (locked) onLockedFacetClick else ({ onEditFacet(facet.id) }),
@@ -383,7 +382,9 @@ private fun FacetPreviewPage(
     isActive: Boolean,
     /** Disabled on the free plan: dimmed with a lock, and tapping it opens the upgrade sheet instead of applying it. */
     locked: Boolean,
-    previewState: HomePreviewState,
+    style: ResolvedFacetStyle,
+    settings: LauncherSettings,
+    content: HomeScreenContent,
     canDelete: Boolean,
     onEditFacetClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -439,13 +440,14 @@ private fun FacetPreviewPage(
         // CLAUDE.md's Material 3 shape section.
         val cardShape = MaterialTheme.shapes.extraLarge
         // Locked to the real screen's proportions — a genuine scale model.
-        HomePreview(
-            state = previewState,
+        ScaledHomeScreen(
+            style = style,
+            settings = settings,
+            content = content,
             homeWallpaper = homeWallpaper,
-            testTagPrefix = "facet_preview_",
+            tagPrefix = "facet_preview_",
             // Tapping anywhere on the card applies the facet, including on top of rows and dock icons.
             onClick = onCardClick,
-            showEmptyHint = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(screenAspectRatio)

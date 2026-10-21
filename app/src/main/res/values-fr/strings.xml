@@ -730,6 +730,8 @@
     <string name="facet_carousel_launcher_settings_subtitle">Apparence, horloge par défaut, favoris, tiroir et plus</string>
     <string name="facet_carousel_active">Active</string>
     <string name="facet_carousel_no_favorites">Aucun favori pour l\'instant</string>
+    <string name="preview_media_title">Lecture en cours</string>
+    <string name="preview_media_artist">Artiste</string>
     <string name="facet_carousel_facet_settings">Réglages de la facette</string>
     <string name="facet_carousel_delete_facet">Supprimer la facette</string>
     <string name="facet_carousel_add_facet">Ajouter une facette</string>

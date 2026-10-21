@@ -84,7 +84,7 @@ fun MediaPlayerRow(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
-            .testTag("home_media_player"),
+            .testTag(homeTag("home_media_player")),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         MediaArt(state = state, tint = labelColor, onOpen = onOpen)
@@ -139,7 +139,7 @@ private fun MediaArt(state: MediaPlayerState, tint: Color, onOpen: () -> Unit) {
             .clip(MaterialTheme.shapes.small)
             .background(tint.copy(alpha = 0.12f))
             .clickable(onClick = onOpen)
-            .testTag("home_media_art"),
+            .testTag(homeTag("home_media_art")),
         contentAlignment = Alignment.Center,
     ) {
         val art = state.art
@@ -176,7 +176,7 @@ private fun MediaText(
             color = color,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.testTag("home_media_title"),
+            modifier = Modifier.testTag(homeTag("home_media_title")),
         )
         state.artist?.let {
             Text(
@@ -185,7 +185,7 @@ private fun MediaText(
                 color = color.copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag("home_media_artist"),
+                modifier = Modifier.testTag(homeTag("home_media_artist")),
             )
         }
     }
@@ -207,7 +207,7 @@ private fun MediaTransport(
             enabled = state.canSkipPrevious,
             tint = tint,
             onClick = onPrevious,
-            testTag = "home_media_previous",
+            testTag = homeTag("home_media_previous"),
         )
     }
     TransportButton(
@@ -225,7 +225,7 @@ private fun MediaTransport(
             enabled = state.canSkipNext,
             tint = tint,
             onClick = onNext,
-            testTag = "home_media_next",
+            testTag = homeTag("home_media_next"),
         )
     }
 }
@@ -273,7 +273,7 @@ private fun MediaProgressLine(
             progress = progress,
             playing = state.isPlaying,
             color = color,
-            modifier = modifier.testTag("home_media_progress"),
+            modifier = modifier.testTag(homeTag("home_media_progress")),
         )
         return
     }
@@ -284,7 +284,7 @@ private fun MediaProgressLine(
             .height(3.dp)
             .clip(CircleShape)
             .background(color.copy(alpha = 0.25f))
-            .testTag("home_media_progress"),
+            .testTag(homeTag("home_media_progress")),
     )
 }
 

@@ -156,7 +156,7 @@ internal fun FolderRow(
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .then(clickModifier)
-            .testTag("${testTagPrefix}folder_row_${folder.id}")
+            .testTag(homeTag("${testTagPrefix}folder_row_${folder.id}"))
             .padding(horizontal = 8.dp, vertical = verticalPadding),
     )
     if (enableLongPressMenu && sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)

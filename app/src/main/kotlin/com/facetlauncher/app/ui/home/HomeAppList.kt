@@ -154,7 +154,7 @@ internal fun HomeAppGrid(
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
-        modifier = modifier.fillMaxWidth().testTag("home_app_grid"),
+        modifier = modifier.fillMaxWidth().testTag(homeTag("home_app_grid")),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -192,7 +192,7 @@ internal fun HomeAppGridTile(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag("home_app_label_${app.packageName}"),
+                modifier = Modifier.testTag(homeTag("home_app_label_${app.packageName}")),
             )
         } else {
             AppIcon(
@@ -201,7 +201,7 @@ internal fun HomeAppGridTile(
                 contentDescription = app.label,
                 notificationCount = style.badgeCounts[app.packageName],
                 badgeStyle = style.badgeStyle,
-                modifier = Modifier.testTag("home_app_icon_${app.packageName}"),
+                modifier = Modifier.testTag(homeTag("home_app_icon_${app.packageName}")),
             )
         }
         AppItemMenu(app, menuExpanded, { menuExpanded = false }, actions, style)
@@ -223,7 +223,7 @@ internal fun HomeFolderGridTile(
         modifier = modifier
             .fillMaxWidth()
             .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
-            .testTag("home_folder_grid_tile_${folder.id}")
+            .testTag(homeTag("home_folder_grid_tile_${folder.id}"))
             .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {

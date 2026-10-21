@@ -58,7 +58,7 @@ fun HomeScreen(
                 layout.rootOriginInRoot = it.positionInRoot()
             }
             .homeEmptySpaceGestures(clock.adjustMode, actions.clock.onAdjustModeChange)
-            .testTag("home_screen_root"),
+            .testTag(homeTag("home_screen_root")),
     ) {
         if (frame.isLandscape) HomeLandscapeContent(frame) else HomePortraitContent(frame)
         val adjustEnv = ClockAdjustEnv(layout, frame.geometry, frame.metrics, clock, state.widget, actions, frame.widgetMinPx, frame.landscapeDockReserve)

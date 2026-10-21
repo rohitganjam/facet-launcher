@@ -74,7 +74,7 @@ data class HomeUiState(
         get() = activeFacet?.clockWidgetHeightDp
 
     /** The active facet's overrides resolved against [settings]. */
-    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(activeFacet, settings) }
+    internal val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(activeFacet, settings) }
 
     val clockTemplateId: ClockTemplateId get() = style.clock.templateId
     val clockFontOption: ClockFontOption get() = style.clock.fontOption

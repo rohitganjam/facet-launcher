@@ -149,7 +149,7 @@ class AppearanceSettingsScreenTest {
         // screen's own preview — see chat history)
         setContent()
 
-        composeRule.onNodeWithTag("appearance_preview_clock").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_preview_home_clock_block").assertIsDisplayed()
     }
 
     @Test
@@ -182,7 +182,7 @@ class AppearanceSettingsScreenTest {
         awaitFacetScoped()
 
         // Then the preview clock is shown and the Clock row names the facet's own template, not the global one
-        composeRule.onNodeWithTag("appearance_preview_clock").assertExists()
+        composeRule.onNodeWithTag("appearance_preview_home_clock_block").assertExists()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
         composeRule.onNodeWithTag("clock_style_gallery_row").assertTextContains("Ruler", substring = true)
     }
