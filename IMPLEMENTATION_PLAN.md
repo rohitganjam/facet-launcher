@@ -4156,7 +4156,7 @@ Chosen over locking to portrait: foldables and tablets ignore a portrait lock, a
   - Tradeoff accepted: landscape cannot have deliberate gaps; dragging reorders instead of placing in an exact cell.
   - Edge case: a widget taller than the visible rows is clamped at render time only.
 - [ ] **Gestures.** Swipe right (widgets) and left (facets) stay. Re-check vertical swipe thresholds on a ~330dp-tall window.
-- [ ] **Previews.** Facet carousel cards and `HomePreview` are portrait-shaped; they need a landscape aspect.
+- [x] **Previews.** The carousel cards and the Appearance preview are the real `HomeScreen` scaled down (`ScaledHomeScreen`), so they follow the window's orientation (docs `13`, `03`).
 
 **Stages.**
 1. **Done.** Window rule (`homeLayoutModeFor`: portrait when taller than wide or under 600dp wide; `homeLandscapeSpaceFor` splits it at 480dp tall into compact, with the right-hand dock, and roomy, with a bottom dock and more grid columns) and a pure widget flow-pack use case (`FlowPackWidgetsUseCase`: order + spans + row count → positions, sparse so order is always preserved), with tests. Neither is wired into the UI yet.
@@ -4168,3 +4168,14 @@ Chosen over locking to portrait: foldables and tablets ignore a portrait lock, a
 Each stage is checked on a rotated phone emulator and the Pixel Fold emulator.
 
 **Open.** (a) the "rail" wording for the dock; (b) the landscape threshold; (c) the widget cell size constant (small enough for 5 rows on a ~330dp-tall phone, or fewer rows with tall widgets clamped).
+
+## Macrobenchmarks per screen (to do)
+
+Only `StartupBenchmark` (cold start) exists in `:benchmark`. The previews are now full `HomeScreen` layouts, and the facet carousel stays composed while closed, so its cost is unmeasured. Whether to compose the carousel only when it opens (or keep it composed with cheap placeholder cards until then) depends on these numbers.
+
+- [ ] **Carousel, first frame on open** (swipe left from Home): always composed vs composed on open. Run it with **1, 3 and 5–6 facets** configured, since every visible card is a full Home layout and a free-plan user has 3 but a Pro user up to 10.
+- [ ] **Cold start with the carousel composed:** the same facet counts, to see what the always-on cost adds to `StartupBenchmark`.
+- [ ] **Each other screen's first frame and a scroll or swipe through it:** Home, the app drawer open (swipe up), the Hub (swipe right), Settings and Appearance (the preview card), the clock style gallery, Manage facets.
+- [ ] **Both window shapes:** the phone and the unfolded Pixel Fold, since the Fold previews use the landscape layout.
+- [ ] **Facet seeding:** a benchmark setup step that creates N facets with their own favorites, dock and a hosted clock widget on one of them, so the cards are not trivially empty.
+- [ ] Record the baseline numbers here (device, build, facet count, median and P90 frame time) before changing how the carousel composes.
