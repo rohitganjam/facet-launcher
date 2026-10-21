@@ -4129,7 +4129,7 @@ Found on the unfolded Pixel Fold emulator: the fixed-column grid left most of th
 - [ ] Tune the cell width / row pitch targets on a real phone and a tablet (set from the Pixel Fold emulator and phone-height arithmetic only).
 - [ ] Check Grid on a phone-sized screen against the old 5×6 / 4×5 / 4×4 looks.
 - [ ] Home's own grid (`AppListGridColumns`) has the same fixed-column assumption — separate change.
-- [ ] Still open from the fold review: Home dock scattering, status-bar icon contrast on a wide window, list view column count, landscape Home layout.
+- [ ] Still open from the fold review: Home dock scattering, status-bar icon contrast on a wide window, list view column count. (Landscape Home layout is built, see below.)
 
 ## Landscape Home (built; simplification tracked separately)
 
@@ -4141,13 +4141,13 @@ Chosen over locking to portrait: foldables and tablets ignore a portrait lock, a
 
 **Panes.** `[ clock pane | apps pane | dock rail ]`, clock on the left.
 
-- [ ] **Clock.** Always left-aligned with margins horizontally. `clockAlignment` is reused with a mapping: LEFT→TOP, CENTER→MIDDLE, RIGHT→BOTTOM (the same field, so a change in one orientation shows in the other; split into its own setting later if that bothers anyone).
+- [x] **Clock.** (Superseded: landscape now has its own alignment, divider width and scale, falling back to portrait; see `LANDSCAPE_SIMPLIFICATION_PLAN.md` and doc `17`.) Always left-aligned with margins horizontally. `clockAlignment` is reused with a mapping: LEFT→TOP, CENTER→MIDDLE, RIGHT→BOTTOM (the same field, so a change in one orientation shows in the other; split into its own setting later if that bothers anyone).
   - New alignment pill in adjust mode: top / middle / bottom (vertical-align icons), writing the same field. It sits inside the clock pane at the bottom edge, or the top when the clock is bottom-aligned.
   - Scale handle: scale origin becomes left-top / left-middle / left-bottom; the maximum scale is bounded by the pane width, not the screen width.
   - `ClockZoneHandle` becomes the vertical divider between the clock and apps panes (orientation parameter: full-height rail, horizontal drag, icon rotated). It reuses `clockZoneHeightDp` as the zone's main-axis size (height in portrait, width in landscape). Floor: scaled clock width + margins. Ceiling: half the window width. Default (null): the clock's natural width + margins. Reveal by long-press on the clock, commit on release, as today.
-- [ ] **Apps pane.** The list keeps the chosen layout: single column, two columns (originally single column only, reversed on request) or grid. A grid follows the user's selection with columns clamped to the pane width. Vertical anchor (top / bottom) is kept. Scrolls if the list is taller than the pane.
-- [ ] **Dock.** A vertical column at the right edge, icons only, no extra icons and no second column; scrolls when the icons do not fit. Inset from the edge (or a gesture-exclusion zone) so a swipe left that starts on it does not trigger the system Back gesture. The A–Z rail stays in the app drawer only. *(To confirm: wording of "the rail is only available in the app drawer".)*
-- [ ] **Widgets (Hub page).** Swipe right still opens it. Fixed cell size (dp constant, like the app grid): rows = as many as fit the height, columns grow and scroll horizontally, widgets compact left instead of up. Each widget keeps its size in cells (`colSpan` x `rowSpan`). Editable in landscape: the existing move / resize / delete use cases are generalised over the grid axis (push and compaction direction mirrored).
+- [x] **Apps pane.** The list keeps the chosen layout: single column, two columns (originally single column only, reversed on request) or grid. A grid follows the user's selection with columns clamped to the pane width. Vertical anchor (top / bottom) is kept. Scrolls if the list is taller than the pane.
+- [x] **Dock.** A vertical column at the right edge, icons only, no extra icons and no second column; scrolls when the icons do not fit. Inset from the edge (or a gesture-exclusion zone) so a swipe left that starts on it does not trigger the system Back gesture. The A–Z rail stays in the app drawer only. *(To confirm: wording of "the rail is only available in the app drawer".)*
+- [x] **Widgets (Hub page).** Swipe right still opens it. Fixed cell size (dp constant, like the app grid): rows = as many as fit the height, columns grow and scroll horizontally, widgets compact left instead of up. Each widget keeps its size in cells (`colSpan` x `rowSpan`). Editable in landscape: the existing move / resize / delete use cases are generalised over the grid axis (push and compaction direction mirrored).
   - **Storage (decided): order only.** One nullable `landscapeOrder` on `widget_placements` (additive migration). The landscape layout is a flow-pack of the widgets in that order (first-fit, gravity left), so it is always valid and never overlaps. A null order falls back to portrait reading order (`row`, then `col`), so existing installs need nothing. Spans are shared by both orientations.
     - Moving a widget in landscape = dropping it at a new place in the flow; it writes only `landscapeOrder`.
     - Resizing writes the shared spans; portrait may then overlap, and the existing `ResolveWidgetResizeUseCase` pushes widgets apart there.

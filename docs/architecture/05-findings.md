@@ -111,7 +111,10 @@ folders (v3) and never picked up the columns added in schema v13–v15: `clockAc
 `clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
 `appListVerticalAlignment` (plus, globally, `selected_calendar_ids`, `calendar_colors` and `recently_installed_position`). A
 restore therefore silently resets clock position/scale/date style and the calendar selection on
-every facet. Add them to both `@Serializable` classes with defaults (older files keep parsing),
+every facet. The landscape twins have the same gap: only `landscapeAppRowPosition` and
+`landscapeAppListColumnAlignment` are exported, so the landscape vertical alignment, clock alignment, zone
+width, scale and hosted-widget size (`LandscapeOverrides`) reset on restore too (`allow_landscape` is
+deliberately device-local and stays out). Add them to both `@Serializable` classes with defaults (older files keep parsing),
 bump `CURRENT_BACKUP_VERSION` to 4, and extend `BackupMapping.kt` both ways. The
 `ExportBackupUseCaseTest`/`ImportBackupUseCaseTest` round-trip tests should assert every
 `FacetEntity` column, so this can't regress when v21 adds the next one.

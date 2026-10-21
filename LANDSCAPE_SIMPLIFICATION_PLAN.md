@@ -127,6 +127,19 @@ Targets: each function ≤ 60 lines, complexity ≤ 14, no nesting or condition 
 - [x] **E2.** `./gradlew :app:detekt` passes with nothing re-baselined for `HomeScreen*` or the new files.
 - [x] **E3.** Update `docs/architecture/04` (package tree and counts), `07` (registry), `17`, `TEST_REGISTRY.md`; tick this file; update the `IMPLEMENTATION_PLAN.md` entry.
 
+## Outcome (2026-10-21)
+
+| | Before | After |
+|---|---|---|
+| `HomeScreen.kt` | 2,718 lines, 21 functions | 173 lines, 4 functions |
+| `HomeScreen` composable | 986 lines, complexity 248, 88 parameters | about 35 lines, 5 parameters |
+| `HomeScreen.kt` entries in `app/detekt-baseline.xml` | 18 | 0 |
+
+New files in `ui/home/`: `HomeFrame.kt` (per-frame resolution), `HomeContent.kt` (portrait and landscape), `HomeSlots.kt`,
+`HomeScreenEffects.kt`, `HomeClockGeometry.kt` (pure, 25 unit tests), `ClockAdjustControls.kt`, `ClockResizeOverlays.kt`.
+`ClockResizeOverlays.kt` has 13 functions, over the "10 per file" target, but Detekt accepts it (private helpers).
+No baseline entry was added anywhere for the new files.
+
 ## Risks and watch-points
 
 - **Phase C changes `HomeScreen`'s public API** and overlaps the user's uncommitted `HomeScreen.kt` / `HomeDrawerRoute.kt` hunks. Commit those first if possible; otherwise stage by hunk as before.

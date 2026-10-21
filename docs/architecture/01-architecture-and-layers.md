@@ -27,7 +27,7 @@ flowchart TB
     end
 
     subgraph SRC["Sources"]
-        DAO["data/local — Room DAOs\nFacetDatabase v28"]
+        DAO["data/local — Room DAOs\nFacetDatabase v32"]
         DS["DataStore of Preferences\nfacet_settings, facet_automation"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end
@@ -46,7 +46,7 @@ flowchart TB
 
 | Layer | May depend on | Must not depend on | Verified example |
 |---|---|---|---|
-| Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(uiState: HomeUiState, onAppClick: ..., ...)` |
+| Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(state: HomeScreenState, actions: HomeScreenActions)` |
 | ViewModels | Use cases, Repositories | DAOs, `DataStore`, framework services | `HomeViewModel(ObserveHomeScreenStateUseCase, SettingsRepository, FacetRepository, ...)` |
 | Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddToActiveListUseCase(ResolveActivePlacementTargetUseCase, PlacementRepository)` |
 | Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `PlacementRepository(AppPlacementDao, FolderPlacementDao, FolderRepository, AppRepository)` |
@@ -101,6 +101,7 @@ flowchart TB
             DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 6 DAO @Provides (unscoped)"]
             DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
+            ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
         end
         REPOS["41 @Singleton data classes (39 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
