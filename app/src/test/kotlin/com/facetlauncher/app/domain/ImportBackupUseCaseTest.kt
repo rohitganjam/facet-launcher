@@ -2,6 +2,8 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.LandscapeTransformCaptor
 import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
@@ -214,12 +216,16 @@ class ImportBackupUseCaseTest {
     }
 
     @Test
-    fun `restores the landscape row position and column alignment, and an old backup clears them`() = runTest {
+    fun `restores the whole landscape group, replacing what was there`() = runTest {
         val uri = mock(Uri::class.java)
         `when`(backupRepository.readBackup(uri)).thenReturn(
             BackupBundle(
                 exportedAtEpochMillis = 0L,
-                settings = minimalSettings().copy(landscapeAppRowPosition = "CENTER", landscapeAppListColumnAlignment = "MIRRORED"),
+                settings = minimalSettings().copy(
+                    landscapeAppRowPosition = "CENTER", landscapeAppListColumnAlignment = "MIRRORED",
+                    landscapeClockAlignment = "RIGHT", landscapeClockZoneHeightDp = 310f, landscapeClockScale = 1.1f,
+                    landscapeAppListVerticalAlignment = "TOP",
+                ),
                 facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
             ),
         )
@@ -228,9 +234,58 @@ class ImportBackupUseCaseTest {
 
         val captor = LandscapeTransformCaptor()
         verify(settingsRepository).updateLandscape(captor.capture())
-        // Only the two backed-up fields change; the rest of the landscape group is left alone
+        // A full restore replaces the group: the old scale is gone, the backed-up values are in
         val before = LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.LEFT)
-        assertEquals(LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.CENTER, appListColumnAlignment = AppListColumnAlignment.MIRRORED), captor.last(before))
+        assertEquals(
+            LandscapeOverrides(
+                clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f, clockScale = 1.1f,
+                appRowPosition = AppRowPosition.CENTER, appListVerticalAlignment = AppListVerticalAlignment.TOP,
+                appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+            ),
+            captor.last(before),
+        )
+    }
+
+    @Test
+    fun `restores the clock and list settings that older backups left out`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L,
+                settings = minimalSettings().copy(
+                    clockAccentColorOption = "ACCENT_SECONDARY", clockDateStyle = "CONDENSED", clockAlignment = "RIGHT",
+                    clockZoneHeightDp = 240f, clockScale = 1.3f, appListVerticalAlignment = "TOP",
+                    recentlyInstalledPosition = "SHOW_LAST", searchSettingsEnabled = true,
+                ),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        verify(settingsRepository).setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
+        verify(settingsRepository).setClockDateStyle(com.facetlauncher.app.data.model.ClockDateStyle.CONDENSED)
+        verify(settingsRepository).setClockAlignment(ClockAlignment.RIGHT)
+        verify(settingsRepository).setClockZoneHeight(240f)
+        verify(settingsRepository).setClockScale(1.3f)
+        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
+        verify(settingsRepository).setRecentlyInstalledPosition(com.facetlauncher.app.data.model.RecentlyInstalledPosition.SHOW_LAST)
+        verify(settingsRepository).setSearchSettingsEnabled(true)
+    }
+
+    @Test
+    fun `a backup whose clock divider was never dragged clears the current one`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L, settings = minimalSettings().copy(clockZoneHeightDp = null),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        verify(settingsRepository).resetClockZoneHeight()
     }
 
     @Test

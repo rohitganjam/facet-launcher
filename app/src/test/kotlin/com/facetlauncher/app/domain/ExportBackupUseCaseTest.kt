@@ -18,6 +18,10 @@ import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
+import com.facetlauncher.app.data.model.ClockDateStyle
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -168,5 +172,61 @@ class ExportBackupUseCaseTest {
         assertEquals("MIRRORED", bundle.settings.landscapeAppListColumnAlignment)
         assertEquals("RIGHT", bundle.facets[0].landscapeAppRowPosition)
         assertEquals("BOTH_RIGHT", bundle.facets[0].landscapeAppListColumnAlignment)
+    }
+
+    @Test
+    fun `exports the clock and list settings for the launcher and each facet`() = runTest {
+        val facet = Facet(
+            id = 7, name = "Work", position = 0,
+            clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
+            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f, clockScale = 1.1f,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
+            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
+            landscapeAppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+        )
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(
+                LauncherSettings(
+                    clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
+                    clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 240f, clockScale = 1.3f,
+                    appListVerticalAlignment = AppListVerticalAlignment.TOP, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST,
+                    searchSettingsEnabled = true,
+                    landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 280f, clockScale = 1.0f, appListVerticalAlignment = AppListVerticalAlignment.TOP),
+                ),
+            ),
+        )
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+            `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
+            `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
+        }
+
+        val bundle = useCase(mock(Uri::class.java))
+
+        val settings = bundle.settings
+        assertEquals("ACCENT_SECONDARY", settings.clockAccentColorOption)
+        assertEquals("CONDENSED", settings.clockDateStyle)
+        assertEquals("RIGHT", settings.clockAlignment)
+        assertEquals(240f, settings.clockZoneHeightDp)
+        assertEquals(1.3f, settings.clockScale)
+        assertEquals("TOP", settings.appListVerticalAlignment)
+        assertEquals("SHOW_LAST", settings.recentlyInstalledPosition)
+        assertEquals(true, settings.searchSettingsEnabled)
+        assertEquals("LEFT", settings.landscapeClockAlignment)
+        assertEquals(280f, settings.landscapeClockZoneHeightDp)
+        assertEquals(1.0f, settings.landscapeClockScale)
+        assertEquals("TOP", settings.landscapeAppListVerticalAlignment)
+        val exported = bundle.facets[0]
+        assertEquals("ACCENT_SECONDARY", exported.clockAccentColorOption)
+        assertEquals("CONDENSED", exported.clockDateStyle)
+        assertEquals("RIGHT", exported.clockAlignment)
+        assertEquals(210f, exported.clockZoneHeightDp)
+        assertEquals(1.1f, exported.clockScale)
+        assertEquals("TOP", exported.appListVerticalAlignment)
+        assertEquals("CENTER", exported.landscapeClockAlignment)
+        assertEquals(300f, exported.landscapeClockZoneHeightDp)
+        assertEquals(0.9f, exported.landscapeClockScale)
+        assertEquals("BOTTOM", exported.landscapeAppListVerticalAlignment)
     }
 }

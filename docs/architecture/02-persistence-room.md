@@ -690,19 +690,18 @@ baseline facet was deleted.
 
 `CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
-older (fields added since carry defaults). Contents: `settings: BackupSettings` — 44 of the 67 DataStore keys, with `activeFacetIndex`
-instead of `active_facet_id`. **Not backed up** (verified against `BackupSettings`):
-`clock_accent_color_option`, `clock_date_style`, `clock_alignment`,
-`clock_zone_height_dp`, `clock_scale`, the three `landscape_clock_*` keys, `landscape_app_list_vertical_alignment`, `allow_landscape` (device-local: it follows the device's orientation), `app_list_vertical_alignment`, `selected_calendar_ids`,
-`calendar_colors`, `recently_installed_position`, `search_settings_enabled`, all four `*_permission_requested` flags,
-`onboarding_completed`, `defaults_seeded`, `coach_marks_seen` — the first six are a real gap
-(a restored device loses clock position/scale/date style), the rest are device-local by design.
-`BackupFacet` has the same six omissions per facet (`facets.clockAccentColorOption`,
-`clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
-`appListVerticalAlignment` — every column added in v13–v15 — are not exported). See finding F11.
-`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode` (added in
-v24→25, both `BackupSettings` and `BackupFacet`) **are** exported — new columns don't inherit the
-older ones' gap.
+older (fields added since carry defaults). Contents: `settings: BackupSettings` — every DataStore key except
+the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `landscape_*` keys as flat
+`landscape*` fields. **Not backed up** (all deliberate): `active_facet_id` (a row id), `selected_calendar_ids`
+and `calendar_colors` (keyed by this device's calendar row ids), `allow_landscape` (a per-device choice),
+all four `*_permission_requested` flags and `onboarding_completed`, `defaults_seeded`, `coach_marks_seen`
+(this install's own history). `BackupFacet` carries every `Facet` field except the id and the hosted
+clock widget (`clockWidgetAppWidgetId` and its portrait and landscape sizes): an `AppWidgetHost` id is not
+portable, so that widget is re-added by hand. `BackupCoverageTest` fails when a `Facet` or `LauncherSettings`
+field is neither exported nor in its list of exclusions, so a new column can't be left out of a backup silently.
+The clock look and placement, the app list's vertical alignment, `recently_installed_position`,
+`search_settings_enabled` and the landscape clock and list values were added later as defaulted fields,
+without a version bump.
 Then
 `facets: List<BackupFacet>` (each with its own favorites, dock apps, folder placements),
 `dockApps`, `defaultFavoriteApps`, `folders` (with members), `dockFolderPlacements`,

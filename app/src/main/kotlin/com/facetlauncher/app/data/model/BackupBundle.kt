@@ -28,7 +28,9 @@ const val CURRENT_BACKUP_VERSION = 3
  *   are local-`ContentProvider` autoincrement values tied to which calendar accounts are synced
  *   on *this* device in *this* order — not portable to another device/reinstall, and silently
  *   matching the wrong calendar by coincidence is worse than just re-deriving them fresh.
- * - `calendarPermissionRequested`/`contactsPermissionRequested`: track *this install's* runtime
+ * - `allowLandscape`: a choice about this device (whether Home may rotate), not a layout preference.
+ * - `calendarPermissionRequested`/`contactsPermissionRequested`/`bluetoothPermissionRequested`/
+ *   `locationPermissionRequested`: track *this install's* runtime
  *   permission-request history, not a user preference — restoring `true` onto a device that was
  *   never actually asked would wrongly skip straight to the "go to App Info" fallback instead of
  *   firing the real system permission dialog.
@@ -122,6 +124,24 @@ data class BackupSettings(
     val clockColorOption: String,
     val clockShowMeridiem: Boolean,
     val homeAppsFontWeight: String = FontWeightOption.REGULAR.name,
+    /**
+     * Added after the first release of this format; all defaulted, so an older backup restores to
+     * today's defaults and an older app ignores them (`ignoreUnknownKeys`) — no version bump.
+     */
+    val recentlyInstalledPosition: String = RecentlyInstalledPosition.SHOW_FIRST.name,
+    val searchSettingsEnabled: Boolean = false,
+    val clockAccentColorOption: String = ClockColorOption.ACCENT_PRIMARY.name,
+    val clockDateStyle: String = ClockDateStyle.FULL.name,
+    val clockAlignment: String = ClockAlignment.LEFT.name,
+    /** `null` until the clock's divider was first dragged. */
+    val clockZoneHeightDp: Float? = null,
+    val clockScale: Float = 0.8f,
+    val appListVerticalAlignment: String = AppListVerticalAlignment.BOTTOM.name,
+    /** Landscape's own clock and list values; `null` is "same as portrait". Like [landscapeAppRowPosition], flat and optional. */
+    val landscapeClockAlignment: String? = null,
+    val landscapeClockZoneHeightDp: Float? = null,
+    val landscapeClockScale: Float? = null,
+    val landscapeAppListVerticalAlignment: String? = null,
 )
 
 /** Mirrors every non-id field of `Facet` — its own row id isn't portable, same reasoning as [BackupSettings.activeFacetIndex]. */
@@ -135,6 +155,21 @@ data class BackupFacet(
     val clockColorOption: String,
     val use24HourTime: Boolean,
     val clockShowMeridiem: Boolean,
+    /**
+     * Added after the first release of this format; all defaulted, so an older backup restores to
+     * today's defaults — no version bump. The hosted clock widget (its id and size) is left out:
+     * an `AppWidgetHost` id is not portable, so that widget is re-added by hand like the Hub's.
+     */
+    val clockAccentColorOption: String = ClockColorOption.ACCENT_PRIMARY.name,
+    val clockDateStyle: String = ClockDateStyle.FULL.name,
+    val clockAlignment: String = ClockAlignment.LEFT.name,
+    val clockZoneHeightDp: Float? = null,
+    val clockScale: Float = 0.8f,
+    val landscapeClockAlignment: String? = null,
+    val landscapeClockZoneHeightDp: Float? = null,
+    val landscapeClockScale: Float? = null,
+    val landscapeAppListVerticalAlignment: String? = null,
+    val appListVerticalAlignment: String = AppListVerticalAlignment.LAUNCHER_DEFAULT.name,
     val overrideApps: Boolean,
     val appRowPosition: String,
     val appRowPresentation: String,
@@ -159,7 +194,7 @@ data class BackupFacet(
     val showCalendarIndicator: Boolean = true,
     val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /**
-     * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.model.Facet.selectedCalendarIdsCsv]'s
+     * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.local.FacetEntity.selectedCalendarIdsCsv]'s
      * own doc comment. A real JSON array here (not the Room column's comma-joined encoding),
      * matching how [BackupBundle] generally favors the more portable/readable shape. Defaulted
      * (not required) so an older backup missing this field still deserializes cleanly — see

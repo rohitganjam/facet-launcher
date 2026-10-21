@@ -20,7 +20,10 @@ import com.facetlauncher.app.data.model.BackupFolder
 import com.facetlauncher.app.data.model.BackupFolderPlacement
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
+import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
@@ -60,6 +63,16 @@ fun Facet.toBackupFacet(
     clockColorOption = clockColorOption.name,
     use24HourTime = use24HourTime,
     clockShowMeridiem = clockShowMeridiem,
+    clockAccentColorOption = clockAccentColorOption.name,
+    clockDateStyle = clockDateStyle.name,
+    clockAlignment = clockAlignment.name,
+    clockZoneHeightDp = clockZoneHeightDp,
+    clockScale = clockScale,
+    landscapeClockAlignment = landscapeClockAlignment?.name,
+    landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
+    landscapeClockScale = landscapeClockScale,
+    landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment?.name,
+    appListVerticalAlignment = appListVerticalAlignment.name,
     overrideApps = overrideApps,
     appRowPosition = appRowPosition.name,
     appRowPresentation = appRowPresentation.name,
@@ -96,6 +109,16 @@ fun BackupFacet.toFacet(): Facet = Facet(
     clockColorOption = clockColorOption.toEnumOrDefault(ClockColorOption.THEME),
     use24HourTime = use24HourTime,
     clockShowMeridiem = clockShowMeridiem,
+    clockAccentColorOption = clockAccentColorOption.toEnumOrDefault(ClockColorOption.ACCENT_PRIMARY),
+    clockDateStyle = clockDateStyle.toEnumOrDefault(ClockDateStyle.FULL),
+    clockAlignment = clockAlignment.toEnumOrDefault(ClockAlignment.LEFT),
+    clockZoneHeightDp = clockZoneHeightDp,
+    clockScale = clockScale,
+    landscapeClockAlignment = landscapeClockAlignment?.toEnumOrNull(),
+    landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
+    landscapeClockScale = landscapeClockScale,
+    landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment?.toEnumOrNull(),
+    appListVerticalAlignment = appListVerticalAlignment.toEnumOrDefault(AppListVerticalAlignment.LAUNCHER_DEFAULT),
     overrideApps = overrideApps,
     // A facet's own row falls back to LAUNCHER_DEFAULT, not a concrete value — see
     // Facet.appRowPosition's own doc for why these are resolved independently of

@@ -17,7 +17,6 @@ error; see this doc's own rule in `CLAUDE.md`'s "Living architecture docs" secti
 | F7 | `HomeViewModel` and `LauncherViewModel` collect for their whole lifetime (`launchIn(viewModelScope)`, not `stateIn(WhileSubscribed)`) | Low | Small |
 | F8 | `ObserveHomeScreenStateUseCase` / `ObserveHubStateUseCase` hold mutable state while unscoped | Low | Trivial |
 | F10 | Recents / Most-used / calendar are one-shot reads behind a manual `refreshTrigger` | Low (UX) | Medium |
-| F11 | Backup v3 omits every clock/app-list column added in schema v13–v15 (both global and per-facet) | Medium (data loss on restore) | Small |
 | F12 | `DrawerViewModel` exposes ~8 separate `StateFlow`s instead of one `DrawerUiState`; `AssignCalendarColorsUseCase` is `new`ed in a ViewModel instead of injected | Low (convention) | Small |
 
 ---
@@ -103,21 +102,6 @@ on resume is reasonable; calendar *does* have one (`ContentResolver.registerCont
 `CalendarContract.Events.CONTENT_URI`), so an event added while Home is visible won't appear until
 the next resume. A `callbackFlow` in `CalendarRepository` would make it live without touching the
 use case.
-
-## F11 — Backup misses the newer clock/app-list fields (Medium)
-
-`BackupSettings` and `BackupFacet` (`data/model/BackupBundle.kt`) were last extended for
-folders (v3) and never picked up the columns added in schema v13–v15: `clockAccentColorOption`,
-`clockDateStyle`, `clockAlignment`, `clockZoneHeightDp`, `clockScale`,
-`appListVerticalAlignment` (plus, globally, `selected_calendar_ids`, `calendar_colors` and `recently_installed_position`). A
-restore therefore silently resets clock position/scale/date style and the calendar selection on
-every facet. The landscape twins have the same gap: only `landscapeAppRowPosition` and
-`landscapeAppListColumnAlignment` are exported, so the landscape vertical alignment, clock alignment, zone
-width, scale and hosted-widget size (`LandscapeOverrides`) reset on restore too (`allow_landscape` is
-deliberately device-local and stays out). Add them to both `@Serializable` classes with defaults (older files keep parsing),
-bump `CURRENT_BACKUP_VERSION` to 4, and extend `BackupMapping.kt` both ways. The
-`ExportBackupUseCaseTest`/`ImportBackupUseCaseTest` round-trip tests should assert every
-`FacetEntity` column, so this can't regress when v21 adds the next one.
 
 ## F12 — Two small convention drifts (Low)
 

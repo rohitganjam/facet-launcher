@@ -14,7 +14,11 @@ import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
+import com.facetlauncher.app.data.model.ClockDateStyle
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.CURRENT_BACKUP_VERSION
@@ -177,12 +181,10 @@ class ImportBackupUseCase @Inject constructor(
             setAppRowPresentation(settings.appRowPresentation.toEnumOrDefault(AppRowPresentation.ICON_AND_TEXT))
             setAppListLayout(settings.appListLayout.toEnumOrDefault(AppListLayout.SINGLE_COLUMN))
             setAppListColumnAlignment(settings.appListColumnAlignment.toEnumOrDefault(AppListColumnAlignment.BOTH_LEFT))
-            updateLandscape {
-                it.copy(
-                    appRowPosition = settings.landscapeAppRowPosition?.toEnumOrNull(),
-                    appListColumnAlignment = settings.landscapeAppListColumnAlignment?.toEnumOrNull(),
-                )
-            }
+            setAppListVerticalAlignment(settings.appListVerticalAlignment.toEnumOrDefault(AppListVerticalAlignment.BOTTOM))
+            setRecentlyInstalledPosition(settings.recentlyInstalledPosition.toEnumOrDefault(RecentlyInstalledPosition.SHOW_FIRST))
+            setSearchSettingsEnabled(settings.searchSettingsEnabled)
+            applyClockPlacement(settings)
             setAppListGridColumns(settings.appListGridColumns.toEnumOrDefault(AppListGridColumns.FOUR))
             setAppListGridDisplayMode(settings.appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.ICONS))
             setListContentMode(settings.listContentMode.toEnumOrDefault(ListContentMode.FAVORITES))
@@ -192,6 +194,28 @@ class ImportBackupUseCase @Inject constructor(
             setClockColorOption(settings.clockColorOption.toEnumOrDefault(ClockColorOption.THEME))
             setClockShowMeridiem(settings.clockShowMeridiem)
             setHomeAppsFontWeight(settings.homeAppsFontWeight.toEnumOrDefault(FontWeightOption.REGULAR))
+        }
+    }
+
+    /** The clock's look and placement, and the whole landscape group, which a full restore replaces. */
+    private suspend fun applyClockPlacement(settings: BackupSettings) {
+        with(settingsRepository) {
+            setClockAccentColorOption(settings.clockAccentColorOption.toEnumOrDefault(ClockColorOption.ACCENT_PRIMARY))
+            setClockDateStyle(settings.clockDateStyle.toEnumOrDefault(ClockDateStyle.FULL))
+            setClockAlignment(settings.clockAlignment.toEnumOrDefault(ClockAlignment.LEFT))
+            setClockScale(settings.clockScale)
+            // A null height means the divider was never dragged; a restore must clear a height set since.
+            if (settings.clockZoneHeightDp != null) setClockZoneHeight(settings.clockZoneHeightDp) else resetClockZoneHeight()
+            updateLandscape {
+                it.copy(
+                    clockAlignment = settings.landscapeClockAlignment?.toEnumOrNull(),
+                    clockZoneHeightDp = settings.landscapeClockZoneHeightDp,
+                    clockScale = settings.landscapeClockScale,
+                    appRowPosition = settings.landscapeAppRowPosition?.toEnumOrNull(),
+                    appListVerticalAlignment = settings.landscapeAppListVerticalAlignment?.toEnumOrNull(),
+                    appListColumnAlignment = settings.landscapeAppListColumnAlignment?.toEnumOrNull(),
+                )
+            }
         }
     }
 }

@@ -32,8 +32,8 @@ sequenceDiagram
   currently uninstalled is still exported. Nothing is filtered against `LauncherApps`.
 - **Ids are not exported.** Facets and folders are referenced by their index in the bundle's
   lists; `active_facet_id` becomes `activeFacetIndex`. Room ids are regenerated on import.
-- What is *not* in the file: see [02 §6](02-persistence-room.md) (clock position/scale/date
-  style, calendar selection/colors, permission and coach-mark flags — finding F11).
+- What is *not* in the file: see [02 §6](02-persistence-room.md) (calendar selection/colors, the hosted
+  clock widget, permission and coach-mark flags, `allow_landscape`). `BackupCoverageTest` enforces the list.
 
 ## 2. Import
 
@@ -121,5 +121,7 @@ file whose `backupVersion` is *greater* than the current constant is refused wit
 additive, defaulted, tolerant-reader field does **not** require a bump (established by
 `fontScaleOption`, reused for `appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
 `appListGridDisplayMode`, `systemBarIconStyle`, and `iconShape` — see `BackupBundle.kt`'s own doc comment). `ExportBackupUseCaseTest` /
-`ImportBackupUseCaseTest` round-trip the bundle and must be extended for every new field
-(see F11 for the fields currently missing).
+`ImportBackupUseCaseTest` round-trip the bundle and must be extended for every new field;
+`BackupCoverageTest` fails until a new `Facet` or `LauncherSettings` field is exported or listed as left out.
+Import replaces the landscape group and the clock divider height outright, so a restore clears values
+the backup did not have.
