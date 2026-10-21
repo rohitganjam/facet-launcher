@@ -28,8 +28,8 @@ flowchart LR
     SCR -- "createHostView(context, id)" --> VM --> AWR
 ```
 
-- **Host listening** is tied to visibility, not process: `HomeDrawerRoute` calls
-  `hubViewModel.onHubVisible()` → `host.startListening()` when the Hub opens and
+- **Host listening** is tied to visibility, not process: `HomeHubOverlay` (in `HomeDrawerRoute`) calls
+  `hubViewModel.onHubVisible()` → `host.startListening()` when the Hub opens (or a clock widget is on Home) and
   `onHubHidden()` → `stopListening()` in `onDispose`. Widgets don't receive updates while the Hub
   is closed.
 - **Orphans**: a placement whose `appWidgetId` no longer has provider info (provider uninstalled,

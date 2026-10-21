@@ -221,7 +221,11 @@ revisiting.
 ## 4. Gestures & routing (why the drawer isn't a nav destination)
 
 `HomeDrawerRoute` owns every follow-finger drag that starts on Home, on one axis at a time
-(`Axis` resolution on the first frame):
+(`Axis` resolution on the first frame). The logic is `HomeSwipeController` (`launcher/`): three
+`SwipeAxisState`s (Drawer, Hub, carousel), the axis lock, the shade-expand rule, and the two
+nested-scroll bridges (a hosted clock widget through `WidgetScrollBridge`, and the app list's leftover
+scroll). `swipeSettleTarget` is the pure open/closed decision. `HomeSwipeControllerTest` and
+`HomeSwipeGesturesTest` cover it:
 
 | Drag on Home | Opens | Reverse gesture closes |
 |---|---|---|
