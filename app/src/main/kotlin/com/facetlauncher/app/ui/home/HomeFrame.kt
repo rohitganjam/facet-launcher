@@ -34,7 +34,6 @@ import com.facetlauncher.app.ui.home.HomeScreenState
 import com.facetlauncher.app.ui.home.stableKey
 import com.facetlauncher.app.ui.hub.HUB_LANDSCAPE_CELL_SIZE
 import com.facetlauncher.app.ui.theme.resolve
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -235,16 +234,15 @@ private fun rememberHomeItemStyle(look: HomeItemLook): HomeItemStyle {
 }
 
 /**
- * Fades the clock in once, after its measured box has held steady for a beat. The box is measured twice on a
- * cold start (a variable font finishes loading between passes), and the glyph anchors to its bottom edge, so
- * revealing between the passes would show it grow upward. One-way; reset with the composable on a rebuild.
+ * Fades the clock in once its box has been measured. The bundled fonts load synchronously, so the box is the
+ * same on every pass (checked on a cold start at several clock scales). One-way; reset with the composable on a rebuild.
  */
 @Composable
 private fun rememberClockAppearAlpha(layout: HomeScreenLayout): State<Float> {
     var revealed by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withTimeoutOrNull(1_500) {
-            snapshotFlow { layout.clockBoxSize }.filter { it != null }.debounce(120).first()
+            snapshotFlow { layout.clockBoxSize }.filter { it != null }.first()
         }
         revealed = true
     }
@@ -275,9 +273,7 @@ private fun rememberListAppearAlpha(state: HomeScreenState, layout: HomeScreenLa
         layout.useCompactAppSpacing = false
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
             snapshotFlow { layout.appListNaturalHeightPx to (layout.contentHeightPx - media.listTopTargetPx) }
-                .filter { (natural, available) -> natural > 0f && available > 0f }
-                .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
-                .first()
+                .first { (natural, available) -> natural > 0f && available > 0f }
         }
         layout.useCompactAppSpacing = layout.appListNaturalHeightPx > (layout.contentHeightPx - media.listTopTargetPx)
         revealed = true
