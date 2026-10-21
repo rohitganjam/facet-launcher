@@ -61,7 +61,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.ProReason
@@ -72,8 +72,10 @@ import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.home.AppRow
-import com.facetlauncher.app.ui.home.HomePreview
-import com.facetlauncher.app.ui.home.HomePreviewState
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.ui.home.HomeScreenContent
+import com.facetlauncher.app.ui.home.ScaledHomeScreen
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.settings.ClickableRow
@@ -162,7 +164,7 @@ private fun FacetCarouselContent(
     onEditFacet: (Long) -> Unit,
     onAddFacet: () -> Unit,
     onLockedFacetClick: () -> Unit,
-    onDeleteFacet: (FacetEntity) -> Unit,
+    onDeleteFacet: (Facet) -> Unit,
     onReorderFacets: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onDismissDrag: (deltaPx: Float) -> Unit,
@@ -185,7 +187,7 @@ private fun FacetCarouselContent(
     val pageCount = facets.size + if (uiState.showAddFacet) 1 else 0
     val initialPage = facets.indexOfFirst { it.id == uiState.activeFacetId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
-    var deletingFacet by remember { mutableStateOf<FacetEntity?>(null) }
+    var deletingFacet by remember { mutableStateOf<Facet?>(null) }
 
     val config = LocalConfiguration.current
     val currentOnDismissDrag by rememberUpdatedState(onDismissDrag)
@@ -265,33 +267,12 @@ private fun FacetCarouselContent(
                     facet = facet,
                     isActive = facet.id == uiState.activeFacetId,
                     locked = locked,
-                    previewState = HomePreviewState(
-                        favorites = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
+                    style = uiState.style(facet.id),
+                    settings = uiState.globalSettings,
+                    content = HomeScreenContent(
+                        listItems = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
                         dockItems = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
-                        use24HourTime = uiState.effectiveUse24HourTime(facet.id),
-                        clockTemplateId = uiState.clockTemplateId(facet.id),
-                        clockFontOption = uiState.clockFontOption(facet.id),
-                        clockColorOption = uiState.clockColorOption(facet.id),
-                        clockAccentColorOption = uiState.clockAccentColorOption(facet.id),
-                        clockShowMeridiem = uiState.clockShowMeridiem(facet.id),
-                        clockDateStyle = uiState.clockDateStyle(facet.id),
-                        clockAlignment = uiState.clockAlignment(facet.id),
-                        clockScale = uiState.clockScale(facet.id),
-                        clockZoneHeightDp = uiState.clockZoneHeightDp(facet.id),
                         calendarEvents = uiState.previewsByFacetId[facet.id]?.calendarEvents.orEmpty(),
-                        calendarColors = uiState.globalSettings.calendarColors,
-                        calendarDisplay = uiState.previewsByFacetId[facet.id]?.calendarDisplay ?: CalendarDisplayOptions(),
-                        launcherFontOption = uiState.globalSettings.launcherFontOption,
-                        appRowPosition = uiState.appRowPosition(facet.id),
-                        appRowPresentation = uiState.appRowPresentation(facet.id),
-                        appListLayout = uiState.appListLayout(facet.id),
-                        appListVerticalAlignment = uiState.appListVerticalAlignment(facet.id),
-                        appListColumnAlignment = uiState.appListColumnAlignment(facet.id),
-                        appListGridColumns = uiState.appListGridColumns(facet.id),
-                        appListGridDisplayMode = uiState.appListGridDisplayMode(facet.id),
-                        appLabelColorOption = uiState.globalSettings.appLabelColorOption,
-                        homeAppsFontWeight = uiState.globalSettings.homeAppsFontWeight,
-                        dockDisplayMode = uiState.dockDisplayMode(facet.id),
                     ),
                     canDelete = uiState.canDeleteFacet,
                     onEditFacetClick = if (locked) onLockedFacetClick else ({ onEditFacet(facet.id) }),
@@ -396,12 +377,14 @@ private fun LauncherSettingsRow(onClick: () -> Unit, modifier: Modifier = Modifi
  */
 @Composable
 private fun FacetPreviewPage(
-    facet: FacetEntity,
+    facet: Facet,
     /** Whether this is the facet currently applied to Home — distinct from which page the pager is centered on. */
     isActive: Boolean,
     /** Disabled on the free plan: dimmed with a lock, and tapping it opens the upgrade sheet instead of applying it. */
     locked: Boolean,
-    previewState: HomePreviewState,
+    style: ResolvedFacetStyle,
+    settings: LauncherSettings,
+    content: HomeScreenContent,
     canDelete: Boolean,
     onEditFacetClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -457,13 +440,14 @@ private fun FacetPreviewPage(
         // CLAUDE.md's Material 3 shape section.
         val cardShape = MaterialTheme.shapes.extraLarge
         // Locked to the real screen's proportions — a genuine scale model.
-        HomePreview(
-            state = previewState,
+        ScaledHomeScreen(
+            style = style,
+            settings = settings,
+            content = content,
             homeWallpaper = homeWallpaper,
-            testTagPrefix = "facet_preview_",
+            tagPrefix = "facet_preview_",
             // Tapping anywhere on the card applies the facet, including on top of rows and dock icons.
             onClick = onCardClick,
-            showEmptyHint = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(screenAspectRatio)
@@ -583,8 +567,8 @@ private fun FacetCarouselScreenPreview() {
         FacetCarouselContent(
             uiState = FacetCarouselUiState(
                 facets = listOf(
-                    FacetEntity(id = 1, name = "Facet 1", position = 0),
-                    FacetEntity(id = 2, name = "Work", position = 1),
+                    Facet(id = 1, name = "Facet 1", position = 0),
+                    Facet(id = 2, name = "Work", position = 1),
                 ),
                 activeFacetId = 1,
             ),

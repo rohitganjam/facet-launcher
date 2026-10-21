@@ -126,14 +126,14 @@ private fun HomeAppsListSettingsContent(
                             overriding = uiState.isOverriding,
                             onOverridingChange = onOverridingChange,
                             testTagPrefix = "home_apps_list",
-                            inheritSubtitle = if (uiState.globalListContentMode != ListContentMode.FAVORITES) {
+                            inheritSubtitle = if (uiState.settings.listContentMode != ListContentMode.FAVORITES) {
                                 stringResource(
                                     R.string.dot_join_2,
-                                    stringResource(uiState.globalListContentMode.displayNameRes),
-                                    pluralStringResource(R.plurals.format_count_apps, uiState.globalAppsToShowCount, uiState.globalAppsToShowCount),
+                                    stringResource(uiState.settings.listContentMode.displayNameRes),
+                                    pluralStringResource(R.plurals.format_count_apps, uiState.settings.appsToShowCount, uiState.settings.appsToShowCount),
                                 )
                             } else {
-                                stringResource(uiState.globalListContentMode.displayNameRes)
+                                stringResource(uiState.settings.listContentMode.displayNameRes)
                             },
                         )
                     }

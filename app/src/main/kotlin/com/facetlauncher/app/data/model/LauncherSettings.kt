@@ -10,9 +10,9 @@ import com.facetlauncher.app.R
  * than being pinned to a value copied at the moment it stopped overriding. Editable from
  * Settings → Appearance now, not Dock's own screen (see chat history — dock/app "look" controls
  * moved out of their content screens into Appearance, alongside [AppRowPosition]/
- * [AppRowPresentation]/[AppListVerticalAlignment]); [com.facetlauncher.app.data.local.FacetEntity.dockDisplayMode]'s
+ * [AppRowPresentation]/[AppListVerticalAlignment]); [com.facetlauncher.app.data.model.Facet.dockDisplayMode]'s
  * resolution no longer goes through `overrideDock` (that flag still gates the dock's own app
- * list) — see [com.facetlauncher.app.data.local.resolveSentinel].
+ * list) — see [com.facetlauncher.app.data.model.resolveSentinel].
  */
 enum class DockDisplayMode(@param:StringRes val displayNameRes: Int) {
     LAUNCHER_DEFAULT(R.string.dock_display_mode_launcher_default),
@@ -25,11 +25,25 @@ enum class DrawerPresentation(@param:StringRes val displayNameRes: Int) {
     GRID(R.string.drawer_presentation_grid),
 }
 
-enum class DrawerGridSize(val columns: Int, val rows: Int) {
-    FOUR_BY_FOUR(4, 4),
-    FOUR_BY_FIVE(4, 5),
-    FIVE_BY_FIVE(5, 5),
-    FIVE_BY_SIX(5, 6),
+/**
+ * App Drawer grid density — the grid's column and row counts are computed from the window size
+ * (`ui/drawer/DrawerGridLayout.kt`), so one setting fits a phone, a foldable or a tablet.
+ * Persisted under the old `drawer_grid_size` key / `drawerGridSize` backup field; [fromStored]
+ * also maps the retired column×row names.
+ */
+enum class DrawerGridDensity(@param:StringRes val displayNameRes: Int) {
+    COMPACT(R.string.drawer_grid_density_compact),
+    REGULAR(R.string.drawer_grid_density_regular),
+    AIRY(R.string.drawer_grid_density_airy);
+
+    companion object {
+        fun fromStored(name: String): DrawerGridDensity? = when (name) {
+            "FIVE_BY_SIX" -> COMPACT
+            "FOUR_BY_FIVE", "FIVE_BY_FIVE" -> REGULAR
+            "FOUR_BY_FOUR" -> AIRY
+            else -> entries.firstOrNull { it.name == name }
+        }
+    }
 }
 
 /**
@@ -230,7 +244,7 @@ data class LauncherSettings(
     val use24HourTime: Boolean = false,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
-    val drawerGridSize: DrawerGridSize = DrawerGridSize.FIVE_BY_SIX,
+    val drawerGridDensity: DrawerGridDensity = DrawerGridDensity.COMPACT,
     val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     val drawerOpacity: Float = 0.6f,
     val notificationDotsEnabled: Boolean = true,
@@ -313,7 +327,7 @@ data class LauncherSettings(
     /** Same "asked once" signal for the facet-automation permissions (Bluetooth, and location for named Wi-Fi networks). */
     val bluetoothPermissionRequested: Boolean = false,
     val locationPermissionRequested: Boolean = false,
-    /** Settings → "Apps list" section — every facet's own [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]
+    /** Settings → "Apps list" section — every facet's own [Facet][com.facetlauncher.app.data.model.Facet]
      * inherits [appRowPosition], [appRowPresentation], and [listContentMode] unless it sets its own override. */
     val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
@@ -347,7 +361,7 @@ data class LauncherSettings(
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     /**
      * Home clock's horizontal placement — the default every facet inherits unless it overrides
-     * it (bundled into [FacetEntity][com.facetlauncher.app.data.local.FacetEntity]'s
+     * it (bundled into [Facet][com.facetlauncher.app.data.model.Facet]'s
      * `overrideClock`, alongside [clockTemplateId]/etc — see chat history: this and its siblings
      * below used to be global-only, like [launcherFontOption]/[themeMode], before moving into that
      * per-facet bundle).
@@ -366,7 +380,7 @@ data class LauncherSettings(
     /**
      * The default every facet inherits unless it overrides it (bundled with [AppRowPosition]/
      * [AppRowPresentation]/[ListContentMode] under `overrideApps` on
-     * [FacetEntity][com.facetlauncher.app.data.local.FacetEntity], same as those three) —
+     * [Facet][com.facetlauncher.app.data.model.Facet], same as those three) —
      * whether the app list anchors to the bottom (today's behavior, right above the dock) or the
      * top (right below the clock's grab handle).
      */
@@ -384,6 +398,13 @@ data class LauncherSettings(
      * Uniform scaling ensures proportions are preserved.
      */
     val clockScale: Float = 0.8f,
+    /**
+     * Whether Home may use its landscape layout and the screen may rotate. Off keeps everything in portrait and hides
+     * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
+     */
+    val allowLandscape: Boolean = true,
+    /** Landscape's own values for the props that differ between orientations; `null` fields use the portrait value. */
+    val landscape: LandscapeOverrides = LandscapeOverrides(),
     /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.facetlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */
     val onboardingCompleted: Boolean = false,
     /** One-shot guard for [SeedDefaultDockUseCase][com.facetlauncher.app.domain.SeedDefaultDockUseCase] — set once the dock's default apps have been seeded, so a re-run (or a later manual empty-dock) never re-seeds. Install-local — excluded from the backup bundle. */

@@ -38,6 +38,8 @@ import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
 import com.facetlauncher.app.ui.testAutomation
+import androidx.compose.runtime.CompositionLocalProvider
+import com.facetlauncher.app.ui.home.LocalAllowLandscape
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -128,6 +130,8 @@ class FacetCarouselScreenTest {
                     entitlement,
                 )
             }
+            // The assertions assume the portrait Home layout, whatever the device's window is.
+            CompositionLocalProvider(LocalAllowLandscape provides false) {
             FacetLauncherTheme {
                 FacetCarouselScreen(
                     onFacetApply = onFacetApply,
@@ -139,6 +143,7 @@ class FacetCarouselScreenTest {
                     onDismissDragEnd = onDismissDragEnd,
                     viewModel = viewModel,
                 )
+            }
             }
         }
         composeRule.waitForIdle()
@@ -456,7 +461,7 @@ class FacetCarouselScreenTest {
                 settings.setActiveFacetId(only.id)
                 // Overriding its own favorites, rather than the launcher-wide default list, since
                 // this test seeds a favorite specifically for this facet.
-                facetRepository.setOverridingFavorites(only, true)
+                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getInstalledApps()
@@ -492,11 +497,11 @@ class FacetCarouselScreenTest {
                 // fully replaces the stored row, so chaining off the same stale snapshot would
                 // silently discard the previous setter's own write (see FacetRepositoryTest's
                 // own setAppListLayout/etc. test for the same lesson).
-                facetRepository.setOverridingFavorites(created, true)
+                facetRepository.setOverridingFavorites(created.id, true)
                 val afterOverride = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListLayout(afterOverride, AppListLayout.GRID)
+                facetRepository.setAppListLayout(afterOverride.id, AppListLayout.GRID)
                 val afterLayout = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListGridColumns(afterLayout, AppListGridColumns.FOUR)
+                facetRepository.setAppListGridColumns(afterLayout.id, AppListGridColumns.FOUR)
             },
             seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getInstalledApps()
@@ -510,15 +515,15 @@ class FacetCarouselScreenTest {
         // Then the card renders grid icon tiles for every favorite...
         packages.forEach { pkg ->
             composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithTag("facet_preview_grid_icon_$pkg", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodesWithTag("facet_preview_home_app_icon_$pkg", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
             }
         }
 
         // ...with the first 4 sharing one row and the last 2 wrapping to the next, packed under
         // row 1's first two columns rather than spread across the card's full width (the same
         // Arrangement.SpaceEvenly bug this test guards against in AppearancePreviewCard too).
-        val row1 = (0..3).map { composeRule.onNodeWithTag("facet_preview_grid_icon_${packages[it]}", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
-        val row2 = (4..5).map { composeRule.onNodeWithTag("facet_preview_grid_icon_${packages[it]}", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
+        val row1 = (0..3).map { composeRule.onNodeWithTag("facet_preview_home_app_icon_${packages[it]}", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
+        val row2 = (4..5).map { composeRule.onNodeWithTag("facet_preview_home_app_icon_${packages[it]}", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
         assertEquals(row1[0].top, row1[1].top, 1f)
         assert(row2[0].top > row1[0].top)
         assertEquals(row1[0].left, row2[0].left, 1f)
@@ -536,11 +541,11 @@ class FacetCarouselScreenTest {
                 facetId = created.id
                 settings.setActiveFacetId(created.id)
                 // Re-fetch between setters — see the sibling grid-layout test's own comment.
-                facetRepository.setOverridingFavorites(created, true)
+                facetRepository.setOverridingFavorites(created.id, true)
                 val afterOverride = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListLayout(afterOverride, AppListLayout.GRID)
+                facetRepository.setAppListLayout(afterOverride.id, AppListLayout.GRID)
                 val afterLayout = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListGridDisplayMode(afterLayout, AppListGridDisplayMode.TEXT)
+                facetRepository.setAppListGridDisplayMode(afterLayout.id, AppListGridDisplayMode.TEXT)
             },
             seedApps = { appRepository, placementRepository ->
                 val app = appRepository.getInstalledApps()[0]
@@ -551,9 +556,9 @@ class FacetCarouselScreenTest {
 
         // Then the tile renders the label, not the icon
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("facet_preview_grid_label_$packageName", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("facet_preview_home_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag("facet_preview_grid_icon_$packageName", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag("facet_preview_home_app_icon_$packageName", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
@@ -590,7 +595,7 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                facetRepository.setOverridingFavorites(only, true)
+                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getInstalledApps()[0]
@@ -648,7 +653,7 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                facetRepository.setOverridingFavorites(only, true)
+                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getInstalledApps()[0]

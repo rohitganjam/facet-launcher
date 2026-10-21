@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Benchmark builds only: lets the :benchmark module set up onboarding, Pro and a number of facets. -->
+        <receiver
+            android:name="com.facetlauncher.app.benchmark.BenchmarkSeedReceiver"
+            android:exported="true" />
+    </application>
+</manifest>

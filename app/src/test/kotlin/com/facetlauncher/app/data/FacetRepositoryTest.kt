@@ -1,7 +1,10 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -72,7 +75,7 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
-        repository.renameFacet(facet, "Work")
+        repository.renameFacet(facet.id, "Work")
         val stored = repository.observeFacets().first().single()
         assertEquals("Work", stored.name)
         assertEquals(facet.position, stored.position)
@@ -84,7 +87,7 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val first = repository.addFacet()
         val second = repository.addFacet()
-        repository.reorderFacets(listOf(second, first))
+        repository.reorderFacets(listOf(second.id, first.id))
         val stored = repository.observeFacets().first().associateBy { it.id }
         assertEquals(0, stored[second.id]?.position)
         assertEquals(1, stored[first.id]?.position)
@@ -95,7 +98,7 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
-        repository.deleteFacet(facet)
+        repository.deleteFacet(facet.id)
         assertTrue(repository.observeFacets().first().isEmpty())
     }
 
@@ -104,9 +107,9 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
-        repository.setUse24HourTime(facet, true)
+        repository.setUse24HourTime(facet.id, true)
         assertEquals(true, repository.observeFacets().first().single().use24HourTime)
-        repository.setUse24HourTime(facet, false)
+        repository.setUse24HourTime(facet.id, false)
         assertEquals(false, repository.observeFacets().first().single().use24HourTime)
     }
 
@@ -116,7 +119,7 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
         repository.updateOverridingClock(
-            facet = facet,
+            facetId = facet.id,
             overriding = true,
             templateId = ClockTemplateId.VERTICAL_STACK_BOLD_HOUR,
             fontOption = ClockFontOption.MANROPE,
@@ -124,8 +127,11 @@ class FacetRepositoryTest {
             use24HourTime = true,
             showMeridiem = true,
             clockAlignment = ClockAlignment.CENTER,
+            landscapeClockAlignment = null,
             clockZoneHeightDp = 180f,
             clockScale = 1.2f,
+            accentColorOption = ClockColorOption.ACCENT_PRIMARY,
+            dateStyle = ClockDateStyle.FULL,
         )
         val stored = repository.observeFacets().first().single()
         assertEquals(true, stored.overrideClock)
@@ -145,13 +151,13 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setClockAccentColorOption(facet, ClockColorOption.ACCENT_SECONDARY)
+        repository.setClockAccentColorOption(facet.id, ClockColorOption.ACCENT_SECONDARY)
 
         val stored = repository.observeFacets().first().single()
         assertEquals(ClockColorOption.ACCENT_SECONDARY, stored.clockAccentColorOption)
         assertEquals(ClockDateStyle.FULL, stored.clockDateStyle)
 
-        repository.setClockDateStyle(stored, ClockDateStyle.CONDENSED)
+        repository.setClockDateStyle(stored.id, ClockDateStyle.CONDENSED)
 
         val restored = repository.observeFacets().first().single()
         assertEquals(ClockColorOption.ACCENT_SECONDARY, restored.clockAccentColorOption)
@@ -164,7 +170,7 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setClockAlignment(facet, ClockAlignment.CENTER)
+        repository.setClockAlignment(facet.id, ClockAlignment.CENTER)
 
         val stored = repository.observeFacets().first().single()
         assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
@@ -176,10 +182,10 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setClockZoneHeight(facet, 220f)
+        repository.setClockZoneHeight(facet.id, 220f)
         assertEquals(220f, repository.observeFacets().first().single().clockZoneHeightDp)
 
-        repository.resetClockZoneHeight(repository.observeFacets().first().single())
+        repository.resetClockZoneHeight(repository.observeFacets().first().single().id)
         assertNull(repository.observeFacets().first().single().clockZoneHeightDp)
     }
 
@@ -189,10 +195,10 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setClockScale(facet, 1.5f)
+        repository.setClockScale(facet.id, 1.5f)
         assertEquals(1.5f, repository.observeFacets().first().single().clockScale, 0.001f)
 
-        repository.resetClockPosition(repository.observeFacets().first().single())
+        repository.resetClockPosition(repository.observeFacets().first().single().id)
         assertEquals(0.8f, repository.observeFacets().first().single().clockScale, 0.001f)
     }
 
@@ -201,12 +207,12 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
-        repository.setClockZoneHeight(facet, 220f)
-        repository.setClockAlignment(facet, ClockAlignment.CENTER)
-        repository.setClockScale(facet, 1.5f)
+        repository.setClockZoneHeight(facet.id, 220f)
+        repository.setClockAlignment(facet.id, ClockAlignment.CENTER)
+        repository.setClockScale(facet.id, 1.5f)
         val dragged = repository.observeFacets().first().single()
 
-        repository.resetClockPosition(dragged)
+        repository.resetClockPosition(dragged.id)
 
         val stored = repository.observeFacets().first().single()
         assertNull(stored.clockZoneHeightDp)
@@ -222,7 +228,7 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
         repository.updateOverridingApps(
-            facet = facet,
+            facetId = facet.id,
             overriding = true,
             mode = ListContentMode.MOST_USED,
             count = 6,
@@ -241,14 +247,14 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setAppRowPosition(facet, AppRowPosition.RIGHT)
+        repository.setAppRowPosition(facet.id, AppRowPosition.RIGHT)
         val afterPosition = repository.observeFacets().first().single()
         assertEquals(AppRowPosition.RIGHT, afterPosition.appRowPosition)
 
         // Re-fetch before the second setter — each setter copies from the entity it's given and
         // fully replaces the stored row, so acting on the original (now-stale) `facet` here
         // would silently discard the position update just made above.
-        repository.setAppRowPresentation(afterPosition, AppRowPresentation.ICON_ONLY)
+        repository.setAppRowPresentation(afterPosition.id, AppRowPresentation.ICON_ONLY)
         val stored = repository.observeFacets().first().single()
         assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
         assertEquals(AppRowPresentation.ICON_ONLY, stored.appRowPresentation)
@@ -260,7 +266,7 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setAppListVerticalAlignment(facet, AppListVerticalAlignment.TOP)
+        repository.setAppListVerticalAlignment(facet.id, AppListVerticalAlignment.TOP)
 
         assertEquals(AppListVerticalAlignment.TOP, repository.observeFacets().first().single().appListVerticalAlignment)
     }
@@ -270,11 +276,11 @@ class FacetRepositoryTest {
         // Given a facet already on a grid with text display
         val repository = FacetRepository(FakeFacetDao())
         val facet = repository.addFacet()
-        repository.setAppListLayout(facet, AppListLayout.GRID)
-        repository.setAppListGridDisplayMode(repository.observeFacets().first().single(), AppListGridDisplayMode.TEXT)
+        repository.setAppListLayout(facet.id, AppListLayout.GRID)
+        repository.setAppListGridDisplayMode(repository.observeFacets().first().single().id, AppListGridDisplayMode.TEXT)
 
         // When it is switched to three columns
-        repository.setAppListGridColumns(repository.observeFacets().first().single(), AppListGridColumns.THREE)
+        repository.setAppListGridColumns(repository.observeFacets().first().single().id, AppListGridColumns.THREE)
 
         // Then three columns persists with a column count of 3, and the rest is untouched
         val stored = repository.observeFacets().first().single()
@@ -290,21 +296,21 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setAppListLayout(facet, AppListLayout.GRID)
+        repository.setAppListLayout(facet.id, AppListLayout.GRID)
         val afterLayout = repository.observeFacets().first().single()
         assertEquals(AppListLayout.GRID, afterLayout.appListLayout)
 
         // Re-fetch before each next setter — each setter copies from the entity it's given and
         // fully replaces the stored row, so acting on a stale `facet` would discard prior updates.
-        repository.setAppListColumnAlignment(afterLayout, AppListColumnAlignment.MIRRORED)
+        repository.setAppListColumnAlignment(afterLayout.id, AppListColumnAlignment.MIRRORED)
         val afterColumnAlignment = repository.observeFacets().first().single()
         assertEquals(AppListColumnAlignment.MIRRORED, afterColumnAlignment.appListColumnAlignment)
 
-        repository.setAppListGridColumns(afterColumnAlignment, AppListGridColumns.SIX)
+        repository.setAppListGridColumns(afterColumnAlignment.id, AppListGridColumns.SIX)
         val afterGridColumns = repository.observeFacets().first().single()
         assertEquals(AppListGridColumns.SIX, afterGridColumns.appListGridColumns)
 
-        repository.setAppListGridDisplayMode(afterGridColumns, AppListGridDisplayMode.TEXT)
+        repository.setAppListGridDisplayMode(afterGridColumns.id, AppListGridDisplayMode.TEXT)
         val stored = repository.observeFacets().first().single()
         assertEquals(AppListLayout.GRID, stored.appListLayout)
         assertEquals(AppListColumnAlignment.MIRRORED, stored.appListColumnAlignment)
@@ -317,11 +323,11 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
-        repository.setAppsToShowCount(facet, 5)
+        repository.setAppsToShowCount(facet.id, 5)
         assertEquals(5, repository.observeFacets().first().single().appsToShowCount)
-        repository.setAppsToShowCount(facet, 1)
+        repository.setAppsToShowCount(facet.id, 1)
         assertEquals(3, repository.observeFacets().first().single().appsToShowCount)
-        repository.setAppsToShowCount(facet, 99)
+        repository.setAppsToShowCount(facet.id, 99)
         assertEquals(12, repository.observeFacets().first().single().appsToShowCount)
     }
 
@@ -330,15 +336,15 @@ class FacetRepositoryTest {
         val repository = FacetRepository(FakeFacetDao())
         val facet = repository.addFacet()
 
-        repository.setShowCalendarIndicator(facet, false)
-        repository.setCalendarItemsToShow(repository.observeFacets().first().single(), 2)
+        repository.setShowCalendarIndicator(facet.id, false)
+        repository.setCalendarItemsToShow(repository.observeFacets().first().single().id, 2)
         val stored = repository.observeFacets().first().single()
         assertEquals(false, stored.showCalendarIndicator)
         assertEquals(2, stored.calendarItemsToShow)
 
-        repository.setCalendarItemsToShow(stored, 0)
+        repository.setCalendarItemsToShow(stored.id, 0)
         assertEquals(1, repository.observeFacets().first().single().calendarItemsToShow)
-        repository.setCalendarItemsToShow(stored, 9)
+        repository.setCalendarItemsToShow(stored.id, 9)
         assertEquals(3, repository.observeFacets().first().single().calendarItemsToShow)
     }
 
@@ -348,10 +354,12 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
         repository.updateOverridingCalendar(
-            facet,
+            facet.id,
             overriding = true,
             showAllDayEvents = false,
             selectedCalendarIds = setOf("1", "2"),
+            showCalendarIndicator = true,
+            calendarItemsToShow = 3,
         )
         val stored = repository.observeFacets().first().single()
         assertEquals(true, stored.overrideCalendar)
@@ -365,10 +373,10 @@ class FacetRepositoryTest {
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
 
-        repository.setSelectedCalendarIds(facet, setOf("10", "20", "30"))
+        repository.setSelectedCalendarIds(facet.id, setOf("10", "20", "30"))
         assertEquals(setOf("10", "20", "30"), repository.observeFacets().first().single().selectedCalendarIds)
 
-        repository.setSelectedCalendarIds(repository.observeFacets().first().single(), null)
+        repository.setSelectedCalendarIds(repository.observeFacets().first().single().id, null)
         assertEquals(null, repository.observeFacets().first().single().selectedCalendarIds)
     }
 
@@ -379,10 +387,10 @@ class FacetRepositoryTest {
         val facet = repository.addFacet()
         assertNull(facet.clockWidgetAppWidgetId)
 
-        repository.setClockWidgetAppWidgetId(facet, 42)
+        repository.setClockWidgetAppWidgetId(facet.id, 42)
         assertEquals(42, repository.observeFacets().first().single().clockWidgetAppWidgetId)
 
-        repository.setClockWidgetAppWidgetId(repository.observeFacets().first().single(), null)
+        repository.setClockWidgetAppWidgetId(repository.observeFacets().first().single().id, null)
         assertNull(repository.observeFacets().first().single().clockWidgetAppWidgetId)
     }
 
@@ -391,18 +399,125 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao)
         val facet = repository.addFacet()
-        repository.setClockWidgetAppWidgetId(facet, 42)
-        repository.setClockWidgetSize(repository.observeFacets().first().single(), 400, 300)
+        repository.setClockWidgetAppWidgetId(facet.id, 42)
+        repository.setClockWidgetSize(repository.observeFacets().first().single().id, 400, 300)
         val resized = repository.observeFacets().first().single()
         assertEquals(400, resized.clockWidgetWidthDp)
 
         // Switching to a different widget must not carry the old widget's size over — a real bug
         // found on-device: a size sane for widget A could be outside widget B's own sane bounds,
         // showing "Can't show content" no matter which provider is picked.
-        repository.setClockWidgetAppWidgetId(resized, 99)
+        repository.setClockWidgetAppWidgetId(resized.id, 99)
         val switched = repository.observeFacets().first().single()
         assertEquals(99, switched.clockWidgetAppWidgetId)
         assertNull(switched.clockWidgetWidthDp)
         assertNull(switched.clockWidgetHeightDp)
+    }
+
+    @Test
+    fun `landscape values are saved apart from the portrait ones`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockAlignment(facet.id, ClockAlignment.RIGHT)
+        repository.setClockWidgetSize(repository.observeFacets().first().single().id, 160, 120)
+        repository.setAppRowPosition(repository.observeFacets().first().single().id, AppRowPosition.RIGHT)
+
+        // When landscape values are written
+        val written = LandscapeOverrides(
+            clockAlignment = ClockAlignment.CENTER,
+            clockZoneHeightDp = 310f,
+            clockScale = 1.1f,
+            clockWidgetWidthDp = 400,
+            clockWidgetHeightDp = 300,
+            appRowPosition = AppRowPosition.CENTER,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
+            appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+        )
+        repository.updateLandscape(repository.observeFacets().first().single().id) { written }
+
+        // Then both sets are kept
+        val stored = repository.observeFacets().first().single()
+        assertEquals(written, stored.landscape)
+        assertEquals(ClockAlignment.RIGHT, stored.clockAlignment)
+        assertEquals(160 to 120, stored.clockWidgetWidthDp to stored.clockWidgetHeightDp)
+        assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
+    }
+
+    @Test
+    fun `updateLandscape changes only the fields it names and a null clears one`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.updateLandscape(facet.id) { it.copy(clockScale = 1.1f, appRowPosition = AppRowPosition.CENTER) }
+
+        repository.updateLandscape(repository.observeFacets().first().single().id) { it.copy(appRowPosition = null) }
+
+        val landscape = repository.observeFacets().first().single().landscape
+        assertEquals(1.1f, landscape.clockScale!!, 0.001f)
+        assertNull(landscape.appRowPosition)
+    }
+
+    @Test
+    fun `setClockWidgetAppWidgetId clears the landscape widget size too`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.setClockWidgetAppWidgetId(facet.id, 42)
+        repository.updateLandscape(repository.observeFacets().first().single().id) { it.copy(clockWidgetWidthDp = 400, clockWidgetHeightDp = 300, clockScale = 1.1f) }
+
+        repository.setClockWidgetAppWidgetId(repository.observeFacets().first().single().id, 99)
+
+        val switched = repository.observeFacets().first().single().landscape
+        assertNull(switched.clockWidgetWidthDp)
+        assertNull(switched.clockWidgetHeightDp)
+        assertEquals(1.1f, switched.clockScale!!, 0.001f)
+    }
+
+    @Test
+    fun `resetClockPosition clears the landscape clock props too`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.updateLandscape(facet.id) { it.copy(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f, clockScale = 1.1f, appRowPosition = AppRowPosition.CENTER) }
+
+        repository.resetClockPosition(repository.observeFacets().first().single().id)
+
+        val landscape = repository.observeFacets().first().single().landscape
+        assertNull(landscape.clockAlignment)
+        assertNull(landscape.clockZoneHeightDp)
+        assertNull(landscape.clockScale)
+        assertEquals(AppRowPosition.CENTER, landscape.appRowPosition)
+    }
+
+    @Test
+    fun `resetClockZoneHeight clears the landscape zone height too`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+        repository.updateLandscape(facet.id) { it.copy(clockZoneHeightDp = 310f) }
+
+        repository.resetClockZoneHeight(repository.observeFacets().first().single().id)
+
+        assertNull(repository.observeFacets().first().single().landscape.clockZoneHeightDp)
+    }
+
+    @Test
+    fun `starting to override the clock seeds the landscape alignment`() = runTest {
+        val repository = FacetRepository(FakeFacetDao())
+        val facet = repository.addFacet()
+
+        repository.updateOverridingClock(
+            facetId = facet.id,
+            overriding = true,
+            templateId = ClockTemplateId.LIGHT_STACK,
+            fontOption = ClockFontOption.SYSTEM,
+            colorOption = ClockColorOption.THEME,
+            use24HourTime = false,
+            showMeridiem = false,
+            clockAlignment = ClockAlignment.LEFT,
+            landscapeClockAlignment = ClockAlignment.CENTER,
+            clockZoneHeightDp = null,
+            clockScale = 0.8f,
+            accentColorOption = ClockColorOption.ACCENT_PRIMARY,
+            dateStyle = ClockDateStyle.FULL,
+        )
+
+        assertEquals(ClockAlignment.CENTER, repository.observeFacets().first().single().landscape.clockAlignment)
     }
 }

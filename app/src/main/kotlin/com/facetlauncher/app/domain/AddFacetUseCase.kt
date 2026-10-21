@@ -2,13 +2,13 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.FacetLimits
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 sealed interface AddFacetResult {
-    data class Added(val facet: FacetEntity) : AddFacetResult
+    data class Added(val facet: Facet) : AddFacetResult
 
     /** The user is at their limit; nothing was added. */
     data object LimitReached : AddFacetResult

@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +57,7 @@ import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.SettingsCard
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material.icons.outlined.AutoMode
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.ConfirmDialog
@@ -114,16 +115,16 @@ fun ManageFacetsScreen(
 private fun ManageFacetsContent(
     uiState: ManageFacetsUiState,
     onBack: () -> Unit,
-    onReorder: (List<FacetEntity>) -> Unit,
+    onReorder: (List<Facet>) -> Unit,
     onEditFacet: (Long) -> Unit,
     onApplyFacet: (Long) -> Unit,
-    onDeleteFacet: (FacetEntity) -> Unit,
+    onDeleteFacet: (Facet) -> Unit,
     onAddFacet: () -> Unit,
     onOpenFacetPro: (ProReason) -> Unit,
     onOpenFacetAutomation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var deletingFacet by remember { mutableStateOf<FacetEntity?>(null) }
+    var deletingFacet by remember { mutableStateOf<Facet?>(null) }
     // remember(facets): a committed reorder re-emits the list from Room; re-seeding the working
     // copy on identity keeps the drag state from fighting the fresh list (same pattern the
     // carousel used).
@@ -134,7 +135,7 @@ private fun ManageFacetsContent(
         header = { ManageFacetsHeader(onBack = onBack) },
         content = { headerHeight ->
             FacetReorderList(
-                facets = workingList,
+                facets = FacetRows(workingList),
                 activeFacetId = uiState.activeFacetId,
                 isFacetLocked = { it !in uiState.selectableFacetIds },
                 automationRuleCount = uiState.automationRuleCount,
@@ -187,6 +188,10 @@ private fun ManageFacetsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
     }
 }
 
+/** A `List` parameter is unstable to Compose, so [FacetReorderList] takes its rows wrapped in this. */
+@Immutable
+private data class FacetRows(val items: List<Facet>)
+
 /**
  * A plain vertical list (never scrolls in practice — capped at
  * [com.facetlauncher.app.data.model.FacetLimits.PRO_MAX_FACETS] rows) of drag-handle + name +
@@ -195,7 +200,7 @@ private fun ManageFacetsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
  */
 @Composable
 private fun FacetReorderList(
-    facets: List<FacetEntity>,
+    facets: FacetRows,
     activeFacetId: Long,
     isFacetLocked: (facetId: Long) -> Boolean,
     automationRuleCount: Int,
@@ -203,11 +208,11 @@ private fun FacetReorderList(
     showAddFacet: Boolean,
     addNeedsPro: Boolean,
     canDeleteFacet: Boolean,
-    onOrderChange: (List<FacetEntity>) -> Unit,
+    onOrderChange: (List<Facet>) -> Unit,
     onCommit: () -> Unit,
     onEditFacet: (Long) -> Unit,
     onApplyFacet: (Long) -> Unit,
-    onDeleteRequest: (FacetEntity) -> Unit,
+    onDeleteRequest: (Facet) -> Unit,
     onAddFacet: () -> Unit,
     onLockedFacetClick: () -> Unit,
     contentPadding: PaddingValues,
@@ -215,7 +220,7 @@ private fun FacetReorderList(
 ) {
     val rowSlotHeightPx = with(LocalDensity.current) { (REORDER_ROW_HEIGHT + REORDER_ROW_SPACING).toPx() }
     val reorderState = rememberDragReorderState(
-        items = facets,
+        items = facets.items,
         key = { it.id },
         axis = Orientation.Vertical,
         slotSizePx = rowSlotHeightPx,
@@ -237,7 +242,7 @@ private fun FacetReorderList(
                 modifier = Modifier.padding(bottom = 4.dp).testTag("facet_reorder_hint"),
             )
         }
-        items(facets, key = { it.id }) { facet ->
+        items(facets.items, key = { it.id }) { facet ->
             val isDragged = reorderState.isDragging(facet)
             FacetReorderRow(
                 facet = facet,
@@ -293,7 +298,7 @@ private fun FacetAutomationCard(ruleCount: Int, onClick: () -> Unit, modifier: M
 
 @Composable
 private fun FacetReorderRow(
-    facet: FacetEntity,
+    facet: Facet,
     isActive: Boolean,
     locked: Boolean,
     canDelete: Boolean,
@@ -398,8 +403,8 @@ private fun ManageFacetsScreenPreview() {
         ManageFacetsContent(
             uiState = ManageFacetsUiState(
                 facets = listOf(
-                    FacetEntity(id = 1, name = "Personal", position = 0),
-                    FacetEntity(id = 2, name = "Work", position = 1),
+                    Facet(id = 1, name = "Personal", position = 0),
+                    Facet(id = 2, name = "Work", position = 1),
                 ),
                 activeFacetId = 1,
                 automationRuleCount = 2,

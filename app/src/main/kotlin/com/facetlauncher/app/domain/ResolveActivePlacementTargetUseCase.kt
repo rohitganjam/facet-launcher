@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.placementTarget
+import com.facetlauncher.app.data.model.placementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
 import javax.inject.Inject

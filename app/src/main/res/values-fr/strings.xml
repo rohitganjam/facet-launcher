@@ -292,7 +292,9 @@
     <!-- Drawer enums -->
     <string name="drawer_presentation_list">Liste</string>
     <string name="drawer_presentation_grid">Grille</string>
-    <string name="drawer_grid_size_label">%1$d colonnes × %2$d lignes</string>
+    <string name="drawer_grid_density_compact">Compacte</string>
+    <string name="drawer_grid_density_regular">Normale</string>
+    <string name="drawer_grid_density_airy">Aérée</string>
     <string name="drawer_list_item_size_compact">Compact</string>
     <string name="drawer_list_item_size_regular">Normal</string>
     <string name="drawer_list_item_size_spacious">Spacieux</string>
@@ -337,6 +339,11 @@
     <string name="home_apps_list_header_title">Liste d\'apps de l\'accueil</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Position de la liste</string>
+    <string name="appearance_allow_landscape_title">Autoriser le mode paysage</string>
+    <string name="appearance_allow_landscape_subtitle">Utilise une disposition paysage quand l’écran est assez large. Désactivé garde l’accueil en portrait.</string>
+    <string name="appearance_alignment_portrait_title">Alignement en portrait</string>
+    <string name="appearance_alignment_landscape_title">Alignement en paysage</string>
+    <string name="home_apps_list_same_as_portrait">Comme en portrait</string>
     <string name="home_apps_list_presentation">Présentation</string>
     <string name="home_apps_list_layout">Disposition de la liste d\'apps</string>
     <string name="home_apps_list_column_alignment">Alignement des colonnes</string>
@@ -352,7 +359,7 @@
     <!-- AppDrawerSettingsScreen -->
     <string name="app_drawer_settings_header_title">Tiroir d\'apps</string>
     <string name="app_drawer_show_apps_as">Afficher les apps comme</string>
-    <string name="app_drawer_grid_size">Taille de la grille</string>
+    <string name="app_drawer_grid_density">Densité de la grille</string>
     <string name="app_drawer_list_item_size">Taille des éléments de liste</string>
     <string name="app_drawer_show_icons_title">Afficher les icônes</string>
     <string name="app_drawer_show_icons_subtitle">Affiche les icônes avec le nom de l\'application</string>
@@ -723,6 +730,8 @@
     <string name="facet_carousel_launcher_settings_subtitle">Apparence, horloge par défaut, favoris, tiroir et plus</string>
     <string name="facet_carousel_active">Active</string>
     <string name="facet_carousel_no_favorites">Aucun favori pour l\'instant</string>
+    <string name="preview_media_title">Lecture en cours</string>
+    <string name="preview_media_artist">Artiste</string>
     <string name="facet_carousel_facet_settings">Réglages de la facette</string>
     <string name="facet_carousel_delete_facet">Supprimer la facette</string>
     <string name="facet_carousel_add_facet">Ajouter une facette</string>
@@ -771,6 +780,9 @@
     <string name="clock_adjust_align_left">Aligner à gauche</string>
     <string name="clock_adjust_align_center">Centrer</string>
     <string name="clock_adjust_align_right">Aligner à droite</string>
+    <string name="clock_adjust_align_top">Aligner en haut</string>
+    <string name="clock_adjust_align_middle">Aligner au milieu</string>
+    <string name="clock_adjust_align_bottom">Aligner en bas</string>
     <string name="clock_adjust_edit_styles">Modifier les styles d\'horloge</string>
     <string name="clock_adjust_edit_styles_subtitle">Modèles, polices, couleurs et alignement</string>
     <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>

@@ -27,7 +27,7 @@ flowchart TB
     end
 
     subgraph SRC["Sources"]
-        DAO["data/local — Room DAOs\nFacetDatabase v28"]
+        DAO["data/local — Room DAOs\nFacetDatabase v32"]
         DS["DataStore of Preferences\nfacet_settings, facet_automation"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end
@@ -46,7 +46,7 @@ flowchart TB
 
 | Layer | May depend on | Must not depend on | Verified example |
 |---|---|---|---|
-| Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(uiState: HomeUiState, onAppClick: ..., ...)` |
+| Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(state: HomeScreenState, actions: HomeScreenActions)` |
 | ViewModels | Use cases, Repositories | DAOs, `DataStore`, framework services | `HomeViewModel(ObserveHomeScreenStateUseCase, SettingsRepository, FacetRepository, ...)` |
 | Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddToActiveListUseCase(ResolveActivePlacementTargetUseCase, PlacementRepository)` |
 | Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `PlacementRepository(AppPlacementDao, FolderPlacementDao, FolderRepository, AppRepository)` |
@@ -101,6 +101,8 @@ flowchart TB
             DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 6 DAO @Provides (unscoped)"]
             DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
+            DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
+            ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
         end
         REPOS["41 @Singleton data classes (39 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
@@ -113,7 +115,7 @@ flowchart TB
     end
 
     subgraph EP["Entry points"]
-        ACT["LauncherActivity\n@AndroidEntryPoint\n@Inject lateinit var launcherApps"]
+        ACT["LauncherActivity\n@AndroidEntryPoint\n@Inject lateinit var launcherApps\n@Inject lateinit var clockWidgetHost (previews)"]
         SVC["FacetNotificationListenerService\n@AndroidEntryPoint\n@Inject lateinit var notificationBadgeRepository"]
     end
 
@@ -129,11 +131,12 @@ flowchart TB
 | What | Scope | How it's bound | Why it matters |
 |---|---|---|---|
 | Framework services (`LauncherApps`, `UserManager`, `AppWidgetManager`, ...) | `@Singleton` | `@Provides` in `AppModule` / `WidgetModule`, `?: error(...)` if the service is missing | Repositories get real system services injected, so tests swap them with fakes/Robolectric. |
+| `CoroutineDispatcher` (`@IoDispatcher`, `@DefaultDispatcher`) | unscoped | `DispatcherModule` provides `Dispatchers.IO` / `Dispatchers.Default`; repositories take them as trailing constructor params defaulting to the same value | Tests pass a `StandardTestDispatcher(testScheduler)` so `withContext` hops run deterministically under `runTest`. |
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (6) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
-| `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; release and benchmark builds leave them empty, so the override and its Settings row exist only in debug. |
+| `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
 | Repositories (39; with `NotificationOpener` and `NotificationActionController`, 41 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (32) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |

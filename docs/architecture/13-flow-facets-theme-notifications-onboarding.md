@@ -35,6 +35,7 @@ flowchart TB
     subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
         A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
+        A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(LandscapeOverrides group, resolved once by HomeUiState.listAlignment(mode))"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
 ```
@@ -70,7 +71,7 @@ flowchart TB
   only, "Notifications" and "General" (one "Fonts, themes and icons" row → `FontsThemesIconsScreen`, route `fontsThemesIcons`).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
-  fields above, always shown; `FontsThemesIconsScreen` holds three cards, each under a `SettingsSectionHeader`: "Theme"
+  fields above, always shown, in four cards on the global screen (three on a facet's): an "Allow landscape mode" switch (global only, `SettingsToggleRow`; off hides the Landscape alignment card), the shared look (dock style, list layout, presentation or grid rows), then "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview card stays portrait-shaped; `FontsThemesIconsScreen` holds three cards, each under a `SettingsSectionHeader`: "Theme"
   (launcher theme, status bar icons, accent), "Icons" (icon style and shape) and "Fonts" (launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
   Home's styles as the card's last row). Row titles on the dock screen:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
@@ -84,15 +85,22 @@ flowchart TB
   `appRowPresentation`, shows `appListGridColumns` ("Grid columns" — 3/4/5/6, user-choosable) and
   `appListGridDisplayMode` ("Grid display" — icons or text, never both, shaped like
   `dockDisplayMode` but a wholly separate field). `appListVerticalAlignment` stays visible and
-  applies uniformly across all three layouts. Its preview card (`AppearancePreviewCard`) is a thin wrapper over the shared `HomePreview`
-  (`ui/home/HomePreview.kt`, fed by `HomePreviewState`) — the same composable `FacetCarouselScreen`'s
-  `FacetPreviewPage` renders, scaled to a fraction of the real screen (`APPEARANCE_PREVIEW_CARD_SCALE`/
-  `CAROUSEL_CARD_SCALE`, both `0.55f`) and density-scaled to match. `HomePreview` honors clock
-  alignment, clock zone height (`clockZoneHeightDp`, same top-offset formula as `HomeScreen`) and
-  clock scale, plus the app list's row/column alignment and `appListVerticalAlignment` (TOP puts the
-  list one `HOME_CLOCK_MIN_GAP` below the clock, BOTTOM keeps it above the dock). Tags are
-  parameterized (`appearance_preview_` / `facet_preview_`); a non-null `onClick` makes rows, grid
-  tiles and dock icons tap-to-apply (carousel), null leaves it read-only (Appearance).
+  applies uniformly across all three layouts. Its preview card (`AppearancePreviewCard`) is a thin wrapper over `ScaledHomeScreen`
+  (`ui/home/ScaledHomeScreen.kt`) — the same composable `FacetCarouselScreen`'s `FacetPreviewPage`
+  renders. It is the real `HomeScreen`, laid out at the window's own size and shrunk to the card
+  (`APPEARANCE_PREVIEW_CARD_SCALE`/`CAROUSEL_CARD_SCALE`, both `0.55f` wide), so every component sits
+  where Home puts it, in portrait and in landscape alike (a wide window such as an unfolded foldable
+  previews the clock pane, apps pane and dock of the landscape layout). Its state comes from
+  `ResolvedFacetStyle.toHomeScreenState(landscape, ...)`, the builder `HomeDrawerRoute` uses too, with
+  no-op actions. A transparent layer above takes every tap: the carousel passes `onClick` (apply the
+  facet), the Appearance card passes none and stays read-only without blocking the screen's scroll.
+  Home's test tags go through `LocalHomeTagPrefix` (`homeTag(...)`), empty on Home itself and
+  `appearance_preview_` / `facet_preview_` in a preview, so a preview's tags (for example
+  `facet_preview_home_clock_block`, `facet_preview_home_app_icon_<pkg>`) never collide with the Home
+  beneath the carousel. When "show media player on Home" is on, a paused sample player marks where the
+  media row sits; the alarm and battery accessories are not shown.
+  Home's content padding reads the raw system-bar insets (`asPaddingValues`) instead of consuming them,
+  so a preview inside a screen that already applied insets still gets the same padding as Home.
   The calendar preview lives here now too (via `ClockBlock`'s own bundled `CalendarEventsBlock`),
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
@@ -103,35 +111,43 @@ flowchart TB
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDayEvents`/`selectedCalendarIds` resolved the same way `ObserveHomeScreenStateUseCase`
-  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `FacetEntity?.effectiveCalendarDisplay` (gated by `overrideCalendar`) into `HomeScreenState.calendarDisplay` / `FacetPreviewData.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
-- **`FacetCarouselScreen`'s `FacetPreviewPage` renders the same `HomePreview`**, fed by
-  `FacetCarouselViewModel`'s per-facet resolvers (`appListLayout(facetId)`/`appListColumnAlignment(facetId)`/
-  `appListVerticalAlignment(facetId)`/`appListGridColumns(facetId)`/`appListGridDisplayMode(facetId)`).
-  Its tiles are tappable (`onCardClick` applies the facet), unlike the read-only Appearance preview.
-  The shared Grid branch uses fixed-slot columns, not `Arrangement.SpaceEvenly`, so an incomplete
-  last row packs left like `HomeScreen`'s real `LazyVerticalGrid(GridCells.Fixed(n))`. The preview
-  caps how many favorites it renders — `previewItemCap`/`PREVIEW_ROW_BUDGET` — a row budget ×
-  items-per-row so `TWO_COLUMN`/`GRID` show proportionally more of the real list than
-  `SINGLE_COLUMN`'s tighter cap without overflowing the card.
+  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `Facet?.effectiveCalendarDisplay` (gated by `overrideCalendar`) (through `resolveFacetStyle`) into `HomeScreenState.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
+- **`FacetCarouselScreen`'s `FacetPreviewPage` renders `ScaledHomeScreen`**, fed by
+  `FacetCarouselUiState.style(facetId)` and the facet's `FacetPreviewData` (its effective favorites, dock
+  and calendar events). Its tiles are tappable (`onCardClick` applies the facet), unlike the read-only
+  Appearance preview. Because it is the real screen, list layouts, the grid, folders and the dock behave
+  as on Home with no preview-only code.
 - **A third, smaller preview card: `HomeSurfacePreview`** (`ui/components/HomeSurfacePreview.kt`) heads
   `HomeAppsListSettingsScreen` and `DockSettingsScreen`. It is a short wallpaper band that shows
   *only* the surface that screen governs — the app list or the dock, never the clock — so it honors
   the app list's row position and presentation, layout, column alignment and grid options, and the dock
   display mode, but has no clock position or app-list Top/Bottom placement to honor. It is separate
-  from `HomePreview` because it is not a scale model of the screen.
+  from `ScaledHomeScreen` because it is not a scale model of the screen.
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.
 - **Turning an override on copies the inherited list** (`replaceItems(facetId, defaultItems)`)
   so the card never goes blank — the facet's own list (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) becomes an independent copy from that moment.
+- **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
+  `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
+  calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
+  with the landscape rules) and the facet's hosted clock widget with its size per orientation. Home
+  (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
+  `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
+  `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
+  last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
+  value. `ResolvedFacetStyleTest` covers the override, sentinel, landscape and widget rules, and
+  `HomeScreenStateBuilderTest` checks that the state a preview is built from has the same placement as Home resolves for the same facet.
+- **A hosted clock widget shows in previews.** The widget is part of the state (`HomeClockWidgetState`),
+  so `HomeScreen` draws it through its normal `ClockWidgetTile`, with `createHostView` pointed at
+  `ClockWidgetHostController.createPreviewHostView`: a non-live copy from a second, non-listening
+  `AppWidgetHost` (`AppWidgetRepository.createPreviewHostView`). A host sends later updates to the newest
+  view of an id, so a view from the main host would take them from the live one on Home. The saved size
+  is used, else the provider's default, as on Home. The controller reaches previews through
+  `LocalClockWidgetHost`; without it a preview draws the native clock.
 - **Turning it off does not delete the facet's rows**; they're just ignored until the flag is set
   again (and are still exported by backup).
-- `FacetCarouselViewModel` exposes 20 `xxx(facetId)` resolvers that apply `resolveOverride`/
-  `resolveSentinel` per facet so each card renders with its own effective clock/apps/dock styling
-  (dropped to 14 when calendar/appearance styling consolidation removed the four calendar-specific
-  resolvers, then rose to 19 with the four `appListLayout`/`appListColumnAlignment`/
-  `appListGridColumns`/`appListGridDisplayMode` resolvers the two-column/grid feature added, and to 20 with
-  `appListVerticalAlignment(facetId)`, which the carousel preview needs to place the app list under the clock).
+- `FacetCarouselUiState.style(facetId)` is the single per-facet accessor; it replaced twenty `xxx(facetId)` resolvers.
 
 ### 1a. Facet limits and the free plan
 
@@ -203,7 +219,7 @@ flowchart LR
   bottom sheet is unscaled too. `FolderContentsSheet` is a dialog, not a `ThemedModalBottomSheet`, but it matches one: edge-to-edge
   window (`decorFitsSystemWindows = false`), scrim up to the status bar, surface behind the nav bar with its content clear of it,
   bar icon colours from `LocalLightStatusBarIcons`/theme, and the same `UnscaledTypography`. Its header mirrors the app sheet's: `FolderTileGlyph`, the name in `titleLarge`, an app count, a
-  rename icon button (or the back chevron and "Add to folder" in `AddHere` mode) and a `CardDivider` below. It slides in from the bottom and out again (scrim fading) with the nav transition's timing; scrim tap, Back and Home press play the exit before calling `onDismissRequest`. Previews that show how Home will look (`HomePreview`, `HomeSurfacePreview`, the
+  rename icon button (or the back chevron and "Add to folder" in `AddHere` mode) and a `CardDivider` below. It slides in from the bottom and out again (scrim fading) with the nav transition's timing; scrim tap, Back and Home press play the exit before calling `onDismissRequest`. Previews that show how Home will look (`ScaledHomeScreen`, `HomeSurfacePreview`, the
   calendar strip) re-wrap in `LauncherScaledTypography`, so they still follow both options. The system font scale is not
   touched.
 - `facetTypography`'s `fontScale` multiplies every role's `fontSize`/`lineHeight` app-wide except

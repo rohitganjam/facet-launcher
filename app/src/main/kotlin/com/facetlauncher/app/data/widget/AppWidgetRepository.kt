@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data.widget
 
+import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
@@ -200,6 +201,16 @@ class AppWidgetRepository @Inject constructor(
 
     fun createHostView(context: Context, appWidgetId: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
         host.createView(context, appWidgetId, info)
+
+    /**
+     * A snapshot view of a bound widget for previews. It comes from a second [AppWidgetHost] with
+     * the same host id that never listens: a host keeps one view per widget id and sends later
+     * updates to the newest, so a view from [host] would take them away from the live one on Home.
+     */
+    fun createPreviewHostView(context: Context, appWidgetId: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
+        previewHost.createView(context, appWidgetId, info)
+
+    private val previewHost: AppWidgetHost by lazy { AppWidgetHost(this.context, HUB_APP_WIDGET_HOST_ID) }
 
     fun observeProviderChanges(): Flow<Int> = host.providerChanges
 }

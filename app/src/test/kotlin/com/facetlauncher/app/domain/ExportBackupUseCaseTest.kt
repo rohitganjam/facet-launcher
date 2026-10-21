@@ -1,5 +1,7 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.AppRowPosition
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -7,7 +9,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.AppPlacementEntity
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -16,6 +18,10 @@ import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.RecentlyInstalledPosition
+import com.facetlauncher.app.data.model.ClockDateStyle
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -51,12 +57,12 @@ class ExportBackupUseCaseTest {
     @Test
     fun `bundles every repository's data and hands it to BackupRepository`() = runTest {
         // Given one active facet with a favorite, one dock app, one default favorite, one widget
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 7,
             name = "Work",
             position = 0,
             clockColorOption = ClockColorOption.ACCENT_PRIMARY,
-            selectedCalendarIdsCsv = "3,4",
+            selectedCalendarIds = setOf("3", "4"),
             appListLayout = AppListLayout.TWO_COLUMN,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,
             appListGridColumns = AppListGridColumns.SIX,
@@ -92,7 +98,7 @@ class ExportBackupUseCaseTest {
         `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock)).thenReturn(emptyList())
         `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(
-            flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1))),
+            flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 3))),
         )
         val uri = mock(Uri::class.java)
 
@@ -125,6 +131,7 @@ class ExportBackupUseCaseTest {
         assertEquals(1, bundle.widgetPlacements.size)
         assertEquals("com.example.widgets", bundle.widgetPlacements[0].providerPackageName)
         assertEquals(2, bundle.widgetPlacements[0].colSpan)
+        assertEquals(3, bundle.widgetPlacements[0].landscapeOrder)
     }
 
     @Test
@@ -141,5 +148,85 @@ class ExportBackupUseCaseTest {
         val bundle = useCase(uri)
 
         assertNull(bundle.settings.activeFacetIndex)
+    }
+
+    @Test
+    fun `exports the landscape row position and column alignment for the launcher and each facet`() = runTest {
+        val facet = Facet(
+            id = 7, name = "Work", position = 0,
+            landscapeAppRowPosition = AppRowPosition.RIGHT, landscapeAppListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
+        )
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(LauncherSettings(landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER, appListColumnAlignment = AppListColumnAlignment.MIRRORED))),
+        )
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+            `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
+            `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
+        }
+
+        val bundle = useCase(mock(Uri::class.java))
+
+        assertEquals("CENTER", bundle.settings.landscapeAppRowPosition)
+        assertEquals("MIRRORED", bundle.settings.landscapeAppListColumnAlignment)
+        assertEquals("RIGHT", bundle.facets[0].landscapeAppRowPosition)
+        assertEquals("BOTH_RIGHT", bundle.facets[0].landscapeAppListColumnAlignment)
+    }
+
+    @Test
+    fun `exports the clock and list settings for the launcher and each facet`() = runTest {
+        val facet = Facet(
+            id = 7, name = "Work", position = 0,
+            clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
+            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f, clockScale = 1.1f,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
+            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
+            landscapeAppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+        )
+        `when`(settingsRepository.settings).thenReturn(
+            flowOf(
+                LauncherSettings(
+                    clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
+                    clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 240f, clockScale = 1.3f,
+                    appListVerticalAlignment = AppListVerticalAlignment.TOP, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST,
+                    searchSettingsEnabled = true,
+                    landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 280f, clockScale = 1.0f, appListVerticalAlignment = AppListVerticalAlignment.TOP),
+                ),
+            ),
+        )
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+            `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
+            `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
+        }
+
+        val bundle = useCase(mock(Uri::class.java))
+
+        val settings = bundle.settings
+        assertEquals("ACCENT_SECONDARY", settings.clockAccentColorOption)
+        assertEquals("CONDENSED", settings.clockDateStyle)
+        assertEquals("RIGHT", settings.clockAlignment)
+        assertEquals(240f, settings.clockZoneHeightDp)
+        assertEquals(1.3f, settings.clockScale)
+        assertEquals("TOP", settings.appListVerticalAlignment)
+        assertEquals("SHOW_LAST", settings.recentlyInstalledPosition)
+        assertEquals(true, settings.searchSettingsEnabled)
+        assertEquals("LEFT", settings.landscapeClockAlignment)
+        assertEquals(280f, settings.landscapeClockZoneHeightDp)
+        assertEquals(1.0f, settings.landscapeClockScale)
+        assertEquals("TOP", settings.landscapeAppListVerticalAlignment)
+        val exported = bundle.facets[0]
+        assertEquals("ACCENT_SECONDARY", exported.clockAccentColorOption)
+        assertEquals("CONDENSED", exported.clockDateStyle)
+        assertEquals("RIGHT", exported.clockAlignment)
+        assertEquals(210f, exported.clockZoneHeightDp)
+        assertEquals(1.1f, exported.clockScale)
+        assertEquals("TOP", exported.appListVerticalAlignment)
+        assertEquals("CENTER", exported.landscapeClockAlignment)
+        assertEquals(300f, exported.landscapeClockZoneHeightDp)
+        assertEquals(0.9f, exported.landscapeClockScale)
+        assertEquals("BOTTOM", exported.landscapeAppListVerticalAlignment)
     }
 }

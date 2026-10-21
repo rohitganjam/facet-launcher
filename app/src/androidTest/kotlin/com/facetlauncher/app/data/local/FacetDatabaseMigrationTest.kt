@@ -664,6 +664,97 @@ class FacetDatabaseMigrationTest {
         assertEquals(listOf("DOCK|null|0|d.one|.A|0|PERSONAL|0", "DOCK|null|0|d.work|.A|1|WORK|10", "DOCK|2|2|fd.two|.A|0|PERSONAL|-1", "FAVORITES|null|0|df.one|.A|0|PERSONAL|0", "FAVORITES|null|0|df.two|.A|1|PERSONAL|0"), apps())
     }
 
+    @Test
+    fun migration28To29AddsAnEmptyLandscapeOrderToEveryWidgetWithoutChangingThem() {
+        // Given a v28 database with two placed widgets (one a work-profile widget)
+        val dbV28 = helper.createDatabase(TEST_DB, 28)
+        dbV28.execSQL(
+            "INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile, userId) " +
+                "VALUES (1, 'com.example.a', '.A', 0, 0, 2, 2, 'PERSONAL', 0), (2, 'com.example.b', '.B', 2, 1, 3, 1, 'WORK', 10)",
+        )
+        dbV28.close()
+
+        // When migrating to v29 (Room also validates the result against the exported v29 schema)
+        val dbV29 = helper.runMigrationsAndValidate(TEST_DB, 29, true, Migrations.MIGRATION_28_29)
+
+        // Then both widgets are unchanged and neither has a landscape order yet
+        val cursor = dbV29.query("SELECT appWidgetId, row, col, colSpan, rowSpan, profile, userId, landscapeOrder FROM widget_placements ORDER BY appWidgetId")
+        val rows = mutableListOf<String>()
+        while (cursor.moveToNext()) {
+            rows += "${cursor.getInt(0)}|${cursor.getInt(1)}|${cursor.getInt(2)}|${cursor.getInt(3)}|${cursor.getInt(4)}|${cursor.getString(5)}|${cursor.getInt(6)}|${cursor.isNull(7)}"
+        }
+        cursor.close()
+        assertEquals(listOf("1|0|0|2|2|PERSONAL|0|true", "2|2|1|3|1|WORK|10|true"), rows)
+
+        // And an order can be written afterwards
+        dbV29.execSQL("UPDATE widget_placements SET landscapeOrder = 4 WHERE appWidgetId = 2")
+        val ordered = dbV29.query("SELECT landscapeOrder FROM widget_placements WHERE appWidgetId = 2")
+        ordered.moveToFirst()
+        assertEquals(4, ordered.getInt(0))
+        ordered.close()
+    }
+
+    @Test
+    fun migration29To30AddsEmptyLandscapeClockWidgetSizesToEveryFacetWithoutChangingThem() {
+        // Given a v29 database with a facet that has a portrait clock widget size
+        val dbV29 = helper.createDatabase(TEST_DB, 29)
+        insertFacetV27(dbV29, id = 1, name = "Work")
+        dbV29.execSQL("UPDATE facets SET clockWidgetAppWidgetId = 7, clockWidgetWidthDp = 180, clockWidgetHeightDp = 90 WHERE id = 1")
+        dbV29.close()
+
+        // When migrating to v30 (Room also validates the result against the exported v30 schema)
+        val dbV30 = helper.runMigrationsAndValidate(TEST_DB, 30, true, Migrations.MIGRATION_29_30)
+
+        // Then the portrait size is kept and there is no landscape size yet
+        val cursor = dbV30.query("SELECT clockWidgetWidthDp, clockWidgetHeightDp, landscapeClockWidgetWidthDp, landscapeClockWidgetHeightDp FROM facets WHERE id = 1")
+        cursor.moveToFirst()
+        assertEquals(180, cursor.getInt(0))
+        assertEquals(90, cursor.getInt(1))
+        assertTrue(cursor.isNull(2) && cursor.isNull(3))
+        cursor.close()
+    }
+
+    @Test
+    fun migration30To31AddsEmptyLandscapeClockPlacementToEveryFacetWithoutChangingIt() {
+        // Given a v30 database with a facet that has a portrait clock placement
+        val dbV30 = helper.createDatabase(TEST_DB, 30)
+        insertFacetV27(dbV30, id = 1, name = "Work")
+        dbV30.execSQL("UPDATE facets SET clockAlignment = 'RIGHT', clockZoneHeightDp = 240.0, clockScale = 1.3 WHERE id = 1")
+        dbV30.close()
+
+        // When migrating to v31 (Room also validates the result against the exported v31 schema)
+        val dbV31 = helper.runMigrationsAndValidate(TEST_DB, 31, true, Migrations.MIGRATION_30_31)
+
+        // Then the portrait placement is kept and the landscape one is empty
+        val cursor = dbV31.query("SELECT clockAlignment, clockZoneHeightDp, clockScale, landscapeClockAlignment, landscapeClockZoneHeightDp, landscapeClockScale FROM facets WHERE id = 1")
+        cursor.moveToFirst()
+        assertEquals("RIGHT", cursor.getString(0))
+        assertEquals(240.0, cursor.getDouble(1), 0.001)
+        assertEquals(1.3, cursor.getDouble(2), 0.001)
+        assertTrue(cursor.isNull(3) && cursor.isNull(4) && cursor.isNull(5))
+        cursor.close()
+    }
+
+    @Test
+    fun migration31To32AddsEmptyLandscapeListAlignmentToEveryFacetWithoutChangingIt() {
+        // Given a v31 database with a facet that has a portrait list alignment
+        val dbV31 = helper.createDatabase(TEST_DB, 31)
+        insertFacetV27(dbV31, id = 1, name = "Work")
+        dbV31.execSQL("UPDATE facets SET appRowPosition = 'RIGHT', appListVerticalAlignment = 'TOP' WHERE id = 1")
+        dbV31.close()
+
+        // When migrating to v32 (Room also validates the result against the exported v32 schema)
+        val dbV32 = helper.runMigrationsAndValidate(TEST_DB, 32, true, Migrations.MIGRATION_31_32)
+
+        // Then the portrait alignment is kept and the landscape one is empty
+        val cursor = dbV32.query("SELECT appRowPosition, appListVerticalAlignment, landscapeAppRowPosition, landscapeAppListVerticalAlignment, landscapeAppListColumnAlignment FROM facets WHERE id = 1")
+        cursor.moveToFirst()
+        assertEquals("RIGHT", cursor.getString(0))
+        assertEquals("TOP", cursor.getString(1))
+        assertTrue(cursor.isNull(2) && cursor.isNull(3) && cursor.isNull(4))
+        cursor.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

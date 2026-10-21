@@ -292,7 +292,9 @@
     <!-- Drawer enums -->
     <string name="drawer_presentation_list">Liste</string>
     <string name="drawer_presentation_grid">Raster</string>
-    <string name="drawer_grid_size_label">%1$d Spalten × %2$d Zeilen</string>
+    <string name="drawer_grid_density_compact">Kompakt</string>
+    <string name="drawer_grid_density_regular">Normal</string>
+    <string name="drawer_grid_density_airy">Luftig</string>
     <string name="drawer_list_item_size_compact">Kompakt</string>
     <string name="drawer_list_item_size_regular">Standard</string>
     <string name="drawer_list_item_size_spacious">Geräumig</string>
@@ -337,6 +339,11 @@
     <string name="home_apps_list_header_title">Startbildschirm-App-Liste</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Listenposition</string>
+    <string name="appearance_allow_landscape_title">Querformat erlauben</string>
+    <string name="appearance_allow_landscape_subtitle">Nutze ein Querformat-Layout, wenn der Bildschirm breit genug ist. Aus lässt Home im Hochformat.</string>
+    <string name="appearance_alignment_portrait_title">Ausrichtung im Hochformat</string>
+    <string name="appearance_alignment_landscape_title">Ausrichtung im Querformat</string>
+    <string name="home_apps_list_same_as_portrait">Wie im Hochformat</string>
     <string name="home_apps_list_presentation">Darstellung</string>
     <string name="home_apps_list_layout">App-Listenlayout</string>
     <string name="home_apps_list_column_alignment">Spaltenausrichtung</string>
@@ -352,7 +359,7 @@
     <!-- AppDrawerSettingsScreen -->
     <string name="app_drawer_settings_header_title">App-Drawer</string>
     <string name="app_drawer_show_apps_as">Apps anzeigen als</string>
-    <string name="app_drawer_grid_size">Rastergröße</string>
+    <string name="app_drawer_grid_density">Rasterdichte</string>
     <string name="app_drawer_list_item_size">Listenelementgröße</string>
     <string name="app_drawer_show_icons_title">Symbole anzeigen</string>
     <string name="app_drawer_show_icons_subtitle">Zeigt Symbole mit dem App-Namen</string>
@@ -723,6 +730,8 @@
     <string name="facet_carousel_launcher_settings_subtitle">Design, Standarduhr, Favoriten, Drawer und mehr</string>
     <string name="facet_carousel_active">Aktiv</string>
     <string name="facet_carousel_no_favorites">Noch keine Favoriten</string>
+    <string name="preview_media_title">Wiedergabe</string>
+    <string name="preview_media_artist">Interpret</string>
     <string name="facet_carousel_facet_settings">Facetteneinstellungen</string>
     <string name="facet_carousel_delete_facet">Facette löschen</string>
     <string name="facet_carousel_add_facet">Facette hinzufügen</string>
@@ -771,6 +780,9 @@
     <string name="clock_adjust_align_left">Linksbündig</string>
     <string name="clock_adjust_align_center">Zentriert</string>
     <string name="clock_adjust_align_right">Rechtsbündig</string>
+    <string name="clock_adjust_align_top">Oben ausrichten</string>
+    <string name="clock_adjust_align_middle">Mittig ausrichten</string>
+    <string name="clock_adjust_align_bottom">Unten ausrichten</string>
     <string name="clock_adjust_edit_styles">Uhrstile bearbeiten</string>
     <string name="clock_adjust_edit_styles_subtitle">Vorlagen, Schriftarten, Farben und Ausrichtung</string>
     <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>

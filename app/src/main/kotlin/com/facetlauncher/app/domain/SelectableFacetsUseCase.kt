@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.FacetLimits
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,7 +22,7 @@ class SelectableFacetsUseCase @Inject constructor(
     }
 
     /** The selectable facets, in list order, re-emitting when the facets or the entitlement change. */
-    fun observe(): Flow<List<FacetEntity>> = flow {
+    fun observe(): Flow<List<Facet>> = flow {
         // A cold start must not reconcile facets against a placeholder entitlement.
         entitlementRepository.awaitLoaded()
         emitAll(

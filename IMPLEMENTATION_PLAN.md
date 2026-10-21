@@ -821,7 +821,7 @@ Adds a scale factor alongside the existing zone-height *position* feature — co
 - [x] `liveScale: Float?` (absolute, held until the committed value round-trips) — no scale collapse/flicker on release.
 - [x] Long-press → `ClockAdjustSheet.kt` ("Adjust size & position" / "Edit … styles"); `dragModeEnabled` → `ClockAdjustMode` enum (`NONE`/`MENU`/`ADJUST`). **One combined `ADJUST` mode** shows the move handle *and* the two resize handles together — either can be used, and dragging the clock upward with the move handle **shrinks it to fit in real time** (`effectiveClockScale` clamps to `maxScaleThatFits` live *only while in `ADJUST`*), persisting the shrunk scale on release. Exits only on tap-away from all handles.
 - [x] Fit math (`maxScaleThatFits`) runs **only** while dragging a handle and once per style/position change (`LaunchedEffect`-keyed one-shot that re-clamps + persists only if the saved scale actually clips). `HOME_CLOCK_MIN_SCALE`/`MAX_SCALE` = `0.5`..`2.0`; the max also reserves room for the top handle to clear the status-bar / notification-shade strip.
-- [x] Appearance: fade in once (M3 emphasized-decelerate, 250ms, draw-phase alpha) after the measured box holds steady for 120ms — waits out the variable-font remeasure so the clock doesn't visibly "grow from the bottom".
+- [x] Appearance: fade in once (M3 emphasized-decelerate, 250ms, draw-phase alpha) after the measured box is first measured (the 120ms settle wait was removed; the box is stable across passes) — so the clock doesn't visibly "grow from the bottom".
 - [x] Unit tests green (`SettingsRepositoryTest`/`FacetRepositoryTest`); instrumented `FacetDatabaseMigrationTest.migration14To15...` covers all three columns.
 - [x] `clockAccentColorOption` + `clockDateStyle` (Full/Condensed) global + per-facet.
 - [x] 16 shape-based clock templates in `ClockTemplates.kt` + shared `HourText`/`MinuteText`/`SeparatorText`/`TemplateDateText` parts; clock hit-box narrowed to the rendered content only.
@@ -4116,3 +4116,112 @@ Folds the eight Dock/Favorites tables into `app_placements` and `folder_placemen
 - [x] `FolderContentsSheet` header mirrors the app sheet's: folder icon, larger name with an app count, rename icon button, divider. `FolderContentsSheetTest` covers it.
 - [x] The "Add to folder" page of the app sheet gets the same header treatment: back chevron, the Add to folder icon, "Add to folder" in the same title style as the app name, and a divider. `AppContextMenuTest` covers it.
 - [x] `FolderContentsSheet` slides in from the bottom and out again, with the scrim fading, using the app's nav transition timing (`FACET_TRANSITION_DURATION_MS`, `FacetTransitionEasing`). Scrim, Back and Home-press play the exit first; the caller-driven closes (a tapped app, Add, back chevron) close at once.
+
+## Wide-screen App Drawer (foldable / landscape)
+
+Found on the unfolded Pixel Fold emulator: the fixed-column grid left most of the screen empty, search results packed to the left, and grid icons sat off-centre in their cells.
+
+- [x] `DrawerGridSize` (columns × rows, portrait-shaped) replaced by `DrawerGridDensity` (`COMPACT`/`REGULAR`/`AIRY`). Column and row counts are computed from the viewport (`ui/drawer/DrawerGridLayout.kt`), so one setting fits any window. Persisted under the old `drawer_grid_size` key; the retired names still load and map to the nearest density (`DrawerGridDensity.fromStored`), and old backups import the same way.
+- [x] `DrawerGridTile` fills its cell width: the icon centres in its column and the whole cell is tappable.
+- [x] Search tiles are equal-weight cells using the same column count, so they sit on the browse grid's columns instead of packing together.
+- [x] Settings row "Grid size" → "Grid density" (all five locales).
+- [x] Tests: `DrawerGridLayoutTest`, `DrawerGridDensityTest`, `SettingsRepositoryTest` (legacy value), `AppDrawerScreenTest` (`gridDensityControlsTileHeight`, `gridSearchResultsSitOnEvenlySpacedEqualWidthCells`). Docs: `02`, `12` updated.
+- [ ] Tune the cell width / row pitch targets on a real phone and a tablet (set from the Pixel Fold emulator and phone-height arithmetic only).
+- [ ] Check Grid on a phone-sized screen against the old 5×6 / 4×5 / 4×4 looks.
+- [ ] Home's own grid (`AppListGridColumns`) has the same fixed-column assumption — separate change.
+- [ ] Still open from the fold review: Home dock scattering, status-bar icon contrast on a wide window, list view column count. (Landscape Home layout is built, see below.)
+
+## Landscape Home (built; simplification tracked separately)
+
+**Follow-up:** grouping the landscape twins, splitting `HomeScreen` and removing its Detekt baseline are done, and ticked off, in [`LANDSCAPE_SIMPLIFICATION_PLAN.md`](LANDSCAPE_SIMPLIFICATION_PLAN.md).
+
+Chosen over locking to portrait: foldables and tablets ignore a portrait lock, and a home app that fights rotation feels broken. Found on the unfolded Pixel Fold emulator (near-square, 2208x1840) where the portrait Home is mostly empty.
+
+**Rule.** Layout follows the window, not a rotation flag: portrait when the window is taller than wide (whatever its size) or under 600dp wide, the landscape layout otherwise (a phone on its side, an unfolded foldable, a tablet on its side). Within landscape, under 480dp tall is compact (right-hand dock) and taller is roomy (bottom dock, more grid columns). Portrait is unchanged.
+
+**Panes.** `[ clock pane | apps pane | dock rail ]`, clock on the left.
+
+- [x] **Clock.** (Superseded: landscape now has its own alignment, divider width and scale, falling back to portrait; see `LANDSCAPE_SIMPLIFICATION_PLAN.md` and doc `17`.) Always left-aligned with margins horizontally. `clockAlignment` is reused with a mapping: LEFT→TOP, CENTER→MIDDLE, RIGHT→BOTTOM (the same field, so a change in one orientation shows in the other; split into its own setting later if that bothers anyone).
+  - New alignment pill in adjust mode: top / middle / bottom (vertical-align icons), writing the same field. It sits inside the clock pane at the bottom edge, or the top when the clock is bottom-aligned.
+  - Scale handle: scale origin becomes left-top / left-middle / left-bottom; the maximum scale is bounded by the pane width, not the screen width.
+  - `ClockZoneHandle` becomes the vertical divider between the clock and apps panes (orientation parameter: full-height rail, horizontal drag, icon rotated). It reuses `clockZoneHeightDp` as the zone's main-axis size (height in portrait, width in landscape). Floor: scaled clock width + margins. Ceiling: half the window width. Default (null): the clock's natural width + margins. Reveal by long-press on the clock, commit on release, as today.
+- [x] **Apps pane.** The list keeps the chosen layout: single column, two columns (originally single column only, reversed on request) or grid. A grid follows the user's selection with columns clamped to the pane width. Vertical anchor (top / bottom) is kept. Scrolls if the list is taller than the pane.
+- [x] **Dock.** A vertical column at the right edge, icons only, no extra icons and no second column; scrolls when the icons do not fit. Inset from the edge (or a gesture-exclusion zone) so a swipe left that starts on it does not trigger the system Back gesture. The A–Z rail stays in the app drawer only. *(To confirm: wording of "the rail is only available in the app drawer".)*
+- [x] **Widgets (Hub page).** Swipe right still opens it. Fixed cell size (dp constant, like the app grid): rows = as many as fit the height, columns grow and scroll horizontally, widgets compact left instead of up. Each widget keeps its size in cells (`colSpan` x `rowSpan`). Editable in landscape: the existing move / resize / delete use cases are generalised over the grid axis (push and compaction direction mirrored).
+  - **Storage (decided): order only.** One nullable `landscapeOrder` on `widget_placements` (additive migration). The landscape layout is a flow-pack of the widgets in that order (first-fit, gravity left), so it is always valid and never overlaps. A null order falls back to portrait reading order (`row`, then `col`), so existing installs need nothing. Spans are shared by both orientations.
+    - Moving a widget in landscape = dropping it at a new place in the flow; it writes only `landscapeOrder`.
+    - Resizing writes the shared spans; portrait may then overlap, and the existing `ResolveWidgetResizeUseCase` pushes widgets apart there.
+    - A widget added in landscape gets its portrait slot from the existing first-fit (`PlaceWidgetUseCase`) and goes last in the landscape order. Delete renumbers nothing (order is relative).
+    - Backup gets the optional field (default null). Docs `02`, `09`, `10`; re-check F11 in `05`.
+  - Tradeoff accepted: landscape cannot have deliberate gaps; dragging reorders instead of placing in an exact cell.
+  - Edge case: a widget taller than the visible rows is clamped at render time only.
+- [ ] **Gestures.** Swipe right (widgets) and left (facets) stay. Re-check vertical swipe thresholds on a ~330dp-tall window.
+- [x] **Previews.** The carousel cards and the Appearance preview are the real `HomeScreen` scaled down (`ScaledHomeScreen`), so they follow the window's orientation (docs `13`, `03`).
+
+**Stages.**
+1. **Done.** Window rule (`homeLayoutModeFor`: portrait when taller than wide or under 600dp wide; `homeLandscapeSpaceFor` splits it at 480dp tall into compact, with the right-hand dock, and roomy, with a bottom dock and more grid columns) and a pure widget flow-pack use case (`FlowPackWidgetsUseCase`: order + spans + row count → positions, sparse so order is always preserved), with tests. Neither is wired into the UI yet.
+2. **Done.** Landscape Home container (`HomeLandscapeLayout`): clock pane, apps pane, dock column, with the clock alignment mapped to top / middle / bottom, a single-column list, an icons-only scrolling dock inset from the right edge, and the long-press menu without "Adjust" until stage 3. The pane gap is where the divider handle goes; the clock pane is a fixed 40% until then. Documented in `17`. Checked on the unfolded Pixel Fold emulator; a phone on its side is covered by `HomeScreenLandscapeTest` only (the Pixel 5 AVD would not rotate).
+3. **Done.** Clock pane adjust mode: the draggable divider (`ClockZoneHandle` turned 90°, saving the pane width in `clockZoneHeightDp`, clamped to between the margins plus the smallest clock and half the window), a top / middle / bottom pill, and scale handles scaling from the left edge around top, middle or bottom. A narrower pane shrinks the clock live down to its smallest scale, where the divider stops, and the shrunk scale is saved on release, as portrait's height handle does; the rendered scale is otherwise clamped to the pane without being saved. Deviation from the plan: the default pane width is a fixed 40% rather than the clock's natural width, which would have meant a pane that resizes itself after the first measure. A hosted clock widget adjusts by real size (corner handles and the divider down to its minimum), and keeps its own landscape size (schema v30, `facets.landscapeClockWidgetWidthDp`/`HeightDp`, falling back to the portrait size) so the two orientations don't resize each other. Alignment, divider position and scale have landscape twins too (schema v31 and `landscape_clock_*` DataStore keys, null falls back to portrait). The apps list's row position, two-column alignment and list position do too (schema v32, `landscape_app_*` keys), edited under "Landscape alignment" in Dock & Apps appearance. A launcher-wide "Allow landscape mode" switch there (`allow_landscape`, default on) turns the whole thing off: Home stays portrait, the screen is locked to portrait and the landscape settings are hidden. Documented in `17 §4`. The landscape tests now run in a genuinely rotated test activity.
+4. **Done.** Landscape widget grid (`HubLandscapeGrid`): fixed 64dp cells, as many rows as fit the height, growing and scrolling to the right. Positions are derived: `LandscapeHubUseCase` orders the widgets (saved `landscapeOrder` first, then portrait reading order) and flow-packs them, so only the order is stored. Schema v29 (`widget_placements.landscapeOrder`, nullable) with migration 28→29 and an additive, optional backup field (no version bump). Editable: a drag reorders (writes only `landscapeOrder`), the menu resizes (right and bottom handles; the size is shared with portrait, so a landscape resize can push portrait neighbours) or removes. Documented in `10 §5`, `02`, `09`, `07`. The widget picker is unchanged and adds widgets with no order (they follow the ordered ones). Known gaps: a drag does not live-reflow the other widgets (they glide into place on drop), and a widget taller than the rows is clamped on screen only.
+5. Previews, gesture thresholds, docs `03`, `10`, `12`, `13`, tests registry.
+
+Each stage is checked on a rotated phone emulator and the Pixel Fold emulator.
+
+**Open.** (a) the "rail" wording for the dock; (b) the landscape threshold; (c) the widget cell size constant (small enough for 5 rows on a ~330dp-tall phone, or fewer rows with tall widgets clamped).
+
+## Macrobenchmarks per screen
+
+`:benchmark` has `StartupBenchmark` and `ScreenBenchmarks` (cold start, and the frames of opening the carousel, the app drawer and the Hub with a swipe from Home, with 1, 3 and 6 facets). A run seeds itself: the benchmark build has a `BenchmarkSeedReceiver` (`app/src/benchmark/`) that the test broadcasts to finish onboarding, dismiss the first-run prompts, force Pro (more than 3 facets) and add facets, each with six favorites, plus a global dock. Run with:
+
+```bash
+ANDROID_SERIAL=<emulator> ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.facetlauncher.app.benchmark.ScreenBenchmarks
+```
+
+Results land in `benchmark/build/outputs/connected_android_test_additional_output/`. Gradle uninstalls the app afterwards, so Facet is gone from the emulator until it is installed again.
+
+**Baseline, 2026-10-22** (emulator API 36, debug-signed `benchmark` build, 8 iterations, warm: the activity restarts, the process stays; carousel always composed):
+
+| Measure | 1 facet | 3 facets | 6 facets |
+|---|---|---|---|
+| Cold start, time to first frame (phone) | 212 ms | 255 ms | 203 ms |
+| Open carousel, frame CPU P90 / P99 (phone) | 5.6 / 15.6 ms | 5.0 / 12.1 ms | 9.7 / 19.7 ms |
+| Open drawer, frame CPU P90 / P99 (phone) | 6.0 / 18.4 ms | 16.3 / 32.0 ms | 9.5 / 33.0 ms |
+| Open Hub, frame CPU P90 / P99 (phone) | 16.5 / 32.4 ms | 18.0 / 33.4 ms | 5.3 / 9.7 ms |
+
+On the phone emulator the carousel's open frames are as cheap as the drawer's and the Hub's, and the facet count shows no trend, so the always-composed carousel is not a measurable cost there. **The unfolded Pixel Fold emulator is not a usable measure of the app:** every panel, including the drawer and the Hub, has 65–230 ms frames there (P50 65–126 ms) and cold start is 530–700 ms, which is that emulator's rendering speed on a 2208x1840 display. Run those on a real foldable.
+
+**Composed only while open** (an experiment, reverted): the carousel's open frames got worse, with a P99 frame of 35–62 ms against 12–20 ms, and a P99 overrun of up to 84 ms (about five dropped frames) with 1 facet and 22 ms with 6, because the cards' full Home layouts compose as the swipe starts; the 3-facet case showed no difference, so the numbers are noisy. Cold start was unchanged (234–282 ms against 203–255 ms). So the always-composed carousel costs nothing on the open and a little at startup, while composing on open adds a visible hitch to the swipe. Keep it always composed unless a real device shows a startup cost.
+
+- [x] **Carousel, first frame on open** with 1, 3 and 6 facets, always composed against composed on open (phone emulator).
+- [x] **Cold start** with the carousel composed, at 1, 3 and 6 facets.
+- [x] **Drawer and Hub** open frames.
+- [x] **Both window shapes:** phone and the Pixel Fold emulator (the Fold numbers are emulator-bound, see above).
+- [x] **Facet seeding** (onboarding, Pro, N facets with favorites). Not seeded: a hosted clock widget, which needs a bind grant.
+- [ ] **On a real phone and a real foldable**, which is where the numbers mean something. Repeat with 10 facets, the Pro maximum.
+- [ ] **Screens still unmeasured:** Settings and Appearance (the preview card), the clock style gallery, Manage facets, the app drawer's search and scroll, scrolling a long app list.
+- [ ] **A hosted clock widget** on a facet, since its preview adds a second `AppWidgetHost` view.
+
+### Memory and startup (phone emulator, 2026-10-22)
+
+`scripts/bench-memory.sh <serial> [facet counts]` prints PSS from `dumpsys meminfo` after Home settles and with each panel open; `scripts/bench-startup.sh <serial> [runs] [facet counts]` times cold start from the system log: "Displayed" is the first frame, "Fully drawn" is when `HomeScreen` reports (`onFullyReveal`, which calls `Activity.reportFullyDrawn`) that the clock and the app list have finished fading in. Both need `./gradlew :app:assembleBenchmark` first.
+
+**Memory** (PSS, MB; Home at rest, then with the carousel open): the whole app is **58–67 MB** whatever the facet count, against 73–96 MB for the stock launcher on the same emulator.
+
+| Facets | Home at rest | Carousel open | Java heap | Native heap | Code |
+|---|---|---|---|---|---|
+| 1 | 63.7 | 58.4 | 6.0 | 19.9 | 13.0 |
+| 3 | 66.2 | 60.8 | 6.4 | 20.7 | 14.0 |
+| 6 | 65.8 | 64.6 | 6.4 | 20.4 | 13.3 |
+| 10 | 66.7 | 64.6 | 6.6 | 20.8 | 13.7 |
+
+The carousel adds 4–5 MB of native heap with 6 or more facets and nothing with 1–3 (it composes only the cards in view). The drawer and Hub add under 1 MB each. This emulator reports no graphics memory, so the GPU share of a real device is not in these numbers.
+
+**Startup** (cold, 8 runs, median): the first frame arrives at **176–213 ms** and Home is fully drawn at **807–889 ms**, with no trend by facet count. So a user sees the wallpaper for roughly 650 ms after the first frame before the clock and list are fully there.
+
+Where that time goes (from timestamps in a temporary log): about 360–590 ms from the first frame until `HomeViewModel` delivers its first state (the route draws nothing until then), then the reveal choreography in `HomeFrame`: the clock waits for its box to be measured and settle for 120 ms and fades in over 250 ms, and the app list waits for its geometry to settle for 150 ms and fades over 200 ms. An experiment (reverted) that dropped both debounces and shortened both fades to 80 ms brought fully drawn from 807–889 ms to **551–578 ms**, so the choreography is worth about 260–310 ms; the rest is the data load.
+
+- [x] **Reveal debounces removed.** Logging the clock box on cold start (Manrope, scales 0.5/0.8/1.2) showed each Home's box is the same size on every pass, so the 120 ms clock debounce and the 150 ms list debounce only added delay; both are gone (the fades stay). Cold start on the emulator, 8 runs: fully drawn **667 ms** with 1 facet and **737 ms** with 6, down from 807-889 ms. Frames of a cold start with Manrope show clock, date and list fading in together at a fixed position.
+- [ ] **Snappy startup, remaining.** Paint the last Home state from a small cache while the live state loads (the ~350 ms before the first state), and shorten the fades if wanted. The facet carousel stays composed while closed, so a second, off-screen Home is built on every cold start; composing it only when opening would cut that work but delay opening. Profile the first-state load (Room open, DataStore, the installed-apps relist).
+- [ ] **Re-measure on a real phone** after that; set the budget there (first frame with content under about 150 ms, fully drawn under about 300 ms is the aim).

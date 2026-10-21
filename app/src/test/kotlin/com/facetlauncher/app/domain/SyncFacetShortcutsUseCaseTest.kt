@@ -3,7 +3,7 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -14,7 +14,7 @@ import org.mockito.Mockito.verify
 
 class SyncFacetShortcutsUseCaseTest {
 
-    private val facets = MutableStateFlow<List<FacetEntity>>(emptyList())
+    private val facets = MutableStateFlow<List<Facet>>(emptyList())
     private val facetRepository: FacetRepository = mock(FacetRepository::class.java).also {
         `when`(it.observeFacets()).thenReturn(facets)
     }
@@ -29,7 +29,7 @@ class SyncFacetShortcutsUseCaseTest {
         verify(facetShortcutRepository).syncShortcuts(emptyList())
 
         // When a facet is added
-        val work = FacetEntity(id = 1, name = "Work", position = 0)
+        val work = Facet(id = 1, name = "Work", position = 0)
         facets.value = listOf(work)
         testScheduler.advanceUntilIdle()
 
@@ -58,7 +58,7 @@ class SyncFacetShortcutsUseCaseTest {
         // Given five facets and a free user
         val entitlement = FakeEntitlementRepository(initial = false)
         val freeUseCase = SyncFacetShortcutsUseCase(SelectableFacetsUseCase(facetRepository, entitlement), facetShortcutRepository)
-        val five = List(5) { FacetEntity(id = it + 1L, name = "F$it", position = it) }
+        val five = List(5) { Facet(id = it + 1L, name = "F$it", position = it) }
         facets.value = five
         val job = launch { freeUseCase() }
         testScheduler.advanceUntilIdle()

@@ -10,6 +10,8 @@ import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
@@ -133,35 +135,50 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Fired once, on release, by the clock's grab handle ([com.facetlauncher.app.ui.home.ClockZoneHandle])
-     * — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. Writes to the
-     * active facet's own override when one is actually governing the widget's position right
-     * now ([HomeUiState.clockPositionOwningFacet]); otherwise falls back to the global setting,
-     * same as every other facet-overridable value here.
+     * — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]; in landscape it is the divider.
      */
-    fun onClockZoneHeightCommit(heightDp: Float) {
-        val owningFacet = _uiState.value.clockPositionOwningFacet
-        viewModelScope.launch {
-            owningFacet?.let { facetRepository.setClockZoneHeight(it, heightDp) }
-                ?: settingsRepository.setClockZoneHeight(heightDp)
-        }
-    }
+    fun onClockZoneHeightCommit(heightDp: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitClock(
+        mode = mode,
+        landscape = { it.copy(clockZoneHeightDp = heightDp) },
+        facetPortrait = { facetRepository.setClockZoneHeight(it.id, heightDp) },
+        globalPortrait = { settingsRepository.setClockZoneHeight(heightDp) },
+    )
 
     /** Fired once, on release, by the clock's resize handles — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
-    fun onClockScaleCommit(scale: Float) {
+    fun onClockScaleCommit(scale: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitClock(
+        mode = mode,
+        landscape = { it.copy(clockScale = scale) },
+        facetPortrait = { facetRepository.setClockScale(it.id, scale) },
+        globalPortrait = { settingsRepository.setClockScale(scale) },
+    )
+
+    /** Fired by the adjust-mode alignment toolbar. */
+    fun onClockAlignmentCommit(alignment: ClockAlignment, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitClock(
+        mode = mode,
+        landscape = { it.copy(clockAlignment = alignment) },
+        facetPortrait = { facetRepository.setClockAlignment(it.id, alignment) },
+        globalPortrait = { settingsRepository.setClockAlignment(alignment) },
+    )
+
+    /**
+     * One home for the clock commits: they write to the active facet's own override when one is governing the
+     * clock right now ([HomeUiState.clockPositionOwningFacet]), the launcher-wide setting otherwise, and to the
+     * landscape group in landscape.
+     */
+    private fun commitClock(
+        mode: HomeLayoutMode,
+        landscape: (LandscapeOverrides) -> LandscapeOverrides,
+        facetPortrait: suspend (Facet) -> Unit,
+        globalPortrait: suspend () -> Unit,
+    ) {
         val owningFacet = _uiState.value.clockPositionOwningFacet
         viewModelScope.launch {
-            owningFacet?.let { facetRepository.setClockScale(it, scale) }
-                ?: settingsRepository.setClockScale(scale)
-        }
-    }
-
-
-    /** Fired by the adjust-mode alignment toolbar — same facet-or-global ownership as [onClockZoneHeightCommit]/[onClockScaleCommit] (all three sit behind `overrideClock`). */
-    fun onClockAlignmentCommit(alignment: ClockAlignment) {
-        val owningFacet = _uiState.value.clockPositionOwningFacet
-        viewModelScope.launch {
-            owningFacet?.let { facetRepository.setClockAlignment(it, alignment) }
-                ?: settingsRepository.setClockAlignment(alignment)
+            when {
+                mode == HomeLayoutMode.LANDSCAPE && owningFacet != null -> facetRepository.updateLandscape(owningFacet.id, landscape)
+                mode == HomeLayoutMode.LANDSCAPE -> settingsRepository.updateLandscape(landscape)
+                owningFacet != null -> facetPortrait(owningFacet)
+                else -> globalPortrait()
+            }
         }
     }
 

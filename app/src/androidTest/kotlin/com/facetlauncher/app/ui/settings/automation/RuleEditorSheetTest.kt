@@ -13,7 +13,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationRuleError
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationTrigger
@@ -31,7 +31,7 @@ class RuleEditorSheetTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val facets = listOf(FacetEntity(id = 1, name = "Personal", position = 0), FacetEntity(id = 2, name = "Work", position = 1))
+    private val facets = listOf(Facet(id = 1, name = "Personal", position = 0), Facet(id = 2, name = "Work", position = 1))
     private var current by mutableStateOf(RuleEditorState.forNew(facets, activeFacetId = 1))
     private var saved = 0
     private var deleted = 0

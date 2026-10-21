@@ -15,15 +15,15 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.ui.home.HomePreview
-import com.facetlauncher.app.ui.home.HomePreviewState
+import com.facetlauncher.app.ui.home.HomeScreenContent
+import com.facetlauncher.app.ui.home.ScaledHomeScreen
 import com.facetlauncher.app.ui.theme.Hairline
 
 /** Matches `FacetCarouselScreen`'s `CAROUSEL_CARD_SCALE` — a scale model of the screen, not a full-width card. */
 private const val APPEARANCE_PREVIEW_CARD_SCALE = 0.55f
 
 /**
- * "This is how Home looks" for this scope: the shared [HomePreview] fed the scope's real,
+ * "This is how Home looks" for this scope: the shared [ScaledHomeScreen] fed the scope's real,
  * facet-or-global resolved content ([AppearanceSettingsUiState]), so clock and app-list position
  * and alignment match the facet carousel's cards and Home itself.
  */
@@ -35,40 +35,17 @@ internal fun AppearancePreviewCard(
 ) {
     val config = LocalConfiguration.current
     val cardShape = MaterialTheme.shapes.extraLarge
-    val settings = uiState.clockSettings
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        HomePreview(
-            state = HomePreviewState(
-                favorites = uiState.effectiveFavorites,
+        ScaledHomeScreen(
+            style = uiState.style,
+            settings = uiState.settings,
+            content = HomeScreenContent(
+                listItems = uiState.effectiveFavorites,
                 dockItems = uiState.effectiveDockItems,
-                use24HourTime = settings.use24HourTime,
-                clockTemplateId = settings.clockTemplateId,
-                clockFontOption = settings.clockFontOption,
-                clockColorOption = settings.clockColorOption,
-                clockAccentColorOption = settings.clockAccentColorOption,
-                clockShowMeridiem = settings.clockShowMeridiem,
-                clockDateStyle = settings.clockDateStyle,
-                clockAlignment = settings.clockAlignment,
-                clockScale = settings.clockScale,
-                clockZoneHeightDp = settings.clockZoneHeightDp,
                 calendarEvents = uiState.calendarEvents,
-                calendarColors = settings.calendarColors,
-                calendarDisplay = uiState.calendarDisplay,
-                launcherFontOption = settings.launcherFontOption,
-                appRowPosition = uiState.appRowPosition,
-                appRowPresentation = uiState.appRowPresentation,
-                appListLayout = uiState.appListLayout,
-                appListVerticalAlignment = uiState.appListVerticalAlignment,
-                appListColumnAlignment = uiState.appListColumnAlignment,
-                appListGridColumns = uiState.appListGridColumns,
-                appListGridDisplayMode = uiState.appListGridDisplayMode,
-                appLabelColorOption = settings.appLabelColorOption,
-                homeAppsFontWeight = settings.homeAppsFontWeight,
-                dockDisplayMode = uiState.dockDisplayMode,
             ),
             homeWallpaper = homeWallpaper,
-            testTagPrefix = "appearance_preview_",
-            clockTestTag = "appearance_preview_clock",
+            tagPrefix = "appearance_preview_",
             modifier = Modifier
                 .fillMaxWidth(APPEARANCE_PREVIEW_CARD_SCALE)
                 .aspectRatio(config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat())

@@ -17,9 +17,6 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.LauncherSettings
-import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.ListContentMode
 
 @Entity(tableName = "facets")
@@ -71,11 +68,22 @@ data class FacetEntity(
      */
     val clockWidgetWidthDp: Int? = null,
     val clockWidgetHeightDp: Int? = null,
+    /** Landscape's own size for the hosted clock widget; `null` falls back to the portrait size above (clamped to the pane on screen). */
+    val landscapeClockWidgetWidthDp: Int? = null,
+    val landscapeClockWidgetHeightDp: Int? = null,
+    /** Landscape's own clock alignment (top, middle or bottom there), zone height (its divider position) and scale; `null` uses the portrait value above. */
+    val landscapeClockAlignment: ClockAlignment? = null,
+    val landscapeClockZoneHeightDp: Float? = null,
+    val landscapeClockScale: Float? = null,
 
     // Apps section
     val overrideApps: Boolean = false,
     /** Look/placement, not content — editable from Settings → Appearance now, resolved independently of [overrideApps] via [resolveSentinel]. See [com.facetlauncher.app.data.model.DockDisplayMode]'s own doc for the sentinel model. */
     val appRowPosition: AppRowPosition = AppRowPosition.LAUNCHER_DEFAULT,
+    /** Landscape's own value for [appRowPosition], [appListVerticalAlignment] and [appListColumnAlignment]; `null` is "same as portrait". */
+    val landscapeAppRowPosition: AppRowPosition? = null,
+    val landscapeAppListVerticalAlignment: AppListVerticalAlignment? = null,
+    val landscapeAppListColumnAlignment: AppListColumnAlignment? = null,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.LAUNCHER_DEFAULT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
@@ -118,53 +126,7 @@ data class FacetEntity(
      * already uses). `null` means every calendar is implicitly selected, mirroring
      * [com.facetlauncher.app.data.model.LauncherSettings.selectedCalendarIds]'s own null
      * semantics exactly. Never read/written directly outside [com.facetlauncher.app.data.FacetRepository] —
-     * see its `selectedCalendarIds` extension property for the decoded `Set<String>?` view.
+     * see [toFacet] for the decoded `Set<String>?` view.
      */
     val selectedCalendarIdsCsv: String? = null,
 )
-
-/**
- * The one recurring shape behind every "active facet's X, falling back to the global default
- * when not overriding" property in [com.facetlauncher.app.ui.home.HomeUiState]/
- * [com.facetlauncher.app.ui.facets.FacetCarouselViewModel]/
- * [com.facetlauncher.app.ui.facets.FacetSettingsViewModel] — `this` is the active/looked-up
- * facet (or `null` if there isn't one), [overriding] picks which of that facet's flags governs
- * (`overrideClock`/`overrideApps`/`overrideCalendar`), [facetValue] reads the facet's own
- * stored value, and [globalValue] is what's used both when there's no active facet and when
- * that facet isn't overriding. New for the clock/calendar-alignment and zone-height properties —
- * existing call sites elsewhere still hand-write the equivalent `?.let { if (...) ... else ... }
- * ?: ...` and aren't migrated to this by this change.
- */
-inline fun <T> FacetEntity?.resolveOverride(overriding: (FacetEntity) -> Boolean, facetValue: (FacetEntity) -> T, globalValue: T): T =
-    this?.let { if (overriding(it)) facetValue(it) else globalValue } ?: globalValue
-
-/**
- * Per-field facet override via a `LAUNCHER_DEFAULT`-style sentinel — no separate override flag;
- * [facetValue] reads this field's own stored value, [sentinel] is its "inherit the global value"
- * marker, [globalValue] is the launcher-wide default. Used for Appearance's dock/app-list "look"
- * fields ([com.facetlauncher.app.data.model.DockDisplayMode]/[com.facetlauncher.app.data.model.AppRowPosition]/
- * [com.facetlauncher.app.data.model.AppRowPresentation]/[com.facetlauncher.app.data.model.AppListVerticalAlignment]) —
- * moved out of the whole-block `overrideDock`/`overrideApps` gate that [resolveOverride] models,
- * since these are edited from Appearance now, independently of Dock's/Apps-list's own content
- * (see chat history).
- */
-inline fun <T> FacetEntity?.resolveSentinel(facetValue: (FacetEntity) -> T, sentinel: T, globalValue: T): T {
-    val value = this?.let(facetValue) ?: return globalValue
-    return if (value == sentinel) globalValue else value
-}
-
-/** The calendar display options in force for `this` facet (or the launcher-wide ones when it's `null` or not overriding the calendar). */
-fun FacetEntity?.effectiveCalendarDisplay(settings: LauncherSettings): CalendarDisplayOptions =
-    if (this?.overrideCalendar == true) {
-        CalendarDisplayOptions(showCalendarIndicator, calendarItemsToShow)
-    } else {
-        CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow)
-    }
-
-/** Where [list] lives for `this` facet: its own rows when it overrides that list, else the launcher-wide default (also the answer when there is no active facet). */
-fun FacetEntity?.placementTarget(list: PlacementList): PlacementTarget = when {
-    this == null -> PlacementTarget(list)
-    list == PlacementList.DOCK && overrideDock -> PlacementTarget(list, id)
-    list == PlacementList.FAVORITES && overridingFavorites -> PlacementTarget(list, id)
-    else -> PlacementTarget(list)
-}

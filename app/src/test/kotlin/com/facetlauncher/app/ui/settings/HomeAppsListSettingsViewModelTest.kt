@@ -5,7 +5,7 @@ import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -64,7 +64,7 @@ class HomeAppsListSettingsViewModelTest {
     private suspend fun createViewModel(
         facetId: Long? = null,
         favorites: List<PlacedItem> = emptyList(),
-        facets: List<FacetEntity> = emptyList(),
+        facets: List<Facet> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
@@ -132,7 +132,7 @@ class HomeAppsListSettingsViewModelTest {
         // A facet not overriding apps content, but with explicit look values (set from
         // Appearance), still resolves to them here — its own preview needs it, even though this
         // screen no longer edits them (see chat history).
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 7L, name = "Work", position = 0, overrideApps = false,
             appRowPosition = AppRowPosition.RIGHT, appRowPresentation = AppRowPresentation.TEXT_ONLY,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,

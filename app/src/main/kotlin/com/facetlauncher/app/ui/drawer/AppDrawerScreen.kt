@@ -108,7 +108,7 @@ import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerItem
 import com.facetlauncher.app.data.model.Folder
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -192,7 +192,7 @@ fun AppDrawerScreen(
     /** Search results' own scroll position — distinct from [listState]/[gridState] (the browse-mode lists), so the caller's swipe-down-to-close nested scroll connection can tell whether the *visible* list is actually at its top while searching. */
     searchListState: LazyListState = rememberLazyListState(),
     presentation: DrawerPresentation = DrawerPresentation.LIST,
-    gridSize: DrawerGridSize = DrawerGridSize.FIVE_BY_SIX,
+    gridDensity: DrawerGridDensity = DrawerGridDensity.COMPACT,
     listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     showIcons: Boolean = true,
     showLabels: Boolean = true,
@@ -472,7 +472,7 @@ fun AppDrawerScreen(
                 contacts = contacts,
                 listState = searchListState,
                 presentation = presentation,
-                gridColumns = gridSize.columns,
+                gridDensity = gridDensity,
                 showIcons = showIcons,
                 showLabels = showLabels,
                 labelFontWeight = labelFontWeight,
@@ -513,8 +513,7 @@ fun AppDrawerScreen(
                     pinnedFolders = pinnedFolders,
                     folderDisplayMode = folderDisplayMode,
                     gridState = gridState,
-                    columns = gridSize.columns,
-                    rows = gridSize.rows,
+                    density = gridDensity,
                     onAppClick = onAppClick,
                     showLabels = showLabels,
                     labelFontWeight = labelFontWeight,
@@ -896,7 +895,7 @@ private fun DrawerSearchResults(
     contacts: List<ContactInfo>,
     listState: LazyListState,
     presentation: DrawerPresentation,
-    gridColumns: Int,
+    gridDensity: DrawerGridDensity,
     showIcons: Boolean,
     showLabels: Boolean,
     labelFontWeight: FontWeight,
@@ -941,30 +940,36 @@ private fun DrawerSearchResults(
             if (presentation == DrawerPresentation.GRID) {
                 item {
                     // A LazyVerticalGrid can't nest inside this LazyColumn — the tile count here
-                    // is tiny (capped at 5), so a plain flow-row-style Column of chunked rows is
-                    // simpler than wiring a second scroll container. Same 8dp horizontal / 20dp
-                    // vertical spacing and DrawerGridTile itself as the real grid, just without
-                    // its fixed per-row height (that's a "fill N screen rows" browse-mode
-                    // computation that doesn't apply to a handful of search results).
-                    apps.chunked(gridColumns).forEach { rowApps ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 20.dp)) {
-                            rowApps.forEach { app ->
-                                DrawerGridTile(
-                                    app = app,
-                                    onClick = { onAppClick(app) },
-                                    showLabel = showLabels,
-                                    labelFontWeight = labelFontWeight,
-                                    badgeCount = badgeCounts[app.packageName],
-                                    badgeStyle = badgeStyle,
-                                    appMenuNotifications = appMenuNotifications,
-                                    onAppInfo = onAppInfo,
-                                    onRequestQuickAddState = onRequestQuickAddState,
-                                    onFavoritesAction = onFavoritesAction,
-                                    onDockAction = onDockAction,
-                                    folderCandidates = folderCandidates,
-                                    onCreateFolder = onCreateFolder,
-                                    onAddToFolder = onAddToFolder,
-                                )
+                    // is tiny, so chunked rows of equal-weight cells (same column count as the
+                    // browse grid) are simpler than a second scroll container. No fixed row
+                    // height: the browse grid's "fill N screen rows" doesn't apply here.
+                    BoxWithConstraints {
+                        val columns = drawerGridColumns(maxWidth, gridDensity)
+                        Column {
+                            apps.chunked(columns).forEach { rowApps ->
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 20.dp)) {
+                                    rowApps.forEach { app ->
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            DrawerGridTile(
+                                                app = app,
+                                                onClick = { onAppClick(app) },
+                                                showLabel = showLabels,
+                                                labelFontWeight = labelFontWeight,
+                                                badgeCount = badgeCounts[app.packageName],
+                                                badgeStyle = badgeStyle,
+                                                appMenuNotifications = appMenuNotifications,
+                                                onAppInfo = onAppInfo,
+                                                onRequestQuickAddState = onRequestQuickAddState,
+                                                onFavoritesAction = onFavoritesAction,
+                                                onDockAction = onDockAction,
+                                                folderCandidates = folderCandidates,
+                                                onCreateFolder = onCreateFolder,
+                                                onAddToFolder = onAddToFolder,
+                                            )
+                                        }
+                                    }
+                                    repeat(columns - rowApps.size) { Spacer(modifier = Modifier.weight(1f)) }
+                                }
                             }
                         }
                     }
@@ -1697,9 +1702,10 @@ private fun DrawerAppRow(
 private val GRID_CONTENT_TOP_PADDING = 4.dp
 private val GRID_CONTENT_BOTTOM_PADDING = 16.dp
 private val GRID_VERTICAL_SPACING = 20.dp
+private val GRID_START_PADDING = 48.dp
 
 /**
- * Grid layout (`1i`): `columns` fixed columns, icons `44×44`/`13dp` corners, centered label
+ * Grid layout (`1i`): [density]-driven columns, icons `44×44`/`13dp` corners, centered label
  * beneath. Unlike List, Grid renders no letter headers — a continuous grid of all apps in
  * alphabetical order, not visually grouped. The alphabet rail still works: dragging to a letter
  * scrolls to that letter's *first item* ([GroupedItems.firstAppIndexForLetter]) rather than a
@@ -1707,12 +1713,11 @@ private val GRID_VERTICAL_SPACING = 20.dp
  * rule when [folderDisplayMode] pins it to either end — just N folder tiles, no "Folders" label
  * (List's equivalent section gets one only because List already headers every letter group too).
  *
- * [rows] (from the selected [DrawerGridSize][com.facetlauncher.app.data.model.DrawerGridSize])
- * divides the *viewport* height into that many equal-height rows — each tile is given exactly
- * that height, so choosing "5 rows" always fits 5 rows of tiles in the visible area regardless of
- * how many apps there are in total, rather than "rows" being purely emergent from however many
- * happen to fit at a fixed tile size (see chat history). The grid still scrolls past that
- * computed row height when there are more apps than fit.
+ * The column and row counts come from [density] and the viewport size ([drawerGridColumns],
+ * [drawerGridRows]), so the same setting suits a phone, a foldable and a tablet. The rows divide
+ * the *viewport* height into equal-height rows — each tile is given exactly that height, so a
+ * whole number of rows always fits the visible area regardless of how many apps there are. The
+ * grid still scrolls past that computed row height when there are more apps than fit.
  */
 @Composable
 private fun DrawerGridContent(
@@ -1720,8 +1725,7 @@ private fun DrawerGridContent(
     pinnedFolders: List<Folder>,
     folderDisplayMode: DrawerFolderDisplayMode,
     gridState: LazyGridState,
-    columns: Int,
-    rows: Int,
+    density: DrawerGridDensity,
     onAppClick: (AppInfo) -> Unit,
     showLabels: Boolean,
     labelFontWeight: FontWeight,
@@ -1745,6 +1749,8 @@ private fun DrawerGridContent(
     val items = remember(groupedItems) { groupedItems.groups.values.flatten() }
     BoxWithConstraints(modifier = modifier) {
         val availableHeight = maxHeight - GRID_CONTENT_TOP_PADDING - GRID_CONTENT_BOTTOM_PADDING
+        val columns = drawerGridColumns(maxWidth - GRID_START_PADDING, density)
+        val rows = drawerGridRows(availableHeight, density)
         val rowHeight = ((availableHeight - GRID_VERTICAL_SPACING * (rows - 1)) / rows).coerceAtLeast(0.dp)
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
@@ -1753,7 +1759,7 @@ private fun DrawerGridContent(
             // No right inset — same reasoning as DrawerListContent's identical fix (see chat
             // history): this content is already in a weight(1f) slot next to LetterJumpZone, so
             // its right edge already stops exactly at the rail's touch zone.
-            contentPadding = PaddingValues(start = 48.dp, top = GRID_CONTENT_TOP_PADDING, bottom = GRID_CONTENT_BOTTOM_PADDING),
+            contentPadding = PaddingValues(start = GRID_START_PADDING, top = GRID_CONTENT_TOP_PADDING, bottom = GRID_CONTENT_BOTTOM_PADDING),
             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -1858,18 +1864,20 @@ private fun DrawerGridTile(
     // NOT restructured to move `modifier` onto this Box like the other ModifierNotUsedAtRoot
     // fixes in this file — `modifier` carries DrawerGridContent's explicit per-row height, and
     // that height has to land on the SAME node as the clickable/testTag (this Column) so the
-    // touch target and the grid's own row-height math (DrawerGridSize.rows) still span the real
-    // rendered tile size. Moving it to the Box left the Column content-intrinsic height again —
-    // caught by gridSizeRowsSettingControlsTileHeight, which exists specifically to guard against
-    // tile height going back to being row-count-independent (see chat history).
+    // touch target and the grid's own row-height math still span the real rendered tile size.
+    // Moving it to the Box left the Column content-intrinsic height again — caught by
+    // gridDensityControlsTileHeight, which guards against tile height going back to being
+    // row-count-independent. Fills the cell width so the icon centers in its column and the
+    // whole cell is tappable.
     Box {
         Column(
             modifier = modifier
+                .fillMaxWidth()
                 .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                 .testTag("drawer_grid_tile_${app.packageName}"),
             horizontalAlignment = Alignment.CenterHorizontally,
-            // The tile is now given an explicit row height (see DrawerGridContent's [rows]
-            // handling) that can be taller than the icon+label's own intrinsic height — center
+            // The tile is now given an explicit row height (see DrawerGridContent's row
+            // computation) that can be taller than the icon+label's own intrinsic height — center
             // them within it instead of letting them sit pinned to the top.
             verticalArrangement = Arrangement.Center,
         ) {

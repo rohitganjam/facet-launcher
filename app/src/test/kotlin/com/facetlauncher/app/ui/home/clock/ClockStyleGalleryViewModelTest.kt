@@ -3,7 +3,7 @@ package com.facetlauncher.app.ui.home.clock
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -144,7 +144,7 @@ class ClockStyleGalleryViewModelTest {
     fun `changing clock alignment writes the facet's own override when facet-scoped`() = runTest {
         // Now part of the same Clock+Calendar design bundle as font/color/template — facet-
         // overridable like those, unlike its earlier global-only design (see chat history).
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideClock = true)
         val facetRepository = mock(FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(facetRepository.getById(5L)).thenReturn(facet)
@@ -153,7 +153,7 @@ class ClockStyleGalleryViewModelTest {
         viewModel.setClockAlignment(ClockAlignment.CENTER)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setClockAlignment(facet, ClockAlignment.CENTER)
+        verify(facetRepository).setClockAlignment(facet.id, ClockAlignment.CENTER)
     }
 
     @Test
@@ -170,7 +170,7 @@ class ClockStyleGalleryViewModelTest {
 
     @Test
     fun `resetClockPosition resets the facet's own height and both alignments when facet-scoped`() = runTest {
-        val facet = FacetEntity(id = 5L, name = "Work", position = 0, overrideClock = true, clockZoneHeightDp = 200f)
+        val facet = Facet(id = 5L, name = "Work", position = 0, overrideClock = true, clockZoneHeightDp = 200f)
         val facetRepository = mock(FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(facetRepository.getById(5L)).thenReturn(facet)
@@ -179,12 +179,12 @@ class ClockStyleGalleryViewModelTest {
         viewModel.resetClockPosition()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).resetClockPosition(facet)
+        verify(facetRepository).resetClockPosition(facet.id)
     }
 
     @Test
     fun `uiState resolves clock alignment from the facet when scoped`() = runTest {
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 5L,
             name = "Work",
             position = 0,
@@ -205,7 +205,7 @@ class ClockStyleGalleryViewModelTest {
 
     @Test
     fun `uiState resolves accent color and date style from the facet when scoped`() = runTest {
-        val facet = FacetEntity(
+        val facet = Facet(
             id = 5L,
             name = "Work",
             position = 0,

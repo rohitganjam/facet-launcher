@@ -3,6 +3,8 @@ package com.facetlauncher.app.ui.home
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -68,16 +70,14 @@ class ClockWidgetHostControllerTest {
     }
 
     @Test
-    fun `resizeFloorDp prefers the provider's own declared minResizeWidth and minResizeHeight`() {
+    fun `resizeFloorDp is one hub cell regardless of the provider's minResize`() {
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
-        val info = AppWidgetProviderInfo().apply {
-            minWidth = 180; minHeight = 90
-            minResizeWidth = 90; minResizeHeight = 40
-        }
+        val info = AppWidgetProviderInfo().apply { minWidth = 180; minHeight = 90; minResizeWidth = 90; minResizeHeight = 40 }
         `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(info)
         val controller = ClockWidgetHostController(appWidgetRepository)
 
-        assertEquals(90 to 40, controller.resizeFloorDp(7))
+        // (400 - 32 padding - 16 gaps) / 5 columns
+        assertEquals(70 to 70, controller.resizeFloorDp(contextWithScreenWidthDp(400), 7))
     }
 
     @Test
@@ -86,25 +86,15 @@ class ClockWidgetHostControllerTest {
         `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(null)
         val controller = ClockWidgetHostController(appWidgetRepository)
 
-        assertNull(controller.resizeFloorDp(7))
-    }
-}
-
-class ClockWidgetResizeFloorDpTest {
-
-    @Test
-    fun `prefers minResizeWidth and minResizeHeight when both are declared`() {
-        assertEquals(90 to 40, clockWidgetResizeFloorDp(minWidth = 180, minHeight = 90, minResizeWidth = 90, minResizeHeight = 40))
+        assertNull(controller.resizeFloorDp(contextWithScreenWidthDp(400), 7))
     }
 
-    @Test
-    fun `falls back to minWidth and minHeight when minResize values are undeclared (zero)`() {
-        assertEquals(180 to 90, clockWidgetResizeFloorDp(minWidth = 180, minHeight = 90, minResizeWidth = 0, minResizeHeight = 0))
-    }
-
-    @Test
-    fun `falls back per-axis independently, not all-or-nothing`() {
-        // A provider that only declared a resize floor for width, not height.
-        assertEquals(90 to 90, clockWidgetResizeFloorDp(minWidth = 180, minHeight = 90, minResizeWidth = 90, minResizeHeight = 0))
+    private fun contextWithScreenWidthDp(widthDp: Int): Context {
+        val configuration = Configuration().apply { screenWidthDp = widthDp }
+        val resources = mock(Resources::class.java)
+        `when`(resources.configuration).thenReturn(configuration)
+        val context = mock(Context::class.java)
+        `when`(context.resources).thenReturn(resources)
+        return context
     }
 }

@@ -1,6 +1,12 @@
 package com.facetlauncher.app.ui.home
 
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.domain.ListAlignment
+import com.facetlauncher.app.domain.ClockPlacement
+import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -17,7 +23,7 @@ class HomeUiStateTest {
     fun `effective 24 hour time falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
             settings = LauncherSettings(use24HourTime = true, activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideClock = false)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = false)),
         )
 
         assertEquals(true, state.effectiveUse24HourTime)
@@ -27,7 +33,7 @@ class HomeUiStateTest {
     fun `effective 24 hour time uses the active facet's override when set`() {
         val state = HomeUiState(
             settings = LauncherSettings(use24HourTime = true, activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideClock = true, use24HourTime = false)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = true, use24HourTime = false)),
         )
 
         assertEquals(false, state.effectiveUse24HourTime)
@@ -37,7 +43,7 @@ class HomeUiStateTest {
     fun `clockWidgetAppWidgetId is null when the active facet uses its native clock`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = null)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = null)),
         )
 
         assertEquals(null, state.clockWidgetAppWidgetId)
@@ -48,8 +54,8 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 2L),
             facets = listOf(
-                FacetEntity(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = 7),
-                FacetEntity(id = 2L, name = "Facet 2", position = 1, clockWidgetAppWidgetId = 42),
+                Facet(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = 7),
+                Facet(id = 2L, name = "Facet 2", position = 1, clockWidgetAppWidgetId = 42),
             ),
         )
 
@@ -60,7 +66,7 @@ class HomeUiStateTest {
     fun `usage access prompt is hidden for favorites mode regardless of grant state`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.FAVORITES)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.FAVORITES)),
             usageAccessGranted = false,
         )
 
@@ -71,7 +77,7 @@ class HomeUiStateTest {
     fun `usage access prompt shows for recents mode when access isn't granted`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
             usageAccessGranted = false,
         )
 
@@ -82,7 +88,7 @@ class HomeUiStateTest {
     fun `usage access prompt is hidden for most used mode once access is granted`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED)),
             usageAccessGranted = true,
         )
 
@@ -93,7 +99,7 @@ class HomeUiStateTest {
     fun `usage access prompt stays hidden once dismissed even though access still isn't granted`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
             usageAccessGranted = false,
             usageAccessPromptDismissed = true,
         )
@@ -105,7 +111,7 @@ class HomeUiStateTest {
     fun `active app row position falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
             settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
         )
 
         assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
@@ -116,7 +122,7 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT, activeFacetId = 1L),
             facets = listOf(
-                FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideApps = true, appRowPosition = AppRowPosition.RIGHT),
+                Facet(id = 1L, name = "Facet 1", position = 0, overrideApps = true, appRowPosition = AppRowPosition.RIGHT),
             ),
         )
 
@@ -127,7 +133,7 @@ class HomeUiStateTest {
     fun `active app row presentation falls back to the global default when the active facet has no override`() {
         val state = HomeUiState(
             settings = LauncherSettings(appRowPresentation = AppRowPresentation.TEXT_ONLY, activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
         )
 
         assertEquals(AppRowPresentation.TEXT_ONLY, state.activeAppRowPresentation)
@@ -138,7 +144,7 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(appRowPresentation = AppRowPresentation.ICON_AND_TEXT, activeFacetId = 1L),
             facets = listOf(
-                FacetEntity(
+                Facet(
                     id = 1L,
                     name = "Facet 1",
                     position = 0,
@@ -224,7 +230,7 @@ class HomeUiStateTest {
     fun `dock override facet name is null when the active facet isn't overriding the dock`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overrideDock = false)),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideDock = false)),
         )
 
         assertEquals(null, state.dockOverrideFacetName)
@@ -234,7 +240,7 @@ class HomeUiStateTest {
     fun `dock override facet name is the active facet's own name when it overrides the dock`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overrideDock = true)),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideDock = true)),
         )
 
         assertEquals("Work", state.dockOverrideFacetName)
@@ -244,7 +250,7 @@ class HomeUiStateTest {
     fun `favorites override facet name is null when the active facet isn't overriding favorites`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overridingFavorites = false)),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overridingFavorites = false)),
         )
 
         assertEquals(null, state.favoritesOverrideFacetName)
@@ -254,9 +260,160 @@ class HomeUiStateTest {
     fun `favorites override facet name is the active facet's own name when it overrides favorites`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(FacetEntity(id = 1L, name = "Work", position = 0, overridingFavorites = true)),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overridingFavorites = true)),
         )
 
         assertEquals("Work", state.favoritesOverrideFacetName)
+    }
+
+    private val portrait = HomeLayoutMode.PORTRAIT
+    private val landscape = HomeLayoutMode.LANDSCAPE
+
+    @Test
+    fun `clock placement in portrait ignores the landscape values`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(
+                clockAlignment = ClockAlignment.RIGHT,
+                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockScale = 0.9f),
+            ),
+        )
+
+        assertEquals(ClockPlacement(ClockAlignment.RIGHT, null, 0.8f), state.clockPlacement(portrait))
+    }
+
+    @Test
+    fun `clock placement in landscape falls back to the portrait values when no landscape value is set`() {
+        val state = HomeUiState(settings = LauncherSettings(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 200f, clockScale = 1.2f))
+
+        assertEquals(ClockPlacement(ClockAlignment.RIGHT, 200f, 1.2f), state.clockPlacement(landscape))
+    }
+
+    @Test
+    fun `clock placement in landscape uses the launcher's landscape values when set`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(
+                clockAlignment = ClockAlignment.RIGHT,
+                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f, clockScale = 0.9f),
+            ),
+        )
+
+        assertEquals(ClockPlacement(ClockAlignment.CENTER, 310f, 0.9f), state.clockPlacement(landscape))
+    }
+
+    @Test
+    fun `an overriding facet's landscape clock values win, then its own portrait values, never the launcher's landscape ones`() {
+        val facet = Facet(
+            id = 1L, name = "Facet 1", position = 0, overrideClock = true,
+            clockAlignment = ClockAlignment.RIGHT, clockScale = 1.4f,
+            landscapeClockAlignment = ClockAlignment.CENTER,
+        )
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f)),
+            facets = listOf(facet),
+        )
+
+        val placement = state.clockPlacement(landscape)
+
+        assertEquals(ClockAlignment.CENTER, placement.alignment)
+        assertEquals(1.4f, placement.scale)
+    }
+
+    @Test
+    fun `an overriding facet that never dragged its divider keeps a natural zone height in landscape`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = true)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, clockZoneHeightDp = 200f, landscape = LandscapeOverrides(clockZoneHeightDp = 300f)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(null, state.clockPlacement(landscape).zoneHeightDp)
+    }
+
+    @Test
+    fun `a facet that is not overriding the clock uses the launcher's values in both orientations`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = false, landscapeClockAlignment = ClockAlignment.CENTER)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(ClockAlignment.RIGHT, state.clockPlacement(landscape).alignment)
+        assertEquals(ClockAlignment.LEFT, state.clockPlacement(portrait).alignment)
+    }
+
+    @Test
+    fun `list alignment in landscape falls back to the portrait values when no landscape value is set`() {
+        val state = HomeUiState(settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, appListVerticalAlignment = AppListVerticalAlignment.TOP))
+
+        assertEquals(ListAlignment(AppRowPosition.RIGHT, AppListVerticalAlignment.TOP, AppListColumnAlignment.BOTH_LEFT), state.listAlignment(landscape))
+    }
+
+    @Test
+    fun `list alignment in landscape uses the launcher's landscape values when set, and portrait is unaffected`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(
+                appRowPosition = AppRowPosition.RIGHT,
+                landscape = LandscapeOverrides(
+                    appRowPosition = AppRowPosition.CENTER,
+                    appListVerticalAlignment = AppListVerticalAlignment.TOP,
+                    appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+                ),
+            ),
+        )
+
+        assertEquals(ListAlignment(AppRowPosition.CENTER, AppListVerticalAlignment.TOP, AppListColumnAlignment.MIRRORED), state.listAlignment(landscape))
+        assertEquals(AppRowPosition.RIGHT, state.listAlignment(portrait).rowPosition)
+    }
+
+    @Test
+    fun `a facet's explicit portrait list alignment beats the launcher's landscape value`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(AppRowPosition.RIGHT, state.listAlignment(landscape).rowPosition)
+    }
+
+    @Test
+    fun `a facet's own landscape list alignment wins`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT, landscapeAppRowPosition = AppRowPosition.LEFT)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(AppRowPosition.LEFT, state.listAlignment(landscape).rowPosition)
+    }
+
+    @Test
+    fun `a facet that inherits its portrait list alignment uses the launcher's landscape value in landscape`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT)
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
+            facets = listOf(facet),
+        )
+
+        assertEquals(AppRowPosition.CENTER, state.listAlignment(landscape).rowPosition)
+    }
+
+    @Test
+    fun `the hosted widget size in landscape is its own when saved, else the portrait size`() {
+        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 7, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
+        val both = portraitOnly.copy(landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300)
+        val settings = LauncherSettings(activeFacetId = 1L)
+
+        assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(portraitOnly)).clockWidgetSizeDp(landscape))
+        assertEquals(400 to 300, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(landscape))
+        assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(portrait))
+    }
+
+    @Test
+    fun `there is no hosted widget size before a resize`() {
+        val state = HomeUiState(settings = LauncherSettings(activeFacetId = 1L), facets = listOf(Facet(id = 1L, name = "A", position = 0)))
+
+        assertEquals(null, state.clockWidgetSizeDp(landscape))
+        assertEquals(null, HomeUiState().clockWidgetSizeDp(portrait))
     }
 }

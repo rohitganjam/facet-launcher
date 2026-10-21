@@ -3,7 +3,7 @@ package com.facetlauncher.app.data
 import android.content.Context
 import android.content.pm.ShortcutManager
 import androidx.test.core.app.ApplicationProvider
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.parseFacetIdFromDeepLink
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,7 +21,7 @@ class FacetShortcutRepositoryTest {
     @Test
     fun `short and long labels read 'Switch to' the facet's name, while the shortcut id and trigger uri encode its id`() {
         // Given a facet
-        val facet = FacetEntity(id = 7, name = "Work", position = 0)
+        val facet = Facet(id = 7, name = "Work", position = 0)
 
         // When its shortcut is published
         repository.syncShortcuts(listOf(facet))
@@ -40,7 +40,7 @@ class FacetShortcutRepositoryTest {
     @Test
     fun `renaming a facet updates the label on the next sync without changing the shortcut id or trigger uri`() {
         // Given a published shortcut
-        val facet = FacetEntity(id = 3, name = "Focus", position = 0)
+        val facet = Facet(id = 3, name = "Focus", position = 0)
         repository.syncShortcuts(listOf(facet))
         val originalUri = shortcutManager.dynamicShortcuts.single().intent!!.data
 
@@ -58,8 +58,8 @@ class FacetShortcutRepositoryTest {
     @Test
     fun `sync fully replaces the previous shortcut set rather than merging into it`() {
         // Given two published facet shortcuts
-        val a = FacetEntity(id = 1, name = "A", position = 0)
-        val b = FacetEntity(id = 2, name = "B", position = 1)
+        val a = Facet(id = 1, name = "A", position = 0)
+        val b = Facet(id = 2, name = "B", position = 1)
         repository.syncShortcuts(listOf(a, b))
 
         // When syncing again with only one of them (the other was deleted)

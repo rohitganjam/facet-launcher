@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.model.FacetLimits
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class ManageFacetsUiState(
-    val facets: List<FacetEntity> = emptyList(),
+    val facets: List<Facet> = emptyList(),
     val activeFacetId: Long = 0L,
     /** False for a free user: facets past the third are disabled and the add row opens the upgrade sheet. */
     val isPro: Boolean = true,
@@ -62,8 +62,8 @@ class ManageFacetsViewModel @Inject constructor(
         ManageFacetsUiState(facets = facets, activeFacetId = settings.activeFacetId, isPro = isPro, automationRuleCount = rules.size)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ManageFacetsUiState())
 
-    fun reorderFacets(orderedFacets: List<FacetEntity>) {
-        viewModelScope.launch { facetRepository.reorderFacets(orderedFacets) }
+    fun reorderFacets(orderedFacets: List<Facet>) {
+        viewModelScope.launch { facetRepository.reorderFacets(orderedFacets.map { it.id }) }
     }
 
     fun applyFacet(facetId: Long) {
@@ -74,7 +74,7 @@ class ManageFacetsViewModel @Inject constructor(
         viewModelScope.launch { addFacetUseCase() }
     }
 
-    fun deleteFacet(facet: FacetEntity) {
+    fun deleteFacet(facet: Facet) {
         if (!uiState.value.canDeleteFacet) return
         viewModelScope.launch {
             deleteFacetUseCase(facet)

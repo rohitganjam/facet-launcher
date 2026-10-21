@@ -1,6 +1,6 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationState
@@ -15,9 +15,9 @@ import java.time.DayOfWeek
 
 class ObserveFacetAutomationUseCaseTest {
 
-    private val personal = FacetEntity(id = 1, name = "Personal", position = 0)
-    private val work = FacetEntity(id = 2, name = "Work", position = 1)
-    private val travel = FacetEntity(id = 3, name = "Travel", position = 2)
+    private val personal = Facet(id = 1, name = "Personal", position = 0)
+    private val work = Facet(id = 2, name = "Work", position = 1)
+    private val travel = Facet(id = 3, name = "Travel", position = 2)
     private val facets = listOf(personal, work, travel)
 
     private val schedule = AutomationTrigger.Schedule(setOf(DayOfWeek.MONDAY), 540, 1080)

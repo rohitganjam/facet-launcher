@@ -1,11 +1,15 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.eqOf
+import com.facetlauncher.app.LandscapeTransformCaptor
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -19,7 +23,7 @@ class ClockWidgetFacetControllerTest {
         val facetRepository = mock(FacetRepository::class.java)
         val switchFacetToNativeClock = mock(SwitchFacetToNativeClockUseCase::class.java)
         val controller = ClockWidgetFacetController(facetRepository, switchFacetToNativeClock, EntitlementRepository())
-        val facet = FacetEntity(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
 
         controller.switchToNativeClock(facet)
 
@@ -31,11 +35,11 @@ class ClockWidgetFacetControllerTest {
         val facetRepository = mock(FacetRepository::class.java)
         val switchFacetToNativeClock = mock(SwitchFacetToNativeClockUseCase::class.java)
         val controller = ClockWidgetFacetController(facetRepository, switchFacetToNativeClock, EntitlementRepository())
-        val facet = FacetEntity(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
 
         controller.commitSize(facet, 180, 90)
 
-        verify(facetRepository).setClockWidgetSize(facet, 180, 90)
+        verify(facetRepository).setClockWidgetSize(facet.id, 180, 90)
     }
 
     @Test
@@ -46,5 +50,19 @@ class ClockWidgetFacetControllerTest {
         assertFalse(controller.isPro.value)
         entitlement.proFlow.value = true
         assertTrue(controller.isPro.value)
+    }
+
+    @Test
+    fun `commitSize in landscape saves landscape's own size`() = runTest {
+        val facetRepository = mock(FacetRepository::class.java)
+        val controller = ClockWidgetFacetController(facetRepository, mock(SwitchFacetToNativeClockUseCase::class.java), EntitlementRepository())
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
+
+        controller.commitSize(facet, 300, 200, HomeLayoutMode.LANDSCAPE)
+
+        val captor = LandscapeTransformCaptor()
+        verify(facetRepository).updateLandscape(eqOf(facet.id), captor.capture())
+        assertEquals(LandscapeOverrides(clockWidgetWidthDp = 300, clockWidgetHeightDp = 200), captor.last(LandscapeOverrides()))
+        verify(facetRepository, org.mockito.Mockito.never()).setClockWidgetSize(facet.id, 300, 200)
     }
 }

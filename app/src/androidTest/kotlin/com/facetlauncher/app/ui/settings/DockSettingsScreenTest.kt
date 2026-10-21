@@ -138,7 +138,7 @@ class DockSettingsScreenTest {
             seed = { _, placementRepository, folderRepository, facetRepository ->
                 folderId = folderRepository.createFolder("Games")
                 placementRepository.placeFolder(PlacementTarget(PlacementList.DOCK, 42L), folderId, position = 0)
-                facetRepository.getById(42L)?.let { facetRepository.updateOverridingDock(it, true) }
+                facetRepository.getById(42L)?.let { facetRepository.updateOverridingDock(it.id, true) }
             },
         )
 

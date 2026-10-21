@@ -119,7 +119,7 @@ private fun DockSettingsContent(
                             testTagPrefix = "dock_settings",
                             inheritSubtitle = stringResource(
                                 R.string.dot_join_2,
-                                stringResource(uiState.globalDockDisplayMode.displayNameRes),
+                                stringResource(uiState.settings.dockDisplayMode.displayNameRes),
                                 pluralStringResource(R.plurals.format_count_apps, uiState.globalDockItems.size, uiState.globalDockItems.size),
                             ),
                         )

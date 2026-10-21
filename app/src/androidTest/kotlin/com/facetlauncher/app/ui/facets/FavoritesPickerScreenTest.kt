@@ -22,7 +22,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
@@ -58,7 +58,7 @@ class FavoritesPickerScreenTest {
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
                 runBlocking {
-                    facetId = database.facetDao().insert(FacetEntity(name = "Facet 1", position = 0))
+                    facetId = database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(name = "Facet 1", position = 0))
                     seed(appRepository, placementRepository, folderRepository)
                 }
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)

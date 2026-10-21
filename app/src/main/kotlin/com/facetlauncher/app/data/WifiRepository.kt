@@ -11,6 +11,7 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.WifiState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -30,7 +32,10 @@ private const val UNKNOWN_SSID = "<unknown ssid>"
  * needs `ACCESS_FINE_LOCATION` (and location turned on), and without it [WifiState.ssid] is null.
  */
 @Singleton
-class WifiRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class WifiRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
 
     private val connectivityManager: ConnectivityManager? get() = context.getSystemService(ConnectivityManager::class.java)
 
@@ -97,7 +102,7 @@ class WifiRepository @Inject constructor(@ApplicationContext private val context
      * strongest first, without duplicates. Empty without the location permission. Android hides a user's
      * saved networks from apps, so only networks in range can be listed.
      */
-    suspend fun nearbyNetworkNames(current: String?): List<String> = withContext(Dispatchers.IO) {
+    suspend fun nearbyNetworkNames(current: String?): List<String> = withContext(ioDispatcher) {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val wifiManager = context.getSystemService(WifiManager::class.java)?.takeIf { granted }
         @Suppress("DEPRECATION")

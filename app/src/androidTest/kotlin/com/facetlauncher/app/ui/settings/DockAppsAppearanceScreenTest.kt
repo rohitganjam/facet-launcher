@@ -1,16 +1,17 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.assertCountEquals
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -75,15 +76,15 @@ class DockAppsAppearanceScreenTest {
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
         packages.forEach { pkg ->
             composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithTag("appearance_preview_grid_icon_$pkg").fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodesWithTag("appearance_preview_home_app_icon_$pkg").fetchSemanticsNodes().isNotEmpty()
             }
         }
 
         // And the first 4 share one row (same top), the last 2 wrap to the next row, packed to
         // the left rather than spread across the full width (the exact bug this test guards
         // against — see chat history: Arrangement.SpaceEvenly used to stretch a short last row).
-        val row1Bounds = (0..3).map { composeRule.onNodeWithTag("appearance_preview_grid_icon_${packages[it]}").fetchSemanticsNode().boundsInRoot }
-        val row2Bounds = (4..5).map { composeRule.onNodeWithTag("appearance_preview_grid_icon_${packages[it]}").fetchSemanticsNode().boundsInRoot }
+        val row1Bounds = (0..3).map { composeRule.onNodeWithTag("appearance_preview_home_app_icon_${packages[it]}").fetchSemanticsNode().boundsInRoot }
+        val row2Bounds = (4..5).map { composeRule.onNodeWithTag("appearance_preview_home_app_icon_${packages[it]}").fetchSemanticsNode().boundsInRoot }
         assertEquals(row1Bounds[0].top, row1Bounds[1].top, 1f)
         assert(row2Bounds[0].top > row1Bounds[0].top)
         // Row 2's two tiles land under row 1's first two columns — same left edges — rather than
@@ -112,9 +113,9 @@ class DockAppsAppearanceScreenTest {
         // Then Grid display defaults to Icons — the tile renders the icon, not the label
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("appearance_preview_grid_icon_$packageName").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("appearance_preview_home_app_icon_$packageName").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag("appearance_preview_grid_label_$packageName").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_preview_home_app_label_$packageName").assertDoesNotExist()
 
         // When switching Grid display to Text
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_grid_display_mode_row"))
@@ -126,9 +127,9 @@ class DockAppsAppearanceScreenTest {
         // Then the tile flips to the label, not the icon
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("appearance_preview_grid_label_$packageName").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("appearance_preview_home_app_label_$packageName").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag("appearance_preview_grid_icon_$packageName").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_preview_home_app_icon_$packageName").assertDoesNotExist()
     }
 
     @Test
@@ -166,10 +167,10 @@ class DockAppsAppearanceScreenTest {
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
         packages.forEach { pkg ->
             composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithTag("appearance_preview_grid_icon_$pkg").fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodesWithTag("appearance_preview_home_app_icon_$pkg").fetchSemanticsNodes().isNotEmpty()
             }
         }
-        val tops = packages.map { composeRule.onNodeWithTag("appearance_preview_grid_icon_$it").fetchSemanticsNode().boundsInRoot.top }
+        val tops = packages.map { composeRule.onNodeWithTag("appearance_preview_home_app_icon_$it").fetchSemanticsNode().boundsInRoot.top }
         assertEquals(tops[0], tops[2], 1f)
         assert(tops[3] > tops[0])
     }
@@ -205,12 +206,12 @@ class DockAppsAppearanceScreenTest {
         )
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
         fun gapBelowClock(): Float {
-            val clockBottom = composeRule.onNodeWithTag("appearance_preview_clock", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
-            val rowTop = composeRule.onNodeWithTag("appearance_preview_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
+            val clockBottom = composeRule.onNodeWithTag("appearance_preview_home_clock_block", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
+            val rowTop = composeRule.onNodeWithTag("appearance_preview_home_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
             return rowTop - clockBottom
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("appearance_preview_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("appearance_preview_home_app_label_$packageName", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
         val bottomGap = gapBelowClock()
 
@@ -280,7 +281,8 @@ class DockAppsAppearanceScreenTest {
         // The Clock card sits above these rows, so each is scrolled into view before it's checked.
         listOf("Show Dock apps as", "Home Apps Alignment", "Show Home apps as", "Home Apps list position").forEach { title ->
             composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasText(title))
-            composeRule.onNodeWithText(title).assertIsDisplayed()
+            // The Portrait and Landscape alignment cards share these two titles; the first is the Portrait one.
+            composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
         }
     }
 
@@ -322,5 +324,79 @@ class DockAppsAppearanceScreenTest {
 
         // Then it leaves
         assertEquals(true, backPressed)
+    }
+
+    @Test
+    fun landscapeAlignmentRowsWriteTheLandscapeSettingAndLeavePortraitAlone() {
+        // Given the screen at global scope
+        val settingsRepository = setContent()
+
+        // When the landscape position and list position are chosen
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row_option_CENTER").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().landscape.appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.CENTER }
+        }
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
+        composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row_option_TOP").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().landscape.appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
+        }
+
+        // Then portrait's own values are unchanged
+        val settings = runBlocking { settingsRepository.settings.first() }
+        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppRowPosition.LEFT, settings.appRowPosition)
+        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
+    }
+
+    @Test
+    fun choosingSameAsPortraitClearsTheLandscapeSetting() {
+        // Given a saved landscape position
+        val settingsRepository = setContent()
+        runBlocking { settingsRepository.updateLandscape { it.copy(appRowPosition = com.facetlauncher.app.data.model.AppRowPosition.RIGHT) } }
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
+
+        // When "Same as portrait" is chosen
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_landscape_app_row_position_row_option_null").performClick()
+
+        // Then the landscape value is cleared
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().landscape.appRowPosition == null }
+        }
+    }
+
+    @Test
+    fun theAllowLandscapeSwitchTurnsLandscapeOffAndHidesTheLandscapeAlignment() {
+        // Given the global screen with landscape allowed
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertExists()
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
+        composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").assertExists()
+
+        // When the switch is turned off
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").performClick()
+
+        // Then the setting is saved and the landscape alignment rows go away
+        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { !settingsRepository.settings.first().allowLandscape } }
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("appearance_landscape_app_list_vertical_alignment_row").fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    @Test
+    fun aFacetScopedScreenHasNoAllowLandscapeSwitch() {
+        // Given a facet-scoped screen
+        val facetId = 1L
+        setContent(facetId = facetId)
+        awaitFacetScoped()
+
+        // Then the launcher-wide switch isn't there
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertDoesNotExist()
     }
 }

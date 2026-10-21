@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -43,7 +43,7 @@ class ObserveFacetPreviewsUseCaseTest {
                 else -> null
             }
         }
-        val facetsFlow = MutableStateFlow<List<FacetEntity>>(emptyList())
+        val facetsFlow = MutableStateFlow<List<Facet>>(emptyList())
         val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facetsFlow) }
         val usageStatsRepository = mock(UsageStatsRepository::class.java)
         val usageAccessRepository = mock(UsageAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(true) }
@@ -69,8 +69,8 @@ class ObserveFacetPreviewsUseCaseTest {
             .thenReturn(flowOf(mapOf(1L to listOf(PlacedItem.SingleApp(appInfo('a'))), 2L to emptyList())))
         `when`(fixture.placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true),
-            FacetEntity(id = 2L, name = "P2", position = 1, overridingFavorites = false),
+            Facet(id = 1L, name = "P1", position = 0, overridingFavorites = true),
+            Facet(id = 2L, name = "P2", position = 1, overridingFavorites = false),
         )
 
         // When observing previews for every facet
@@ -89,8 +89,8 @@ class ObserveFacetPreviewsUseCaseTest {
             .thenReturn(flowOf(mapOf(1L to listOf(PlacedItem.SingleApp(appInfo('a'))), 2L to emptyList())))
         `when`(fixture.placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = true),
-            FacetEntity(id = 2L, name = "P2", position = 1, overrideDock = false),
+            Facet(id = 1L, name = "P1", position = 0, overrideDock = true),
+            Facet(id = 2L, name = "P2", position = 1, overrideDock = false),
         )
 
         // When observing previews for every facet
@@ -107,7 +107,7 @@ class ObserveFacetPreviewsUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
+            Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
         )
 
         // When observing previews
@@ -122,8 +122,8 @@ class ObserveFacetPreviewsUseCaseTest {
         // Given calendar access ungranted (the fixture default) and two facets
         val fixture = Fixture()
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0),
-            FacetEntity(id = 2L, name = "P2", position = 1),
+            Facet(id = 1L, name = "P1", position = 0),
+            Facet(id = 2L, name = "P2", position = 1),
         )
 
         // When observing previews
@@ -145,9 +145,9 @@ class ObserveFacetPreviewsUseCaseTest {
         `when`(fixture.calendarRepository.getUpcomingEvents(null, true)).thenReturn(listOf(overriddenEvent, inheritedEvent))
         fixture.facetsFlow.value = listOf(
             // Overrides all-day events off — queried with includeAllDay=false.
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
+            Facet(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
             // Inherits the global default (true) — queried with includeAllDay=true.
-            FacetEntity(id = 2L, name = "P2", position = 1, overrideCalendar = false),
+            Facet(id = 2L, name = "P2", position = 1, overrideCalendar = false),
         )
 
         // When observing previews
@@ -167,7 +167,7 @@ class ObserveFacetPreviewsUseCaseTest {
         `when`(fixture.calendarRepository.getUpcomingEvents(setOf("9"), true)).thenReturn(listOf(event))
         fixture.settingsFlow.value = LauncherSettings(selectedCalendarIds = setOf("1", "2"))
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),
+            Facet(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIds = setOf("9")),
         )
 
         // When observing previews

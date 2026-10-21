@@ -1,8 +1,10 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -18,7 +20,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
@@ -54,6 +56,21 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `a grid size stored by an older version loads as the nearest density`() = runTest {
+        // Given a DataStore that still holds the retired column by row value
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            produceFile = { tempFolder.newFile("legacy-${System.nanoTime()}.preferences_pb") },
+        )
+        dataStore.edit { it[androidx.datastore.preferences.core.stringPreferencesKey("drawer_grid_size")] = "FOUR_BY_FIVE" }
+
+        // When the settings are read
+        val settings = SettingsRepository(dataStore).settings.first()
+
+        // Then it maps to Regular
+        assertEquals(DrawerGridDensity.REGULAR, settings.drawerGridDensity)
+    }
+
+    @Test
     fun `defaults match the design spec before anything is written`() = runTest {
         // Given a fresh repository with nothing written yet
         val repository = createRepository()
@@ -63,7 +80,7 @@ class SettingsRepositoryTest {
         assertFalse(settings.use24HourTime)
         assertEquals(DockDisplayMode.ICONS, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.LIST, settings.drawerPresentation)
-        assertEquals(DrawerGridSize.FIVE_BY_SIX, settings.drawerGridSize)
+        assertEquals(DrawerGridDensity.COMPACT, settings.drawerGridDensity)
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
         assertEquals(IconShape.SQUIRCLE, settings.iconShape)
@@ -277,7 +294,7 @@ class SettingsRepositoryTest {
         repository.setUse24HourTime(true)
         repository.setDockDisplayMode(DockDisplayMode.TEXT)
         repository.setDrawerPresentation(DrawerPresentation.GRID)
-        repository.setDrawerGridSize(DrawerGridSize.FOUR_BY_FOUR)
+        repository.setDrawerGridDensity(DrawerGridDensity.AIRY)
         repository.setDrawerListItemSize(DrawerListItemSize.SPACIOUS)
         repository.setIconRenderMode(IconRenderMode.MONOCHROME_ACCENT)
         repository.setIconShape(IconShape.ROUNDED)
@@ -317,7 +334,7 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.use24HourTime)
         assertEquals(DockDisplayMode.TEXT, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.GRID, settings.drawerPresentation)
-        assertEquals(DrawerGridSize.FOUR_BY_FOUR, settings.drawerGridSize)
+        assertEquals(DrawerGridDensity.AIRY, settings.drawerGridDensity)
         assertEquals(DrawerListItemSize.SPACIOUS, settings.drawerListItemSize)
         assertEquals(IconRenderMode.MONOCHROME_ACCENT, settings.iconRenderMode)
         assertEquals(IconShape.ROUNDED, settings.iconShape)
@@ -476,5 +493,66 @@ class SettingsRepositoryTest {
         val afterLocation = repository.settings.first()
         assertEquals(true, afterLocation.bluetoothPermissionRequested)
         assertEquals(true, afterLocation.locationPermissionRequested)
+    }
+
+    @Test
+    fun `allow landscape defaults to on and persists when turned off`() = runTest {
+        val repository = createRepository()
+        assertEquals(true, repository.settings.first().allowLandscape)
+
+        repository.setAllowLandscape(false)
+
+        assertEquals(false, repository.settings.first().allowLandscape)
+    }
+
+    @Test
+    fun `landscape values are saved apart from the portrait ones and default to none`() = runTest {
+        val repository = createRepository()
+        assertEquals(LandscapeOverrides(), repository.settings.first().landscape)
+
+        // When the landscape values are written
+        val written = LandscapeOverrides(
+            clockAlignment = ClockAlignment.CENTER,
+            clockZoneHeightDp = 310f,
+            clockScale = 1.2f,
+            appRowPosition = AppRowPosition.CENTER,
+            appListVerticalAlignment = AppListVerticalAlignment.TOP,
+            appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+        )
+        repository.updateLandscape { written }
+
+        // Then they read back, and the portrait values are untouched
+        val saved = repository.settings.first()
+        assertEquals(written, saved.landscape)
+        assertEquals(ClockAlignment.LEFT, saved.clockAlignment)
+        assertEquals(null, saved.clockZoneHeightDp)
+        assertEquals(0.8f, saved.clockScale, 0.001f)
+        assertEquals(AppRowPosition.LEFT, saved.appRowPosition)
+    }
+
+    @Test
+    fun `updateLandscape changes only the fields it names and a null clears one`() = runTest {
+        val repository = createRepository()
+        repository.updateLandscape { it.copy(clockScale = 1.2f, appRowPosition = AppRowPosition.RIGHT) }
+
+        repository.updateLandscape { it.copy(appRowPosition = null) }
+
+        val landscape = repository.settings.first().landscape
+        assertEquals(1.2f, landscape.clockScale!!, 0.001f)
+        assertEquals(null, landscape.appRowPosition)
+    }
+
+    @Test
+    fun `resetting the clock height and scale clears their landscape values too`() = runTest {
+        val repository = createRepository()
+        repository.updateLandscape { it.copy(clockZoneHeightDp = 310f, clockScale = 1.2f, clockAlignment = ClockAlignment.CENTER) }
+
+        repository.resetClockZoneHeight()
+        repository.resetClockScale()
+
+        val landscape = repository.settings.first().landscape
+        assertEquals(null, landscape.clockZoneHeightDp)
+        assertEquals(null, landscape.clockScale)
+        assertEquals(ClockAlignment.CENTER, landscape.clockAlignment)
     }
 }

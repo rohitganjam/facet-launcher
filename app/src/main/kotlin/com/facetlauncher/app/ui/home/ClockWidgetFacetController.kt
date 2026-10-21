@@ -2,12 +2,12 @@ package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import javax.inject.Inject
 
 /**
- * PRD F15's facet-writing clock-widget actions — takes the target [FacetEntity] as a parameter
+ * PRD F15's facet-writing clock-widget actions — takes the target [Facet] as a parameter
  * rather than reading it from any ViewModel's own state, sibling to [ClockWidgetHostController]
  * (that one wraps `AppWidgetRepository` hooks; this one wraps `FacetRepository` writes) — both
  * extracted out of [HomeViewModel] to stay under this codebase's max-functions-per-class lint
@@ -24,9 +24,13 @@ class ClockWidgetFacetController @Inject constructor(
     val isPro = entitlementRepository.isPro
 
     /** PRD F15's "Switch to launcher clock widget" row — see [SwitchFacetToNativeClockUseCase]'s own doc. */
-    suspend fun switchToNativeClock(facet: FacetEntity) = switchFacetToNativeClock(facet)
+    suspend fun switchToNativeClock(facet: Facet) = switchFacetToNativeClock(facet)
 
-    /** PRD F15's interactive resize commit, fired once on release by the clock's resize handles — see [FacetEntity.clockWidgetWidthDp]'s own doc. */
-    suspend fun commitSize(facet: FacetEntity, widthDp: Int, heightDp: Int) =
-        facetRepository.setClockWidgetSize(facet, widthDp, heightDp)
+    /** PRD F15's interactive resize commit, fired once on release by the clock's resize handles — see [Facet.clockWidgetWidthDp]'s own doc. */
+    suspend fun commitSize(facet: Facet, widthDp: Int, heightDp: Int, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) =
+        if (mode == HomeLayoutMode.LANDSCAPE) {
+            facetRepository.updateLandscape(facet.id) { it.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp) }
+        } else {
+            facetRepository.setClockWidgetSize(facet.id, widthDp, heightDp)
+        }
 }

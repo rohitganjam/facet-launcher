@@ -9,7 +9,7 @@ import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -43,7 +43,7 @@ class ObserveHomeScreenStateUseCaseTest {
             `when`(it.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(emptyList()))
             `when`(it.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
         }
-        val facetsFlow = MutableStateFlow<List<FacetEntity>>(emptyList())
+        val facetsFlow = MutableStateFlow<List<Facet>>(emptyList())
         val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facetsFlow) }
         val usageStatsRepository = mock(UsageStatsRepository::class.java)
         val usageAccessRepository = mock(UsageAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(true) }
@@ -79,7 +79,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given settings pointing at facet 1, overriding its own favorites, resolving to one app
         val fixture = Fixture()
         `when`(fixture.placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('a')))))
-        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true))
+        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0, overridingFavorites = true))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -93,7 +93,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given settings pointing at facet 1, which hasn't overridden its own favorites
         val fixture = Fixture()
         `when`(fixture.placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
-        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = false))
+        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0, overridingFavorites = false))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -109,8 +109,8 @@ class ObserveHomeScreenStateUseCaseTest {
         `when`(fixture.placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('a')))))
         `when`(fixture.placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, 2L))).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('b')))))
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overridingFavorites = true),
-            FacetEntity(id = 2L, name = "P2", position = 1, overridingFavorites = true),
+            Facet(id = 1L, name = "P1", position = 0, overridingFavorites = true),
+            Facet(id = 2L, name = "P2", position = 1, overridingFavorites = true),
         )
 
         // When switching the active facet to 2
@@ -127,7 +127,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // favorites of its own on the launcher-wide default list
         val fixture = Fixture()
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
+            Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
         `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(emptyList())
         `when`(fixture.placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('f')))))
@@ -147,7 +147,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given a facet set to Recents, usage access granted
         val fixture = Fixture()
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
+            Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
         `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(listOf(appInfo('r')))
 
@@ -164,7 +164,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given a facet set to Most Used, usage access granted
         val fixture = Fixture()
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED, appsToShowCount = 4),
+            Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED, appsToShowCount = 4),
         )
         `when`(fixture.usageStatsRepository.getMostUsedApps(4)).thenReturn(listOf(appInfo('m')))
 
@@ -181,7 +181,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
+            Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
         )
 
         // When observing home screen state
@@ -197,7 +197,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given facet 1 active and overriding its dock, resolving to one app
         val fixture = Fixture()
         `when`(fixture.placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, 1L))).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('p')))))
-        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = true))
+        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0, overrideDock = true))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -211,7 +211,7 @@ class ObserveHomeScreenStateUseCaseTest {
         // Given facet 1 active, NOT overriding its dock, and a non-empty default dock
         val fixture = Fixture()
         `when`(fixture.placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('g')))))
-        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0, overrideDock = false))
+        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0, overrideDock = false))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -224,7 +224,7 @@ class ObserveHomeScreenStateUseCaseTest {
     fun `calendar events are empty when calendar access isn't granted`() = runTest {
         // Given calendar access ungranted (the fixture default)
         val fixture = Fixture()
-        fixture.facetsFlow.value = listOf(FacetEntity(id = 1L, name = "P1", position = 0))
+        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -241,7 +241,7 @@ class ObserveHomeScreenStateUseCaseTest {
         val event = CalendarEvent(id = 1L, calendarId = "1", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
         `when`(fixture.calendarRepository.getUpcomingEvents(null, false)).thenReturn(listOf(event))
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
+            Facet(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
         )
 
         // When observing home screen state
@@ -260,7 +260,7 @@ class ObserveHomeScreenStateUseCaseTest {
         `when`(fixture.calendarRepository.getUpcomingEvents(setOf("9"), true)).thenReturn(listOf(event))
         fixture.settingsFlow.value = LauncherSettings(activeFacetId = 1L, selectedCalendarIds = setOf("1", "2"))
         fixture.facetsFlow.value = listOf(
-            FacetEntity(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIdsCsv = "9"),
+            Facet(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIds = setOf("9")),
         )
 
         // When observing home screen state

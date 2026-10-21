@@ -5,10 +5,12 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.annotation.StringRes
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -47,10 +49,11 @@ private val SETTINGS_CATALOG = listOf(
 @Singleton
 class SystemSettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
 
     /** Catalog entries whose label/keywords contain [query], filtered to those this device can actually resolve — some OEMs drop or rename standard Settings screens (same [android.content.pm.PackageManager.resolveActivity] guard [ContactRepository] uses for its own dynamic connections). */
-    suspend fun search(query: String): List<SettingsSearchEntry> = withContext(Dispatchers.IO) {
+    suspend fun search(query: String): List<SettingsSearchEntry> = withContext(ioDispatcher) {
         if (query.isBlank()) return@withContext emptyList()
 
         val packageManager = context.packageManager

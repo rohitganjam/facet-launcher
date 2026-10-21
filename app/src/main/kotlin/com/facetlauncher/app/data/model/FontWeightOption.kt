@@ -8,7 +8,7 @@ import com.facetlauncher.app.R
  * Black, since this governs regular text (Calendar events, Home's app list/Dock/Drawer labels, and —
  * via `ui/theme/Type.kt`'s `facetTypography` — every `bodyLarge`/`bodyMedium`/`bodySmall` consumer
  * app-wide, including Settings' own rows), never headlines/titles/labels. Lives in `data/model` so
- * it can be a real typed field on [LauncherSettings]/`FacetEntity` — the actual
+ * it can be a real typed field on [LauncherSettings]/`Facet` — the actual
  * [androidx.compose.ui.text.font.FontWeight] each option resolves to stays in the UI layer
  * (`ui/theme/Type.kt`'s `FontWeightOption.resolve()`).
  */

@@ -13,7 +13,7 @@ flowchart TB
     S --> TAB["DrawerTab.Personal → profile ∈ {PERSONAL, OTHER}\nDrawerTab.Work(handle) → userHandle == handle"]
     TAB --> GRP["GroupAppsByLetterUseCase(items, locale) { displayName }\nICU AlphabeticIndex buckets → GroupedItems&lt;DrawerItem&gt;\n(headers + AlphabetRail index maps)\nitems = apps only, or apps+folders merged when INLINE"]
     DVM[DrawerViewModel] -- "badgeCounts, contactResults, settingsResults,\nshowContactsPermissionPrompt, showContactsSettingPrompt,\nprivateSpaceState, secureFolderIntent, folders" --> S
-    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridSize,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode, recentlyInstalledPosition" --> S
+    SET["SettingsRepository.settings"] -- "drawerPresentation LIST/GRID, gridDensity,\nlistItemSize, opacity, showIcons/Labels,\nsearchBarPosition, notificationBadgeStyle,\ndrawerFolderDisplayMode, recentlyInstalledPosition" --> S
 ```
 
 ### 1a. Folders in the drawer (`DrawerFolderDisplayMode`)
@@ -115,6 +115,17 @@ either, just the row's own position in its flat `LazyColumn`. The row there
 `MaterialTheme.colorScheme.*` tokens, like every other Private Space row, not this app's usual
 `Accent`/`Ink`, and also gets the sheet's recency badge (`showRecencyBadge = true`).
 
+### 1c. Grid density (`DrawerGridDensity`)
+
+Grid presentation only. `COMPACT`/`REGULAR`/`AIRY` pick a target cell width and row pitch
+(`ui/drawer/DrawerGridLayout.kt`); the column and row counts are computed from the viewport, so one
+setting fits a phone, a foldable and a tablet (a typical phone gets 5/4/4 columns and 6/5/4 rows).
+`DrawerGridContent` derives both counts from its own constraints and divides the height into equal
+rows; search results use the same column count, laid out as equal-weight cells so tiles sit on the
+same grid. The setting persists under the old `drawer_grid_size` key; the retired `FIVE_BY_SIX`-style
+names still load (`DrawerGridDensity.fromStored`) and map to the nearest density. Home's own grid
+(`AppListGridColumns`) is a separate setting and still fixed-column.
+
 ## 2. Search pipeline
 
 ```mermaid
@@ -210,7 +221,11 @@ revisiting.
 ## 4. Gestures & routing (why the drawer isn't a nav destination)
 
 `HomeDrawerRoute` owns every follow-finger drag that starts on Home, on one axis at a time
-(`Axis` resolution on the first frame):
+(`Axis` resolution on the first frame). The logic is `HomeSwipeController` (`launcher/`): three
+`SwipeAxisState`s (Drawer, Hub, carousel), the axis lock, the shade-expand rule, and the two
+nested-scroll bridges (a hosted clock widget through `WidgetScrollBridge`, and the app list's leftover
+scroll). `swipeSettleTarget` is the pure open/closed decision. `HomeSwipeControllerTest` and
+`HomeSwipeGesturesTest` cover it:
 
 | Drag on Home | Opens | Reverse gesture closes |
 |---|---|---|
@@ -254,7 +269,7 @@ it unconsumed (empty space); there is no Done button — tapping the clock or em
 
 **Media player row** (`MediaPlayerRow`, see [13 §3](13-flow-facets-theme-notifications-onboarding.md)) sits just under the
 clock block, at `handlePx - HOME_CLOCK_MIN_GAP + HOME_MEDIA_ROW_TOP_GAP`, and while visible pushes a top-aligned app list
-down by its own measured height (`appListTopPx` replaces `handlePx` for the list's offset, max height and the compact-spacing
+down by its own measured height (`HomeMediaLayout.listTopPx` replaces `handlePx` for the list's offset, max height and the compact-spacing
 check). A bottom-aligned list stays put and the row fills the gap. Its height is kept after it hides, and it is not composed
 in clock adjust mode (so the handles own that space), so neither shifts the list. Its taps are scoped to the art and the
 title, so Home's own long-press still works around it.

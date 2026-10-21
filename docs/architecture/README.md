@@ -1,6 +1,6 @@
 # Facet Launcher — Living Blueprint
 
-An architecture reference derived from the code at app `0.1.26` (Room schema v28, 342 Kotlin files under `app/src/main`). Every claim below was
+An architecture reference derived from the code at app `0.1.28` (Room schema v32, 374 Kotlin files under `app/src/main`). Every claim below was
 checked against source, not against planning docs; where the code diverges from
 `CLAUDE.md`'s stated conventions, [05-findings.md](05-findings.md) says so.
 
@@ -10,10 +10,10 @@ checked against source, not against planning docs; where the code diverges from
 | [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (7 tables: placements are two tables, `app_placements` and `folder_placements`), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v28, the complete DataStore key registry (60 keys, read/write paths, all 62 writers), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
-| [05-findings.md](05-findings.md) | Architect's review: 9 open findings ranked by severity with concrete fixes, plus what's working well |
+| [05-findings.md](05-findings.md) | Architect's review: 8 open findings ranked by severity with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
-| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (193 classes / 1840 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories and data singletons (deps, source wrapped, API, consumers), 41 use cases, 32 ViewModels |
+| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (217 classes / 2117 cases), regenerate with `scripts/gen-test-registry.py` |
+| [07-registries.md](07-registries.md) | Complete inventories: 42 repositories and data singletons (deps, source wrapped, API, consumers), 45 use cases, 32 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -23,6 +23,7 @@ checked against source, not against planning docs; where the code diverges from
 | [14-flow-deep-links-and-shortcuts.md](14-flow-deep-links-and-shortcuts.md) | Flow: facet deep links (`facetlauncher://facet/{id}`), dynamic-shortcut sync, external-trigger ingestion |
 | [15-flow-facet-automation.md](15-flow-facet-automation.md) | Framework: rules that switch the active facet — concepts, baseline/overlay state model, the pure evaluator, manual-wins enforcement, planned triggers and runner, invariants. Mixes built and planned (labelled) |
 | [16-flow-billing.md](16-flow-billing.md) | Flow: the one-time `facet_pro` Google Play purchase, the cached entitlement and its offline rules, Buy/Restore, what a lapse does, the debug override, and why there is still no `INTERNET` |
+| [17-flow-home-layout.md](17-flow-home-layout.md) | Flow: how `HomeScreen` picks portrait or landscape from the window shape, what each layout contains, and how landscape adjust mode works |
 
 ## Stack at a glance
 
@@ -32,7 +33,7 @@ checked against source, not against planning docs; where the code diverges from
 | Module layout | `:app` (`minSdk 30`, `targetSdk 36`, `compileSdk 37`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.10.2` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
-| Persistence | Room `2.8.5` (`facet.db`, v28, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
+| Persistence | Room `2.8.5` (`facet.db`, v32, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |
 | Billing | Google Play Billing `billing-ktx 9.1.0` for the one-time `facet_pro` purchase ([16](16-flow-billing.md)); the manifest removes the `INTERNET` permission the library merges in |

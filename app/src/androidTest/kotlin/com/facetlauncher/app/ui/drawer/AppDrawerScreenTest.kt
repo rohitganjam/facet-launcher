@@ -37,7 +37,7 @@ import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactConnectionType
 import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
@@ -309,6 +309,36 @@ class AppDrawerScreenTest {
     }
 
     @Test
+    fun gridSearchResultsSitOnEvenlySpacedEqualWidthCells() {
+        // Given grid presentation and apps whose labels differ a lot in width
+        val labels = listOf("Wide Wide Wide", "I", "Mmmm")
+        val matches = labels.mapIndexed { i, label ->
+            AppInfo(packageName = "com.example.match$i", activityName = ".Main", label = "Match $label", icon = null)
+        }
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = matches, onAppClick = {}, presentation = DrawerPresentation.GRID,
+                    query = query, onQueryChange = { query = it },
+                )
+            }
+        }
+
+        // When searching
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("Match")
+
+        // Then every tile is the same width and the tiles are evenly spaced, like the browse grid
+        val bounds = (0..2).map {
+            composeRule.onNodeWithTag("drawer_grid_tile_com.example.match$it").fetchSemanticsNode().boundsInRoot
+        }
+        assert(bounds.all { kotlin.math.abs(it.width - bounds[0].width) < 1f }) { "tile widths differ: ${bounds.map { it.width }}" }
+        // Search orders results by relevance, not input order — compare left to right
+        val gaps = bounds.sortedBy { it.left }.zipWithNext { a, b -> b.left - a.left }
+        assert(kotlin.math.abs(gaps[0] - gaps[1]) < 1f) { "tile spacing differs: $gaps" }
+    }
+
+    @Test
     fun emptySearchShowsTheNothingMatchesStateWithAWorkingClearButton() {
         // Given a query that matches nothing
         var query by mutableStateOf("")
@@ -508,30 +538,30 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun gridSizeRowsSettingControlsTileHeight() {
-        // Given the drawer in Grid presentation with a small row count (tiles get more of the
-        // viewport's height each) — a single setContent with reactive state driving [gridSize],
+    fun gridDensityControlsTileHeight() {
+        // Given the drawer in Grid presentation at Airy density (fewer rows, so tiles get more of the
+        // viewport's height each) — a single setContent with reactive state driving [gridDensity],
         // not two separate setContent calls on the same Activity (no longer permitted by the
         // current compose-ui-test/activity libraries — see chat history).
-        var gridSize by mutableStateOf(DrawerGridSize.FOUR_BY_FOUR)
+        var gridDensity by mutableStateOf(DrawerGridDensity.AIRY)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridSize = gridSize)
+                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridDensity = gridDensity)
             }
         }
-        val fourRowsHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
+        val airyHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
-        // When the same drawer instead uses a larger row count (tiles get less height each,
+        // When the same drawer instead uses Compact density (more rows, so tiles get less height each,
         // since more rows must fit in the same viewport)
-        gridSize = DrawerGridSize.FIVE_BY_SIX
+        gridDensity = DrawerGridDensity.COMPACT
         composeRule.waitForIdle()
-        val sixRowsHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
+        val compactHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
-        // Then tile height tracks the selected row count, not just column count — this is the
-        // regression this test guards: before the fix, DrawerGridSize.rows was never read, so
+        // Then tile height tracks the selected density — this is the
+        // regression this test guards: before the fix, the density never reached the grid, so
         // tile height was purely content-intrinsic and identical regardless of row count.
-        assert(fourRowsHeight > sixRowsHeight) {
-            "expected fewer rows (4) to produce taller tiles than more rows (6): $fourRowsHeight vs $sixRowsHeight"
+        assert(airyHeight > compactHeight) {
+            "expected Airy to produce taller tiles than Compact: $airyHeight vs $compactHeight"
         }
     }
 

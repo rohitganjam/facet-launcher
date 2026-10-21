@@ -2,7 +2,7 @@ package com.facetlauncher.app.domain
 
 import android.content.Context
 
-/** Hub's grid is fixed at 5 columns (matching `DrawerGridSize.FIVE_BY_SIX`'s column count). */
+/** Hub's grid is fixed at 5 columns. */
 const val HUB_COLUMNS = 5
 
 /** Rows grow as widgets are added, up to this scroll cap (F5). */
@@ -11,17 +11,11 @@ const val HUB_MAX_ROWS = 50
 /** F5's widget cap. */
 const val HUB_MAX_WIDGETS = 20
 
-/**
- * The standard horizontal padding around the Hub grid (from `HubGrid.kt`).
- * Total deduction is 24dp * 2 = 48dp.
- */
-private const val HUB_HORIZONTAL_PADDING_TOTAL_DP = 48
+/** Matches `HUB_GRID_HORIZONTAL_PADDING` (16dp) on both sides in `HubGrid.kt`. */
+private const val HUB_HORIZONTAL_PADDING_TOTAL_DP = 32
 
-/**
- * The gap between cells in the Hub grid (from `HubGrid.kt`).
- * For 5 columns, there are 4 gaps. 8dp * 4 = 32dp.
- */
-private const val HUB_TOTAL_GAP_DP = 32
+/** Matches `HUB_GRID_GAP` (4dp) across the grid's 4 gaps in `HubGrid.kt`. */
+private const val HUB_TOTAL_GAP_DP = 16
 
 /**
  * Calculates the width of a single Hub cell in dp based on the screen width.

@@ -15,6 +15,8 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
+import androidx.compose.runtime.CompositionLocalProvider
+import com.facetlauncher.app.ui.home.LocalAllowLandscape
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -99,7 +101,8 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                     FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
                 ).also { screenViewModel = it }
             }
-            FacetLauncherTheme { screen(viewModel) }
+            // The assertions assume the portrait Home layout, whatever the device's window is.
+            CompositionLocalProvider(LocalAllowLandscape provides false) { FacetLauncherTheme { screen(viewModel) } }
         }
         return settingsRepository
     }

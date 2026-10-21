@@ -15,6 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FormatAlignCenter
 import androidx.compose.material.icons.filled.FormatAlignLeft
 import androidx.compose.material.icons.filled.FormatAlignRight
+import androidx.compose.material.icons.filled.VerticalAlignBottom
+import androidx.compose.material.icons.filled.VerticalAlignCenter
+import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,7 +48,8 @@ import com.facetlauncher.app.ui.theme.Surface
 
 /**
  * The floating "Alignment" pill shown during [ClockAdjustMode.ADJUST], just below the height handle:
- * left / center / right for the clock (or hosted widget), applied immediately. It swallows taps on its
+ * left / center / right for the clock (or hosted widget), applied immediately. In landscape
+ * ([vertical]) the same three values are top / middle / bottom of the clock pane. It swallows taps on its
  * own surface, enabled or not — Home's root treats any tap that reaches it unconsumed as "empty space" and
  * exits adjust mode, which must not happen from tapping the heading, the padding, or the dimmed pill.
  */
@@ -56,6 +60,8 @@ fun ClockAdjustToolbar(
     modifier: Modifier = Modifier,
     /** `false` greys out the three options (they stop reacting) — the pill still absorbs taps either way. */
     enabled: Boolean = true,
+    /** Landscape: the same three values read as top / middle / bottom (left, center and right respectively). */
+    vertical: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -74,9 +80,15 @@ fun ClockAdjustToolbar(
         )
         Box(modifier = Modifier.padding(horizontal = 12.dp).size(width = 1.dp, height = 24.dp).background(Hairline))
         Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            AlignmentButton(ClockAlignment.LEFT, Icons.Filled.FormatAlignLeft, R.string.clock_adjust_align_left, "clock_align_left", alignment, enabled, onAlignmentChange)
-            AlignmentButton(ClockAlignment.CENTER, Icons.Filled.FormatAlignCenter, R.string.clock_adjust_align_center, "clock_align_center", alignment, enabled, onAlignmentChange)
-            AlignmentButton(ClockAlignment.RIGHT, Icons.Filled.FormatAlignRight, R.string.clock_adjust_align_right, "clock_align_right", alignment, enabled, onAlignmentChange)
+            if (vertical) {
+                AlignmentButton(ClockAlignment.LEFT, Icons.Filled.VerticalAlignTop, R.string.clock_adjust_align_top, "clock_align_top", alignment, enabled, onAlignmentChange)
+                AlignmentButton(ClockAlignment.CENTER, Icons.Filled.VerticalAlignCenter, R.string.clock_adjust_align_middle, "clock_align_middle", alignment, enabled, onAlignmentChange)
+                AlignmentButton(ClockAlignment.RIGHT, Icons.Filled.VerticalAlignBottom, R.string.clock_adjust_align_bottom, "clock_align_bottom", alignment, enabled, onAlignmentChange)
+            } else {
+                AlignmentButton(ClockAlignment.LEFT, Icons.Filled.FormatAlignLeft, R.string.clock_adjust_align_left, "clock_align_left", alignment, enabled, onAlignmentChange)
+                AlignmentButton(ClockAlignment.CENTER, Icons.Filled.FormatAlignCenter, R.string.clock_adjust_align_center, "clock_align_center", alignment, enabled, onAlignmentChange)
+                AlignmentButton(ClockAlignment.RIGHT, Icons.Filled.FormatAlignRight, R.string.clock_adjust_align_right, "clock_align_right", alignment, enabled, onAlignmentChange)
+            }
         }
     }
 }
@@ -122,6 +134,17 @@ private fun ClockAdjustToolbarPreview() {
     FacetLauncherTheme {
         Box(modifier = Modifier.padding(24.dp)) {
             ClockAdjustToolbar(alignment = ClockAlignment.CENTER, onAlignmentChange = {})
+        }
+    }
+}
+
+@Preview(name = "Landscape (top / middle / bottom)", showBackground = true)
+@Preview(name = "Landscape dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ClockAdjustToolbarVerticalPreview() {
+    FacetLauncherTheme {
+        Box(modifier = Modifier.padding(24.dp)) {
+            ClockAdjustToolbar(alignment = ClockAlignment.CENTER, onAlignmentChange = {}, vertical = true)
         }
     }
 }

@@ -28,7 +28,9 @@ const val CURRENT_BACKUP_VERSION = 3
  *   are local-`ContentProvider` autoincrement values tied to which calendar accounts are synced
  *   on *this* device in *this* order — not portable to another device/reinstall, and silently
  *   matching the wrong calendar by coincidence is worse than just re-deriving them fresh.
- * - `calendarPermissionRequested`/`contactsPermissionRequested`: track *this install's* runtime
+ * - `allowLandscape`: a choice about this device (whether Home may rotate), not a layout preference.
+ * - `calendarPermissionRequested`/`contactsPermissionRequested`/`bluetoothPermissionRequested`/
+ *   `locationPermissionRequested`: track *this install's* runtime
  *   permission-request history, not a user preference — restoring `true` onto a device that was
  *   never actually asked would wrongly skip straight to the "go to App Info" fallback instead of
  *   firing the real system permission dialog.
@@ -110,6 +112,9 @@ data class BackupSettings(
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, as today's unchanged single-column look). */
     val appListLayout: String = AppListLayout.SINGLE_COLUMN.name,
     val appListColumnAlignment: String = AppListColumnAlignment.BOTH_LEFT.name,
+    /** Landscape's own row position and two-column alignment: optional and additive (no version bump); absent is "same as portrait". */
+    val landscapeAppRowPosition: String? = null,
+    val landscapeAppListColumnAlignment: String? = null,
     val appListGridColumns: String = AppListGridColumns.FOUR.name,
     val appListGridDisplayMode: String = AppListGridDisplayMode.ICONS.name,
     val listContentMode: String,
@@ -119,9 +124,27 @@ data class BackupSettings(
     val clockColorOption: String,
     val clockShowMeridiem: Boolean,
     val homeAppsFontWeight: String = FontWeightOption.REGULAR.name,
+    /**
+     * Added after the first release of this format; all defaulted, so an older backup restores to
+     * today's defaults and an older app ignores them (`ignoreUnknownKeys`) — no version bump.
+     */
+    val recentlyInstalledPosition: String = RecentlyInstalledPosition.SHOW_FIRST.name,
+    val searchSettingsEnabled: Boolean = false,
+    val clockAccentColorOption: String = ClockColorOption.ACCENT_PRIMARY.name,
+    val clockDateStyle: String = ClockDateStyle.FULL.name,
+    val clockAlignment: String = ClockAlignment.LEFT.name,
+    /** `null` until the clock's divider was first dragged. */
+    val clockZoneHeightDp: Float? = null,
+    val clockScale: Float = 0.8f,
+    val appListVerticalAlignment: String = AppListVerticalAlignment.BOTTOM.name,
+    /** Landscape's own clock and list values; `null` is "same as portrait". Like [landscapeAppRowPosition], flat and optional. */
+    val landscapeClockAlignment: String? = null,
+    val landscapeClockZoneHeightDp: Float? = null,
+    val landscapeClockScale: Float? = null,
+    val landscapeAppListVerticalAlignment: String? = null,
 )
 
-/** Mirrors every non-id field of `FacetEntity` — its own row id isn't portable, same reasoning as [BackupSettings.activeFacetIndex]. */
+/** Mirrors every non-id field of `Facet` — its own row id isn't portable, same reasoning as [BackupSettings.activeFacetIndex]. */
 @Serializable
 data class BackupFacet(
     val name: String,
@@ -132,12 +155,30 @@ data class BackupFacet(
     val clockColorOption: String,
     val use24HourTime: Boolean,
     val clockShowMeridiem: Boolean,
+    /**
+     * Added after the first release of this format; all defaulted, so an older backup restores to
+     * today's defaults — no version bump. The hosted clock widget (its id and size) is left out:
+     * an `AppWidgetHost` id is not portable, so that widget is re-added by hand like the Hub's.
+     */
+    val clockAccentColorOption: String = ClockColorOption.ACCENT_PRIMARY.name,
+    val clockDateStyle: String = ClockDateStyle.FULL.name,
+    val clockAlignment: String = ClockAlignment.LEFT.name,
+    val clockZoneHeightDp: Float? = null,
+    val clockScale: Float = 0.8f,
+    val landscapeClockAlignment: String? = null,
+    val landscapeClockZoneHeightDp: Float? = null,
+    val landscapeClockScale: Float? = null,
+    val landscapeAppListVerticalAlignment: String? = null,
+    val appListVerticalAlignment: String = AppListVerticalAlignment.LAUNCHER_DEFAULT.name,
     val overrideApps: Boolean,
     val appRowPosition: String,
     val appRowPresentation: String,
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, inheriting the launcher-wide layout). */
     val appListLayout: String = AppListLayout.LAUNCHER_DEFAULT.name,
     val appListColumnAlignment: String = AppListColumnAlignment.LAUNCHER_DEFAULT.name,
+    /** Optional and additive, like [BackupSettings.landscapeAppRowPosition]. */
+    val landscapeAppRowPosition: String? = null,
+    val landscapeAppListColumnAlignment: String? = null,
     val appListGridColumns: String = AppListGridColumns.LAUNCHER_DEFAULT.name,
     val appListGridDisplayMode: String = AppListGridDisplayMode.LAUNCHER_DEFAULT.name,
     val listContentMode: String,
@@ -211,4 +252,6 @@ data class BackupWidgetPlacement(
     val rowSpan: Int,
     /** Raw `AppProfile.name` — defaulted so a backup exported before Work Profile support still imports cleanly (as `PERSONAL`). Only a hint for the guided re-add queue's initial bind attempt; re-adding always goes through a real bind, since a Work Profile widget's grant can't be restored from a backup file. */
     val profile: String = "PERSONAL",
+    /** The widget's place in the landscape Hub's flow order, if it had one — defaulted so older backups import as "no order" (landscape then follows portrait's reading order). */
+    val landscapeOrder: Int? = null,
 )

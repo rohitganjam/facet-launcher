@@ -2,10 +2,12 @@ package com.facetlauncher.app.data
 
 import android.content.Context
 import android.net.Uri
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.BackupBundle
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -26,16 +28,17 @@ private val json = Json {
 @Singleton
 class BackupRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
 
-    suspend fun writeBackup(uri: Uri, bundle: BackupBundle) = withContext(Dispatchers.IO) {
+    suspend fun writeBackup(uri: Uri, bundle: BackupBundle) = withContext(ioDispatcher) {
         context.contentResolver.openOutputStream(uri)?.use { stream ->
             stream.write(json.encodeToString(BackupBundle.serializer(), bundle).toByteArray(Charsets.UTF_8))
         } ?: error("Could not open an output stream for $uri")
     }
 
     /** `null` means the file at [uri] isn't valid JSON, or isn't shaped like a [BackupBundle] at all — a clean "not a backup file" signal rather than an exception the caller has to know to catch. */
-    suspend fun readBackup(uri: Uri): BackupBundle? = withContext(Dispatchers.IO) {
+    suspend fun readBackup(uri: Uri): BackupBundle? = withContext(ioDispatcher) {
         val text = context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: return@withContext null
         runCatching { json.decodeFromString(BackupBundle.serializer(), text) }.getOrNull()
     }

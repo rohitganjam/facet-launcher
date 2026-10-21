@@ -299,7 +299,7 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
         AppearanceSettingsContent(
             settings = LauncherSettings(),
             uiState = AppearanceSettingsUiState(
-                facet = com.facetlauncher.app.data.local.FacetEntity(id = 1L, name = "Work", position = 0),
+                facet = com.facetlauncher.app.data.model.Facet(id = 1L, name = "Work", position = 0),
                 globalFavorites = DesignTimeFavorites,
                 globalDockItems = DesignTimeDockItems,
             ),

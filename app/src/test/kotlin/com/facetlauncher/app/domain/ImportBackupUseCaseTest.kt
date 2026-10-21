@@ -1,5 +1,10 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.LandscapeTransformCaptor
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -7,7 +12,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupAppEntry
@@ -140,19 +145,19 @@ class ImportBackupUseCaseTest {
             ),
             dockApps = listOf(BackupAppEntry(packageName = "com.example.b", activityName = ".Main", position = 0)),
             defaultFavoriteApps = listOf(BackupAppEntry(packageName = "com.example.c", activityName = ".Main", position = 0)),
-            widgetPlacements = listOf(BackupWidgetPlacement("com.example.widgets", ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1)),
+            widgetPlacements = listOf(BackupWidgetPlacement("com.example.widgets", ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 4)),
         )
         `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
         // A concrete expected entity, not any(...): Mockito's static any()/eq() return a raw
         // `null` placeholder, which Kotlin's compiler-inserted non-null check on
-        // restoreFacet's `facet: FacetEntity` parameter rejects outright.
-        val expectedFacetEntity = FacetEntity(
+        // restoreFacet's `facet: Facet` parameter rejects outright.
+        val expectedFacetEntity = Facet(
             id = 0, name = "Work", position = 0, overrideClock = false,
             clockTemplateId = ClockTemplateId.LIGHT_STACK, clockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
             clockColorOption = ClockColorOption.THEME, use24HourTime = false, clockShowMeridiem = false,
             overrideApps = false, appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
-            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIdsCsv = "3,4",
+            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIds = setOf("3", "4"),
             overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)
@@ -188,6 +193,7 @@ class ImportBackupUseCaseTest {
         assertEquals(1, result.defaultFavoriteCount)
         assertEquals(1, result.pendingWidgetPlacements.size)
         assertEquals("com.example.widgets", result.pendingWidgetPlacements[0].providerPackageName)
+        assertEquals(4, result.pendingWidgetPlacements[0].landscapeOrder)
     }
 
     @Test
@@ -207,5 +213,95 @@ class ImportBackupUseCaseTest {
 
         assertTrue(result is ImportBackupResult.Success)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.SYSTEM)
+    }
+
+    @Test
+    fun `restores the whole landscape group, replacing what was there`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L,
+                settings = minimalSettings().copy(
+                    landscapeAppRowPosition = "CENTER", landscapeAppListColumnAlignment = "MIRRORED",
+                    landscapeClockAlignment = "RIGHT", landscapeClockZoneHeightDp = 310f, landscapeClockScale = 1.1f,
+                    landscapeAppListVerticalAlignment = "TOP",
+                ),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        val captor = LandscapeTransformCaptor()
+        verify(settingsRepository).updateLandscape(captor.capture())
+        // A full restore replaces the group: the old scale is gone, the backed-up values are in
+        val before = LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.LEFT)
+        assertEquals(
+            LandscapeOverrides(
+                clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f, clockScale = 1.1f,
+                appRowPosition = AppRowPosition.CENTER, appListVerticalAlignment = AppListVerticalAlignment.TOP,
+                appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+            ),
+            captor.last(before),
+        )
+    }
+
+    @Test
+    fun `restores the clock and list settings that older backups left out`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L,
+                settings = minimalSettings().copy(
+                    clockAccentColorOption = "ACCENT_SECONDARY", clockDateStyle = "CONDENSED", clockAlignment = "RIGHT",
+                    clockZoneHeightDp = 240f, clockScale = 1.3f, appListVerticalAlignment = "TOP",
+                    recentlyInstalledPosition = "SHOW_LAST", searchSettingsEnabled = true,
+                ),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        verify(settingsRepository).setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
+        verify(settingsRepository).setClockDateStyle(com.facetlauncher.app.data.model.ClockDateStyle.CONDENSED)
+        verify(settingsRepository).setClockAlignment(ClockAlignment.RIGHT)
+        verify(settingsRepository).setClockZoneHeight(240f)
+        verify(settingsRepository).setClockScale(1.3f)
+        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
+        verify(settingsRepository).setRecentlyInstalledPosition(com.facetlauncher.app.data.model.RecentlyInstalledPosition.SHOW_LAST)
+        verify(settingsRepository).setSearchSettingsEnabled(true)
+    }
+
+    @Test
+    fun `a backup whose clock divider was never dragged clears the current one`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L, settings = minimalSettings().copy(clockZoneHeightDp = null),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        verify(settingsRepository).resetClockZoneHeight()
+    }
+
+    @Test
+    fun `a backup without landscape fields restores them as same as portrait`() = runTest {
+        val uri = mock(Uri::class.java)
+        `when`(backupRepository.readBackup(uri)).thenReturn(
+            BackupBundle(
+                exportedAtEpochMillis = 0L, settings = minimalSettings(),
+                facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+            ),
+        )
+
+        useCase(uri)
+
+        val captor = LandscapeTransformCaptor()
+        verify(settingsRepository).updateLandscape(captor.capture())
+        assertEquals(LandscapeOverrides(), captor.last(LandscapeOverrides(appRowPosition = AppRowPosition.LEFT, appListColumnAlignment = AppListColumnAlignment.MIRRORED)))
     }
 }

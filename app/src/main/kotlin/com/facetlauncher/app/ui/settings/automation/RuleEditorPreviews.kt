@@ -5,14 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.data.model.PairedBluetoothDevice
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Surface
 
-private val facets = listOf(FacetEntity(id = 1, name = "Personal", position = 0), FacetEntity(id = 2, name = "Work", position = 1))
+private val facets = listOf(Facet(id = 1, name = "Personal", position = 0), Facet(id = 2, name = "Work", position = 1))
 private val choices = DeviceChoices(bluetooth = listOf(PairedBluetoothDevice("AA:BB", "Car")), networks = listOf("HomeNet-5G", "Cafe"))
 
 @Composable

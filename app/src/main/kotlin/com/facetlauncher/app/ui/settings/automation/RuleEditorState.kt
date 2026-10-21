@@ -1,6 +1,6 @@
 package com.facetlauncher.app.ui.settings.automation
 
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationRule
 import com.facetlauncher.app.data.model.AutomationRuleError
@@ -49,7 +49,7 @@ data class RuleEditorState(
     /** Only used when [endKind] is [EndKind.SWITCH]. */
     val endFacetId: Long,
     /** The facets the pickers offer, read when the editor opened. */
-    val facets: List<FacetEntity>,
+    val facets: List<Facet>,
     val errors: List<AutomationRuleError> = emptyList(),
     val facetMissing: Boolean = false,
     /** The permission the user just refused for the trigger they tried to pick; the trigger itself stays as it was. */
@@ -99,7 +99,7 @@ data class RuleEditorState(
 
     companion object {
         /** A weekday-hours schedule that targets the first facet other than the one showing. */
-        fun forNew(facets: List<FacetEntity>, activeFacetId: Long): RuleEditorState {
+        fun forNew(facets: List<Facet>, activeFacetId: Long): RuleEditorState {
             val target = facets.firstOrNull { it.id != activeFacetId } ?: facets.first()
             return RuleEditorState(
                 ruleId = 0L,
@@ -112,7 +112,7 @@ data class RuleEditorState(
             )
         }
 
-        fun from(rule: AutomationRule, facets: List<FacetEntity>): RuleEditorState {
+        fun from(rule: AutomationRule, facets: List<Facet>): RuleEditorState {
             val switchTo = rule.endBehavior as? RuleEndBehavior.SwitchTo
             return RuleEditorState(
                 ruleId = rule.id,

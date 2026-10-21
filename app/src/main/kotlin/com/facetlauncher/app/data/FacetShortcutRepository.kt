@@ -7,7 +7,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.facetlauncher.app.LauncherActivity
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.buildFacetDeepLinkUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -28,7 +28,7 @@ private const val SHORTCUT_LABEL_PREFIX = "Switch to "
  * short/long label is `"Switch to <facet's live name>"` (what the user and the OS picker see —
  * reads as an action, not just a name, since that's how it shows up in an automation picker), while
  * the shortcut id (`"facet_<id>"`) and the launch intent's `Uri` ([buildFacetDeepLinkUri]) both
- * carry the facet's numeric, stable [FacetEntity.id] — what
+ * carry the facet's numeric, stable [Facet.id] — what
  * [com.facetlauncher.app.domain.ActivateFacetByIdUseCase] actually resolves against. Renaming a
  * facet updates the label on the next [syncShortcuts] call without touching the shortcut id or its
  * trigger `Uri`, so an already-configured automation rule keeps working and just shows the new
@@ -39,11 +39,11 @@ class FacetShortcutRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     /** Full atomic replace, not a hand-rolled add/update/remove diff — simpler and can't drift from [facets]. */
-    fun syncShortcuts(facets: List<FacetEntity>) {
+    fun syncShortcuts(facets: List<Facet>) {
         ShortcutManagerCompat.setDynamicShortcuts(context, facets.map(::shortcutFor))
     }
 
-    private fun shortcutFor(facet: FacetEntity): ShortcutInfoCompat {
+    private fun shortcutFor(facet: Facet): ShortcutInfoCompat {
         val intent = Intent(Intent.ACTION_VIEW, buildFacetDeepLinkUri(facet.id), context, LauncherActivity::class.java)
         val label = "$SHORTCUT_LABEL_PREFIX${facet.name}"
         return ShortcutInfoCompat.Builder(context, "$SHORTCUT_ID_PREFIX${facet.id}")

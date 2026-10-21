@@ -83,7 +83,7 @@ class SettingsViewModelTest {
             ),
         )
         val facetRepository = mock(com.facetlauncher.app.data.FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf((1..facetCount).map { com.facetlauncher.app.data.local.FacetEntity(id = it.toLong(), name = "F$it", position = it) }))
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf((1..facetCount).map { com.facetlauncher.app.data.model.Facet(id = it.toLong(), name = "F$it", position = it) }))
         return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository)
     }
 

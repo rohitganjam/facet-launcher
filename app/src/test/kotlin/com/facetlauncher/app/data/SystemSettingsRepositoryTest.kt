@@ -7,8 +7,12 @@ import android.content.pm.ResolveInfo
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.model.SettingsSearchEntry
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -37,6 +41,22 @@ class SystemSettingsRepositoryTest {
         ).forEach { action ->
             shadowOf(context.packageManager).addResolveInfoForIntent(Intent(action), resolveInfoFor("com.android.settings"))
         }
+    }
+
+    @Test
+    fun `search runs on the injected IO dispatcher`() = runTest {
+        // Given a repository whose IO dispatcher is the test scheduler's
+        registerAllCatalogActions()
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val injected = SystemSettingsRepository(context, testDispatcher)
+
+        // When search starts, nothing runs until the scheduler is advanced
+        val result = async(testDispatcher) { injected.search("wi-f") }
+        assertFalse(result.isCompleted)
+        advanceUntilIdle()
+
+        // Then it completes deterministically on that dispatcher
+        assertEquals(1, result.await().size)
     }
 
     @Test

@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -45,6 +45,7 @@ import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
@@ -71,7 +72,7 @@ fun AppDrawerSettingsScreen(
         settings = settings,
         onBack = onBack,
         onDrawerPresentationChange = viewModel::setDrawerPresentation,
-        onDrawerGridSizeChange = viewModel::setDrawerGridSize,
+        onDrawerGridDensityChange = viewModel::setDrawerGridDensity,
         onDrawerListItemSizeChange = viewModel::setDrawerListItemSize,
         onShowDrawerIconsChange = viewModel::setShowDrawerIcons,
         onShowDrawerLabelsChange = viewModel::setShowDrawerLabels,
@@ -95,7 +96,7 @@ private fun AppDrawerSettingsContent(
     settings: LauncherSettings,
     onBack: () -> Unit,
     onDrawerPresentationChange: (DrawerPresentation) -> Unit,
-    onDrawerGridSizeChange: (DrawerGridSize) -> Unit,
+    onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
     onDrawerListItemSizeChange: (DrawerListItemSize) -> Unit,
     onShowDrawerIconsChange: (Boolean) -> Unit,
     onShowDrawerLabelsChange: (Boolean) -> Unit,
@@ -135,11 +136,11 @@ private fun AppDrawerSettingsContent(
                         if (presentation == DrawerPresentation.GRID) {
                             CardDivider()
                             LabeledDropdownRow(
-                                title = stringResource(R.string.app_drawer_grid_size),
-                                options = DrawerGridSize.entries,
-                                selected = settings.drawerGridSize,
-                                label = { it.appDrawerDisplayLabel() },
-                                onSelect = onDrawerGridSizeChange,
+                                title = stringResource(R.string.app_drawer_grid_density),
+                                options = DrawerGridDensity.entries,
+                                selected = settings.drawerGridDensity,
+                                label = { stringResource(it.displayNameRes) },
+                                onSelect = onDrawerGridDensityChange,
                                 testTag = "drawer_grid_size_row",
                             )
                         }
@@ -154,7 +155,7 @@ private fun AppDrawerSettingsContent(
                                 testTag = "drawer_list_item_size_row",
                             )
                             CardDivider()
-                            AppDrawerToggleRow(
+                            SettingsToggleRow(
                                 title = stringResource(R.string.app_drawer_show_icons_title),
                                 subtitle = stringResource(R.string.app_drawer_show_icons_subtitle),
                                 checked = settings.showDrawerIcons,
@@ -164,7 +165,7 @@ private fun AppDrawerSettingsContent(
                         }
                         if (presentation == DrawerPresentation.GRID) {
                             CardDivider()
-                            AppDrawerToggleRow(
+                            SettingsToggleRow(
                                 title = stringResource(R.string.app_drawer_show_labels_title),
                                 subtitle = stringResource(R.string.app_drawer_show_labels_subtitle),
                                 checked = settings.showDrawerLabels,
@@ -173,7 +174,7 @@ private fun AppDrawerSettingsContent(
                             )
                         }
                         CardDivider()
-                        AppDrawerToggleRow(
+                        SettingsToggleRow(
                             title = stringResource(R.string.app_drawer_search_contacts_title),
                             subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
                             checked = settings.searchContactsEnabled,
@@ -181,7 +182,7 @@ private fun AppDrawerSettingsContent(
                             testTag = "search_contacts_toggle",
                         )
                         CardDivider()
-                        AppDrawerToggleRow(
+                        SettingsToggleRow(
                             title = stringResource(R.string.app_drawer_search_settings_title),
                             subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
                             checked = settings.searchSettingsEnabled,
@@ -241,38 +242,6 @@ private fun AppDrawerSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mod
     }
 }
 
-/** Not a fixed per-value [androidx.annotation.StringRes] like this file's other enum labels — the
- *  actual column/row counts are [DrawerGridSize]'s own numeric fields, so this stays a format
- *  template rather than 4 near-identical fixed strings. */
-@Composable
-private fun DrawerGridSize.appDrawerDisplayLabel(): String = stringResource(R.string.drawer_grid_size_label, columns, rows)
-
-@Composable
-private fun AppDrawerToggleRow(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    testTag: String,
-    subtitle: String? = null,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 13.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Constrains the label/subtitle to the space left of the Switch so a long subtitle wraps
-        // onto a second line instead of pushing the Switch out past the card's own edge.
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
-            if (subtitle != null) {
-                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
-            }
-        }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = Modifier.testTag(testTag))
-    }
-}
-
 @Composable
 private fun DrawerOpacitySlider(opacity: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.testTag("drawer_opacity_slider").padding(vertical = 8.dp)) {
@@ -303,7 +272,7 @@ private fun AppDrawerSettingsScreenPreview() {
             settings = LauncherSettings(),
             onBack = {},
             onDrawerPresentationChange = {},
-            onDrawerGridSizeChange = {},
+            onDrawerGridDensityChange = {},
             onDrawerListItemSizeChange = {},
             onShowDrawerIconsChange = {},
             onShowDrawerLabelsChange = {},

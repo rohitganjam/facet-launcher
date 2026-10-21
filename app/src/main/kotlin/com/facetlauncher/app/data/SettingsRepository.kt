@@ -1,6 +1,7 @@
 package com.facetlauncher.app.data
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -25,13 +26,14 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
+import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -86,6 +88,7 @@ private object Keys {
     val BLUETOOTH_PERMISSION_REQUESTED = booleanPreferencesKey("bluetooth_permission_requested")
     val LOCATION_PERMISSION_REQUESTED = booleanPreferencesKey("location_permission_requested")
     val APP_ROW_POSITION = stringPreferencesKey("app_row_position")
+    val LANDSCAPE_APP_ROW_POSITION = stringPreferencesKey("landscape_app_row_position")
     val APP_ROW_PRESENTATION = stringPreferencesKey("app_row_presentation")
     val LIST_CONTENT_MODE = stringPreferencesKey("list_content_mode")
     val APPS_TO_SHOW_COUNT = intPreferencesKey("apps_to_show_count")
@@ -99,9 +102,15 @@ private object Keys {
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
     val CLOCK_SCALE = floatPreferencesKey("clock_scale")
+    val ALLOW_LANDSCAPE = booleanPreferencesKey("allow_landscape")
+    val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
+    val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
+    val LANDSCAPE_CLOCK_SCALE = floatPreferencesKey("landscape_clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
+    val LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("landscape_app_list_vertical_alignment")
     val APP_LIST_LAYOUT = stringPreferencesKey("app_list_layout")
     val APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("app_list_column_alignment")
+    val LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("landscape_app_list_column_alignment")
     val APP_LIST_GRID_COLUMNS = stringPreferencesKey("app_list_grid_columns")
     val APP_LIST_GRID_DISPLAY_MODE = stringPreferencesKey("app_list_grid_display_mode")
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
@@ -122,8 +131,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.dockDisplayMode,
             drawerPresentation = preferences[Keys.DRAWER_PRESENTATION]?.let { runCatching { DrawerPresentation.valueOf(it) }.getOrNull() }
                 ?: defaults.drawerPresentation,
-            drawerGridSize = preferences[Keys.DRAWER_GRID_SIZE]?.let { runCatching { DrawerGridSize.valueOf(it) }.getOrNull() }
-                ?: defaults.drawerGridSize,
+            drawerGridDensity = preferences[Keys.DRAWER_GRID_SIZE]?.let(DrawerGridDensity::fromStored)
+                ?: defaults.drawerGridDensity,
             drawerListItemSize = preferences[Keys.DRAWER_LIST_ITEM_SIZE]?.let { runCatching { DrawerListItemSize.valueOf(it) }.getOrNull() }
                 ?: defaults.drawerListItemSize,
             drawerOpacity = preferences[Keys.DRAWER_OPACITY] ?: defaults.drawerOpacity,
@@ -203,6 +212,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.clockAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
+            allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
+            landscape = preferences.toLandscapeOverrides(),
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
             appListLayout = preferences[Keys.APP_LIST_LAYOUT]?.let { runCatching { AppListLayout.valueOf(it) }.getOrNull() }
@@ -231,8 +242,8 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.DRAWER_PRESENTATION] = presentation.name }
     }
 
-    suspend fun setDrawerGridSize(gridSize: DrawerGridSize) {
-        dataStore.edit { it[Keys.DRAWER_GRID_SIZE] = gridSize.name }
+    suspend fun setDrawerGridDensity(density: DrawerGridDensity) {
+        dataStore.edit { it[Keys.DRAWER_GRID_SIZE] = density.name }
     }
 
     suspend fun setDrawerListItemSize(itemSize: DrawerListItemSize) {
@@ -422,6 +433,10 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
     }
 
+    suspend fun setAllowLandscape(allow: Boolean) {
+        dataStore.edit { it[Keys.ALLOW_LANDSCAPE] = allow }
+    }
+
     suspend fun setClockAlignment(alignment: ClockAlignment) {
         dataStore.edit { it[Keys.CLOCK_ALIGNMENT] = alignment.name }
     }
@@ -432,7 +447,10 @@ class SettingsRepository @Inject constructor(
 
     /** Settings' "Reset clock height" row — restores [LauncherSettings.clockZoneHeightDp] to `null`, so the clock+calendar block and app list return to their original fixed-top, bottom-anchored layout. */
     suspend fun resetClockZoneHeight() {
-        dataStore.edit { it.remove(Keys.CLOCK_ZONE_HEIGHT_DP) }
+        dataStore.edit {
+            it.remove(Keys.CLOCK_ZONE_HEIGHT_DP)
+            it.remove(Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP)
+        }
     }
 
     suspend fun setClockScale(scale: Float) {
@@ -441,9 +459,15 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    /** Changes the launcher-wide landscape values in one write; a `null` field is removed ("same as portrait"). */
+    suspend fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) {
+        dataStore.edit { it.writeLandscape(transform(it.toLandscapeOverrides())) }
+    }
+
     suspend fun resetClockScale() {
         dataStore.edit {
             it.remove(Keys.CLOCK_SCALE)
+            it.remove(Keys.LANDSCAPE_CLOCK_SCALE)
         }
     }
 
@@ -484,4 +508,27 @@ class SettingsRepository @Inject constructor(
     suspend fun markCoachMarkSeen(id: String) {
         dataStore.edit { it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + id }
     }
+}
+
+private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
+    clockAlignment = this[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
+    clockZoneHeightDp = this[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
+    clockScale = this[Keys.LANDSCAPE_CLOCK_SCALE],
+    appRowPosition = this[Keys.LANDSCAPE_APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() },
+    appListVerticalAlignment = this[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() },
+    appListColumnAlignment = this[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() },
+)
+
+/** The widget size is facet-only, so it isn't stored here. */
+private fun MutablePreferences.writeLandscape(overrides: LandscapeOverrides) {
+    setOrRemove(Keys.LANDSCAPE_CLOCK_ALIGNMENT, overrides.clockAlignment?.name)
+    setOrRemove(Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP, overrides.clockZoneHeightDp)
+    setOrRemove(Keys.LANDSCAPE_CLOCK_SCALE, overrides.clockScale)
+    setOrRemove(Keys.LANDSCAPE_APP_ROW_POSITION, overrides.appRowPosition?.name)
+    setOrRemove(Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT, overrides.appListVerticalAlignment?.name)
+    setOrRemove(Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT, overrides.appListColumnAlignment?.name)
+}
+
+private fun <T> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {
+    if (value == null) remove(key) else this[key] = value
 }

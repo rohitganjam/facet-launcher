@@ -1,9 +1,11 @@
 package com.facetlauncher.app.data
 
 import android.content.Context
+import com.facetlauncher.app.data.di.DefaultDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -14,9 +16,12 @@ import kotlinx.coroutines.withContext
  * normal-level permission, auto-granted once declared in the manifest.
  */
 @Singleton
-class NotificationShadeRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class NotificationShadeRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) {
 
-    suspend fun expand() = withContext(Dispatchers.Default) {
+    suspend fun expand() = withContext(defaultDispatcher) {
         runCatching {
             val statusBarService = context.getSystemService("statusbar") ?: return@runCatching
             val method = Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel")

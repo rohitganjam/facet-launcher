@@ -149,7 +149,7 @@ class AppearanceSettingsScreenTest {
         // screen's own preview — see chat history)
         setContent()
 
-        composeRule.onNodeWithTag("appearance_preview_clock").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_preview_home_clock_block").assertIsDisplayed()
     }
 
     @Test
@@ -175,14 +175,14 @@ class AppearanceSettingsScreenTest {
     fun facetScopedClockRowReflectsTheFacetsOwnClockOverride() {
         // Given a facet overriding the clock with a different template than the global default
         setContent(facetId = 1L, seed = { facetRepository, facetId ->
-            val facet = com.facetlauncher.app.data.local.FacetEntity(id = requireNotNull(facetId), name = "P", position = 0)
-            facetRepository.setOverrideClock(facet, true)
-            facetRepository.setClockTemplateId(facet.copy(overrideClock = true), com.facetlauncher.app.data.model.ClockTemplateId.RULE_MERIDIEM)
+            val facet = com.facetlauncher.app.data.model.Facet(id = requireNotNull(facetId), name = "P", position = 0)
+            facetRepository.setOverrideClock(facet.id, true)
+            facetRepository.setClockTemplateId(facet.id, com.facetlauncher.app.data.model.ClockTemplateId.RULE_MERIDIEM)
         })
         awaitFacetScoped()
 
         // Then the preview clock is shown and the Clock row names the facet's own template, not the global one
-        composeRule.onNodeWithTag("appearance_preview_clock").assertExists()
+        composeRule.onNodeWithTag("appearance_preview_home_clock_block").assertExists()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
         composeRule.onNodeWithTag("clock_style_gallery_row").assertTextContains("Ruler", substring = true)
     }
@@ -475,9 +475,9 @@ class AppearanceSettingsScreenTest {
                 // the same (now-stale) `facet` snapshot for the second call would clobber the first
                 // call's own field change back to its old value.
                 val facet = facetRepository.getById(id!!)!!
-                facetRepository.setOverrideApps(facet, overriding = true)
+                facetRepository.setOverrideApps(facet.id, overriding = true)
                 val updated = facetRepository.getById(id)!!
-                facetRepository.updateOverridingDock(updated, overriding = true)
+                facetRepository.updateOverridingDock(updated.id, overriding = true)
             },
             seedApps = { appRepository, placementRepository, id ->
                 val installed = appRepository.getInstalledApps()

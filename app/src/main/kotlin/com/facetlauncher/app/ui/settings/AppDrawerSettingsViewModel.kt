@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
-import com.facetlauncher.app.data.model.DrawerGridSize
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -30,8 +30,8 @@ class AppDrawerSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setDrawerPresentation(presentation) }
     }
 
-    fun setDrawerGridSize(gridSize: DrawerGridSize) {
-        viewModelScope.launch { settingsRepository.setDrawerGridSize(gridSize) }
+    fun setDrawerGridDensity(density: DrawerGridDensity) {
+        viewModelScope.launch { settingsRepository.setDrawerGridDensity(density) }
     }
 
     fun setDrawerListItemSize(itemSize: DrawerListItemSize) {

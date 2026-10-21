@@ -8,9 +8,9 @@ import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
-import com.facetlauncher.app.data.local.FacetEntity
-import com.facetlauncher.app.data.local.effectiveCalendarDisplay
-import com.facetlauncher.app.data.local.resolveOverride
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
@@ -18,7 +18,6 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
-import com.facetlauncher.app.data.selectedCalendarIds
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +33,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class CalendarSettingsUiState(
-    val facet: FacetEntity? = null,
+    val facet: Facet? = null,
     val globalShowAllDayEvents: Boolean = true,
     /** Launcher-wide settings — the preview strip reads the font/colour/clock-alignment fields from here. */
     val settings: LauncherSettings = LauncherSettings(),
@@ -51,10 +50,11 @@ data class CalendarSettingsUiState(
     val isFacetScoped: Boolean get() = facet != null
     val isOverriding: Boolean get() = facet?.overrideCalendar ?: false
     val effectiveShowAllDayEvents: Boolean get() = if (isOverriding) facet?.showAllDayEvents ?: globalShowAllDayEvents else globalShowAllDayEvents
-    val calendarDisplay: CalendarDisplayOptions get() = facet.effectiveCalendarDisplay(settings)
+    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
+    val calendarDisplay: CalendarDisplayOptions get() = style.calendarDisplay
     /** The clock-block look the preview strip renders with: the facet's own when it overrides the clock, else launcher-wide. */
-    val previewUse24HourTime: Boolean get() = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime)
-    val previewClockAlignment: ClockAlignment get() = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment)
+    val previewUse24HourTime: Boolean get() = style.clock.use24HourTime
+    val previewClockAlignment: ClockAlignment get() = style.clock.alignment
     val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverriding) facet?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
     /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
     fun calendarSwatch(calendarId: String): AccentSwatch? =
@@ -95,7 +95,7 @@ class CalendarSettingsViewModel @Inject constructor(
 
     private fun buildUiState(
         settings: LauncherSettings,
-        facets: List<FacetEntity>,
+        facets: List<Facet>,
         granted: Boolean,
         calendarList: List<CalendarInfo> = emptyList(),
         wallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
@@ -159,7 +159,7 @@ class CalendarSettingsViewModel @Inject constructor(
         val facet = uiState.value.facet
         viewModelScope.launch {
             if (facet != null) {
-                facetRepository.setShowAllDayEvents(facet, enabled)
+                facetRepository.setShowAllDayEvents(facet.id, enabled)
             } else {
                 settingsRepository.setShowAllDayEvents(enabled)
             }
@@ -169,14 +169,14 @@ class CalendarSettingsViewModel @Inject constructor(
     fun setShowCalendarIndicator(enabled: Boolean) {
         val facet = uiState.value.facet
         viewModelScope.launch {
-            if (facet != null) facetRepository.setShowCalendarIndicator(facet, enabled) else settingsRepository.setShowCalendarIndicator(enabled)
+            if (facet != null) facetRepository.setShowCalendarIndicator(facet.id, enabled) else settingsRepository.setShowCalendarIndicator(enabled)
         }
     }
 
     fun setCalendarItemsToShow(count: Int) {
         val facet = uiState.value.facet
         viewModelScope.launch {
-            if (facet != null) facetRepository.setCalendarItemsToShow(facet, count) else settingsRepository.setCalendarItemsToShow(count)
+            if (facet != null) facetRepository.setCalendarItemsToShow(facet.id, count) else settingsRepository.setCalendarItemsToShow(count)
         }
     }
 
@@ -186,7 +186,7 @@ class CalendarSettingsViewModel @Inject constructor(
         val state = uiState.value
         viewModelScope.launch {
             facetRepository.updateOverridingCalendar(
-                facet = facet,
+                facetId = facet.id,
                 overriding = overriding,
                 showAllDayEvents = state.effectiveShowAllDayEvents,
                 selectedCalendarIds = state.effectiveSelectedCalendarIds,
@@ -215,10 +215,10 @@ class CalendarSettingsViewModel @Inject constructor(
         writeSelectedCalendarIds(state.facet, ids)
     }
 
-    private fun writeSelectedCalendarIds(facet: FacetEntity?, ids: Set<String>) {
+    private fun writeSelectedCalendarIds(facet: Facet?, ids: Set<String>) {
         viewModelScope.launch {
             if (facet != null && facet.overrideCalendar) {
-                facetRepository.setSelectedCalendarIds(facet, ids)
+                facetRepository.setSelectedCalendarIds(facet.id, ids)
             } else {
                 settingsRepository.setSelectedCalendarIds(ids)
             }

@@ -5,8 +5,8 @@ behaviour broke.** This doc records how that rule is actually implemented in the
 which tier tests what, the fixtures and harnesses in use, and the conventions every new test
 must follow. The per-class inventory is generated: [TEST_REGISTRY.md](TEST_REGISTRY.md).
 
-Current counts (from the registry): **193 test classes, 1840 cases** — 1112 unit (139 classes),
-728 instrumented (54 classes).
+Current counts (from the registry): **217 test classes, 2117 cases** — 1297 unit (154 classes),
+820 instrumented (63 classes).
 
 ## 1. The two tiers
 
@@ -14,13 +14,13 @@ Current counts (from the registry): **193 test classes, 1840 cases** — 1112 un
 flowchart LR
     subgraph UNIT["app/src/test — JVM, ./gradlew test"]
         direction TB
-        U1["data/ — 53 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
-        U2["domain/ — 38 classes\nEvery use case; pure ones need no Android"]
-        U3["ui/ — 48 classes\nViewModels with mocked repos/use cases\n+ theme/token tests"]
+        U1["data/ — 57 classes\nRepositories over DAO fakes or in-memory Room\nConverters, entities"]
+        U2["domain/ — 42 classes\nEvery use case; pure ones need no Android"]
+        U3["ui/ — 55 classes\nViewModels with mocked repos/use cases\n+ theme/token tests, pure geometry"]
     end
     subgraph INST["app/src/androidTest — emulator, ./gradlew connectedDebugAndroidTest"]
         direction TB
-        I1["ui/ — 52 classes\nOne *ScreenTest per screen + route/component/theme"]
+        I1["ui/ — 61 classes\nOne *ScreenTest per screen + route/component/theme"]
         I2["data/ — 2 classes\nFacetDatabaseMigrationTest over app/schemas,\nMediaSessionRepositoryTest"]
     end
     CODE["app/src/main"] --> UNIT
@@ -30,10 +30,10 @@ flowchart LR
 | | Unit (JVM) | Instrumented |
 |---|---|---|
 | Runner | JUnit4; `@RunWith(RobolectricTestRunner::class)` on 66 classes that touch `Context`/framework types (`robolectric.properties`: `sdk=31`) | `AndroidJUnitRunner` + **Android Test Orchestrator** (`execution = "ANDROIDX_TEST_ORCHESTRATOR"`, one process per test class) |
-| Coroutines | `kotlinx-coroutines-test`: `runTest` (764 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
+| Coroutines | `kotlinx-coroutines-test`: `runTest` (802 uses), `StandardTestDispatcher` + `Dispatchers.setMain/resetMain` in ViewModel tests | Real dispatchers; `composeRule.waitForIdle()` / `waitUntil { }` |
 | Doubles | Mockito 5.24 (`mockito-core`, inline mock maker → `final` Kotlin classes are mockable) for repositories/use cases; hand-written fake DAOs (`data/FolderTestFakes.kt`: `FakeFolderDao`, `FakeAppPlacementDao`, `FakeFolderPlacementDao`, used by `PlacementRepositoryTest`) for Room; `data/FakeEntitlementRepository.kt` (a `MutableStateFlow` behind the `open` entitlement repository) to flip a free user in tests; `Room.inMemoryDatabaseBuilder` in 7 tests that need real SQL | `mockito-android`; subclass fakes for the three `open` repositories (`ui/settings/Fake{NotificationAccess,CalendarPermission}Repository.kt`, plus an inline `WallpaperRepository` subclass per test that needs one); most screen tests need no doubles — they pass a `UiState` + lambdas |
-| Compose | — | `createComposeRule()` (53 uses); content set with `composeRule.setContent { FacetLauncherTheme { XScreen(uiState, on… = {}) } }` |
-| Selectors | — | `onNodeWithTag` against 310 `Modifier.testTag(...)` sites in `main` (430 distinct tags referenced by tests), `onNodeWithText`, `onNodeWithContentDescription` |
+| Compose | — | `createComposeRule()` (60 uses); content set with `composeRule.setContent { FacetLauncherTheme { XScreen(uiState, on… = {}) } }` |
+| Selectors | — | `onNodeWithTag` against 325 `Modifier.testTag(...)` sites in `main` (456 distinct tags referenced by tests), `onNodeWithText`, `onNodeWithContentDescription` |
 | Room migrations | — | `MigrationTestHelper` reading `app/schemas/…/<v>.json` (mounted as `androidTest` assets in `build.gradle.kts`) |
 | Hilt | Not used in tests — everything is constructed by hand | Not used — no `HiltAndroidRule`; screens are tested below the ViewModel |
 
@@ -104,8 +104,17 @@ class PlacementRepositoryTest {
 - Route-level tests (`HomeDrawerRouteTest`, `KeyboardDismissalTest`) compose the real
   `HomeDrawerRoute` with real ViewModels over mocked repositories to exercise gesture routing
   between Home and Drawer.
+- Home is driven through `HomeScreen`'s two groups. `FlatHomeScreen` (`androidTest/ui/home/`) takes the old flat
+  parameter list and builds `HomeScreenState` / `HomeScreenActions`, so most tests read as a few named values;
+  `HomeScreenWiringTest` drives each callback through the real groups to prove every action reaches its handler.
+  Portrait tests need the emulator's rotation locked (`adb shell wm user-rotation lock 0`) so the sensor can't
+  flip them. On the JVM side, ViewModel tests that capture the landscape `transform` lambda a repository receives
+  use `LandscapeTransformCaptor` (`src/test/.../LandscapeTransformCaptor.kt`, with `eqOf`): a raw Mockito `capture()` /
+  `eq()` returns null into a non-null Kotlin parameter and leaks matcher state into the next test.
+- Pure geometry (`HomeClockGeometryTest`, `HomeLandscapeGeometryTest`, `HomeClockHandleGeometryTest`) is tested on
+  the JVM with plain numbers; the instrumented tests then only prove the wiring.
 - Anything async on top of an animation is awaited with `composeRule.waitUntil(timeoutMillis) { }`
-  (215 uses). There is no `Thread.sleep` anywhere in the suite.
+  (227 uses). There is no `Thread.sleep` anywhere in the suite.
 
 ### Migrations (`androidTest/data/local/FacetDatabaseMigrationTest`)
 

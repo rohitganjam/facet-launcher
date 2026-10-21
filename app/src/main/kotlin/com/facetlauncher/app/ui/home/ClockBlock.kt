@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -86,6 +87,8 @@ fun ClockBlock(
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
     clockScale: Float = 0.8f,
+    /** Vertical anchor of the scale: 1 (the default) grows the clock up from its bottom edge, 0 grows it down from its top, 0.5 from its middle. */
+    clockScaleOriginY: Float = 1f,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
     /** `null` until the first real battery reading arrives. */
@@ -126,6 +129,9 @@ fun ClockBlock(
         Box(
             modifier = Modifier
                 .align(clockAlignment.resolve())
+                // Measure the clock at its natural width even when the column is narrower (a narrow
+                // landscape pane): otherwise the box size, which the resize maths relies on, is clamped.
+                .wrapContentWidth(align = clockAlignment.resolve(), unbounded = true)
                 .then(clockBoxModifier),
         ) {
             ClockOrWidgetContent(
@@ -141,6 +147,7 @@ fun ClockBlock(
                 launcherFontOption = launcherFontOption,
                 clockAlignment = clockAlignment,
                 clockScale = clockScale,
+                clockScaleOriginY = clockScaleOriginY,
                 nextAlarmMillis = nextAlarmMillis,
                 batteryPercent = batteryPercent,
                 isCharging = isCharging,
@@ -194,6 +201,7 @@ private fun ClockOrWidgetContent(
     launcherFontOption: LauncherFontOption,
     clockAlignment: ClockAlignment,
     clockScale: Float,
+    clockScaleOriginY: Float,
     nextAlarmMillis: Long?,
     batteryPercent: Int?,
     isCharging: Boolean,
@@ -228,7 +236,7 @@ private fun ClockOrWidgetContent(
         )
     } else {
         val now by rememberTickingNow(clock)
-        Box(modifier = Modifier.uniformScale(clockScale, clockAlignment)) {
+        Box(modifier = Modifier.uniformScale(clockScale, clockAlignment, clockScaleOriginY)) {
             ClockDisplay(
                 templateId = templateId,
                 fontOption = fontOption,
@@ -292,6 +300,7 @@ private fun ClockWidgetContent(
 private fun Modifier.uniformScale(
     scale: Float,
     alignment: ClockAlignment,
+    originY: Float,
 ) = this.layout { measurable, _ ->
     val placeable = measurable.measure(Constraints())
     layout(placeable.width, placeable.height) {
@@ -299,9 +308,9 @@ private fun Modifier.uniformScale(
             scaleX = scale
             scaleY = scale
             transformOrigin = when (alignment) {
-                ClockAlignment.LEFT -> TransformOrigin(0f, 1f)
-                ClockAlignment.RIGHT -> TransformOrigin(1f, 1f)
-                ClockAlignment.CENTER -> TransformOrigin(0.5f, 1f)
+                ClockAlignment.LEFT -> TransformOrigin(0f, originY)
+                ClockAlignment.RIGHT -> TransformOrigin(1f, originY)
+                ClockAlignment.CENTER -> TransformOrigin(0.5f, originY)
             }
         }
     }

@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.PairedBluetoothDevice
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -39,7 +41,10 @@ private val QUERIED_PROFILES = listOf(BluetoothProfile.A2DP, BluetoothProfile.HE
  * "unknown" state until that query answers (or times out), so a "not connected" rule never fires on a guess.
  */
 @Singleton
-class BluetoothRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class BluetoothRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
 
     private val bluetoothManager: BluetoothManager? get() = context.getSystemService(BluetoothManager::class.java)
 
@@ -65,7 +70,7 @@ class BluetoothRepository @Inject constructor(@ApplicationContext private val co
 
     /** Paired devices, by name. Empty without the permission or without Bluetooth. */
     @SuppressLint("MissingPermission") // guarded by permissionGranted()
-    suspend fun pairedDevices(): List<PairedBluetoothDevice> = withContext(Dispatchers.IO) {
+    suspend fun pairedDevices(): List<PairedBluetoothDevice> = withContext(ioDispatcher) {
         val adapter = bluetoothManager?.adapter?.takeIf { permissionGranted() }
         adapter?.bondedDevices.orEmpty()
             .map { PairedBluetoothDevice(address = it.address, name = it.name?.takeIf(String::isNotBlank) ?: it.address) }

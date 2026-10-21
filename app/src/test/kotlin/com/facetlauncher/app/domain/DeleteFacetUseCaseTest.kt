@@ -1,7 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.local.FacetEntity
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -16,12 +16,12 @@ class DeleteFacetUseCaseTest {
         val facetRepository = mock(FacetRepository::class.java)
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val useCase = DeleteFacetUseCase(facetRepository, appWidgetRepository)
-        val facet = FacetEntity(id = 1, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
+        val facet = Facet(id = 1, name = "Work", position = 0, clockWidgetAppWidgetId = 42)
 
         useCase(facet)
 
         verify(appWidgetRepository).deleteAppWidgetId(42)
-        verify(facetRepository).deleteFacet(facet)
+        verify(facetRepository).deleteFacet(facet.id)
     }
 
     @Test
@@ -29,11 +29,11 @@ class DeleteFacetUseCaseTest {
         val facetRepository = mock(FacetRepository::class.java)
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val useCase = DeleteFacetUseCase(facetRepository, appWidgetRepository)
-        val facet = FacetEntity(id = 1, name = "Work", position = 0, clockWidgetAppWidgetId = null)
+        val facet = Facet(id = 1, name = "Work", position = 0, clockWidgetAppWidgetId = null)
 
         useCase(facet)
 
         verifyNoInteractions(appWidgetRepository)
-        verify(facetRepository).deleteFacet(facet)
+        verify(facetRepository).deleteFacet(facet.id)
     }
 }

@@ -16,10 +16,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.MediaPlayerState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +40,7 @@ import kotlinx.coroutines.withContext
 open class MediaSessionRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val notificationBadgeRepository: NotificationBadgeRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     @Volatile private var activeController: MediaController? = null
 
@@ -120,7 +123,7 @@ open class MediaSessionRepository @Inject constructor(
             trySend(picked.copy(art = cached?.second))
             if (artUri != null && cached == null) {
                 launch {
-                    val bitmap = withContext(Dispatchers.IO) { decodeArt(artUri) }
+                    val bitmap = withContext(ioDispatcher) { decodeArt(artUri) }
                     artCache = artUri to bitmap
                     publish()
                 }

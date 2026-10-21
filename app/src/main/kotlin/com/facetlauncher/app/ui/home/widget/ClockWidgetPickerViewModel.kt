@@ -137,7 +137,7 @@ class ClockWidgetPickerViewModel @Inject constructor(
             return
         }
         facet.clockWidgetAppWidgetId?.let { appWidgetRepository.deleteAppWidgetId(it) }
-        facetRepository.setClockWidgetAppWidgetId(facet, appWidgetId)
+        facetRepository.setClockWidgetAppWidgetId(facet.id, appWidgetId)
         _events.emit(HubAddWidgetEvent.WidgetAdded)
     }
 

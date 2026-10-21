@@ -154,7 +154,7 @@ class HomeAppsListSettingsScreenTest {
                 val id = requireNotNull(facetId)
                 folderId = folderRepository.createFolder("Games")
                 placementRepository.placeFolder(PlacementTarget(PlacementList.FAVORITES, id), folderId, position = 0)
-                facetRepository.getById(id)?.let { facetRepository.setOverrideApps(it, true) }
+                facetRepository.getById(id)?.let { facetRepository.setOverrideApps(it.id, true) }
             },
         )
 
