@@ -5,15 +5,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import com.facetlauncher.app.data.di.DefaultDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Wraps the system default-launcher check and request — whether Facet is the currently resolved `HOME` activity, and how to ask to become it. */
 @Singleton
-class DefaultLauncherRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class DefaultLauncherRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) {
 
     /**
      * `PackageManager.resolveActivity` (the old preferred-activity mechanism) doesn't reliably
@@ -23,7 +28,7 @@ class DefaultLauncherRepository @Inject constructor(@ApplicationContext private 
      * same as [requestDefaultLauncherIntent] already does; only fall back to the legacy check on
      * an OEM build where the role isn't exposed at all.
      */
-    suspend fun isDefaultLauncher(): Boolean = withContext(Dispatchers.Default) {
+    suspend fun isDefaultLauncher(): Boolean = withContext(defaultDispatcher) {
         val roleManager = context.getSystemService(RoleManager::class.java)
         if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
             roleManager.isRoleHeld(RoleManager.ROLE_HOME)

@@ -1,11 +1,13 @@
 package com.facetlauncher.app.data
 
 import android.app.usage.UsageStatsManager
+import com.facetlauncher.app.data.di.DefaultDispatcher
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.FACET_LAUNCHER_PACKAGE_NAME
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -19,6 +21,7 @@ import kotlinx.coroutines.withContext
 class UsageStatsRepository @Inject constructor(
     private val usageStatsManager: UsageStatsManager,
     private val appRepository: AppRepository,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     suspend fun getRecentApps(limit: Int): List<AppInfo> = rankedApps(limit) { lastUsed, _ -> lastUsed }
 
@@ -31,14 +34,14 @@ class UsageStatsRepository @Inject constructor(
      * recorded usage (including when the Usage Access permission isn't granted, in which case
      * [usageStatsManager] simply returns no data).
      */
-    suspend fun getLastUsedTimestamps(): Map<String, Long> = withContext(Dispatchers.Default) {
+    suspend fun getLastUsedTimestamps(): Map<String, Long> = withContext(defaultDispatcher) {
         aggregateUsage(begin = 0L, end = System.currentTimeMillis()).mapValues { (_, usage) -> usage.first }
     }
 
     private suspend fun rankedApps(
         limit: Int,
         rankBy: (lastTimeUsed: Long, totalTimeInForeground: Long) -> Long,
-    ): List<AppInfo> = withContext(Dispatchers.Default) {
+    ): List<AppInfo> = withContext(defaultDispatcher) {
         val end = System.currentTimeMillis()
         val begin = end - LOOKBACK_MS
         val aggregatedByPackage = aggregateUsage(begin, end)

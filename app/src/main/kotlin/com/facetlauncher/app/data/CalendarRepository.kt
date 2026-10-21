@@ -2,6 +2,7 @@ package com.facetlauncher.app.data
 
 import android.content.ContentResolver
 import android.provider.CalendarContract
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
 import java.time.Instant
@@ -10,6 +11,7 @@ import java.time.ZoneOffset
 import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -17,10 +19,11 @@ import kotlinx.coroutines.withContext
 @Singleton
 open class CalendarRepository @Inject constructor(
     private val contentResolver: ContentResolver,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
 
     /** Every calendar visible to this device's Calendar Provider, for the "Calendars to display" picker. */
-    open suspend fun getCalendars(): List<CalendarInfo> = withContext(Dispatchers.IO) {
+    open suspend fun getCalendars(): List<CalendarInfo> = withContext(ioDispatcher) {
         val projection = arrayOf(
             CalendarContract.Calendars._ID,
             CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
@@ -50,7 +53,7 @@ open class CalendarRepository @Inject constructor(
      * @param calendarIds restrict to these calendar ids; `null` means every calendar.
      * @param includeAllDay whether all-day events are included at all.
      */
-    open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(Dispatchers.IO) {
+    open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(ioDispatcher) {
         val (begin, end) = upcomingWindow()
         val today = LocalDate.now()
 

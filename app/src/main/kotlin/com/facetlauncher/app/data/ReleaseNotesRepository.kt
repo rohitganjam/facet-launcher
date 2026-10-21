@@ -1,10 +1,12 @@
 package com.facetlauncher.app.data
 
 import android.content.Context
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.ReleaseNotes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -18,9 +20,10 @@ private const val NOTES_EXTENSION = ".md"
 @Singleton
 open class ReleaseNotesRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     /** Every release that has notes, newest first. A file that can't be read or has no bullets is skipped. */
-    open suspend fun releases(): List<ReleaseNotes> = withContext(Dispatchers.IO) {
+    open suspend fun releases(): List<ReleaseNotes> = withContext(ioDispatcher) {
         val assets = context.assets
         assets.list(NOTES_DIR).orEmpty()
             .filter { it.endsWith(NOTES_EXTENSION) }

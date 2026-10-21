@@ -21,12 +21,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.ApplicationScope
+import com.facetlauncher.app.data.di.DefaultDispatcher
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -114,6 +116,7 @@ class AppRepository @Inject constructor(
     // Hilt itself always supplies the real @ApplicationScope binding from AppModule regardless of
     // this default, since Dagger-generated code passes every constructor parameter explicitly.
     @ApplicationScope private val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
     /**
@@ -181,7 +184,7 @@ class AppRepository @Inject constructor(
      * sum of all of them (see chat history: this was invisible before Home started gating its own
      * first paint on this list, since default content rendered over it in the meantime).
      */
-    suspend fun getInstalledApps(): List<AppInfo> = withContext(Dispatchers.Default) {
+    suspend fun getInstalledApps(): List<AppInfo> = withContext(defaultDispatcher) {
         val collator = Collator.getInstance()
         userManager.userProfiles
             // A device-specific LauncherApps quirk for one odd profile (e.g. an OEM clone profile

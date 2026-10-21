@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ConnectionOption
 import com.facetlauncher.app.data.model.ContactConnection
@@ -17,6 +18,7 @@ import com.facetlauncher.app.data.model.ContactInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,10 +46,11 @@ private val STANDARD_MIMETYPES = setOf(
 class ContactRepository @Inject constructor(
     private val contentResolver: ContentResolver,
     @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
 
     /** Contacts whose name matches [query], one row per contact (that contact's first/primary phone number only). */
-    suspend fun searchContacts(query: String, limit: Int): List<ContactInfo> = withContext(Dispatchers.IO) {
+    suspend fun searchContacts(query: String, limit: Int): List<ContactInfo> = withContext(ioDispatcher) {
         if (query.isBlank()) return@withContext emptyList()
 
         val projection = arrayOf(
@@ -94,7 +97,7 @@ class ContactRepository @Inject constructor(
      * connections sheet actually opens for them (see `HubWidgetPickerViewModel`'s identical
      * fetch-on-open precedent for F12's shortcuts) — never precomputed for every row in a list.
      */
-    suspend fun getConnections(contactId: String): List<ContactConnection> = withContext(Dispatchers.IO) {
+    suspend fun getConnections(contactId: String): List<ContactConnection> = withContext(ioDispatcher) {
         val phoneNumbers = allPhoneNumbers(contactId)
         val emails = allEmails(contactId)
 

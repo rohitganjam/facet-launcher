@@ -5,9 +5,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.MediaStore
+import com.facetlauncher.app.data.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -21,7 +23,10 @@ import kotlinx.coroutines.withContext
  * Appearance's live preview card.
  */
 @Singleton
-class DefaultAppRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class DefaultAppRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
 
     /**
      * One package name per category, in [categoryIntents]' order, omitting any category with no
@@ -32,7 +37,7 @@ class DefaultAppRepository @Inject constructor(@ApplicationContext private val c
      * arbitrary-but-installed pick still reads as more "this device's own home screen" than
      * [com.facetlauncher.app.domain.SelectPreviewAppsUseCase]'s own plain alphabetical fallback.
      */
-    suspend fun getDefaultAppPackages(): List<String> = withContext(Dispatchers.IO) {
+    suspend fun getDefaultAppPackages(): List<String> = withContext(ioDispatcher) {
         // resolveActivity/queryIntentActivities are blocking binder calls into the system package
         // service — IO, not the CPU-bound Default pool.
         categoryIntents().mapNotNull(::resolvePackage).distinct()

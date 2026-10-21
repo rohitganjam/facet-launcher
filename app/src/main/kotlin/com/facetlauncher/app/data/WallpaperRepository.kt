@@ -7,9 +7,11 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.toBitmap
+import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.HomeWallpaper
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -29,6 +31,7 @@ private const val MAX_WALLPAPER_DIMENSION = 1080
 @Singleton
 open class WallpaperRepository @Inject constructor(
     private val wallpaperManager: WallpaperManager,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     /**
      * Degrades in order: the set home wallpaper, then the built-in default, then the wallpaper's
@@ -37,7 +40,7 @@ open class WallpaperRepository @Inject constructor(
      * just advances the chain.
      */
     @SuppressLint("MissingPermission") // a SecurityException is caught below and just advances the chain
-    open suspend fun currentHomeWallpaper(): HomeWallpaper = withContext(Dispatchers.IO) {
+    open suspend fun currentHomeWallpaper(): HomeWallpaper = withContext(ioDispatcher) {
         val drawable = runCatching { wallpaperManager.peekDrawable() }.getOrNull()
             ?: runCatching { wallpaperManager.builtInDrawable }.getOrNull()
         drawable?.toBitmapOrNull()?.let { return@withContext HomeWallpaper.Image(it.downscaled()) }
