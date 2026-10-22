@@ -8,7 +8,6 @@
     <ID>ComposableNestingDepth:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>ComposableNestingDepth:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
     <ID>ComposableNestingDepth:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
-    <ID>ComposableNestingDepth:ClockTemplates.kt:@Composable private fun ColumnRuleTemplate</ID>
     <ID>ComposableNestingDepth:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
     <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun AddFacetPage</ID>
     <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
@@ -40,7 +39,6 @@
     <ID>CyclomaticComplexMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
-    <ID>CyclomaticComplexMethod:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
     <ID>CyclomaticComplexMethod:ContactRepository.kt:ContactRepository$private fun dynamicConnections: List&lt;ContactConnection&gt;</ID>
     <ID>CyclomaticComplexMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>CyclomaticComplexMethod:HubGrid.kt:@Composable fun HubGrid</ID>
@@ -67,7 +65,6 @@
     <ID>LongMethod:BackupRestoreScreen.kt:@Composable private fun BackupRestoreContent</ID>
     <ID>LongMethod:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
     <ID>LongMethod:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
-    <ID>LongMethod:ClockTemplates.kt:@Composable private fun StubTemplate</ID>
     <ID>LongMethod:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
     <ID>LongMethod:DockSettingsScreen.kt:@Composable private fun DockSettingsContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetCarouselContent</ID>
@@ -100,7 +97,6 @@
     <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .fillMaxWidth() .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true }) .testTag("drawer_grid_tile_${app.packageName}")</ID>
     <ID>ModifierNotUsedAtRoot:AppDrawerScreen.kt:modifier = modifier .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true }) .testTag("drawer_grid_folder_tile_${folder.id}")</ID>
     <ID>ModifierWithoutDefault:ClockBlock.kt:clockContentModifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ClockTemplates.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:ManageFacetsScreen.kt:dragHandleModifier: Modifier</ID>
     <ID>ReturnCount:AlphabetRail.kt:internal fun railSelectionAt: RailSelection?</ID>
     <ID>ReturnCount:AppRepository.kt:AppRepository$fun profileFor: AppProfile</ID>
@@ -175,8 +171,6 @@
     <ID>UnstableCollections:PrivateSpaceScreen.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:SettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnusedParameter:ClockAccessoryRow.kt:accentColor: Color</ID>
-    <ID>UnusedParameter:ClockTemplates.kt:horizontalAlignment: Alignment.Horizontal</ID>
-    <ID>UnusedParameter:ClockTemplates.kt:mutedTextColor: Color</ID>
     <ID>UnusedParameter:HubHeader.kt:columns: Int</ID>
     <ID>UnusedParameter:OnboardingFacetsPage.kt:uiState: OnboardingUiState</ID>
     <ID>ViewModelForwarding:ClockStyleGalleryScreen.kt:ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)</ID>

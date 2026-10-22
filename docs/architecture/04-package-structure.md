@@ -39,7 +39,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`
     │                                    (`HomeItemActions` / `HomeItemStyle` / `HomeAppListContent`, the one parameter group they share);
     │                                    landscape: `HomeLandscapeLayout`, `HomeLandscapeGeometry`, `HomeClockHandleGeometry`, `HomeLayoutMode`; `ClockPlacement`/`ListAlignment` (now in `domain/HomePlacement.kt`)
-    │   ├── clock/                 (7)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
+    │   ├── clock/                 (8)   Clock templates, accessory row/icons, calendar strip, ClockStyleGallery screen+VM
     │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel

@@ -99,50 +99,64 @@ fun ClockDisplay(
     /** Settings → Clock & Calendar Style → "Clock alignment" — every template aligns its own time/date content to match, not just its position within Home (see [com.facetlauncher.app.ui.home.HomeScreen]). */
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
 ) {
-    val family = fontOption.resolveFontFamily(launcherFontOption)
-    val meridiem = meridiemText(now, use24HourTime, showMeridiem, locale)
-    val horizontalAlignment = clockAlignment.resolve()
-    val nextAlarmText = nextAlarmMillis?.let {
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()).format(timeFormatter(use24HourTime, locale))
-    }
-    when (templateId) {
-        ClockTemplateId.LIGHT_STACK -> LightStackTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.RULE_MERIDIEM -> RuleMeridiemTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.DATE_FORWARD -> DateForwardTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.WEIGHT_CONTRAST -> WeightContrastTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ITALIC_ACCENT -> ItalicAccentTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.SPELLED_OUT -> SpelledOutTemplate(now, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.VERTICAL_STACK -> VerticalStackTemplate(now, use24HourTime, meridiem, locale, family, boldHour = false, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.VERTICAL_STACK_BOLD_HOUR -> VerticalStackTemplate(now, use24HourTime, meridiem, locale, family, boldHour = true, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ROBOTO_FLEX_WIDE -> RobotoFlexWideTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ROBOTO_FLEX_NARROW -> RobotoFlexNarrowTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.TECH_DISTORTED -> TechDistortedTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.VARIABLE_DIVIDER -> VariableDividerTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.FLUID_STACK -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = false, accentHour = false, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.FLUID_STACK_INVERTED -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = true, accentHour = false, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.BRACKET_MINIMAL -> BracketMinimalTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.TWO_LINE_DIVIDER -> TwoLineDividerTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.BOLD_COLON -> BoldColonTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ACCENTED_FLUID_STACK -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = false, accentHour = true, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ACCENTED_FLUID_STACK_INVERTED -> FluidStackTemplate(now, use24HourTime, meridiem, locale, family, inverted = true, accentHour = true, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ACCENT_CONTRAST -> AccentContrastTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.ACCENT_FIELD -> AccentFieldTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.HOUR_TILE -> HourTileTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.CHIP -> ChipTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.DUOTONE_OVERLAP -> DuotoneOverlapTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.CORNER_FRAME -> CornerFrameTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.STUB -> StubTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.HALO -> HaloTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.DIGIT_CELLS -> DigitCellsTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.NEGATIVE_PANEL -> NegativePanelTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.HOLLOW_HOUR -> HollowHourTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, dateStyle = dateStyle, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.HIGHLIGHTER -> HighlighterTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.COLUMN_RULE -> ColumnRuleTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.COLON_MARK -> ColonMarkTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.PILL_PAIR -> PillPairTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.SHELF -> ShelfTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-        ClockTemplateId.HALF_IMMERSED -> HalfImmersedTemplate(now, use24HourTime, meridiem, locale, family, textColor, mutedTextColor, modifier, horizontalAlignment, accentColor = accentColor, dateStyle = dateStyle, nextAlarmText = nextAlarmText, batteryPercent = batteryPercent, isCharging = isCharging)
-    }
+    val data = ClockTemplateData(
+        now = now,
+        use24HourTime = use24HourTime,
+        meridiem = meridiemText(now, use24HourTime, showMeridiem, locale),
+        locale = locale,
+        family = fontOption.resolveFontFamily(launcherFontOption),
+        textColor = textColor,
+        mutedTextColor = mutedTextColor,
+        horizontalAlignment = clockAlignment.resolve(),
+        dateStyle = dateStyle,
+        accentColor = accentColor,
+        nextAlarmText = nextAlarmMillis?.let {
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault()).format(timeFormatter(use24HourTime, locale))
+        },
+        batteryPercent = batteryPercent,
+        isCharging = isCharging,
+    )
+    ClockTemplateRenderers.getValue(templateId)(data, modifier)
+}
+
+/** One renderer per [ClockTemplateId]; `ClockTemplateRenderersTest` fails if an id is missing. */
+internal val ClockTemplateRenderers: Map<ClockTemplateId, @Composable ClockTemplateData.(Modifier) -> Unit> = buildMap {
+    put(ClockTemplateId.LIGHT_STACK) { LightStackTemplate(modifier = it) }
+    put(ClockTemplateId.RULE_MERIDIEM) { RuleMeridiemTemplate(modifier = it) }
+    put(ClockTemplateId.DATE_FORWARD) { DateForwardTemplate(modifier = it) }
+    put(ClockTemplateId.WEIGHT_CONTRAST) { WeightContrastTemplate(modifier = it) }
+    put(ClockTemplateId.ITALIC_ACCENT) { ItalicAccentTemplate(modifier = it) }
+    put(ClockTemplateId.SPELLED_OUT) { SpelledOutTemplate(modifier = it) }
+    put(ClockTemplateId.VERTICAL_STACK) { VerticalStackTemplate(boldHour = false, modifier = it) }
+    put(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR) { VerticalStackTemplate(boldHour = true, modifier = it) }
+    put(ClockTemplateId.ROBOTO_FLEX_WIDE) { RobotoFlexWideTemplate(modifier = it) }
+    put(ClockTemplateId.ROBOTO_FLEX_NARROW) { RobotoFlexNarrowTemplate(modifier = it) }
+    put(ClockTemplateId.TECH_DISTORTED) { TechDistortedTemplate(modifier = it) }
+    put(ClockTemplateId.VARIABLE_DIVIDER) { VariableDividerTemplate(modifier = it) }
+    put(ClockTemplateId.FLUID_STACK) { FluidStackTemplate(inverted = false, accentHour = false, modifier = it) }
+    put(ClockTemplateId.FLUID_STACK_INVERTED) { FluidStackTemplate(inverted = true, accentHour = false, modifier = it) }
+    put(ClockTemplateId.BRACKET_MINIMAL) { BracketMinimalTemplate(modifier = it) }
+    put(ClockTemplateId.TWO_LINE_DIVIDER) { TwoLineDividerTemplate(modifier = it) }
+    put(ClockTemplateId.BOLD_COLON) { BoldColonTemplate(modifier = it) }
+    put(ClockTemplateId.ACCENTED_FLUID_STACK) { FluidStackTemplate(inverted = false, accentHour = true, modifier = it) }
+    put(ClockTemplateId.ACCENTED_FLUID_STACK_INVERTED) { FluidStackTemplate(inverted = true, accentHour = true, modifier = it) }
+    put(ClockTemplateId.ACCENT_CONTRAST) { AccentContrastTemplate(modifier = it) }
+    put(ClockTemplateId.ACCENT_FIELD) { AccentFieldTemplate(modifier = it) }
+    put(ClockTemplateId.HOUR_TILE) { HourTileTemplate(modifier = it) }
+    put(ClockTemplateId.CHIP) { ChipTemplate(modifier = it) }
+    put(ClockTemplateId.DUOTONE_OVERLAP) { DuotoneOverlapTemplate(modifier = it) }
+    put(ClockTemplateId.CORNER_FRAME) { CornerFrameTemplate(modifier = it) }
+    put(ClockTemplateId.STUB) { StubTemplate(modifier = it) }
+    put(ClockTemplateId.HALO) { HaloTemplate(modifier = it) }
+    put(ClockTemplateId.DIGIT_CELLS) { DigitCellsTemplate(modifier = it) }
+    put(ClockTemplateId.NEGATIVE_PANEL) { NegativePanelTemplate(modifier = it) }
+    put(ClockTemplateId.HOLLOW_HOUR) { HollowHourTemplate(modifier = it) }
+    put(ClockTemplateId.HIGHLIGHTER) { HighlighterTemplate(modifier = it) }
+    put(ClockTemplateId.COLUMN_RULE) { ColumnRuleTemplate(modifier = it) }
+    put(ClockTemplateId.COLON_MARK) { ColonMarkTemplate(modifier = it) }
+    put(ClockTemplateId.PILL_PAIR) { PillPairTemplate(modifier = it) }
+    put(ClockTemplateId.SHELF) { ShelfTemplate(modifier = it) }
+    put(ClockTemplateId.HALF_IMMERSED) { HalfImmersedTemplate(modifier = it) }
 }
 
 private fun timeFormatter(use24HourTime: Boolean, locale: Locale) =
@@ -257,21 +271,8 @@ private fun TemplateDateText(
  * readability test, see chat history) — extralight(200) became light(300) here, etc.
  */
 @Composable
-private fun LightStackTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.LightStackTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -300,21 +301,8 @@ private fun LightStackTemplate(
 
 /** README `1c` — 68sp time, an optional meridiem baseline-aligned beside it, a hairline rule, date beneath. */
 @Composable
-private fun RuleMeridiemTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.RuleMeridiemTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val timeText = now.format(timeFormatter(use24HourTime, locale))
     // width(IntrinsicSize.Max) bounds this Column to its own widest child (the 82sp time row) —
@@ -354,21 +342,8 @@ private fun RuleMeridiemTemplate(
 
 /** README `1d` — semibold 34sp date leads, time demoted to a muted light 44sp beneath. */
 @Composable
-private fun DateForwardTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.DateForwardTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(5.dp), horizontalAlignment = horizontalAlignment) {
         Text(
@@ -391,21 +366,8 @@ private fun DateForwardTemplate(
 
 /** Bold hour / regular minute on one tightly-kerned line, small caps-style label date beneath. */
 @Composable
-private fun WeightContrastTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.WeightContrastTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = horizontalAlignment) {
@@ -421,21 +383,8 @@ private fun WeightContrastTemplate(
 
 /** Hour and minute both italic; italic date beneath; optional italic meridiem beside the time. */
 @Composable
-private fun ItalicAccentTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.ItalicAccentTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -461,22 +410,9 @@ private fun ItalicAccentTemplate(
  * only difference from [ClockTemplateId.VERTICAL_STACK] — same tight two-line spacing either way.
  */
 @Composable
-private fun VerticalStackTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
+private fun ClockTemplateData.VerticalStackTemplate(
     boldHour: Boolean,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -520,19 +456,8 @@ private fun VerticalStackTemplate(
 
 /** [timeInWords] instead of digits — "Eleven Twenty Two" — always spoken 12-hour, see that function's doc. No meridiem slot: the toggle has no effect here. */
 @Composable
-private fun SpelledOutTemplate(
-    now: LocalDateTime,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.SpelledOutTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(7.dp), horizontalAlignment = horizontalAlignment) {
         Text(
@@ -643,21 +568,8 @@ private val RobotoFlexBlack = FontFamily(
 )
 
 @Composable
-private fun BracketMinimalTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.BracketMinimalTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH : mm" else "h : mm", locale)
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
@@ -716,21 +628,8 @@ private fun BracketMinimalTemplate(
 }
 
 @Composable
-private fun TwoLineDividerTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.TwoLineDividerTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -783,21 +682,8 @@ private fun TwoLineDividerTemplate(
 }
 
 @Composable
-private fun BoldColonTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.BoldColonTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -857,21 +743,8 @@ private fun BoldColonTemplate(
 }
 
 @Composable
-private fun VariableDividerTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.VariableDividerTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -939,23 +812,10 @@ private fun VariableDividerTemplate(
  * [ClockTemplateId.ACCENTED_FLUID_STACK]/[ClockTemplateId.ACCENTED_FLUID_STACK_INVERTED].
  */
 @Composable
-private fun FluidStackTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
+private fun ClockTemplateData.FluidStackTemplate(
     inverted: Boolean,
     accentHour: Boolean,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -1023,21 +883,8 @@ private fun FluidStackTemplate(
 }
 
 @Composable
-private fun RobotoFlexWideTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.RobotoFlexWideTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -1069,20 +916,8 @@ private fun RobotoFlexWideTemplate(
 }
 
 @Composable
-private fun RobotoFlexNarrowTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.RobotoFlexNarrowTemplate(
+    modifier: Modifier = Modifier,
 ) {
     // This template's own two columns (hour/minute digits, then meridiem+abbreviated date) sit
     // side by side rather than stacked, so there's no single Column to hand horizontalAlignment
@@ -1154,21 +989,8 @@ private fun RobotoFlexNarrowTemplate(
 }
 
 @Composable
-private fun TechDistortedTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.TechDistortedTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom) {
@@ -1219,21 +1041,8 @@ private fun TechDistortedTemplate(
  * template's shape instead ([ClockTemplateId.ACCENTED_FLUID_STACK]/`_INVERTED`).
  */
 @Composable
-private fun AccentContrastTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.AccentContrastTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = horizontalAlignment) {
@@ -1264,21 +1073,8 @@ private fun AccentContrastTemplate(
 
 /** `6a` — the hour sits in an [accentColor]-filled rounded block, knocked out in [Surface] tone (the same knockout convention `Theme.kt`'s own `onPrimary = Surface` uses for text on an accentColor fill); the minute stays plain [textColor] beside it. The first template in this file to use a shape (`clip`/`background`) rather than pure typography. */
 @Composable
-private fun AccentFieldTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.AccentFieldTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -1311,21 +1107,8 @@ private fun AccentFieldTemplate(
 
 /** `6b` — hour in a filled square-ish tile, knocked out in [contentColorFor]'s derived color on a [textColor] fill (flips with the tile across `THEME`/`THEME_INVERTED`; the inverse knockout of [AccentFieldTemplate]); minute unbounded beside it. */
 @Composable
-private fun HourTileTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.HourTileTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -1359,21 +1142,8 @@ private fun HourTileTemplate(
 
 /** `6d` — the whole time inside one bordered/filled pill with a small [accentColor] status dot leading it; reads as a control rather than a headline. */
 @Composable
-private fun ChipTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.ChipTemplate(
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
         Row(
@@ -1402,21 +1172,8 @@ private fun ChipTemplate(
 
 /** `6h` — an [accentColor], heavy-weight hour overlapping a light-weight [textColor] minute on the same baseline; color does the separating that weight alone can't. */
 @Composable
-private fun DuotoneOverlapTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.DuotoneOverlapTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -1441,21 +1198,8 @@ private fun DuotoneOverlapTemplate(
 
 /** `6i` — two [accentColor] L-shaped corner rules crop the time from opposite corners; the date sits below the frame, outside it. */
 @Composable
-private fun CornerFrameTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.CornerFrameTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val frameColor = accentColor
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
@@ -1494,20 +1238,8 @@ private fun CornerFrameTemplate(
 
 /** `6j` — a bordered/filled card with an [accentColor] spine, the time + a meridiem/day line, and (past a dashed divider) a small day-of-month stub. The most literally container-like of the shape-based templates. */
 @Composable
-private fun StubTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.StubTemplate(
+    modifier: Modifier = Modifier,
 ) {
     // width(IntrinsicSize.Max) bounds this Column to its own widest child — same fix as
     // RuleMeridiemTemplate's own doc comment explains: without it, the accessory row's
@@ -1557,43 +1289,34 @@ private fun StubTemplate(
                     ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 31.sp, family, FontWeight.Light)
                 }
             }
-            if (nextAlarmText != null || batteryPercent != null) {
-                val accessoryDividerColor = Hairline
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .drawBehind {
-                            drawLine(accessoryDividerColor, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f), 0f))
-                        }
-                        .padding(horizontal = 19.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AlarmAccessoryContent(nextAlarmText, mutedTextColor, family)
-                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
-                }
-            }
+            if (nextAlarmText != null || batteryPercent != null) StubAccessoryRow()
         }
+    }
+}
+
+/** [StubTemplate]'s alarm/battery footer, set off from the card body by a dashed rule. */
+@Composable
+private fun ClockTemplateData.StubAccessoryRow() {
+    val accessoryDividerColor = Hairline
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                drawLine(accessoryDividerColor, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f), 0f))
+            }
+            .padding(horizontal = 19.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AlarmAccessoryContent(nextAlarmText, mutedTextColor, family)
+        BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
     }
 }
 
 /** `6k` — a large thin [accentColor]-stroked circle bleeding past the time's own bounds, drawn behind it via [drawBehind] (so the bleed is decorative only and never grows this template's own measured/tappable size). */
 @Composable
-private fun HaloTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.HaloTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val haloColor = accentColor
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
@@ -1618,21 +1341,8 @@ private fun HaloTemplate(
 
 /** `6m` — each digit of the time in its own bordered/filled cell via the local [DigitCell]; the colon between cells renders plain, in [accentColor], not inside a cell. Mechanical counterpart to [FluidStackTemplate]'s fluid stacks. */
 @Composable
-private fun DigitCellsTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.DigitCellsTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourDigits = now.format(DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)).toList()
     val minuteDigits = now.format(DateTimeFormatter.ofPattern("mm", locale)).toList()
@@ -1670,21 +1380,8 @@ private fun DigitCell(digit: String, family: FontFamily, color: Color, modifier:
 
 /** `7a` — the whole clock sits on one filled [textColor]-tone panel, digits/accessory row knocked out in [contentColorFor]'s derived color (flips with the panel across `THEME`/`THEME_INVERTED`), date knocked out in [accentColor]. The inverse of every other template. */
 @Composable
-private fun NegativePanelTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.NegativePanelTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val panelContentColor = contentColorFor(textColor)
     Column(
@@ -1714,21 +1411,8 @@ private fun NegativePanelTemplate(
 
 /** `7b` — the hour rendered as a stroked outline glyph via [HourText]'s `drawStyle`, against a solid [MinuteText]; weight contrast done with outline instead of mass. */
 @Composable
-private fun HollowHourTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    dateStyle: ClockDateStyle,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.HollowHourTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
@@ -1759,21 +1443,8 @@ private fun HollowHourTemplate(
 
 /** `7c` — a translucent [accentColor] band drawn behind the lower half of the time digits via [drawBehind], like a marker stroke. */
 @Composable
-private fun HighlighterTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.HighlighterTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val bandColor = accentColor.copy(alpha = 0.28f)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
@@ -1812,24 +1483,9 @@ private fun HighlighterTemplate(
 
 /** `7d` — a thin [accentColor] rule beside a two-line hour/minute vertical stack (tight negative line spacing, matching [VerticalStackTemplate]'s own convention). Smallest amount of shape that still changes the read. */
 @Composable
-private fun ColumnRuleTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.ColumnRuleTemplate(
+    modifier: Modifier = Modifier,
 ) {
-    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
-    val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(19.dp)) {
             Box(
@@ -1839,13 +1495,7 @@ private fun ColumnRuleTemplate(
                     .clip(RoundedCornerShape(2.4.dp))
                     .background(accentColor),
             ) {}
-            Column(verticalArrangement = Arrangement.spacedBy((-24).dp)) {
-                HourText(now.format(hourFormatter), family, textColor, 74.sp, FontWeight.Light, letterSpacing = (-2.4).sp)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    MinuteText(now.format(minuteFormatter), family, textColor, 74.sp, FontWeight.Normal, letterSpacing = (-2.4).sp)
-                    if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
-                }
-            }
+            ColumnRuleDigits()
         }
         TemplateDateText(
             now.format(dateFormatter(locale, dateStyle)).uppercase(locale),
@@ -1860,23 +1510,24 @@ private fun ColumnRuleTemplate(
     }
 }
 
-/** `7e` — accent applied to nothing but the colon, in a small filled [accentColor] badge between the digits, knocked out in [Surface]. */
+/** [ColumnRuleTemplate]'s two-line hour/minute stack, with the meridiem beside the minutes. */
 @Composable
-private fun ColonMarkTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.ColumnRuleDigits() {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
+    Column(verticalArrangement = Arrangement.spacedBy((-24).dp)) {
+        HourText(now.format(hourFormatter), family, textColor, 74.sp, FontWeight.Light, letterSpacing = (-2.4).sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MinuteText(now.format(minuteFormatter), family, textColor, 74.sp, FontWeight.Normal, letterSpacing = (-2.4).sp)
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
+        }
+    }
+}
+
+/** `7e`— accent applied to nothing but the colon, in a small filled [accentColor] badge between the digits, knocked out in [Surface]. */
+@Composable
+private fun ClockTemplateData.ColonMarkTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -1911,21 +1562,8 @@ private fun ColonMarkTemplate(
 
 /** `7g` — hour and minute each in their own bordered/filled pill via the local [TimePill], with a small [accentColor]-filled meridiem pill trailing (omitted entirely, like every other template's [MeridiemText], when there's no meridiem to show). */
 @Composable
-private fun PillPairTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.PillPairTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
@@ -1970,20 +1608,8 @@ private fun TimePill(text: String, family: FontFamily, color: Color, modifier: M
 
 /** `7h` — one wide bordered/filled row: time leading, a stacked day-of-week/day-of-month pair trailing, inside one shared card. The most horizontal/row-like of the shape-based templates — deliberately wrap-content rather than edge-to-edge (a full-width shelf would reintroduce a large, mostly-empty tappable area, exactly the hit-box bug this file's templates were all fixed to avoid — see [com.facetlauncher.app.ui.home.HomeScreen]'s own doc on the clock's tap/long-press box). No separate date line beneath, since the day info already lives inside the row. */
 @Composable
-private fun ShelfTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.ShelfTemplate(
+    modifier: Modifier = Modifier,
 ) {
     // width(IntrinsicSize.Max) bounds this Column to its own widest child — same fix as
     // RuleMeridiemTemplate's own doc comment explains: without it, the accessory row's
@@ -2025,21 +1651,8 @@ private fun ShelfTemplate(
 
 /** `7j` — the time digits sit half-submerged in an [accentColor] field that multiplies over their own lower half, via a real [BlendMode.Multiply] composited in an offscreen [graphicsLayer] (so it blends against the glyph's own rasterized pixels, not the wallpaper behind them). */
 @Composable
-private fun HalfImmersedTemplate(
-    now: LocalDateTime,
-    use24HourTime: Boolean,
-    meridiem: String?,
-    locale: Locale,
-    family: FontFamily,
-    textColor: Color,
-    mutedTextColor: Color,
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    accentColor: Color,
-    dateStyle: ClockDateStyle,
-    nextAlarmText: String?,
-    batteryPercent: Int?,
-    isCharging: Boolean,
+private fun ClockTemplateData.HalfImmersedTemplate(
+    modifier: Modifier = Modifier,
 ) {
     val immersionColor = accentColor
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
