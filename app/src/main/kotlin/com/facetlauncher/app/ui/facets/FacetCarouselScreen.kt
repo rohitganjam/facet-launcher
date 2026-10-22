@@ -6,10 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -94,14 +94,17 @@ private val CAROUSEL_PAGE_SPACING = 8.dp
 
 /**
  * The preview card is a scale model of the real screen — this fraction of the device's own
- * width *and* height — so it keeps whatever aspect ratio the current phone has, on any phone.
- * Everything else about the carousel's footprint derives from it: the horizontal inset (the
- * strip of each neighbour card that peeks in) is `(1 − scale) / 2` of the screen width, and the
- * pager's height is `scale` of the screen height plus [CAROUSEL_PAGE_CHROME_HEIGHT]. The pager
- * is content-sized (not `weight(1f)`), so the dots + Launcher-settings row pack directly beneath
- * it and the leftover space collects at the bottom (a trailing weighted spacer).
+ * width *and* height — so it keeps whatever aspect ratio the current device has. It is an
+ * upper bound: the dots + Launcher-settings row are measured first and the card shrinks (keeping
+ * the aspect ratio) to fit the space left, so those rows are always visible on wide or short
+ * screens. The horizontal inset (the strip of each neighbour card that peeks in) is whatever
+ * width the fitted card doesn't use, and the pager is the card plus [CAROUSEL_PAGE_CHROME_HEIGHT],
+ * so the dots + settings row pack directly beneath it.
  */
 private const val CAROUSEL_CARD_SCALE = 0.55f
+
+/** Floor for the fitted card in split-screen or very short windows. */
+private val CAROUSEL_MIN_CARD_HEIGHT = 120.dp
 
 /** The facet-name row above the card + the gear/trash row below it, inside every page. */
 private val CAROUSEL_PAGE_CHROME_HEIGHT = 104.dp
@@ -245,8 +248,14 @@ private fun FacetCarouselContent(
         // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
         // fraction of the screen width and the leftover half on each side is the neighbour peek.
         val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
-        val pageInset = (config.screenWidthDp * (1f - CAROUSEL_CARD_SCALE) / 2f).dp
-        val pagerHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp + CAROUSEL_PAGE_CHROME_HEIGHT
+        // The dots and Launcher-settings row are measured first, so this box only gets what they
+        // leave; the card is shrunk to fit it (never grown past CAROUSEL_CARD_SCALE).
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
+            val idealCardHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp
+            val cardHeight = minOf(idealCardHeight, maxHeight - CAROUSEL_PAGE_CHROME_HEIGHT)
+                .coerceAtLeast(CAROUSEL_MIN_CARD_HEIGHT)
+            val cardWidth = cardHeight * screenAspectRatio
+            val pageInset = ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
         HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = pageInset),
@@ -255,7 +264,7 @@ private fun FacetCarouselContent(
             // transition (HubScreen.kt's content starts exactly at headerHeight, zero padding).
             modifier = Modifier
                 .fillMaxWidth()
-                .height(pagerHeight)
+                .height(cardHeight + CAROUSEL_PAGE_CHROME_HEIGHT)
                 .testTag("facet_carousel_pager"),
         ) { page ->
             if (page < facets.size) {
@@ -292,6 +301,7 @@ private fun FacetCarouselContent(
                 )
             }
         }
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
@@ -315,9 +325,6 @@ private fun FacetCarouselContent(
                 .fillMaxWidth()
                 .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 20.dp),
         )
-
-        // Leftover space collects below the whole cluster, not as a dead band inside it.
-        Spacer(modifier = Modifier.weight(1f))
     }
 
     deletingFacet?.let { facet ->

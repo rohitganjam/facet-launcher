@@ -4,7 +4,13 @@ import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.unit.dp
+import org.junit.Assert.assertTrue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -74,6 +80,7 @@ class FacetCarouselScreenTest {
         entitlement: EntitlementRepository = EntitlementRepository(),
         onOpenFacetPro: (ProReason) -> Unit = {},
         seedApps: suspend (AppRepository, PlacementRepository) -> Unit = { _, _ -> },
+        modifier: Modifier = Modifier,
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -144,6 +151,7 @@ class FacetCarouselScreenTest {
                     onDismissDrag = onDismissDrag,
                     onDismissDragEnd = onDismissDragEnd,
                     viewModel = viewModel,
+                    modifier = modifier,
                 )
             }
             }
@@ -177,6 +185,21 @@ class FacetCarouselScreenTest {
             }
             up()
         }
+    }
+
+    @Test
+    fun launcherSettingsRowStaysVisibleWhenTheScreenIsShort() {
+        // Given a window too short for a full-scale card plus the dots and settings row
+        setContent(
+            seed = { facetRepository, _ -> facetRepository.addFacet() },
+            modifier = Modifier.height(420.dp),
+        )
+
+        // Then the settings row is on screen and the pager ends above it
+        composeRule.onNodeWithTag("facet_carousel_launcher_settings").assertIsDisplayed()
+        val pagerBottom = composeRule.onNodeWithTag("facet_carousel_pager").getUnclippedBoundsInRoot().bottom
+        val settingsTop = composeRule.onNodeWithTag("facet_carousel_launcher_settings").getUnclippedBoundsInRoot().top
+        assertTrue("pager ($pagerBottom) overlaps the settings row ($settingsTop)", pagerBottom <= settingsTop)
     }
 
     @Test

@@ -90,7 +90,10 @@ flowchart TB
   renders. It is the real `HomeScreen`, laid out at the window's own size and shrunk to the card
   (`APPEARANCE_PREVIEW_CARD_SCALE`/`CAROUSEL_CARD_SCALE`, both `0.55f` wide), so every component sits
   where Home puts it, in portrait and in landscape alike (a wide window such as an unfolded foldable
-  previews the clock pane, apps pane and dock of the landscape layout). Its state comes from
+  previews the clock pane, apps pane and dock of the landscape layout). In the carousel `0.55f` is an upper
+  bound: the dots and Launcher-settings row are measured first and the card shrinks, keeping the screen's
+  aspect ratio, to fit the height left (floor `CAROUSEL_MIN_CARD_HEIGHT`), so tablets and foldables never
+  push the settings row off screen; the neighbour peek is the width the fitted card leaves. Its state comes from
   `ResolvedFacetStyle.toHomeScreenState(landscape, ...)`, the builder `HomeDrawerRoute` uses too, with
   no-op actions. A transparent layer above takes every tap: the carousel passes `onClick` (apply the
   facet), the Appearance card passes none and stays read-only without blocking the screen's scroll.
