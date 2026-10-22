@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
@@ -42,7 +45,12 @@ class DockAppsAppearanceScreenTest {
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
-        DockAppsAppearanceScreen(onBack = onBack, viewModel = viewModel)
+        // Stub card: the real one needs Hilt; its own rows are covered by AppDrawerSettingsCardTest.
+        DockAppsAppearanceScreen(
+            onBack = onBack,
+            viewModel = viewModel,
+            appDrawerCard = { Text("drawer", Modifier.testTag("app_drawer_settings_card")) },
+        )
     }
 
     @Test
@@ -398,5 +406,26 @@ class DockAppsAppearanceScreenTest {
 
         // Then the launcher-wide switch isn't there
         composeRule.onNodeWithTag("appearance_allow_landscape_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun appDrawerCardShowsOnTheGlobalScreenOnly() {
+        // Given the global screen scrolled to the bottom
+        setContent()
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("app_drawer_settings_card"))
+
+        // Then the App Drawer section is there
+        composeRule.onNodeWithTag("app_drawer_settings_card").assertIsDisplayed()
+        composeRule.onNodeWithText("App Drawer").assertIsDisplayed()
+    }
+
+    @Test
+    fun aFacetScopedScreenHasNoAppDrawerCard() {
+        // Given a facet-scoped screen
+        setContent(facetId = 1L)
+        awaitFacetScoped()
+
+        // Then the launcher-wide drawer settings aren't there
+        composeRule.onNodeWithTag("app_drawer_settings_card").assertDoesNotExist()
     }
 }

@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -102,92 +103,80 @@ private fun AppDrawerSettingsContent(
             onSelect = onDrawerPresentationChange,
             testTag = "drawer_presentation_row",
         )
-        if (presentation == DrawerPresentation.GRID) {
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.app_drawer_grid_density),
-                options = DrawerGridDensity.entries,
-                selected = settings.drawerGridDensity,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = onDrawerGridDensityChange,
-                testTag = "drawer_grid_size_row",
-            )
-        }
-        if (presentation == DrawerPresentation.LIST) {
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.app_drawer_list_item_size),
-                options = DrawerListItemSize.entries,
-                selected = settings.drawerListItemSize,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = onDrawerListItemSizeChange,
-                testTag = "drawer_list_item_size_row",
-            )
-            CardDivider()
-            SettingsToggleRow(
-                title = stringResource(R.string.app_drawer_show_icons_title),
-                subtitle = stringResource(R.string.app_drawer_show_icons_subtitle),
-                checked = settings.showDrawerIcons,
-                onCheckedChange = onShowDrawerIconsChange,
-                testTag = "show_drawer_icons_toggle",
-            )
-        }
-        if (presentation == DrawerPresentation.GRID) {
-            CardDivider()
-            SettingsToggleRow(
-                title = stringResource(R.string.app_drawer_show_labels_title),
-                subtitle = stringResource(R.string.app_drawer_show_labels_subtitle),
-                checked = settings.showDrawerLabels,
-                onCheckedChange = onShowDrawerLabelsChange,
-                testTag = "show_drawer_labels_toggle",
-            )
-        }
-        CardDivider()
-        SettingsToggleRow(
-            title = stringResource(R.string.app_drawer_search_contacts_title),
-            subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
-            checked = settings.searchContactsEnabled,
-            onCheckedChange = onSearchContactsToggle,
-            testTag = "search_contacts_toggle",
+        DrawerPresentationDetailRows(
+            settings = settings,
+            onDrawerGridDensityChange = onDrawerGridDensityChange,
+            onDrawerListItemSizeChange = onDrawerListItemSizeChange,
+            onShowDrawerIconsChange = onShowDrawerIconsChange,
+            onShowDrawerLabelsChange = onShowDrawerLabelsChange,
         )
-        CardDivider()
-        SettingsToggleRow(
-            title = stringResource(R.string.app_drawer_search_settings_title),
-            subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
-            checked = settings.searchSettingsEnabled,
-            onCheckedChange = onSearchSettingsToggle,
-            testTag = "search_settings_toggle",
+        DrawerSearchAndOrderRows(
+            settings = settings,
+            onSearchContactsToggle = onSearchContactsToggle,
+            onSearchSettingsToggle = onSearchSettingsToggle,
+            onSearchBarPositionChange = onSearchBarPositionChange,
+            onDrawerFolderDisplayModeChange = onDrawerFolderDisplayModeChange,
+            onRecentlyInstalledPositionChange = onRecentlyInstalledPositionChange,
+            onDrawerOpacityChange = onDrawerOpacityChange,
         )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.app_drawer_search_bar_position),
-            options = SearchBarPosition.entries,
-            selected = settings.searchBarPosition,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onSearchBarPositionChange,
-            testTag = "search_bar_position_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.app_drawer_folders_in_drawer),
-            options = DrawerFolderDisplayMode.entries,
-            selected = settings.drawerFolderDisplayMode,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onDrawerFolderDisplayModeChange,
-            testTag = "drawer_folder_display_mode_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.app_drawer_recently_installed_position),
-            options = RecentlyInstalledPosition.entries,
-            selected = settings.recentlyInstalledPosition,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onRecentlyInstalledPositionChange,
-            testTag = "recently_installed_position_row",
-        )
-        CardDivider()
-        DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChange)
     }
+}
+
+@Composable
+private fun ColumnScope.DrawerSearchAndOrderRows(
+    settings: LauncherSettings,
+    onSearchContactsToggle: (Boolean) -> Unit,
+    onSearchSettingsToggle: (Boolean) -> Unit,
+    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
+    onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
+    onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
+    onDrawerOpacityChange: (Float) -> Unit,
+) {
+    CardDivider()
+    SettingsToggleRow(
+        title = stringResource(R.string.app_drawer_search_contacts_title),
+        subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
+        checked = settings.searchContactsEnabled,
+        onCheckedChange = onSearchContactsToggle,
+        testTag = "search_contacts_toggle",
+    )
+    CardDivider()
+    SettingsToggleRow(
+        title = stringResource(R.string.app_drawer_search_settings_title),
+        subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
+        checked = settings.searchSettingsEnabled,
+        onCheckedChange = onSearchSettingsToggle,
+        testTag = "search_settings_toggle",
+    )
+    CardDivider()
+    LabeledDropdownRow(
+        title = stringResource(R.string.app_drawer_search_bar_position),
+        options = SearchBarPosition.entries,
+        selected = settings.searchBarPosition,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = onSearchBarPositionChange,
+        testTag = "search_bar_position_row",
+    )
+    CardDivider()
+    LabeledDropdownRow(
+        title = stringResource(R.string.app_drawer_folders_in_drawer),
+        options = DrawerFolderDisplayMode.entries,
+        selected = settings.drawerFolderDisplayMode,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = onDrawerFolderDisplayModeChange,
+        testTag = "drawer_folder_display_mode_row",
+    )
+    CardDivider()
+    LabeledDropdownRow(
+        title = stringResource(R.string.app_drawer_recently_installed_position),
+        options = RecentlyInstalledPosition.entries,
+        selected = settings.recentlyInstalledPosition,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = onRecentlyInstalledPositionChange,
+        testTag = "recently_installed_position_row",
+    )
+    CardDivider()
+    DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChange)
 }
 
 @Composable
@@ -229,6 +218,57 @@ private fun AppDrawerSettingsCardPreview() {
             onDrawerOpacityChange = {},
             onDrawerFolderDisplayModeChange = {},
             onRecentlyInstalledPositionChange = {},
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.DrawerPresentationDetailRows(
+    settings: LauncherSettings,
+    onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
+    onDrawerListItemSizeChange: (DrawerListItemSize) -> Unit,
+    onShowDrawerIconsChange: (Boolean) -> Unit,
+    onShowDrawerLabelsChange: (Boolean) -> Unit,
+) {
+    val presentation = settings.drawerPresentation
+    if (presentation == DrawerPresentation.GRID) {
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.app_drawer_grid_density),
+            options = DrawerGridDensity.entries,
+            selected = settings.drawerGridDensity,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onDrawerGridDensityChange,
+            testTag = "drawer_grid_size_row",
+        )
+    }
+    if (presentation == DrawerPresentation.LIST) {
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.app_drawer_list_item_size),
+            options = DrawerListItemSize.entries,
+            selected = settings.drawerListItemSize,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onDrawerListItemSizeChange,
+            testTag = "drawer_list_item_size_row",
+        )
+        CardDivider()
+        SettingsToggleRow(
+            title = stringResource(R.string.app_drawer_show_icons_title),
+            subtitle = stringResource(R.string.app_drawer_show_icons_subtitle),
+            checked = settings.showDrawerIcons,
+            onCheckedChange = onShowDrawerIconsChange,
+            testTag = "show_drawer_icons_toggle",
+        )
+    }
+    if (presentation == DrawerPresentation.GRID) {
+        CardDivider()
+        SettingsToggleRow(
+            title = stringResource(R.string.app_drawer_show_labels_title),
+            subtitle = stringResource(R.string.app_drawer_show_labels_subtitle),
+            checked = settings.showDrawerLabels,
+            onCheckedChange = onShowDrawerLabelsChange,
+            testTag = "show_drawer_labels_toggle",
         )
     }
 }

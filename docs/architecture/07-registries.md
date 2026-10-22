@@ -151,7 +151,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `SettingsViewModel` | `SettingsScreen` | — |
 | `FacetProViewModel` | `FacetProScreen` (Settings → Facet Pro, and every Pro limit): Buy, Restore, the Play price and messages | `reason` (`ProReason`) |
 | `AppearanceSettingsViewModel` | `AppearanceSettingsScreen`, `DockAppsAppearanceScreen` (both `facetId?`), `FontsThemesIconsScreen` (global) — one instance per back-stack entry | `facetId?` |
-| `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` | — |
+| `AppDrawerSettingsViewModel` | `AppDrawerSettingsCard` (in `DockAppsAppearanceScreen`) | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |
 | `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId?` |
 | `CalendarSettingsViewModel` | `CalendarSettingsScreen` | `facetId?` |

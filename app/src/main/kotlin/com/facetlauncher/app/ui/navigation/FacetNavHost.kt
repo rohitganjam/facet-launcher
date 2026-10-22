@@ -30,7 +30,6 @@ import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.pro.FacetProScreen
 import com.facetlauncher.app.ui.settings.AboutScreen
-import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
@@ -77,7 +76,6 @@ object FacetDestinations {
     const val FONTS_THEMES_ICONS = "fontsThemesIcons"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
-    const val APP_DRAWER_SETTINGS = "appDrawerSettings"
     const val ABOUT = "about"
     const val WHATS_NEW = "whats_new"
 
@@ -204,7 +202,6 @@ fun FacetNavHost(
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.appearanceSettings()) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
-                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
@@ -268,9 +265,6 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
             )
-        }
-        settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
-            AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.CLOCK_STYLE_GALLERY) {
             ClockStyleGalleryRoute(onBack = { navController.popBackStackSafely() })

@@ -241,11 +241,6 @@
     </plurals>
     <string name="settings_most_used_count">%1$d más usadas</string>
     <string name="settings_app_drawer_title">Cajón de apps</string>
-    <string name="settings_show_as">Mostrar como %1$s</string>
-    <string name="settings_search_on">Activado</string>
-    <string name="settings_search_off">Desactivado</string>
-    <string name="settings_contact_search">Búsqueda de contactos %1$s</string>
-    <string name="settings_settings_search">Búsqueda de ajustes %1$s</string>
     <string name="settings_notifications_title">Notificaciones</string>
     <string name="settings_notifications_media_row_title">Notificaciones y multimedia</string>
     <string name="settings_notifications_summary_badges_dot">Insignias de punto</string>
@@ -357,7 +352,6 @@
     <string name="drag_to_reorder_content_description">Arrastra para reordenar</string>
 
     <!-- AppDrawerSettingsScreen -->
-    <string name="app_drawer_settings_header_title">Cajón de apps</string>
     <string name="app_drawer_show_apps_as">Mostrar apps como</string>
     <string name="app_drawer_grid_density">Densidad de la cuadrícula</string>
     <string name="app_drawer_list_item_size">Tamaño de elemento de lista</string>

@@ -50,6 +50,7 @@ fun DockAppsAppearanceScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
+    appDrawerCard: @Composable () -> Unit = { AppDrawerSettingsCard() },
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val homeWallpaper by viewModel.homeWallpaper.collectAsState()
@@ -69,6 +70,7 @@ fun DockAppsAppearanceScreen(
         onAppListColumnAlignmentChange = viewModel::setAppListColumnAlignment,
         onAppListGridColumnsChange = viewModel::setAppListGridColumns,
         onAppListGridDisplayModeChange = viewModel::setAppListGridDisplayMode,
+        appDrawerCard = appDrawerCard,
         modifier = modifier,
     )
 }
@@ -90,6 +92,7 @@ private fun DockAppsAppearanceContent(
     onAppListColumnAlignmentChange: (AppListColumnAlignment) -> Unit,
     onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
     onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
+    appDrawerCard: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -159,6 +162,11 @@ private fun DockAppsAppearanceContent(
                             onVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
                         )
                     }
+                }
+                // Launcher-wide only, like Allow landscape: the drawer has no per-facet override.
+                if (!uiState.isFacetScoped) {
+                    item { SettingsSectionHeader(stringResource(R.string.settings_app_drawer_title)) }
+                    item { appDrawerCard() }
                 }
             }
         },
@@ -343,6 +351,7 @@ private fun DockAppsAppearanceScreenPreview() {
             onAppListColumnAlignmentChange = {},
             onAppListGridColumnsChange = {},
             onAppListGridDisplayModeChange = {},
+            appDrawerCard = {},
         )
     }
 }

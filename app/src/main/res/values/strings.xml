@@ -260,11 +260,6 @@
     </plurals>
     <string name="settings_most_used_count">%1$d Most used</string>
     <string name="settings_app_drawer_title">App Drawer</string>
-    <string name="settings_show_as">Show as %1$s</string>
-    <string name="settings_search_on">On</string>
-    <string name="settings_search_off">Off</string>
-    <string name="settings_contact_search">Contact search %1$s</string>
-    <string name="settings_settings_search">Settings search %1$s</string>
     <string name="settings_notifications_title">Notifications</string>
     <string name="settings_notifications_media_row_title">Notifications and media</string>
     <string name="settings_notifications_summary_badges_dot">Dot badges</string>
@@ -395,7 +390,6 @@
     <string name="drag_to_reorder_content_description">Drag to reorder</string>
 
     <!-- AppDrawerSettingsScreen -->
-    <string name="app_drawer_settings_header_title">App Drawer</string>
     <string name="app_drawer_show_apps_as">Show apps as</string>
     <string name="app_drawer_grid_density">Grid density</string>
     <string name="app_drawer_list_item_size">List item size</string>

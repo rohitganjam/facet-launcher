@@ -27,7 +27,6 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.data.local.FacetDatabase
-import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -52,7 +51,6 @@ class SettingsScreenTest {
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
-        onNavigateToAppDrawerSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
@@ -89,7 +87,6 @@ class SettingsScreenTest {
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
-                    onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToPermissions = onNavigateToPermissions,
                     onNavigateToBackupRestore = onNavigateToBackupRestore,
@@ -207,41 +204,6 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun appDrawerRowIsClickableAndReflectsDefaultSettings() {
-        // Given the settings screen, scrolled to the "App Drawer" row under HOME & APPS — its
-        // seven controls used to be inline on this list; they now live on their own screen.
-        // Defaults: List presentation, contact search off, settings search off.
-        var navigated = false
-        setContent(onNavigateToAppDrawerSettings = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
-        composeRule.onNodeWithTag("app_drawer_settings_row").assertTextContains("Show as List · Contact search Off · Settings search Off", substring = true)
-
-        // When tapping it
-        composeRule.onNodeWithTag("app_drawer_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun appDrawerRowSubtitleReflectsNonDefaultSettings() {
-        // Given Grid presentation with contact search on and settings search still off
-        val settingsRepository = setContent()
-        runBlocking {
-            settingsRepository.setDrawerPresentation(DrawerPresentation.GRID)
-            settingsRepository.setSearchContactsEnabled(true)
-        }
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
-
-        // Then the row reflects that exact combination
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("app_drawer_settings_row").assertTextContains("Show as Grid · Contact search On · Settings search Off", substring = true)
-            }.isSuccess
-        }
-    }
-
-    @Test
     fun calendarAndNotificationRowsLiveInAppearanceNotInSettings() {
         // Given the settings screen, scrolled through its Apps and folders section
         setContent()
@@ -250,6 +212,7 @@ class SettingsScreenTest {
         // Then neither moved row is here any more (Appearance owns them now)
         composeRule.onNodeWithTag("calendar_settings_row").assertDoesNotExist()
         composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_drawer_settings_row").assertDoesNotExist()
     }
 
     @Test

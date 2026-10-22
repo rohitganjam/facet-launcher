@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Settings → Home & Apps → App Drawer — split out of the main Settings list into its own screen (see chat history: the main list was getting too long to scan). Every field here is global only, no per-facet override. */
+/** Backs the App drawer card on Settings → Appearance → Dock & Apps appearance. Every field here is global only, no per-facet override. */
 @HiltViewModel
 class AppDrawerSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,

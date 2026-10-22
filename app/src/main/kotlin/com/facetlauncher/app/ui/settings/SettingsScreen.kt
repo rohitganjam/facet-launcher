@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.AutoMode
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Folder
@@ -58,7 +57,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.BackButton
@@ -94,7 +92,6 @@ fun SettingsScreen(
     onNavigateToAppearance: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
-    onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
@@ -113,7 +110,6 @@ fun SettingsScreen(
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
-        onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
@@ -134,7 +130,6 @@ private fun SettingsContent(
     onNavigateToAppearance: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
-    onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
@@ -230,14 +225,6 @@ private fun SettingsContent(
                             onClick = onNavigateToHomeAppsListSettings,
                             testTag = "home_apps_list_settings_row",
                             leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_app_drawer_title),
-                            subtitle = appDrawerSummary(uiState.settings.drawerPresentation, uiState.settings.searchContactsEnabled, uiState.settings.searchSettingsEnabled),
-                            onClick = onNavigateToAppDrawerSettings,
-                            testTag = "app_drawer_settings_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.HOME_APPS),
                         )
                         CardDivider(startInset = SettingsIconBadgeInset)
                         ClickableRow(
@@ -340,19 +327,6 @@ private fun appsListSummary(mode: ListContentMode, favoritesCount: Int, appsToSh
     ListContentMode.MOST_USED -> stringResource(R.string.settings_most_used_count, appsToShowCount)
 }
 
-@Composable
-private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEnabled: Boolean, searchSettingsEnabled: Boolean): String {
-    val layout = stringResource(presentation.displayNameRes)
-    val contactSearch = stringResource(if (searchContactsEnabled) R.string.settings_search_on else R.string.settings_search_off)
-    val settingsSearch = stringResource(if (searchSettingsEnabled) R.string.settings_search_on else R.string.settings_search_off)
-    return stringResource(
-        R.string.dot_join_3,
-        stringResource(R.string.settings_show_as, layout),
-        stringResource(R.string.settings_contact_search, contactSearch),
-        stringResource(R.string.settings_settings_search, settingsSearch),
-    )
-}
-
 /** "4 Dock Apps" / "3 Dock Apps, 1 Folder" — Dock capacity is counted by item (a folder costs one slot regardless of how many apps it holds), so this mirrors that rather than the old flat app count, which silently dropped folder members entirely. */
 @Composable
 private fun dockSummary(items: List<PlacedItem>): String {
@@ -434,7 +408,6 @@ private fun SettingsScreenPreview() {
             onNavigateToAppearance = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},
-            onNavigateToAppDrawerSettings = {},
             onNavigateToFolders = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
