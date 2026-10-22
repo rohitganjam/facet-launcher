@@ -16,7 +16,6 @@
     <ID>ComposableNestingDepth:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>ComposableNestingDepth:HubWidgetPickerScreen.kt:@Composable internal fun HubWidgetPickerContent</ID>
     <ID>ComposableParamOrder:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
-    <ID>ComposableParamOrder:AppDrawerSettingsScreen.kt:@Composable private fun AppDrawerToggleRow</ID>
     <ID>ComposableParamOrder:ClockAccessoryIcons.kt:@Composable fun BatteryIcon</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun ClockGlyphText</ID>
@@ -60,7 +59,6 @@
     <ID>LongMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>LongMethod:AppDrawerScreen.kt:@Composable private fun DrawerListContent</ID>
     <ID>LongMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
-    <ID>LongMethod:AppDrawerSettingsScreen.kt:@Composable private fun AppDrawerSettingsContent</ID>
     <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
     <ID>LongMethod:AppearancePreview.kt:@Composable internal fun AppearancePreviewCard</ID>
@@ -127,13 +125,9 @@
     <ID>TooManyFunctions:ClockWidgetTouchGate.kt:ClockWidgetTouchGate : FrameLayoutNestedScrollingParent3</ID>
     <ID>TooManyFunctions:Converters.kt:Converters</ID>
     <ID>TooManyFunctions:DatabaseModule.kt:DatabaseModule</ID>
-    <ID>TooManyFunctions:DefaultFavoriteAppRepository.kt:DefaultFavoriteAppRepository</ID>
-    <ID>TooManyFunctions:DockAppRepository.kt:DockAppRepository</ID>
     <ID>TooManyFunctions:DrawerViewModel.kt:DrawerViewModel : ViewModel</ID>
     <ID>TooManyFunctions:FacetCarouselViewModel.kt:FacetCarouselUiState</ID>
-    <ID>TooManyFunctions:FacetDockAppRepository.kt:FacetDockAppRepository</ID>
     <ID>TooManyFunctions:FacetRepository.kt:FacetRepository</ID>
-    <ID>TooManyFunctions:FavoriteAppRepository.kt:FavoriteAppRepository</ID>
     <ID>TooManyFunctions:FolderRepository.kt:FolderRepository</ID>
     <ID>TooManyFunctions:HubViewModel.kt:HubViewModel : ViewModel</ID>
     <ID>TooManyFunctions:SettingsRepository.kt:SettingsRepository</ID>
