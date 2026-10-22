@@ -38,6 +38,7 @@ import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -71,13 +72,15 @@ class HomeAppsListSettingsScreenTest {
                 val facetId = if (facetScoped) runBlocking { facetRepository.addFacet().id } else null
                 onFacetRepo(facetRepository, facetId)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
                 runBlocking { seed(folderRepository, placementRepository, facetRepository, facetId) }
                 HomeAppsListSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
                     placementRepository,
+                    observePlacedItems,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -14,6 +13,7 @@ import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -48,7 +48,7 @@ private const val DOCK_SAMPLE_COUNT = 4
 class NotificationSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
-    placementRepository: PlacementRepository,
+    observePlacedItems: ObservePlacedItemsUseCase,
     private val wallpaperRepository: WallpaperRepository,
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
@@ -60,8 +60,8 @@ class NotificationSettingsViewModel @Inject constructor(
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
     private val previewInputs = combine(
-        placementRepository.observeItems(PlacementTarget.GlobalFavorites),
-        placementRepository.observeItems(PlacementTarget.GlobalDock),
+        observePlacedItems.items(PlacementTarget.GlobalFavorites),
+        observePlacedItems.items(PlacementTarget.GlobalDock),
         getInstalledApps.observe(),
         preferredPreviewPackages,
     ) { favorites, dock, installed, preferred ->

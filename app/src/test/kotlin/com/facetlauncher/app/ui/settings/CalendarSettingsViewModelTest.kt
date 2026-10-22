@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.lifecycle.SavedStateHandle
+import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -63,7 +64,7 @@ class CalendarSettingsViewModelTest {
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOfNotNull(facet)))
         runBlocking { `when`(calendarRepository.getUpcomingEvents(any(), anyBoolean())).thenReturn(todayEvents) }
         val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
-        return CalendarSettingsViewModel(savedStateHandle, settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository, wallpaperRepository)
+        return CalendarSettingsViewModel(savedStateHandle, settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository, wallpaperRepository, AssignCalendarColorsUseCase())
     }
 
     @Test
@@ -207,6 +208,7 @@ class CalendarSettingsViewModelTest {
             mock(CalendarPermissionRepository::class.java),
             mock(CalendarRepository::class.java),
             unavailableWallpaperRepository(),
+            AssignCalendarColorsUseCase(),
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()

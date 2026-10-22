@@ -36,6 +36,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 class SettingsScreenTest {
 
@@ -68,9 +69,10 @@ class SettingsScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
                 SettingsViewModel(
-                    ObserveSettingsScreenStateUseCase(settingsRepository, placementRepository, folderRepository),
+                    ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),

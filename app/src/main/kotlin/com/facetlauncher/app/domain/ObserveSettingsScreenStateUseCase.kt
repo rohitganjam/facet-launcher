@@ -7,7 +7,6 @@ import com.facetlauncher.app.data.model.PlacedItem
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 
 data class SettingsScreenState(
@@ -19,21 +18,21 @@ data class SettingsScreenState(
 )
 
 /**
- * Combines [SettingsRepository], [PlacementRepository] (the launcher-wide Dock and Favorites) and
+ * Combines [SettingsRepository], [ObservePlacedItemsUseCase] (the launcher-wide Dock and Favorites) and
  * [FolderRepository] into one observable state for the Settings screen — the one place in
  * Phase 2 where logic genuinely spans multiple repositories, so it earns a UseCase rather than
  * being called directly from a ViewModel.
  */
 class ObserveSettingsScreenStateUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val folderRepository: FolderRepository,
 ) {
     operator fun invoke(): Flow<SettingsScreenState> =
         combine(
             settingsRepository.settings,
-            placementRepository.observeItems(PlacementTarget.GlobalDock),
-            placementRepository.observeItems(PlacementTarget.GlobalFavorites),
+            observePlacedItems.items(PlacementTarget.GlobalDock),
+            observePlacedItems.items(PlacementTarget.GlobalFavorites),
             folderRepository.observeFolders(),
         ) { settings, dockItems, defaultFavorites, folders ->
             SettingsScreenState(settings = settings, dockItems = dockItems, defaultFavorites = defaultFavorites, folderCount = folders.size)

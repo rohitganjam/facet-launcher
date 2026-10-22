@@ -21,7 +21,7 @@ flowchart TB
     F --> D{"facet.placementTarget(list)"}
     D -- "Dock and facet.overrideDock, or Favorites and facet.overridingFavorites" --> T1["PlacementTarget(list, facet.id)"]
     D -- "otherwise" --> T2["PlacementTarget(list) — launcher-wide"]
-    T1 & T2 --> POS["position = placementRepository.observeItems(target).first().size\n(append to end)"]
+    T1 & T2 --> POS["position = observePlacedItems.items(target).first().size\n(append to end)"]
     POS --> DAO["appPlacementDao.upsert(AppPlacementEntity(list, pkg, activity, position, profile, userId))"]
     DAO --> ROOM[(Room invalidates table)]
     ROOM --> HOME["Home / Drawer re-emit via combine\n(see 03 §2)"]

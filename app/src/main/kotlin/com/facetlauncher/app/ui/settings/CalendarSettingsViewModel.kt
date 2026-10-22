@@ -80,11 +80,11 @@ class CalendarSettingsViewModel @Inject constructor(
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val calendarRepository: CalendarRepository,
     private val wallpaperRepository: WallpaperRepository,
+    private val assignCalendarColorsUseCase: AssignCalendarColorsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long = savedStateHandle.get<Long>("facetId") ?: NO_ACTIVE_FACET_ID
 
-    private val assignCalendarColorsUseCase = AssignCalendarColorsUseCase()
     private val calendarColorPalette = AccentSwatch.entries.map { it.name }
 
     private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())

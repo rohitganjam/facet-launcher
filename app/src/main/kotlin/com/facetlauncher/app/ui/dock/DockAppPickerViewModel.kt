@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.SortDirection
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.domain.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -64,6 +65,7 @@ class DockAppPickerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getInstalledApps: GetInstalledAppsUseCase,
     private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val folderRepository: FolderRepository,
     private val sortAppsForPicker: SortAppsForPickerUseCase,
     private val usageAccessRepository: UsageAccessRepository,
@@ -81,7 +83,7 @@ class DockAppPickerViewModel @Inject constructor(
 
     private val target = PlacementTarget(PlacementList.DOCK, facetId)
 
-    private fun observeDockItems(): Flow<List<PlacedItem>> = placementRepository.observeItems(target)
+    private fun observeDockItems(): Flow<List<PlacedItem>> = observePlacedItems.items(target)
 
     /** Latched from the dock's live order the first time it's observed; never updated after — see [DockAppPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)

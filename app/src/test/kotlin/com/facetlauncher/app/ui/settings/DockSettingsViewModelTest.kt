@@ -33,6 +33,7 @@ import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -61,16 +62,18 @@ class DockSettingsViewModelTest {
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
+        observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
     ): DockSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockItems))
-        facetId?.let { `when`(placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(dockItems)) }
+        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockItems))
+        facetId?.let { `when`(observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(dockItems)) }
         return DockSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
             facetRepository,
             placementRepository,
+            observePlacedItems,
             fakeWallpaperRepository(),
         )
     }

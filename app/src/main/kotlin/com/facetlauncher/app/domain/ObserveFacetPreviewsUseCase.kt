@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -41,7 +40,7 @@ data class FacetPreviewData(
  * including which calendars are selected). The dock follows the same shape — a facet overriding
  * its own dock (`overrideDock`) shows that list, one still inheriting shows the launcher-wide
  * default. Spans [FacetRepository],
- * [SettingsRepository], [PlacementRepository],
+ * [SettingsRepository], [ObservePlacedItemsUseCase],
  * [UsageStatsRepository], [UsageAccessRepository], [CalendarPermissionRepository] and
  * [CalendarRepository], so it's a use case rather than something either the ViewModel or a
  * composable computes directly. Unlike [ObserveHomeScreenStateUseCase], which resolves state for
@@ -52,7 +51,7 @@ data class FacetPreviewData(
 class ObserveFacetPreviewsUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
-    private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val usageStatsRepository: UsageStatsRepository,
     private val usageAccessRepository: UsageAccessRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
@@ -64,16 +63,16 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         val settings = settingsRepository.settings.distinctUntilChanged()
 
         val facetIds = facets.map { it.map { facet -> facet.id } }.distinctUntilChanged()
-        val ownFavoritesByFacet = facetIds.flatMapLatest { placementRepository.observeItemsForFacets(PlacementList.FAVORITES, it) }
-        val ownDockByFacet = facetIds.flatMapLatest { placementRepository.observeItemsForFacets(PlacementList.DOCK, it) }
+        val ownFavoritesByFacet = facetIds.flatMapLatest { observePlacedItems.itemsForFacets(PlacementList.FAVORITES, it) }
+        val ownDockByFacet = facetIds.flatMapLatest { observePlacedItems.itemsForFacets(PlacementList.DOCK, it) }
 
         return combine(
             facets,
             settings,
             ownFavoritesByFacet,
-            placementRepository.observeItems(PlacementTarget.GlobalFavorites),
+            observePlacedItems.items(PlacementTarget.GlobalFavorites),
             ownDockByFacet,
-            placementRepository.observeItems(PlacementTarget.GlobalDock),
+            observePlacedItems.items(PlacementTarget.GlobalDock),
         ) { facetList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock ->
             Inputs(facetList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock)
         }.flatMapLatest { inputs ->

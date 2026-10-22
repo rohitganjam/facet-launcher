@@ -14,12 +14,13 @@ import kotlinx.coroutines.flow.first
 class AddToActiveListUseCase @Inject constructor(
     private val resolveTarget: ResolveActivePlacementTargetUseCase,
     private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
 ) {
     suspend operator fun invoke(list: PlacementList, item: PlacedItem) {
         val target = resolveTarget(list)
         // Item-counted, not app-counted — a folder occupies a slot too, and an app-only count
         // would let a new app's computed position collide with an existing folder's.
-        val position = placementRepository.observeItems(target).first().size
+        val position = observePlacedItems.items(target).first().size
         when (item) {
             is PlacedItem.SingleApp -> placementRepository.addApp(target, item.app, position)
             is PlacedItem.FolderItem -> placementRepository.placeFolder(target, item.folder.id, position)

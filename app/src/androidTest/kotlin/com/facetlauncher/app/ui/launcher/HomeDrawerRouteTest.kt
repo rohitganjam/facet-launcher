@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
@@ -77,6 +79,7 @@ import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
@@ -227,12 +230,13 @@ class HomeDrawerRouteTest {
                 }
             }
             val placementRepository = remember {
-                PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository).also { repo ->
+                PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()).also { repo ->
                     // Never seeded otherwise — the app list combines DB rows against installed apps, so with
                     // zero rows it stays permanently empty regardless of how fast/slow the installed-apps side is.
                     runBlocking { apps.take(favoriteCount).forEachIndexed { index, app -> repo.addApp(PlacementTarget.GlobalFavorites, app, position = index) } }
                 }
             }
+            val observePlacedItems = remember { ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository) }
             val homeViewModel = remember {
                 val usageStatsRepository = UsageStatsRepository(
                     context.getSystemService(UsageStatsManager::class.java),
@@ -251,7 +255,7 @@ class HomeDrawerRouteTest {
                 HomeViewModel(
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
-                        placementRepository,
+                        observePlacedItems,
                         facetRepository,
                         usageStatsRepository,
                         usageAccessRepository,
@@ -317,7 +321,7 @@ class HomeDrawerRouteTest {
                     notificationBadgeRepository,
                     notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),
-                    AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
+                    AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository, observePlacedItems),
                     RemoveFromActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
@@ -325,6 +329,7 @@ class HomeDrawerRouteTest {
                     NotificationActionController(),
                     NotificationOpener(context),
                     ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
+                    DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
                 )
             }
             val privateSpaceViewModel = remember {
@@ -411,7 +416,7 @@ class HomeDrawerRouteTest {
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
-                        placementRepository,
+                        observePlacedItems,
                         UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
                         UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                         CalendarPermissionRepository(context),

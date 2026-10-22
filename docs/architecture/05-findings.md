@@ -11,31 +11,14 @@ error; see this doc's own rule in `CLAUDE.md`'s "Living architecture docs" secti
 
 | # | Finding | Severity | Effort |
 |---|---|---|---|
-| F2 | Composables construct use cases directly (`AppDrawerScreen`, 3 use cases) | Medium (convention) | Small |
 | F4 | `domain/` imports `android.*` in 5 files | Low–Medium | Small |
-| F5 | Repository→repository dependency web (`PlacementRepository` → `FolderRepository` → `AppRepository`) | Medium (design) | Medium |
+| F5 | `AppRepository` is still a fan-in for five repositories (`FolderRepository`, `UsageStatsRepository`, `WorkProfileRepository`, `PrivateSpaceRepository`, `AppWidgetRepository`) | Low (design) | Medium |
 | F7 | `HomeViewModel` and `LauncherViewModel` collect for their whole lifetime (`launchIn(viewModelScope)`, not `stateIn(WhileSubscribed)`) | Low | Small |
 | F8 | `ObserveHomeScreenStateUseCase` / `ObserveHubStateUseCase` hold mutable state while unscoped | Low | Trivial |
 | F10 | Recents / Most-used / calendar are one-shot reads behind a manual `refreshTrigger` | Low (UX) | Medium |
-| F12 | `DrawerViewModel` exposes ~8 separate `StateFlow`s instead of one `DrawerUiState`; `AssignCalendarColorsUseCase` is `new`ed in a ViewModel instead of injected | Low (convention) | Small |
+| F12 | `DrawerViewModel` exposes ~8 separate `StateFlow`s instead of one `DrawerUiState` | Low (convention) | Small |
 
 ---
-
-## F2 — Composables instantiating use cases (Medium)
-
-`ui/drawer/AppDrawerScreen.kt:250`, `:272` and `:284`:
-
-```kotlin
-val rankBySearchRelevance = remember { RankBySearchRelevanceUseCase() }
-val groupUseCase = remember { GroupAppsByLetterUseCase() }
-val recentlyInstalledUseCase = remember { RecentlyInstalledAppsUseCase() }
-```
-
-All three are pure functions with no dependencies, so nothing breaks — but it is the one place a
-composable reaches into `domain/`, and `DrawerViewModel` already injects
-`RankBySearchRelevanceUseCase`. Move the grouping/ranking/recents into `DrawerViewModel` (emit
-`GroupedApps` in `DrawerUiState`) or pass the result in as a parameter. The same
-`AppDrawerScreenTest` assertions will still hold.
 
 ## F4 — `domain/` touching the Android framework (Low–Medium)
 
@@ -48,29 +31,25 @@ composable reaches into `domain/`, and `DrawerViewModel` already injects
 | `ExportBackupUseCase.kt`, `ImportBackupUseCase.kt` | `android.net.Uri` as a parameter type | Value type only; acceptable. Could take a `String` and let `BackupRepository` parse |
 | `ObserveAppNotificationsUseCase.kt` | `android.os.UserHandle` as a parameter type | Value type only (the same `UserHandle` `AppInfo` carries); acceptable |
 
-## F5 — Repositories depending on repositories (Medium, design)
+## F5 — `AppRepository` fan-in (Low, design)
 
 ```mermaid
 flowchart LR
-    PR[PlacementRepository] --> FOR[FolderRepository]
-    FOR --> AR[AppRepository]
-    PR --> AR
+    FOR[FolderRepository] --> AR[AppRepository]
     USR[UsageStatsRepository] --> AR
     WPR2[WorkProfileRepository] --> AR
     PSR[PrivateSpaceRepository] --> AR
     AWR[AppWidgetRepository] --> AR
 ```
 
-Hydration ("join these Room rows against the live app list and the live folder list") is logic
-that spans repositories, which `CLAUDE.md` assigns to `domain/`. Today it lives in
-`PlacementRepository`'s `observeApps` / `observeItems`. This is not wrong — it keeps the
-`PlacedItem` union in one layer and the use cases simple — but it means `AppRepository` is a fan-in
-for 6 classes and any change to its emission shape ripples through `data/`. Now that
-`AppRepository.observeInstalledApps()` is shared (`shareIn`, fixed — see `03 §1`), the runtime cost
-of this fan-in is gone; the design question (whether hydration belongs in `domain/` instead) remains
-open. With the four placement repositories folded into one, the join exists once, so the old worry
-about duplicating it is gone; consider an `ObservePlacedItemsUseCase` that owns the join and lets
-`PlacementRepository` expose raw entity flows only if it starts to grow.
+Dock/Favorites hydration used to be a second repository→repository edge: `PlacementRepository`
+joined its rows against `AppRepository` and `FolderRepository`. That join now lives in
+`ObservePlacedItemsUseCase` (`domain/`), and `PlacementRepository` exposes raw entity flows only,
+so the join exists once and `data/` has one fewer dependency on `AppRepository`'s emission shape.
+What remains is `FolderRepository`, which hydrates folder members against the live app list the
+same way. It is the same shape, but it has no cross-repository fan-out beyond that one edge, and
+`AppRepository.observeInstalledApps()` is shared (`shareIn`, see `03 §1`), so the runtime cost is
+nil. Worth moving into a use case only if its emission shape starts to change often.
 
 ## F7 — Lifetime collection in two ViewModels (Low)
 
@@ -103,16 +82,13 @@ on resume is reasonable; calendar *does* have one (`ContentResolver.registerCont
 the next resume. A `callbackFlow` in `CalendarRepository` would make it live without touching the
 use case.
 
-## F12 — Two small convention drifts (Low)
+## F12 — `DrawerViewModel` flow sprawl (Low)
 
 - `DrawerViewModel` exposes `badgeCounts`, `contactResults`, `settingsResults`,
   `showContactsPermissionPrompt`, `showContactsSettingPrompt`, … as separate `StateFlow`s and
   `observeAppNotifications(app)` for the composable to call. Every other screen has one
   `XUiState`; the drawer's composable ends up collecting 8 flows itself (`settings`, `privateSpaceState`, `badgeCounts`, `contactResults`, `settingsResults`, `showContactsPermissionPrompt`, `showContactsSettingPrompt`, `folders`). Folding them into a
   `DrawerUiState` would also make `AppDrawerScreenTest` setups smaller.
-- `CalendarSettingsViewModel` does `private val assignCalendarColorsUseCase = AssignCalendarColorsUseCase()`
-  instead of constructor-injecting it (it has no dependencies, so Hilt would provide it for free).
-  Same category as F2.
 
 ---
 

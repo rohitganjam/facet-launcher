@@ -22,20 +22,19 @@
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun MinuteText</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun SeparatorText</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun TemplateDateText</ID>
-    <ID>ComposableParamOrder:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
     <ID>ComposableParamOrder:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>ComposableParamOrder:StickyHeaderLayout.kt:@Composable fun StickyHeaderLayout</ID>
+    <ID>CompositionLocalAllowlist:HomeSwipeGate.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests, like `LocalHomePressedEvent`. */ val LocalHomeSwipeGate = staticCompositionLocalOf&lt;HomeSwipeGate?&gt; { null }</ID>
     <ID>CompositionLocalAllowlist:LauncherLocals.kt:/** * [LauncherViewModel.homePressedEvent], threaded down from [com.facetlauncher.app.LauncherActivity]'s * top-level `CompositionLocalProvider` so any transient UI state that should close when the user * returns Home — not just [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own Drawer/Hub/Facet * axes, but e.g. [com.facetlauncher.app.ui.components.AppContextMenu]'s bottom sheet — can subscribe * directly without every intermediate composable threading it through as a parameter. Same shape as * `ui/theme/ThemeLocals.kt`'s own locals. `null` wherever [com.facetlauncher.app.LauncherActivity] * hasn't provided it (`@Preview`s, unit tests), where nothing should close rather than crash. */ val LocalHomePressedEvent = staticCompositionLocalOf&lt;SharedFlow&lt;Unit&gt;?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:SystemBars.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests. */ val LocalSystemBarsState = staticCompositionLocalOf&lt;SystemBarsState?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:SystemBars.kt:/** Whether the status bar currently shows light icons — read by sheet windows, which set their own bar appearance. Null outside `LauncherActivity`. */ val LocalLightStatusBarIcons = staticCompositionLocalOf&lt;Boolean?&gt; { null }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Bumped by [FacetLauncherTheme] on every `ON_RESUME` so [Accent]'s dynamic-color lookup re-reads * the OS's current wallpaper-derived palette instead of trusting a value cached from whenever the * Activity was first composed. Needed because Facet, as the Home app, is almost always *resumed* * rather than freshly launched — without this, a wallpaper/theme-palette change made in system * Settings would only show up in Facet after a full force-stop, not just returning to Home (see * chat history). */ val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * F11's accent-source settings, provided once at the root by [FacetLauncherTheme] so [Accent] * (a plain top-level color, not a composable parameter) can read them without every call site * threading them through. Defaults here (Material You on, no custom pick) only apply to * previews/tests that render without going through [FacetLauncherTheme] explicitly. */ val LocalAccentFromSystem = staticCompositionLocalOf { true }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * F11's global icon-rendering mode, provided once at the root by [FacetLauncherTheme] so * [com.facetlauncher.app.ui.components.AppIcon] — called from a dozen+ surfaces (Home, Drawer, * Dock, context menu, pickers) — can read it without every call site threading it through. */ val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAULT }</ID>
-    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** Global app-icon outline, provided alongside [LocalIconRenderMode] for the same reason. */ val LocalIconShape = staticCompositionLocalOf { IconShape.SQUIRCLE }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** * Whether the app is currently rendering dark — resolved once by [FacetLauncherTheme] from * [com.facetlauncher.app.data.model.ThemeMode] (an explicit Light/Dark override, or System * following [androidx.compose.foundation.isSystemInDarkTheme]) and read from here by every * color in `Color.kt` instead of each calling `isSystemInDarkTheme()` itself, so the in-app * override actually takes effect everywhere a color is used. */ val LocalIsDarkTheme = staticCompositionLocalOf { false }</ID>
+    <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** Global app-icon outline, provided alongside [LocalIconRenderMode] for the same reason. */ val LocalIconShape = staticCompositionLocalOf { IconShape.SQUIRCLE }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:/** Which wallpaper-derived tonal role [Accent] resolves to when [LocalAccentFromSystem] is `true` — see [WallpaperAccentRole]. */ val LocalWallpaperAccentRole = staticCompositionLocalOf { WallpaperAccentRole.PRIMARY }</ID>
     <ID>CompositionLocalAllowlist:ThemeLocals.kt:val LocalCustomAccentSwatch = compositionLocalOf&lt;AccentSwatch?&gt; { null }</ID>
-    <ID>CompositionLocalAllowlist:HomeSwipeGate.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests, like `LocalHomePressedEvent`. */ val LocalHomeSwipeGate = staticCompositionLocalOf&lt;HomeSwipeGate?&gt; { null }</ID>
-    <ID>CompositionLocalAllowlist:SystemBars.kt:/** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests. */ val LocalSystemBarsState = staticCompositionLocalOf&lt;SystemBarsState?&gt; { null }</ID>
-    <ID>CompositionLocalAllowlist:SystemBars.kt:/** Whether the status bar currently shows light icons — read by sheet windows, which set their own bar appearance. Null outside `LauncherActivity`. */ val LocalLightStatusBarIcons = staticCompositionLocalOf&lt;Boolean?&gt; { null }</ID>
     <ID>CyclomaticComplexMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
@@ -45,7 +44,6 @@
     <ID>CyclomaticComplexMethod:ImportBackupUseCase.kt:ImportBackupUseCase$suspend operator fun invoke: ImportBackupResult</ID>
     <ID>CyclomaticComplexMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
     <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestQuickAddState: suspend (AppInfo) -&gt; QuickAddState = { QuickAddState() }</ID>
-    <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestShortcuts: suspend (AppInfo) -&gt; List&lt;AppShortcut&gt;</ID>
     <ID>LambdaParameterInRestartableEffect:AppDrawerScreen.kt:onRequestConnections: suspend (ContactInfo) -&gt; List&lt;ContactConnection&gt; = { emptyList() }</ID>
     <ID>LambdaParameterInRestartableEffect:AppPickerScreen.kt:onResume: () -&gt; Unit = {}</ID>
     <ID>LambdaParameterInRestartableEffect:ClockWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
@@ -59,13 +57,11 @@
     <ID>LongMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
     <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
-    <ID>LongMethod:AppearancePreview.kt:@Composable internal fun AppearancePreviewCard</ID>
-    <ID>LongMethod:DockAppsAppearanceScreen.kt:@Composable private fun DockAppsAppearanceContent</ID>
-    <ID>LongMethod:FontsThemesIconsScreen.kt:@Composable private fun FontsThemesIconsContent</ID>
     <ID>LongMethod:BackupRestoreScreen.kt:@Composable private fun BackupRestoreContent</ID>
     <ID>LongMethod:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
     <ID>LongMethod:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
     <ID>LongMethod:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
+    <ID>LongMethod:DockAppsAppearanceScreen.kt:@Composable private fun DockAppsAppearanceContent</ID>
     <ID>LongMethod:DockSettingsScreen.kt:@Composable private fun DockSettingsContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetCarouselContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
@@ -74,6 +70,7 @@
     <ID>LongMethod:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
     <ID>LongMethod:FolderTileContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun FolderTileContextMenu</ID>
     <ID>LongMethod:FoldersSettingsScreen.kt:@Composable internal fun FoldersSettingsContent</ID>
+    <ID>LongMethod:FontsThemesIconsScreen.kt:@Composable private fun FontsThemesIconsContent</ID>
     <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun DefaultFavoritesReorderList</ID>
     <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun HomeAppsListSettingsContent</ID>
     <ID>LongMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
@@ -82,7 +79,6 @@
     <ID>LongMethod:Migrations.kt:Migrations.&lt;no name provided&gt;$override fun migrate</ID>
     <ID>LongMethod:OnboardingFacetsPage.kt:@Composable private fun FacetSwitchDemo</ID>
     <ID>LongMethod:OnboardingHomeSetupPage.kt:@Composable fun OnboardingHomeSetupPage</ID>
-    <ID>LongMethod:OnboardingIntroPage.kt:@Composable fun OnboardingIntroPage</ID>
     <ID>LongMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun SettingsContent</ID>
     <ID>LoopWithTooManyJumpStatements:AppDrawerScreen.kt:while</ID>
@@ -113,26 +109,19 @@
     <ID>TooGenericExceptionCaught:LauncherAppWidgetHost.kt:LauncherAppWidgetHost$e: Exception</ID>
     <ID>TooManyFunctions:AppDrawerScreen.kt:com.facetlauncher.app.ui.drawer.AppDrawerScreen.kt</ID>
     <ID>TooManyFunctions:AppWidgetRepository.kt:AppWidgetRepository</ID>
-    <ID>TooManyFunctions:FacetNavHost.kt:FacetDestinations</ID>
     <ID>TooManyFunctions:AppearanceSettingsViewModel.kt:AppearanceSettingsViewModel : ViewModel</ID>
-    <ID>TooManyFunctions:BackupMapping.kt:com.facetlauncher.app.domain.BackupMapping.kt</ID>
-    <ID>TooManyFunctions:ClockStyleGalleryViewModel.kt:ClockStyleGalleryViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ClockTemplates.kt:com.facetlauncher.app.ui.home.clock.ClockTemplates.kt</ID>
     <ID>TooManyFunctions:ClockWidgetTouchGate.kt:ClockWidgetTouchGate : FrameLayoutNestedScrollingParent3</ID>
     <ID>TooManyFunctions:Converters.kt:Converters</ID>
-    <ID>TooManyFunctions:DatabaseModule.kt:DatabaseModule</ID>
     <ID>TooManyFunctions:DrawerViewModel.kt:DrawerViewModel : ViewModel</ID>
-    <ID>TooManyFunctions:FacetCarouselViewModel.kt:FacetCarouselUiState</ID>
+    <ID>TooManyFunctions:FacetNavHost.kt:FacetDestinations</ID>
     <ID>TooManyFunctions:FacetRepository.kt:FacetRepository</ID>
     <ID>TooManyFunctions:FolderRepository.kt:FolderRepository</ID>
     <ID>TooManyFunctions:HubViewModel.kt:HubViewModel : ViewModel</ID>
     <ID>TooManyFunctions:SettingsRepository.kt:SettingsRepository</ID>
-    <ID>TooManyFunctions:SettingsScreen.kt:com.facetlauncher.app.ui.settings.SettingsScreen.kt</ID>
     <ID>UnstableCollections:AlphabetRail.kt:List&lt;String&gt;</ID>
     <ID>UnstableCollections:AppContextMenu.kt:List&lt;Folder&gt;?</ID>
     <ID>UnstableCollections:AppContextMenu.kt:List&lt;PlacementActionUi&gt;</ID>
-    <ID>UnstableCollections:FolderTileContextMenu.kt:List&lt;PlacementActionUi&gt;</ID>
-    <ID>UnstableCollections:PlacementActions.kt:List&lt;PlacementActionUi&gt;</ID>
     <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;ContactInfo&gt;</ID>
     <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;DrawerTab&gt;</ID>
@@ -146,8 +135,6 @@
     <ID>UnstableCollections:AppPickerScreen.kt:List&lt;Folder&gt;</ID>
     <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Long&gt;</ID>
     <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;String&gt;</ID>
-    <ID>UnstableCollections:AppearancePreview.kt:List&lt;CalendarEvent&gt;</ID>
-    <ID>UnstableCollections:AppearancePreview.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:CalendarEventsBlock.kt:List&lt;CalendarEvent&gt;</ID>
     <ID>UnstableCollections:CalendarEventsBlock.kt:Map&lt;String, String&gt;</ID>
     <ID>UnstableCollections:ClockBlock.kt:List&lt;CalendarEvent&gt;</ID>
@@ -155,11 +142,9 @@
     <ID>UnstableCollections:ContactConnectionsSheet.kt:List&lt;ContactConnection&gt;</ID>
     <ID>UnstableCollections:DockSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:DragReorderState.kt:List&lt;T&gt;</ID>
-    <ID>UnstableCollections:FacetCarouselScreen.kt:List&lt;CalendarEvent&gt;</ID>
-    <ID>UnstableCollections:FacetCarouselScreen.kt:List&lt;PlacedItem&gt;</ID>
-    <ID>UnstableCollections:FacetCarouselScreen.kt:Map&lt;String, String&gt;</ID>
     <ID>UnstableCollections:FacetNavHost.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:FolderDetailScreen.kt:List&lt;AppInfo&gt;</ID>
+    <ID>UnstableCollections:FolderTileContextMenu.kt:List&lt;PlacementActionUi&gt;</ID>
     <ID>UnstableCollections:HomeAppsListSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:HomeDrawerRoute.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:HomeSurfacePreview.kt:List&lt;PlacedItem&gt;</ID>
@@ -168,6 +153,7 @@
     <ID>UnstableCollections:LabeledDropdownRow.kt:List&lt;T&gt;</ID>
     <ID>UnstableCollections:OnboardingHomeSetupPage.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:PermissionsScreen.kt:List&lt;PermissionRowState&gt;</ID>
+    <ID>UnstableCollections:PlacementActions.kt:List&lt;PlacementActionUi&gt;</ID>
     <ID>UnstableCollections:PrivateSpaceScreen.kt:List&lt;AppInfo&gt;</ID>
     <ID>UnstableCollections:SettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnusedParameter:ClockAccessoryRow.kt:accentColor: Color</ID>

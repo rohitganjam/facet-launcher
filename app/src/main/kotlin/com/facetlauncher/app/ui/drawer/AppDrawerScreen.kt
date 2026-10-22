@@ -116,11 +116,11 @@ import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.GroupedItems
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
-import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
-import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
@@ -246,8 +246,10 @@ fun AppDrawerScreen(
     onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
     /** True while the drawer itself is open/opening (caller's own `isDrawerOpen`). Used only to reset the connections sheet once the drawer is fully closed — see the `LaunchedEffect` below. */
     isDrawerOpen: Boolean = true,
+    /** Injected into `DrawerViewModel`; the default serves previews and tests, which have none. */
+    listUseCases: DrawerListUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
 ) {
-    val rankBySearchRelevance = remember { RankBySearchRelevanceUseCase() }
+    val rankBySearchRelevance = listUseCases.rank
     val isSearching = query.isNotBlank()
     // Browse mode is scoped to the selected tab; search spans every profile regardless of which
     // tab is active — the tab is a browsing filter, not a search filter (decided explicitly: the
@@ -269,7 +271,7 @@ fun AppDrawerScreen(
         }
     }
     val filteredApps = remember(tabScopedApps, query) { rankBySearchRelevance(tabScopedApps, query) { it.label } }
-    val groupUseCase = remember { GroupAppsByLetterUseCase() }
+    val groupUseCase = listUseCases.group
     // Search-mode (DrawerSearchResults) never shows folders — this whole computation only feeds
     // the browse-mode content below, so a folder never has to be search-ranked.
     val sortedFolders = remember(folderCandidates) { folderCandidates.orEmpty().sortedBy { it.name } }
@@ -281,7 +283,7 @@ fun AppDrawerScreen(
         }
     }
     // Scoped to tabScopedApps, not the raw apps param — unlike pinnedFolders, deliberately NOT tab-filtered.
-    val recentlyInstalledUseCase = remember { RecentlyInstalledAppsUseCase() }
+    val recentlyInstalledUseCase = listUseCases.recentlyInstalled
     val recentlyInstalledApps = remember(tabScopedApps, isSearching, recentlyInstalledPosition) {
         if (recentlyInstalledPosition != RecentlyInstalledPosition.DO_NOT_SHOW && !isSearching) {
             recentlyInstalledUseCase(tabScopedApps)

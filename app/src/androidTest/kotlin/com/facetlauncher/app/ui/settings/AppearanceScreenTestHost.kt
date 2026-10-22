@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 /** Builds the real [AppearanceSettingsViewModel] over an in-memory DB and a throwaway DataStore, and hosts whichever Appearance screen a test hands it. Shared by the three Appearance screens' tests. */
 internal class AppearanceScreenTestHost(private val composeRule: ComposeContentTestRule) {
@@ -84,7 +85,8 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val facetRepository = FacetRepository(database.facetDao())
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
@@ -94,7 +96,7 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
-                    placementRepository,
+                    observePlacedItems,
                     FakeCalendarRepository(context.contentResolver, calendarEvents),
                     FakeCalendarPermissionRepository(context, granted = calendarGranted),
                     wallpaperRepository,

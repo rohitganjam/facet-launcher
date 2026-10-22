@@ -24,7 +24,7 @@ dependency is not listed the class does not have it.
 | `DefaultLauncherRepository` | `RoleManager` / `PackageManager` home-role query | `Context` | `isDefaultLauncher()`, `requestDefaultLauncherIntent()` | `HomeViewModel`, `SettingsViewModel` |
 | `DeviceStateRepository` | combines battery, headphones, Wi-Fi and Bluetooth into one hot `StateFlow<DeviceState>`, subscribing each source only while an enabled rule reads it | `BatteryRepository`, `HeadphonesRepository`, `WifiRepository`, `AutomationRuleRepository`, `BluetoothRepository`, `@ApplicationScope CoroutineScope` | `deviceState`, `current()`, `onPermissionsChanged()` | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `PermissionsViewModel`, `RuleEditorViewModel` |
 | `EntitlementRepository` (`open`) | the Pro seam: the base class is "everyone is Pro" (tests, previews); the app injects `PlayEntitlementRepository` via `EntitlementModule` | — | `isPro: StateFlow<Boolean>`, `awaitLoaded()`, `suspend refresh(): ProQueryResult` (what Play said, so Restore can report it) | `RefreshAutomationStateUseCase`, `RunFacetAutomationUseCase`, `ObserveFacetAutomationUseCase`, `SelectableFacetsUseCase`, `AddFacetUseCase`, `RuleEditorViewModel`, `ManageFacetsViewModel`, `FacetCarouselViewModel`, `LauncherActivity` (refresh on resume), `FacetProViewModel`, `SettingsViewModel` |
-| `PlacementRepository` | Room `app_placements` + `folder_placements` — every Dock and Favorites list, launcher-wide and per facet; a `PlacementTarget(list, facetId)` names one | `AppPlacementDao`, `FolderPlacementDao`, `FolderRepository`, `AppRepository` | `observeApps(target)`, `observeItems(target)`, batched `observeAppsForFacets` / `observeItemsForFacets(list, ids)`, `addApp`, `removeApp`, `placeFolder`, `removeFolderPlacement`, `replaceItems`, `reorderItems`, `deleteAll(target)`, `removeByPackage/UserId` (every list), raw getters, `restoreApp` / `restoreFolderPlacement`, `getOrphanedRows`, `backfillUserId` | 10 use cases, 7 ViewModels |
+| `PlacementRepository` | Room `app_placements` + `folder_placements` — every Dock and Favorites list, launcher-wide and per facet; a `PlacementTarget(list, facetId)` names one | `AppPlacementDao`, `FolderPlacementDao` | raw reads `observeAppEntities` / `observeFolderPlacements(target)` and their batched `…ForFacets(list, ids)` forms (hydration lives in `ObservePlacedItemsUseCase`), `addApp`, `removeApp`, `placeFolder`, `removeFolderPlacement`, `replaceItems`, `reorderItems`, `deleteAll(target)`, `removeByPackage/UserId` (every list), raw getters, `restoreApp` / `restoreFolderPlacement`, `getOrphanedRows`, `backfillUserId` | 8 use cases, 5 ViewModels |
 | `PlayEntitlementRepository` | Pro from Google Play, cached in the `facet_entitlement` DataStore; only an explicit "owned" or "no purchase" answer changes it (a pending purchase or an unreachable Play keeps the last value) | `BillingRepository`, `@EntitlementDataStore DataStore<Preferences>`, `@ApplicationScope CoroutineScope` | overrides `isPro`, `awaitLoaded()`, `refresh()`; applies an optional debug `EntitlementOverride` on top of Play's answer (the cache keeps Play's answer only) | `EntitlementModule` (bound as `EntitlementRepository`) |
 | `BillingRepository` (`open`) | Google Play Billing client over IPC, the one-time `facet_pro` product; no network permission needed | `Context`, `@ApplicationScope CoroutineScope` | `suspend queryPro(): ProQueryResult`, `suspend priceText()`, `suspend launchPurchase(activity)`, `updates: Flow<ProQueryResult>`; acknowledges purchases | `PlayEntitlementRepository`, `FacetProViewModel` (price, purchase flow, pending updates) |
 | `FacetRepository` | Room `facets` | `FacetDao` | `observeFacets()`, `getById`, `addFacet()`, `renameFacet`, 28 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters (trimmed — `updateOverridingApps`/`updateOverridingDock` no longer take the look-field params, moved to `AppearanceSettingsViewModel`'s own per-column setters), `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 11 use cases, 12 ViewModels |
@@ -63,8 +63,6 @@ constructed over a hand-written DAO fake or mocked with Mockito 5 on the JVM.
 flowchart LR
     AR[AppRepository]
     FOR[FolderRepository] --> AR
-    PR[PlacementRepository] --> FOR
-    PR --> AR
     USR[UsageStatsRepository] --> AR
     WPR[WorkProfileRepository] --> AR
     PSR[PrivateSpaceRepository] --> AR
@@ -74,7 +72,7 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (45) — unscoped, constructor-injected unless noted
+## 2. Use cases (46) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -82,8 +80,8 @@ cycles; `AppRepository` is the single root.
 | `ApplyFacetAutomationUseCase` | one automation pass: refresh, then an `AUTOMATION` switch if the rules want a different facet | `RefreshAutomationStateUseCase`, `ActivateFacetByIdUseCase`, `SettingsRepository` | `RunFacetAutomationUseCase` |
 | `CanUseTriggerUseCase` | pure Pro gate: `invoke(trigger, isPro)` (schedule free, device triggers Pro) and `entitledRuleIds(rules, isPro)` (free keeps the first two schedule rules in list order) | — | `RefreshAutomationStateUseCase`, `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`, `SaveAutomationRuleUseCase` |
 | `AddFacetUseCase` | write: adds a facet unless at the limit (3 free, 10 Pro); returns `AddFacetResult` (`Added` / `LimitReached`) | `FacetRepository`, `EntitlementRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
-| `AddToActiveListUseCase` | write: appends an app or folder to a list for the active facet, at the next position (apps and folders counted together) | `ResolveActivePlacementTargetUseCase`, `PlacementRepository` | `DrawerViewModel` |
-| `AssignCalendarColorsUseCase` | pure | — (**constructed with `new` in `CalendarSettingsViewModel`**, see F12) | `CalendarSettingsViewModel` |
+| `AddToActiveListUseCase` | write: appends an app or folder to a list for the active facet, at the next position (apps and folders counted together) | `ResolveActivePlacementTargetUseCase`, `PlacementRepository`, `ObservePlacedItemsUseCase` | `DrawerViewModel` |
+| `AssignCalendarColorsUseCase` | pure | — | `CalendarSettingsViewModel` |
 | `CleanUpUninstalledAppsUseCase` | long-running collector | `AppRepository`, `PlacementRepository`, `FolderRepository` | `LauncherViewModel` |
 | `CompactWidgetsUseCase` | pure grid | — | `HubViewModel` |
 | `DeleteFacetUseCase` | write (releases the facet's clock widget id first) | `FacetRepository`, `AppWidgetRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
@@ -93,21 +91,22 @@ cycles; `AppRepository` is the single root.
 | `ExportBackupUseCase` | one-shot read + file write | `SettingsRepository`, `FacetRepository`, `PlacementRepository`, `WidgetPlacementRepository`, `FolderRepository`, `BackupRepository` | `BackupRestoreViewModel` |
 | `FlowPackWidgetsUseCase` | pure grid (lays widgets out in a fixed number of rows, in list order) | — | `LandscapeHubUseCase` |
 | `GetInstalledAppsUseCase` | read (`invoke()` one-shot / `observe()` live) | `AppRepository` | `LauncherViewModel`, 4 picker/settings ViewModels, `SeedDefaultDockUseCase` |
-| `GroupAppsByLetterUseCase` | pure (ICU `AlphabeticIndex`) | — (**constructed in `AppDrawerScreen` composable**, see F2) | `AppDrawerScreen` |
+| `GroupAppsByLetterUseCase` | pure (ICU `AlphabeticIndex`) | — | `DrawerListUseCases` (→ `AppDrawerScreen`) |
 | `LandscapeHubUseCase` | pure (composes the three below: lays widgets out in the landscape Hub, and works out the new order after a drop) | `OrderWidgetsForLandscapeUseCase`, `FlowPackWidgetsUseCase`, `ReorderLandscapeWidgetUseCase` | `HubViewModel` |
 | `ImportBackupUseCase` | destructive full-replace restore | `BackupRepository`, `SettingsRepository`, `FacetRepository`, `PlacementRepository`, `FolderRepository`, `RepairOrphanedProfileRowsUseCase` | `BackupRestoreViewModel` |
 | `ObserveClockAccessoriesUseCase` | observe | `BatteryRepository`, `NextAlarmRepository` | `ObserveHomeScreenStateUseCase` |
 | `ObserveFacetAutomationUseCase` | observe (`Flow<FacetAutomationScreenState>`: rule rows with facet names, "why Home looks like this" status, permission and Pro availability, `canAddRule`, `isPro`). Takes a refresh tick that re-reads permission grants | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase` | `FacetAutomationViewModel` |
-| `ObserveFacetPreviewsUseCase` | observe (`Flow<Map<Long, FacetPreviewData>>`) | `FacetRepository`, `SettingsRepository`, `PlacementRepository`, `UsageStatsRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`, `CalendarRepository` | `FacetCarouselViewModel` |
-| `ObserveHomeScreenStateUseCase` | observe (holds `refreshTrigger`, see F8) | 10 repositories (`PlacementRepository` among them) + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
+| `ObserveFacetPreviewsUseCase` | observe (`Flow<Map<Long, FacetPreviewData>>`) | `FacetRepository`, `SettingsRepository`, `ObservePlacedItemsUseCase`, `UsageStatsRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`, `CalendarRepository` | `FacetCarouselViewModel` |
+| `ObserveHomeScreenStateUseCase` | observe (holds `refreshTrigger`, see F8) | 9 repositories + `ObservePlacedItemsUseCase` + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
 | `ObserveHubStateUseCase` | observe (holds `refreshTrigger`) | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
 | `ObserveAppNotificationsUseCase` | read, `flatMapLatest` over the `show_notifications_in_app_menu` setting; `AppNotificationsState(notifications, needsAccess)` | `SettingsRepository`, `NotificationBadgeRepository`, `NotificationAccessRepository` | `DrawerViewModel` |
+| `ObservePlacedItemsUseCase` | observe: joins `PlacementRepository`'s raw Dock/Favorites rows against `AppRepository.observeInstalledApps()` and `FolderRepository.observeFolders()` (`apps`, `items`, batched `appsForFacets` / `itemsForFacets`); an uninstalled app drops out live | `PlacementRepository`, `FolderRepository`, `AppRepository` | `AddToActiveListUseCase`, `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `ObserveSettingsScreenStateUseCase`; 8 ViewModels (`DockAppPicker`, `FavoritesPicker`, `Onboarding`, `DockSettings`, `HomeAppsListSettings`, `AppearanceSettings`, `NotificationSettings`, `FacetSettings`) |
 | `ObserveQuickAddStateUseCase` | pure (`forApp` / `forFolder`) | — | `HomeViewModel` |
-| `ObserveSettingsScreenStateUseCase` | observe | `SettingsRepository`, `PlacementRepository`, `FolderRepository` | `SettingsViewModel` |
+| `ObserveSettingsScreenStateUseCase` | observe | `SettingsRepository`, `ObservePlacedItemsUseCase`, `FolderRepository` | `SettingsViewModel` |
 | `OrderWidgetsForLandscapeUseCase` | pure (saved landscape order first, the rest in portrait reading order) | — | `LandscapeHubUseCase` |
 | `PlaceWidgetUseCase` | pure grid (`Placed` / `HubFull`) | — | `HubWidgetPickerViewModel`, `BackupRestoreViewModel` |
 | `ReorderLandscapeWidgetUseCase` | pure (moves one widget in the order, renumbers all) | — | `LandscapeHubUseCase` |
-| `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen`, F2) |
+| `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen` via `DrawerListUseCases`) |
 | `RecentlyInstalledAppsUseCase` | pure (filters `firstInstallTime` within 72h) | — | `AppDrawerScreen` (inline `remember`), `PrivateSpaceViewModel` |
 | `RemoveFromActiveListUseCase` | write: removes an app or folder from a list for the active facet | `ResolveActivePlacementTargetUseCase`, `PlacementRepository` | `DrawerViewModel` |
 | `ResolveActivePlacementTargetUseCase` | read: which concrete list the active facet reads `DOCK` or `FAVORITES` from (its own when `overrideDock` / `overridingFavorites`, else the launcher-wide one) | `SettingsRepository`, `FacetRepository` | `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` |

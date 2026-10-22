@@ -49,14 +49,14 @@ flowchart TB
 | Composables (`ui/**/*Screen.kt`, `ui/components`) | its `UiState`, event lambdas, `data/model` value types, `ui/theme` tokens | Repositories, DAOs, use cases | `HomeScreen(state: HomeScreenState, actions: HomeScreenActions)` |
 | ViewModels | Use cases, Repositories | DAOs, `DataStore`, framework services | `HomeViewModel(ObserveHomeScreenStateUseCase, SettingsRepository, FacetRepository, ...)` |
 | Use cases (`domain/`) | Repositories, other use cases, `data/model`, entities as value types | Android framework APIs (see finding F4) | `AddToActiveListUseCase(ResolveActivePlacementTargetUseCase, PlacementRepository)` |
-| Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `PlacementRepository(AppPlacementDao, FolderPlacementDao, FolderRepository, AppRepository)` |
+| Repositories (`data/`) | DAOs, `DataStore`, framework services, **other repositories** (see F5) | ViewModels, composables | `FolderRepository(FolderDao, AppRepository)`; `PlacementRepository(AppPlacementDao, FolderPlacementDao)` |
 | DAOs / entities (`data/local`) | Room, `data/model` enums via `Converters` | anything above | `AppPlacementDao.observe(list, ownerKey): Flow<List<AppPlacementEntity>>` |
 
 Boundary check results (grep over `app/src/main`):
 
 - **0** ViewModels import a DAO. ✅
 - **0** composables inject or call a Repository. ✅ (The dock size cap lives in `AppListLimits.MAX_DOCK_APPS`, so no composable imports a repository type for a constant any more.)
-- **1** composable instantiates use cases directly (`AppDrawerScreen` → `remember { RankBySearchRelevanceUseCase() }`, and two more) — see F2.
+- **0** composables construct a use case. ✅ (`AppDrawerScreen` takes its ranking/grouping/recents use cases as a `listUseCases` parameter, passed from `DrawerViewModel.listUseCases`; the parameter default only serves previews and tests.)
 - **5** `domain/` files import `android.*` — see F4.
 
 ## 2. Unidirectional data flow, concretely

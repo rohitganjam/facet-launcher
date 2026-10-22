@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.onboarding
 
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
@@ -31,12 +32,13 @@ import com.facetlauncher.app.data.model.PlacementTarget
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<OnboardingUiState> = combine(
-        placementRepository.observeApps(PlacementTarget.GlobalFavorites),
-        placementRepository.observeApps(PlacementTarget.GlobalDock),
+        observePlacedItems.apps(PlacementTarget.GlobalFavorites),
+        observePlacedItems.apps(PlacementTarget.GlobalDock),
         settingsRepository.settings,
     ) { favorites, dockApps, settings ->
         OnboardingUiState(

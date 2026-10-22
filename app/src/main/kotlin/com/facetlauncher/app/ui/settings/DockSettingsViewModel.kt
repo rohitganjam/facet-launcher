@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.resolveFacetStyle
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.FontWeightOption
@@ -68,6 +69,7 @@ class DockSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val wallpaperRepository: WallpaperRepository,
 ) : ViewModel() {
 
@@ -75,8 +77,8 @@ class DockSettingsViewModel @Inject constructor(
 
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
 
-    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
-    private val globalDockItemsFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalDock)
+    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
+    private val globalDockItemsFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalDock)
 
     val uiState: StateFlow<DockSettingsUiState> = combine(
         settingsRepository.settings,

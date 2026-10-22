@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import androidx.compose.ui.platform.LocalContext
@@ -60,7 +61,7 @@ class NotificationSettingsScreenTest {
                 NotificationSettingsViewModel(
                     settingsRepository,
                     FakeNotificationAccessRepository(context, granted = accessGranted),
-                    PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository),
+                    ObservePlacedItemsUseCase(PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()), folderRepository, appRepository),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),

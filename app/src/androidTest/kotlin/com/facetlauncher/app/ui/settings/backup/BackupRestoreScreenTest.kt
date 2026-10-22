@@ -31,6 +31,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 class BackupRestoreScreenTest {
 
@@ -50,7 +51,8 @@ class BackupRestoreScreenTest {
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val facetRepository = FacetRepository(database.facetDao())
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
                 val widgetPlacementRepository = WidgetPlacementRepository(database.widgetPlacementDao())
                 val backupRepository = BackupRepository(context)
                 val appWidgetRepository = AppWidgetRepository(context, AppWidgetManager.getInstance(context), LauncherAppWidgetHost(context), context.getSystemService(UserManager::class.java), appRepository)

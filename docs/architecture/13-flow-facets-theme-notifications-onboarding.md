@@ -105,7 +105,7 @@ flowchart TB
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
   live content, not sampled installed apps or fixed sample events: `AppearanceSettingsViewModel`
-  observes `PlacementRepository` for the facet's own and the launcher-wide Favorites and Dock, resolved facet-or-global via `effectiveFavorites`/`effectiveDockItems`
+  observes `ObservePlacedItemsUseCase` for the facet's own and the launcher-wide Favorites and Dock, resolved facet-or-global via `effectiveFavorites`/`effectiveDockItems`
   (`if (facet?.overrideApps == true) facetFavorites else globalFavorites`, same for dock) —
   identical to `HomeAppsListSettingsViewModel`/`DockSettingsViewModel`'s own resolution. Calendar
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository

@@ -5,7 +5,6 @@ import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FolderPlacementDao
 import com.facetlauncher.app.data.local.FolderPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
-import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -14,19 +13,16 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * Every Dock and Favorites list — the launcher-wide defaults and each facet's own — over
  * `app_placements` and `folder_placements`. A [PlacementTarget] names the list (`DOCK` or
  * `FAVORITES`) and its owner (a facet id, or null for the launcher-wide default).
  *
- * Reads hydrate stored `(packageName, activityName, userId)` rows against the live installed-app
- * list ([AppRepository.observeInstalledApps]): an entry whose app is no longer installed is filtered
- * out of the emitted list rather than shown as a dead tile, live, so an uninstall collapses the
- * list immediately. A folder placement occupies one slot in the same `position` space as the
- * apps, merged in Kotlin by [observeItems]; folder identity and membership live in
- * [FolderRepository], this repository only owns *whether* a folder occupies a slot.
+ * Reads emit the stored rows only; [com.facetlauncher.app.domain.ObservePlacedItemsUseCase] joins
+ * them against the live installed-app and folder lists (an uninstalled app drops out there). A
+ * folder placement occupies one slot in the same `position` space as the apps; folder identity and
+ * membership live in [FolderRepository], this repository only owns *whether* a folder occupies a slot.
  */
 // One API over one table pair; it replaces four repositories that each had these same methods.
 @Suppress("TooManyFunctions")
@@ -34,52 +30,23 @@ import kotlinx.coroutines.flow.flowOf
 class PlacementRepository @Inject constructor(
     private val appPlacementDao: AppPlacementDao,
     private val folderPlacementDao: FolderPlacementDao,
-    private val folderRepository: FolderRepository,
-    private val appRepository: AppRepository,
 ) {
 
-    /** The target's apps only, in position order. */
-    fun observeApps(target: PlacementTarget): Flow<List<AppInfo>> =
-        combine(appPlacementDao.observe(target.list, target.ownerKey), appRepository.observeInstalledApps()) { entities, installed ->
-            hydrate(entities, installed)
-        }
+    /** The target's stored app rows, unhydrated. */
+    fun observeAppEntities(target: PlacementTarget): Flow<List<AppPlacementEntity>> =
+        appPlacementDao.observe(target.list, target.ownerKey)
 
-    /**
-     * [list] for every facet at once, keyed by facet id — for the facet carousel's preview cards.
-     * Subscribes to the live installed-app list once and reuses it across all [facetIds], rather than
-     * each facet re-querying it, which with several facets browsed at once was slow enough to make
-     * callers relying on a single-frame result flaky.
-     */
-    fun observeAppsForFacets(list: PlacementList, facetIds: List<Long>): Flow<Map<Long, List<AppInfo>>> {
-        if (facetIds.isEmpty()) return flowOf(emptyMap())
-        val entitiesPerFacet = combine(facetIds.map { appPlacementDao.observe(list, it) }) { it }
-        return combine(entitiesPerFacet, appRepository.observeInstalledApps()) { perFacet, installed ->
-            facetIds.indices.associate { index -> facetIds[index] to hydrate(perFacet[index], installed) }
-        }
-    }
+    /** The target's stored folder-placement rows. */
+    fun observeFolderPlacements(target: PlacementTarget): Flow<List<FolderPlacementEntity>> =
+        folderPlacementDao.observe(target.list, target.ownerKey)
 
-    /** The target's full ordered content, apps and folders interleaved. A 0-app folder placed here is still emitted. */
-    fun observeItems(target: PlacementTarget): Flow<List<PlacedItem>> =
-        combine(
-            appPlacementDao.observe(target.list, target.ownerKey),
-            folderPlacementDao.observe(target.list, target.ownerKey),
-            folderRepository.observeFolders(),
-            appRepository.observeInstalledApps(),
-        ) { appEntities, placements, folders, installed ->
-            mergeItems(appEntities, placements, folders, installed)
-        }
+    /** [observeAppEntities] for every facet at once, in [facetIds] order. */
+    fun observeAppEntitiesForFacets(list: PlacementList, facetIds: List<Long>): Flow<List<List<AppPlacementEntity>>> =
+        combine(facetIds.map { appPlacementDao.observe(list, it) }) { it.toList() }
 
-    /** Batched counterpart of [observeItems] for [list], mirroring [observeAppsForFacets]. */
-    fun observeItemsForFacets(list: PlacementList, facetIds: List<Long>): Flow<Map<Long, List<PlacedItem>>> {
-        if (facetIds.isEmpty()) return flowOf(emptyMap())
-        val appsPerFacet = combine(facetIds.map { appPlacementDao.observe(list, it) }) { it }
-        val placementsPerFacet = combine(facetIds.map { folderPlacementDao.observe(list, it) }) { it }
-        return combine(appsPerFacet, placementsPerFacet, folderRepository.observeFolders(), appRepository.observeInstalledApps()) { perFacetApps, perFacetPlacements, folders, installed ->
-            facetIds.indices.associate { index ->
-                facetIds[index] to mergeItems(perFacetApps[index], perFacetPlacements[index], folders, installed)
-            }
-        }
-    }
+    /** [observeFolderPlacements] for every facet at once, in [facetIds] order. */
+    fun observeFolderPlacementsForFacets(list: PlacementList, facetIds: List<Long>): Flow<List<List<FolderPlacementEntity>>> =
+        combine(facetIds.map { folderPlacementDao.observe(list, it) }) { it.toList() }
 
     suspend fun addApp(target: PlacementTarget, app: AppInfo, position: Int) {
         appPlacementDao.upsert(app.toEntity(target, position))
@@ -169,32 +136,4 @@ class PlacementRepository @Inject constructor(
         profile = profile,
         userId = userHandle.hashCode(),
     )
-
-    private fun mergeItems(
-        appEntities: List<AppPlacementEntity>,
-        placements: List<FolderPlacementEntity>,
-        folders: List<Folder>,
-        installed: List<AppInfo>,
-    ): List<PlacedItem> {
-        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
-        val foldersById = folders.associateBy { it.id }
-
-        val appItems = appEntities.mapNotNull { entity ->
-            installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)]?.let { app ->
-                entity.position to PlacedItem.SingleApp(app)
-            }
-        }
-        val folderItems = placements.mapNotNull { placement ->
-            foldersById[placement.folderId]?.let { folder ->
-                placement.position to PlacedItem.FolderItem(folder)
-            }
-        }
-        return (appItems + folderItems).sortedBy { it.first }.map { it.second }
-    }
-
-    private fun hydrate(entities: List<AppPlacementEntity>, installed: List<AppInfo>): List<AppInfo> {
-        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
-        return entities.sortedBy { it.position }
-            .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)] }
-    }
 }

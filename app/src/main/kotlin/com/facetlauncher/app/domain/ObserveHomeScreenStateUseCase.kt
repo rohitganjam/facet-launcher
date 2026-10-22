@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.placementTarget
 
@@ -56,14 +55,14 @@ data class HomeScreenState(
 )
 
 /**
- * Combines [SettingsRepository], [PlacementRepository], [UsageStatsRepository]
+ * Combines [SettingsRepository], [ObservePlacedItemsUseCase], [UsageStatsRepository]
  * (scoped to the active facet's [ListContentMode]), [CalendarRepository], and [FacetRepository]
  * into the Home screen's state — spans more than one repository, so it's a UseCase rather than
  * being called directly from [com.facetlauncher.app.ui.home.HomeViewModel].
  */
 class ObserveHomeScreenStateUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val facetRepository: FacetRepository,
     private val usageStatsRepository: UsageStatsRepository,
     private val usageAccessRepository: UsageAccessRepository,
@@ -104,14 +103,14 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }.flatMapLatest { (facet, settings) -> observeAppListItems(facet, settings) }
 
         val dockApps = activeFacet.flatMapLatest { facet ->
-            placementRepository.observeItems(facet.placementTarget(PlacementList.DOCK))
+            observePlacedItems.items(facet.placementTarget(PlacementList.DOCK))
         }
 
         // Unconditional — unlike appListItems, which only resolves Favorites when the active list
         // mode actually is FAVORITES. Paired with dockApps below purely to stay within combine()'s
         // supported arity (see badgeCountsAndAccessories' own comment further down).
         val favoriteItems = activeFacet.flatMapLatest { facet ->
-            placementRepository.observeItems(facet.placementTarget(PlacementList.FAVORITES))
+            observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES))
         }
         val dockAndFavoriteItems = combine(dockApps, favoriteItems) { dock, favorites -> dock to favorites }
 
@@ -166,7 +165,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         val mode = if (facet.overrideApps) facet.listContentMode else settings.listContentMode
         val appsToShowCount = if (facet.overrideApps) facet.appsToShowCount else settings.appsToShowCount
         return when {
-            mode == ListContentMode.FAVORITES -> placementRepository.observeItems(facet.placementTarget(PlacementList.FAVORITES))
+            mode == ListContentMode.FAVORITES -> observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES))
             !usageAccessRepository.isGranted() -> flowOf(emptyList())
             mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
             else -> flow { emit(usageStatsRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }

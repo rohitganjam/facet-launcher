@@ -14,6 +14,8 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
+import java.util.IdentityHashMap
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -57,7 +59,20 @@ class PlacementRepositoryTest {
         dao: AppPlacementDao = FakeAppPlacementDao(),
         placementDao: FolderPlacementDao = FakeFolderPlacementDao(),
         folderDao: FolderDao = FakeFolderDao(),
-    ) = PlacementRepository(dao, placementDao, FolderRepository(folderDao, appRepository), appRepository)
+    ): PlacementRepository {
+        val repository = PlacementRepository(dao, placementDao)
+        observers[repository] = ObservePlacedItemsUseCase(repository, FolderRepository(folderDao, appRepository), appRepository)
+        return repository
+    }
+
+    // Most tests write through the repository and read the hydrated result back, so each repository
+    // built here is paired with the use case that joins its rows (the join itself: ObservePlacedItemsUseCaseTest).
+    private val observers = IdentityHashMap<PlacementRepository, ObservePlacedItemsUseCase>()
+
+    private fun PlacementRepository.observeApps(target: PlacementTarget) = observers.getValue(this).apps(target)
+    private fun PlacementRepository.observeItems(target: PlacementTarget) = observers.getValue(this).items(target)
+    private fun PlacementRepository.observeAppsForFacets(list: PlacementList, facetIds: List<Long>) = observers.getValue(this).appsForFacets(list, facetIds)
+    private fun PlacementRepository.observeItemsForFacets(list: PlacementList, facetIds: List<Long>) = observers.getValue(this).itemsForFacets(list, facetIds)
 
     private fun entity(target: PlacementTarget, app: AppInfo, position: Int, userId: Int = 0) = AppPlacementEntity(
         list = target.list,

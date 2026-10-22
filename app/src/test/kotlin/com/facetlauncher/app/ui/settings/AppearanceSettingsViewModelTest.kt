@@ -51,7 +51,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
-import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementList
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -83,7 +83,7 @@ class AppearanceSettingsViewModelTest {
         globalDockItems: List<PlacedItem> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
-        placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
+        observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         wallpaperRepository: WallpaperRepository = fakeWallpaperRepository(),
@@ -97,17 +97,17 @@ class AppearanceSettingsViewModelTest {
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
         facetId?.let {
-            `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(facetFavorites))
-            `when`(placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(facetDockItems))
+            `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(facetFavorites))
+            `when`(observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(facetDockItems))
         }
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(globalFavorites))
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(globalDockItems))
+        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(globalFavorites))
+        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(globalDockItems))
         `when`(calendarPermissionRepository.isGranted()).thenReturn(calendarGranted)
         return AppearanceSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
             facetRepository,
-            placementRepository,
+            observePlacedItems,
             calendarRepository,
             calendarPermissionRepository,
             wallpaperRepository,

@@ -46,6 +46,7 @@ import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
 
 class OnboardingScreenTest {
@@ -74,7 +75,8 @@ class OnboardingScreenTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), folderRepository, appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "onboarding-test-${System.nanoTime()}.preferences_pb") },
@@ -87,14 +89,15 @@ class OnboardingScreenTest {
                 Triple(
                     OnboardingViewModel(
                         placementRepository,
+                        observePlacedItems,
                         settingsRepository,
                     ),
                     // Onboarding embeds these full-screen pickers as-is (same as Settings); this
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
                     // FavoritesPickerScreenTest — an empty SavedStateHandle means the launcher-wide
                     // default dock/favorites, matching onboarding's own scope.
-                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
-                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
                 )
             }
             FacetLauncherTheme {

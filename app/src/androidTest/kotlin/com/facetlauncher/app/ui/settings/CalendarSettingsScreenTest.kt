@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
+import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -58,6 +59,7 @@ class CalendarSettingsScreenTest {
                     FakeCalendarPermissionRepository(context, granted = false),
                     CalendarRepository(context.contentResolver),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
+                    AssignCalendarColorsUseCase(),
                 )
             }
             FacetLauncherTheme {
@@ -186,6 +188,7 @@ class CalendarSettingsScreenGrantedTest {
                     FakeCalendarPermissionRepository(context, granted = true),
                     FakeCalendarRepository(context.contentResolver, calendars, todayEvents),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
+                    AssignCalendarColorsUseCase(),
                 )
             }
             FacetLauncherTheme { CalendarSettingsScreen(onBack = {}, viewModel = viewModel) }

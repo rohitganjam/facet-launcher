@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -75,7 +76,7 @@ class FacetSettingsScreenTest {
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     facetRepository,
                     settingsRepository,
-                    PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository),
+                    ObservePlacedItemsUseCase(PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()), FolderRepository(database.folderDao(), appRepository), appRepository),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                 )
             }

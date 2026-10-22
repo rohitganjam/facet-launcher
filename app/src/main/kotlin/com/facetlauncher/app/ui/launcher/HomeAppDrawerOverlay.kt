@@ -46,6 +46,7 @@ import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
+import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
@@ -70,6 +71,7 @@ internal data class HomeDrawerState(
     val privateSpaceState: PrivateSpaceState,
     val secureFolderIntent: Intent?,
     val appMenuNotifications: AppMenuNotifications,
+    val listUseCases: DrawerListUseCases,
 )
 
 /** What the drawer asks of its view model, beyond the item actions it shares with Home. */
@@ -97,6 +99,7 @@ internal fun rememberHomeDrawerState(viewModel: DrawerViewModel, appMenuNotifica
     privateSpaceState = viewModel.privateSpaceState.collectAsStateWithLifecycle().value,
     secureFolderIntent = viewModel.secureFolderIntent,
     appMenuNotifications = appMenuNotifications,
+    listUseCases = viewModel.listUseCases,
 )
 
 internal fun homeDrawerActions(viewModel: DrawerViewModel) = HomeDrawerActions(
@@ -248,6 +251,7 @@ private fun HomeDrawerScreen(
         settingsEntries = state.settingsEntries,
         onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
         isDrawerOpen = isDrawerOpen,
+        listUseCases = state.listUseCases,
         modifier = modifier,
     )
 }

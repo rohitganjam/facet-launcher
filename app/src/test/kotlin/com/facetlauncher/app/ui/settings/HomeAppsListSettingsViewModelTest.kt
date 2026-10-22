@@ -39,6 +39,7 @@ import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.AppListLimits
 
 /** A real (not Mockito) stub — plain Mockito can't reliably stub a `suspend` return. */
@@ -68,13 +69,14 @@ class HomeAppsListSettingsViewModelTest {
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
+        observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
     ): HomeAppsListSettingsViewModel {
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        facetId?.let { `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(favorites)) }
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(favorites))
+        facetId?.let { `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(favorites)) }
+        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(favorites))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
         return HomeAppsListSettingsViewModel(
@@ -82,6 +84,7 @@ class HomeAppsListSettingsViewModelTest {
             settingsRepository,
             facetRepository,
             placementRepository,
+            observePlacedItems,
             fakeWallpaperRepository(),
             defaultAppRepository,
             getInstalledApps,

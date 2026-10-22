@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.drawer
 
+import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
+import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.UserHandle
@@ -120,6 +123,7 @@ class DrawerViewModelTest {
             notificationActionController = notificationActionController,
             notificationOpener = notificationOpener,
             observeAppNotificationsUseCase = observeAppNotifications,
+            listUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
         )
     }
 

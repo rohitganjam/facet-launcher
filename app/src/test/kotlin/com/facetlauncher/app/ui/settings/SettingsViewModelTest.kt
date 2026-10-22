@@ -29,7 +29,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
-import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 /** [SettingsViewModel] is purely observational now — every mutable section lives in its own screen/ViewModel — so this only exercises the summary state it composes for the main list's rows. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -64,16 +64,16 @@ class SettingsViewModelTest {
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
-        val placementRepository = mock(PlacementRepository::class.java)
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(defaultFavorites.map { PlacedItem.SingleApp(it) }))
+        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
+        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
+        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(defaultFavorites.map { PlacedItem.SingleApp(it) }))
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf((1..folderCount).map { mock(com.facetlauncher.app.data.model.Folder::class.java) }))
         val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
         runBlocking { `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
         val workProfileRepository = mock(WorkProfileRepository::class.java)
         `when`(workProfileRepository.observeWorkProfiles()).thenReturn(flowOf(workProfiles))
-        val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, placementRepository, folderRepository)
+        val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository)
         val automationRuleRepository = mock(com.facetlauncher.app.data.AutomationRuleRepository::class.java)
         `when`(automationRuleRepository.observeRules()).thenReturn(
             flowOf(

@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -49,7 +50,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -135,7 +135,7 @@ class AppearanceSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
-    private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val calendarRepository: CalendarRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val wallpaperRepository: WallpaperRepository,
@@ -144,10 +144,10 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
 
-    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
-    private val globalFavoritesFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalFavorites)
-    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
-    private val globalDockItemsFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalDock)
+    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
+    private val globalFavoritesFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalFavorites)
+    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
+    private val globalDockItemsFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalDock)
 
     private val isNotificationAccessGranted = MutableStateFlow(notificationAccessRepository.isGranted())
     private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())

@@ -45,7 +45,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
-import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.AppListLimits
@@ -260,20 +260,20 @@ class FacetSettingsViewModelTest {
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings()))
         },
-        placementRepository: PlacementRepository = mock(PlacementRepository::class.java).also {
+        observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java).also {
             listOf(
                 PlacementTarget(PlacementList.FAVORITES, facetId),
                 PlacementTarget.GlobalFavorites,
                 PlacementTarget(PlacementList.DOCK, facetId),
                 PlacementTarget.GlobalDock,
-            ).forEach { target -> `when`(it.observeItems(target)).thenReturn(flowOf(emptyList())) }
+            ).forEach { target -> `when`(it.items(target)).thenReturn(flowOf(emptyList())) }
         },
         automationStateRepository: AutomationStateRepository = mock(AutomationStateRepository::class.java),
     ) = FacetSettingsViewModel(
         SavedStateHandle(mapOf("facetId" to facetId)),
         facetRepository,
         settingsRepository,
-        placementRepository,
+        observePlacedItems,
         ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()), settingsRepository, automationStateRepository, mock(RefreshAutomationStateUseCase::class.java)),
     )
 

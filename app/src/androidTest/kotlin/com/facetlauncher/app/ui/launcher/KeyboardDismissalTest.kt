@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
@@ -97,6 +99,7 @@ import java.time.Clock
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
 import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
@@ -124,7 +127,8 @@ class KeyboardDismissalTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val usageStatsRepository = UsageStatsRepository(
                     context.getSystemService(UsageStatsManager::class.java),
@@ -143,7 +147,7 @@ class KeyboardDismissalTest {
                 HomeViewModel(
                     ObserveHomeScreenStateUseCase(
                         settingsRepository,
-                        placementRepository,
+                        observePlacedItems,
                         facetRepository,
                         usageStatsRepository,
                         usageAccessRepository,
@@ -173,7 +177,8 @@ class KeyboardDismissalTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
@@ -202,7 +207,8 @@ class KeyboardDismissalTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val notificationBadgeRepository = NotificationBadgeRepository()
                 val notificationAccessRepository = NotificationAccessRepository(context)
@@ -215,7 +221,7 @@ class KeyboardDismissalTest {
                     notificationBadgeRepository,
                     notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),
-                    AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
+                    AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository, observePlacedItems),
                     RemoveFromActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
@@ -223,6 +229,7 @@ class KeyboardDismissalTest {
                     NotificationActionController(),
                     NotificationOpener(context),
                     ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
+                    DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
                 )
             }
             val privateSpaceViewModel = remember {
@@ -273,7 +280,8 @@ class KeyboardDismissalTest {
             val clockWidgetPickerViewModel = remember {
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val appWidgetRepository = AppWidgetRepository(
                     context,
@@ -296,7 +304,8 @@ class KeyboardDismissalTest {
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao())
                 val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
                 FacetCarouselViewModel(
@@ -316,7 +325,7 @@ class KeyboardDismissalTest {
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
-                        placementRepository,
+                        observePlacedItems,
                         UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
                         UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                         CalendarPermissionRepository(context),

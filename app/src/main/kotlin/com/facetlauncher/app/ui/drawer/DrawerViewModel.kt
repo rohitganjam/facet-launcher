@@ -69,6 +69,7 @@ class DrawerViewModel @Inject constructor(
     private val notificationActionController: NotificationActionController,
     private val notificationOpener: NotificationOpener,
     private val observeAppNotificationsUseCase: ObserveAppNotificationsUseCase,
+    val listUseCases: DrawerListUseCases,
 ) : ViewModel() {
 
     val settings: StateFlow<LauncherSettings> = settingsRepository.settings

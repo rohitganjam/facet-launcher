@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -98,6 +99,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val wallpaperRepository: WallpaperRepository,
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
@@ -109,8 +111,8 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
-    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
-    private val globalFavoritesFlow: Flow<List<PlacedItem>> = placementRepository.observeItems(PlacementTarget.GlobalFavorites)
+    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
+    private val globalFavoritesFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalFavorites)
 
     val uiState: StateFlow<HomeAppsListUiState> = combine(
         settingsRepository.settings,

@@ -74,7 +74,7 @@ Key properties of this flow:
 
 ## 2. Hydrating Room placements against the live list
 
-`PlacementRepository` joins the Room rows of any Dock or Favorites list with the live app list in memory. `observeItems(PlacementTarget.GlobalDock)` is representative:
+`ObservePlacedItemsUseCase` joins the Room rows of any Dock or Favorites list (the raw entity flows `PlacementRepository` exposes) with the live app list in memory. `items(PlacementTarget.GlobalDock)` is representative:
 
 ```mermaid
 flowchart TB
@@ -99,10 +99,10 @@ Rules this encodes:
   index — so a personal and a work copy of the same app are distinct placements.
 - A Room write re-runs only the join, using `combine`'s cached latest app list; it never re-queries
   `LauncherApps`.
-- `PlacementRepository` serves all four lists from the same two tables, `app_placements` and
+- `PlacementRepository` serves all four lists' raw rows from the same two tables, `app_placements` and
   `folder_placements`, each through a `PlacementTarget(list, facetId)`: `DOCK` or `FAVORITES`, for the
   launcher-wide default (`facetId` null) or for one facet. The join above is identical for all of them.
-- `observeItemsForFacets(list, ids)` / `observeAppsForFacets(list, ids)` offer a batched read
+- `itemsForFacets(list, ids)` / `appsForFacets(list, ids)` offer a batched read
   → `Flow<Map<Long, List<PlacedItem>>>` for the facet carousel previews, built the same way. Those
   previews, and the Appearance screens' preview, render the real `HomeScreen` scaled down
   (`ScaledHomeScreen`), built from the same `ResolvedFacetStyle` and `toHomeScreenState` as Home, so
@@ -123,12 +123,12 @@ flowchart TB
     S --> ALI
     RT["refreshTrigger\nMutableSharedFlow(replay=1)"] --> ALI
     ALI{{"flatMapLatest → observeAppListItems(facet, settings)"}}
-    ALI -- "FAVORITES" --> FAV["PlacementRepository.observeItems(facet.placementTarget(FAVORITES))\n(the facet's own list if overridingFavorites, else the launcher-wide one)"]
+    ALI -- "FAVORITES" --> FAV["ObservePlacedItemsUseCase.items(facet.placementTarget(FAVORITES))\n(the facet's own list if overridingFavorites, else the launcher-wide one)"]
     ALI -- "RECENTS / MOST_USED\n(one-shot flow { emit(...) })" --> US["UsageStatsRepository\ngetRecentApps / getMostUsedApps"]
     ALI -- "usage access not granted" --> EMPTY["flowOf(emptyList())"]
 
     AF --> DK{{"flatMapLatest → dock"}}
-    DK --> GDK["PlacementRepository.observeItems(facet.placementTarget(DOCK))\n(the facet's own list if overrideDock, else the launcher-wide one)"]
+    DK --> GDK["ObservePlacedItemsUseCase.items(facet.placementTarget(DOCK))\n(the facet's own list if overrideDock, else the launcher-wide one)"]
 
     AF --> CAL{{"flatMapLatest → observeCalendarEvents"}}
     CAL --> CR["CalendarRepository.getUpcomingEvents(ids, includeAllDay)\n(gated by CalendarPermissionRepository)"]

@@ -27,6 +27,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -58,12 +59,14 @@ class OnboardingViewModelTest {
         val favoritesFlow = MutableStateFlow(favorites)
         val dockFlow = MutableStateFlow(dockApps)
         val placementRepository = mock(PlacementRepository::class.java)
-        `when`(placementRepository.observeApps(PlacementTarget.GlobalFavorites)).thenReturn(favoritesFlow)
-        `when`(placementRepository.observeApps(PlacementTarget.GlobalDock)).thenReturn(dockFlow)
+        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
+        `when`(observePlacedItems.apps(PlacementTarget.GlobalFavorites)).thenReturn(favoritesFlow)
+        `when`(observePlacedItems.apps(PlacementTarget.GlobalDock)).thenReturn(dockFlow)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings))
         val viewModel = OnboardingViewModel(
             placementRepository,
+            observePlacedItems,
             settingsRepository,
         )
         testDispatcher.scheduler.advanceUntilIdle()

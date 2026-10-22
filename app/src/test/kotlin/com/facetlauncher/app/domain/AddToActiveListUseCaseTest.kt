@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
@@ -24,11 +25,12 @@ class AddToActiveListUseCaseTest {
     private class Fixture(val target: PlacementTarget, existingItems: Int) {
         val resolveTarget = mock(ResolveActivePlacementTargetUseCase::class.java)
         val placementRepository = mock(PlacementRepository::class.java)
-        val useCase = AddToActiveListUseCase(resolveTarget, placementRepository)
+        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
+        val useCase = AddToActiveListUseCase(resolveTarget, placementRepository, observePlacedItems)
 
         init {
             kotlinx.coroutines.runBlocking { `when`(resolveTarget(target.list)).thenReturn(target) }
-            `when`(placementRepository.observeItems(target)).thenReturn(flowOf(List(existingItems) { PlacedItem.FolderItem(Folder(it.toLong(), "f$it", emptyList())) }))
+            `when`(observePlacedItems.items(target)).thenReturn(flowOf(List(existingItems) { PlacedItem.FolderItem(Folder(it.toLong(), "f$it", emptyList())) }))
         }
     }
 

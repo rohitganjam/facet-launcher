@@ -48,6 +48,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -86,7 +87,8 @@ class FacetCarouselScreenTest {
                 )
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao(), FolderRepository(database.folderDao(), appRepository), appRepository)
+                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
+                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val usageStatsRepository = com.facetlauncher.app.data.UsageStatsRepository(
                     context.getSystemService(android.app.usage.UsageStatsManager::class.java),
                     appRepository
@@ -119,7 +121,7 @@ class FacetCarouselScreenTest {
                     ObserveFacetPreviewsUseCase(
                         facetRepository,
                         settingsRepository,
-                        placementRepository,
+                        observePlacedItems,
                         usageStatsRepository,
                         usageAccessRepository,
                         calendarPermissionRepository,

@@ -234,7 +234,7 @@ Exceptions to the common shape, all deliberate:
    calls `placementRepository.addApp(target, app, position)` → `appPlacementDao.upsert(AppPlacementEntity(list = DOCK, ...))`.
 3. Room commits and invalidates the `app_placements` table tracker.
 4. Every live `appPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)` collector re-queries and emits the new `List<AppPlacementEntity>`.
-5. `PlacementRepository.observeItems(target)` is a `combine(appPlacementDao.observe(target.list, target.ownerKey), folderPlacementDao.observe(target.list, target.ownerKey), folderRepository.observeFolders(), appRepository.observeInstalledApps())`; the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
+5. `ObservePlacedItemsUseCase.items(target)` is a `combine(placementRepository.observeAppEntities(target), placementRepository.observeFolderPlacements(target), folderRepository.observeFolders(), appRepository.observeInstalledApps())` (the first two are `PlacementRepository`'s raw `appPlacementDao.observe` / `folderPlacementDao.observe` flows); the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
 6. `ObserveHomeScreenStateUseCase` combines that with settings/facets/calendar/badges → `HomeScreenState`.
 7. `HomeViewModel` maps it into `HomeUiState` and sets `_uiState.value`.
 8. `HomeScreen` recomposes from `collectAsStateWithLifecycle()`.

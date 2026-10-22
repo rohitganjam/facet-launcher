@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.ResolvedFacetStyle
@@ -32,7 +33,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.facetlauncher.app.data.model.AppListLimits
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -92,7 +92,7 @@ class FacetSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
-    private val placementRepository: PlacementRepository,
+    private val observePlacedItems: ObservePlacedItemsUseCase,
     private val activateFacetById: ActivateFacetByIdUseCase,
 ) : ViewModel() {
 
@@ -102,13 +102,13 @@ class FacetSettingsViewModel @Inject constructor(
         facetRepository.observeFacets(),
         settingsRepository.settings,
         combine(
-            placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, facetId)),
-            placementRepository.observeItems(PlacementTarget.GlobalFavorites),
+            observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, facetId)),
+            observePlacedItems.items(PlacementTarget.GlobalFavorites),
             ::Pair,
         ),
         combine(
-            placementRepository.observeItems(PlacementTarget(PlacementList.DOCK, facetId)),
-            placementRepository.observeItems(PlacementTarget.GlobalDock),
+            observePlacedItems.items(PlacementTarget(PlacementList.DOCK, facetId)),
+            observePlacedItems.items(PlacementTarget.GlobalDock),
             ::Pair,
         ),
     ) { facets, settings, favs, docks ->

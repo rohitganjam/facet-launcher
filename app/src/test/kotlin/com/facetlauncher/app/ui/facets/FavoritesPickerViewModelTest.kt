@@ -31,6 +31,7 @@ import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 /**
  * Focused on the sort control + Usage Access gating added on top of the Favorites picker —
@@ -73,9 +74,10 @@ class FavoritesPickerViewModelTest {
         val getInstalledApps = GetInstalledAppsUseCase(appRepository)
 
         val placementRepository = mock(PlacementRepository::class.java)
-        `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, facetId)))
+        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
+        `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, facetId)))
             .thenReturn(flowOf(favorites.map { PlacedItem.SingleApp(it) }))
-        `when`(placementRepository.observeItems(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
+        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
@@ -90,6 +92,7 @@ class FavoritesPickerViewModelTest {
             SavedStateHandle(mapOf("facetId" to facetId)),
             getInstalledApps,
             placementRepository,
+            observePlacedItems,
             folderRepository,
             sortAppsForPicker,
             usageAccessRepository,
@@ -146,7 +149,8 @@ class FavoritesPickerViewModelTest {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.getInstalledApps()).thenReturn(listOf(a))
         val placementRepository = mock(PlacementRepository::class.java)
-        `when`(placementRepository.observeItems(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(emptyList()))
+        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
+        `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(emptyList()))
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
         // False when the ViewModel is constructed (before the user leaves for system Settings),
@@ -158,6 +162,7 @@ class FavoritesPickerViewModelTest {
             SavedStateHandle(mapOf("facetId" to 1L)),
             GetInstalledAppsUseCase(appRepository),
             placementRepository,
+            observePlacedItems,
             folderRepository,
             SortAppsForPickerUseCase(mock(UsageStatsRepository::class.java)),
             usageAccessRepository,
