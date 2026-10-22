@@ -5,6 +5,7 @@ import android.net.Uri
 import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.BackupBundle
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -32,14 +33,47 @@ class BackupRepository @Inject constructor(
 ) {
 
     suspend fun writeBackup(uri: Uri, bundle: BackupBundle) = withContext(ioDispatcher) {
-        context.contentResolver.openOutputStream(uri)?.use { stream ->
-            stream.write(json.encodeToString(BackupBundle.serializer(), bundle).toByteArray(Charsets.UTF_8))
-        } ?: error("Could not open an output stream for $uri")
+        val bytes = json.encodeToString(BackupBundle.serializer(), bundle).toByteArray(Charsets.UTF_8)
+        // Clear the file before writing: some document providers ignore the "wt" mode, and the leftover tail of a
+        // longer file this one overwrites would corrupt the JSON.
+        context.contentResolver.openFileDescriptor(uri, "wt")?.use { descriptor ->
+            FileOutputStream(descriptor.fileDescriptor).use { stream ->
+                stream.channel.truncate(0)
+                stream.write(bytes)
+            }
+        } ?: error("Could not open $uri for writing")
     }
 
     /** `null` means the file at [uri] isn't valid JSON, or isn't shaped like a [BackupBundle] at all — a clean "not a backup file" signal rather than an exception the caller has to know to catch. */
     suspend fun readBackup(uri: Uri): BackupBundle? = withContext(ioDispatcher) {
         val text = context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: return@withContext null
+        decode(text) ?: firstJsonObject(text)?.let(::decode)
+    }
+
+    private fun decode(text: String): BackupBundle? =
         runCatching { json.decodeFromString(BackupBundle.serializer(), text) }.getOrNull()
+
+    /** Recovers backups exported before the truncation fix, which ended with the leftover tail of an older, longer file. */
+    private fun firstJsonObject(text: String): String? {
+        val start = text.indexOf('{')
+        if (start < 0) return null
+        var depth = 0
+        var inString = false
+        var escaped = false
+        var end = -1
+        for (i in start until text.length) {
+            val c = text[i]
+            when {
+                escaped -> escaped = false
+                inString -> if (c == '\\') escaped = true else if (c == '"') inString = false
+                c == '"' -> inString = true
+                c == '{' -> depth++
+                c == '}' -> if (--depth == 0) {
+                    end = i
+                    break
+                }
+            }
+        }
+        return if (end < 0) null else text.substring(start, end + 1)
     }
 }

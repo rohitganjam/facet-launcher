@@ -159,4 +159,49 @@ class BackupRepositoryTest {
 
         assertNull(readBack)
     }
+
+    @Test
+    fun `a backup with leftover bytes after the closing brace still imports`() = runTest {
+        // Given a valid export followed by the tail of an older, longer file it overwrote without truncating
+        val file = File(context.cacheDir, "backup-trailing-${System.nanoTime()}.json")
+        val uri: Uri = Uri.fromFile(file)
+        val bundle = BackupBundle(
+            exportedAtEpochMillis = 123456789L,
+            settings = minimalSettings(),
+            facets = emptyList(),
+            dockApps = emptyList(),
+            defaultFavoriteApps = emptyList(),
+            widgetPlacements = emptyList(),
+        )
+        repository.writeBackup(uri, bundle)
+        file.appendText("ile\": \"PERSONAL\"\n    },\n    { \"x\": \"}\" }\n  ]\n}")
+
+        // When reading it
+        val readBack = repository.readBackup(uri)
+
+        // Then the leading backup is recovered
+        assertEquals(bundle, readBack)
+    }
+
+    @Test
+    fun `writing over a longer existing file leaves no leftover bytes`() = runTest {
+        // Given a file already holding a longer backup (here: padded junk)
+        val file = File(context.cacheDir, "backup-overwrite-${System.nanoTime()}.json")
+        file.writeText("x".repeat(50_000))
+        val uri: Uri = Uri.fromFile(file)
+        val bundle = BackupBundle(
+            exportedAtEpochMillis = 123456789L,
+            settings = minimalSettings(),
+            facets = emptyList(),
+            dockApps = emptyList(),
+            defaultFavoriteApps = emptyList(),
+            widgetPlacements = emptyList(),
+        )
+
+        // When exporting over it
+        repository.writeBackup(uri, bundle)
+
+        // Then the file is exactly the new backup, and strictly parses
+        assertEquals(bundle, kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString(BackupBundle.serializer(), file.readText()))
+    }
 }

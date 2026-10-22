@@ -23,7 +23,7 @@ sequenceDiagram
     UC->>R: placementRepository.getRawApps / getRawFolderPlacements (GlobalDock, GlobalFavorites), widgetPlacementRepository.observeAll().first()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
     UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 3, exportedAtEpochMillis, ...))
-    BR->>BR: contentResolver.openOutputStream(uri) + Json.encodeToString  (Dispatchers.IO)
+    BR->>BR: contentResolver.openFileDescriptor(uri, "wt") truncated to 0, then Json.encodeToString  (Dispatchers.IO)
     UC-->>VM: bundle
     VM-->>S: uiState.message = "Exported N facets …"
 ```
@@ -46,7 +46,7 @@ sequenceDiagram
     participant R as repositories
     S->>VM: onImportFileChosen(uri)   (OpenDocument) → confirm dialog ("replaces everything")
     VM->>UC: invoke(uri)
-    UC->>R: backupRepository.readBackup(uri) → bundle?  (null → InvalidFile)
+    UC->>R: backupRepository.readBackup(uri) → bundle?  (null → InvalidFile; trailing bytes after the closing brace are ignored)
     UC->>UC: backupVersion > CURRENT_BACKUP_VERSION → UnsupportedVersion
     UC->>R: applySettings(bundle.settings)  — 41 SettingsRepository setters
     UC->>R: folderRepository.deleteAllFolders(), then restoreFolder(...) per folder → index→newId map
