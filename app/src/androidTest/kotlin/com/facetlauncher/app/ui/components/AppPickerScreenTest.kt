@@ -2,7 +2,16 @@ package com.facetlauncher.app.ui.components
 
 import android.os.Parcel
 import android.os.UserHandle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -98,5 +107,49 @@ class AppPickerScreenTest {
         setContent(selectedResults = emptyList(), otherResults = listOf(personalCalendar))
 
         composeRule.onAllNodesWithTag("work_profile_badge", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun searchFieldAcceptsTypingAfterChangingTheSortOrder() {
+        // Given a picker with live query and sort state, and the search field focused
+        composeRule.setContent {
+            var query by remember { mutableStateOf("") }
+            var sortOption by remember { mutableStateOf(AppSortOption.ALPHABETICAL) }
+            FacetLauncherTheme {
+                AppPickerScreen(
+                    title = "Pick apps",
+                    query = query,
+                    selectedResults = emptyList(),
+                    otherResults = listOf(personalCalendar),
+                    selectedComponents = emptySet(),
+                    canAddMore = true,
+                    canRemove = true,
+                    sortOption = sortOption,
+                    sortDirection = SortDirection.ASCENDING,
+                    selectedSectionLabel = "Selected",
+                    screenTestTag = "app_picker_test_screen",
+                    tagPrefix = "app_picker_test",
+                    onQueryChange = { query = it },
+                    onSortOptionChange = { sortOption = it },
+                    onSortDirectionToggle = {},
+                    onToggleApp = {},
+                    onDone = {},
+                )
+            }
+        }
+        composeRule.onNodeWithTag("app_picker_test_search").performClick()
+
+        // When choosing another sort order from the dropdown
+        val other = AppSortOption.entries.last().name
+        composeRule.onNodeWithTag("app_picker_test_sort_menu_button").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("app_picker_test_sort_option_$other").performClick()
+        composeRule.waitForIdle()
+
+        // Then the field no longer holds stale focus, and tapping it again accepts typing
+        composeRule.onNodeWithTag("app_picker_test_search").assertIsNotFocused()
+        composeRule.onNodeWithTag("app_picker_test_search").performClick()
+        composeRule.onNodeWithTag("app_picker_test_search").performTextInput("cal")
+        composeRule.onNodeWithTag("app_picker_test_search").assertTextContains("cal")
     }
 }

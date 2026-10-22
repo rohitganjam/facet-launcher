@@ -10,6 +10,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 
 /** [RobolectricTestRunner] purely because [AppInfo]'s default `userHandle` calls `Process.myUserHandle()`, which needs a shadow. */
@@ -95,5 +97,19 @@ class SortAppsForPickerUseCaseTest {
         val result = useCase(lastUsed = emptyMap())(listOf(a, b), AppSortOption.LAST_USED, SortDirection.ASCENDING)
 
         assertEquals(listOf(a, b), result)
+    }
+
+    @Test
+    fun `LAST_USED queries usage stats once across repeated sorts, so each search keystroke stays fast`() = runTest {
+        val usageStatsRepository = mock(UsageStatsRepository::class.java)
+        `when`(usageStatsRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
+        val useCase = SortAppsForPickerUseCase(usageStatsRepository)
+        val apps = listOf(appInfo('a'))
+
+        useCase(apps, AppSortOption.LAST_USED, SortDirection.ASCENDING)
+        useCase(apps, AppSortOption.LAST_USED, SortDirection.DESCENDING)
+        useCase(apps, AppSortOption.LAST_USED, SortDirection.ASCENDING)
+
+        verify(usageStatsRepository, times(1)).getLastUsedTimestamps()
     }
 }

@@ -15,6 +15,9 @@ import javax.inject.Inject
  * toggle works no matter which field is selected.
  */
 class SortAppsForPickerUseCase @Inject constructor(private val usageStatsRepository: UsageStatsRepository) {
+    // Not a singleton: one instance per picker ViewModel, so this is loaded once per screen visit.
+    private var cachedLastUsed: Map<String, Long>? = null
+
     suspend operator fun invoke(apps: List<AppInfo>, option: AppSortOption, direction: SortDirection): List<AppInfo> {
         if (option == AppSortOption.LAST_USED) return sortByLastUsed(apps, direction)
 
@@ -28,8 +31,14 @@ class SortAppsForPickerUseCase @Inject constructor(private val usageStatsReposit
         return if (direction == SortDirection.ASCENDING) ascending else ascending.reversed()
     }
 
+    // The full-history usage query takes seconds, and this runs on every search keystroke (the query
+    // and the sort share one combined state) — uncached, the search field lagged and dropped typing.
+    private suspend fun lastUsedTimestamps(): Map<String, Long> {
+        return cachedLastUsed ?: usageStatsRepository.getLastUsedTimestamps().also { cachedLastUsed = it }
+    }
+
     private suspend fun sortByLastUsed(apps: List<AppInfo>, direction: SortDirection): List<AppInfo> {
-        val lastUsed = usageStatsRepository.getLastUsedTimestamps()
+        val lastUsed = lastUsedTimestamps()
         val (used, neverUsed) = apps.partition { lastUsed.containsKey(it.packageName) }
         val orderedUsed = used.sortedBy { lastUsed.getValue(it.packageName) }
         // "Never used" always sorts after "used," regardless of direction — it isn't a

@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,6 +61,7 @@ fun AppSortControl(
     var anchorWidthPx by remember { mutableIntStateOf(0) }
     var menuWidthPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
+    val focusManager = LocalFocusManager.current
     val rotation by animateFloatAsState(
         targetValue = if (sortDirection == SortDirection.DESCENDING) 180f else 0f,
         label = "app_sort_direction_rotation",
@@ -79,7 +81,12 @@ fun AppSortControl(
                     // rather than read as a raised chip; the open popup below keeps
                     // ThemedDropdownMenu's own default SurfaceContainer instead.
                     .background(Surface)
-                    .clickable { expanded = true }
+                    .clickable {
+                        // The popup takes the window's input focus; a search field left focused would
+                        // come back with a dead IME connection and swallow typing.
+                        focusManager.clearFocus()
+                        expanded = true
+                    }
                     .testTag("${tagPrefix}_sort_menu_button")
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
