@@ -30,7 +30,7 @@ The alphabet rail (`AlphabetRail`, `LetterJumpZone`) mirrors this: `RailFolderPo
 
 A single virtual item — not a real `Folder`/`FolderEntity` — positioned by
 `LauncherSettings.recentlyInstalledPosition` (global-only `RecentlyInstalledPosition` enum:
-`SHOW_FIRST` default, `SHOW_LAST`, or `DO_NOT_SHOW`; Settings → Appearance → Dock & Apps appearance → App drawer → "Recently installed",
+`SHOW_FIRST` default, `SHOW_LAST`, or `DO_NOT_SHOW`; Settings → Appearance → App Drawer → "Recently installed",
 a `LabeledDropdownRow` mirroring `DrawerFolderDisplayMode`'s own dropdown). `SHOW_FIRST` places it
 above everything, even a `SHOW_FIRST` folder section; `SHOW_LAST` places it below everything, even
 a `SHOW_LAST` folder section — each independent of the other (a folder section and the category can

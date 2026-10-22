@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Backs the App drawer card on Settings → Appearance → Dock & Apps appearance. Every field here is global only, no per-facet override. */
+/** Settings → Appearance → App Drawer. Every field here is global only, no per-facet override. */
 @HiltViewModel
 class AppDrawerSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,

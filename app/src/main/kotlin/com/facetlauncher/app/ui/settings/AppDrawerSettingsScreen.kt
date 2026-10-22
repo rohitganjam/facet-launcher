@@ -4,19 +4,30 @@ import android.Manifest
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -31,20 +42,24 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsToggleRow
+import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
-import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
+import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlin.math.roundToInt
 
-/** The App drawer card on Settings → Appearance → Dock & Apps appearance. Global only, so that screen hides it per facet. */
+/** Settings → Appearance → App Drawer (global only). */
 @Composable
-fun AppDrawerSettingsCard(
+fun AppDrawerSettingsScreen(
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppDrawerSettingsViewModel = hiltViewModel(),
 ) {
@@ -56,6 +71,7 @@ fun AppDrawerSettingsCard(
 
     AppDrawerSettingsContent(
         settings = settings,
+        onBack = onBack,
         onDrawerPresentationChange = viewModel::setDrawerPresentation,
         onDrawerGridDensityChange = viewModel::setDrawerGridDensity,
         onDrawerListItemSizeChange = viewModel::setDrawerListItemSize,
@@ -79,6 +95,7 @@ fun AppDrawerSettingsCard(
 @Composable
 private fun AppDrawerSettingsContent(
     settings: LauncherSettings,
+    onBack: () -> Unit,
     onDrawerPresentationChange: (DrawerPresentation) -> Unit,
     onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
     onDrawerListItemSizeChange: (DrawerListItemSize) -> Unit,
@@ -94,7 +111,59 @@ private fun AppDrawerSettingsContent(
 ) {
     val presentation = settings.drawerPresentation
 
-    SettingsCard(modifier = modifier.testTag("app_drawer_settings_card")) {
+    StickyHeaderLayout(
+        modifier = modifier,
+        header = { AppDrawerSettingsHeader(onBack = onBack) },
+        content = { headerHeight ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(SurfaceContainer)
+                    .testTag("app_drawer_settings_screen")
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(horizontal = 24.dp),
+                contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
+            ) {
+                item {
+                    AppDrawerSettingsCard(
+                        settings = settings,
+                        onDrawerPresentationChange = onDrawerPresentationChange,
+                        onDrawerGridDensityChange = onDrawerGridDensityChange,
+                        onDrawerListItemSizeChange = onDrawerListItemSizeChange,
+                        onShowDrawerIconsChange = onShowDrawerIconsChange,
+                        onShowDrawerLabelsChange = onShowDrawerLabelsChange,
+                        onSearchContactsToggle = onSearchContactsToggle,
+                        onSearchSettingsToggle = onSearchSettingsToggle,
+                        onSearchBarPositionChange = onSearchBarPositionChange,
+                        onDrawerOpacityChange = onDrawerOpacityChange,
+                        onDrawerFolderDisplayModeChange = onDrawerFolderDisplayModeChange,
+                        onRecentlyInstalledPositionChange = onRecentlyInstalledPositionChange,
+                    )
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun AppDrawerSettingsCard(
+    settings: LauncherSettings,
+    onDrawerPresentationChange: (DrawerPresentation) -> Unit,
+    onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
+    onDrawerListItemSizeChange: (DrawerListItemSize) -> Unit,
+    onShowDrawerIconsChange: (Boolean) -> Unit,
+    onShowDrawerLabelsChange: (Boolean) -> Unit,
+    onSearchContactsToggle: (Boolean) -> Unit,
+    onSearchSettingsToggle: (Boolean) -> Unit,
+    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
+    onDrawerOpacityChange: (Float) -> Unit,
+    onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
+    onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val presentation = settings.drawerPresentation
+
+    SettingsCard(modifier = modifier) {
         LabeledDropdownRow(
             title = stringResource(R.string.app_drawer_show_apps_as),
             options = DrawerPresentation.entries,
@@ -180,49 +249,6 @@ private fun ColumnScope.DrawerSearchAndOrderRows(
 }
 
 @Composable
-private fun DrawerOpacitySlider(opacity: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.testTag("drawer_opacity_slider").padding(vertical = 8.dp)) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(text = stringResource(R.string.app_drawer_opacity_label), style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = stringResource(R.string.percent_format, (opacity * 100).roundToInt()), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        }
-        // Plain M3 Slider — default thumb/track shape, just this app's Accent/Hairline colors.
-        Slider(
-            value = opacity,
-            onValueChange = onChange,
-            valueRange = 0f..1f,
-            colors = SliderDefaults.colors(
-                thumbColor = Accent,
-                activeTrackColor = Accent,
-                inactiveTrackColor = Hairline,
-            ),
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun AppDrawerSettingsCardPreview() {
-    FacetLauncherTheme {
-        AppDrawerSettingsContent(
-            settings = LauncherSettings(),
-            onDrawerPresentationChange = {},
-            onDrawerGridDensityChange = {},
-            onDrawerListItemSizeChange = {},
-            onShowDrawerIconsChange = {},
-            onShowDrawerLabelsChange = {},
-            onSearchContactsToggle = {},
-            onSearchSettingsToggle = {},
-            onSearchBarPositionChange = {},
-            onDrawerOpacityChange = {},
-            onDrawerFolderDisplayModeChange = {},
-            onRecentlyInstalledPositionChange = {},
-        )
-    }
-}
-
-@Composable
 private fun ColumnScope.DrawerPresentationDetailRows(
     settings: LauncherSettings,
     onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
@@ -269,6 +295,67 @@ private fun ColumnScope.DrawerPresentationDetailRows(
             checked = settings.showDrawerLabels,
             onCheckedChange = onShowDrawerLabelsChange,
             testTag = "show_drawer_labels_toggle",
+        )
+    }
+}
+
+@Composable
+private fun AppDrawerSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(SurfaceContainer)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BackButton(onClick = onBack)
+        Text(text = stringResource(R.string.app_drawer_settings_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
+    }
+}
+
+@Composable
+private fun DrawerOpacitySlider(opacity: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.testTag("drawer_opacity_slider").padding(vertical = 8.dp)) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.app_drawer_opacity_label), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Text(text = stringResource(R.string.percent_format, (opacity * 100).roundToInt()), style = MaterialTheme.typography.bodyMedium, color = Muted)
+        }
+        // Plain M3 Slider — default thumb/track shape, just this app's Accent/Hairline colors.
+        Slider(
+            value = opacity,
+            onValueChange = onChange,
+            valueRange = 0f..1f,
+            colors = SliderDefaults.colors(
+                thumbColor = Accent,
+                activeTrackColor = Accent,
+                inactiveTrackColor = Hairline,
+            ),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun AppDrawerSettingsScreenPreview() {
+    FacetLauncherTheme {
+        AppDrawerSettingsContent(
+            settings = LauncherSettings(),
+            onBack = {},
+            onDrawerPresentationChange = {},
+            onDrawerGridDensityChange = {},
+            onDrawerListItemSizeChange = {},
+            onShowDrawerIconsChange = {},
+            onShowDrawerLabelsChange = {},
+            onSearchContactsToggle = {},
+            onSearchSettingsToggle = {},
+            onSearchBarPositionChange = {},
+            onDrawerOpacityChange = {},
+            onDrawerFolderDisplayModeChange = {},
+            onRecentlyInstalledPositionChange = {},
         )
     }
 }

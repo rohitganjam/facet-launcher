@@ -41,6 +41,7 @@ class AppearanceSettingsScreenTest {
         onNavigateToCalendarSettings: () -> Unit = {},
         onNavigateToNotificationSettings: () -> Unit = {},
         onNavigateToDockAppsAppearance: () -> Unit = {},
+        onNavigateToAppDrawerSettings: () -> Unit = {},
         onNavigateToFontsThemesIcons: () -> Unit = {},
         facetId: Long? = null,
         calendarGranted: Boolean = false,
@@ -55,6 +56,7 @@ class AppearanceSettingsScreenTest {
             onNavigateToCalendarSettings = onNavigateToCalendarSettings,
             onNavigateToNotificationSettings = onNavigateToNotificationSettings,
             onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
+            onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
             onNavigateToFontsThemesIcons = onNavigateToFontsThemesIcons,
             viewModel = viewModel,
         )
@@ -163,6 +165,7 @@ class AppearanceSettingsScreenTest {
         // Then the Dock & Apps appearance row (the moved-in look fields) and the Clock row are here...
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
         composeRule.onNodeWithTag("appearance_dock_apps_row").assertExists()
+        composeRule.onNodeWithTag("app_drawer_settings_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
         composeRule.onNodeWithTag("clock_style_gallery_row").assertExists()
         // ...but the purely-global rows (notifications, fonts / themes / icons) are gone — no
@@ -545,6 +548,20 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_fonts_themes_icons_row").performClick()
 
         // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun appDrawerRowSitsBesideDockAppsRowAndNavigates() {
+        // Given the global Appearance screen
+        var navigated = false
+        setContent(onNavigateToAppDrawerSettings = { navigated = true })
+
+        // When the App Drawer row in the Dock & home card is tapped
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
+        composeRule.onNodeWithTag("app_drawer_settings_row").performClick()
+
+        // Then it navigates to the App Drawer screen
         assertEquals(true, navigated)
     }
 }

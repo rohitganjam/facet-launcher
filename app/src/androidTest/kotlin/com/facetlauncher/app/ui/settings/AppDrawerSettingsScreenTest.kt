@@ -1,12 +1,8 @@
 package com.facetlauncher.app.ui.settings
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -19,15 +15,16 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-class AppDrawerSettingsCardTest {
+class AppDrawerSettingsScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent() {
+    private fun setContent(onBack: () -> Unit = {}) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -39,11 +36,33 @@ class AppDrawerSettingsCardTest {
                 AppDrawerSettingsViewModel(settingsRepository)
             }
             FacetLauncherTheme {
-                Column(Modifier.testTag("app_drawer_settings_screen").verticalScroll(rememberScrollState())) {
-                    AppDrawerSettingsCard(viewModel = viewModel)
-                }
+                AppDrawerSettingsScreen(onBack = onBack, viewModel = viewModel)
             }
         }
+    }
+
+    @Test
+    fun headerStaysVisibleAfterScrollingToTheBottom() {
+        // Given the screen, scrolled all the way down
+        setContent()
+        composeRule.onNodeWithTag("app_drawer_settings_screen").performScrollToNode(hasTestTag("drawer_opacity_slider"))
+
+        // Then the pinned header (title + back button) is still on screen, not scrolled away
+        composeRule.onNodeWithText("App Drawer").assertIsDisplayed()
+        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
+    }
+
+    @Test
+    fun backButtonInvokesOnBack() {
+        // Given the screen
+        var backInvoked = false
+        setContent(onBack = { backInvoked = true })
+
+        // When tapping the back button
+        composeRule.onNodeWithTag("back_button").performClick()
+
+        // Then it navigates back
+        assertEquals(true, backInvoked)
     }
 
     @Test

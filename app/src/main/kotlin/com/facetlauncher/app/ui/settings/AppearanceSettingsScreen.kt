@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
@@ -40,6 +41,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.BackButton
@@ -67,6 +69,7 @@ fun AppearanceSettingsScreen(
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
+    onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToFontsThemesIcons: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
@@ -96,6 +99,7 @@ fun AppearanceSettingsScreen(
         onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
+        onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToFontsThemesIcons = onNavigateToFontsThemesIcons,
         modifier = modifier,
     )
@@ -111,6 +115,7 @@ private fun AppearanceSettingsContent(
     onNavigateToCalendarSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
+    onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToFontsThemesIcons: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -135,7 +140,7 @@ private fun AppearanceSettingsContent(
                     )
                 }
                 clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToCalendarSettings)
-                dockAndHomeSection(uiState, onNavigateToDockAppsAppearance)
+                dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
                 // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
                 if (!uiState.isFacetScoped) {
                     notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
@@ -220,8 +225,13 @@ private fun notificationsSummary(settings: LauncherSettings, accessGranted: Bool
 }
 
 
-/** One row into [DockAppsAppearanceScreen], summarising the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
-private fun LazyListScope.dockAndHomeSection(uiState: AppearanceSettingsUiState, onNavigateToDockAppsAppearance: () -> Unit) {
+/** Rows into [DockAppsAppearanceScreen] and (global only) [AppDrawerSettingsScreen]; the first summarises the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
+private fun LazyListScope.dockAndHomeSection(
+    settings: LauncherSettings,
+    uiState: AppearanceSettingsUiState,
+    onNavigateToDockAppsAppearance: () -> Unit,
+    onNavigateToAppDrawerSettings: () -> Unit,
+) {
     item { SettingsSectionHeader(stringResource(R.string.appearance_section_dock_home)) }
     item {
         SettingsCard(fullBleedRows = true) {
@@ -236,8 +246,32 @@ private fun LazyListScope.dockAndHomeSection(uiState: AppearanceSettingsUiState,
                 testTag = "appearance_dock_apps_row",
                 leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.APPEARANCE),
             )
+            // Launcher-wide only: the drawer has no per-facet override.
+            if (!uiState.isFacetScoped) {
+                CardDivider(startInset = SettingsIconBadgeInset)
+                ClickableRow(
+                    title = stringResource(R.string.settings_app_drawer_title),
+                    subtitle = appDrawerSummary(settings.drawerPresentation, settings.searchContactsEnabled, settings.searchSettingsEnabled),
+                    onClick = onNavigateToAppDrawerSettings,
+                    testTag = "app_drawer_settings_row",
+                    leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.APPEARANCE),
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEnabled: Boolean, searchSettingsEnabled: Boolean): String {
+    val layout = stringResource(presentation.displayNameRes)
+    val contactSearch = stringResource(if (searchContactsEnabled) R.string.settings_search_on else R.string.settings_search_off)
+    val settingsSearch = stringResource(if (searchSettingsEnabled) R.string.settings_search_on else R.string.settings_search_off)
+    return stringResource(
+        R.string.dot_join_3,
+        stringResource(R.string.settings_show_as, layout),
+        stringResource(R.string.settings_contact_search, contactSearch),
+        stringResource(R.string.settings_settings_search, settingsSearch),
+    )
 }
 
 /** Global only — one row into [FontsThemesIconsScreen]. */
@@ -287,6 +321,7 @@ private fun AppearanceSettingsScreenPreview() {
             onNavigateToCalendarSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
+            onNavigateToAppDrawerSettings = {},
             onNavigateToFontsThemesIcons = {},
         )
     }
@@ -309,6 +344,7 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             onNavigateToCalendarSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
+            onNavigateToAppDrawerSettings = {},
             onNavigateToFontsThemesIcons = {},
         )
     }

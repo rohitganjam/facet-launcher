@@ -30,6 +30,7 @@ import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.pro.FacetProScreen
 import com.facetlauncher.app.ui.settings.AboutScreen
+import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
@@ -76,6 +77,7 @@ object FacetDestinations {
     const val FONTS_THEMES_ICONS = "fontsThemesIcons"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
+    const val APP_DRAWER_SETTINGS = "appDrawerSettings"
     const val ABOUT = "about"
     const val WHATS_NEW = "whats_new"
 
@@ -234,6 +236,7 @@ fun FacetNavHost(
                 onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings(facetId)) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
+                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToFontsThemesIcons = { navController.navigate(FacetDestinations.FONTS_THEMES_ICONS) },
             )
         }
@@ -265,6 +268,9 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
             )
+        }
+        settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
+            AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.CLOCK_STYLE_GALLERY) {
             ClockStyleGalleryRoute(onBack = { navController.popBackStackSafely() })
