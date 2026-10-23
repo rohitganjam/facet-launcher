@@ -1130,11 +1130,11 @@ private fun ClockTemplateData.HourTileTemplate(
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
         if (nextAlarmText != null || batteryPercent != null) {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 11.5.sp)
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 11.5.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp)
             }
         }
     }
@@ -1163,8 +1163,8 @@ private fun ClockTemplateData.ChipTemplate(
         if (nextAlarmText != null || batteryPercent != null) {
             val pillModifier = Modifier.clip(CircleShape).background(SurfaceContainer, CircleShape).border(1.dp, Hairline, CircleShape).padding(horizontal = 14.dp, vertical = 6.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 12.sp, modifier = pillModifier)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 12.sp, modifier = pillModifier)
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = pillModifier)
             }
         }
     }
@@ -1285,7 +1285,7 @@ private fun ClockTemplateData.StubTemplate(
                         },
                 ) {}
                 Column(modifier = Modifier.padding(start = 17.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    TemplateDateText(now.format(DateTimeFormatter.ofPattern("MMM", locale)).uppercase(locale), family, mutedTextColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
+                    TemplateDateText(now.format(DateTimeFormatter.ofPattern("MMM", locale)).uppercase(locale), family, mutedTextColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
                     ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 31.sp, family, FontWeight.Light)
                 }
             }
@@ -1357,8 +1357,8 @@ private fun ClockTemplateData.DigitCellsTemplate(
         if (nextAlarmText != null || batteryPercent != null) {
             val cellModifier = Modifier.clip(RoundedCornerShape(8.dp)).background(SurfaceContainer, RoundedCornerShape(8.dp)).border(1.dp, Hairline, RoundedCornerShape(8.dp)).padding(horizontal = 9.dp, vertical = 6.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 11.5.sp, modifier = cellModifier)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 11.5.sp, modifier = cellModifier)
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = cellModifier)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = cellModifier)
             }
         }
     }
@@ -1399,13 +1399,13 @@ private fun ClockTemplateData.NegativePanelTemplate(
             now.format(dateFormatter(locale, dateStyle)).uppercase(locale),
             family,
             accentColor,
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.3.sp,
             modifier = Modifier.padding(top = 10.dp),
             shadow = false,
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, panelContentColor.copy(alpha = 0.62f), accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 13.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, panelContentColor.copy(alpha = 0.62f), accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 14.sp)
     }
 }
 
@@ -1434,8 +1434,8 @@ private fun ClockTemplateData.HollowHourTemplate(
         if (nextAlarmText != null || batteryPercent != null) {
             val boxModifier = Modifier.clip(RoundedCornerShape(9.dp)).border(1.dp, Hairline, RoundedCornerShape(9.dp)).padding(horizontal = 11.dp, vertical = 5.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 12.sp, modifier = boxModifier)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 12.sp, modifier = boxModifier)
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = boxModifier)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = boxModifier)
             }
         }
     }
@@ -1586,8 +1586,8 @@ private fun ClockTemplateData.PillPairTemplate(
         if (nextAlarmText != null || batteryPercent != null) {
             val pillModifier = Modifier.clip(CircleShape).background(SurfaceContainer, CircleShape).border(1.dp, Hairline, CircleShape).padding(horizontal = 14.dp, vertical = 6.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 12.sp, modifier = pillModifier)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 12.sp, modifier = pillModifier)
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = pillModifier)
             }
         }
     }

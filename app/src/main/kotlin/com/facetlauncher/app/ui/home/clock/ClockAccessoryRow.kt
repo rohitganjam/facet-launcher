@@ -29,7 +29,7 @@ fun AlarmAccessoryContent(
     color: Color,
     family: FontFamily,
     modifier: Modifier = Modifier,
-    fontSize: TextUnit = 12.5.sp,
+    fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
 ) {
     if (text == null) return
@@ -56,7 +56,7 @@ fun BatteryAccessoryContent(
     accentColor: Color,
     family: FontFamily,
     modifier: Modifier = Modifier,
-    fontSize: TextUnit = 12.5.sp,
+    fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
 ) {
     if (percent == null) return
@@ -81,7 +81,7 @@ fun ClockAccessoryRow(
     mutedColor: Color,
     accentColor: Color,
     modifier: Modifier = Modifier,
-    fontSize: TextUnit = 12.5.sp,
+    fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
 ) {
     if (nextAlarmText == null && batteryPercent == null) return
