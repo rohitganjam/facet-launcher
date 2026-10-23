@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/NotificationSettingsScreenTest.kt": {
-    "mtime": 1792684517.7737324,
-    "seen": 1792684680.920962,
-    "ast_hash": "1f4c01e9825ba2e7b083022095961ad8",
+    "mtime": 1792720728.932826,
+    "seen": 1792721170.261087,
+    "ast_hash": "1454665d865181eebdc62871143126dc",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/PermissionsScreenTest.kt": {
@@ -2442,8 +2442,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1792686086.0321229,
-    "seen": 1792688159.297514,
+    "mtime": 1792721101.9319487,
+    "seen": 1792721170.261421,
     "ast_hash": "2ac608d5c466645238bddaf788f8441b",
     "semantic_hash": ""
   },
