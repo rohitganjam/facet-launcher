@@ -20,7 +20,10 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -98,7 +101,10 @@ class NotificationSettingsScreenTest {
         runBlocking { settings.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT) }
         composeRule.waitForIdle()
 
-        // Then the preview badge shows its count
+        // Then the preview badge shows its count (the settings flow lands asynchronously)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("3").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag("notification_preview").performScrollTo()
         composeRule.onNodeWithText("3").assertIsDisplayed()
     }
@@ -275,7 +281,10 @@ class NotificationSettingsScreenTest {
         // Given the screen with access granted and settings at their defaults
         setContent(accessGranted = true)
 
-        // Then the app menu switch is on
+        // Then the app menu switch is on (the settings flow lands asynchronously)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(hasTestTag("notification_app_menu_toggle") and isOn()).fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag("notification_app_menu_toggle").assertIsOn()
     }
 
