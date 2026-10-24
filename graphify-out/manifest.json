@@ -1164,9 +1164,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1792612053.0839193,
-    "seen": 1792639458.214964,
-    "ast_hash": "0cea982c26f779d0fb726b9ba7af0be9",
+    "mtime": 1792820223.8200674,
+    "seen": 1792820347.370142,
+    "ast_hash": "2c3e081a469b44fb511a22cf885100c5",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeUiState.kt": {
@@ -2442,9 +2442,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1792721101.9319487,
-    "seen": 1792721170.261421,
-    "ast_hash": "2ac608d5c466645238bddaf788f8441b",
+    "mtime": 1792820298.5935016,
+    "seen": 1792820347.370363,
+    "ast_hash": "b3b37e8f75b2f850018e0034ce0d4a66",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
@@ -4614,15 +4614,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeClockGeometry.kt": {
-    "mtime": 1792612053.082534,
-    "seen": 1792639458.21496,
-    "ast_hash": "a80efe183c53b0c403d450c544f3bc1f",
+    "mtime": 1792820223.7904694,
+    "seen": 1792820347.370135,
+    "ast_hash": "2257d33a1455abdfa3fd20c01f096b19",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/home/HomeClockGeometryTest.kt": {
-    "mtime": 1792612053.0994654,
-    "seen": 1792639458.2150981,
-    "ast_hash": "b6a69064e46bc40ed87dcb3084d8cab6",
+    "mtime": 1792820223.855756,
+    "seen": 1792820347.370285,
+    "ast_hash": "86faa4082fd9e921145f1f23890962d1",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockAdjustControls.kt": {
@@ -4644,9 +4644,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeFrame.kt": {
-    "mtime": 1792612053.0830977,
-    "seen": 1792639458.214962,
-    "ast_hash": "0a2c03cd1a55ad9ffd7066125065efc0",
+    "mtime": 1792820223.8037145,
+    "seen": 1792820347.3701382,
+    "ast_hash": "3e3fe8453e5e8de44909d1cf7327fec8",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreenEffects.kt": {
