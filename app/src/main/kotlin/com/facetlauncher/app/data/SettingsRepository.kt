@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -38,11 +39,18 @@ import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PressureUnit
+import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SystemBarIconStyle
+import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.WeatherLocationMode
+import com.facetlauncher.app.data.model.WindSpeedUnit
+import com.facetlauncher.app.data.model.weatherCityOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -98,6 +106,18 @@ private object Keys {
     val CLOCK_ACCENT_COLOR_OPTION = stringPreferencesKey("clock_accent_color_option")
     val CLOCK_SHOW_MERIDIEM = booleanPreferencesKey("clock_show_meridiem")
     val CLOCK_DATE_STYLE = stringPreferencesKey("clock_date_style")
+    val SHOW_NEXT_ALARM = booleanPreferencesKey("show_next_alarm")
+    val SHOW_BATTERY_PERCENTAGE = booleanPreferencesKey("show_battery_percentage")
+    val SHOW_WEATHER = booleanPreferencesKey("show_weather")
+    val TEMPERATURE_UNIT = stringPreferencesKey("temperature_unit")
+    val WIND_SPEED_UNIT = stringPreferencesKey("wind_speed_unit")
+    val RAIN_UNIT = stringPreferencesKey("rain_unit")
+    val PRESSURE_UNIT = stringPreferencesKey("pressure_unit")
+    val WEATHER_LOCATION_MODE = stringPreferencesKey("weather_location_mode")
+    val WEATHER_CITY_NAME = stringPreferencesKey("weather_city_name")
+    val WEATHER_CITY_LATITUDE = doublePreferencesKey("weather_city_latitude")
+    val WEATHER_CITY_LONGITUDE = doublePreferencesKey("weather_city_longitude")
+    val WEATHER_CITY_TIMEZONE = stringPreferencesKey("weather_city_timezone")
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
@@ -206,6 +226,20 @@ class SettingsRepository @Inject constructor(
             clockShowMeridiem = preferences[Keys.CLOCK_SHOW_MERIDIEM] ?: defaults.clockShowMeridiem,
             clockDateStyle = preferences[Keys.CLOCK_DATE_STYLE]?.let { runCatching { ClockDateStyle.valueOf(it) }.getOrNull() }
                 ?: defaults.clockDateStyle,
+            showNextAlarm = preferences[Keys.SHOW_NEXT_ALARM] ?: defaults.showNextAlarm,
+            showBatteryPercentage = preferences[Keys.SHOW_BATTERY_PERCENTAGE] ?: defaults.showBatteryPercentage,
+            showWeather = preferences[Keys.SHOW_WEATHER] ?: defaults.showWeather,
+            temperatureUnit = preferences[Keys.TEMPERATURE_UNIT]?.let { runCatching { TemperatureUnit.valueOf(it) }.getOrNull() }
+                ?: defaults.temperatureUnit,
+            windSpeedUnit = preferences[Keys.WIND_SPEED_UNIT]?.let { runCatching { WindSpeedUnit.valueOf(it) }.getOrNull() }
+                ?: defaults.windSpeedUnit,
+            rainUnit = preferences[Keys.RAIN_UNIT]?.let { runCatching { RainUnit.valueOf(it) }.getOrNull() }
+                ?: defaults.rainUnit,
+            pressureUnit = preferences[Keys.PRESSURE_UNIT]?.let { runCatching { PressureUnit.valueOf(it) }.getOrNull() }
+                ?: defaults.pressureUnit,
+            weatherLocationMode = preferences[Keys.WEATHER_LOCATION_MODE]?.let { runCatching { WeatherLocationMode.valueOf(it) }.getOrNull() }
+                ?: defaults.weatherLocationMode,
+            weatherCity = preferences.readWeatherCity(),
             homeAppsFontWeight = preferences[Keys.HOME_APPS_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
                 ?: defaults.homeAppsFontWeight,
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
@@ -429,6 +463,55 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.CLOCK_DATE_STYLE] = dateStyle.name }
     }
 
+    suspend fun setShowNextAlarm(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_NEXT_ALARM] = enabled }
+    }
+
+    suspend fun setShowBatteryPercentage(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_BATTERY_PERCENTAGE] = enabled }
+    }
+
+    suspend fun setShowWeather(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_WEATHER] = enabled }
+    }
+
+    suspend fun setTemperatureUnit(unit: TemperatureUnit) {
+        dataStore.edit { it[Keys.TEMPERATURE_UNIT] = unit.name }
+    }
+
+    suspend fun setWindSpeedUnit(unit: WindSpeedUnit) {
+        dataStore.edit { it[Keys.WIND_SPEED_UNIT] = unit.name }
+    }
+
+    suspend fun setRainUnit(unit: RainUnit) {
+        dataStore.edit { it[Keys.RAIN_UNIT] = unit.name }
+    }
+
+    suspend fun setPressureUnit(unit: PressureUnit) {
+        dataStore.edit { it[Keys.PRESSURE_UNIT] = unit.name }
+    }
+
+    suspend fun setWeatherLocationMode(mode: WeatherLocationMode) {
+        dataStore.edit { it[Keys.WEATHER_LOCATION_MODE] = mode.name }
+    }
+
+    /** Stores the chosen city (the four keys together); `null` clears it. */
+    suspend fun setWeatherCity(city: WeatherCity?) {
+        dataStore.edit {
+            if (city == null) {
+                it.remove(Keys.WEATHER_CITY_NAME)
+                it.remove(Keys.WEATHER_CITY_LATITUDE)
+                it.remove(Keys.WEATHER_CITY_LONGITUDE)
+                it.remove(Keys.WEATHER_CITY_TIMEZONE)
+            } else {
+                it[Keys.WEATHER_CITY_NAME] = city.name
+                it[Keys.WEATHER_CITY_LATITUDE] = city.latitude
+                it[Keys.WEATHER_CITY_LONGITUDE] = city.longitude
+                it[Keys.WEATHER_CITY_TIMEZONE] = city.timezone
+            }
+        }
+    }
+
     suspend fun setHomeAppsFontWeight(weight: FontWeightOption) {
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
     }
@@ -509,6 +592,10 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + id }
     }
 }
+
+/** The chosen city, or `null` unless all four of its keys are present. */
+private fun Preferences.readWeatherCity(): WeatherCity? =
+    weatherCityOrNull(this[Keys.WEATHER_CITY_NAME], this[Keys.WEATHER_CITY_LATITUDE], this[Keys.WEATHER_CITY_LONGITUDE], this[Keys.WEATHER_CITY_TIMEZONE])
 
 private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
     clockAlignment = this[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },

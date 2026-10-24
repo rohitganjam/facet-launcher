@@ -98,13 +98,14 @@ flowchart TB
         direction TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
             AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver\n(all @Singleton)"]
-            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 6 DAO @Provides (unscoped)"]
+            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 7 DAO @Provides (unscoped)"]
             DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
             DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
+            WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore"]
         end
-        REPOS["41 @Singleton data classes (39 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["44 @Singleton data classes (40 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -134,14 +135,15 @@ flowchart TB
 | `CoroutineDispatcher` (`@IoDispatcher`, `@DefaultDispatcher`) | unscoped | `DispatcherModule` provides `Dispatchers.IO` / `Dispatchers.Default`; repositories take them as trailing constructor params defaulting to the same value | Tests pass a `StandardTestDispatcher(testScheduler)` so `withContext` hops run deterministically under `runTest`. |
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
-| DAOs (6) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
+| DAOs (7) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
-| Repositories (39; with `NotificationOpener` and `NotificationActionController`, 41 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| `WeatherApi`, `WeatherStore` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi` and `RoomWeatherStore` | The two seams `WeatherRepository` is tested through: tests pass a fake API and an in-memory store, so no test touches the network. |
+| Repositories (40; with `NotificationOpener`, `NotificationActionController`, `MetWeatherApi` and `RoomWeatherStore`, 44 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (32) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
-There are **no interface-to-implementation `@Binds` modules**: every repository is a concrete
+Apart from `EntitlementModule` and `WeatherModule`, there are **no interface-to-implementation `@Binds` modules**: every repository is a concrete
 `@Singleton class`, and tests substitute them with hand-written DAO fakes (`FolderTestFakes.kt`)
 or Mockito 5 mocks of the concrete repository (inline mock maker, so `final` Kotlin classes mock
 fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).

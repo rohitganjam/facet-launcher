@@ -125,3 +125,9 @@ additive, defaulted, tolerant-reader field does **not** require a bump (establis
 `BackupCoverageTest` fails until a new `Facet` or `LauncherSettings` field is exported or listed as left out.
 Import replaces the landscape group and the clock divider height outright, so a restore clears values
 the backup did not have.
+
+The weather options are additive and defaulted (`WeatherBackupTest`): the clock accessory switches
+(`showNextAlarm`, `showBatteryPercentage`, `showWeather`, and each facet's `clockShowAlarm`, `clockShowBattery`,
+`clockShowWeather`), the four units, the location mode, and the chosen city as four flat fields (`weatherCityName`,
+`weatherCityLatitude`, `weatherCityLongitude`, `weatherCityTimezone`). A city is restored only when all four are present.
+The current location and the stored forecast (`weather_hours`, `weather_meta`) are never backed up.

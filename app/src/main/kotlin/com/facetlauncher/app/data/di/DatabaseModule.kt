@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.Migrations
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FolderDao
+import com.facetlauncher.app.data.local.WeatherDao
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import dagger.Module
 import dagger.Provides
@@ -55,4 +56,7 @@ object DatabaseModule {
 
     @Provides
     fun provideAutomationRuleDao(database: FacetDatabase): AutomationRuleDao = database.automationRuleDao()
+
+    @Provides
+    fun provideWeatherDao(database: FacetDatabase): WeatherDao = database.weatherDao()
 }

@@ -127,4 +127,20 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     landscapeClockZoneHeightDp = landscape.clockZoneHeightDp,
     landscapeClockScale = landscape.clockScale,
     landscapeAppListVerticalAlignment = landscape.appListVerticalAlignment?.name,
+).withAccessoriesAndWeather(this)
+
+/** The clock accessory switches and weather options; the chosen city goes out as four flat fields, the current location never. */
+private fun BackupSettings.withAccessoriesAndWeather(settings: LauncherSettings): BackupSettings = copy(
+    showNextAlarm = settings.showNextAlarm,
+    showBatteryPercentage = settings.showBatteryPercentage,
+    showWeather = settings.showWeather,
+    temperatureUnit = settings.temperatureUnit.name,
+    windSpeedUnit = settings.windSpeedUnit.name,
+    rainUnit = settings.rainUnit.name,
+    pressureUnit = settings.pressureUnit.name,
+    weatherLocationMode = settings.weatherLocationMode.name,
+    weatherCityName = settings.weatherCity?.name,
+    weatherCityLatitude = settings.weatherCity?.latitude,
+    weatherCityLongitude = settings.weatherCity?.longitude,
+    weatherCityTimezone = settings.weatherCity?.timezone,
 )

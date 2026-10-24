@@ -105,6 +105,19 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         update(facetId) { it.copy(clockShowMeridiem = enabled) }
     }
 
+    /** See [Facet.clockShowAlarm]. */
+    suspend fun setClockShowAlarm(facetId: Long, enabled: Boolean) {
+        update(facetId) { it.copy(clockShowAlarm = enabled) }
+    }
+
+    suspend fun setClockShowBattery(facetId: Long, enabled: Boolean) {
+        update(facetId) { it.copy(clockShowBattery = enabled) }
+    }
+
+    suspend fun setClockShowWeather(facetId: Long, enabled: Boolean) {
+        update(facetId) { it.copy(clockShowWeather = enabled) }
+    }
+
     suspend fun setClockAlignment(facetId: Long, alignment: ClockAlignment) {
         update(facetId) { it.copy(clockAlignment = alignment) }
     }
@@ -190,10 +203,16 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         clockScale: Float,
         accentColorOption: ClockColorOption,
         dateStyle: ClockDateStyle,
+        showAlarm: Boolean = true,
+        showBattery: Boolean = true,
+        showWeather: Boolean = false,
     ) {
         update(facetId) {
             it.copy(
                 overrideClock = overriding,
+                clockShowAlarm = showAlarm,
+                clockShowBattery = showBattery,
+                clockShowWeather = showWeather,
                 clockTemplateId = templateId,
                 clockFontOption = fontOption,
                 clockColorOption = colorOption,

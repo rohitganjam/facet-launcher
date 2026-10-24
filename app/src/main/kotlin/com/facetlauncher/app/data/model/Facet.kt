@@ -19,6 +19,10 @@ data class Facet(
     val use24HourTime: Boolean = false,
     val clockShowMeridiem: Boolean = false,
     val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    /** The clock accessories this facet shows while it overrides the clock block; see `LauncherSettings.showNextAlarm`. */
+    val clockShowAlarm: Boolean = true,
+    val clockShowBattery: Boolean = true,
+    val clockShowWeather: Boolean = false,
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until the facet drags the clock's grab handle for the first time. */
     val clockZoneHeightDp: Float? = null,

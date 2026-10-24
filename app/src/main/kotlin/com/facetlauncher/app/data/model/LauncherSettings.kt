@@ -348,6 +348,18 @@ data class LauncherSettings(
     val clockShowMeridiem: Boolean = false,
     /** "Full" ("Thursday, 27 August") vs "Condensed" ("Thu, 27 Aug") — applies to every template that renders its date line through `ClockTemplates.kt`'s shared `dateFormatter()`. */
     val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    /** The clock accessories: the launcher-wide defaults, overridden per facet through its clock block (`overrideClock`). */
+    val showNextAlarm: Boolean = true,
+    val showBatteryPercentage: Boolean = true,
+    val showWeather: Boolean = false,
+    /** Launcher-wide only, never per facet: the units weather is shown in, and where it is for. */
+    val temperatureUnit: TemperatureUnit = TemperatureUnit.AUTO,
+    val windSpeedUnit: WindSpeedUnit = WindSpeedUnit.AUTO,
+    val rainUnit: RainUnit = RainUnit.AUTO,
+    val pressureUnit: PressureUnit = PressureUnit.AUTO,
+    val weatherLocationMode: WeatherLocationMode = WeatherLocationMode.CURRENT,
+    /** The chosen city; only read under [WeatherLocationMode.CITY]. */
+    val weatherCity: WeatherCity? = null,
     /**
      * Settings → Appearance → "Text weight" — Home's app list/Dock/App Drawer labels apply it
      * directly (see `ui/home/HomeScreen.kt`'s `AppRow`/`DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s

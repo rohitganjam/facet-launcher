@@ -1,7 +1,9 @@
 package com.facetlauncher.app.data.di
 
 import com.facetlauncher.app.data.weather.MetWeatherApi
+import com.facetlauncher.app.data.weather.RoomWeatherStore
 import com.facetlauncher.app.data.weather.WeatherApi
+import com.facetlauncher.app.data.weather.WeatherStore
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -13,4 +15,7 @@ abstract class WeatherModule {
 
     @Binds
     abstract fun bindWeatherApi(api: MetWeatherApi): WeatherApi
+
+    @Binds
+    abstract fun bindWeatherStore(store: RoomWeatherStore): WeatherStore
 }

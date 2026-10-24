@@ -41,6 +41,10 @@ data class FacetEntity(
     val clockShowMeridiem: Boolean = false,
     /** See [com.facetlauncher.app.data.model.LauncherSettings.clockDateStyle]. */
     val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    /** See [com.facetlauncher.app.data.model.LauncherSettings.showNextAlarm]. */
+    val clockShowAlarm: Boolean = true,
+    val clockShowBattery: Boolean = true,
+    val clockShowWeather: Boolean = false,
     /** The clock widget's own horizontal placement — also governs the calendar events strip, which shares it rather than having its own (see chat history: the strip's font/color/weight/alignment were consolidated into Appearance's/clock's shared settings). See [com.facetlauncher.app.data.model.LauncherSettings.clockAlignment]. */
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until this facet drags the clock's grab handle for the first time — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. */

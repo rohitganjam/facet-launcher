@@ -10,9 +10,10 @@ app/src/main/kotlin/com/facetlauncher/app/
 │
 ├── data/                          (48)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
-│   ├── di/                        (7)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
-│   ├── local/                     (16)  Room: FacetDatabase, 7 entities, 6 DAOs, Converters, Migrations
-│   ├── model/                     (43)  Immutable value types & enums shared by every layer
+│   ├── di/                        (8)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
+│   ├── local/                     (18)  Room: FacetDatabase, 9 entities, 7 DAOs, Converters, Migrations
+│   ├── weather/                   (6)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WeatherStore + RoomWeatherStore (see 18)
+│   ├── model/                     (45)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
