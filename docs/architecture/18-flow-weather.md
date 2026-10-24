@@ -1,10 +1,8 @@
 # 18 — Flow: weather on the clock
 
-In progress; the build plan and the decisions are in `IMPLEMENTATION_PLAN.md` ("Weather on the clock").
-This page is filled in as each part lands, and every statement here describes what is built, not what is planned.
-Built so far: the network permission, the MET client and parser, the refresh gate and repository, the Room store,
-the settings and facet fields, location, place names and the city list code, and the domain that turns stored hours into
-what the UI shows. Not built yet: the accessory, the sheet and the settings screens.
+The build plan and the decisions are in `IMPLEMENTATION_PLAN.md` ("Weather on the clock"); every statement here
+describes what is built. Sections 1 to 9 are the data side, section 10 the screens. The accessory and the settings
+screens are covered in `13 §1b`.
 
 ## 1. Network and permissions
 
@@ -115,3 +113,21 @@ the locale (`AUTO`) and converts from the feed's units.
 When MET answers HTTP 429 (over the limit) or 403 (a blocked `User-Agent`), the call fails once: no retry loop.
 The state becomes "Weather is busy, try again later", the cached forecast keeps showing, and a `Retry-After`
 header, when sent, sets the earliest next attempt.
+
+## 10. The screens
+
+- **`WeatherViewModel`** (`ui/home/weather/`) is the only consumer of `ObserveWeatherUseCase` and `RefreshWeatherUseCase`.
+  It exposes `WeatherUiState` (the `WeatherState`, the resolved units, a `WeatherNotice`, `isRefreshing`). `onHomeResumed(shown)`
+  refreshes only when weather is shown, so with it off nothing is read or requested; `refresh(userInitiated)` backs the
+  sheet's button and maps the use case's result to a notice (already up to date, busy, offline, permission, no place).
+- **`WeatherSheet`** opens from the clock accessory (`13 §1b`), shows the values in the user's units (`WeatherFormat`,
+  `WeatherUnits`), and ends with "Updated …" and the credit "Weather data from MET Norway" (CC BY 4.0).
+- **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) and **`WeatherLocationScreen`** (`weatherLocation`) edit the
+  switches, units, location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
+  Location card, and its state is re-read on resume. The city search runs 400 ms after the last keystroke
+  (`WeatherLocationViewModel`) through `SearchPlacesUseCase`.
+- **Credits:** About lists MET Norway and GeoNames.
+
+Tests: `WeatherConditionTest`, `WeatherViewModelTest` (JVM); `ClockAccessoriesScreenTest`, `WeatherLocationScreenTest` and
+`ClockWeatherAccessoryTest` (instrumented). Not testable on an emulator: a real location fix, a real `Geocoder` backend
+and MET over the network; check them on a phone.

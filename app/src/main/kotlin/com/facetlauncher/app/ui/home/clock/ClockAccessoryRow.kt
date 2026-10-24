@@ -69,8 +69,8 @@ fun BatteryAccessoryContent(
 /**
  * The plain middot-joined accessory line used by every typographic template (and by a few
  * shape templates that prefix their own small decorative mark before calling this) — see
- * `ClockTemplates.kt`'s per-template docs for exactly which. Renders nothing at all when both
- * [nextAlarmText] and [batteryPercent] are absent (weather, unwired, is always absent too).
+ * `ClockTemplates.kt`'s per-template docs for exactly which. Renders nothing at all when the
+ * alarm, the battery and the weather ([LocalClockWeather]) are all absent.
  */
 @Composable
 fun ClockAccessoryRow(
@@ -84,12 +84,22 @@ fun ClockAccessoryRow(
     fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
 ) {
-    if (nextAlarmText == null && batteryPercent == null) return
+    val hasWeather = LocalClockWeather.current != null
+    if (nextAlarmText == null && batteryPercent == null && !hasWeather) return
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AlarmAccessoryContent(nextAlarmText, mutedColor, family, fontSize = fontSize, fontWeight = fontWeight)
         if (nextAlarmText != null && batteryPercent != null) {
-            Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
+            AccessoryDot(family, fontWeight, fontSize, mutedColor)
         }
         BatteryAccessoryContent(batteryPercent, isCharging, mutedColor, accentColor, family, fontSize = fontSize, fontWeight = fontWeight)
+        if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+            AccessoryDot(family, fontWeight, fontSize, mutedColor)
+        }
+        WeatherAccessoryContent(mutedColor, family, fontSize = fontSize, fontWeight = fontWeight)
     }
+}
+
+@Composable
+private fun AccessoryDot(family: FontFamily, fontWeight: FontWeight, fontSize: TextUnit, color: Color) {
+    Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color)
 }

@@ -113,6 +113,14 @@ private fun AboutContent(
                         )
                     }
                 }
+                item {
+                    Text(
+                        text = stringResource(R.string.about_weather_credit),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp).testTag("about_weather_credit"),
+                    )
+                }
                 item { Spacer(modifier = Modifier.height(24.dp)) }
             }
         },

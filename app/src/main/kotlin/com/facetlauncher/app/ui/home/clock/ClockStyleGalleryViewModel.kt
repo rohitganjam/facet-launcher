@@ -49,6 +49,7 @@ data class ClockStyleGalleryUiState(
     val use24HourTime: Boolean get() = clock.use24HourTime
     val showMeridiem: Boolean get() = clock.showMeridiem
     val dateStyle: ClockDateStyle get() = clock.dateStyle
+    val showWeather: Boolean get() = clock.showWeather
     /** Home clock's horizontal placement, in the same Clock+Calendar design bundle as [templateId]; it also positions the calendar events strip. */
     val clockAlignment: ClockAlignment get() = clock.alignment
 }
@@ -168,6 +169,9 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 clockScale = facet.clockScale,
                 accentColorOption = state.accentColorOption,
                 dateStyle = state.dateStyle,
+                showAlarm = if (overriding) state.settings.showNextAlarm else facet.clockShowAlarm,
+                showBattery = if (overriding) state.settings.showBatteryPercentage else facet.clockShowBattery,
+                showWeather = if (overriding) state.settings.showWeather else facet.clockShowWeather,
             )
         }
     }

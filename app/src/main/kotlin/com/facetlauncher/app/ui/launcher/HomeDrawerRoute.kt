@@ -56,6 +56,8 @@ import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.home.rememberHomeLandscapeSpace
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
+import com.facetlauncher.app.ui.home.weather.WeatherSheet
+import com.facetlauncher.app.ui.home.weather.WeatherViewModel
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubScreen
@@ -94,8 +96,11 @@ fun HomeDrawerRoute(
     onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
+    /** Opens the Clock accessories settings (where the weather location is chosen), from the weather sheet. */
+    onNavigateToClockAccessories: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
+    weatherViewModel: WeatherViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
@@ -105,6 +110,7 @@ fun HomeDrawerRoute(
     launcherViewModel: LauncherViewModel,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
     val clockWidgetIsPro by homeViewModel.clockWidgetFacet.isPro.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
@@ -129,9 +135,13 @@ fun HomeDrawerRoute(
     // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
     // Home (e.g. from the usage-access Settings redirect) rather than only on facet changes.
     val lifecycleOwner = LocalLifecycleOwner.current
+    val weatherShown by rememberUpdatedState(homeUiState.style.clock.showWeather)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) homeViewModel.refresh()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                homeViewModel.refresh()
+                weatherViewModel.onHomeResumed(weatherShown)
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -282,6 +292,7 @@ fun HomeDrawerRoute(
                     showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
                     clockAccessories = homeUiState.clockAccessories,
                     mediaPlayer = homeUiState.mediaPlayer,
+                    weather = weatherUiState.weather,
                 ),
                 widgetSizing = HomeWidgetSizing(
                     defaultSizeDp = { clockWidgetDefaultSizeDp },
@@ -308,6 +319,10 @@ fun HomeDrawerRoute(
                     openClockWidgetPicker = { facetId ->
                         overlays.clockWidgetPickerFacetId = facetId
                         overlays.showClockWidgetPicker = true
+                    },
+                    openWeather = {
+                        overlays.showWeatherSheet = true
+                        weatherViewModel.refresh(userInitiated = false)
                     },
                 ),
                 navigation = HomeNavigation(
@@ -412,6 +427,17 @@ fun HomeDrawerRoute(
                 facetId = facetId,
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
+            )
+        }
+        if (overlays.showWeatherSheet) {
+            WeatherSheet(
+                uiState = weatherUiState,
+                onRefresh = { weatherViewModel.refresh() },
+                onDismiss = { overlays.showWeatherSheet = false },
+                onChooseCity = {
+                    overlays.showWeatherSheet = false
+                    onNavigateToClockAccessories()
+                },
             )
         }
         HomeOneTimePrompts(

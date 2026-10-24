@@ -4255,7 +4255,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 ### 2. Settings and persistence
 
 - [x] `LauncherSettings`: `showNextAlarm` and `showBatteryPercentage` (default on), `showWeather` (default off), the four unit options (enums with an `AUTO`; the locale resolution is in `WeatherUnits`, step 3), `weatherLocationMode`, and the chosen city as `WeatherCity(name, latitude, longitude, timezone)`. DataStore keys, reads and writers in `SettingsRepository` (79 keys now); additive, defaulted fields in `BackupSettings`, the city as four flat fields (no current location). Tests: `WeatherSettingsTest`, `WeatherBackupTest`, `BackupCoverageTest`.
-- [x] `Facet`/`FacetEntity`: `clockShowAlarm`, `clockShowBattery` (default true), `clockShowWeather` (default false); `FacetDatabase.VERSION` 33 with `MIGRATION_32_33` (the three columns and both weather tables); `FacetMapping`, `FacetRepository` setters (and `updateOverridingClock` seeds them), `BackupFacet` fields, and `resolveFacetStyle` (`ResolvedClockStyle.showAlarm/showBattery/showWeather`, resolved with `overrideClock`). Tests: `ClockAccessorySwitchesTest`, `FacetDatabaseMigrationTest.migration32To33…` (passes on the emulator). Not yet: `ClockStyleGalleryViewModel.setOverridingClock` still seeds the defaults, since the Clock accessories screen that edits them is step 6.
+- [x] `Facet`/`FacetEntity`: `clockShowAlarm`, `clockShowBattery` (default true), `clockShowWeather` (default false); `FacetDatabase.VERSION` 33 with `MIGRATION_32_33` (the three columns and both weather tables); `FacetMapping`, `FacetRepository` setters (and `updateOverridingClock` seeds them), `BackupFacet` fields, and `resolveFacetStyle` (`ResolvedClockStyle.showAlarm/showBattery/showWeather`, resolved with `overrideClock`). Tests: `ClockAccessorySwitchesTest`, `FacetDatabaseMigrationTest.migration32To33…` (passes on the emulator). `ClockStyleGalleryViewModel.setOverridingClock` seeds them from the defaults.
 - [x] Home reads the resolved flags: `HomeScreenStateBuilder` drops the alarm or the battery from the accessory row when its switch is off (the use case itself is unchanged; the weather flag is read in step 5).
 
 ### 3. Weather data (`data/`, `domain/`)
@@ -4274,26 +4274,26 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 
 ### 5. Home accessory and sheet (`ui/home/`)
 
-- [ ] `ClockAccessoryRow`/`ClockTemplateData` gain a weather item (icon and temperature, 48dp tap, merged semantics "27 degrees, rain"); every template that shows accessories passes it through. Icon mapping from the symbol code (clear, partly cloudy, cloudy, rain, thunder, snow, fog, day/night variants).
-- [ ] `WeatherSheet` (`ui/home/weather/`): the sections above, `@Preview` light and dark, tap on the accessory opens it, refresh button with a spinner and the "Already up to date" message, location-permission and "Turn on location" states, all strings in en/de/es/fr/pt and no hardcoded text.
-- [ ] `HomeViewModel` exposure (state and refresh), `HomeUiEvent` for opening the sheet; the sheet closes on Home press.
+- [x] `ClockAccessoryRow`/`ClockTemplateData` gain a weather item (icon and temperature, 48dp tap, merged semantics "27 degrees, rain"); every template that shows accessories passes it through. Icon mapping from the symbol code (clear, partly cloudy, cloudy, rain, thunder, snow, fog, day/night variants).
+- [x] `WeatherSheet` (`ui/home/weather/`): the sections above, `@Preview` light and dark, tap on the accessory opens it, refresh button with a spinner and the "Already up to date" message, location-permission and "Turn on location" states, all strings in en/de/es/fr/pt and no hardcoded text.
+- [x] Built as `WeatherViewModel` (state and refresh) with the sheet's visibility in `HomeOverlayState`, not in `HomeViewModel`; the sheet is a `ThemedModalBottomSheet`, so it closes on Home press. The accessory's touch area is smaller than 48dp (a bigger one would shift the clock's rows); it is one merged TalkBack button.
 
 ### 6. Settings UI (`ui/settings/`)
 
-- [ ] `ClockAccessoriesScreen` and `ClockAccessoriesViewModel` with four `SettingsCard`s (full-bleed rows for the radio and permission rows, control-only rows for dropdowns and switches). Facet-scoped version shows cards 1 and 2 with a link row to the Default screen when weather is on for the facet but off by default.
-- [ ] `WeatherLocationScreen`: mode radios, access row, "Showing weather for", city search (Geocoder results and list, debounced) with the chosen city shown.
-- [ ] New row in `AppearanceSettingsScreen`'s clock card, its summary ("Alarm, battery, weather"), and the preview card showing the weather item.
+- [x] `ClockAccessoriesScreen` and `ClockAccessoriesViewModel` with four `SettingsCard`s (full-bleed rows for the radio and permission rows, control-only rows for dropdowns and switches). Facet-scoped version shows cards 1 and 2 with a link row to the Default screen when weather is on for the facet but off by default.
+- [x] `WeatherLocationScreen`: mode radios, access row, "Showing weather for", city search (Geocoder results and list, debounced) with the chosen city shown.
+- [x] New row in `AppearanceSettingsScreen`'s clock card, its summary ("Alarm, battery, weather"), and the preview card showing the weather item.
 
 ### 7. Tests
 
 - [x] Done so far (31 tests): `MetForecastParserTest` (a trimmed real response as a fixture in `src/test/resources/weather/`; missing `next_*` blocks), `MetWeatherApiTest` (URL, rounding, `Retry-After`, `Expires`), `WeatherRefreshPolicyTest` (9), `WeatherRepositoryTest` (12: `Expires`, minimum interval, single flight, 304, 429 with and without `Retry-After`, a new place, hours kept and pruned).
 - [ ] Unit, still to write: `WeatherDaoTest`, `FacetDatabaseMigrationTest` (32 to 33), `CityRepositoryTest` (search, nearest, country restriction, timezone), `GeocodingRepositoryTest` (fakes, absent backend), `ResolvePlaceUseCaseTest`, `SummarizeRainUseCaseTest`, `DayRangeTest` (merge with the cache, DST, a zone different from the device's), `WeatherUnitsTest`, `ObserveWeatherUseCaseTest`, additions to `SettingsRepositoryTest`, `ExportBackupUseCaseTest`, `ImportBackupUseCaseTest`, `ObserveClockAccessoriesUseCaseTest`, and a `ClockTextFloorTest` that fails if any date or accessory text size in the templates is below 14sp.
-- [ ] Compose (emulator, pinned serial, no animation-scale changes): the accessory shows and its tap opens the sheet, 48dp target, sheet sections and refresh states, `ClockAccessoriesScreenTest` (cards 3 and 4 hide with weather off, facet version), `WeatherLocationScreenTest`.
+- [x] Compose (emulator, pinned serial, no animation-scale changes): the accessory shows and its tap opens the sheet, 48dp target, sheet sections and refresh states, `ClockAccessoriesScreenTest` (cards 3 and 4 hide with weather off, facet version), `WeatherLocationScreenTest`.
 - [ ] Not coverable on the emulator: a real location fix, a real `Geocoder` backend, MET over the network. Check these on a real phone, including a device without Google services.
 
 ### 8. Docs and release
 
-- [ ] `docs/architecture`: `01` (privacy claim, Hilt modules and counts, the `INTERNET` exception), `02` (Room tables, v33 step, DataStore keys and writers), `03 §5` (new reactive sources), `04` (packages), `07` (registries), `09` (backup fields), `13` (clock accessories, settings), a new `18-flow-weather.md` with a README row; `TEST_REGISTRY.md` regenerated; the `05` findings reviewed.
+- [x] `docs/architecture`: `01` (privacy claim, Hilt modules and counts, the `INTERNET` exception), `02` (Room tables, v33 step, DataStore keys and writers), `03 §5` (new reactive sources), `04` (packages), `07` (registries), `09` (backup fields), `13` (clock accessories, settings), a new `18-flow-weather.md` with a README row; `TEST_REGISTRY.md` regenerated; the `05` findings reviewed.
 - [ ] Release notes: list weather under New; mention the network use plainly in What's new (`scripts/release.sh --notes-only`).
 
 ### Risks and open points

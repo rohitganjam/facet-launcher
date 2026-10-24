@@ -41,7 +41,10 @@ import com.facetlauncher.app.ui.settings.FolderDetailScreen
 import com.facetlauncher.app.ui.settings.FoldersSettingsScreen
 import com.facetlauncher.app.ui.settings.HomeAppsListSettingsScreen
 import com.facetlauncher.app.ui.settings.NotificationAccessExplanationScreen
+import com.facetlauncher.app.ui.settings.ClockAccessoriesNavigation
+import com.facetlauncher.app.ui.settings.ClockAccessoriesScreen
 import com.facetlauncher.app.ui.settings.NotificationSettingsScreen
+import com.facetlauncher.app.ui.settings.WeatherLocationScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
 import com.facetlauncher.app.ui.settings.UsageAccessExplanationScreen
@@ -69,6 +72,8 @@ object FacetDestinations {
     const val FOLDER_DETAIL = "folderDetail/{folderId}"
     const val FOLDER_APP_PICKER = "folderAppPicker/{folderId}"
     const val NOTIFICATION_ACCESS_EXPLANATION = "notificationAccessExplanation"
+    const val CLOCK_ACCESSORIES = "clockAccessories?facetId={facetId}"
+    const val WEATHER_LOCATION = "weatherLocation"
     const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
     const val BACKUP_RESTORE = "backupRestore"
@@ -118,6 +123,10 @@ object FacetDestinations {
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) entry point. */
     fun calendarSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "calendarSettings?facetId=$facetId" else "calendarSettings"
+
+    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories (the only one with units and location). */
+    fun clockAccessories(facetId: Long? = null) =
+        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "clockAccessories?facetId=$facetId" else "clockAccessories"
 }
 
 /**
@@ -185,6 +194,7 @@ fun FacetNavHost(
                 onNavigateToNotificationAccessExplanation = {
                     navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                 },
+                onNavigateToClockAccessories = { navController.navigate(FacetDestinations.clockAccessories()) },
                 onNavigateToClockStyleGallery = { facetId ->
                     val dest = if (facetId != null) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                     navController.navigate(dest)
@@ -238,7 +248,27 @@ fun FacetNavHost(
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToFontsThemesIcons = { navController.navigate(FacetDestinations.FONTS_THEMES_ICONS) },
+                onNavigateToClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
             )
+        }
+        settingsComposable(
+            FacetDestinations.CLOCK_ACCESSORIES,
+            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+        ) { backStackEntry ->
+            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+            ClockAccessoriesScreen(
+                navigation = ClockAccessoriesNavigation(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenClockStyle = {
+                        val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
+                        navController.navigate(dest)
+                    },
+                    onOpenLocation = { navController.navigate(FacetDestinations.WEATHER_LOCATION) },
+                ),
+            )
+        }
+        settingsComposable(FacetDestinations.WEATHER_LOCATION) {
+            WeatherLocationScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(
             FacetDestinations.DOCK_APPS_APPEARANCE,

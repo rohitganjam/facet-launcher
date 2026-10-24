@@ -52,6 +52,7 @@ import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.home.weather.WeatherIconKind
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -83,6 +84,7 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         use24HourTime = uiState.use24HourTime,
         showMeridiem = uiState.showMeridiem,
         dateStyle = uiState.dateStyle,
+        showWeather = uiState.showWeather,
         launcherFontOption = uiState.launcherFontOption,
         onTemplateSelect = viewModel::setClockTemplateId,
         onFontOptionChange = viewModel::setClockFontOption,
@@ -157,6 +159,7 @@ private fun ClockStyleGalleryScreen(
     isOverriding: Boolean = false,
     onOverridingChange: (Boolean) -> Unit = {},
     inheritSubtitle: String = "",
+    showWeather: Boolean = false,
 ) {
     val controlsEnabled = !isFacetScoped || isOverriding
     val textColor = colorOption.resolve()
@@ -171,6 +174,11 @@ private fun ClockStyleGalleryScreen(
     val samplePreviewNextAlarmMillis = remember { LocalDate.now().plusDays(1).atTime(7, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() }
     val samplePreviewBatteryPercent = 64
     val samplePreviewIsCharging = false
+    val sampleWeather = if (showWeather) {
+        remember { ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, "21°", "21°, Partly cloudy", onClick = {}) }
+    } else {
+        null
+    }
 
     StickyHeaderLayout(
         modifier = modifier,
@@ -363,6 +371,7 @@ private fun ClockStyleGalleryScreen(
                     nextAlarmMillis = samplePreviewNextAlarmMillis,
                     batteryPercent = samplePreviewBatteryPercent,
                     isCharging = samplePreviewIsCharging,
+                    weather = sampleWeather,
                 )
             }
         }

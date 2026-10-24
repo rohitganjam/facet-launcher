@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,6 +74,8 @@ fun AppearanceSettingsScreen(
     onNavigateToFontsThemesIcons: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
+    /** Opens the Clock accessories screen (alarm, battery, weather), for this facet when the screen is facet-scoped. */
+    onNavigateToClockAccessories: () -> Unit = {},
 ) {
     val settings by viewModel.settings.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
@@ -101,6 +104,7 @@ fun AppearanceSettingsScreen(
         onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToFontsThemesIcons = onNavigateToFontsThemesIcons,
+        onNavigateToClockAccessories = onNavigateToClockAccessories,
         modifier = modifier,
     )
 }
@@ -118,6 +122,7 @@ private fun AppearanceSettingsContent(
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToFontsThemesIcons: () -> Unit,
     modifier: Modifier = Modifier,
+    onNavigateToClockAccessories: () -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,
@@ -139,7 +144,7 @@ private fun AppearanceSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToCalendarSettings)
+                clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToClockAccessories, onNavigateToCalendarSettings)
                 dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
                 // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
                 if (!uiState.isFacetScoped) {
@@ -155,6 +160,7 @@ private fun AppearanceSettingsContent(
 private fun LazyListScope.clockAndCalendarSection(
     uiState: AppearanceSettingsUiState,
     onNavigateToClockStyleGallery: () -> Unit,
+    onNavigateToClockAccessories: () -> Unit,
     onNavigateToCalendarSettings: () -> Unit,
 ) {
     item { SettingsSectionHeader(stringResource(R.string.appearance_section_clock)) }
@@ -170,6 +176,14 @@ private fun LazyListScope.clockAndCalendarSection(
                 onClick = onNavigateToClockStyleGallery,
                 testTag = "clock_style_gallery_row",
                 leadingIcon = iconBadge(Icons.Outlined.Schedule, SettingsSectionHue.APPEARANCE),
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+            ClickableRow(
+                title = stringResource(R.string.clock_accessories_title),
+                subtitle = stringResource(R.string.clock_accessories_summary),
+                onClick = onNavigateToClockAccessories,
+                testTag = "appearance_clock_accessories_row",
+                leadingIcon = iconBadge(Icons.Outlined.WbSunny, SettingsSectionHue.APPEARANCE),
             )
             CardDivider(startInset = SettingsIconBadgeInset)
             ClickableRow(

@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.theme.Ink
@@ -25,9 +26,11 @@ fun SettingsToggleRow(
     testTag: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    /** `false` dims the row and ignores the switch, for a row whose value cannot be edited here. */
+    enabled: Boolean = true,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 13.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (enabled) 1f else DISABLED_ALPHA),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -39,6 +42,8 @@ fun SettingsToggleRow(
                 Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = Modifier.testTag(testTag))
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled, modifier = Modifier.testTag(testTag))
     }
 }
+
+private const val DISABLED_ALPHA = 0.4f
