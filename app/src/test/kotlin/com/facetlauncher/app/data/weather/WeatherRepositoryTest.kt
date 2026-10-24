@@ -215,6 +215,31 @@ class WeatherRepositoryTest {
     }
 
     @Test
+    fun `a place name is kept for its place and dropped when the place changes`() = runTest {
+        api.results += success(hour("2026-10-24T05:00:00Z", 26.6))
+        repository.refresh(place)
+
+        // When the name is set for the stored place, it is stored
+        repository.setPlaceName(place, "Bengaluru", PlaceNameSource.GEOCODER)
+        assertEquals("Bengaluru", store.state.value.placeName)
+        assertEquals(PlaceNameSource.GEOCODER, store.state.value.placeNameSource)
+
+        // And a name for some other place is ignored
+        repository.setPlaceName(WeatherPlace(18.52, 73.86), "Pune", PlaceNameSource.GEOCODER)
+        assertEquals("Bengaluru", store.state.value.placeName)
+
+        // And the next refresh keeps it for the same place (a 304 here), but a new place clears it
+        clock.now = start.plus(Duration.ofMinutes(61))
+        api.results += WeatherApiResult.NotModified(expiresAt = start.plus(Duration.ofHours(2)))
+        repository.refresh(place)
+        assertEquals("Bengaluru", store.state.value.placeName)
+        api.results += WeatherApiResult.Failed(WeatherFailure.OFFLINE)
+        repository.refresh(WeatherPlace(18.52, 73.86))
+        assertNull(store.state.value.placeName)
+        assertNull(store.state.value.placeNameSource)
+    }
+
+    @Test
     fun `two refreshes at once make one request`() = runTest {
         // Given a request that is held open
         val gate = CompletableDeferred<Unit>()

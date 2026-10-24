@@ -8,10 +8,11 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (48)  @Singleton Repositories — the only layer that touches
+├── data/                          (49)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (8)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── local/                     (18)  Room: FacetDatabase, 9 entities, 7 DAOs, Converters, Migrations
+│   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (6)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WeatherStore + RoomWeatherStore (see 18)
 │   ├── model/                     (45)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
@@ -19,7 +20,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (48)  46 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt
+├── domain/                        (55)  50 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/

@@ -15,7 +15,13 @@ data class WeatherFetchState(
     val lastAttemptAt: Instant? = null,
     /** After a 429 (or a block): no attempt before this. */
     val blockedUntil: Instant? = null,
+    /** The name resolved for [place] and which source gave it; both are dropped when the place changes. */
+    val placeName: String? = null,
+    val placeNameSource: PlaceNameSource? = null,
 )
+
+/** Where a place name came from: the device's geocoder (exact) or the nearest city of the offline list (shown as "Near X"). */
+enum class PlaceNameSource { GEOCODER, OFFLINE }
 
 sealed interface RefreshDecision {
     data object Go : RefreshDecision

@@ -35,10 +35,7 @@ class RoomWeatherStore @Inject constructor(
         }
     }
 
-    /** Keeps the stored place name unless the place changed, since a name belongs to one place. */
     override suspend fun writeState(state: WeatherFetchState) {
-        val old = dao.getMeta()
-        val samePlace = old != null && old.toState().place == state.place
         dao.upsertMeta(
             WeatherMetaEntity(
                 latitude = state.place?.latitude,
@@ -49,8 +46,8 @@ class RoomWeatherStore @Inject constructor(
                 lastModified = state.lastModified,
                 lastAttemptAtEpochSecond = state.lastAttemptAt?.epochSecond,
                 blockedUntilEpochSecond = state.blockedUntil?.epochSecond,
-                placeName = old?.placeName.takeIf { samePlace },
-                placeNameSource = old?.placeNameSource.takeIf { samePlace },
+                placeName = state.placeName,
+                placeNameSource = state.placeNameSource?.name,
             ),
         )
     }
@@ -90,5 +87,7 @@ internal fun WeatherMetaEntity?.toState(): WeatherFetchState {
         lastModified = lastModified,
         lastAttemptAt = lastAttemptAtEpochSecond?.let(Instant::ofEpochSecond),
         blockedUntil = blockedUntilEpochSecond?.let(Instant::ofEpochSecond),
+        placeName = placeName,
+        placeNameSource = placeNameSource?.let { name -> PlaceNameSource.entries.firstOrNull { it.name == name } },
     )
 }

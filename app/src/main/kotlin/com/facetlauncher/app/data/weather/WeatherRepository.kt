@@ -42,6 +42,14 @@ class WeatherRepository @Inject constructor(
 ) {
     private val mutex = Mutex()
 
+    /** Stores [name] for [place] when that is still the place of the stored forecast; a name for any other place is dropped. */
+    suspend fun setPlaceName(place: WeatherPlace, name: String?, source: PlaceNameSource?) {
+        mutex.withLock {
+            val state = store.readState()
+            if (state.place == place) store.writeState(state.copy(placeName = name, placeNameSource = source))
+        }
+    }
+
     fun observeHours(): Flow<List<WeatherHour>> = store.observeHours()
     fun observeState(): Flow<WeatherFetchState> = store.observeState()
 

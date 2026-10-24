@@ -1,5 +1,7 @@
 package com.facetlauncher.app.data.di
 
+import com.facetlauncher.app.data.places.AndroidPlaceGeocoder
+import com.facetlauncher.app.data.places.PlaceGeocoder
 import com.facetlauncher.app.data.weather.MetWeatherApi
 import com.facetlauncher.app.data.weather.RoomWeatherStore
 import com.facetlauncher.app.data.weather.WeatherApi
@@ -18,4 +20,7 @@ abstract class WeatherModule {
 
     @Binds
     abstract fun bindWeatherStore(store: RoomWeatherStore): WeatherStore
+
+    @Binds
+    abstract fun bindPlaceGeocoder(geocoder: AndroidPlaceGeocoder): PlaceGeocoder
 }

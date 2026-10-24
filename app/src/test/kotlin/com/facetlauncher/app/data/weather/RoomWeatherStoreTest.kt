@@ -87,30 +87,21 @@ class RoomWeatherStoreTest {
     }
 
     @Test
-    fun `the stored place name survives a state write for the same place`() = runTest {
-        val (store, database) = createStore()
-        val place = WeatherPlace(12.97, 77.59)
-        store.writeState(WeatherFetchState(place = place))
-        val dao = database.weatherDao()
-        dao.upsertMeta(dao.getMeta()!!.copy(placeName = "Bengaluru", placeNameSource = "GEOCODER"))
+    fun `the place name and its source round-trip with the state`() = runTest {
+        val (store, _) = createStore()
+        val state = WeatherFetchState(place = WeatherPlace(12.97, 77.59), placeName = "Bengaluru", placeNameSource = PlaceNameSource.GEOCODER)
 
-        store.writeState(WeatherFetchState(place = place, lastAttemptAt = Instant.parse("2026-10-24T05:30:00Z")))
+        store.writeState(state)
 
-        assertEquals("Bengaluru", dao.getMeta()!!.placeName)
-        assertEquals("GEOCODER", dao.getMeta()!!.placeNameSource)
+        assertEquals(state, store.readState())
     }
 
     @Test
-    fun `the stored place name is dropped when the place changes`() = runTest {
+    fun `an unknown stored name source reads as none`() = runTest {
         val (store, database) = createStore()
-        store.writeState(WeatherFetchState(place = WeatherPlace(12.97, 77.59)))
-        val dao = database.weatherDao()
-        dao.upsertMeta(dao.getMeta()!!.copy(placeName = "Bengaluru", placeNameSource = "GEOCODER"))
+        database.weatherDao().upsertMeta(WeatherMetaEntity(latitude = 1.0, longitude = 2.0, placeName = "X", placeNameSource = "SOMETHING_NEW"))
 
-        store.writeState(WeatherFetchState(place = WeatherPlace(18.52, 73.86)))
-
-        assertNull(dao.getMeta()!!.placeName)
-        assertNull(dao.getMeta()!!.placeNameSource)
+        assertNull(store.readState().placeNameSource)
     }
 
     @Test

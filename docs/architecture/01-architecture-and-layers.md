@@ -103,9 +103,9 @@ flowchart TB
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
             DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
-            WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore"]
+            WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder"]
         end
-        REPOS["44 @Singleton data classes (40 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["47 @Singleton data classes (42 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -138,8 +138,8 @@ flowchart TB
 | DAOs (7) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
-| `WeatherApi`, `WeatherStore` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi` and `RoomWeatherStore` | The two seams `WeatherRepository` is tested through: tests pass a fake API and an in-memory store, so no test touches the network. |
-| Repositories (40; with `NotificationOpener`, `NotificationActionController`, `MetWeatherApi` and `RoomWeatherStore`, 44 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
+| Repositories (42; with `NotificationOpener`, `NotificationActionController`, `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder`, 47 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
 | ViewModels (32) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
