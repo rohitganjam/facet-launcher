@@ -1042,7 +1042,7 @@
     <string name="weather_location_none">None yet</string>
     <string name="weather_location_saved_title">Your cities</string>
     <string name="weather_location_pick_prompt">Search for a city below, then tap it to add it here.</string>
-    <string name="weather_location_tick_prompt">Tick a city to show its weather.</string>
+    <string name="weather_location_tick_prompt">Select a city to show its weather.</string>
     <string name="weather_location_remove">Remove %1$s</string>
     <string name="weather_location_limit">You can keep up to %1$d cities. Remove one to add another.</string>
     <string name="weather_leave_title">No city selected</string>

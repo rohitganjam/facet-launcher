@@ -4284,7 +4284,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 - [x] `WeatherLocationScreen`: mode radios, access row, "Showing weather for", city search (Geocoder results and list, debounced) with the chosen city shown.
 - [x] New row in `AppearanceSettingsScreen`'s clock card, its summary ("Alarm, battery, weather"), and the preview card showing the weather item.
 
-- [x] Saved cities (a follow-up request): the location screen keeps up to 10 cities with a ticked one, works with none saved, and asks what to do when left with none ticked (turn off weather everywhere, use current location, or keep choosing). `SettingsRepository.chooseWeatherCity/removeWeatherCity/setSavedWeatherCities`, `TurnOffWeatherUseCase`, backup field `savedWeatherCities`. Tests: `WeatherSettingsTest`, `WeatherBackupTest`, `TurnOffWeatherUseCaseTest`, `WeatherLocationScreenTest`.
+- [x] Saved cities (a follow-up request): the location screen keeps up to 10 cities with one selected, works with none saved, and asks what to do when left with none ticked (turn off weather everywhere, use current location, or keep choosing). `SettingsRepository.chooseWeatherCity/removeWeatherCity/setSavedWeatherCities`, `TurnOffWeatherUseCase`, backup field `savedWeatherCities`. Tests: `WeatherSettingsTest`, `WeatherBackupTest`, `TurnOffWeatherUseCaseTest`, `WeatherLocationScreenTest`.
 
 ### 7. Tests
 

@@ -963,7 +963,7 @@
     <string name="weather_location_none">Ninguna aún</string>
     <string name="weather_location_saved_title">Tus ciudades</string>
     <string name="weather_location_pick_prompt">Busca una ciudad abajo y tócala para añadirla aquí.</string>
-    <string name="weather_location_tick_prompt">Marca una ciudad para ver su tiempo.</string>
+    <string name="weather_location_tick_prompt">Selecciona una ciudad para ver su tiempo.</string>
     <string name="weather_location_remove">Quitar %1$s</string>
     <string name="weather_location_limit">Puedes guardar hasta %1$d ciudades. Quita una para añadir otra.</string>
     <string name="weather_leave_title">Ninguna ciudad seleccionada</string>

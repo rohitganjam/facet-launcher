@@ -963,7 +963,7 @@
     <string name="weather_location_none">Noch keine</string>
     <string name="weather_location_saved_title">Deine Städte</string>
     <string name="weather_location_pick_prompt">Suche unten nach einer Stadt und tippe darauf, um sie hier hinzuzufügen.</string>
-    <string name="weather_location_tick_prompt">Hake eine Stadt an, um ihr Wetter anzuzeigen.</string>
+    <string name="weather_location_tick_prompt">Wähle eine Stadt, um ihr Wetter anzuzeigen.</string>
     <string name="weather_location_remove">%1$s entfernen</string>
     <string name="weather_location_limit">Du kannst bis zu %1$d Städte behalten. Entferne eine, um eine neue hinzuzufügen.</string>
     <string name="weather_leave_title">Keine Stadt ausgewählt</string>

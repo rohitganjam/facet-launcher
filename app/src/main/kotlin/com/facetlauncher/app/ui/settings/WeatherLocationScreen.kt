@@ -22,8 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,7 +74,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  * Where the weather is for: "Use current location" (the phone's approximate position, read when Home opens; needs the
  * location permission) or "Choose a city" (cities kept in a list to switch between, found with a search over the device's
  * geocoder and the bundled city list, no permission). Launcher-wide, so it has no facet scope. Leaving while "Choose a city"
- * has no city ticked asks what to do instead.
+ * has no city selected asks what to do instead.
  */
 @Composable
 fun WeatherLocationScreen(
@@ -187,7 +185,7 @@ internal fun WeatherLocationContent(
     }
 }
 
-/** The cities kept for switching, one ticked; or the prompt to add the first. */
+/** The cities kept for switching, one selected; or the prompt to add the first. */
 @Composable
 private fun SavedCities(uiState: WeatherLocationUiState, onSelect: (WeatherCity) -> Unit, onRemove: (WeatherCity) -> Unit) {
     SettingsSectionHeader(stringResource(R.string.weather_location_saved_title))
@@ -217,7 +215,7 @@ private fun SavedCityRow(city: WeatherCity, selected: Boolean, onSelect: () -> U
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Checkbox(checked = selected, onCheckedChange = null, colors = CityCheckboxColors)
+        RadioButton(selected = selected, onClick = null, colors = CityRadioColors)
         Text(city.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f).padding(vertical = 14.dp))
         IconButton(onClick = onRemove, modifier = Modifier.testTag("weather_saved_city_remove")) {
             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.weather_location_remove, city.name), tint = Muted)
@@ -225,7 +223,7 @@ private fun SavedCityRow(city: WeatherCity, selected: Boolean, onSelect: () -> U
     }
 }
 
-/** Asked when leaving "Choose a city" with no city ticked. */
+/** Asked when leaving "Choose a city" with no city selected. */
 @Composable
 internal fun NoCityDialog(onTurnOffWeather: () -> Unit, onUseCurrentLocation: () -> Unit, onChooseCity: () -> Unit) {
     AlertDialog(
@@ -245,8 +243,8 @@ internal fun NoCityDialog(onTurnOffWeather: () -> Unit, onUseCurrentLocation: ()
     )
 }
 
-private val CityCheckboxColors
-    @Composable get() = CheckboxDefaults.colors(checkedColor = Accent, uncheckedColor = Muted, checkmarkColor = Surface)
+private val CityRadioColors
+    @Composable get() = RadioButtonDefaults.colors(selectedColor = Accent, unselectedColor = Muted)
 
 @Composable
 private fun ModeRow(title: String, hint: String, selected: Boolean, onClick: () -> Unit, testTag: String) {
@@ -279,7 +277,7 @@ private fun ValueRow(title: String, value: String) {
     }
 }
 
-/** The search field and what it found; picking a result adds that city to the list and ticks it. */
+/** The search field and what it found; picking a result adds that city to the list and selects it. */
 @Composable
 private fun CitySearch(uiState: WeatherLocationUiState, onQueryChange: (String) -> Unit, onChooseCity: (PlaceCandidate) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -312,8 +310,8 @@ private fun CitySearch(uiState: WeatherLocationUiState, onQueryChange: (String) 
             uiState.results.isNotEmpty() -> SettingsCard(fullBleedRows = true) {
                 uiState.results.forEachIndexed { index, place ->
                     if (index > 0) CardDivider()
-                    val saved = place.toWeatherCity().let { city -> uiState.savedCities.any { it.isSamePlaceAs(city) } }
-                    ResultRow(place, saved = saved, onClick = { onChooseCity(place) })
+                    val chosen = uiState.city?.isSamePlaceAs(place.toWeatherCity()) == true
+                    ResultRow(place, chosen = chosen, onClick = { onChooseCity(place) })
                 }
             }
             uiState.query.isNotBlank() -> Text(stringResource(R.string.weather_location_no_results), style = MaterialTheme.typography.bodyMedium, color = Muted)
@@ -322,7 +320,7 @@ private fun CitySearch(uiState: WeatherLocationUiState, onQueryChange: (String) 
 }
 
 @Composable
-private fun ResultRow(place: PlaceCandidate, saved: Boolean, onClick: () -> Unit) {
+private fun ResultRow(place: PlaceCandidate, chosen: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -337,7 +335,7 @@ private fun ResultRow(place: PlaceCandidate, saved: Boolean, onClick: () -> Unit
             val detail = listOfNotNull(place.admin, place.countryCode).joinToString(", ")
             if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
-        if (saved) Checkbox(checked = true, onCheckedChange = null, colors = CityCheckboxColors)
+        if (chosen) RadioButton(selected = true, onClick = null, colors = CityRadioColors)
     }
 }
 

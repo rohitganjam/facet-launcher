@@ -963,7 +963,7 @@
     <string name="weather_location_none">Aucune pour l\'instant</string>
     <string name="weather_location_saved_title">Vos villes</string>
     <string name="weather_location_pick_prompt">Cherchez une ville ci-dessous, puis touchez-la pour l\'ajouter ici.</string>
-    <string name="weather_location_tick_prompt">Cochez une ville pour afficher sa météo.</string>
+    <string name="weather_location_tick_prompt">Sélectionnez une ville pour afficher sa météo.</string>
     <string name="weather_location_remove">Retirer %1$s</string>
     <string name="weather_location_limit">Vous pouvez garder jusqu\'à %1$d villes. Retirez-en une pour en ajouter une autre.</string>
     <string name="weather_leave_title">Aucune ville sélectionnée</string>

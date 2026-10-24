@@ -124,9 +124,9 @@ header, when sent, sets the earliest next attempt.
 - **`WeatherSheet`** opens from the clock accessory (`13 §1b`), shows the values in the user's units (`WeatherFormat`,
   `WeatherUnits`), and ends with "Updated …" and the credit "Weather data from MET Norway" (CC BY 4.0).
 - **Choose a city.** Picking the radio switches to city mode even with nothing saved; the screen then shows "Your cities"
-  (a ticked row per saved city, a remove button each) or a prompt to search, and the search box. Tapping a result adds the
-  city, ticks it and clears the query; at 10 saved cities a new one is refused with a message until one is removed.
-  Removing the ticked city leaves none ticked. Leaving the screen (arrow or back gesture) in city mode with no city ticked
+  (a radio row per saved city, a remove button each) or a prompt to search, and the search box. Tapping a result adds the
+  city, selects it and clears the query; at 10 saved cities a new one is refused with a message until one is removed.
+  Removing the selected city leaves none selected. Leaving the screen (arrow or back gesture) in city mode with no city selected
   opens "No city selected": *Choose a city* stays, *Use current location* switches mode (and asks for the permission when
   it is missing, leaving once it is granted), *Turn off weather* runs `TurnOffWeatherUseCase` (default and every facet) and leaves.
 - **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) and **`WeatherLocationScreen`** (`weatherLocation`) edit the
