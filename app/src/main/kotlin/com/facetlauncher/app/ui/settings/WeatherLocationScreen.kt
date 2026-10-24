@@ -20,7 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -218,7 +218,7 @@ private fun SavedCityRow(city: WeatherCity, selected: Boolean, onSelect: () -> U
         RadioButton(selected = selected, onClick = null, colors = CityRadioColors)
         Text(city.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f).padding(vertical = 14.dp))
         IconButton(onClick = onRemove, modifier = Modifier.testTag("weather_saved_city_remove")) {
-            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.weather_location_remove, city.name), tint = Muted)
+            Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.weather_location_remove, city.name), tint = ErrorColor)
         }
     }
 }
