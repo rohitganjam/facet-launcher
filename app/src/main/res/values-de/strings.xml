@@ -961,6 +961,16 @@
     <string name="weather_location_search_hint">Gib einen Städtenamen ein</string>
     <string name="weather_location_no_results">Keine Städte gefunden</string>
     <string name="weather_location_none">Noch keine</string>
+    <string name="weather_location_saved_title">Deine Städte</string>
+    <string name="weather_location_pick_prompt">Suche unten nach einer Stadt und tippe darauf, um sie hier hinzuzufügen.</string>
+    <string name="weather_location_tick_prompt">Hake eine Stadt an, um ihr Wetter anzuzeigen.</string>
+    <string name="weather_location_remove">%1$s entfernen</string>
+    <string name="weather_location_limit">Du kannst bis zu %1$d Städte behalten. Entferne eine, um eine neue hinzuzufügen.</string>
+    <string name="weather_leave_title">Keine Stadt ausgewählt</string>
+    <string name="weather_leave_message">Für das Wetter wird eine Stadt benötigt. Was möchtest du tun?</string>
+    <string name="weather_leave_turn_off">Wetter ausschalten</string>
+    <string name="weather_leave_use_current">Aktuellen Standort verwenden</string>
+    <string name="weather_leave_choose_city">Stadt wählen</string>
     <string name="clock_accessories_inheriting">Diese Facette nutzt die Uhr-Einstellungen des Launchers. Aktiviere „Überschreiben“ unter Uhrstil, um sie zu ändern.</string>
     <string name="clock_accessories_open_clock_style">Uhrstil</string>
     <string name="weather_location_allow">Erlauben</string>

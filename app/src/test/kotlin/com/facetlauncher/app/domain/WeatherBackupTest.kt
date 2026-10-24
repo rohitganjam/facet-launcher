@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupSettings
+import com.facetlauncher.app.data.model.BackupWeatherCity
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacementList
@@ -35,6 +36,7 @@ import org.mockito.Mockito.`when`
 class WeatherBackupTest {
 
     private val pune = WeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata")
+    private val london = WeatherCity("London", 51.51, -0.13, "Europe/London")
 
     // --- export ---
 
@@ -66,7 +68,7 @@ class WeatherBackupTest {
                     showNextAlarm = false, showBatteryPercentage = true, showWeather = true,
                     temperatureUnit = TemperatureUnit.FAHRENHEIT, windSpeedUnit = WindSpeedUnit.MPH,
                     rainUnit = RainUnit.INCH, pressureUnit = PressureUnit.INHG,
-                    weatherLocationMode = WeatherLocationMode.CITY, weatherCity = pune,
+                    weatherLocationMode = WeatherLocationMode.CITY, weatherCity = pune, savedWeatherCities = listOf(pune, london),
                 ),
             ),
         )
@@ -88,6 +90,7 @@ class WeatherBackupTest {
         assertEquals(listOf("FAHRENHEIT", "MPH", "INCH", "INHG"), listOf(settings.temperatureUnit, settings.windSpeedUnit, settings.rainUnit, settings.pressureUnit))
         assertEquals("CITY", settings.weatherLocationMode)
         assertEquals(listOf("Pune", 18.52, 73.86, "Asia/Kolkata"), listOf(settings.weatherCityName, settings.weatherCityLatitude, settings.weatherCityLongitude, settings.weatherCityTimezone))
+        assertEquals(listOf(BackupWeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata"), BackupWeatherCity("London", 51.51, -0.13, "Europe/London")), settings.savedWeatherCities)
         val exported = bundle.facets[0]
         assertFalse(exported.clockShowAlarm)
         assertFalse(exported.clockShowBattery)
@@ -122,6 +125,7 @@ class WeatherBackupTest {
                     temperatureUnit = "FAHRENHEIT", windSpeedUnit = "MPH", rainUnit = "INCH", pressureUnit = "MMHG",
                     weatherLocationMode = "CITY", weatherCityName = "Pune", weatherCityLatitude = 18.52,
                     weatherCityLongitude = 73.86, weatherCityTimezone = "Asia/Kolkata",
+                    savedWeatherCities = listOf(BackupWeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata"), BackupWeatherCity("London", 51.51, -0.13, "Europe/London")),
                 ),
             ),
         )
@@ -137,6 +141,7 @@ class WeatherBackupTest {
         verify(settingsRepository).setPressureUnit(PressureUnit.MMHG)
         verify(settingsRepository).setWeatherLocationMode(WeatherLocationMode.CITY)
         verify(settingsRepository).setWeatherCity(pune)
+        verify(settingsRepository).setSavedWeatherCities(listOf(pune, london))
     }
 
     @Test

@@ -8,7 +8,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
+import com.facetlauncher.app.data.model.MAX_SAVED_WEATHER_CITIES
 import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.decodeWeatherCities
+import com.facetlauncher.app.data.model.encodeWeatherCities
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import kotlinx.coroutines.flow.first
@@ -102,5 +105,91 @@ class WeatherSettingsTest {
         dataStore.edit { it[stringPreferencesKey("weather_city_name")] = "Pune" }
 
         assertNull(SettingsRepository(dataStore).settings.first().weatherCity)
+    }
+
+    private val london = WeatherCity("London", 51.51, -0.13, "Europe/London")
+
+    @Test
+    fun `choosing a city saves it, selects it and switches to city mode`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+
+        assertTrue(repository.chooseWeatherCity(pune))
+        assertTrue(repository.chooseWeatherCity(london))
+
+        val settings = repository.settings.first()
+        assertEquals(listOf(pune, london), settings.savedWeatherCities)
+        assertEquals(london, settings.weatherCity)
+        assertEquals(WeatherLocationMode.CITY, settings.weatherLocationMode)
+    }
+
+    @Test
+    fun `choosing a saved city again selects it without adding a copy`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+        repository.chooseWeatherCity(pune)
+        repository.chooseWeatherCity(london)
+
+        repository.chooseWeatherCity(pune)
+
+        val settings = repository.settings.first()
+        assertEquals(listOf(pune, london), settings.savedWeatherCities)
+        assertEquals(pune, settings.weatherCity)
+    }
+
+    @Test
+    fun `a new city is refused once the saved list is full`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+        val cities = (1..MAX_SAVED_WEATHER_CITIES).map { WeatherCity("City $it", it.toDouble(), it.toDouble(), "UTC") }
+        cities.forEach { repository.chooseWeatherCity(it) }
+
+        assertFalse(repository.chooseWeatherCity(pune))
+
+        val settings = repository.settings.first()
+        assertEquals(cities, settings.savedWeatherCities)
+        assertEquals(cities.last(), settings.weatherCity)
+        assertTrue(repository.chooseWeatherCity(cities.first()))
+    }
+
+    @Test
+    fun `removing the chosen city leaves none chosen and keeps the others`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+        repository.chooseWeatherCity(pune)
+        repository.chooseWeatherCity(london)
+
+        repository.removeWeatherCity(london)
+
+        val settings = repository.settings.first()
+        assertEquals(listOf(pune), settings.savedWeatherCities)
+        assertNull(settings.weatherCity)
+        assertEquals(WeatherLocationMode.CITY, settings.weatherLocationMode)
+    }
+
+    @Test
+    fun `removing another city keeps the chosen one`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+        repository.chooseWeatherCity(pune)
+        repository.chooseWeatherCity(london)
+
+        repository.removeWeatherCity(pune)
+
+        assertEquals(london, repository.settings.first().weatherCity)
+    }
+
+    @Test
+    fun `a city chosen before the list existed shows in the list`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+
+        repository.setWeatherCity(pune)
+
+        assertEquals(listOf(pune), repository.settings.first().savedWeatherCities)
+    }
+
+    @Test
+    fun `saved cities survive the stored string, whatever the name holds`() {
+        val cities = listOf(pune, WeatherCity("Odd\tName\nCity", 1.0, 2.0, "UTC"))
+
+        val decoded = decodeWeatherCities(encodeWeatherCities(cities))
+
+        assertEquals(listOf(pune, WeatherCity("Odd Name City", 1.0, 2.0, "UTC")), decoded)
+        assertEquals(emptyList<WeatherCity>(), decodeWeatherCities("garbage\nonly\tthree\tfields"))
     }
 }

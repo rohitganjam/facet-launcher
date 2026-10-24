@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.weather.WeatherRepository
 import com.facetlauncher.app.domain.PlaceCandidate
 import com.facetlauncher.app.domain.SearchPlacesUseCase
+import com.facetlauncher.app.domain.TurnOffWeatherUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,7 +27,11 @@ import kotlinx.coroutines.launch
 
 data class WeatherLocationUiState(
     val mode: WeatherLocationMode = WeatherLocationMode.CURRENT,
+    /** The city weather is shown for under "Choose a city", if one is picked. */
     val city: WeatherCity? = null,
+    val savedCities: List<WeatherCity> = emptyList(),
+    /** Picking a new city was refused because the saved list is full. */
+    val cityLimitHit: Boolean = false,
     val permissionGranted: Boolean = false,
     /** The name of the place the weather is for now: the chosen city, or the resolved name of the position. */
     val showingFor: String? = null,
@@ -47,10 +52,12 @@ class WeatherLocationViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository,
     private val locationRepository: LocationRepository,
     private val searchPlaces: SearchPlacesUseCase,
+    private val turnOffWeather: TurnOffWeatherUseCase,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val permissionGranted = MutableStateFlow(locationRepository.isPermissionGranted())
+    private val cityLimitHit = MutableStateFlow(false)
 
     private val search = query.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }.distinctUntilChanged().flatMapLatest { text ->
         flow {
@@ -73,16 +80,19 @@ class WeatherLocationViewModel @Inject constructor(
         WeatherLocationUiState(
             mode = settings.weatherLocationMode,
             city = settings.weatherCity,
+            savedCities = settings.savedWeatherCities,
             permissionGranted = granted,
             showingFor = if (settings.weatherLocationMode == WeatherLocationMode.CITY) settings.weatherCity?.name else state.placeName,
             query = text,
             results = results,
             isSearching = searching,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), WeatherLocationUiState())
+    }.combine(cityLimitHit) { state, limitHit -> state.copy(cityLimitHit = limitHit) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), WeatherLocationUiState())
 
     fun onQueryChange(text: String) {
         query.value = text
+        cityLimitHit.value = false
     }
 
     fun refreshPermission() {
@@ -93,12 +103,35 @@ class WeatherLocationViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setWeatherLocationMode(WeatherLocationMode.CURRENT) }
     }
 
-    /** Saves [place] as the weather city and switches to it. */
-    fun chooseCity(place: PlaceCandidate) {
+    /** Switches to "Choose a city", with or without a city picked yet. */
+    fun useCityMode() {
+        viewModelScope.launch { settingsRepository.setWeatherLocationMode(WeatherLocationMode.CITY) }
+    }
+
+    /** Saves [place] with the other cities and makes it the one weather is for; refused when the list is full. */
+    fun chooseCity(place: PlaceCandidate) = choose(place.toWeatherCity(), clearQuery = true)
+
+    /** Makes a saved city the one weather is for. */
+    fun selectSavedCity(city: WeatherCity) = choose(city, clearQuery = false)
+
+    fun removeCity(city: WeatherCity) {
+        viewModelScope.launch { settingsRepository.removeWeatherCity(city) }
+        cityLimitHit.value = false
+    }
+
+    /** Turns weather off for the default and every facet, then calls [onDone]. */
+    fun turnWeatherOff(onDone: () -> Unit) {
         viewModelScope.launch {
-            settingsRepository.setWeatherCity(place.toWeatherCity())
-            settingsRepository.setWeatherLocationMode(WeatherLocationMode.CITY)
-            query.value = ""
+            turnOffWeather()
+            onDone()
+        }
+    }
+
+    private fun choose(city: WeatherCity, clearQuery: Boolean) {
+        viewModelScope.launch {
+            val accepted = settingsRepository.chooseWeatherCity(city)
+            cityLimitHit.value = !accepted
+            if (accepted && clearQuery) query.value = ""
         }
     }
 

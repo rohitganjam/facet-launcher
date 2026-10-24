@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupSettings
+import com.facetlauncher.app.data.model.BackupWeatherCity
 import com.facetlauncher.app.data.model.LauncherSettings
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
@@ -143,4 +144,5 @@ private fun BackupSettings.withAccessoriesAndWeather(settings: LauncherSettings)
     weatherCityLatitude = settings.weatherCity?.latitude,
     weatherCityLongitude = settings.weatherCity?.longitude,
     weatherCityTimezone = settings.weatherCity?.timezone,
+    savedWeatherCities = settings.savedWeatherCities.map { BackupWeatherCity(it.name, it.latitude, it.longitude, it.timezone) },
 )

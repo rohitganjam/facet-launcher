@@ -961,6 +961,16 @@
     <string name="weather_location_search_hint">Digite o nome de uma cidade</string>
     <string name="weather_location_no_results">Nenhuma cidade encontrada</string>
     <string name="weather_location_none">Nenhuma ainda</string>
+    <string name="weather_location_saved_title">Suas cidades</string>
+    <string name="weather_location_pick_prompt">Pesquise uma cidade abaixo e toque nela para adicioná-la aqui.</string>
+    <string name="weather_location_tick_prompt">Marque uma cidade para mostrar o tempo dela.</string>
+    <string name="weather_location_remove">Remover %1$s</string>
+    <string name="weather_location_limit">Você pode manter até %1$d cidades. Remova uma para adicionar outra.</string>
+    <string name="weather_leave_title">Nenhuma cidade selecionada</string>
+    <string name="weather_leave_message">O tempo precisa de uma cidade. O que você quer fazer?</string>
+    <string name="weather_leave_turn_off">Desativar o tempo</string>
+    <string name="weather_leave_use_current">Usar a localização atual</string>
+    <string name="weather_leave_choose_city">Escolher uma cidade</string>
     <string name="clock_accessories_inheriting">Esta faceta usa as configurações de relógio do launcher. Ative «Personalizar» em Estilo do relógio para alterá-las.</string>
     <string name="clock_accessories_open_clock_style">Estilo do relógio</string>
     <string name="weather_location_allow">Permitir</string>

@@ -1040,6 +1040,16 @@
     <string name="weather_location_search_hint">Type a city name</string>
     <string name="weather_location_no_results">No cities found</string>
     <string name="weather_location_none">None yet</string>
+    <string name="weather_location_saved_title">Your cities</string>
+    <string name="weather_location_pick_prompt">Search for a city below, then tap it to add it here.</string>
+    <string name="weather_location_tick_prompt">Tick a city to show its weather.</string>
+    <string name="weather_location_remove">Remove %1$s</string>
+    <string name="weather_location_limit">You can keep up to %1$d cities. Remove one to add another.</string>
+    <string name="weather_leave_title">No city selected</string>
+    <string name="weather_leave_message">Weather needs a city to show. What would you like to do?</string>
+    <string name="weather_leave_turn_off">Turn off weather</string>
+    <string name="weather_leave_use_current">Use current location</string>
+    <string name="weather_leave_choose_city">Choose a city</string>
 
     <string name="clock_accessories_inheriting">This facet uses the launcher\'s clock settings. Turn on Override in Clock style to change these.</string>
     <string name="clock_accessories_open_clock_style">Clock style</string>

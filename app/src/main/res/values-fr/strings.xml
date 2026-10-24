@@ -961,6 +961,16 @@
     <string name="weather_location_search_hint">Saisissez le nom d\'une ville</string>
     <string name="weather_location_no_results">Aucune ville trouvée</string>
     <string name="weather_location_none">Aucune pour l\'instant</string>
+    <string name="weather_location_saved_title">Vos villes</string>
+    <string name="weather_location_pick_prompt">Cherchez une ville ci-dessous, puis touchez-la pour l\'ajouter ici.</string>
+    <string name="weather_location_tick_prompt">Cochez une ville pour afficher sa météo.</string>
+    <string name="weather_location_remove">Retirer %1$s</string>
+    <string name="weather_location_limit">Vous pouvez garder jusqu\'à %1$d villes. Retirez-en une pour en ajouter une autre.</string>
+    <string name="weather_leave_title">Aucune ville sélectionnée</string>
+    <string name="weather_leave_message">La météo a besoin d\'une ville. Que voulez-vous faire ?</string>
+    <string name="weather_leave_turn_off">Désactiver la météo</string>
+    <string name="weather_leave_use_current">Utiliser la position actuelle</string>
+    <string name="weather_leave_choose_city">Choisir une ville</string>
     <string name="clock_accessories_inheriting">Cette facette utilise les réglages d\'horloge du launcher. Activez « Personnaliser » dans Style de l\'horloge pour les modifier.</string>
     <string name="clock_accessories_open_clock_style">Style de l\'horloge</string>
     <string name="weather_location_allow">Autoriser</string>

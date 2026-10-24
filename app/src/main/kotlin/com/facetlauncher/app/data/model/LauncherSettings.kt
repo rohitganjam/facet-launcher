@@ -360,6 +360,8 @@ data class LauncherSettings(
     val weatherLocationMode: WeatherLocationMode = WeatherLocationMode.CURRENT,
     /** The chosen city; only read under [WeatherLocationMode.CITY]. */
     val weatherCity: WeatherCity? = null,
+    /** Cities kept for quick switching, [weatherCity] among them while one is chosen. */
+    val savedWeatherCities: List<WeatherCity> = emptyList(),
     /**
      * Settings → Appearance → "Text weight" — Home's app list/Dock/App Drawer labels apply it
      * directly (see `ui/home/HomeScreen.kt`'s `AppRow`/`DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s

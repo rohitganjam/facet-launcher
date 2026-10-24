@@ -50,6 +50,10 @@ import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
+import com.facetlauncher.app.data.model.MAX_SAVED_WEATHER_CITIES
+import com.facetlauncher.app.data.model.decodeWeatherCities
+import com.facetlauncher.app.data.model.encodeWeatherCities
+import com.facetlauncher.app.data.model.isSamePlaceAs
 import com.facetlauncher.app.data.model.weatherCityOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -118,6 +122,7 @@ private object Keys {
     val WEATHER_CITY_LATITUDE = doublePreferencesKey("weather_city_latitude")
     val WEATHER_CITY_LONGITUDE = doublePreferencesKey("weather_city_longitude")
     val WEATHER_CITY_TIMEZONE = stringPreferencesKey("weather_city_timezone")
+    val WEATHER_SAVED_CITIES = stringPreferencesKey("weather_saved_cities")
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
@@ -240,6 +245,7 @@ class SettingsRepository @Inject constructor(
             weatherLocationMode = preferences[Keys.WEATHER_LOCATION_MODE]?.let { runCatching { WeatherLocationMode.valueOf(it) }.getOrNull() }
                 ?: defaults.weatherLocationMode,
             weatherCity = preferences.readWeatherCity(),
+            savedWeatherCities = preferences.readSavedWeatherCities(),
             homeAppsFontWeight = preferences[Keys.HOME_APPS_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
                 ?: defaults.homeAppsFontWeight,
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
@@ -495,20 +501,41 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.WEATHER_LOCATION_MODE] = mode.name }
     }
 
-    /** Stores the chosen city (the four keys together); `null` clears it. */
+    /** Stores the chosen city (the four keys together); `null` clears it. The saved list is left as it is. */
     suspend fun setWeatherCity(city: WeatherCity?) {
+        dataStore.edit { it.writeWeatherCity(city) }
+    }
+
+    /** Replaces the saved cities (a restore); the chosen city is not touched. */
+    suspend fun setSavedWeatherCities(cities: List<WeatherCity>) {
+        dataStore.edit { it[Keys.WEATHER_SAVED_CITIES] = encodeWeatherCities(cities.take(MAX_SAVED_WEATHER_CITIES)) }
+    }
+
+    /**
+     * Saves [city] if it is new and makes it the chosen one, in city mode. Returns false, changing nothing, when it is new
+     * and [MAX_SAVED_WEATHER_CITIES] are already saved.
+     */
+    suspend fun chooseWeatherCity(city: WeatherCity): Boolean {
+        var accepted = true
         dataStore.edit {
-            if (city == null) {
-                it.remove(Keys.WEATHER_CITY_NAME)
-                it.remove(Keys.WEATHER_CITY_LATITUDE)
-                it.remove(Keys.WEATHER_CITY_LONGITUDE)
-                it.remove(Keys.WEATHER_CITY_TIMEZONE)
+            val saved = it.readSavedWeatherCities()
+            val known = saved.firstOrNull { other -> other.isSamePlaceAs(city) }
+            if (known == null && saved.size >= MAX_SAVED_WEATHER_CITIES) {
+                accepted = false
             } else {
-                it[Keys.WEATHER_CITY_NAME] = city.name
-                it[Keys.WEATHER_CITY_LATITUDE] = city.latitude
-                it[Keys.WEATHER_CITY_LONGITUDE] = city.longitude
-                it[Keys.WEATHER_CITY_TIMEZONE] = city.timezone
+                if (known == null) it[Keys.WEATHER_SAVED_CITIES] = encodeWeatherCities(saved + city)
+                it.writeWeatherCity(known ?: city)
+                it[Keys.WEATHER_LOCATION_MODE] = WeatherLocationMode.CITY.name
             }
+        }
+        return accepted
+    }
+
+    /** Drops [city] from the saved cities; when it was the chosen one, none is chosen any more. */
+    suspend fun removeWeatherCity(city: WeatherCity) {
+        dataStore.edit {
+            it[Keys.WEATHER_SAVED_CITIES] = encodeWeatherCities(it.readSavedWeatherCities().filterNot { other -> other.isSamePlaceAs(city) })
+            if (it.readWeatherCity()?.isSamePlaceAs(city) == true) it.writeWeatherCity(null)
         }
     }
 
@@ -596,6 +623,27 @@ class SettingsRepository @Inject constructor(
 /** The chosen city, or `null` unless all four of its keys are present. */
 private fun Preferences.readWeatherCity(): WeatherCity? =
     weatherCityOrNull(this[Keys.WEATHER_CITY_NAME], this[Keys.WEATHER_CITY_LATITUDE], this[Keys.WEATHER_CITY_LONGITUDE], this[Keys.WEATHER_CITY_TIMEZONE])
+
+/** The saved cities, with the chosen city first when an older install stored it without a list. */
+private fun Preferences.readSavedWeatherCities(): List<WeatherCity> {
+    val saved = decodeWeatherCities(this[Keys.WEATHER_SAVED_CITIES])
+    val chosen = readWeatherCity()
+    return if (chosen != null && saved.none { it.isSamePlaceAs(chosen) }) listOf(chosen) + saved else saved
+}
+
+private fun MutablePreferences.writeWeatherCity(city: WeatherCity?) {
+    if (city == null) {
+        remove(Keys.WEATHER_CITY_NAME)
+        remove(Keys.WEATHER_CITY_LATITUDE)
+        remove(Keys.WEATHER_CITY_LONGITUDE)
+        remove(Keys.WEATHER_CITY_TIMEZONE)
+    } else {
+        this[Keys.WEATHER_CITY_NAME] = city.name
+        this[Keys.WEATHER_CITY_LATITUDE] = city.latitude
+        this[Keys.WEATHER_CITY_LONGITUDE] = city.longitude
+        this[Keys.WEATHER_CITY_TIMEZONE] = city.timezone
+    }
+}
 
 private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
     clockAlignment = this[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },

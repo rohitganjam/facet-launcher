@@ -43,6 +43,7 @@ import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
+import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.weatherCityOrNull
 import javax.inject.Inject
 import com.facetlauncher.app.data.PlacementRepository
@@ -214,6 +215,7 @@ class ImportBackupUseCase @Inject constructor(
             setRainUnit(settings.rainUnit.toEnumOrDefault(RainUnit.AUTO))
             setPressureUnit(settings.pressureUnit.toEnumOrDefault(PressureUnit.AUTO))
             setWeatherLocationMode(settings.weatherLocationMode.toEnumOrDefault(WeatherLocationMode.CURRENT))
+            setSavedWeatherCities(settings.savedWeatherCities.map { WeatherCity(it.name, it.latitude, it.longitude, it.timezone) })
             setWeatherCity(weatherCityOrNull(settings.weatherCityName, settings.weatherCityLatitude, settings.weatherCityLongitude, settings.weatherCityTimezone))
         }
     }

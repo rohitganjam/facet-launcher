@@ -77,7 +77,8 @@ weather is shown, so with weather off no location is read, no geocoder is asked 
   earlier place it is `NoLocation`. A stored place is kept while the device is within 5 km of it, so walking around does
   not refetch; a new one is rounded to two decimals, with the fix's altitude when it has one (an altitude of exactly 0
   counts as unknown).
-- **Chosen city:** the city's coordinates, rounded, with no permission and no location read; no city is `NoCity`.
+- **Chosen city:** the city's coordinates, rounded, with no permission and no location read; no city is `NoCity`. The
+  chosen city is one of the saved cities (up to 10, `savedWeatherCities`) the location screen keeps for switching.
 
 ## 7. Names and the city list (`data/places`)
 
@@ -122,6 +123,12 @@ header, when sent, sets the earliest next attempt.
   sheet's button and maps the use case's result to a notice (already up to date, busy, offline, permission, no place).
 - **`WeatherSheet`** opens from the clock accessory (`13 §1b`), shows the values in the user's units (`WeatherFormat`,
   `WeatherUnits`), and ends with "Updated …" and the credit "Weather data from MET Norway" (CC BY 4.0).
+- **Choose a city.** Picking the radio switches to city mode even with nothing saved; the screen then shows "Your cities"
+  (a ticked row per saved city, a remove button each) or a prompt to search, and the search box. Tapping a result adds the
+  city, ticks it and clears the query; at 10 saved cities a new one is refused with a message until one is removed.
+  Removing the ticked city leaves none ticked. Leaving the screen (arrow or back gesture) in city mode with no city ticked
+  opens "No city selected": *Choose a city* stays, *Use current location* switches mode (and asks for the permission when
+  it is missing, leaving once it is granted), *Turn off weather* runs `TurnOffWeatherUseCase` (default and every facet) and leaves.
 - **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) and **`WeatherLocationScreen`** (`weatherLocation`) edit the
   switches, units, location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
   Location card, and its state is re-read on resume. The city search runs 400 ms after the last keystroke

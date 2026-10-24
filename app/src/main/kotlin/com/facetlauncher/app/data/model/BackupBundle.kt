@@ -145,6 +145,8 @@ data class BackupSettings(
     val weatherCityLatitude: Double? = null,
     val weatherCityLongitude: Double? = null,
     val weatherCityTimezone: String? = null,
+    /** Cities kept for quick switching; an older file has none. */
+    val savedWeatherCities: List<BackupWeatherCity> = emptyList(),
     val clockAlignment: String = ClockAlignment.LEFT.name,
     /** `null` until the clock's divider was first dragged. */
     val clockZoneHeightDp: Float? = null,
@@ -271,3 +273,7 @@ data class BackupWidgetPlacement(
     /** The widget's place in the landscape Hub's flow order, if it had one — defaulted so older backups import as "no order" (landscape then follows portrait's reading order). */
     val landscapeOrder: Int? = null,
 )
+
+/** A saved weather city in a backup file. */
+@Serializable
+data class BackupWeatherCity(val name: String, val latitude: Double, val longitude: Double, val timezone: String)

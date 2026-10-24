@@ -500,6 +500,9 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setTemperatureUnit`, `setWindSpeedUnit`, `setRainUnit`, `setPressureUnit` | `temperature_unit`, `wind_speed_unit`, `rain_unit`, `pressure_unit` | set | none yet (same screen) |
 | `setWeatherLocationMode(WeatherLocationMode)` | `weather_location_mode` | set | none yet |
 | `setWeatherCity(WeatherCity?)` | `weather_city_name`, `weather_city_latitude`, `weather_city_longitude`, `weather_city_timezone` | set the four together, or remove all four on `null` | none yet |
+| `chooseWeatherCity(WeatherCity): Boolean` | `weather_saved_cities`, the four city keys, `weather_location_mode` | add the city to the saved list unless already there (refused, returning false, past 10), make it the chosen city and switch to city mode | `WeatherLocationViewModel` |
+| `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
+| `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
 | `setAllowLandscape(Boolean)` | `allow_landscape` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
@@ -592,6 +595,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `pressure_unit` | String (`PressureUnit`) | `pressureUnit` | `AUTO` | |
 | `weather_location_mode` | String (`WeatherLocationMode`) | `weatherLocationMode` | `CURRENT` | launcher-wide |
 | `weather_city_name`, `weather_city_latitude` (Double), `weather_city_longitude` (Double), `weather_city_timezone` | String / Double | `weatherCity` | `null` | the chosen city; it reads as `null` unless all four keys are present |
+| `weather_saved_cities` | String | `savedWeatherCities` | empty | the cities kept for switching, one per line with tab-separated name, latitude, longitude and timezone; the chosen city is added to the read list when an older install stored it without a list |
 | `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | also positions the calendar events strip |
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
 | `clock_scale` | Float | `clockScale` | `0.8` | `resetClockScale()` removes the key |
