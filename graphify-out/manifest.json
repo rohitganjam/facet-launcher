@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1792612053.0593789,
-    "seen": 1792639458.214762,
-    "ast_hash": "1933985253748b6615ca43ab1b7f4105",
+    "mtime": 1792721234.851453,
+    "seen": 1792721595.16853,
+    "ast_hash": "4a357c3b43a04522869a016a1e2e0b79",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -1200,9 +1200,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockAccessoryRow.kt": {
-    "mtime": 1789799333.8527997,
-    "seen": 1789804989.075799,
-    "ast_hash": "3bff15d617c7c63d12ffc0b0d4c81be1",
+    "mtime": 1792771432.745021,
+    "seen": 1792771814.856481,
+    "ast_hash": "11ab6f1582c9413679d1fdb8937c1a7f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockStyleGalleryScreen.kt": {
@@ -1218,9 +1218,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockTemplates.kt": {
-    "mtime": 1792640088.1989403,
-    "seen": 1792640590.879392,
-    "ast_hash": "35692835d189e08755815aa40a5410c4",
+    "mtime": 1792771432.8493333,
+    "seen": 1792771814.8564842,
+    "ast_hash": "a08e4056ffcd317bf9f4b1463a7bfa4c",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/TimeInWords.kt": {
@@ -2448,9 +2448,9 @@
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1792612053.1359363,
-    "seen": 1792639458.21513,
-    "ast_hash": "69277091383ce0f1c490841643d7b4df",
+    "mtime": 1792721559.1894734,
+    "seen": 1792721595.168921,
+    "ast_hash": "27c3ea7f6380c9fea1bb23d344a1da04",
     "semantic_hash": ""
   },
   "scripts/gen-release-notes.py": {
@@ -2460,9 +2460,9 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1792612053.0592532,
-    "seen": 1792639458.215143,
-    "ast_hash": "1e98afa6fa7bd423ed7bd874b6356be8",
+    "mtime": 1792721559.1673388,
+    "seen": 1792721595.1689339,
+    "ast_hash": "bd57987f05fb6538248995be9e086b33",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {
@@ -4875,6 +4875,18 @@
     "mtime": 1792684995.222605,
     "seen": 1792685104.09704,
     "ast_hash": "7ff10962e947ad341103b94d2158099d",
+    "semantic_hash": ""
+  },
+  "app/src/main/assets/whats_new/0.1.29.md": {
+    "mtime": 1792721424.2322583,
+    "seen": 1792721595.16895,
+    "ast_hash": "f0078f005e1c2324bdcd39123f10a814",
+    "semantic_hash": ""
+  },
+  "release_notes/0.1.29.md": {
+    "mtime": 1792721559.167932,
+    "seen": 1792721595.1689742,
+    "ast_hash": "bd57987f05fb6538248995be9e086b33",
     "semantic_hash": ""
   }
 }
