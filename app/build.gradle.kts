@@ -221,11 +221,11 @@ tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
     jvmTarget = "17"
 }
 
-// The privacy policy promises the app cannot reach the network. Libraries can merge INTERNET back in
-// (Play Billing's telemetry does), so check the merged manifest of both variants.
-val verifyNoInternetPermission = tasks.register("verifyNoInternetPermission") {
+// Weather is the only network use and it needs INTERNET. The source manifest declares it on purpose, so check that
+// the merged manifest of both variants still has it (a stray tools:node="remove" would break weather silently).
+val verifyInternetPermission = tasks.register("verifyInternetPermission") {
     group = "verification"
-    description = "Fails if the merged debug or release manifest declares android.permission.INTERNET."
+    description = "Fails if the merged debug or release manifest does not declare android.permission.INTERNET."
     val merged = listOf("debug", "release").map { variant ->
         layout.buildDirectory.file("intermediates/merged_manifests/$variant/process${variant.replaceFirstChar(Char::uppercase)}Manifest/AndroidManifest.xml")
     }
@@ -234,14 +234,14 @@ val verifyNoInternetPermission = tasks.register("verifyNoInternetPermission") {
         merged.forEach { file ->
             val manifest = file.get().asFile
             check(manifest.exists()) { "Missing merged manifest: $manifest" }
-            check(!manifest.readText().contains("android.permission.INTERNET")) {
-                "android.permission.INTERNET is in $manifest, which breaks the no-internet promise. Find the library that adds it in the manifest merger report."
+            check(manifest.readText().contains("android.permission.INTERNET")) {
+                "android.permission.INTERNET is missing from $manifest, so weather cannot reach MET. Check the manifest for a tools:node=\"remove\" on it."
             }
         }
     }
 }
-tasks.named("check") { dependsOn(verifyNoInternetPermission) }
+tasks.named("check") { dependsOn(verifyInternetPermission) }
 afterEvaluate {
-    verifyNoInternetPermission.configure { dependsOn("processDebugManifest", "processReleaseManifest") }
-    listOf("assembleRelease", "bundleRelease").forEach { name -> tasks.findByName(name)?.dependsOn(verifyNoInternetPermission) }
+    verifyInternetPermission.configure { dependsOn("processDebugManifest", "processReleaseManifest") }
+    listOf("assembleRelease", "bundleRelease").forEach { name -> tasks.findByName(name)?.dependsOn(verifyInternetPermission) }
 }

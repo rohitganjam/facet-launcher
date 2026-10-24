@@ -59,11 +59,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <!-- Facet makes no network requests. Google's Play Billing library drags in its data-transport telemetry
-         (transport-backend-cct), which merges INTERNET into the manifest; removing it keeps the "no internet"
-         promise in the privacy policy. Purchases go through the Play Store app over IPC and don't need it.
-         The verifyNoInternetPermission Gradle task fails the build if INTERNET ever comes back. -->
-    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <!-- The weather feature (docs/architecture/18-flow-weather.md) is the only thing that uses the network: one
+         request to MET Norway for a forecast, and nothing while weather is off. Play Billing's telemetry also
+         merges INTERNET in, which is why this is declared explicitly. The verifyInternetPermission Gradle task
+         fails the build if this line is removed or overridden. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".FacetApplication"

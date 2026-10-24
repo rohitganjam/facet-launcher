@@ -22,8 +22,9 @@ checked against source, not against planning docs; where the code diverges from
 | [13-flow-facets-theme-notifications-onboarding.md](13-flow-facets-theme-notifications-onboarding.md) | Flows: facet switch/preview/override, theme resolution, notification badges, onboarding |
 | [14-flow-deep-links-and-shortcuts.md](14-flow-deep-links-and-shortcuts.md) | Flow: facet deep links (`facetlauncher://facet/{id}`), dynamic-shortcut sync, external-trigger ingestion |
 | [15-flow-facet-automation.md](15-flow-facet-automation.md) | Framework: rules that switch the active facet — concepts, baseline/overlay state model, the pure evaluator, manual-wins enforcement, planned triggers and runner, invariants. Mixes built and planned (labelled) |
-| [16-flow-billing.md](16-flow-billing.md) | Flow: the one-time `facet_pro` Google Play purchase, the cached entitlement and its offline rules, Buy/Restore, what a lapse does, the debug override, and why there is still no `INTERNET` |
+| [16-flow-billing.md](16-flow-billing.md) | Flow: the one-time `facet_pro` Google Play purchase, the cached entitlement and its offline rules, Buy/Restore, what a lapse does, the debug override, and what the manifest says about `INTERNET` |
 | [17-flow-home-layout.md](17-flow-home-layout.md) | Flow: how `HomeScreen` picks portrait or landscape from the window shape, what each layout contains, and how landscape adjust mode works |
+| [18-flow-weather.md](18-flow-weather.md) | Flow (in progress): the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
 
 ## Stack at a glance
 
@@ -36,8 +37,8 @@ checked against source, not against planning docs; where the code diverges from
 | Persistence | Room `2.8.5` (`facet.db`, v32, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |
-| Billing | Google Play Billing `billing-ktx 9.1.0` for the one-time `facet_pro` purchase ([16](16-flow-billing.md)); the manifest removes the `INTERNET` permission the library merges in |
-| Networking | **None** — no Retrofit/OkHttp dependency, no `INTERNET` permission |
+| Billing | Google Play Billing `billing-ktx 9.1.0` for the one-time `facet_pro` purchase ([16](16-flow-billing.md)); the library also merges in `INTERNET`, which the manifest now declares for weather ([18](18-flow-weather.md)) |
+| Networking | Weather only — one `HttpURLConnection` request to MET Norway ([18](18-flow-weather.md)); no Retrofit/OkHttp dependency, and nothing is sent while weather is off |
 | Tests | JUnit4 + Robolectric `4.17` + `kotlinx-coroutines-test` (JVM); Compose UI tests + `room-testing` + Orchestrator (instrumented) |
 
 ## Keeping this blueprint alive

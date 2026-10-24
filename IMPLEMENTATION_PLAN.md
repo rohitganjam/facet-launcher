@@ -4225,3 +4225,84 @@ Where that time goes (from timestamps in a temporary log): about 360–590 ms fr
 - [x] **Reveal debounces removed.** Logging the clock box on cold start (Manrope, scales 0.5/0.8/1.2) showed each Home's box is the same size on every pass, so the 120 ms clock debounce and the 150 ms list debounce only added delay; both are gone (the fades stay). Cold start on the emulator, 8 runs: fully drawn **667 ms** with 1 facet and **737 ms** with 6, down from 807-889 ms. Frames of a cold start with Manrope show clock, date and list fading in together at a fixed position.
 - [ ] **Snappy startup, remaining.** Paint the last Home state from a small cache while the live state loads (the ~350 ms before the first state), and shorten the fades if wanted. The facet carousel stays composed while closed, so a second, off-screen Home is built on every cold start; composing it only when opening would cut that work but delay opening. Profile the first-state load (Room open, DataStore, the installed-apps relist).
 - [ ] **Re-measure on a real phone** after that; set the budget there (first frame with content under about 150 ms, fully drawn under about 300 ms is the aim).
+
+## Weather on the clock (direct request)
+
+Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories screen, Location screen). Weather is the app's first use of the network, so the privacy work in step 1 comes first and gates the rest.
+
+### Decisions
+
+- **Source:** MET Norway Locationforecast 2.0 `compact` (JSON), called from the device, no proxy. Free, no key, commercial use allowed (Open-Meteo's free tier is non-commercial and Facet has Pro). Requests carry an identifying `User-Agent` (app name, version, contact), send coordinates rounded to 2 decimals (MET allows 4), use `If-Modified-Since` and never refetch before `Expires`. Credit "Weather data from MET Norway" (CC BY 4.0, link to the licence) in the sheet footer and the About screen. Check MET's licensing page before release.
+- **Refresh:** only on Home resume when the data is stale, and from the sheet's refresh button. No `WorkManager`, no background network, no background location (so no `ACCESS_BACKGROUND_LOCATION`). All paths go through one gate in `WeatherRepository`: not before `Expires`, a minimum 10 minutes between real network attempts (persisted, survives a process kill), one request in flight (taps join it). **Over the limit (HTTP 429, or 403 from a banned `User-Agent`) the call simply fails**: no retry loop, the state becomes "Weather is busy, try again later", the cache keeps showing, and `Retry-After` (when sent) sets the earliest next attempt. Other failures (offline, 5xx) also fail once and wait for the next trigger. A refresh the gate refuses reports "Already up to date" and never goes silent.
+- **Location:** a launcher-wide setting with two modes. *Current location* (default): `ACCESS_COARSE_LOCATION` only, a one-shot `LocationManager.getCurrentLocation` (network provider) with `getLastKnownLocation` as fallback, read on Home resume when stale, refetch after a move of 5 km or more. *Choose a city:* no permission needed. Coordinates are rounded to 2 decimals before they are stored or sent, and are not in the backup. The permission is already declared (for the Bluetooth/Wi-Fi automation); only the weather use is new.
+- **Place names:** current location resolves a name with `Geocoder.getFromLocation` (locale-aware; `locality`, then `subAdminArea`, then `adminArea`, never `subLocality`), then the nearest row of the offline city list shown as "Near X", then no label. Looked up only when the rounded position changes; the name is stored with the coordinates and the source that produced it, and a fallback name is retried once the `Geocoder` is available.
+- **City search:** `Geocoder.getFromLocationName` when `Geocoder.isPresent()`, else the offline list. The offline list is a bundled GeoNames extract (places over about 15,000 people: name, region, country code, latitude, longitude, population, IANA timezone), parsed once and cached. Sizes and the CC BY credit are from memory: verify against the real file before relying on them.
+- **Timezone:** the device zone for current location. A chosen city carries its own zone: from the list row, or for a `Geocoder` result from the nearest list row in the same country (device zone when none is within a few hundred km). "Today", the day rows and the hourly labels use that zone; the strip labels use the city's local time with the zone abbreviation when it differs from the device's.
+- **Today's min and max** come from stored hourly rows: each fetch overwrites future hours and keeps past hours as last seen, so the day's range is computed over the local calendar day. Falls back to the remaining hours when the low has not been stored (phone off overnight). The cache is cleared when the location changes and is not backed up. Days past about 2.5 are 6-hourly in the feed, so their highs are approximate.
+- **Summary line:** rule-based (`SummarizeRainUseCase`): contiguous hours at or above a threshold become "Heavy rain 12:30 AM to 4:30 PM, about 75 mm", with a handful of localised templates (rain from a time, dry for 24 h, clearing by a time). No AI.
+- **Accessory bar:** weather icon (from the symbol code) plus the temperature, no text. 48dp tap target (the clock draws at a scale, so pad for it). Opens the sheet. Hidden when weather is off, no data, or the data is older than 3 hours. Text stays at or above 14sp (`ClockTextFloor`).
+- **Sheet** (`ThemedModalBottomSheet`, closes on Home press): summary line, header (place, temperature, condition, H and L), next-24-hours strip (condition, temperature, rain in mm when above zero, wind arrow and speed), details grid (humidity, pressure, cloud cover, wind), outlook rows (Today then about 8 days, icon, low, high), footer ("Updated 10:30", MET credit) and a refresh button. No "feels like" yet. Dew point is not in the compact feed, so it is left out.
+- **Settings:** a new "Clock accessories" row in the Clock and calendar card of Appearance opens `ClockAccessoriesScreen`, four cards: (1) Show next alarm, Show battery percentage; (2) Show weather; (3) Units: temperature (Auto, °C, °F), wind speed (Auto, km/h, mph, m/s), rain (Auto, mm, in), pressure (Auto, hPa, inHg, mmHg), Auto following the device locale; (4) Location. Cards 3 and 4 are global, shown only in the Default screen, and hidden as whole cards while weather is off everywhere (default and every facet). The alarm 12-hour cap already exists (`NextAlarmRepository.LOOKAHEAD`), so it is not a setting.
+- **Per facet:** the three show/hide toggles follow the clock block's override (`overrideClock`), stored on the facet like the other clock fields. Confirm in review whether they should have an override flag of their own.
+
+### 1. Privacy, manifest and build (first)
+
+- [x] Manifest declares `INTERNET` (the `tools:node="remove"` is gone). `verifyNoInternetPermission` became `verifyInternetPermission`: it now fails if the merged manifest of either variant *loses* the permission. It can no longer catch a library adding `INTERNET` back, since that is now allowed; the code that uses the network is limited by review and by `CLAUDE.md`'s rule.
+- [x] Updated in this repo: `CLAUDE.md` (the network rule), `docs/architecture/README.md` and `16-flow-billing.md` §6, `play-store-assets/store-listing.md`, `play-store-assets/permission-disclosures.md` (the Data safety top-level answer now says "needs review" and a Weather section was added), and a first `docs/architecture/18-flow-weather.md`.
+- [ ] Still to change: the privacy policy and `features.html` in `../facet-launcher-site` (`build.py` lines 216 and 232 say the app cannot reach the network and does not request `INTERNET`; edit the templates, not the generated HTML), `docs/architecture/01`, and the Data safety answers in Play Console. Do these before any release build.
+- [ ] A setting-off state sends nothing: with weather off nothing touches the network, location or geocoder.
+
+### 2. Settings and persistence
+
+- [ ] `LauncherSettings`: `showNextAlarm` and `showBatteryPercentage` (default on), `weatherEnabled` (default off), unit options (enums with an `AUTO` that resolves from the locale), `weatherLocationMode`, and the chosen city (id, name, latitude, longitude, timezone). DataStore keys and read/write lines in `SettingsRepository`; additive, defaulted fields in `BackupSettings` for the units, mode and city (no coordinates of the current location).
+- [ ] `Facet`/`FacetEntity`: `clockShowAlarm`, `clockShowBattery`, `clockShowWeather`; `FacetDatabase.VERSION` 32 to 33 with a `Migration` (and the weather tables of step 3); `FacetMapping`, `FacetRepository` setters, `BackupBundle` facet fields (additive), and `resolveFacetStyle` (`ResolvedClockStyle` gains the three flags, resolved with `overrideClock`).
+- [ ] `ObserveClockAccessoriesUseCase` and the Home state builder read the resolved flags; today the alarm and battery are always shown when present.
+
+### 3. Weather data (`data/`, `domain/`)
+
+- [x] `WeatherApi` (interface) and `MetWeatherApi` (`data/weather/`, `HttpURLConnection`, `User-Agent` `FacetLauncher/<version> github.com/rohitganjam/facet-launcher`, conditional GET, `Expires`/`Last-Modified`/`Retry-After` parsing, 429 and 403 reported as failures). No new dependency. `parseMetForecast` with `kotlinx.serialization`: hourly and 6-hourly points, every `next_*` block optional, unusable points skipped. The symbol is kept whole (`partlycloudy_day`); splitting day and night is for the icon mapping in step 5. Bound in `data/di/WeatherModule.kt`. Confirm the `User-Agent` contact (the repository URL) before release.
+- [x] Gate and repository: `WeatherRefreshPolicy` (pure: `Expires`, 10-minute interval persisted in `WeatherFetchState`, rate-limit block, a new place skips the first two), `WeatherRepository.refresh(place)` (one refresh at a time, nothing retried, merge of stored hours via `mergeStoredHours`, other place's hours cleared at once), `WeatherStore` interface. The Room-backed store is not written yet.
+- [ ] Room: `weather_hours` (UTC hour primary key, temperature, humidity, pressure, cloud, wind speed and direction, precipitation, symbol) and a single-row `weather_meta` holding `WeatherFetchState` plus the place name and its source. `WeatherDao` and the `WeatherStore` implementation, with the v33 migration from step 2.
+- [ ] `ObserveWeatherUseCase` joins settings, location and weather into `WeatherState` (now, hourly 24 h, daily outlook, summary, units applied). `DayRange` merges stored and fetched hours per local day (zone aware, DST safe). `WeatherUnits` converts and formats (Auto from `Locale`). `SummarizeRainUseCase` as above.
+
+### 4. Location and places (`data/`)
+
+- [ ] `LocationRepository`: permission state, one-shot coarse fix, last-known fallback, the 5 km moved check. Runs only when Home is resumed.
+- [ ] `CityRepository`: asset parser, search by name (prefix and substring, diacritics folded), nearest by coordinates (optionally within a country), timezone lookup. `GeocodingRepository`: reverse and forward `Geocoder` calls behind an interface (API 33 listener wrapped in `suspendCancellableCoroutine`, API 30-32 blocking call on `@IoDispatcher`), debounce and stale-response guards for the search box, results cached by rounded coordinates.
+- [ ] `ResolvePlaceUseCase` (name and zone for a position) and `SearchPlacesUseCase` (Geocoder first, list fallback, de-duplicated).
+- [ ] Bundle the city list in `assets/`, with its credit; record its size and the licence check in this section.
+
+### 5. Home accessory and sheet (`ui/home/`)
+
+- [ ] `ClockAccessoryRow`/`ClockTemplateData` gain a weather item (icon and temperature, 48dp tap, merged semantics "27 degrees, rain"); every template that shows accessories passes it through. Icon mapping from the symbol code (clear, partly cloudy, cloudy, rain, thunder, snow, fog, day/night variants).
+- [ ] `WeatherSheet` (`ui/home/weather/`): the sections above, `@Preview` light and dark, tap on the accessory opens it, refresh button with a spinner and the "Already up to date" message, location-permission and "Turn on location" states, all strings in en/de/es/fr/pt and no hardcoded text.
+- [ ] `HomeViewModel` exposure (state and refresh), `HomeUiEvent` for opening the sheet; the sheet closes on Home press.
+
+### 6. Settings UI (`ui/settings/`)
+
+- [ ] `ClockAccessoriesScreen` and `ClockAccessoriesViewModel` with four `SettingsCard`s (full-bleed rows for the radio and permission rows, control-only rows for dropdowns and switches). Facet-scoped version shows cards 1 and 2 with a link row to the Default screen when weather is on for the facet but off by default.
+- [ ] `WeatherLocationScreen`: mode radios, access row, "Showing weather for", city search (Geocoder results and list, debounced) with the chosen city shown.
+- [ ] New row in `AppearanceSettingsScreen`'s clock card, its summary ("Alarm, battery, weather"), and the preview card showing the weather item.
+
+### 7. Tests
+
+- [x] Done so far (31 tests): `MetForecastParserTest` (a trimmed real response as a fixture in `src/test/resources/weather/`; missing `next_*` blocks), `MetWeatherApiTest` (URL, rounding, `Retry-After`, `Expires`), `WeatherRefreshPolicyTest` (9), `WeatherRepositoryTest` (12: `Expires`, minimum interval, single flight, 304, 429 with and without `Retry-After`, a new place, hours kept and pruned).
+- [ ] Unit, still to write: `WeatherDaoTest`, `FacetDatabaseMigrationTest` (32 to 33), `CityRepositoryTest` (search, nearest, country restriction, timezone), `GeocodingRepositoryTest` (fakes, absent backend), `ResolvePlaceUseCaseTest`, `SummarizeRainUseCaseTest`, `DayRangeTest` (merge with the cache, DST, a zone different from the device's), `WeatherUnitsTest`, `ObserveWeatherUseCaseTest`, additions to `SettingsRepositoryTest`, `ExportBackupUseCaseTest`, `ImportBackupUseCaseTest`, `ObserveClockAccessoriesUseCaseTest`, and a `ClockTextFloorTest` that fails if any date or accessory text size in the templates is below 14sp.
+- [ ] Compose (emulator, pinned serial, no animation-scale changes): the accessory shows and its tap opens the sheet, 48dp target, sheet sections and refresh states, `ClockAccessoriesScreenTest` (cards 3 and 4 hide with weather off, facet version), `WeatherLocationScreenTest`.
+- [ ] Not coverable on the emulator: a real location fix, a real `Geocoder` backend, MET over the network. Check these on a real phone, including a device without Google services.
+
+### 8. Docs and release
+
+- [ ] `docs/architecture`: `01` (privacy claim, Hilt modules and counts, the `INTERNET` exception), `02` (Room tables, v33 step, DataStore keys and writers), `03 §5` (new reactive sources), `04` (packages), `07` (registries), `09` (backup fields), `13` (clock accessories, settings), a new `18-flow-weather.md` with a README row; `TEST_REGISTRY.md` regenerated; the `05` findings reviewed.
+- [ ] Release notes: list weather under New; mention the network use plainly in What's new (`scripts/release.sh --notes-only`).
+
+### Risks and open points
+
+- **The no-network promise** is part of the product's pitch. Weather ends it; the wording change in step 1 is a product decision, not just a copy edit. Weather stays opt-in and off by default.
+- **Rain wording:** MET's symbols call 1.0 mm in an hour "heavy rain". Decide whether to derive the label from millimetres (light under 2.5 mm per hour, moderate to 7.6, heavy above) and keep MET's codes for icons only.
+- **Per-facet scope** of the three toggles (follows `overrideClock`, or its own flag), and the case where a facet turns weather on while the default has it off.
+- **Today's low** is best effort until a day of fetches exists; first run after the low shows the remaining hours' low.
+- **`Geocoder` availability** varies by device; the offline list covers it, but names are English only there. Whether to bundle localised names later.
+- **MET's aggregate limit** (over 20 requests per second across all clients of one application) is far above one install per hour, but check it if the user base grows; a proxy is the escape hatch.
+- **Narrow templates:** the weather item widens the accessory row. Check the pill, box and band templates at larger font scales.
+- **Not specified:** feels-like, UV, alerts, a weather widget on the lock screen.
