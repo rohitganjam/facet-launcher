@@ -55,7 +55,11 @@ internal fun ScaledHomeScreen(
     val context = LocalContext.current
     val sampleMedia = previewMediaPlayer()
     val state = remember(style, settings, content, mode, host, sampleMedia) {
-        val shown = content.copy(mediaPlayer = content.mediaPlayer ?: sampleMedia.takeIf { settings.showMediaPlayerOnHome })
+        val shown = content.copy(
+            mediaPlayer = content.mediaPlayer ?: sampleMedia.takeIf { settings.showMediaPlayerOnHome },
+            clockAccessories = content.clockAccessories ?: previewClockAccessories(),
+            weather = content.weather ?: previewWeather(),
+        )
         val sizing = HomeWidgetSizing(
             defaultSizeDp = { host?.defaultSizeDp(it) },
             resizeFloorDp = { host?.resizeFloorDp(context, it) },

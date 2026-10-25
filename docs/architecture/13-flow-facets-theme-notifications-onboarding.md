@@ -209,6 +209,9 @@ drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one 
 `ClockAccessoriesPreview`: the clock of that scope (template, font, colour, alignment) with a sample alarm, battery and
 weather, following the switches and the icon style as they change. The alarm, battery and weather icons carry the same
 drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).
+`ScaledHomeScreen` (the Appearance card and the facet carousel cards) feeds Home a sample alarm, battery and weather
+(`PreviewAccessorySamples.kt`) when the content has none, so the accessory row shows in those previews, still following the
+facet's three switches.
 
 ## 2. Theme resolution — from DataStore to `MaterialTheme`
 

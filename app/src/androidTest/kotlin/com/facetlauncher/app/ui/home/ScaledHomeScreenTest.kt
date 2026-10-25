@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
@@ -83,6 +85,24 @@ class ScaledHomeScreenTest {
         get() = composeRule
             .onAllNodes(hasTestTag("test_preview_home_app_label_preview.test.one"), useUnmergedTree = true)
             .onFirst().fetchSemanticsNode().boundsInRoot.top
+
+    @Test
+    fun `the preview shows the weather accessory while weather is on`() {
+        // Given a preview of a launcher with weather on
+        setContent { settings().copy(showWeather = true, temperatureUnit = TemperatureUnit.CELSIUS) }
+
+        // Then the sample weather sits in the accessory row
+        composeRule.onNodeWithContentDescription("21°, Partly cloudy", substring = true, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `the preview leaves the weather accessory out while weather is off`() {
+        // Given a preview of a launcher with weather off
+        setContent { settings() }
+
+        // Then there is none
+        composeRule.onNodeWithContentDescription("21°, Partly cloudy", substring = true, useUnmergedTree = true).assertDoesNotExist()
+    }
 
     @Test
     fun `top alignment puts the app list in the upper part of the preview`() {
