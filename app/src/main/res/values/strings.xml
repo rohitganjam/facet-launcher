@@ -494,7 +494,7 @@
     <string name="permission_bluetooth_title">Bluetooth</string>
     <string name="permission_bluetooth_subtitle">Lets facet automation rules react to a paired Bluetooth device, such as your car, and lists paired devices when you set one up.</string>
     <string name="permission_location_title">Location</string>
-    <string name="permission_location_subtitle">Android requires it to read the Wi-Fi network name for rules about a named network. Facet only uses it for that, never to find where you are.</string>
+    <string name="permission_location_subtitle">Android requires it to read the Wi-Fi network name for rules about a named network, and to find the weather where you are when you pick Use current location. Facet uses it for nothing else.</string>
 
     <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
     <string name="settings_facet_automation_title">Facet automation</string>
@@ -1032,14 +1032,16 @@
     <string name="weather_location_current_hint">Approximate, read when you open Home</string>
     <string name="weather_location_city">Choose a city</string>
     <string name="weather_location_city_hint">No location permission needed</string>
-    <string name="weather_location_access">Location access</string>
-    <string name="weather_location_access_allowed">Allowed</string>
-    <string name="weather_location_access_denied">Not allowed</string>
     <string name="weather_location_showing_for">Showing weather for</string>
     <string name="weather_location_search">Search cities</string>
     <string name="weather_location_search_hint">Type a city name</string>
     <string name="weather_location_no_results">No cities found</string>
     <string name="weather_location_none">None yet</string>
+    <string name="weather_permission_location_subtitle">Needed to show the weather where you are. Facet only reads an approximate position, and only while Home is open.</string>
+    <string name="clock_accessories_icons">Icons</string>
+    <string name="weather_icon_style">Weather icons</string>
+    <string name="weather_icon_style_monochrome">Monochrome</string>
+    <string name="weather_icon_style_colored">Colored</string>
     <string name="weather_location_saved_title">Your cities</string>
     <string name="weather_location_pick_prompt">Search for a city below, then tap it to add it here.</string>
     <string name="weather_location_tick_prompt">Select a city to show its weather.</string>
@@ -1053,7 +1055,6 @@
 
     <string name="clock_accessories_inheriting">This facet uses the launcher\'s clock settings. Turn on Override in Clock style to change these.</string>
     <string name="clock_accessories_open_clock_style">Clock style</string>
-    <string name="weather_location_allow">Allow</string>
     <string name="weather_location_current_short">Current location</string>
 
     <!-- About: credits -->

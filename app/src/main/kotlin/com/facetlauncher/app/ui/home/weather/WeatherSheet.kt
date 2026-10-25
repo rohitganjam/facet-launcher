@@ -1,8 +1,5 @@
 package com.facetlauncher.app.ui.home.weather
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +28,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.WeatherHour
@@ -69,9 +67,9 @@ fun WeatherSheet(
     onRefresh: () -> Unit,
     onDismiss: () -> Unit,
     onChooseCity: () -> Unit,
+    onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val requestLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onRefresh() }
     ThemedModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = SHEET_SIDE_PADDING).padding(bottom = 24.dp),
@@ -79,7 +77,7 @@ fun WeatherSheet(
         ) {
             val weather = uiState.weather
             if (weather == null) EmptyWeather() else WeatherContent(weather, uiState)
-            NoticeLine(uiState.notice, onAllowLocation = { requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }, onChooseCity = onChooseCity)
+            NoticeLine(uiState.notice, onAllowLocation = onOpenPermissions, onChooseCity = onChooseCity)
             FooterRow(uiState, onRefresh)
         }
     }
@@ -100,10 +98,10 @@ private fun WeatherContent(weather: WeatherState, uiState: WeatherUiState) {
     val timeFormat = remember(pattern, weather.zone) { DateTimeFormatter.ofPattern(pattern, Locale.getDefault()).withZone(weather.zone) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         rainSummaryText(weather.summary, timeFormat, units.rain)?.let { SummaryBar(it) }
-        Header(weather, units.temperature)
+        Header(weather, units.temperature, uiState.iconStyle)
         HourlyStrip(weather, uiState, timeFormat)
         DetailsGrid(weather, units)
-        Outlook(weather, units.temperature)
+        Outlook(weather, units.temperature, uiState.iconStyle)
     }
 }
 
@@ -118,7 +116,7 @@ private fun SummaryBar(text: String) {
 }
 
 @Composable
-private fun Header(weather: WeatherState, unit: com.facetlauncher.app.data.model.TemperatureUnit) {
+private fun Header(weather: WeatherState, unit: com.facetlauncher.app.data.model.TemperatureUnit, iconStyle: WeatherIconStyle) {
     val condition = conditionOf(weather.now.symbolCode, weather.now.precipitationMm)
     val today = weather.days.firstOrNull()
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -135,7 +133,7 @@ private fun Header(weather: WeatherState, unit: com.facetlauncher.app.data.model
             val range = today?.let { stringResource(R.string.weather_sheet_high_low, temperatureText(it.highC, unit), temperatureText(it.lowC, unit)) }
             Text(listOfNotNull(conditionText, range).joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
-        WeatherIcon(weatherIconKind(condition, isNightSymbol(weather.now.symbolCode)), Ink, Modifier.size(56.dp))
+        WeatherIcon(weatherIconKind(condition, isNightSymbol(weather.now.symbolCode)), Ink, Modifier.size(56.dp), iconStyle)
     }
 }
 

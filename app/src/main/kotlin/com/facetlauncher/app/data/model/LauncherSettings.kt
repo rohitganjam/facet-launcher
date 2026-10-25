@@ -359,6 +359,7 @@ data class LauncherSettings(
     val pressureUnit: PressureUnit = PressureUnit.AUTO,
     val weatherLocationMode: WeatherLocationMode = WeatherLocationMode.CURRENT,
     /** The chosen city; only read under [WeatherLocationMode.CITY]. */
+    val weatherIconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
     val weatherCity: WeatherCity? = null,
     /** Cities kept for quick switching, [weatherCity] among them while one is chosen. */
     val savedWeatherCities: List<WeatherCity> = emptyList(),

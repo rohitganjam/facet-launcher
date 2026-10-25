@@ -140,6 +140,7 @@ private fun BackupSettings.withAccessoriesAndWeather(settings: LauncherSettings)
     rainUnit = settings.rainUnit.name,
     pressureUnit = settings.pressureUnit.name,
     weatherLocationMode = settings.weatherLocationMode.name,
+    weatherIconStyle = settings.weatherIconStyle.name,
     weatherCityName = settings.weatherCity?.name,
     weatherCityLatitude = settings.weatherCity?.latitude,
     weatherCityLongitude = settings.weatherCity?.longitude,

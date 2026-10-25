@@ -202,6 +202,14 @@ ahead, and an "Updated" footer with the MET Norway credit and a refresh button. 
 busy-try-later, offline, location permission needed, no city, and already up to date. Its place line opens Clock
 accessories to choose another place. The About screen carries the MET and GeoNames credit too.
 
+Weather pictures come in two styles, the launcher-wide `weatherIconStyle` (Settings → Clock accessories → Icons): monochrome,
+drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one bundled PNG per picture
+(`res/drawable-nodpi/weather_color_*`, mapped by `coloredRes()`). The style applies to the accessory row and the sheet;
+`HomeWeatherState.iconStyle` and `WeatherUiState.iconStyle` carry it. The Clock accessories screen opens with
+`ClockAccessoriesPreview`: the clock of that scope (template, font, colour, alignment) with a sample alarm, battery and
+weather, following the switches and the icon style as they change. The alarm, battery and weather icons carry the same
+drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).
+
 ## 2. Theme resolution — from DataStore to `MaterialTheme`
 
 ```mermaid

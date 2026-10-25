@@ -445,7 +445,7 @@
     <string name="permission_bluetooth_title">Bluetooth</string>
     <string name="permission_bluetooth_subtitle">Lässt Automatisierungsregeln für Facetten auf ein gekoppeltes Bluetooth-Gerät reagieren, etwa das Auto, und listet gekoppelte Geräte beim Einrichten einer Regel auf.</string>
     <string name="permission_location_title">Standort</string>
-    <string name="permission_location_subtitle">Android verlangt ihn, um den WLAN-Namen für Regeln zu einem bestimmten Netzwerk zu lesen. Facet nutzt ihn nur dafür, nie um den Aufenthaltsort zu ermitteln.</string>
+    <string name="permission_location_subtitle">Android verlangt ihn, um den WLAN-Namen für Regeln zu einem bestimmten Netzwerk zu lesen und um das Wetter an deinem Standort zu finden, wenn du „Aktuellen Standort verwenden“ wählst. Facet nutzt ihn für nichts anderes.</string>
 
     <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
     <string name="settings_facet_automation_title">Facetten-Automatisierung</string>
@@ -953,14 +953,16 @@
     <string name="weather_location_current_hint">Ungefähr, wird beim Öffnen von Home gelesen</string>
     <string name="weather_location_city">Stadt wählen</string>
     <string name="weather_location_city_hint">Keine Standortberechtigung nötig</string>
-    <string name="weather_location_access">Standortzugriff</string>
-    <string name="weather_location_access_allowed">Erlaubt</string>
-    <string name="weather_location_access_denied">Nicht erlaubt</string>
     <string name="weather_location_showing_for">Wetter für</string>
     <string name="weather_location_search">Städte suchen</string>
     <string name="weather_location_search_hint">Gib einen Städtenamen ein</string>
     <string name="weather_location_no_results">Keine Städte gefunden</string>
     <string name="weather_location_none">Noch keine</string>
+    <string name="weather_permission_location_subtitle">Nötig, um das Wetter an deinem Standort anzuzeigen. Facet liest nur eine ungefähre Position, und nur solange Home geöffnet ist.</string>
+    <string name="clock_accessories_icons">Symbole</string>
+    <string name="weather_icon_style">Wettersymbole</string>
+    <string name="weather_icon_style_monochrome">Einfarbig</string>
+    <string name="weather_icon_style_colored">Farbig</string>
     <string name="weather_location_saved_title">Deine Städte</string>
     <string name="weather_location_pick_prompt">Suche unten nach einer Stadt und tippe darauf, um sie hier hinzuzufügen.</string>
     <string name="weather_location_tick_prompt">Wähle eine Stadt, um ihr Wetter anzuzeigen.</string>
@@ -973,7 +975,6 @@
     <string name="weather_leave_choose_city">Stadt wählen</string>
     <string name="clock_accessories_inheriting">Diese Facette nutzt die Uhr-Einstellungen des Launchers. Aktiviere „Überschreiben“ unter Uhrstil, um sie zu ändern.</string>
     <string name="clock_accessories_open_clock_style">Uhrstil</string>
-    <string name="weather_location_allow">Erlauben</string>
     <string name="weather_location_current_short">Aktueller Standort</string>
     <string name="about_weather_credit">Wetterdaten von MET Norway (CC BY 4.0). Städtenamen von GeoNames (CC BY 4.0).</string>
 </resources>

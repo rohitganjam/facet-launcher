@@ -195,7 +195,7 @@ private fun PermissionsHeader(onBack: () -> Unit, modifier: Modifier = Modifier)
 }
 
 @Composable
-private fun PermissionRow(permission: PermissionRowState, onTurnOnClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun PermissionRow(permission: PermissionRowState, onTurnOnClick: () -> Unit, modifier: Modifier = Modifier) {
     // A row that still needs a permission is tappable across its whole width (its action is "Turn on");
     // a granted row has nothing to do, so it isn't. The padding follows clickable so the press
     // highlight spans the full-bleed card.

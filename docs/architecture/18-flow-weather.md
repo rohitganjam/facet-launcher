@@ -71,6 +71,11 @@ Backup carries all of these except the current location and the cache (`docs/09 
 `RefreshWeatherUseCase` is the one entry point for a refresh; Home on resume and the sheet's button are to call it only while
 weather is shown, so with weather off no location is read, no geocoder is asked and no request is made.
 
+- **Order of work.** With a stored place the request for it starts at once while the position is read in parallel, so the
+  accessory does not wait for the fix (cached weather shows immediately anyway); a move of 5 km or more fetches the new
+  place next. With no stored place a last-known position up to two hours old (`recentLocation`) is used before waiting
+  for a fresh fix. A request to MET takes roughly 0.8 s (measured: TLS about 0.33 s, first byte about 0.67 s, 41 KB);
+  the fresh-fix wait, up to 10 s, was the slow part.
 - **Current location** (the default): `LocationRepository` takes one approximate fix (the network provider's current
   location with a 10-second timeout, else the last known), only with `ACCESS_COARSE_LOCATION` or fine, and never
   in the background. Without the permission the result is `NeedsLocationPermission`; with the permission but no fix and no
@@ -129,10 +134,16 @@ header, when sent, sets the earliest next attempt.
   Removing the selected city leaves none selected. Leaving the screen (arrow or back gesture) in city mode with no city selected
   opens "No city selected": *Choose a city* stays, *Use current location* switches mode (and asks for the permission when
   it is missing, leaving once it is granted), *Turn off weather* runs `TurnOffWeatherUseCase` (default and every facet) and leaves.
+- **Location permission row.** The Clock accessories and Location screens show the Permissions screen's own Location row
+  (`WeatherLocationPermissionRow`), and tapping it opens Settings → Permissions (so does the sheet's "Allow"), where the
+  request is made, or App info once Android stops asking. Settings → Permissions → Location now says it serves both the
+  Wi-Fi network name and weather. Switching weather on, or choosing "Use current location", still asks once inline.
 - **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) and **`WeatherLocationScreen`** (`weatherLocation`) edit the
   switches, units, location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
   Location card, and its state is re-read on resume. The city search runs 400 ms after the last keystroke
   (`WeatherLocationViewModel`) through `SearchPlacesUseCase`.
+- **Icons.** `weatherIconStyle` (monochrome by default, coloured optional) is a launcher-wide setting; the coloured set is
+  nine PNGs (192 px) from a third-party pack whose licence is unconfirmed (see `IMPLEMENTATION_PLAN.md`).
 - **Credits:** About lists MET Norway and GeoNames.
 
 Tests: `WeatherConditionTest`, `WeatherViewModelTest` (JVM); `ClockAccessoriesScreenTest`, `WeatherLocationScreenTest` and

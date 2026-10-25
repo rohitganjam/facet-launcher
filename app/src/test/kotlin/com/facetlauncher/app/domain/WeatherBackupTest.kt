@@ -18,6 +18,7 @@ import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import kotlinx.coroutines.flow.flowOf
@@ -68,7 +69,7 @@ class WeatherBackupTest {
                     showNextAlarm = false, showBatteryPercentage = true, showWeather = true,
                     temperatureUnit = TemperatureUnit.FAHRENHEIT, windSpeedUnit = WindSpeedUnit.MPH,
                     rainUnit = RainUnit.INCH, pressureUnit = PressureUnit.INHG,
-                    weatherLocationMode = WeatherLocationMode.CITY, weatherCity = pune, savedWeatherCities = listOf(pune, london),
+                    weatherLocationMode = WeatherLocationMode.CITY, weatherIconStyle = WeatherIconStyle.COLORED, weatherCity = pune, savedWeatherCities = listOf(pune, london),
                 ),
             ),
         )
@@ -89,6 +90,7 @@ class WeatherBackupTest {
         assertTrue(settings.showWeather)
         assertEquals(listOf("FAHRENHEIT", "MPH", "INCH", "INHG"), listOf(settings.temperatureUnit, settings.windSpeedUnit, settings.rainUnit, settings.pressureUnit))
         assertEquals("CITY", settings.weatherLocationMode)
+        assertEquals("COLORED", settings.weatherIconStyle)
         assertEquals(listOf("Pune", 18.52, 73.86, "Asia/Kolkata"), listOf(settings.weatherCityName, settings.weatherCityLatitude, settings.weatherCityLongitude, settings.weatherCityTimezone))
         assertEquals(listOf(BackupWeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata"), BackupWeatherCity("London", 51.51, -0.13, "Europe/London")), settings.savedWeatherCities)
         val exported = bundle.facets[0]
@@ -123,7 +125,7 @@ class WeatherBackupTest {
                 backupSettings().copy(
                     showNextAlarm = false, showBatteryPercentage = false, showWeather = true,
                     temperatureUnit = "FAHRENHEIT", windSpeedUnit = "MPH", rainUnit = "INCH", pressureUnit = "MMHG",
-                    weatherLocationMode = "CITY", weatherCityName = "Pune", weatherCityLatitude = 18.52,
+                    weatherLocationMode = "CITY", weatherIconStyle = "COLORED", weatherCityName = "Pune", weatherCityLatitude = 18.52,
                     weatherCityLongitude = 73.86, weatherCityTimezone = "Asia/Kolkata",
                     savedWeatherCities = listOf(BackupWeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata"), BackupWeatherCity("London", 51.51, -0.13, "Europe/London")),
                 ),
@@ -140,6 +142,7 @@ class WeatherBackupTest {
         verify(settingsRepository).setRainUnit(RainUnit.INCH)
         verify(settingsRepository).setPressureUnit(PressureUnit.MMHG)
         verify(settingsRepository).setWeatherLocationMode(WeatherLocationMode.CITY)
+        verify(settingsRepository).setWeatherIconStyle(WeatherIconStyle.COLORED)
         verify(settingsRepository).setWeatherCity(pune)
         verify(settingsRepository).setSavedWeatherCities(listOf(pune, london))
     }

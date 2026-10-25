@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.model.MAX_SAVED_WEATHER_CITIES
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.decodeWeatherCities
 import com.facetlauncher.app.data.model.encodeWeatherCities
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import kotlinx.coroutines.flow.first
@@ -46,6 +47,7 @@ class WeatherSettingsTest {
         assertEquals(RainUnit.AUTO, settings.rainUnit)
         assertEquals(PressureUnit.AUTO, settings.pressureUnit)
         assertEquals(WeatherLocationMode.CURRENT, settings.weatherLocationMode)
+        assertEquals(WeatherIconStyle.MONOCHROME, settings.weatherIconStyle)
         assertNull(settings.weatherCity)
     }
 
@@ -191,5 +193,14 @@ class WeatherSettingsTest {
 
         assertEquals(listOf(pune, WeatherCity("Odd Name City", 1.0, 2.0, "UTC")), decoded)
         assertEquals(emptyList<WeatherCity>(), decodeWeatherCities("garbage\nonly\tthree\tfields"))
+    }
+
+    @Test
+    fun `the weather icon style round-trips`() = runTest {
+        val repository = SettingsRepository(createDataStore())
+
+        repository.setWeatherIconStyle(WeatherIconStyle.COLORED)
+
+        assertEquals(WeatherIconStyle.COLORED, repository.settings.first().weatherIconStyle)
     }
 }

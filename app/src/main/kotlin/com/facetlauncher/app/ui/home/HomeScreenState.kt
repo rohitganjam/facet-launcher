@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import android.appwidget.AppWidgetHostView
@@ -93,6 +94,7 @@ data class HomeWeatherState(
     val precipitationMm: Double?,
     val temperatureC: Double,
     val temperatureUnit: TemperatureUnit,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
 )
 
 /** The data behind a [HomeItemStyle]: its label colour and weight are options here, resolved to themed values where they are drawn. */

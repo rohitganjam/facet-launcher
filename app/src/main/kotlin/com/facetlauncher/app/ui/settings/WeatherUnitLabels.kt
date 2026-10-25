@@ -5,6 +5,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WindSpeedUnit
 
 @StringRes
@@ -35,4 +36,10 @@ internal fun pressureUnitLabel(unit: PressureUnit): Int = when (unit) {
     PressureUnit.HPA -> R.string.weather_unit_option_hpa
     PressureUnit.INHG -> R.string.weather_unit_option_inhg
     PressureUnit.MMHG -> R.string.weather_unit_option_mmhg
+}
+
+@StringRes
+internal fun weatherIconStyleLabel(style: WeatherIconStyle): Int = when (style) {
+    WeatherIconStyle.MONOCHROME -> R.string.weather_icon_style_monochrome
+    WeatherIconStyle.COLORED -> R.string.weather_icon_style_colored
 }

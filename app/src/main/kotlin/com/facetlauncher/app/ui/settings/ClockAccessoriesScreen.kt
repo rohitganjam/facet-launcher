@@ -37,6 +37,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.ui.components.BackButton
@@ -56,11 +57,12 @@ data class ClockAccessoriesNavigation(
     val onBack: () -> Unit,
     val onOpenClockStyle: () -> Unit,
     val onOpenLocation: () -> Unit,
+    val onOpenPermissions: () -> Unit,
 )
 
 /**
- * "Clock accessories": the next alarm, the battery percentage and the weather next to the clock. Four cards: the alarm and
- * battery switches, the weather switch, then Units and Location (launcher-wide, so only on the default screen and only while
+ * "Clock accessories": the next alarm, the battery percentage and the weather next to the clock. Five cards: the alarm and
+ * battery switches, the weather switch, then Units, Icons and Location (launcher-wide, so only on the default screen and only while
  * weather is on somewhere; each is hidden as a whole card). Scoped to a facet it shows just the switches, and they apply while
  * that facet overrides the clock.
  */
@@ -94,7 +96,7 @@ fun ClockAccessoriesScreen(
             onWindSpeedUnit = viewModel::setWindSpeedUnit,
             onRainUnit = viewModel::setRainUnit,
             onPressureUnit = viewModel::setPressureUnit,
-            onAllowLocation = { requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION) },
+            onIconStyle = viewModel::setWeatherIconStyle,
         ),
         modifier = modifier,
     )
@@ -108,7 +110,7 @@ data class ClockAccessoriesActions(
     val onWindSpeedUnit: (WindSpeedUnit) -> Unit = {},
     val onRainUnit: (RainUnit) -> Unit = {},
     val onPressureUnit: (PressureUnit) -> Unit = {},
-    val onAllowLocation: () -> Unit = {},
+    val onIconStyle: (WeatherIconStyle) -> Unit = {},
 )
 
 @Composable
@@ -136,11 +138,13 @@ internal fun ClockAccessoriesContent(
             BackButton(onClick = navigation.onBack)
             Text(text = stringResource(R.string.clock_accessories_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         }
+        ClockAccessoriesPreview(uiState)
         if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)
         if (uiState.showGlobalCards) {
             UnitsCard(uiState.settings, actions)
-            LocationCard(uiState, actions, navigation.onOpenLocation)
+            IconStyleCard(uiState.settings, actions)
+            LocationCard(uiState, navigation.onOpenLocation, navigation.onOpenPermissions)
         }
         if (uiState.isFacetScoped && uiState.weatherEnabledAnywhere) {
             Text(stringResource(R.string.clock_accessories_facet_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
@@ -215,9 +219,25 @@ private fun UnitsCard(settings: LauncherSettings, actions: ClockAccessoriesActio
     }
 }
 
-/** Card four: a link to where the weather is for, and the permission it needs while it follows the phone. Global, never per facet. */
+/** Card four: monochrome or coloured weather pictures. Global, never per facet. */
 @Composable
-private fun LocationCard(uiState: ClockAccessoriesUiState, actions: ClockAccessoriesActions, onOpenLocation: () -> Unit) {
+private fun IconStyleCard(settings: LauncherSettings, actions: ClockAccessoriesActions) {
+    SettingsSectionHeader(stringResource(R.string.clock_accessories_icons))
+    SettingsCard {
+        LabeledDropdownRow(
+            title = stringResource(R.string.weather_icon_style),
+            options = WeatherIconStyle.entries,
+            selected = settings.weatherIconStyle,
+            label = { stringResource(weatherIconStyleLabel(it)) },
+            onSelect = actions.onIconStyle,
+            testTag = "icon_style_row",
+        )
+    }
+}
+
+/** Card five: a link to where the weather is for, and the permission it needs while it follows the phone. Global, never per facet. */
+@Composable
+private fun LocationCard(uiState: ClockAccessoriesUiState, onOpenLocation: () -> Unit, onOpenPermissions: () -> Unit) {
     val settings = uiState.settings
     SettingsSectionHeader(stringResource(R.string.clock_accessories_location))
     SettingsCard(fullBleedRows = true) {
@@ -234,23 +254,7 @@ private fun LocationCard(uiState: ClockAccessoriesUiState, actions: ClockAccesso
         )
         if (settings.weatherLocationMode == WeatherLocationMode.CURRENT) {
             CardDivider()
-            PermissionRow(uiState.locationPermissionGranted, actions.onAllowLocation)
-        }
-    }
-}
-
-@Composable
-internal fun PermissionRow(granted: Boolean, onAllow: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = com.facetlauncher.app.ui.components.LocalSettingsRowInset.current, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(stringResource(R.string.weather_location_access), style = MaterialTheme.typography.bodyLarge, color = Ink)
-        if (granted) {
-            Text(stringResource(R.string.weather_location_access_allowed), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        } else {
-            TextActionButton(stringResource(R.string.weather_location_allow), onAllow)
+            WeatherLocationPermissionRow(uiState.locationPermissionGranted, onOpenPermissions)
         }
     }
 }
@@ -262,7 +266,7 @@ private fun ClockAccessoriesScreenPreview() {
     FacetLauncherTheme {
         ClockAccessoriesContent(
             uiState = ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true, locationPermissionGranted = true),
-            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenLocation = {}),
+            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenLocation = {}, onOpenPermissions = {}),
             actions = ClockAccessoriesActions(),
         )
     }

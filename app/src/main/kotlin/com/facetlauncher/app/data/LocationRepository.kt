@@ -43,6 +43,18 @@ class LocationRepository @Inject constructor(
         }
     }
 
+    /** The last position the system knows if it is at most [maxAgeMs] old, without waiting for a new fix; else `null`. */
+    suspend fun recentLocation(maxAgeMs: Long): DeviceLocation? {
+        val manager = locationManager
+        return if (manager == null || !isPermissionGranted()) {
+            null
+        } else {
+            withContext(ioDispatcher) {
+                lastKnown(manager)?.takeIf { System.currentTimeMillis() - it.time <= maxAgeMs }?.toDeviceLocation()
+            }
+        }
+    }
+
     private suspend fun fresh(manager: LocationManager): Location? =
         if (!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             null

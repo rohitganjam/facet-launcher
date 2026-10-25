@@ -195,6 +195,7 @@ fun FacetNavHost(
                     navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                 },
                 onNavigateToClockAccessories = { navController.navigate(FacetDestinations.clockAccessories()) },
+                onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToClockStyleGallery = { facetId ->
                     val dest = if (facetId != null) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                     navController.navigate(dest)
@@ -264,11 +265,15 @@ fun FacetNavHost(
                         navController.navigate(dest)
                     },
                     onOpenLocation = { navController.navigate(FacetDestinations.WEATHER_LOCATION) },
+                    onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 ),
             )
         }
         settingsComposable(FacetDestinations.WEATHER_LOCATION) {
-            WeatherLocationScreen(onBack = { navController.popBackStackSafely() })
+            WeatherLocationScreen(
+                onBack = { navController.popBackStackSafely() },
+                onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+            )
         }
         settingsComposable(
             FacetDestinations.DOCK_APPS_APPEARANCE,

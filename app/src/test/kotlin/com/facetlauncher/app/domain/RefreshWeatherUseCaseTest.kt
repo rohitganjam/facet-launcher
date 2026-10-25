@@ -119,11 +119,29 @@ class RefreshWeatherUseCaseTest {
         storedState(WeatherFetchState(place = bengaluru, placeName = "Bengaluru", placeNameSource = PlaceNameSource.GEOCODER))
         `when`(locationRepository.isPermissionGranted()).thenReturn(true)
         `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(18.5204, 73.8567, null))
+        `when`(weatherRepository.refresh(bengaluru)).thenReturn(RefreshOutcome.UpToDate)
         `when`(weatherRepository.refresh(WeatherPlace(18.52, 73.86))).thenReturn(RefreshOutcome.Updated)
 
-        useCase()
+        val result = useCase()
 
+        // Then the stored place was fetched without waiting for the fix, and the new place after it
+        assertEquals(WeatherRefreshResult.Done(RefreshOutcome.Updated), result)
+        verify(weatherRepository).refresh(bengaluru)
         verify(weatherRepository).refresh(WeatherPlace(18.52, 73.86))
+    }
+
+    @Test
+    fun `a first fetch uses a recent last known position without waiting for a fresh fix`() = runTest {
+        settings(WeatherLocationMode.CURRENT)
+        storedState(WeatherFetchState())
+        `when`(locationRepository.isPermissionGranted()).thenReturn(true)
+        `when`(locationRepository.recentLocation(RefreshWeatherUseCase.RECENT_FIX_MS)).thenReturn(DeviceLocation(12.9716, 77.5946, null))
+        `when`(weatherRepository.refresh(bengaluru)).thenReturn(RefreshOutcome.Updated)
+
+        val result = useCase()
+
+        assertEquals(WeatherRefreshResult.Done(RefreshOutcome.Updated), result)
+        verify(locationRepository, never()).currentLocation()
     }
 
     @Test

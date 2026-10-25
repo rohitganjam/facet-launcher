@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.stringResource
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.domain.conditionOf
 import com.facetlauncher.app.domain.isNightSymbol
@@ -24,7 +25,8 @@ fun rememberClockWeatherAccessory(weather: HomeWeatherState?, onClick: () -> Uni
     }
     val currentOnClick by rememberUpdatedState(onClick)
     val kind = weatherIconKind(condition, isNightSymbol(weather?.symbolCode))
-    return remember(temperature, description, kind) {
-        if (temperature == null || description == null) null else ClockWeatherAccessory(kind, temperature, description) { currentOnClick() }
+    val iconStyle = weather?.iconStyle ?: WeatherIconStyle.MONOCHROME
+    return remember(temperature, description, kind, iconStyle) {
+        if (temperature == null || description == null) null else ClockWeatherAccessory(kind, temperature, description, iconStyle) { currentOnClick() }
     }
 }

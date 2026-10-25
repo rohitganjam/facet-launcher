@@ -22,8 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.ui.home.weather.WeatherIcon
 import com.facetlauncher.app.ui.home.weather.WeatherIconKind
+import com.facetlauncher.app.ui.theme.homeIconShadow
 import com.facetlauncher.app.ui.theme.homeTextShadow
 
 /**
@@ -35,6 +37,7 @@ data class ClockWeatherAccessory(
     val iconKind: WeatherIconKind,
     val temperatureText: String,
     val contentDescription: String,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
     val onClick: () -> Unit,
 )
 
@@ -72,7 +75,7 @@ fun WeatherAccessoryContent(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        WeatherIcon(weather.iconKind, color, Modifier.size(WeatherIconBoxSize).clearAndSetSemantics { })
+        WeatherIcon(weather.iconKind, color, Modifier.size(WeatherIconBoxSize).homeIconShadow(color).clearAndSetSemantics { }, weather.iconStyle)
         Text(
             text = weather.temperatureText,
             style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)),

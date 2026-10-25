@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home.weather
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -18,6 +19,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.res.painterResource
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.WeatherCondition
 
 /** The few pictures weather needs: [WeatherCondition] and day or night pick one. */
@@ -37,9 +40,16 @@ internal const val ICON_GRID = 24f
 internal const val ICON_STROKE = 1.8f
 private const val RAY_COUNT = 8
 
-/** A weather picture in [tint], drawn on a 24 by 24 grid scaled to the box, so it is crisp at any size. Decorative: callers describe the weather in words. */
+/**
+ * A weather picture. Monochrome ([style] `MONOCHROME`) is drawn in [tint] on a 24 by 24 grid scaled to the box, so it is
+ * crisp at any size; coloured ignores [tint]. Decorative: callers describe the weather in words.
+ */
 @Composable
-fun WeatherIcon(kind: WeatherIconKind, tint: Color, modifier: Modifier = Modifier) {
+fun WeatherIcon(kind: WeatherIconKind, tint: Color, modifier: Modifier = Modifier, style: WeatherIconStyle = WeatherIconStyle.MONOCHROME) {
+    if (style == WeatherIconStyle.COLORED) {
+        Image(painter = painterResource(kind.coloredRes()), contentDescription = null, modifier = modifier)
+        return
+    }
     Canvas(modifier = modifier) {
         val factor = size.minDimension / ICON_GRID
         scale(factor, factor, pivot = Offset.Zero) { drawKind(kind, tint) }

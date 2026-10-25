@@ -48,6 +48,7 @@ import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.data.model.MAX_SAVED_WEATHER_CITIES
@@ -118,6 +119,7 @@ private object Keys {
     val RAIN_UNIT = stringPreferencesKey("rain_unit")
     val PRESSURE_UNIT = stringPreferencesKey("pressure_unit")
     val WEATHER_LOCATION_MODE = stringPreferencesKey("weather_location_mode")
+    val WEATHER_ICON_STYLE = stringPreferencesKey("weather_icon_style")
     val WEATHER_CITY_NAME = stringPreferencesKey("weather_city_name")
     val WEATHER_CITY_LATITUDE = doublePreferencesKey("weather_city_latitude")
     val WEATHER_CITY_LONGITUDE = doublePreferencesKey("weather_city_longitude")
@@ -244,6 +246,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.pressureUnit,
             weatherLocationMode = preferences[Keys.WEATHER_LOCATION_MODE]?.let { runCatching { WeatherLocationMode.valueOf(it) }.getOrNull() }
                 ?: defaults.weatherLocationMode,
+            weatherIconStyle = preferences[Keys.WEATHER_ICON_STYLE]?.let { runCatching { WeatherIconStyle.valueOf(it) }.getOrNull() }
+                ?: defaults.weatherIconStyle,
             weatherCity = preferences.readWeatherCity(),
             savedWeatherCities = preferences.readSavedWeatherCities(),
             homeAppsFontWeight = preferences[Keys.HOME_APPS_FONT_WEIGHT]?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() }
@@ -495,6 +499,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setPressureUnit(unit: PressureUnit) {
         dataStore.edit { it[Keys.PRESSURE_UNIT] = unit.name }
+    }
+
+    suspend fun setWeatherIconStyle(style: WeatherIconStyle) {
+        dataStore.edit { it[Keys.WEATHER_ICON_STYLE] = style.name }
     }
 
     suspend fun setWeatherLocationMode(mode: WeatherLocationMode) {

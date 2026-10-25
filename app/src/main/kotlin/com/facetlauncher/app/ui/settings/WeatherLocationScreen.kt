@@ -79,6 +79,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 @Composable
 fun WeatherLocationScreen(
     onBack: () -> Unit,
+    onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WeatherLocationViewModel = hiltViewModel(),
 ) {
@@ -102,7 +103,7 @@ fun WeatherLocationScreen(
         onBack = { if (needsCity) askingToLeave = true else onBack() },
         onUseCurrentLocation = useCurrentLocation,
         onUseCityMode = viewModel::useCityMode,
-        onAllowLocation = { requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION) },
+        onOpenPermissions = onOpenPermissions,
         onQueryChange = viewModel::onQueryChange,
         onChooseCity = viewModel::chooseCity,
         onSelectSavedCity = viewModel::selectSavedCity,
@@ -128,7 +129,7 @@ internal fun WeatherLocationContent(
     onBack: () -> Unit,
     onUseCurrentLocation: () -> Unit,
     onUseCityMode: () -> Unit,
-    onAllowLocation: () -> Unit,
+    onOpenPermissions: () -> Unit,
     onQueryChange: (String) -> Unit,
     onChooseCity: (PlaceCandidate) -> Unit,
     onSelectSavedCity: (WeatherCity) -> Unit,
@@ -172,7 +173,7 @@ internal fun WeatherLocationContent(
         }
         if (uiState.mode == WeatherLocationMode.CURRENT) {
             SettingsCard(fullBleedRows = true) {
-                PermissionRow(uiState.permissionGranted, onAllowLocation)
+                WeatherLocationPermissionRow(uiState.permissionGranted, onOpenPermissions)
                 uiState.showingFor?.let { name ->
                     CardDivider()
                     ValueRow(stringResource(R.string.weather_location_showing_for), name)
@@ -356,7 +357,7 @@ private fun WeatherLocationScreenPreview() {
             onBack = {},
             onUseCurrentLocation = {},
             onUseCityMode = {},
-            onAllowLocation = {},
+            onOpenPermissions = {},
             onQueryChange = {},
             onChooseCity = {},
             onSelectSavedCity = {},

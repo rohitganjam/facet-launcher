@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.font.FontFamily
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.ui.home.weather.WeatherIconKind
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
@@ -39,6 +40,15 @@ class ClockWeatherAccessoryTest {
         setContent(ClockWeatherAccessory(WeatherIconKind.RAIN, "27°", description) {})
 
         // Then the accessory is one spoken button, not a loose icon and number
+        composeRule.onNodeWithContentDescription(description).assertHasClickAction()
+    }
+
+    @Test
+    fun aColouredAccessoryIsStillOneSpokenButton() {
+        // Given a weather accessory drawn with the coloured pictures
+        setContent(ClockWeatherAccessory(WeatherIconKind.RAIN, "27°", description, WeatherIconStyle.COLORED) {})
+
+        // Then it speaks and taps the same way
         composeRule.onNodeWithContentDescription(description).assertHasClickAction()
     }
 

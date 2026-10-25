@@ -9,6 +9,9 @@ enum class RainUnit { AUTO, MM, INCH }
 
 enum class PressureUnit { AUTO, HPA, INHG, MMHG }
 
+/** How weather pictures are drawn: in the surrounding text colour, or in their own colours. Launcher-wide. */
+enum class WeatherIconStyle { MONOCHROME, COLORED }
+
 /** Where the weather is for: the phone's own position, or one chosen city. Launcher-wide, never per facet. */
 enum class WeatherLocationMode { CURRENT, CITY }
 

@@ -141,6 +141,7 @@ data class BackupSettings(
     val rainUnit: String = RainUnit.AUTO.name,
     val pressureUnit: String = PressureUnit.AUTO.name,
     val weatherLocationMode: String = WeatherLocationMode.CURRENT.name,
+    val weatherIconStyle: String = WeatherIconStyle.MONOCHROME.name,
     val weatherCityName: String? = null,
     val weatherCityLatitude: Double? = null,
     val weatherCityLongitude: Double? = null,

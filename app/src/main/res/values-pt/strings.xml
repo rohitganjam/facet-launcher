@@ -445,7 +445,7 @@
     <string name="permission_bluetooth_title">Bluetooth</string>
     <string name="permission_bluetooth_subtitle">Permite que as regras de automação de facetas reajam a um dispositivo Bluetooth pareado, como o carro, e lista os dispositivos pareados ao configurar uma regra.</string>
     <string name="permission_location_title">Localização</string>
-    <string name="permission_location_subtitle">O Android exige essa permissão para ler o nome da rede Wi-Fi em regras de uma rede específica. O Facet a usa só para isso, nunca para saber onde você está.</string>
+    <string name="permission_location_subtitle">O Android exige essa permissão para ler o nome da rede Wi-Fi em regras de uma rede específica e para buscar o tempo de onde você está quando escolhe Usar a localização atual. O Facet não a usa para mais nada.</string>
 
     <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
     <string name="settings_facet_automation_title">Automação de facetas</string>
@@ -953,14 +953,16 @@
     <string name="weather_location_current_hint">Aproximada, lida ao abrir o Home</string>
     <string name="weather_location_city">Escolher uma cidade</string>
     <string name="weather_location_city_hint">Não precisa de permissão de localização</string>
-    <string name="weather_location_access">Acesso à localização</string>
-    <string name="weather_location_access_allowed">Permitido</string>
-    <string name="weather_location_access_denied">Não permitido</string>
     <string name="weather_location_showing_for">Mostrando o clima de</string>
     <string name="weather_location_search">Buscar cidades</string>
     <string name="weather_location_search_hint">Digite o nome de uma cidade</string>
     <string name="weather_location_no_results">Nenhuma cidade encontrada</string>
     <string name="weather_location_none">Nenhuma ainda</string>
+    <string name="weather_permission_location_subtitle">Necessário para mostrar o tempo de onde você está. O Facet lê só uma posição aproximada, e só enquanto o Home está aberto.</string>
+    <string name="clock_accessories_icons">Ícones</string>
+    <string name="weather_icon_style">Ícones do tempo</string>
+    <string name="weather_icon_style_monochrome">Monocromático</string>
+    <string name="weather_icon_style_colored">Colorido</string>
     <string name="weather_location_saved_title">Suas cidades</string>
     <string name="weather_location_pick_prompt">Pesquise uma cidade abaixo e toque nela para adicioná-la aqui.</string>
     <string name="weather_location_tick_prompt">Selecione uma cidade para mostrar o tempo dela.</string>
@@ -973,7 +975,6 @@
     <string name="weather_leave_choose_city">Escolher uma cidade</string>
     <string name="clock_accessories_inheriting">Esta faceta usa as configurações de relógio do launcher. Ative «Personalizar» em Estilo do relógio para alterá-las.</string>
     <string name="clock_accessories_open_clock_style">Estilo do relógio</string>
-    <string name="weather_location_allow">Permitir</string>
     <string name="weather_location_current_short">Localização atual</string>
     <string name="about_weather_credit">Dados do clima da MET Norway (CC BY 4.0). Nomes de cidades do GeoNames (CC BY 4.0).</string>
 </resources>

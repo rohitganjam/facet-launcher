@@ -98,6 +98,7 @@ fun HomeDrawerRoute(
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
     /** Opens the Clock accessories settings (where the weather location is chosen), from the weather sheet. */
     onNavigateToClockAccessories: () -> Unit = {},
+    onNavigateToPermissions: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     weatherViewModel: WeatherViewModel = hiltViewModel(),
@@ -437,6 +438,10 @@ fun HomeDrawerRoute(
                 onChooseCity = {
                     overlays.showWeatherSheet = false
                     onNavigateToClockAccessories()
+                },
+                onOpenPermissions = {
+                    overlays.showWeatherSheet = false
+                    onNavigateToPermissions()
                 },
             )
         }

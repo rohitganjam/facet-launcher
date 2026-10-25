@@ -115,4 +115,5 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings) = HomeWeather
     precipitationMm = now.precipitationMm,
     temperatureC = now.temperatureC,
     temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
+    iconStyle = settings.weatherIconStyle,
 )

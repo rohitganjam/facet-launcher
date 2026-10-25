@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home.weather
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
@@ -44,6 +45,7 @@ data class WeatherUiState(
     val isRefreshing: Boolean = false,
     /** The launcher's 12 or 24-hour setting, for the hourly labels. */
     val use24HourTime: Boolean = false,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
 )
 
 /**
@@ -76,6 +78,7 @@ class WeatherViewModel @Inject constructor(
             notice = notice,
             isRefreshing = refreshing,
             use24HourTime = settings.use24HourTime,
+            iconStyle = settings.weatherIconStyle,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), WeatherUiState())
 

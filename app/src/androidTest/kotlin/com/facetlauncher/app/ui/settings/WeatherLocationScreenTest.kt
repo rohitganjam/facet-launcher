@@ -39,7 +39,7 @@ class WeatherLocationScreenTest {
                     onBack = {},
                     onUseCurrentLocation = onUseCurrentLocation,
                     onUseCityMode = onUseCityMode,
-                    onAllowLocation = {},
+                    onOpenPermissions = {},
                     onQueryChange = onQueryChange,
                     onChooseCity = onChooseCity,
                     onSelectSavedCity = onSelectSavedCity,

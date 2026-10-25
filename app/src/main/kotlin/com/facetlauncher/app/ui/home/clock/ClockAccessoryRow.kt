@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.theme.homeIconShadow
 import com.facetlauncher.app.ui.theme.homeTextShadow
 
 /**
@@ -34,7 +35,7 @@ fun AlarmAccessoryContent(
 ) {
     if (text == null) return
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        AlarmClockIcon(tint = color, modifier = Modifier.size(ClockAccessoryIconSize))
+        AlarmClockIcon(tint = color, modifier = Modifier.size(ClockAccessoryIconSize).homeIconShadow(color))
         Text(text = text, style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color)
     }
 }
@@ -61,7 +62,7 @@ fun BatteryAccessoryContent(
 ) {
     if (percent == null) return
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize))
+        BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize).homeIconShadow(mutedColor))
         Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
     }
 }

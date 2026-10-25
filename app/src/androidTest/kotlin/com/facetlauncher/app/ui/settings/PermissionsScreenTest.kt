@@ -113,7 +113,7 @@ class PermissionsScreenTest {
 
         composeRule.onNodeWithText("Location").assertExists()
         composeRule.onNodeWithText(
-            "Android requires it to read the Wi-Fi network name for rules about a named network. Facet only uses it for that, never to find where you are.",
+            "Android requires it to read the Wi-Fi network name for rules about a named network, and to find the weather where you are when you pick Use current location. Facet uses it for nothing else.",
         ).assertExists()
         composeRule.onNodeWithTag("permission_row_LOCATION").assertHasClickAction()
         composeRule.onNodeWithTag("permission_turn_on_LOCATION", useUnmergedTree = true).assertExists()

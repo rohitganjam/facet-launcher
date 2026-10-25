@@ -12,7 +12,7 @@ import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
-import com.facetlauncher.app.data.model.WeatherLocationMode
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.domain.resolveFacetStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,10 +39,10 @@ data class ClockAccessoriesUiState(
 
     /** A facet's own switches count only while it overrides the clock; until then they show what it inherits and cannot be edited here. */
     val isInheriting: Boolean get() = facet != null && !facet.overrideClock
-    private val clock get() = resolveFacetStyle(facet, settings).clock
-    val showAlarm: Boolean get() = clock.showAlarm
-    val showBattery: Boolean get() = clock.showBattery
-    val showWeather: Boolean get() = clock.showWeather
+    val clockStyle get() = resolveFacetStyle(facet, settings).clock
+    val showAlarm: Boolean get() = clockStyle.showAlarm
+    val showBattery: Boolean get() = clockStyle.showBattery
+    val showWeather: Boolean get() = clockStyle.showWeather
 
     /** The Units and Location cards: launcher-wide, so only on the default screen, and only while weather is on somewhere. */
     val showGlobalCards: Boolean get() = !isFacetScoped && weatherEnabledAnywhere
@@ -91,7 +91,7 @@ class ClockAccessoriesViewModel @Inject constructor(
 
     fun setPressureUnit(unit: PressureUnit) = launch { settingsRepository.setPressureUnit(unit) }
 
-    fun setLocationMode(mode: WeatherLocationMode) = launch { settingsRepository.setWeatherLocationMode(mode) }
+    fun setWeatherIconStyle(style: WeatherIconStyle) = launch { settingsRepository.setWeatherIconStyle(style) }
 
     /** Writes to this facet when the screen is scoped to one, else to the launcher defaults. */
     private fun write(global: suspend SettingsRepository.() -> Unit, facet: suspend FacetRepository.(Long) -> Unit) = launch {

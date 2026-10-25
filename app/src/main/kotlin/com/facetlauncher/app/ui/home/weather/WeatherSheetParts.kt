@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.WeatherHour
@@ -92,7 +93,7 @@ internal fun HourColumn(hour: WeatherHour, isNow: Boolean, timeFormat: DateTimeF
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = Muted, maxLines = 1)
-        WeatherIcon(weatherIconKind(condition, isNightSymbol(hour.symbolCode)), Ink, Modifier.size(HOUR_ICON_SIZE))
+        WeatherIcon(weatherIconKind(condition, isNightSymbol(hour.symbolCode)), Ink, Modifier.size(HOUR_ICON_SIZE), uiState.iconStyle)
         Text(temperatureText(hour.temperatureC, units.temperature), style = MaterialTheme.typography.bodyMedium, color = Ink)
         val rain = hour.precipitationMm?.takeIf { it > 0.0 }
         Text(
@@ -141,18 +142,18 @@ internal fun DetailCell(label: String, value: String, modifier: Modifier = Modif
 }
 
 @Composable
-internal fun Outlook(weather: WeatherState, unit: com.facetlauncher.app.data.model.TemperatureUnit) {
+internal fun Outlook(weather: WeatherState, unit: com.facetlauncher.app.data.model.TemperatureUnit, iconStyle: WeatherIconStyle) {
     val today = LocalDate.now(weather.zone)
     Column(modifier = Modifier.fillMaxWidth().background(SurfaceContainer, MaterialTheme.shapes.medium).padding(horizontal = 12.dp, vertical = 4.dp)) {
         weather.days.take(OUTLOOK_DAYS).forEachIndexed { index, day ->
             if (index > 0) HorizontalDivider(color = Hairline)
-            OutlookRow(day, isToday = day.date == today, unit)
+            OutlookRow(day, isToday = day.date == today, unit, iconStyle)
         }
     }
 }
 
 @Composable
-internal fun OutlookRow(day: WeatherDay, isToday: Boolean, unit: com.facetlauncher.app.data.model.TemperatureUnit) {
+internal fun OutlookRow(day: WeatherDay, isToday: Boolean, unit: com.facetlauncher.app.data.model.TemperatureUnit, iconStyle: WeatherIconStyle) {
     val condition = conditionOf(day.symbolCode)
     val label = if (isToday) {
         stringResource(R.string.weather_sheet_today)
@@ -161,7 +162,7 @@ internal fun OutlookRow(day: WeatherDay, isToday: Boolean, unit: com.facetlaunch
     }
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = Ink, modifier = Modifier.width(72.dp))
-        WeatherIcon(weatherIconKind(condition, night = false), Ink, Modifier.size(HOUR_ICON_SIZE))
+        WeatherIcon(weatherIconKind(condition, night = false), Ink, Modifier.size(HOUR_ICON_SIZE), iconStyle)
         Spacer(Modifier.weight(1f))
         Text(temperatureText(day.lowC, unit), style = MaterialTheme.typography.bodyMedium, color = Muted)
         Text(temperatureText(day.highC, unit), style = MaterialTheme.typography.bodyMedium, color = Ink, modifier = Modifier.width(44.dp))
