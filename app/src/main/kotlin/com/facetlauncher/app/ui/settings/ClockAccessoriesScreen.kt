@@ -145,14 +145,13 @@ internal fun ClockAccessoriesContent(
         SwitchesCards(uiState, actions)
         if (uiState.showIconStyleCard) IconStyleCard(uiState, actions)
         if (uiState.showGlobalCards) {
+            Text(stringResource(R.string.clock_accessories_global_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
             UnitsCard(uiState.settings, actions)
             LocationCard(uiState, navigation.onOpenLocation, navigation.onOpenPermissions)
         }
         if (uiState.showDefaultsLink) WeatherDefaultsCard(navigation.onOpenDefaults)
         if (uiState.isFacetScoped && uiState.weatherEnabledAnywhere) {
             Text(stringResource(R.string.clock_accessories_facet_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
-        } else if (uiState.showGlobalCards) {
-            Text(stringResource(R.string.clock_accessories_global_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.facetlauncher.app.data.model.Facet
@@ -12,6 +13,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -52,6 +54,17 @@ class ClockAccessoriesScreenTest {
         composeRule.onNodeWithTag("unit_temperature_row").assertExists()
         composeRule.onNodeWithTag("icon_style_row").assertExists()
         composeRule.onNodeWithTag("accessory_location_row").assertExists()
+    }
+
+    @Test
+    fun theUnitsAndLocationNoteSitsAboveTheUnitsCard() {
+        // Given weather on for the launcher default
+        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+
+        // Then the note about every facet is above the first Units row, not below the cards
+        val note = composeRule.onNodeWithText("Units and location apply to every facet.").fetchSemanticsNode().boundsInRoot
+        val units = composeRule.onNodeWithTag("unit_temperature_row").performScrollTo().fetchSemanticsNode().boundsInRoot
+        assertTrue("note ${note.top} should be above units ${units.top}", note.top < units.top)
     }
 
     @Test
