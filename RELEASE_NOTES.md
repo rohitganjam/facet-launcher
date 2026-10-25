@@ -1,4 +1,4 @@
-# Facet Launcher 0.1.30
+# Facet Launcher 0.1.31
 
 ## New Features
 - **Weather on your clock:** The current weather icon and temperature can now appear next to the alarm and battery under the clock. Tap it to see a 24-hour forecast, current details and the outlook for the coming days. Forecasts come from MET Norway.
