@@ -34,7 +34,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.resolve
 
-private val PREVIEW_HEIGHT = 340.dp
+private val PREVIEW_HEIGHT = 350.dp
 private const val RECENT_SAMPLE_COUNT = 2
 private const val FOLDER_SAMPLE_APP_COUNT = 2
 private const val HOUR_MILLIS = 60 * 60 * 1000L
