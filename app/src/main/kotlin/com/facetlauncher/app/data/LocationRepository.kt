@@ -55,6 +55,7 @@ class LocationRepository @Inject constructor(
         }
     }
 
+    @Suppress("MissingPermission") // checked by isPermissionGranted() before any call; a revoked grant is caught below
     private suspend fun fresh(manager: LocationManager): Location? =
         if (!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             null
@@ -63,8 +64,13 @@ class LocationRepository @Inject constructor(
                 suspendCancellableCoroutine { continuation ->
                     val signal = CancellationSignal()
                     continuation.invokeOnCancellation { signal.cancel() }
-                    manager.getCurrentLocation(LocationManager.NETWORK_PROVIDER, signal, Runnable::run) { location ->
-                        if (continuation.isActive) continuation.resume(location)
+                    try {
+                        manager.getCurrentLocation(LocationManager.NETWORK_PROVIDER, signal, Runnable::run) { location ->
+                            if (continuation.isActive) continuation.resume(location)
+                        }
+                    } catch (_: SecurityException) {
+                        // The permission was taken away between the check and the call: no fresh fix.
+                        if (continuation.isActive) continuation.resume(null)
                     }
                 }
             }
