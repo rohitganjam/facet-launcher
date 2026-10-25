@@ -207,7 +207,8 @@ drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one 
 (`res/drawable-nodpi/weather_color_*`, mapped by `coloredRes()`). The style applies to the accessory row and the sheet;
 `HomeWeatherState.iconStyle` and `WeatherUiState.iconStyle` carry it. The Clock accessories screen opens with
 `ClockAccessoriesPreview`: the clock of that scope (template, font, colour, alignment) with a sample alarm, battery and
-weather, following the switches and the icon style as they change. The alarm, battery and weather icons carry the same
+weather, following the switches and the icon style as they change. The Icons card also carries `WeatherIconsPreviewRow`:
+all nine weather pictures in the selected style. The alarm, battery and weather icons carry the same
 drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).
 `ScaledHomeScreen` (the Appearance card and the facet carousel cards) feeds Home a sample alarm, battery and weather
 (`PreviewAccessorySamples.kt`) when the content has none, so the accessory row shows in those previews, still following the

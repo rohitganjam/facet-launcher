@@ -232,6 +232,8 @@ private fun IconStyleCard(settings: LauncherSettings, actions: ClockAccessoriesA
             onSelect = actions.onIconStyle,
             testTag = "icon_style_row",
         )
+        CardDivider()
+        WeatherIconsPreviewRow(style = settings.weatherIconStyle)
     }
 }
 

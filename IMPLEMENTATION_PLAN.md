@@ -4314,3 +4314,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 ## App drawer settings preview (direct request)
 
 - [x] `AppDrawerSettingsPreview` (`ui/settings/`) at the top of Settings → App Drawer: the real `AppDrawerScreen` on sample apps and a sample folder over the system wallpaper, fed the current `LauncherSettings`, inert, so presentation, density, sizes, icons, labels, folders, recently installed, search bar position and opacity show as they change. `AppDrawerSettingsViewModel` gained `homeWallpaper` (via `WallpaperRepository`). Strings in en/de/es/fr/pt. Tests: `AppDrawerSettingsPreviewTest`, `AppDrawerSettingsViewModelTest`, `AppDrawerSettingsScreenTest`. Docs: `12 §1d`, `07`, `03`.
+
+## Weather icons preview row (direct request)
+
+- [x] `WeatherIconsPreviewRow` (`ui/settings/`) under the "Weather icons" dropdown in Clock accessories → Icons: the nine weather pictures in the selected style (monochrome in `Ink`). Tests: `ClockAccessoriesScreenTest` (preview follows the style).

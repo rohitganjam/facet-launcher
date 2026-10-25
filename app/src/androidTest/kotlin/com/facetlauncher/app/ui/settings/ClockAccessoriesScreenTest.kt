@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -51,6 +52,29 @@ class ClockAccessoriesScreenTest {
         composeRule.onNodeWithTag("unit_temperature_row").assertExists()
         composeRule.onNodeWithTag("icon_style_row").assertExists()
         composeRule.onNodeWithTag("accessory_location_row").assertExists()
+    }
+
+    @Test
+    fun theIconsCardPreviewFollowsTheSelectedIconStyle() {
+        // Given weather on with the default monochrome icons
+        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
+        composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertDoesNotExist()
+    }
+
+    @Test
+    fun theIconsCardPreviewShowsColouredIconsWhenColouredIsSelected() {
+        // Given weather on with coloured icons chosen
+        setContent(
+            ClockAccessoriesUiState(
+                settings = LauncherSettings(showWeather = true, weatherIconStyle = WeatherIconStyle.COLORED),
+                weatherEnabledAnywhere = true,
+            ),
+        )
+
+        // Then the preview row shows the coloured set, not the monochrome one
+        composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertExists()
+        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertDoesNotExist()
     }
 
     @Test
